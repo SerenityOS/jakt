@@ -9,48 +9,48 @@ namespace jakt__libc__io {
 }
 namespace jakt__arguments {
 struct ArgsParser;
-ErrorOr<String> escape_for_quotes(const String s);
+ErrorOr<String> escape_for_quotes(String const s);
 
 }
 namespace utility {
 struct Span;
 struct FileId;
-bool is_ascii_binary(const u8 c);
+bool is_ascii_binary(u8 const c);
 
-String join(const JaktInternal::Array<String> strings, const String separator);
+String join(JaktInternal::Array<String> const strings, String const separator);
 
-bool is_whitespace(const u8 byte);
+bool is_whitespace(u8 const byte);
 
 template <typename T>
-ErrorOr<void> extend_array(JaktInternal::Array<T> target, const JaktInternal::Array<T> extend_with);
+ErrorOr<void> extend_array(JaktInternal::Array<T> target, JaktInternal::Array<T> const extend_with);
 
-bool is_ascii_alpha(const u8 c);
+bool is_ascii_alpha(u8 const c);
 
-ErrorOr<JaktInternal::Array<String>> prepend_to_each(const JaktInternal::Array<String> strings, const String prefix);
+ErrorOr<JaktInternal::Array<String>> prepend_to_each(JaktInternal::Array<String> const strings, String const prefix);
 
-bool is_ascii_digit(const u8 c);
+bool is_ascii_digit(u8 const c);
 
-void todo(const String message);
+void todo(String const message);
 
-bool is_ascii_alphanumeric(const u8 c);
+bool is_ascii_alphanumeric(u8 const c);
 
-ErrorOr<String> interpret_escapes(const String s);
+ErrorOr<String> interpret_escapes(String const s);
 
-ErrorOr<JaktInternal::Array<String>> append_to_each(const JaktInternal::Array<String> strings, const String suffix);
+ErrorOr<JaktInternal::Array<String>> append_to_each(JaktInternal::Array<String> const strings, String const suffix);
 
 template <typename T>
 T* null();
 
-bool is_ascii_octdigit(const u8 c);
+bool is_ascii_octdigit(u8 const c);
 
-bool is_ascii_hexdigit(const u8 c);
+bool is_ascii_hexdigit(u8 const c);
 
-[[noreturn]] void panic(const String message);
+[[noreturn]] void panic(String const message);
 
-ErrorOr<String> escape_for_quotes(const String s);
+ErrorOr<String> escape_for_quotes(String const s);
 
 template <typename T>
-T* allocate(const size_t count);
+T* allocate(size_t const count);
 
 }
 namespace error {
@@ -66,17 +66,17 @@ struct Error;
 }
 struct MessageSeverity;
 
-ErrorOr<void> print_error_json(const String file_name, const error::JaktError error);
+ErrorOr<void> print_error_json(String const file_name, error::JaktError const error);
 
-ErrorOr<JaktInternal::Array<JaktInternal::Tuple<size_t,size_t>>> gather_line_spans(const JaktInternal::Array<u8> file_contents);
+ErrorOr<JaktInternal::Array<JaktInternal::Tuple<size_t,size_t>>> gather_line_spans(JaktInternal::Array<u8> const file_contents);
 
-ErrorOr<void> display_message_with_span(const error::MessageSeverity severity, const String file_name, const JaktInternal::Optional<JaktInternal::Array<u8>> contents, const String message, const utility::Span span);
+ErrorOr<void> display_message_with_span(error::MessageSeverity const severity, String const file_name, JaktInternal::Optional<JaktInternal::Array<u8>> const contents, String const message, utility::Span const span);
 
-ErrorOr<void> print_source_line(const error::MessageSeverity severity, const JaktInternal::Array<u8> file_contents, const JaktInternal::Tuple<size_t,size_t> file_span, const utility::Span error_span, const size_t line_number, const size_t largest_line_number);
+ErrorOr<void> print_source_line(error::MessageSeverity const severity, JaktInternal::Array<u8> const file_contents, JaktInternal::Tuple<size_t,size_t> const file_span, utility::Span const error_span, size_t const line_number, size_t const largest_line_number);
 
-ErrorOr<void> display_message_with_span_json(const error::MessageSeverity severity, const String file_name, const String message, const utility::Span span);
+ErrorOr<void> display_message_with_span_json(error::MessageSeverity const severity, String const file_name, String const message, utility::Span const span);
 
-ErrorOr<void> print_error(const String file_name, const JaktInternal::Optional<JaktInternal::Array<u8>> file_contents, const error::JaktError error);
+ErrorOr<void> print_error(String const file_name, JaktInternal::Optional<JaktInternal::Array<u8>> const file_contents, error::JaktError const error);
 
 }
 namespace os {
@@ -222,6 +222,9 @@ struct Weak;
 struct While;
 struct Yield;
 struct Guard;
+struct Implements;
+struct Requires;
+struct Trait;
 struct Garbage;
 }
 struct Token;
@@ -245,11 +248,14 @@ struct ParsedFunction;
 struct ParsedExternImport;
 struct ParsedModuleImport;
 struct ParsedVariable;
+struct ParsedNameWithGenericParameters;
 struct SumEnumVariant;
 struct ParsedMatchCase;
+struct ParsedTrait;
 struct Parser;
 struct ParsedCall;
 struct ParsedNamespace;
+struct ParsedName;
 struct ParsedMethod;
 struct ParsedField;
 struct ParsedParameter;
@@ -478,12 +484,12 @@ struct IsEnumVariant;
 }
 struct UnaryOperator;
 
-ErrorOr<utility::Span> merge_spans(const utility::Span start, const utility::Span end);
+ErrorOr<utility::Span> merge_spans(utility::Span const start, utility::Span const end);
 
-f32 f64_to_f32(const f64 number);
+f32 f64_to_f32(f64 const number);
 
 template <typename T>
-T u64_to_float(const u64 number);
+T u64_to_float(u64 const number);
 
 }
 namespace types {
@@ -492,25 +498,29 @@ struct GenericInferences;
 struct CheckedStruct;
 struct CheckedVariable;
 class CheckedProgram;
-struct FieldRecord;
 struct Value;
+struct VarId;
 struct CheckedParameter;
 struct CheckedCall;
 struct CheckedVarDecl;
 struct CheckedNamespace;
+struct CheckedGenericParameter;
 struct CheckedBlock;
+struct TraitId;
 struct FunctionId;
 class Module;
-struct VarId;
+class CheckedTrait;
 class CheckedFunction;
 struct EnumId;
 struct StructId;
 struct ScopeId;
 struct LoadedModule;
+struct CheckedEnum;
+struct FunctionGenericParameter;
 struct ResolvedNamespace;
 class Scope;
 struct TypeId;
-struct CheckedEnum;
+struct FieldRecord;
 struct ModuleId;
 struct CheckedEnumVariantBinding;
 struct CheckedField;
@@ -519,6 +529,12 @@ struct Safe;
 struct Unsafe;
 }
 struct SafetyMode;
+
+namespace FunctionGenericParameterKind_Details {
+struct InferenceGuide;
+struct Parameter;
+}
+struct FunctionGenericParameterKind;
 
 namespace Type_Details {
 struct Void;
@@ -542,10 +558,12 @@ struct Never;
 struct TypeVariable;
 struct GenericInstance;
 struct GenericEnumInstance;
+struct GenericTraitInstance;
 struct GenericResolvedType;
 struct Struct;
 struct Enum;
 struct RawPtr;
+struct Trait;
 struct Reference;
 struct MutableReference;
 struct Function;
@@ -591,12 +609,6 @@ struct Expression;
 struct CatchAll;
 }
 struct CheckedMatchCase;
-
-namespace FunctionGenericParameter_Details {
-struct InferenceGuide;
-struct Parameter;
-}
-struct FunctionGenericParameter;
 
 namespace CheckedTypeCast_Details {
 struct Fallible;
@@ -769,7 +781,7 @@ struct Never;
 }
 struct BuiltinType;
 
-types::TypeId builtin(const types::BuiltinType builtin);
+types::TypeId builtin(types::BuiltinType const builtin);
 
 types::TypeId void_type_id();
 
@@ -804,13 +816,15 @@ struct Statement;
 struct Deferred;
 
 enum class InterpretError: i32;
-ErrorOr<types::Value> cast_value_to_type(const types::Value this_value, const types::TypeId type_id, const NonnullRefPtr<interpreter::Interpreter> interpreter, const bool saturating);
+ErrorOr<types::Value> cast_value_to_type(types::Value const this_value, types::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter, bool const saturating);
 
-ErrorOr<NonnullRefPtr<types::CheckedExpression>> value_to_checked_expression(const types::Value this_value, NonnullRefPtr<interpreter::Interpreter> interpreter);
+ErrorOr<NonnullRefPtr<types::CheckedExpression>> value_to_checked_expression(types::Value const this_value, NonnullRefPtr<interpreter::Interpreter> interpreter);
 
 }
 namespace typechecker {
+struct AlreadyImplementedFor;
 struct Typechecker;
+struct TraitImplCheck;
 }
 namespace codegen {
 struct LineSpan;
@@ -824,9 +838,9 @@ struct AtLoop;
 }
 struct AllowedControlExits;
 
-bool are_loop_exits_allowed(const codegen::AllowedControlExits allowed_control_exits);
+bool are_loop_exits_allowed(codegen::AllowedControlExits const allowed_control_exits);
 
-bool is_return_allowed(const codegen::AllowedControlExits allowed_control_exits);
+bool is_return_allowed(codegen::AllowedControlExits const allowed_control_exits);
 
 }
 namespace formatter {
@@ -876,15 +890,15 @@ struct InExpression;
 struct ExpressionMode;
 
 template <typename T>
-JaktInternal::Optional<T> collapse(const JaktInternal::Optional<JaktInternal::Optional<T>> x);
+JaktInternal::Optional<T> collapse(JaktInternal::Optional<JaktInternal::Optional<T>> const x);
 
 template <typename T>
-ErrorOr<JaktInternal::Array<T>> concat(const JaktInternal::Array<T> xs, const T y);
+ErrorOr<JaktInternal::Array<T>> concat(JaktInternal::Array<T> const xs, T const y);
 
 void bubble_sort(JaktInternal::Array<String> values);
 
 template <typename T>
-ErrorOr<JaktInternal::Array<T>> init(const JaktInternal::Array<T> xs);
+ErrorOr<JaktInternal::Array<T>> init(JaktInternal::Array<T> const xs);
 
 }
 namespace jakt__libc__io {
@@ -898,9 +912,9 @@ struct Eof;
 }
 struct LineResult;
 
-String serialize_unary_operation(const types::CheckedUnaryOperator op, const String expr);
+String serialize_unary_operation(types::CheckedUnaryOperator const op, String const expr);
 
-ErrorOr<String> serialize_ast_node(const NonnullRefPtr<types::CheckedExpression> node);
+ErrorOr<String> serialize_ast_node(NonnullRefPtr<types::CheckedExpression> const node);
 
 }
 namespace ide {
@@ -935,61 +949,61 @@ struct Restricted;
 }
 struct VarVisibility;
 
-ErrorOr<ide::JaktSymbol> record_to_symbol(const parser::ParsedRecord record);
+ErrorOr<ide::JaktSymbol> record_to_symbol(parser::ParsedRecord const record);
 
-ErrorOr<JaktInternal::Optional<String>> find_typename_in_program(const NonnullRefPtr<types::CheckedProgram> program, const utility::Span span);
+ErrorOr<JaktInternal::Optional<String>> find_typename_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
-ErrorOr<JaktInternal::Array<String>> completions_for_type_id(const NonnullRefPtr<types::CheckedProgram> program, const types::TypeId type_id);
+ErrorOr<JaktInternal::Array<String>> completions_for_type_id(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id);
 
-ErrorOr<ide::Usage> get_enum_variant_usage_from_type_id_and_name(const NonnullRefPtr<types::CheckedProgram> program, const types::TypeId type_id, const String name);
+ErrorOr<ide::Usage> get_enum_variant_usage_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id, String const name);
 
-ErrorOr<String> get_enum_variant_signature_from_type_id_and_name(const NonnullRefPtr<types::CheckedProgram> program, const types::TypeId type_id, const String name);
+ErrorOr<String> get_enum_variant_signature_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id, String const name);
 
-ErrorOr<String> get_type_signature(const NonnullRefPtr<types::CheckedProgram> program, const types::TypeId type_id);
+ErrorOr<String> get_type_signature(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id);
 
-ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_scope(const NonnullRefPtr<types::CheckedProgram> program, const NonnullRefPtr<types::Scope> scope, const utility::Span span);
+ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_scope(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::Scope> const scope, utility::Span const span);
 
-ErrorOr<String> get_constructor_signature(const NonnullRefPtr<types::CheckedProgram> program, const types::FunctionId function_id);
+ErrorOr<String> get_constructor_signature(NonnullRefPtr<types::CheckedProgram> const program, types::FunctionId const function_id);
 
-ErrorOr<JaktInternal::Array<String>> find_dot_completions(const NonnullRefPtr<types::CheckedProgram> program, const utility::Span span);
+ErrorOr<JaktInternal::Array<String>> find_dot_completions(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
-ErrorOr<utility::Span> find_definition_in_program(const NonnullRefPtr<types::CheckedProgram> program, const utility::Span span);
+ErrorOr<utility::Span> find_definition_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
-ErrorOr<String> get_var_signature(const NonnullRefPtr<types::CheckedProgram> program, const String name, const types::TypeId var_type_id, const ide::Mutability mutability, const ide::VarType var_type, const ide::VarVisibility visibility, const JaktInternal::Optional<types::TypeId> struct_type_id);
+ErrorOr<String> get_var_signature(NonnullRefPtr<types::CheckedProgram> const program, String const name, types::TypeId const var_type_id, ide::Mutability const mutability, ide::VarType const var_type, ide::VarVisibility const visibility, JaktInternal::Optional<types::TypeId> const struct_type_id);
 
-ErrorOr<JaktInternal::Array<JaktInternal::Tuple<JaktInternal::Optional<String>,types::TypeId>>> enum_variant_fields(const NonnullRefPtr<types::CheckedProgram> program, const types::CheckedEnumVariant checked_enum_variant);
+ErrorOr<JaktInternal::Array<JaktInternal::Tuple<JaktInternal::Optional<String>,types::TypeId>>> enum_variant_fields(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnumVariant const checked_enum_variant);
 
-ErrorOr<utility::Span> find_type_definition_in_program(const NonnullRefPtr<types::CheckedProgram> program, const utility::Span span);
+ErrorOr<utility::Span> find_type_definition_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
-ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_expression(const NonnullRefPtr<types::CheckedProgram> program, const NonnullRefPtr<types::CheckedExpression> expr, const utility::Span span);
+ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_expression(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::CheckedExpression> const expr, utility::Span const span);
 
-ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_block(const NonnullRefPtr<types::CheckedProgram> program, const types::CheckedBlock block, const utility::Span span);
+ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_block(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedBlock const block, utility::Span const span);
 
-ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_program(const NonnullRefPtr<types::CheckedProgram> program, const utility::Span span);
+ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
-ErrorOr<JaktInternal::Array<ide::JaktSymbol>> find_symbols_in_namespace(const parser::ParsedNamespace namespace_);
+ErrorOr<JaktInternal::Array<ide::JaktSymbol>> find_symbols_in_namespace(parser::ParsedNamespace const namespace_);
 
-ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_function(const NonnullRefPtr<types::CheckedProgram> program, const NonnullRefPtr<types::CheckedFunction> checked_function, const utility::Span span);
+ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_function(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::CheckedFunction> const checked_function, utility::Span const span);
 
-ErrorOr<utility::Span> find_type_definition_for_type_id(const NonnullRefPtr<types::CheckedProgram> program, const types::TypeId type_id, const utility::Span span);
+ErrorOr<utility::Span> find_type_definition_for_type_id(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id, utility::Span const span);
 
-ErrorOr<String> get_enum_variant_signature(const NonnullRefPtr<types::CheckedProgram> program, const String name, const types::TypeId type_id, const JaktInternal::Array<JaktInternal::Tuple<JaktInternal::Optional<String>,types::TypeId>> variants, const JaktInternal::Optional<types::NumberConstant> number_constant);
+ErrorOr<String> get_enum_variant_signature(NonnullRefPtr<types::CheckedProgram> const program, String const name, types::TypeId const type_id, JaktInternal::Array<JaktInternal::Tuple<JaktInternal::Optional<String>,types::TypeId>> const variants, JaktInternal::Optional<types::NumberConstant> const number_constant);
 
-ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_enum(const NonnullRefPtr<types::CheckedProgram> program, const types::CheckedEnum checked_enum, const utility::Span span);
+ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_enum(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnum const checked_enum, utility::Span const span);
 
-ErrorOr<ide::JaktSymbol> function_to_symbol(const parser::ParsedFunction function_, const String kind);
+ErrorOr<ide::JaktSymbol> function_to_symbol(parser::ParsedFunction const function_, String const kind);
 
-ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_statement(const NonnullRefPtr<types::CheckedProgram> program, const NonnullRefPtr<types::CheckedStatement> statement, const utility::Span span);
+ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_statement(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::CheckedStatement> const statement, utility::Span const span);
 
-ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_struct(const NonnullRefPtr<types::CheckedProgram> program, const types::CheckedStruct checked_struct, const utility::Span span);
+ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_struct(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedStruct const checked_struct, utility::Span const span);
 
-ErrorOr<String> get_function_signature(const NonnullRefPtr<types::CheckedProgram> program, const types::FunctionId function_id);
+ErrorOr<String> get_function_signature(NonnullRefPtr<types::CheckedProgram> const program, types::FunctionId const function_id);
 
 }
 namespace unknown_process {
 struct Process;
 struct ExitPollResult;
-ErrorOr<unknown_process::Process> start_background_process(const JaktInternal::Array<String> args);
+ErrorOr<unknown_process::Process> start_background_process(JaktInternal::Array<String> const args);
 
 ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<size_t>,unknown_process::ExitPollResult>> wait_for_some_set_of_processes_that_at_least_includes(JaktInternal::Dictionary<size_t,unknown_process::Process> const& processes);
 
@@ -1000,29 +1014,32 @@ ErrorOr<void> forcefully_kill_process(unknown_process::Process const& process);
 ErrorOr<JaktInternal::Optional<unknown_process::ExitPollResult>> poll_process_exit(unknown_process::Process const& process);
 
 }
+namespace build {
+struct Builder;
+struct ParallelExecutionPool;
+}
 namespace unknown_fs {
-ErrorOr<void> make_directory(const String path);
+ErrorOr<void> make_directory(String const path);
 
 }
 namespace unknown_compiler {
-ErrorOr<JaktInternal::Array<String>> run_compiler(const String cxx_compiler_path, const String cpp_filename, const String output_filename, const String runtime_path, const JaktInternal::Array<String> extra_include_paths, const JaktInternal::Array<String> extra_lib_paths, const JaktInternal::Array<String> extra_link_libs, const bool optimize, const JaktInternal::Array<String> extra_compiler_flags);
+ErrorOr<JaktInternal::Array<String>> run_compiler(String const cxx_compiler_path, String const cpp_filename, String const output_filename, String const runtime_path, JaktInternal::Array<String> const extra_include_paths, JaktInternal::Array<String> const extra_lib_paths, JaktInternal::Array<String> const extra_link_libs, bool const optimize, JaktInternal::Array<String> const extra_compiler_flags);
 
 }
-struct ParallelExecutionPool;
 struct FormatRange;
-ErrorOr<void> write_to_file(const String data, const String output_filename);
-
-template <typename T>
-ErrorOr<T> value_or_throw(const JaktInternal::Optional<T> maybe);
-
-ErrorOr<String> indent(const size_t level);
-
+ErrorOr<void> write_to_file(String const data, String const output_filename);
 
 
 String help();
 
+ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(String const range, size_t const input_file_length);
+
+ErrorOr<String> indent(size_t const level);
+
+template <typename T>
+ErrorOr<T> value_or_throw(JaktInternal::Optional<T> const maybe);
+
 String usage();
 
-ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(const String range, const size_t input_file_length);
 
 } // namespace Jakt

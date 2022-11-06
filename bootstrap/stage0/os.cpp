@@ -6,7 +6,7 @@ namespace os {
 
 ErrorOr<JaktInternal::Array<String>> platform_import_names() {
 {
-const os::Target target = TRY((os::Target::active()));
+os::Target const target = TRY((os::Target::Target::active()));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<String>,ErrorOr<JaktInternal::Array<String>>>{
 auto __jakt_enum_value = (((target).os));
 if (__jakt_enum_value == String("windows")) {
@@ -54,8 +54,8 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(builder.append(")"));return builder.to_string(); }
 ErrorOr<os::Target> os::Target::active() {
 {
-const String triple = ___jakt_get_target_triple_string();
-const JaktInternal::Array<String> parts = TRY((((triple).split('-'))));
+String const triple = ___jakt_get_target_triple_string();
+JaktInternal::Array<String> const parts = TRY((((triple).split('-'))));
 if ((((parts).size()) != static_cast<size_t>(4ULL))){
 warnln(String("Invalid target triple '{}'"),triple);
 return Error::from_errno(static_cast<i32>(22));

@@ -4,19 +4,19 @@ namespace Jakt {
 namespace utility {
 struct FileId {
   public:
-size_t id;bool equals(const utility::FileId rhs) const;
+size_t id;bool equals(utility::FileId const rhs) const;
 FileId(size_t a_id);
 
 ErrorOr<String> debug_description() const;
 };struct Span {
   public:
-utility::FileId file_id;size_t start;size_t end;bool contains(const utility::Span span) const;
-bool is_in_offset_range(const size_t start, const size_t end) const;
+utility::FileId file_id;size_t start;size_t end;bool contains(utility::Span const span) const;
+bool is_in_offset_range(size_t const start, size_t const end) const;
 Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
 
 ErrorOr<String> debug_description() const;
 };template <typename T>
-ErrorOr<void> extend_array(JaktInternal::Array<T> target,const JaktInternal::Array<T> extend_with) {
+ErrorOr<void> extend_array(JaktInternal::Array<T> target,JaktInternal::Array<T> const extend_with) {
 {
 TRY((((target).add_capacity(((extend_with).size())))));
 {
@@ -50,7 +50,7 @@ abort();
 }
 
 template <typename T>
-T* allocate(const size_t count) {
+T* allocate(size_t const count) {
 {
 {
 return static_cast<T*>(malloc(count * sizeof(T)));

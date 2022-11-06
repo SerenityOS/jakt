@@ -1,6 +1,6 @@
 #include "Root Module.h"
 namespace Jakt {
-ErrorOr<void> write_to_file(const String data,const String output_filename) {
+ErrorOr<void> write_to_file(String const data,String const output_filename) {
 {
 NonnullRefPtr<File> outfile = TRY((File::open_for_writing(output_filename)));
 JaktInternal::Array<u8> bytes = (TRY((Array<u8>::create_with({}))));
@@ -23,29 +23,6 @@ TRY((((outfile)->write(bytes))));
 }
 return {};
 }
-
-ErrorOr<String> indent(const size_t level) {
-{
-String output = String("");
-{
-JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(level)});
-for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-size_t i = (_magic_value.value());
-{
-(output += String("    "));
-}
-
-}
-}
-
-return (output);
-}
-}
-
 
 
 String help() {
@@ -93,38 +70,32 @@ return (output);
 }
 }
 
-String usage() {
+ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(String const range,size_t const input_file_length) {
 {
-return (String("usage: jakt [-h] [OPTIONS] <filename>"));
-}
-}
-
-ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(const String range,const size_t input_file_length) {
-{
-const JaktInternal::Array<String> parts = TRY((((range).split(':'))));
+JaktInternal::Array<String> const parts = TRY((((range).split(':'))));
 if (((parts).is_empty())){
 return (FormatRange(static_cast<size_t>(0ULL),input_file_length));
 }
-const JaktInternal::Optional<u32> start_input = ((((parts)[static_cast<i64>(0LL)])).to_uint());
+JaktInternal::Optional<u32> const start_input = ((((parts)[static_cast<i64>(0LL)])).to_uint());
 if ((!(((start_input).has_value())))){
 return (JaktInternal::OptionalNone());
 }
-const size_t start = (infallible_integer_cast<size_t>(((start_input.value()))));
-const size_t end = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<JaktInternal::Optional<FormatRange>>>{
+size_t const start = (infallible_integer_cast<size_t>(((start_input.value()))));
+size_t const end = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<JaktInternal::Optional<FormatRange>>>{
 auto __jakt_enum_value = (((parts).size()));
 if (__jakt_enum_value == static_cast<size_t>(1ULL)) {
 return JaktInternal::ExplicitValue(input_file_length);
 }
 else if (__jakt_enum_value == static_cast<size_t>(2ULL)) {
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_682; {
-const JaktInternal::Optional<u32> end_input = ((((parts)[static_cast<i64>(1LL)])).to_uint());
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_697; {
+JaktInternal::Optional<u32> const end_input = ((((parts)[static_cast<i64>(1LL)])).to_uint());
 if ((!(((end_input).has_value())))){
 return (JaktInternal::OptionalNone());
 }
-__jakt_var_682 = (infallible_integer_cast<size_t>(((end_input.value())))); goto __jakt_label_632;
+__jakt_var_697 = (infallible_integer_cast<size_t>(((end_input.value())))); goto __jakt_label_641;
 
 }
-__jakt_label_632:; __jakt_var_682.release_value(); }));
+__jakt_label_641:; __jakt_var_697.release_value(); }));
 }
 else {
 {
@@ -137,7 +108,36 @@ return (FormatRange(start,end));
 }
 }
 
-ErrorOr<int> main(const JaktInternal::Array<String> args) {
+ErrorOr<String> indent(size_t const level) {
+{
+String output = String("");
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(level)});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+(output += String("    "));
+}
+
+}
+}
+
+return (output);
+}
+}
+
+String usage() {
+{
+return (String("usage: jakt [-h] [OPTIONS] <filename>"));
+}
+}
+
+
+ErrorOr<int> main(JaktInternal::Array<String> const args) {
 
 
             #ifdef _WIN32
@@ -150,7 +150,7 @@ if ((((args).size()) <= static_cast<size_t>(1ULL))){
 warnln(String("{}"),usage());
 return (static_cast<i64>(1LL));
 }
-jakt__arguments::ArgsParser args_parser = TRY((jakt__arguments::ArgsParser::from_args(args)));
+jakt__arguments::ArgsParser args_parser = TRY((jakt__arguments::ArgsParser::ArgsParser::from_args(args)));
 if (TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-h"), String("--help")}))))))))){
 outln(String("{}\n"),usage());
 outln(String("{}"),help());
@@ -160,63 +160,63 @@ if (TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-v"), Str
 outln(String("unreleased"));
 return (static_cast<i64>(0LL));
 }
-const path::Path current_executable_path = TRY((path::Path::from_string(TRY((File::current_executable_path())))));
-const path::Path install_base_path = TRY((((TRY((((current_executable_path).parent())))).parent())));
-const path::Path default_runtime_path = TRY((((install_base_path).join(String("include/runtime")))));
-const path::Path default_runtime_library_path = TRY((((install_base_path).join(String("lib")))));
-const bool optimize = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-O")}))))))));
-const bool lexer_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-dl")}))))))));
-const bool parser_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-dp")}))))))));
-const bool typechecker_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-dt")}))))))));
-const bool build_executable = (!(TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-S")}))))))))));
-const bool run_executable = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-cr"), String("--compile-run")}))))))));
-const bool codegen_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-d")}))))))));
-const bool debug_print = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("--debug-print")}))))))));
-const bool prettify_cpp_source = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-p"), String("--prettify-cpp-source")}))))))));
-const bool json_errors = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-j"), String("--json-errors")}))))))));
-const bool dump_type_hints = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-H"), String("--type-hints")}))))))));
-const bool dump_try_hints = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("--try-hints")}))))))));
-const bool check_only = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-c"), String("--check-only")}))))))));
-const bool write_source_to_file = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-S"), String("--emit-cpp-source-only")}))))))));
-const JaktInternal::Optional<String> generate_depfile = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-M"), String("--dep-file")}))))))));
-const JaktInternal::Optional<String> target_triple = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-T"), String("--target-triple")}))))))));
-const String runtime_library_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-RLP"), String("--runtime-library-path")})))))))).value_or_lazy_evaluated([&] { return ((default_runtime_library_path).to_string()); });
+path::Path const current_executable_path = TRY((path::Path::Path::from_string(TRY((File::current_executable_path())))));
+path::Path const install_base_path = TRY((((TRY((((current_executable_path).parent())))).parent())));
+path::Path const default_runtime_path = TRY((((install_base_path).join(String("include/runtime")))));
+path::Path const default_runtime_library_path = TRY((((install_base_path).join(String("lib")))));
+bool const optimize = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-O")}))))))));
+bool const lexer_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-dl")}))))))));
+bool const parser_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-dp")}))))))));
+bool const typechecker_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-dt")}))))))));
+bool const build_executable = (!(TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-S")}))))))))));
+bool const run_executable = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-cr"), String("--compile-run")}))))))));
+bool const codegen_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-d")}))))))));
+bool const debug_print = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("--debug-print")}))))))));
+bool const prettify_cpp_source = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-p"), String("--prettify-cpp-source")}))))))));
+bool const json_errors = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-j"), String("--json-errors")}))))))));
+bool const dump_type_hints = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-H"), String("--type-hints")}))))))));
+bool const dump_try_hints = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("--try-hints")}))))))));
+bool const check_only = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-c"), String("--check-only")}))))))));
+bool const write_source_to_file = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-S"), String("--emit-cpp-source-only")}))))))));
+JaktInternal::Optional<String> const generate_depfile = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-M"), String("--dep-file")}))))))));
+JaktInternal::Optional<String> const target_triple = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-T"), String("--target-triple")}))))))));
+String const runtime_library_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-RLP"), String("--runtime-library-path")})))))))).value_or_lazy_evaluated([&] { return ((default_runtime_library_path).to_string()); });
 String compiler_job_count = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-J"), String("--jobs")})))))))).value_or_lazy_evaluated([&] { return String("2"); });
-const String clang_format_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-F"), String("--clang-format-path")})))))))).value_or_lazy_evaluated([&] { return String("clang-format"); });
-const String runtime_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-R"), String("--runtime-path")})))))))).value_or_lazy_evaluated([&] { return ((default_runtime_path).to_string()); });
-const path::Path binary_dir = TRY((path::Path::from_string(TRY((((args_parser).option((TRY((Array<String>::create_with({String("-B"), String("--binary-dir")})))))))).value_or_lazy_evaluated([&] { return String("build"); }))));
-const JaktInternal::Optional<String> dot_clang_format_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-D"), String("--dot-clang-format-path")}))))))));
-const String cxx_compiler_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-C"), String("--cxx-compiler-path")})))))))).value_or_lazy_evaluated([&] { return String("clang++"); });
-const JaktInternal::Optional<String> archiver_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-A"), String("--archiver")}))))))));
-const JaktInternal::Optional<String> link_archive = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-a"), String("--link-archive")}))))))));
-const JaktInternal::Array<String> extra_include_paths = TRY((((args_parser).option_multiple((TRY((Array<String>::create_with({String("-I")}))))))));
-const JaktInternal::Array<String> extra_lib_paths = TRY((((args_parser).option_multiple((TRY((Array<String>::create_with({String("-L")}))))))));
-const JaktInternal::Array<String> extra_link_libs = TRY((((args_parser).option_multiple((TRY((Array<String>::create_with({String("-l")}))))))));
-const JaktInternal::Optional<String> set_output_filename = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-o"), String("--output-filename")}))))))));
-const JaktInternal::Optional<String> goto_def = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-g"), String("--goto-def")}))))))));
-const JaktInternal::Optional<String> goto_type_def = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-t"), String("--goto-type-def")}))))))));
-const JaktInternal::Optional<String> hover = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-e"), String("--hover")}))))))));
-const JaktInternal::Optional<String> completions = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-m"), String("--completions")}))))))));
-const bool print_symbols = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("--print-symbols")}))))))));
-const bool interpret_run = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-r"), String("--run")}))))))));
-const bool format = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-f"), String("--format")}))))))));
-const bool format_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-fd"), String("--format-debug")}))))))));
-const String input_format_range = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-fr"), String("--format-range")})))))))).value_or_lazy_evaluated([&] { return String(""); });
-const size_t max_concurrent = (infallible_integer_cast<size_t>((({ Optional<u32> __jakt_var_683;
-auto __jakt_var_684 = [&]() -> ErrorOr<u32> { return TRY((value_or_throw<u32>(((compiler_job_count).to_uint())))); }();
-if (__jakt_var_684.is_error()) {{
+String const clang_format_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-F"), String("--clang-format-path")})))))))).value_or_lazy_evaluated([&] { return String("clang-format"); });
+String const runtime_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-R"), String("--runtime-path")})))))))).value_or_lazy_evaluated([&] { return ((default_runtime_path).to_string()); });
+path::Path const binary_dir = TRY((path::Path::Path::from_string(TRY((((args_parser).option((TRY((Array<String>::create_with({String("-B"), String("--binary-dir")})))))))).value_or_lazy_evaluated([&] { return String("build"); }))));
+JaktInternal::Optional<String> const dot_clang_format_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-D"), String("--dot-clang-format-path")}))))))));
+String const cxx_compiler_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-C"), String("--cxx-compiler-path")})))))))).value_or_lazy_evaluated([&] { return String("clang++"); });
+JaktInternal::Optional<String> const archiver_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-A"), String("--archiver")}))))))));
+JaktInternal::Optional<String> const link_archive = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-a"), String("--link-archive")}))))))));
+JaktInternal::Array<String> const extra_include_paths = TRY((((args_parser).option_multiple((TRY((Array<String>::create_with({String("-I")}))))))));
+JaktInternal::Array<String> const extra_lib_paths = TRY((((args_parser).option_multiple((TRY((Array<String>::create_with({String("-L")}))))))));
+JaktInternal::Array<String> const extra_link_libs = TRY((((args_parser).option_multiple((TRY((Array<String>::create_with({String("-l")}))))))));
+JaktInternal::Optional<String> const set_output_filename = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-o"), String("--output-filename")}))))))));
+JaktInternal::Optional<String> const goto_def = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-g"), String("--goto-def")}))))))));
+JaktInternal::Optional<String> const goto_type_def = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-t"), String("--goto-type-def")}))))))));
+JaktInternal::Optional<String> const hover = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-e"), String("--hover")}))))))));
+JaktInternal::Optional<String> const completions = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-m"), String("--completions")}))))))));
+bool const print_symbols = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("--print-symbols")}))))))));
+bool const interpret_run = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-r"), String("--run")}))))))));
+bool const format = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-f"), String("--format")}))))))));
+bool const format_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-fd"), String("--format-debug")}))))))));
+String const input_format_range = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-fr"), String("--format-range")})))))))).value_or_lazy_evaluated([&] { return String(""); });
+size_t const max_concurrent = (infallible_integer_cast<size_t>((({ Optional<u32> __jakt_var_698;
+auto __jakt_var_699 = [&]() -> ErrorOr<u32> { return TRY((value_or_throw<u32>(((compiler_job_count).to_uint())))); }();
+if (__jakt_var_699.is_error()) {{
 warnln(String("error: invalid value for --jobs: {}"),compiler_job_count);
 return (static_cast<i64>(1LL));
 }
-} else {__jakt_var_683 = __jakt_var_684.release_value();
+} else {__jakt_var_698 = __jakt_var_699.release_value();
 }
-__jakt_var_683.release_value(); }))));
+__jakt_var_698.release_value(); }))));
 if (TRY((((args_parser).flag((TRY((Array<String>::create_with({String("--repl")}))))))))){
-repl::REPL repl = TRY((repl::REPL::create(TRY((path::Path::from_parts((TRY((Array<String>::create_with({runtime_path, String("jaktlib")}))))))),target_triple)));
+repl::REPL repl = TRY((repl::REPL::REPL::create(TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({runtime_path, String("jaktlib")}))))))),target_triple)));
 TRY((((repl).run())));
 return (static_cast<i64>(0LL));
 }
-const JaktInternal::Array<String> positional_arguments = TRY((((args_parser).remaining_arguments())));
+JaktInternal::Array<String> const positional_arguments = TRY((((args_parser).remaining_arguments())));
 if (false){
 (compiler_job_count = String("1"));
 }
@@ -256,18 +256,18 @@ warnln(String("you must pass a source file"));
 warnln(String("{}"),usage());
 return (static_cast<i64>(1LL));
 }
-const path::Path file_path = TRY((path::Path::from_string((file_name.value()))));
-const String guessed_output_filename = TRY((((file_path).basename(true))));
-const String output_filename = ((TRY((((binary_dir).join(set_output_filename.value_or_lazy_evaluated([&] { return guessed_output_filename; })))))).to_string());
+path::Path const file_path = TRY((path::Path::Path::from_string((file_name.value()))));
+String const guessed_output_filename = TRY((((file_path).basename(true))));
+String const output_filename = ((TRY((((binary_dir).join(set_output_filename.value_or_lazy_evaluated([&] { return guessed_output_filename; })))))).to_string());
 JaktInternal::Array<error::JaktError> errors = (TRY((Array<error::JaktError>::create_with({}))));
-NonnullRefPtr<compiler::Compiler> compiler = TRY((compiler::Compiler::create((TRY((Array<path::Path>::create_with({})))),(TRY((Dictionary<String, utility::FileId>::create_with_entries({})))),(TRY((Array<error::JaktError>::create_with({})))),JaktInternal::OptionalNone(),(TRY((Array<u8>::create_with({})))),lexer_debug,parser_debug,false,debug_print,TRY((path::Path::from_parts((TRY((Array<String>::create_with({runtime_path, String("jaktlib")}))))))),extra_include_paths,json_errors,dump_type_hints,dump_try_hints,optimize,target_triple)));
+NonnullRefPtr<compiler::Compiler> compiler = TRY((compiler::Compiler::create((TRY((Array<path::Path>::create_with({})))),(TRY((Dictionary<String, utility::FileId>::create_with_entries({})))),(TRY((Array<error::JaktError>::create_with({})))),JaktInternal::OptionalNone(),(TRY((Array<u8>::create_with({})))),lexer_debug,parser_debug,false,debug_print,TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({runtime_path, String("jaktlib")}))))))),extra_include_paths,json_errors,dump_type_hints,dump_try_hints,optimize,target_triple)));
 TRY((((compiler)->load_prelude())));
-const utility::FileId main_file_id = TRY((((compiler)->get_file_id_or_register(file_path))));
-const bool file_is_set = ((compiler)->set_current_file(main_file_id));
+utility::FileId const main_file_id = TRY((((compiler)->get_file_id_or_register(file_path))));
+bool const file_is_set = ((compiler)->set_current_file(main_file_id));
 if ((!(file_is_set))){
 return (static_cast<i64>(1LL));
 }
-const JaktInternal::Array<lexer::Token> tokens = TRY((lexer::Lexer::lex(compiler)));
+JaktInternal::Array<lexer::Token> const tokens = TRY((lexer::Lexer::Lexer::lex(compiler)));
 if (lexer_debug){
 {
 JaktInternal::ArrayIterator<lexer::Token> _magic = ((tokens).iterator());
@@ -285,7 +285,7 @@ outln(String("token: {}"),token);
 }
 
 }
-const JaktInternal::Optional<FormatRange> format_range = TRY((parse_format_range(input_format_range,((((compiler)->current_file_contents)).size()))));
+JaktInternal::Optional<FormatRange> const format_range = TRY((parse_format_range(input_format_range,((((compiler)->current_file_contents)).size()))));
 if ((!(((format_range).has_value())))){
 warnln(String("invalid format range '{}', expected <start>(:<end>?)"),input_format_range);
 return (static_cast<i64>(1LL));
@@ -293,7 +293,7 @@ return (static_cast<i64>(1LL));
 if ((format || format_debug)){
 bool on_new_line = true;
 {
-formatter::Formatter _magic = TRY((formatter::Formatter::for_tokens(tokens,format_debug,static_cast<size_t>(120ULL))));
+formatter::Formatter _magic = TRY((formatter::Formatter::Formatter::for_tokens(tokens,format_debug,static_cast<size_t>(120ULL))));
 for (;;){
 JaktInternal::Optional<JaktInternal::Array<formatter::FormattedToken>> _magic_value = TRY((((_magic).next())));
 if ((!(((_magic_value).has_value())))){
@@ -339,7 +339,7 @@ u8 next_char = ' ';
 if (((((comment.value())).length()) != static_cast<size_t>(0ULL))){
 (next_char = (((comment.value())).byte_at(static_cast<size_t>(0ULL))));
 }
-const String space = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<int>>{
+String const space = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<int>>{
 auto __jakt_enum_value = (next_char);
 if (__jakt_enum_value == ' ') {
 return JaktInternal::ExplicitValue(String(""));
@@ -355,7 +355,7 @@ return JaktInternal::ExplicitValue(String(" "));
 }
 }()))
 ;
-const String lhs_space = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<int>>{
+String const lhs_space = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<int>>{
 auto __jakt_enum_value = (on_new_line);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(TRY((indent(((formatted_token).indent)))));
@@ -371,7 +371,7 @@ out(String("{}//{}{}"),lhs_space,space,(comment.value()));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 106: {
+case 109: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Garbage>();JaktInternal::Optional<String> const& consumed = __jakt_match_value.consumed;
 {
 if (((consumed).has_value())){
@@ -423,12 +423,12 @@ outln();
 
 return (static_cast<i64>(0LL));
 }
-const parser::ParsedNamespace parsed_namespace = TRY((parser::Parser::parse(compiler,tokens)));
+parser::ParsedNamespace const parsed_namespace = TRY((parser::Parser::Parser::parse(compiler,tokens)));
 if (parser_debug){
 outln(String("{:#}"),parsed_namespace);
 }
 if (print_symbols){
-const JaktInternal::Array<ide::JaktSymbol> symbols = TRY((ide::find_symbols_in_namespace(parsed_namespace)));
+JaktInternal::Array<ide::JaktSymbol> const symbols = TRY((ide::find_symbols_in_namespace(parsed_namespace)));
 JaktInternal::Array<String> symbol_representations = (TRY((Array<String>::create_with({}))));
 {
 JaktInternal::ArrayIterator<ide::JaktSymbol> _magic = ((symbols).iterator());
@@ -448,10 +448,10 @@ TRY((((symbol_representations).push(TRY((((symbol).to_json())))))));
 outln(String("[{}]"),utility::join(symbol_representations,String(",")));
 return (static_cast<i64>(0LL));
 }
-const NonnullRefPtr<types::CheckedProgram> checked_program = TRY((typechecker::Typechecker::typecheck(compiler,parsed_namespace)));
+NonnullRefPtr<types::CheckedProgram> const checked_program = TRY((typechecker::Typechecker::Typechecker::typecheck(compiler,parsed_namespace)));
 if (interpret_run){
-NonnullRefPtr<interpreter::Interpreter> interpreter = TRY((interpreter::Interpreter::create(compiler,checked_program,(TRY((Array<utility::Span>::create_with({})))))));
-const types::ScopeId prelude_scope_id = types::ScopeId(types::ModuleId(static_cast<size_t>(0ULL)),static_cast<size_t>(0ULL));
+NonnullRefPtr<interpreter::Interpreter> interpreter = TRY((interpreter::Interpreter::Interpreter::create(compiler,checked_program,(TRY((Array<utility::Span>::create_with({})))))));
+types::ScopeId const prelude_scope_id = types::ScopeId(types::ModuleId(static_cast<size_t>(0ULL)),static_cast<size_t>(0ULL));
 JaktInternal::Optional<types::FunctionId> main_function_id = JaktInternal::OptionalNone();
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<types::Module>> _magic = ((((checked_program)->modules)).iterator());
@@ -512,13 +512,13 @@ if ((!(((main_function_id).has_value())))){
 warnln(String("Error: No main function found in program"));
 return (static_cast<i64>(1LL));
 }
-const JaktInternal::Array<types::ResolvedNamespace> namespace_ = (TRY((Array<types::ResolvedNamespace>::create_with({}))));
-const utility::Span call_span = utility::Span(utility::FileId(static_cast<size_t>(0ULL)),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL));
-const JaktInternal::Optional<types::CheckedParameter> first_main_param = ((((((checked_program)->get_function((main_function_id.value()))))->params)).first());
-const JaktInternal::Array<types::Value> arguments = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<types::Value>,ErrorOr<int>>{
+JaktInternal::Array<types::ResolvedNamespace> const namespace_ = (TRY((Array<types::ResolvedNamespace>::create_with({}))));
+utility::Span const call_span = utility::Span(utility::FileId(static_cast<size_t>(0ULL)),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL));
+JaktInternal::Optional<types::CheckedParameter> const first_main_param = ((((((checked_program)->get_function((main_function_id.value()))))->params)).first());
+JaktInternal::Array<types::Value> const arguments = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<types::Value>,ErrorOr<int>>{
 auto __jakt_enum_value = (((first_main_param).has_value()));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<types::Value>> __jakt_var_685; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<types::Value>> __jakt_var_700; {
 JaktInternal::Array<types::Value> passed_arguments = (TRY((Array<types::Value>::create_with({types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>((file_name.value())))),call_span)}))));
 {
 JaktInternal::ArrayIterator<String> _magic = ((interpreted_main_arguments).iterator());
@@ -535,17 +535,17 @@ TRY((((passed_arguments).push(types::Value(TRY((types::ValueImpl::template creat
 }
 }
 
-__jakt_var_685 = (TRY((Array<types::Value>::create_with({types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktArray>(passed_arguments,(((((first_main_param.value())).variable)).type_id)))),call_span)})))); goto __jakt_label_633;
+__jakt_var_700 = (TRY((Array<types::Value>::create_with({types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktArray>(passed_arguments,(((((first_main_param.value())).variable)).type_id)))),call_span)})))); goto __jakt_label_642;
 
 }
-__jakt_label_633:; __jakt_var_685.release_value(); }));
+__jakt_label_642:; __jakt_var_700.release_value(); }));
 }
 else {
 return JaktInternal::ExplicitValue((TRY((Array<types::Value>::create_with({})))));
 }
 }()))
 ;
-const interpreter::ExecutionResult main_result = TRY((((interpreter)->execute((main_function_id.value()),namespace_,JaktInternal::OptionalNone(),arguments,call_span,JaktInternal::OptionalNone()))));
+interpreter::ExecutionResult const main_result = TRY((((interpreter)->execute((main_function_id.value()),namespace_,JaktInternal::OptionalNone(),arguments,call_span,JaktInternal::OptionalNone()))));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<int>>{
 auto&& __jakt_match_variant = main_result;
 switch(__jakt_match_variant.index()) {
@@ -603,42 +603,42 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 ));
 }
 if (((goto_def).has_value())){
-const size_t index = (infallible_integer_cast<size_t>((((((goto_def.value())).to_uint()).value()))));
-const utility::Span result = TRY((ide::find_definition_in_program(checked_program,utility::Span(utility::FileId(static_cast<size_t>(1ULL)),index,index))));
+size_t const index = (infallible_integer_cast<size_t>((((((goto_def.value())).to_uint()).value()))));
+utility::Span const result = TRY((ide::find_definition_in_program(checked_program,utility::Span(utility::FileId(static_cast<size_t>(1ULL)),index,index))));
 if ((((((result).file_id)).id) == static_cast<size_t>(1ULL))){
 outln(String("{{\"start\": {}, \"end\": {}}}"),((result).start),((result).end));
 }
 else {
-const JaktInternal::Optional<path::Path> file_path = TRY((((compiler)->get_file_path(((result).file_id)))));
+JaktInternal::Optional<path::Path> const file_path = TRY((((compiler)->get_file_path(((result).file_id)))));
 outln(String("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}"),((result).start),((result).end),TRY((utility::escape_for_quotes((((file_path.value())).to_string())))));
 }
 
 return (static_cast<i64>(0LL));
 }
 if (((goto_type_def).has_value())){
-const size_t index = (infallible_integer_cast<size_t>((((((goto_type_def.value())).to_uint()).value()))));
-const utility::Span result = TRY((ide::find_type_definition_in_program(checked_program,utility::Span(utility::FileId(static_cast<size_t>(1ULL)),index,index))));
+size_t const index = (infallible_integer_cast<size_t>((((((goto_type_def.value())).to_uint()).value()))));
+utility::Span const result = TRY((ide::find_type_definition_in_program(checked_program,utility::Span(utility::FileId(static_cast<size_t>(1ULL)),index,index))));
 if ((((((result).file_id)).id) == static_cast<size_t>(1ULL))){
 outln(String("{{\"start\": {}, \"end\": {}}}"),((result).start),((result).end));
 }
 else {
-const JaktInternal::Optional<path::Path> file_path = TRY((((compiler)->get_file_path(((result).file_id)))));
+JaktInternal::Optional<path::Path> const file_path = TRY((((compiler)->get_file_path(((result).file_id)))));
 outln(String("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}"),((result).start),((result).end),TRY((utility::escape_for_quotes((((file_path.value())).to_string())))));
 }
 
 return (static_cast<i64>(0LL));
 }
 if (((hover).has_value())){
-const size_t index = (infallible_integer_cast<size_t>((((((hover.value())).to_uint()).value()))));
-const JaktInternal::Optional<String> result = TRY((ide::find_typename_in_program(checked_program,utility::Span(utility::FileId(static_cast<size_t>(1ULL)),index,index))));
+size_t const index = (infallible_integer_cast<size_t>((((((hover.value())).to_uint()).value()))));
+JaktInternal::Optional<String> const result = TRY((ide::find_typename_in_program(checked_program,utility::Span(utility::FileId(static_cast<size_t>(1ULL)),index,index))));
 if (((result).has_value())){
 outln(String("{{\"hover\": \"{}\"}}"),(result.value()));
 }
 return (static_cast<i64>(0LL));
 }
 if (((completions).has_value())){
-const size_t index = (infallible_integer_cast<size_t>((((((completions.value())).to_uint()).value()))));
-const JaktInternal::Array<String> result = TRY((ide::find_dot_completions(checked_program,utility::Span(utility::FileId(static_cast<size_t>(1ULL)),index,index))));
+size_t const index = (infallible_integer_cast<size_t>((((((completions.value())).to_uint()).value()))));
+JaktInternal::Array<String> const result = TRY((ide::find_dot_completions(checked_program,utility::Span(utility::FileId(static_cast<size_t>(1ULL)),index,index))));
 out(String("{{\"completions\": ["));
 bool first = true;
 {
@@ -676,7 +676,7 @@ return (static_cast<i64>(1LL));
 if (check_only){
 return (static_cast<i64>(0LL));
 }
-const JaktInternal::Dictionary<String,JaktInternal::Tuple<String,String>> codegen_result = TRY((codegen::CodeGenerator::generate(compiler,checked_program,codegen_debug)));
+JaktInternal::Dictionary<String,JaktInternal::Tuple<String,String>> const codegen_result = TRY((codegen::CodeGenerator::CodeGenerator::generate(compiler,checked_program,codegen_debug)));
 StringBuilder depfile_builder = TRY((StringBuilder::create()));
 if ((!(((binary_dir).exists())))){
 TRY((unknown_fs::make_directory(((binary_dir).to_string()))));
@@ -690,17 +690,17 @@ break;
 }
 JaktInternal::Tuple<String,JaktInternal::Tuple<String,String>> file__contents_and_path__ = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,JaktInternal::Tuple<String,String>> jakt__file__contents_and_path__ = file__contents_and_path__;
-const String file = ((jakt__file__contents_and_path__).get<0>());
-const JaktInternal::Tuple<String,String> contents_and_path = ((jakt__file__contents_and_path__).get<1>());
+JaktInternal::Tuple<String,JaktInternal::Tuple<String,String>> const jakt__file__contents_and_path__ = file__contents_and_path__;
+String const file = ((jakt__file__contents_and_path__).get<0>());
+JaktInternal::Tuple<String,String> const contents_and_path = ((jakt__file__contents_and_path__).get<1>());
 
-const JaktInternal::Tuple<String,String> contents_module_file_path_ = contents_and_path;
-const String contents = ((contents_module_file_path_).get<0>());
-const String module_file_path = ((contents_module_file_path_).get<1>());
+JaktInternal::Tuple<String,String> const contents_module_file_path_ = contents_and_path;
+String const contents = ((contents_module_file_path_).get<0>());
+String const module_file_path = ((contents_module_file_path_).get<1>());
 
-const path::Path path = TRY((((binary_dir).join(file))));
-auto __jakt_var_687 = [&]() -> ErrorOr<void> { return TRY((write_to_file(contents,((path).to_string())))), ErrorOr<void>{}; }();
-if (__jakt_var_687.is_error()) {auto error = __jakt_var_687.release_error();
+path::Path const path = TRY((((binary_dir).join(file))));
+auto __jakt_var_702 = [&]() -> ErrorOr<void> { return TRY((write_to_file(contents,((path).to_string())))), ErrorOr<void>{}; }();
+if (__jakt_var_702.is_error()) {auto error = __jakt_var_702.release_error();
 {
 warnln(String("Error: Could not write to file: {} ({})"),file,error);
 return (static_cast<i64>(1LL));
@@ -708,8 +708,8 @@ return (static_cast<i64>(1LL));
 }
 ;
 if ((((generate_depfile).has_value()) && ((file).ends_with(String(".cpp"))))){
-const String escaped = TRY((((file).replace(String(" "),String("\\ ")))));
-const String escaped_module_file_path = TRY((((module_file_path).replace(String(" "),String("\\ ")))));
+String const escaped = TRY((((file).replace(String(" "),String("\\ ")))));
+String const escaped_module_file_path = TRY((((module_file_path).replace(String(" "),String("\\ ")))));
 TRY((((depfile_builder).append_string(TRY((String::formatted(String("{} {}.h: {}"),escaped,TRY((((escaped).substring(static_cast<size_t>(0ULL),(JaktInternal::checked_sub<size_t>(((file).length()),static_cast<size_t>(4ULL))))))),escaped_module_file_path)))))));
 TRY((((depfile_builder).append('\n'))));
 }
@@ -719,22 +719,19 @@ TRY((((depfile_builder).append('\n'))));
 }
 
 if (((generate_depfile).has_value())){
-auto __jakt_var_688 = [&]() -> ErrorOr<void> {{
+auto __jakt_var_703 = [&]() -> ErrorOr<void> {{
 TRY((write_to_file(TRY((((depfile_builder).to_string()))),(generate_depfile.value()))));
 }
 
 ;return {};}();
-if (__jakt_var_688.is_error()) {auto error = __jakt_var_688.release_error();{
+if (__jakt_var_703.is_error()) {auto error = __jakt_var_703.release_error();{
 warnln(String("Error: Could not write to file list ({})"),error);
 return (static_cast<i64>(1LL));
 }
 };
 }
 if ((build_executable || run_executable)){
-JaktInternal::Set<size_t> ids = (TRY((Set<size_t>::create_with_values({}))));
-JaktInternal::Array<String> linked_files = (TRY((Array<String>::create_with({}))));
-ParallelExecutionPool pool = TRY((ParallelExecutionPool::create(max_concurrent)));
-i64 total_jobs = static_cast<i64>(0LL);
+JaktInternal::Array<String> files = (TRY((Array<String>::create_with({}))));
 {
 JaktInternal::DictionaryIterator<String,JaktInternal::Tuple<String,String>> _magic = ((codegen_result).iterator());
 for (;;){
@@ -744,130 +741,42 @@ break;
 }
 JaktInternal::Tuple<String,JaktInternal::Tuple<String,String>> file_name_____ = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,JaktInternal::Tuple<String,String>> jakt__file_name_____ = file_name_____;
-const String file_name = ((jakt__file_name_____).get<0>());
-const JaktInternal::Tuple<String,String> _ = ((jakt__file_name_____).get<1>());
+JaktInternal::Tuple<String,JaktInternal::Tuple<String,String>> const jakt__file_name_____ = file_name_____;
+String const file_name = ((jakt__file_name_____).get<0>());
+JaktInternal::Tuple<String,String> const _ = ((jakt__file_name_____).get<1>());
 
 if (((file_name).ends_with(String(".h")))){
 continue;
 }
-({auto& _jakt_ref = total_jobs;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, static_cast<i64>(1LL));});
+TRY((((files).push(file_name))));
 }
 
 }
 }
 
-{
-JaktInternal::DictionaryIterator<String,JaktInternal::Tuple<String,String>> _magic = ((codegen_result).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,JaktInternal::Tuple<String,String>>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
+build::Builder builder = TRY((build::Builder::Builder::for_building(files,max_concurrent)));
+auto __jakt_var_705 = [&]() -> ErrorOr<void> { return TRY((((builder).build_all(binary_dir,(([cxx_compiler_path, runtime_path, extra_include_paths, optimize](String input_filename, String output_filename) -> ErrorOr<JaktInternal::Array<String>> {
+return (TRY((unknown_compiler::run_compiler(cxx_compiler_path,input_filename,output_filename,runtime_path,extra_include_paths,(TRY((Array<String>::create_with({})))),(TRY((Array<String>::create_with({})))),optimize,(TRY((Array<String>::create_with({String("-c")}))))))));
 }
-JaktInternal::Tuple<String,JaktInternal::Tuple<String,String>> file_name_____ = (_magic_value.value());
-{
-const JaktInternal::Tuple<String,JaktInternal::Tuple<String,String>> jakt__file_name_____ = file_name_____;
-const String file_name = ((jakt__file_name_____).get<0>());
-const JaktInternal::Tuple<String,String> _ = ((jakt__file_name_____).get<1>());
-
-if (((file_name).ends_with(String(".h")))){
-continue;
-}
-{
-JaktInternal::DictionaryIterator<size_t,unknown_process::ExitPollResult> _magic = ((((pool).completed)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,unknown_process::ExitPollResult>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> id__exit_result__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> jakt__id__exit_result__ = id__exit_result__;
-const size_t id = ((jakt__id__exit_result__).get<0>());
-const unknown_process::ExitPollResult exit_result = ((jakt__id__exit_result__).get<1>());
-
-if ((((exit_result).exit_code) != static_cast<i32>(0))){
-warnln(String("Error: Compilation failed"));
-TRY((((pool).kill_all())));
+)))))), ErrorOr<void>{}; }();
+if (__jakt_var_705.is_error()) {{
 return (static_cast<i64>(1LL));
 }
 }
-
-}
-}
-
-const String built_object = ((TRY((((binary_dir).join(((TRY((((TRY((path::Path::from_string(file_name)))).replace_extension(String("o")))))).to_string())))))).to_string());
-TRY((((linked_files).push(built_object))));
-const size_t id = TRY((((pool).run(TRY((unknown_compiler::run_compiler(cxx_compiler_path,((TRY((((binary_dir).join(file_name))))).to_string()),built_object,runtime_path,extra_include_paths,(TRY((Array<String>::create_with({})))),(TRY((Array<String>::create_with({})))),optimize,(TRY((Array<String>::create_with({String("-c")})))))))))));
-TRY((((ids).add(id))));
-warnln(String("{:c}[2LBuilding: {}/{}"),static_cast<i64>(27LL),((ids).size()),total_jobs);
-}
-
-}
-}
-
-TRY((((pool).wait_for_all_jobs_to_complete())));
-{
-JaktInternal::DictionaryIterator<size_t,unknown_process::ExitPollResult> _magic = ((((pool).completed)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,unknown_process::ExitPollResult>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> id__exit_result__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> jakt__id__exit_result__ = id__exit_result__;
-const size_t id = ((jakt__id__exit_result__).get<0>());
-const unknown_process::ExitPollResult exit_result = ((jakt__id__exit_result__).get<1>());
-
-if ((((exit_result).exit_code) != static_cast<i32>(0))){
-warnln(String("Error: Compilation failed"));
-return (static_cast<i64>(1LL));
-}
-}
-
-}
-}
-
-JaktInternal::Array<String> linker_args = (TRY((Array<String>::create_with({}))));
+;
 if (((link_archive).has_value())){
-(linker_args = (TRY((Array<String>::create_with({archiver_path.value_or_lazy_evaluated([&] { return String("ar"); }), String("cr"), (link_archive.value())})))));
-{
-JaktInternal::ArrayIterator<String> _magic = ((linked_files).iterator());
-for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-String arg = (_magic_value.value());
-{
-TRY((((linker_args).push(arg))));
-}
-
+auto __jakt_var_707 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_archive(archiver_path.value_or_lazy_evaluated([&] { return String("ar"); }),(link_archive.value()))))), ErrorOr<void>{}; }();
+if (__jakt_var_707.is_error()) {{
+return (static_cast<i64>(1LL));
 }
 }
-
+;
 }
 else {
-(linker_args = (TRY((Array<String>::create_with({cxx_compiler_path, String("-o"), output_filename})))));
-{
-JaktInternal::ArrayIterator<String> _magic = ((linked_files).iterator());
-for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-String arg = (_magic_value.value());
-{
-TRY((((linker_args).push(arg))));
-}
-
-}
-}
-
-const path::Path runtime_lib_path = TRY((path::Path::from_string(runtime_library_path)));
-TRY((((linker_args).push(((TRY((((runtime_lib_path).join(String("libjakt_runtime.a")))))).to_string())))));
-TRY((((linker_args).push(((TRY((((runtime_lib_path).join(String("libjakt_main.a")))))).to_string())))));
+JaktInternal::Array<String> extra_arguments = (TRY((Array<String>::create_with({}))));
+path::Path const runtime_lib_path = TRY((path::Path::Path::from_string(runtime_library_path)));
+TRY((((extra_arguments).push(((TRY((((runtime_lib_path).join(String("libjakt_main.a")))))).to_string())))));
+TRY((((extra_arguments).push(((TRY((((runtime_lib_path).join(String("libjakt_runtime.a")))))).to_string())))));
 {
 JaktInternal::ArrayIterator<String> _magic = ((extra_lib_paths).iterator());
 for (;;){
@@ -877,8 +786,8 @@ break;
 }
 String path = (_magic_value.value());
 {
-TRY((((linker_args).push(String("-L")))));
-TRY((((linker_args).push(path))));
+TRY((((extra_arguments).push(String("-L")))));
+TRY((((extra_arguments).push(path))));
 }
 
 }
@@ -893,166 +802,31 @@ break;
 }
 String lib = (_magic_value.value());
 {
-TRY((((linker_args).push(String("-l")))));
-TRY((((linker_args).push(lib))));
+TRY((((extra_arguments).push(String("-l")))));
+TRY((((extra_arguments).push(lib))));
 }
 
 }
 }
 
-if ((false && (TRY((((TRY((path::Path::from_string(cxx_compiler_path)))).basename(false)))) == String("clang-cl")))){
-TRY((((linker_args).push(String("/link")))));
-TRY((((linker_args).push(String("/subsystem:console")))));
+if ((false && (TRY((((TRY((path::Path::Path::from_string(cxx_compiler_path)))).basename(false)))) == String("clang-cl")))){
+TRY((((extra_arguments).push(String("/link")))));
+TRY((((extra_arguments).push(String("/subsystem:console")))));
 }
+auto __jakt_var_709 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_executable(cxx_compiler_path,output_filename,extra_arguments)))), ErrorOr<void>{}; }();
+if (__jakt_var_709.is_error()) {{
+return (static_cast<i64>(1LL));
+}
+}
+;
 }
 
-const size_t id = TRY((((pool).run(linker_args))));
-TRY((((pool).wait_for_all_jobs_to_complete())));
-const unknown_process::ExitPollResult result = (((pool).status(id)).value());
-if ((((result).exit_code) != static_cast<i32>(0))){
-return (((result).exit_code));
-}
 }
 if (run_executable){
 return (system(((output_filename).c_string())));
 }
 }
 return 0;
-}
-
-ErrorOr<String> ParallelExecutionPool::debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParallelExecutionPool("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("pids: "));TRY(builder.appendff("{}, ", pids));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("completed: "));TRY(builder.appendff("{}, ", completed));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("pid_index: "));TRY(builder.appendff("{}, ", pid_index));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("max_concurrent: "));TRY(builder.appendff("{}", max_concurrent));
-}
-TRY(builder.append(")"));return builder.to_string(); }
-ErrorOr<ParallelExecutionPool> ParallelExecutionPool::create(const size_t max_concurrent) {
-{
-return (ParallelExecutionPool((TRY((Dictionary<size_t, unknown_process::Process>::create_with_entries({})))),(TRY((Dictionary<size_t, unknown_process::ExitPollResult>::create_with_entries({})))),static_cast<size_t>(0ULL),max_concurrent));
-}
-}
-
-JaktInternal::Optional<unknown_process::ExitPollResult> ParallelExecutionPool::status(const size_t id) const {
-{
-if (((((*this).completed)).contains(id))){
-return (((((*this).completed))[id]));
-}
-return (JaktInternal::OptionalNone());
-}
-}
-
-ParallelExecutionPool::ParallelExecutionPool(JaktInternal::Dictionary<size_t,unknown_process::Process> a_pids, JaktInternal::Dictionary<size_t,unknown_process::ExitPollResult> a_completed, size_t a_pid_index, size_t a_max_concurrent) :pids(a_pids), completed(a_completed), pid_index(a_pid_index), max_concurrent(a_max_concurrent){}
-
-ErrorOr<void> ParallelExecutionPool::wait_for_any_job_to_complete() {
-{
-const JaktInternal::Tuple<JaktInternal::Optional<size_t>,unknown_process::ExitPollResult> finished_pid_finished_status_ = TRY((unknown_process::wait_for_some_set_of_processes_that_at_least_includes(((((*this).pids))))));
-const JaktInternal::Optional<size_t> finished_pid = ((finished_pid_finished_status_).get<0>());
-const unknown_process::ExitPollResult finished_status = ((finished_pid_finished_status_).get<1>());
-
-JaktInternal::Dictionary<size_t,unknown_process::ExitPollResult> pids_to_remove = (TRY((Dictionary<size_t, unknown_process::ExitPollResult>::create_with_entries({}))));
-if (((finished_pid).has_value())){
-TRY((((pids_to_remove).set((finished_pid.value()),finished_status))));
-}
-{
-JaktInternal::DictionaryIterator<size_t,unknown_process::Process> _magic = ((((*this).pids)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,unknown_process::Process>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<size_t,unknown_process::Process> index__process__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<size_t,unknown_process::Process> jakt__index__process__ = index__process__;
-const size_t index = ((jakt__index__process__).get<0>());
-const unknown_process::Process process = ((jakt__index__process__).get<1>());
-
-const JaktInternal::Optional<unknown_process::ExitPollResult> status = ({ Optional<JaktInternal::Optional<unknown_process::ExitPollResult>> __jakt_var_689;
-auto __jakt_var_690 = [&]() -> ErrorOr<JaktInternal::Optional<unknown_process::ExitPollResult>> { return TRY((unknown_process::poll_process_exit(((process))))); }();
-if (__jakt_var_690.is_error()) {{
-TRY((((pids_to_remove).set(index,finished_status))));
-continue;
-}
-} else {__jakt_var_689 = __jakt_var_690.release_value();
-}
-__jakt_var_689.release_value(); });
-if (((status).has_value())){
-TRY((((pids_to_remove).set(index,(status.value())))));
-}
-}
-
-}
-}
-
-{
-JaktInternal::DictionaryIterator<size_t,unknown_process::ExitPollResult> _magic = ((pids_to_remove).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,unknown_process::ExitPollResult>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> index__status__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> jakt__index__status__ = index__status__;
-const size_t index = ((jakt__index__status__).get<0>());
-const unknown_process::ExitPollResult status = ((jakt__index__status__).get<1>());
-
-((((*this).pids)).remove(index));
-TRY((((((*this).completed)).set(index,status))));
-}
-
-}
-}
-
-}
-return {};
-}
-
-ErrorOr<size_t> ParallelExecutionPool::run(const JaktInternal::Array<String> args) {
-{
-if ((((((*this).pids)).size()) >= ((*this).max_concurrent))){
-TRY((((*this).wait_for_any_job_to_complete())));
-}
-const unknown_process::Process process = TRY((unknown_process::start_background_process(args)));
-const size_t id = ((((*this).pid_index)++));
-TRY((((((*this).pids)).set(id,process))));
-return (id);
-}
-}
-
-ErrorOr<void> ParallelExecutionPool::kill_all() {
-{
-{
-JaktInternal::DictionaryIterator<size_t,unknown_process::Process> _magic = ((((*this).pids)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,unknown_process::Process>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<size_t,unknown_process::Process> ___process__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<size_t,unknown_process::Process> jakt_____process__ = ___process__;
-const size_t _ = ((jakt_____process__).get<0>());
-const unknown_process::Process process = ((jakt_____process__).get<1>());
-
-TRY((unknown_process::forcefully_kill_process(((process)))));
-}
-
-}
-}
-
-}
-return {};
-}
-
-ErrorOr<void> ParallelExecutionPool::wait_for_all_jobs_to_complete() {
-{
-while ((!(((((*this).pids)).is_empty())))){
-TRY((((*this).wait_for_any_job_to_complete())));
-}
-}
-return {};
 }
 
 ErrorOr<String> FormatRange::debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("FormatRange("));{

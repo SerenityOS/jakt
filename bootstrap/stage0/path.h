@@ -6,20 +6,20 @@ namespace Jakt {
 namespace path {
 struct Path {
   public:
-String path;static ErrorOr<path::Path> from_parts(const JaktInternal::Array<String> parts);
-static JaktInternal::Optional<size_t> last_slash(const String path);
+String path;static ErrorOr<path::Path> from_parts(JaktInternal::Array<String> const parts);
+static JaktInternal::Optional<size_t> last_slash(String const path);
 Path(String a_path);
 
 String to_string() const;
 ErrorOr<String> extension() const;
 ErrorOr<JaktInternal::Tuple<String,String>> split_at_last_slash() const;
 ErrorOr<void> normalize_separators();
-ErrorOr<path::Path> join(const String path) const;
-ErrorOr<String> basename(const bool strip_extension) const;
+ErrorOr<path::Path> join(String const path) const;
+ErrorOr<String> basename(bool const strip_extension) const;
 ErrorOr<path::Path> parent() const;
-ErrorOr<path::Path> replace_extension(const String new_extension) const;
+ErrorOr<path::Path> replace_extension(String const new_extension) const;
 bool exists() const;
-static ErrorOr<path::Path> from_string(const String string);
+static ErrorOr<path::Path> from_string(String const string);
 ErrorOr<String> debug_description() const;
 };}
 template<>struct Formatter<path::Path> : Formatter<StringView>{

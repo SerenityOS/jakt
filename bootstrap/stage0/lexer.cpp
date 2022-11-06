@@ -9,9 +9,9 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("comment_contents: "));TRY(builder.appendff("{}", comment_contents));
 }
 TRY(builder.append(")"));return builder.to_string(); }
-ErrorOr<lexer::Token> lexer::Lexer::lex_quoted_string(const u8 delimiter) {
+ErrorOr<lexer::Token> lexer::Lexer::lex_quoted_string(u8 const delimiter) {
 {
-const size_t start = ((*this).index);
+size_t const start = ((*this).index);
 (++(((*this).index)));
 if (((*this).eof())){
 TRY((((*this).error(String("unexpected eof"),((*this).span(start,start))))));
@@ -32,9 +32,9 @@ else {
 
 (++(((*this).index)));
 }
-const String str = TRY((((*this).substring((JaktInternal::checked_add<size_t>(start,static_cast<size_t>(1ULL))),((*this).index)))));
+String const str = TRY((((*this).substring((JaktInternal::checked_add<size_t>(start,static_cast<size_t>(1ULL))),((*this).index)))));
 ((((*this).index)++));
-const size_t end = ((*this).index);
+size_t const end = ((*this).index);
 if ((delimiter == '\'')){
 return ( lexer::Token { typename lexer::Token::SingleQuotedString(str,((*this).span(start,end))) } );
 }
@@ -52,7 +52,7 @@ return ( lexer::Token { typename lexer::Token::Eof(((*this).span((JaktInternal::
 if (((*this).eof())){
 return (JaktInternal::OptionalNone());
 }
-const u8 ch = ((*this).peek());
+u8 const ch = ((*this).peek());
 if (utility::is_whitespace(ch)){
 ((((*this).index)++));
 }
@@ -61,7 +61,7 @@ break;
 }
 
 }
-const size_t start = ((*this).index);
+size_t const start = ((*this).index);
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<lexer::Token>,ErrorOr<JaktInternal::Optional<lexer::Token>>>{
 auto __jakt_enum_value = (((((*this).input))[((*this).index)]));
 if (__jakt_enum_value == '(') {
@@ -167,7 +167,7 @@ ErrorOr<JaktInternal::Optional<String>> lexer::Lexer::consume_comment_contents()
 if ((!(((((*this).comment_contents)).has_value())))){
 return (JaktInternal::OptionalNone());
 }
-const JaktInternal::Array<u8> contents = (((*this).comment_contents).value());
+JaktInternal::Array<u8> const contents = (((*this).comment_contents).value());
 (((*this).comment_contents) = JaktInternal::OptionalNone());
 StringBuilder builder = TRY((StringBuilder::create()));
 {
@@ -194,11 +194,11 @@ ErrorOr<lexer::Token> lexer::Lexer::lex_character_constant_or_name() {
 if ((((*this).peek_ahead(static_cast<size_t>(1ULL))) != '\'')){
 return (TRY((((*this).lex_number_or_name()))));
 }
-const bool is_byte = (((*this).peek()) == 'b');
+bool const is_byte = (((*this).peek()) == 'b');
 if (is_byte){
 ((((*this).index)++));
 }
-const size_t start = ((*this).index);
+size_t const start = ((*this).index);
 ((((*this).index)++));
 bool escaped = false;
 while (((!(((*this).eof()))) && (escaped || (((*this).peek()) != '\'')))){
@@ -222,8 +222,8 @@ TRY((((builder).append(((((*this).input))[(JaktInternal::checked_add<size_t>(sta
 if (escaped){
 TRY((((builder).append(((((*this).input))[(JaktInternal::checked_add<size_t>(start,static_cast<size_t>(2ULL)))])))));
 }
-const String quote = TRY((((builder).to_string())));
-const size_t end = ((*this).index);
+String const quote = TRY((((builder).to_string())));
+size_t const end = ((*this).index);
 if (is_byte){
 return ( lexer::Token { typename lexer::Token::SingleQuotedByteString(quote,((*this).span(start,end))) } );
 }
@@ -233,7 +233,7 @@ return ( lexer::Token { typename lexer::Token::SingleQuotedString(quote,((*this)
 
 lexer::Token lexer::Lexer::lex_dot() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '.') {
@@ -249,7 +249,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Dot(((
 
 ErrorOr<lexer::Token> lexer::Lexer::lex_forward_slash() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 if ((((*this).peek()) == '=')){
 return ( lexer::Token { typename lexer::Token::ForwardSlashEqual(((*this).span(start,(++(((*this).index)))))) } );
 }
@@ -261,9 +261,9 @@ if (((((*this).comment_contents)).has_value())){
 return ( lexer::Token { typename lexer::Token::Eol(TRY((((*this).consume_comment_contents()))),((*this).span(start,((*this).index)))) } );
 }
 ((((*this).index)++));
-const size_t comment_start_index = ((*this).index);
+size_t const comment_start_index = ((*this).index);
 while ((!(((*this).eof())))){
-const u8 c = ((*this).peek());
+u8 const c = ((*this).peek());
 ((((*this).index)++));
 if ((c == '\n')){
 ((((*this).index)--));
@@ -277,7 +277,7 @@ return (TRY((((*this).next()))).value_or_lazy_evaluated([&] { return  lexer::Tok
 
 lexer::Token lexer::Lexer::lex_question_mark() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '?') {
@@ -305,7 +305,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Questi
 }
 }
 
-u8 lexer::Lexer::peek_behind(const size_t steps) const {
+u8 lexer::Lexer::peek_behind(size_t const steps) const {
 {
 if ((((*this).index) < steps)){
 return (static_cast<u8>(0));
@@ -314,7 +314,7 @@ return (((((*this).input))[(JaktInternal::checked_sub<size_t>(((*this).index),st
 }
 }
 
-u8 lexer::Lexer::peek_ahead(const size_t steps) const {
+u8 lexer::Lexer::peek_ahead(size_t const steps) const {
 {
 if (((JaktInternal::checked_add<size_t>(((*this).index),steps)) >= ((((*this).input)).size()))){
 return (static_cast<u8>(0));
@@ -325,7 +325,7 @@ return (((((*this).input))[(JaktInternal::checked_add<size_t>(((*this).index),st
 
 lexer::Token lexer::Lexer::lex_asterisk() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
@@ -350,7 +350,7 @@ return (((((*this).input))[((*this).index)]));
 
 lexer::Token lexer::Lexer::lex_percent_sign() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
@@ -366,7 +366,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Percen
 
 ErrorOr<lexer::Token> lexer::Lexer::lex_number_or_name() {
 {
-const size_t start = ((*this).index);
+size_t const start = ((*this).index);
 if (((*this).eof())){
 TRY((((*this).error(String("unexpected eof"),((*this).span(start,start))))));
 return ( lexer::Token { typename lexer::Token::Garbage(JaktInternal::OptionalNone(),((*this).span(start,start))) } );
@@ -377,20 +377,20 @@ return (TRY((((*this).lex_number()))));
 else if ((utility::is_ascii_alpha(((*this).peek())) || (((*this).peek()) == '_'))){
 StringBuilder string_builder = TRY((StringBuilder::create()));
 while ((utility::is_ascii_alphanumeric(((*this).peek())) || (((*this).peek()) == '_'))){
-const u8 value = ((((*this).input))[((*this).index)]);
+u8 const value = ((((*this).input))[((*this).index)]);
 (++(((*this).index)));
 TRY((((string_builder).append(value))));
 }
-const size_t end = ((*this).index);
-const utility::Span span = ((*this).span(start,end));
-const String string = TRY((((string_builder).to_string())));
+size_t const end = ((*this).index);
+utility::Span const span = ((*this).span(start,end));
+String const string = TRY((((string_builder).to_string())));
 if ((((JaktInternal::checked_sub<size_t>(end,start)) >= static_cast<size_t>(6ULL)) && (TRY((((string).substring(static_cast<size_t>(0ULL),static_cast<size_t>(6ULL))))) == String("__jakt")))){
 TRY((((*this).error(String("reserved identifier name"),span))));
 }
 return (lexer::Token::from_keyword_or_identifier(string,span));
 }
-const u8 unknown_char = ((((*this).input))[((*this).index)]);
-const size_t end = (++(((*this).index)));
+u8 const unknown_char = ((((*this).input))[((*this).index)]);
+size_t const end = (++(((*this).index)));
 TRY((((*this).error(TRY((String::formatted(String("unknown character: {:c}"),unknown_char))),((*this).span(start,end))))));
 return ( lexer::Token { typename lexer::Token::Garbage(TRY((String::formatted(String("{:c}"),unknown_char))),((*this).span(start,end))) } );
 }
@@ -398,7 +398,7 @@ return ( lexer::Token { typename lexer::Token::Garbage(TRY((String::formatted(St
 
 lexer::Token lexer::Lexer::lex_minus() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
@@ -426,7 +426,7 @@ return ((((*this).index) >= ((((*this).input)).size())));
 
 lexer::Token lexer::Lexer::lex_ampersand() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
@@ -443,7 +443,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Ampers
 }
 }
 
-utility::Span lexer::Lexer::span(const size_t start,const size_t end) const {
+utility::Span lexer::Lexer::span(size_t const start,size_t const end) const {
 {
 return (utility::Span((((((*this).compiler))->current_file).value()),start,end));
 }
@@ -451,7 +451,7 @@ return (utility::Span((((((*this).compiler))->current_file).value()),start,end))
 
 lexer::Token lexer::Lexer::lex_plus() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
@@ -470,7 +470,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Plus((
 
 lexer::Token lexer::Lexer::lex_exclamation_point() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
@@ -522,12 +522,12 @@ while (utility::is_ascii_digit(((*this).peek_ahead(local_index)))){
 if ((local_index > static_cast<size_t>(3ULL))){
 return ( lexer::LiteralSuffix { typename lexer::LiteralSuffix::None() } );
 }
-const u8 value = ((((*this).input))[(JaktInternal::checked_add<size_t>(((*this).index),local_index))]);
+u8 const value = ((((*this).input))[(JaktInternal::checked_add<size_t>(((*this).index),local_index))]);
 (++(local_index));
-const i64 digit = as_saturated<i64, u8>((JaktInternal::checked_sub<u8>(value,'0')));
+i64 const digit = as_saturated<i64, u8>((JaktInternal::checked_sub<u8>(value,'0')));
 (width = (JaktInternal::checked_add<i64>((JaktInternal::checked_mul<i64>(width,static_cast<i64>(10LL))),digit)));
 }
-const lexer::LiteralSuffix suffix = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,ErrorOr<lexer::LiteralSuffix>>{
+lexer::LiteralSuffix const suffix = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,ErrorOr<lexer::LiteralSuffix>>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == 'u') {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,ErrorOr<lexer::LiteralSuffix>>{
@@ -600,7 +600,7 @@ return (suffix);
 
 lexer::Token lexer::Lexer::lex_colon() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == ':') {
@@ -616,7 +616,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Colon(
 
 lexer::Lexer::Lexer(size_t a_index, JaktInternal::Array<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::Array<u8>> a_comment_contents) :index(a_index), input(a_input), compiler(a_compiler), comment_contents(a_comment_contents){}
 
-bool lexer::Lexer::valid_digit(const lexer::LiteralPrefix prefix,const u8 digit,const bool decimal_allowed) {
+bool lexer::Lexer::valid_digit(lexer::LiteralPrefix const prefix,u8 const digit,bool const decimal_allowed) {
 {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = prefix;
@@ -642,14 +642,14 @@ return JaktInternal::ExplicitValue((utility::is_ascii_digit(digit) || (decimal_a
 }
 }
 
-ErrorOr<void> lexer::Lexer::error(const String message,const utility::Span span) {
+ErrorOr<void> lexer::Lexer::error(String const message,utility::Span const span) {
 {
 TRY((((((((*this).compiler))->errors)).push( error::JaktError { typename error::JaktError::Message(message,span) } ))));
 }
 return {};
 }
 
-ErrorOr<String> lexer::Lexer::substring(const size_t start,const size_t length) const {
+ErrorOr<String> lexer::Lexer::substring(size_t const start,size_t const length) const {
 {
 StringBuilder builder = TRY((StringBuilder::create()));
 {
@@ -673,7 +673,7 @@ return (TRY((((builder).to_string()))));
 
 lexer::Token lexer::Lexer::lex_greater_than() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
@@ -709,7 +709,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Greate
 
 lexer::Token lexer::Lexer::lex_pipe() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
@@ -728,7 +728,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Pipe((
 
 lexer::Token lexer::Lexer::lex_caret() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
@@ -744,7 +744,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Caret(
 
 ErrorOr<lexer::Token> lexer::Lexer::lex_number() {
 {
-const size_t start = ((*this).index);
+size_t const start = ((*this).index);
 bool floating = false;
 lexer::LiteralPrefix prefix =  lexer::LiteralPrefix { typename lexer::LiteralPrefix::None() } ;
 StringBuilder number = TRY((StringBuilder::create()));
@@ -782,7 +782,7 @@ return JaktInternal::ExplicitValue<void>();
 ;
 }
 while ((!(((*this).eof())))){
-const u8 value = ((((*this).input))[((*this).index)]);
+u8 const value = ((((*this).input))[((*this).index)]);
 if ((!(((*this).valid_digit(prefix,value,true))))){
 break;
 }
@@ -808,14 +808,14 @@ break;
 
 }
 }
-const lexer::LiteralSuffix suffix = TRY((((*this).consume_numeric_literal_suffix())));
+lexer::LiteralSuffix const suffix = TRY((((*this).consume_numeric_literal_suffix())));
 return ( lexer::Token { typename lexer::Token::Number(prefix,TRY((((number).to_string()))),suffix,((*this).span(start,((*this).index)))) } );
 }
 }
 
 lexer::Token lexer::Lexer::lex_less_than() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
@@ -851,7 +851,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::LessTh
 
 lexer::Token lexer::Lexer::lex_equals() {
 {
-const size_t start = ((((*this).index)++));
+size_t const start = ((((*this).index)++));
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
@@ -868,7 +868,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Equal(
 }
 }
 
-ErrorOr<JaktInternal::Array<lexer::Token>> lexer::Lexer::lex(const NonnullRefPtr<compiler::Compiler> compiler) {
+ErrorOr<JaktInternal::Array<lexer::Token>> lexer::Lexer::lex(NonnullRefPtr<compiler::Compiler> const compiler) {
 {
 lexer::Lexer lexer = lexer::Lexer(static_cast<size_t>(0ULL),((compiler)->current_file_contents),compiler,JaktInternal::OptionalNone());
 JaktInternal::Array<lexer::Token> tokens = (TRY((Array<lexer::Token>::create_with({}))));
@@ -1595,7 +1595,22 @@ case 105 /* Guard */: {
 TRY(builder.append("Token::Guard"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 106 /* Garbage */: {
+case 106 /* Implements */: {
+[[maybe_unused]] auto const& that = this->template get<Token::Implements>();
+TRY(builder.append("Token::Implements"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 107 /* Requires */: {
+[[maybe_unused]] auto const& that = this->template get<Token::Requires>();
+TRY(builder.append("Token::Requires"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 108 /* Trait */: {
+[[maybe_unused]] auto const& that = this->template get<Token::Trait>();
+TRY(builder.append("Token::Trait"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 109 /* Garbage */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Garbage>();
 TRY(builder.append("Token::Garbage"));
 TRY(builder.append("("));
@@ -1612,7 +1627,7 @@ break;}
 }
 return builder.to_string();
 }
-lexer::Token lexer::Token::from_keyword_or_identifier(const String string,const utility::Span span) {
+lexer::Token lexer::Token::from_keyword_or_identifier(String const string,utility::Span const span) {
 {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (string);
@@ -1753,6 +1768,15 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Yield(
 }
 else if (__jakt_enum_value == String("guard")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Guard(span) } );
+}
+else if (__jakt_enum_value == String("requires")) {
+return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Requires(span) } );
+}
+else if (__jakt_enum_value == String("implements")) {
+return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Implements(span) } );
+}
+else if (__jakt_enum_value == String("trait")) {
+return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Trait(span) } );
 }
 else {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Identifier(string,span) } );
@@ -2292,6 +2316,21 @@ utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 106: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Implements>();
+utility::Span const& span = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(span);
+};/*case end*/
+case 107: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Requires>();
+utility::Span const& span = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(span);
+};/*case end*/
+case 108: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Trait>();
+utility::Span const& span = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(span);
+};/*case end*/
+case 109: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Garbage>();utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/

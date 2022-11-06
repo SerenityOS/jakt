@@ -1,13 +1,13 @@
 #include "codegen.h"
 namespace Jakt {
 namespace codegen {
-bool are_loop_exits_allowed(const codegen::AllowedControlExits allowed_control_exits) {
+bool are_loop_exits_allowed(codegen::AllowedControlExits const allowed_control_exits) {
 {
 return (((allowed_control_exits).index() == 2 /* AtLoop */));
 }
 }
 
-bool is_return_allowed(const codegen::AllowedControlExits allowed_control_exits) {
+bool is_return_allowed(codegen::AllowedControlExits const allowed_control_exits) {
 {
 return ((!(((allowed_control_exits).index() == 0 /* Nothing */))));
 }
@@ -43,8 +43,8 @@ if ((((file).get<0>()) == String("__prelude__"))){
 continue;
 }
 ((((*this).compiler))->set_current_file(((file).get<1>())));
-const size_t file_idx = ((((file).get<1>())).id);
-const JaktInternal::Array<codegen::LineSpan> empty_array = (TRY((Array<codegen::LineSpan>::create_with({}))));
+size_t const file_idx = ((((file).get<1>())).id);
+JaktInternal::Array<codegen::LineSpan> const empty_array = (TRY((Array<codegen::LineSpan>::create_with({}))));
 TRY((((((*this).line_spans)).set(file_idx,empty_array))));
 size_t idx = static_cast<size_t>(0ULL);
 size_t start = idx;
@@ -67,19 +67,19 @@ TRY((((((((*this).line_spans))[file_idx])).push(codegen::LineSpan(start,idx)))))
 return {};
 }
 
-ErrorOr<String> codegen::CodegenDebugInfo::span_to_source_location(const utility::Span span) {
+ErrorOr<String> codegen::CodegenDebugInfo::span_to_source_location(utility::Span const span) {
 {
 if (((((*this).line_spans)).is_empty())){
 TRY((((*this).gather_line_spans())));
 }
-const size_t file_idx = ((((span).file_id)).id);
+size_t const file_idx = ((((span).file_id)).id);
 if ((!(((((*this).line_spans)).contains(file_idx))))){
 return (String(""));
 }
 size_t line_index = static_cast<size_t>(0ULL);
 while ((line_index < ((((((*this).line_spans))[file_idx])).size()))){
 if (((((span).start) >= ((((((((*this).line_spans))[file_idx]))[line_index])).start)) && (((span).start) <= ((((((((*this).line_spans))[file_idx]))[line_index])).end)))){
-const size_t column_index = (JaktInternal::checked_sub<size_t>(((span).start),((((((((*this).line_spans))[file_idx]))[line_index])).start)));
+size_t const column_index = (JaktInternal::checked_sub<size_t>(((span).start),((((((((*this).line_spans))[file_idx]))[line_index])).start)));
 return (TRY((String::formatted(String("{} \"{}\""),(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),(((TRY((((((*this).compiler))->get_file_path(((span).file_id))))).value())).to_string())))));
 }
 ({auto& _jakt_ref = line_index;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
@@ -105,7 +105,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("fresh_label_counter: "));TRY(builder.appendff("{}", fresh_label_counter));
 }
 TRY(builder.append(")"));return builder.to_string(); }
-ErrorOr<String> codegen::CodeGenerator::codegen_function(const NonnullRefPtr<types::CheckedFunction> function_,const bool as_method) {
+ErrorOr<String> codegen::CodeGenerator::codegen_function(NonnullRefPtr<types::CheckedFunction> const function_,bool const as_method) {
 {
 if (((function_)->is_comptime)){
 return (String(""));
@@ -114,10 +114,10 @@ return (TRY((((*this).codegen_function_in_namespace(function_,JaktInternal::Opti
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_generic_type_instance(const types::StructId id,const JaktInternal::Array<types::TypeId> args,const bool as_namespace) const {
+ErrorOr<String> codegen::CodeGenerator::codegen_generic_type_instance(types::StructId const id,JaktInternal::Array<types::TypeId> const args,bool const as_namespace) const {
 {
 String output = String("");
-const NonnullRefPtr<types::Module> type_module = ((((*this).program))->get_module(((id).module)));
+NonnullRefPtr<types::Module> const type_module = ((((*this).program))->get_module(((id).module)));
 String namespace_ = String("");
 if (((type_module)->is_prelude())){
 (namespace_ += String("JaktInternal::"));
@@ -126,19 +126,19 @@ else if ((!(((type_module)->is_root)))){
 (namespace_ += ((type_module)->name));
 (namespace_ += String("::"));
 }
-const JaktInternal::Optional<types::StructId> inner_weak_ptr_struct_id = TRY((((((*this).program))->check_and_extract_weak_ptr(id,args))));
+JaktInternal::Optional<types::StructId> const inner_weak_ptr_struct_id = TRY((((((*this).program))->check_and_extract_weak_ptr(id,args))));
 if (((inner_weak_ptr_struct_id).has_value())){
 (output += String("WeakPtr<"));
 (output += namespace_);
-const types::StructId inner_struct_id = ((inner_weak_ptr_struct_id).value());
-const types::CheckedStruct struct_ = ((((*this).program))->get_struct(inner_struct_id));
+types::StructId const inner_struct_id = ((inner_weak_ptr_struct_id).value());
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct(inner_struct_id));
 (output += TRY((((*this).codegen_namespace_qualifier(((struct_).scope_id))))));
 (output += ((struct_).name));
 (output += String(">"));
 }
 else {
-const types::CheckedStruct struct_ = ((((*this).program))->get_struct(id));
-const bool acquired_by_ref = ((!(as_namespace)) && ((((struct_).record_type)).index() == 1 /* Class */));
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct(id));
+bool const acquired_by_ref = ((!(as_namespace)) && ((((struct_).record_type)).index() == 1 /* Class */));
 if (acquired_by_ref){
 (output += String("NonnullRefPtr<"));
 }
@@ -200,7 +200,7 @@ break;
 }
 types::ModuleId imported_module = (_magic_value.value());
 {
-const i64 existing = ((in_degrees).get(((imported_module).id))).value_or_lazy_evaluated([&] { return static_cast<i64>(0LL); });
+i64 const existing = ((in_degrees).get(((imported_module).id))).value_or_lazy_evaluated([&] { return static_cast<i64>(0LL); });
 TRY((((in_degrees).set(((imported_module).id),(JaktInternal::checked_add<i64>(existing,static_cast<i64>(1LL)))))));
 }
 
@@ -235,7 +235,7 @@ TRY((((stack).push(((module)->id)))));
 
 JaktInternal::Array<types::ModuleId> sorted_modules = (TRY((Array<types::ModuleId>::create_with({}))));
 while ((!(((stack).is_empty())))){
-const types::ModuleId id = (((stack).pop()).value());
+types::ModuleId const id = (((stack).pop()).value());
 TRY((((sorted_modules).push(id))));
 {
 JaktInternal::ArrayIterator<types::ModuleId> _magic = ((((((((((*this).program))->modules))[((id).id)]))->imports)).iterator());
@@ -246,7 +246,7 @@ break;
 }
 types::ModuleId imported_module = (_magic_value.value());
 {
-const i64 module_in_degrees = ((in_degrees)[((imported_module).id)]);
+i64 const module_in_degrees = ((in_degrees)[((imported_module).id)]);
 TRY((((in_degrees).set(((imported_module).id),(JaktInternal::checked_sub<i64>(module_in_degrees,static_cast<i64>(1LL)))))));
 if ((module_in_degrees == static_cast<i64>(1LL))){
 TRY((((stack).push(types::ModuleId(((imported_module).id))))));
@@ -264,20 +264,20 @@ utility::panic(String("Cyclic module imports"));
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_debug_description_getter(const types::CheckedStruct struct_,const bool is_inline) {
+ErrorOr<String> codegen::CodeGenerator::codegen_debug_description_getter(types::CheckedStruct const struct_,bool const is_inline) {
 {
 String output = String("");
 if (((!(is_inline)) && (!(((((struct_).generic_parameters)).is_empty()))))){
 (output += String("template <"));
 bool first = true;
 {
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((((struct_).generic_parameters)).iterator());
+JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((struct_).generic_parameters)).iterator());
 for (;;){
-JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
+JaktInternal::Optional<types::CheckedGenericParameter> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-types::TypeId type_id = (_magic_value.value());
+types::CheckedGenericParameter param = (_magic_value.value());
 {
 if (first){
 (first = false);
@@ -287,7 +287,7 @@ else {
 }
 
 (output += String("typename "));
-(output += TRY((((*this).codegen_type(type_id)))));
+(output += TRY((((*this).codegen_type(((param).type_id))))));
 }
 
 }
@@ -315,7 +315,7 @@ break;
 }
 types::CheckedField field = (_magic_value.value());
 {
-const types::CheckedVariable field_var = ((((*this).program))->get_variable(((field).variable_id)));
+types::CheckedVariable const field_var = ((((*this).program))->get_variable(((field).variable_id)));
 (output += String("TRY(JaktInternal::PrettyPrint::output_indentation(builder));"));
 (output += TRY((String::formatted(String("TRY(builder.append(\"{}: \"));"),((field_var).name)))));
 (output += String("TRY(builder.appendff(\""));
@@ -333,7 +333,7 @@ if ((i != (JaktInternal::checked_sub<size_t>(((((struct_).fields)).size()),stati
 (output += JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(((field_var).type_id)));
 switch(__jakt_match_variant.index()) {
-case 22: {
+case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
 types::StructId const& struct_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
@@ -370,7 +370,420 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_unchecked_binary_op(const NonnullRefPtr<types::CheckedExpression> lhs,const NonnullRefPtr<types::CheckedExpression> rhs,const parser::BinaryOperator op,const types::TypeId type_id) {
+ErrorOr<String> codegen::CodeGenerator::codegen_expression_and_deref_if_generic_and_needed(NonnullRefPtr<types::CheckedExpression> const expression) {
+{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
+auto&& __jakt_match_variant = *((((*this).program))->get_type(((expression)->type())));
+switch(__jakt_match_variant.index()) {
+case 18: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::TypeVariable>();
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_380; {
+String const contents = TRY((((*this).codegen_expression(expression))));
+__jakt_var_380 = TRY((String::formatted(String("(*([]<typename V>(V const& value) {{ if constexpr (IsSpecializationOf<V, NonnullRefPtr>) return &*value; else return &value; }})({}))"),contents))); goto __jakt_label_352;
+
+}
+__jakt_label_352:; __jakt_var_380.release_value(); }));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(TRY((((*this).codegen_expression(expression)))));
+};/*case end*/
+}/*switch end*/
+}()
+)));
+}
+}
+
+ErrorOr<String> codegen::CodeGenerator::codegen_namespace(NonnullRefPtr<types::Scope> const scope,NonnullRefPtr<types::Module> const current_module,bool const as_forward) {
+{
+if (((((scope)->import_path_if_extern)).has_value())){
+return (String(""));
+}
+JaktInternal::Set<String> seen_types = (TRY((Set<String>::create_with_values({}))));
+if (as_forward){
+String output = String("");
+JaktInternal::Dictionary<String,JaktInternal::Array<String>> const encoded_dependency_graph = TRY((((*this).produce_codegen_dependency_graph(scope))));
+{
+JaktInternal::DictionaryIterator<String,JaktInternal::Array<String>> _magic = ((encoded_dependency_graph).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<String,JaktInternal::Array<String>>> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<String,JaktInternal::Array<String>> entry = (_magic_value.value());
+{
+JaktInternal::Array<types::TypeId> const traversal = (TRY((Array<types::TypeId>::create_with({}))));
+TRY((((*this).postorder_traversal(((entry).get<0>()),seen_types,encoded_dependency_graph,traversal))));
+{
+JaktInternal::ArrayIterator<types::TypeId> _magic = ((traversal).iterator());
+for (;;){
+JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::TypeId type_id = (_magic_value.value());
+{
+NonnullRefPtr<types::Type> const type_ = ((((*this).program))->get_type(type_id));
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<String>>{
+auto&& __jakt_match_variant = *type_;
+switch(__jakt_match_variant.index()) {
+case 24: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
+types::EnumId const& enum_id = __jakt_match_value.value;
+{
+if ((!(((((enum_id).module)).equals(((current_module)->id)))))){
+return JaktInternal::LoopContinue{};
+}
+types::CheckedEnum const enum_ = ((((*this).program))->get_enum(enum_id));
+String const enum_output = TRY((((*this).codegen_enum(enum_))));
+if ((!(((enum_output).is_empty())))){
+(output += enum_output);
+}
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 23: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
+types::StructId const& struct_id = __jakt_match_value.value;
+{
+if ((!(((((struct_id).module)).equals(((current_module)->id)))))){
+return JaktInternal::LoopContinue{};
+}
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct(struct_id));
+String const struct_output = TRY((((*this).codegen_struct(struct_))));
+if ((!(((struct_output).is_empty())))){
+(output += struct_output);
+}
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 26: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Trait>();
+{
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+default: {
+{
+utility::panic(TRY((String::formatted(String("Unexpected type in dependency graph: {}"),type_))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+}/*switch end*/
+}()
+));
+TRY((((seen_types).add(TRY((((type_id).to_string())))))));
+}
+
+}
+}
+
+}
+
+}
+}
+
+{
+JaktInternal::DictionaryIterator<String,types::StructId> _magic = ((((scope)->structs)).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<String,types::StructId>> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<String,types::StructId> ___struct_id__ = (_magic_value.value());
+{
+JaktInternal::Tuple<String,types::StructId> const jakt_____struct_id__ = ___struct_id__;
+String const _ = ((jakt_____struct_id__).get<0>());
+types::StructId const struct_id = ((jakt_____struct_id__).get<1>());
+
+if ((!(((((struct_id).module)).equals(((current_module)->id)))))){
+continue;
+}
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct(struct_id));
+if (((seen_types).contains(TRY((((((struct_).type_id)).to_string())))))){
+continue;
+}
+(output += TRY((((*this).codegen_struct(struct_)))));
+(output += String("\n"));
+}
+
+}
+}
+
+{
+JaktInternal::DictionaryIterator<String,types::EnumId> _magic = ((((scope)->enums)).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<String,types::EnumId>> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<String,types::EnumId> ___enum_id__ = (_magic_value.value());
+{
+JaktInternal::Tuple<String,types::EnumId> const jakt_____enum_id__ = ___enum_id__;
+String const _ = ((jakt_____enum_id__).get<0>());
+types::EnumId const enum_id = ((jakt_____enum_id__).get<1>());
+
+if ((!(((((enum_id).module)).equals(((current_module)->id)))))){
+continue;
+}
+types::CheckedEnum const enum_ = ((((*this).program))->get_enum(enum_id));
+if (((seen_types).contains(TRY((((((enum_).type_id)).to_string())))))){
+continue;
+}
+(output += TRY((((*this).codegen_enum(enum_)))));
+(output += String("\n"));
+}
+
+}
+}
+
+{
+JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
+{
+JaktInternal::Tuple<String,types::FunctionId> const jakt_____function_id__ = ___function_id__;
+String const _ = ((jakt_____function_id__).get<0>());
+types::FunctionId const function_id = ((jakt_____function_id__).get<1>());
+
+if ((!(((((function_id).module)).equals(((current_module)->id)))))){
+continue;
+}
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
+JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function = ((*this).current_function);
+(((*this).current_function) = function_);
+ScopeGuard __jakt_var_381([&] {
+(((*this).current_function) = previous_function);
+});
+if (((((((function_)->linkage)).index() == 1 /* External */) || ((((function_)->type)).index() == 1 /* ImplicitConstructor */)) || ((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))){
+continue;
+}
+if ((!(((((((function_)->generics))->params)).is_empty())))){
+(output += TRY((((*this).codegen_function(function_,false)))));
+(output += String("\n"));
+}
+}
+
+}
+}
+
+{
+JaktInternal::ArrayIterator<types::ScopeId> _magic = ((((scope)->children)).iterator());
+for (;;){
+JaktInternal::Optional<types::ScopeId> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::ScopeId child_scope_id = (_magic_value.value());
+{
+NonnullRefPtr<types::Scope> const child_scope = TRY((((((*this).program))->get_scope(child_scope_id))));
+if (((((child_scope)->namespace_name)).has_value())){
+String const name = (((child_scope)->namespace_name).value());
+TRY((((((*this).namespace_stack)).push(name))));
+(output += String("namespace "));
+(output += name);
+(output += String(" {\n"));
+(output += TRY((((*this).codegen_namespace(child_scope,current_module,as_forward)))));
+(output += String("}\n"));
+JaktInternal::Optional<String> const dummy = ((((*this).namespace_stack)).pop());
+}
+}
+
+}
+}
+
+return (output);
+}
+String output = String("");
+{
+JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
+{
+JaktInternal::Tuple<String,types::FunctionId> const jakt_____function_id__ = ___function_id__;
+String const _ = ((jakt_____function_id__).get<0>());
+types::FunctionId const function_id = ((jakt_____function_id__).get<1>());
+
+if ((!(((((function_id).module)).equals(((current_module)->id)))))){
+continue;
+}
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
+JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function = ((*this).current_function);
+(((*this).current_function) = function_);
+ScopeGuard __jakt_var_382([&] {
+(((*this).current_function) = previous_function);
+});
+if (((((((function_)->linkage)).index() == 1 /* External */) || ((((function_)->type)).index() == 1 /* ImplicitConstructor */)) || ((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))){
+continue;
+}
+if (((((((function_)->generics))->params)).is_empty())){
+(output += TRY((((*this).codegen_function(function_,false)))));
+(output += String("\n"));
+}
+}
+
+}
+}
+
+{
+JaktInternal::DictionaryIterator<String,types::StructId> _magic = ((((scope)->structs)).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<String,types::StructId>> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<String,types::StructId> ___struct_id__ = (_magic_value.value());
+{
+JaktInternal::Tuple<String,types::StructId> const jakt_____struct_id__ = ___struct_id__;
+String const _ = ((jakt_____struct_id__).get<0>());
+types::StructId const struct_id = ((jakt_____struct_id__).get<1>());
+
+if ((!(((((struct_id).module)).equals(((current_module)->id)))))){
+continue;
+}
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct(struct_id));
+if (((((struct_).definition_linkage)).index() == 1 /* External */)){
+continue;
+}
+if ((!(((((struct_).generic_parameters)).is_empty())))){
+continue;
+}
+(output += TRY((((*this).codegen_debug_description_getter(struct_,false)))));
+NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((struct_).scope_id)))));
+{
+JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
+{
+JaktInternal::Tuple<String,types::FunctionId> const jakt_____function_id__ = ___function_id__;
+String const _ = ((jakt_____function_id__).get<0>());
+types::FunctionId const function_id = ((jakt_____function_id__).get<1>());
+
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
+JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function = ((*this).current_function);
+(((*this).current_function) = function_);
+ScopeGuard __jakt_var_383([&] {
+(((*this).current_function) = previous_function);
+});
+if (((((function_)->type)).index() == 1 /* ImplicitConstructor */)){
+(output += TRY((((*this).codegen_constructor(function_,false)))));
+(output += String("\n"));
+}
+else if (((!(((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))) && ((!(((function_)->is_comptime))) && ((((((function_)->generics))->params)).is_empty())))){
+(output += TRY((((*this).codegen_function_in_namespace(function_,((struct_).type_id),false)))));
+(output += String("\n"));
+}
+}
+
+}
+}
+
+}
+
+}
+}
+
+{
+JaktInternal::DictionaryIterator<String,types::EnumId> _magic = ((((scope)->enums)).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<String,types::EnumId>> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<String,types::EnumId> ___enum_id__ = (_magic_value.value());
+{
+JaktInternal::Tuple<String,types::EnumId> const jakt_____enum_id__ = ___enum_id__;
+String const _ = ((jakt_____enum_id__).get<0>());
+types::EnumId const enum_id = ((jakt_____enum_id__).get<1>());
+
+if ((!(((((enum_id).module)).equals(((current_module)->id)))))){
+continue;
+}
+types::CheckedEnum const enum_ = ((((*this).program))->get_enum(enum_id));
+if (((((enum_).definition_linkage)).index() == 1 /* External */)){
+continue;
+}
+if ((!(((((enum_).generic_parameters)).is_empty())))){
+continue;
+}
+if (((((enum_).underlying_type_id)).equals(types::void_type_id()))){
+(output += TRY((((*this).codegen_enum_debug_description_getter(enum_,false)))));
+}
+NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((enum_).scope_id)))));
+{
+JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
+{
+JaktInternal::Tuple<String,types::FunctionId> const jakt_____function_id__ = ___function_id__;
+String const _ = ((jakt_____function_id__).get<0>());
+types::FunctionId const function_id = ((jakt_____function_id__).get<1>());
+
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
+JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function = ((*this).current_function);
+(((*this).current_function) = function_);
+ScopeGuard __jakt_var_384([&] {
+(((*this).current_function) = previous_function);
+});
+if (((!(((((function_)->type)).index() == 1 /* ImplicitConstructor */))) && ((!(((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))) && (!(((function_)->is_comptime)))))){
+(output += TRY((((*this).codegen_function_in_namespace(function_,((enum_).type_id),false)))));
+(output += String("\n"));
+}
+}
+
+}
+}
+
+}
+
+}
+}
+
+{
+JaktInternal::ArrayIterator<types::ScopeId> _magic = ((((scope)->children)).iterator());
+for (;;){
+JaktInternal::Optional<types::ScopeId> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::ScopeId child_scope_id = (_magic_value.value());
+{
+NonnullRefPtr<types::Scope> const child_scope = TRY((((((*this).program))->get_scope(child_scope_id))));
+if (((((child_scope)->namespace_name)).has_value())){
+String const name = (((child_scope)->namespace_name).value());
+TRY((((((*this).namespace_stack)).push(name))));
+(output += String("namespace "));
+(output += name);
+(output += String(" {\n"));
+(output += TRY((((*this).codegen_namespace(child_scope,current_module,as_forward)))));
+(output += String("}\n"));
+JaktInternal::Optional<String> const dummy = ((((*this).namespace_stack)).pop());
+}
+}
+
+}
+}
+
+return (output);
+}
+}
+
+ErrorOr<String> codegen::CodeGenerator::codegen_unchecked_binary_op(NonnullRefPtr<types::CheckedExpression> const lhs,NonnullRefPtr<types::CheckedExpression> const rhs,parser::BinaryOperator const op,types::TypeId const type_id) {
 {
 String output = String("static_cast<");
 (output += TRY((((*this).codegen_type(type_id)))));
@@ -413,391 +826,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_namespace(const NonnullRefPtr<types::Scope> scope,const NonnullRefPtr<types::Module> current_module,const bool as_forward) {
-{
-if (((((scope)->import_path_if_extern)).has_value())){
-return (String(""));
-}
-JaktInternal::Set<String> seen_types = (TRY((Set<String>::create_with_values({}))));
-if (as_forward){
-String output = String("");
-const JaktInternal::Dictionary<String,JaktInternal::Array<String>> encoded_dependency_graph = TRY((((*this).produce_codegen_dependency_graph(scope))));
-{
-JaktInternal::DictionaryIterator<String,JaktInternal::Array<String>> _magic = ((encoded_dependency_graph).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,JaktInternal::Array<String>>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<String,JaktInternal::Array<String>> entry = (_magic_value.value());
-{
-const JaktInternal::Array<types::TypeId> traversal = (TRY((Array<types::TypeId>::create_with({}))));
-TRY((((*this).postorder_traversal(((entry).get<0>()),seen_types,encoded_dependency_graph,traversal))));
-{
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((traversal).iterator());
-for (;;){
-JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-types::TypeId type_id = (_magic_value.value());
-{
-const NonnullRefPtr<types::Type> type_ = ((((*this).program))->get_type(type_id));
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<String>>{
-auto&& __jakt_match_variant = *type_;
-switch(__jakt_match_variant.index()) {
-case 23: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
-types::EnumId const& enum_id = __jakt_match_value.value;
-{
-if ((!(((((enum_id).module)).equals(((current_module)->id)))))){
-return JaktInternal::LoopContinue{};
-}
-const types::CheckedEnum enum_ = ((((*this).program))->get_enum(enum_id));
-const String enum_output = TRY((((*this).codegen_enum(enum_))));
-if ((!(((enum_output).is_empty())))){
-(output += enum_output);
-}
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 22: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
-types::StructId const& struct_id = __jakt_match_value.value;
-{
-if ((!(((((struct_id).module)).equals(((current_module)->id)))))){
-return JaktInternal::LoopContinue{};
-}
-const types::CheckedStruct struct_ = ((((*this).program))->get_struct(struct_id));
-const String struct_output = TRY((((*this).codegen_struct(struct_))));
-if ((!(((struct_output).is_empty())))){
-(output += struct_output);
-}
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-default: {
-{
-utility::panic(TRY((String::formatted(String("Unexpected type in dependency graph: {}"),type_))));
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-}/*switch end*/
-}()
-));
-TRY((((seen_types).add(TRY((((type_id).to_string())))))));
-}
-
-}
-}
-
-}
-
-}
-}
-
-{
-JaktInternal::DictionaryIterator<String,types::StructId> _magic = ((((scope)->structs)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::StructId>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<String,types::StructId> ___struct_id__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<String,types::StructId> jakt_____struct_id__ = ___struct_id__;
-const String _ = ((jakt_____struct_id__).get<0>());
-const types::StructId struct_id = ((jakt_____struct_id__).get<1>());
-
-if ((!(((((struct_id).module)).equals(((current_module)->id)))))){
-continue;
-}
-const types::CheckedStruct struct_ = ((((*this).program))->get_struct(struct_id));
-if (((seen_types).contains(TRY((((((struct_).type_id)).to_string())))))){
-continue;
-}
-(output += TRY((((*this).codegen_struct(struct_)))));
-(output += String("\n"));
-}
-
-}
-}
-
-{
-JaktInternal::DictionaryIterator<String,types::EnumId> _magic = ((((scope)->enums)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::EnumId>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<String,types::EnumId> ___enum_id__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<String,types::EnumId> jakt_____enum_id__ = ___enum_id__;
-const String _ = ((jakt_____enum_id__).get<0>());
-const types::EnumId enum_id = ((jakt_____enum_id__).get<1>());
-
-if ((!(((((enum_id).module)).equals(((current_module)->id)))))){
-continue;
-}
-const types::CheckedEnum enum_ = ((((*this).program))->get_enum(enum_id));
-if (((seen_types).contains(TRY((((((enum_).type_id)).to_string())))))){
-continue;
-}
-(output += TRY((((*this).codegen_enum(enum_)))));
-(output += String("\n"));
-}
-
-}
-}
-
-{
-JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<String,types::FunctionId> jakt_____function_id__ = ___function_id__;
-const String _ = ((jakt_____function_id__).get<0>());
-const types::FunctionId function_id = ((jakt_____function_id__).get<1>());
-
-if ((!(((((function_id).module)).equals(((current_module)->id)))))){
-continue;
-}
-const NonnullRefPtr<types::CheckedFunction> function_ = ((((*this).program))->get_function(function_id));
-const JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> previous_function = ((*this).current_function);
-(((*this).current_function) = function_);
-ScopeGuard __jakt_var_368([&] {
-(((*this).current_function) = previous_function);
-});
-if (((((((function_)->linkage)).index() == 1 /* External */) || ((((function_)->type)).index() == 1 /* ImplicitConstructor */)) || ((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))){
-continue;
-}
-if ((!(((((((function_)->generics))->params)).is_empty())))){
-(output += TRY((((*this).codegen_function(function_,false)))));
-(output += String("\n"));
-}
-}
-
-}
-}
-
-{
-JaktInternal::ArrayIterator<types::ScopeId> _magic = ((((scope)->children)).iterator());
-for (;;){
-JaktInternal::Optional<types::ScopeId> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-types::ScopeId child_scope_id = (_magic_value.value());
-{
-const NonnullRefPtr<types::Scope> child_scope = TRY((((((*this).program))->get_scope(child_scope_id))));
-if (((((child_scope)->namespace_name)).has_value())){
-const String name = (((child_scope)->namespace_name).value());
-TRY((((((*this).namespace_stack)).push(name))));
-(output += String("namespace "));
-(output += name);
-(output += String(" {\n"));
-(output += TRY((((*this).codegen_namespace(child_scope,current_module,as_forward)))));
-(output += String("}\n"));
-const JaktInternal::Optional<String> dummy = ((((*this).namespace_stack)).pop());
-}
-}
-
-}
-}
-
-return (output);
-}
-String output = String("");
-{
-JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<String,types::FunctionId> jakt_____function_id__ = ___function_id__;
-const String _ = ((jakt_____function_id__).get<0>());
-const types::FunctionId function_id = ((jakt_____function_id__).get<1>());
-
-if ((!(((((function_id).module)).equals(((current_module)->id)))))){
-continue;
-}
-const NonnullRefPtr<types::CheckedFunction> function_ = ((((*this).program))->get_function(function_id));
-const JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> previous_function = ((*this).current_function);
-(((*this).current_function) = function_);
-ScopeGuard __jakt_var_369([&] {
-(((*this).current_function) = previous_function);
-});
-if (((((((function_)->linkage)).index() == 1 /* External */) || ((((function_)->type)).index() == 1 /* ImplicitConstructor */)) || ((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))){
-continue;
-}
-if (((((((function_)->generics))->params)).is_empty())){
-(output += TRY((((*this).codegen_function(function_,false)))));
-(output += String("\n"));
-}
-}
-
-}
-}
-
-{
-JaktInternal::DictionaryIterator<String,types::StructId> _magic = ((((scope)->structs)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::StructId>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<String,types::StructId> ___struct_id__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<String,types::StructId> jakt_____struct_id__ = ___struct_id__;
-const String _ = ((jakt_____struct_id__).get<0>());
-const types::StructId struct_id = ((jakt_____struct_id__).get<1>());
-
-if ((!(((((struct_id).module)).equals(((current_module)->id)))))){
-continue;
-}
-const types::CheckedStruct struct_ = ((((*this).program))->get_struct(struct_id));
-if (((((struct_).definition_linkage)).index() == 1 /* External */)){
-continue;
-}
-if ((!(((((struct_).generic_parameters)).is_empty())))){
-continue;
-}
-(output += TRY((((*this).codegen_debug_description_getter(struct_,false)))));
-const NonnullRefPtr<types::Scope> scope = TRY((((((*this).program))->get_scope(((struct_).scope_id)))));
-{
-JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<String,types::FunctionId> jakt_____function_id__ = ___function_id__;
-const String _ = ((jakt_____function_id__).get<0>());
-const types::FunctionId function_id = ((jakt_____function_id__).get<1>());
-
-const NonnullRefPtr<types::CheckedFunction> function_ = ((((*this).program))->get_function(function_id));
-const JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> previous_function = ((*this).current_function);
-(((*this).current_function) = function_);
-ScopeGuard __jakt_var_370([&] {
-(((*this).current_function) = previous_function);
-});
-if (((((function_)->type)).index() == 1 /* ImplicitConstructor */)){
-(output += TRY((((*this).codegen_constructor(function_,false)))));
-(output += String("\n"));
-}
-else if (((!(((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))) && ((!(((function_)->is_comptime))) && ((((((function_)->generics))->params)).is_empty())))){
-(output += TRY((((*this).codegen_function_in_namespace(function_,((struct_).type_id),false)))));
-(output += String("\n"));
-}
-}
-
-}
-}
-
-}
-
-}
-}
-
-{
-JaktInternal::DictionaryIterator<String,types::EnumId> _magic = ((((scope)->enums)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::EnumId>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<String,types::EnumId> ___enum_id__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<String,types::EnumId> jakt_____enum_id__ = ___enum_id__;
-const String _ = ((jakt_____enum_id__).get<0>());
-const types::EnumId enum_id = ((jakt_____enum_id__).get<1>());
-
-if ((!(((((enum_id).module)).equals(((current_module)->id)))))){
-continue;
-}
-const types::CheckedEnum enum_ = ((((*this).program))->get_enum(enum_id));
-if (((((enum_).definition_linkage)).index() == 1 /* External */)){
-continue;
-}
-if ((!(((((enum_).generic_parameters)).is_empty())))){
-continue;
-}
-if (((((enum_).underlying_type_id)).equals(types::void_type_id()))){
-(output += TRY((((*this).codegen_enum_debug_description_getter(enum_,false)))));
-}
-const NonnullRefPtr<types::Scope> scope = TRY((((((*this).program))->get_scope(((enum_).scope_id)))));
-{
-JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
-{
-const JaktInternal::Tuple<String,types::FunctionId> jakt_____function_id__ = ___function_id__;
-const String _ = ((jakt_____function_id__).get<0>());
-const types::FunctionId function_id = ((jakt_____function_id__).get<1>());
-
-const NonnullRefPtr<types::CheckedFunction> function_ = ((((*this).program))->get_function(function_id));
-const JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> previous_function = ((*this).current_function);
-(((*this).current_function) = function_);
-ScopeGuard __jakt_var_371([&] {
-(((*this).current_function) = previous_function);
-});
-if (((!(((((function_)->type)).index() == 1 /* ImplicitConstructor */))) && ((!(((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))) && (!(((function_)->is_comptime)))))){
-(output += TRY((((*this).codegen_function_in_namespace(function_,((enum_).type_id),false)))));
-(output += String("\n"));
-}
-}
-
-}
-}
-
-}
-
-}
-}
-
-{
-JaktInternal::ArrayIterator<types::ScopeId> _magic = ((((scope)->children)).iterator());
-for (;;){
-JaktInternal::Optional<types::ScopeId> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-types::ScopeId child_scope_id = (_magic_value.value());
-{
-const NonnullRefPtr<types::Scope> child_scope = TRY((((((*this).program))->get_scope(child_scope_id))));
-if (((((child_scope)->namespace_name)).has_value())){
-const String name = (((child_scope)->namespace_name).value());
-TRY((((((*this).namespace_stack)).push(name))));
-(output += String("namespace "));
-(output += name);
-(output += String(" {\n"));
-(output += TRY((((*this).codegen_namespace(child_scope,current_module,as_forward)))));
-(output += String("}\n"));
-const JaktInternal::Optional<String> dummy = ((((*this).namespace_stack)).pop());
-}
-}
-
-}
-}
-
-return (output);
-}
-}
-
-ErrorOr<JaktInternal::Dictionary<String,JaktInternal::Array<String>>> codegen::CodeGenerator::produce_codegen_dependency_graph(const NonnullRefPtr<types::Scope> scope) const {
+ErrorOr<JaktInternal::Dictionary<String,JaktInternal::Array<String>>> codegen::CodeGenerator::produce_codegen_dependency_graph(NonnullRefPtr<types::Scope> const scope) const {
 {
 JaktInternal::Dictionary<String,JaktInternal::Array<String>> dependency_graph = (TRY((Dictionary<String, JaktInternal::Array<String>>::create_with_entries({}))));
 {
@@ -819,7 +848,7 @@ return (dependency_graph);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_unchecked_binary_op_assignment(const NonnullRefPtr<types::CheckedExpression> lhs,const NonnullRefPtr<types::CheckedExpression> rhs,const parser::BinaryOperator op,const types::TypeId type_id) {
+ErrorOr<String> codegen::CodeGenerator::codegen_unchecked_binary_op_assignment(NonnullRefPtr<types::CheckedExpression> const lhs,NonnullRefPtr<types::CheckedExpression> const rhs,parser::BinaryOperator const op,types::TypeId const type_id) {
 {
 String output = String("");
 (output += String("{"));
@@ -867,7 +896,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_statement(const NonnullRefPtr<types::CheckedStatement> statement) {
+ErrorOr<String> codegen::CodeGenerator::codegen_statement(NonnullRefPtr<types::CheckedStatement> const statement) {
 {
 bool add_newline = true;
 String output = String("");
@@ -913,23 +942,23 @@ return JaktInternal::ExplicitValue((TRY((((*this).codegen_expression(expr)))) + 
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::Defer>();NonnullRefPtr<types::CheckedStatement> const& statement = __jakt_match_value.statement;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_372; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_385; {
 String output = String("");
 (output += String("ScopeGuard "));
 (output += TRY((((*this).fresh_var()))));
 (output += String("([&] {\n"));
-const codegen::ControlFlowState last_control_flow = ((*this).control_flow_state);
-const bool old_inside_defer = ((*this).inside_defer);
+codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
+bool const old_inside_defer = ((*this).inside_defer);
 (((((*this).control_flow_state)).passes_through_match) = false);
 (((*this).inside_defer) = true);
 (output += TRY((((*this).codegen_statement(statement)))));
 (output += String("});"));
 (((*this).control_flow_state) = last_control_flow);
 (((*this).inside_defer) = old_inside_defer);
-__jakt_var_372 = output; goto __jakt_label_344;
+__jakt_var_385 = output; goto __jakt_label_353;
 
 }
-__jakt_label_344:; __jakt_var_372.release_value(); }));
+__jakt_label_353:; __jakt_var_385.release_value(); }));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::Return>();JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const& val = __jakt_match_value.val;
@@ -939,8 +968,8 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(((String("return (") + TRY((((*this).codegen_expression((val.value())))))) + String(");")));
 }
 else {
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_373; {
-__jakt_var_373 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_386; {
+__jakt_var_386 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = ((((((*this).current_function).value()))->can_throw));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(String("return {};"));
@@ -949,37 +978,37 @@ else {
 return JaktInternal::ExplicitValue(String("return;"));
 }
 }()))
-; goto __jakt_label_345;
+; goto __jakt_label_354;
 
 }
-__jakt_label_345:; __jakt_var_373.release_value(); }));
+__jakt_label_354:; __jakt_var_386.release_value(); }));
 }
 }()))
 );
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::Loop>();types::CheckedBlock const& block = __jakt_match_value.block;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_374; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_387; {
 String output = String("");
 if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())).has_value()))){
 (output += TRY((String::formatted(String("\n#line {}\n"),TRY((((((*this).debug_info)).span_to_source_location((((statement)->span()).value())))))))));
 }
 (output += String("for (;;)"));
 (add_newline = false);
-const codegen::ControlFlowState last_control_flow = ((*this).control_flow_state);
+codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((*this).control_flow_state) = ((last_control_flow).enter_loop()));
-const String block_str = TRY((((*this).codegen_block(block))));
+String const block_str = TRY((((*this).codegen_block(block))));
 (((*this).control_flow_state) = last_control_flow);
 (output += block_str);
-__jakt_var_374 = output; goto __jakt_label_346;
+__jakt_var_387 = output; goto __jakt_label_355;
 
 }
-__jakt_label_346:; __jakt_var_374.release_value(); }));
+__jakt_label_355:; __jakt_var_387.release_value(); }));
 };/*case end*/
 case 7: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::While>();NonnullRefPtr<types::CheckedExpression> const& condition = __jakt_match_value.condition;
 types::CheckedBlock const& block = __jakt_match_value.block;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_375; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_388; {
 String output = String("");
 if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())).has_value()))){
 (output += TRY((String::formatted(String("\n#line {}\n"),TRY((((((*this).debug_info)).span_to_source_location((((statement)->span()).value())))))))));
@@ -988,18 +1017,18 @@ if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())
 (output += TRY((((*this).codegen_expression(condition)))));
 (output += String(")"));
 {
-const codegen::ControlFlowState last_control_flow = ((*this).control_flow_state);
+codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((*this).control_flow_state) = ((last_control_flow).enter_loop()));
-const String code = TRY((((*this).codegen_block(block))));
+String const code = TRY((((*this).codegen_block(block))));
 (((*this).control_flow_state) = last_control_flow);
 (output += code);
 }
 
 (add_newline = false);
-__jakt_var_375 = output; goto __jakt_label_347;
+__jakt_var_388 = output; goto __jakt_label_356;
 
 }
-__jakt_label_347:; __jakt_var_375.release_value(); }));
+__jakt_label_356:; __jakt_var_388.release_value(); }));
 };/*case end*/
 case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::Block>();types::CheckedBlock const& block = __jakt_match_value.block;
@@ -1014,7 +1043,7 @@ utility::panic(String("Garbage statement in codegen"));
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::DestructuringAssignment>();JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> const& vars = __jakt_match_value.vars;
 NonnullRefPtr<types::CheckedStatement> const& var_decl = __jakt_match_value.var_decl;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_376; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_389; {
 String output = String("");
 (output += TRY((((*this).codegen_statement(var_decl)))));
 {
@@ -1032,35 +1061,35 @@ NonnullRefPtr<types::CheckedStatement> v = (_magic_value.value());
 }
 }
 
-__jakt_var_376 = output; goto __jakt_label_348;
+__jakt_var_389 = output; goto __jakt_label_357;
 
 }
-__jakt_label_348:; __jakt_var_376.release_value(); }));
+__jakt_label_357:; __jakt_var_389.release_value(); }));
 };/*case end*/
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::VarDecl>();types::VarId const& var_id = __jakt_match_value.var_id;
 NonnullRefPtr<types::CheckedExpression> const& init = __jakt_match_value.init;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_377; {
-const types::CheckedVariable var = ((((*this).program))->get_variable(var_id));
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_390; {
+types::CheckedVariable const var = ((((*this).program))->get_variable(var_id));
 String output = String("");
-const NonnullRefPtr<types::Type> var_type = ((((*this).program))->get_type(((var).type_id)));
-if (((!(((var).is_mutable))) && (!((((var_type)->index() == 25 /* Reference */) || ((var_type)->index() == 26 /* MutableReference */)))))){
-(output += String("const "));
-}
+NonnullRefPtr<types::Type> const var_type = ((((*this).program))->get_type(((var).type_id)));
 (output += TRY((((*this).codegen_type(((var).type_id))))));
 (output += String(" "));
+if (((!(((var).is_mutable))) && (!((((var_type)->index() == 27 /* Reference */) || ((var_type)->index() == 28 /* MutableReference */)))))){
+(output += String("const "));
+}
 (output += ((var).name));
 (output += String(" = "));
 (output += TRY((((*this).codegen_expression(init)))));
 (output += String(";"));
-__jakt_var_377 = output; goto __jakt_label_349;
+__jakt_var_390 = output; goto __jakt_label_358;
 
 }
-__jakt_label_349:; __jakt_var_377.release_value(); }));
+__jakt_label_358:; __jakt_var_390.release_value(); }));
 };/*case end*/
 case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::InlineCpp>();JaktInternal::Array<String> const& lines = __jakt_match_value.lines;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_378; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_391; {
 String output = String("");
 {
 JaktInternal::ArrayIterator<String> _magic = ((lines).iterator());
@@ -1080,16 +1109,16 @@ String escaped_line = line;
 }
 }
 
-__jakt_var_378 = output; goto __jakt_label_350;
+__jakt_var_391 = output; goto __jakt_label_359;
 
 }
-__jakt_label_350:; __jakt_var_378.release_value(); }));
+__jakt_label_359:; __jakt_var_391.release_value(); }));
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::If>();NonnullRefPtr<types::CheckedExpression> const& condition = __jakt_match_value.condition;
 types::CheckedBlock const& then_block = __jakt_match_value.then_block;
 JaktInternal::Optional<NonnullRefPtr<types::CheckedStatement>> const& else_statement = __jakt_match_value.else_statement;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_379; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_392; {
 String output = String("");
 if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())).has_value()))){
 (output += TRY((String::formatted(String("\n#line {}\n"),TRY((((((*this).debug_info)).span_to_source_location((((statement)->span()).value())))))))));
@@ -1109,22 +1138,22 @@ return JaktInternal::ExplicitValue(String(""));
 }()))
 );
 (add_newline = false);
-__jakt_var_379 = output; goto __jakt_label_351;
+__jakt_var_392 = output; goto __jakt_label_360;
 
 }
-__jakt_label_351:; __jakt_var_379.release_value(); }));
+__jakt_label_360:; __jakt_var_392.release_value(); }));
 };/*case end*/
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::Yield>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_380; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_393; {
 String output = String("");
 if ((((((*this).entered_yieldable_blocks)).size()) == static_cast<size_t>(0ULL))){
 utility::panic(String("Must be in a block to yield"));
 }
-const JaktInternal::Tuple<String,String> var_name_end_label_ = (((((*this).entered_yieldable_blocks)).last()).value());
-const String var_name = ((var_name_end_label_).get<0>());
-const String end_label = ((var_name_end_label_).get<1>());
+JaktInternal::Tuple<String,String> const var_name_end_label_ = (((((*this).entered_yieldable_blocks)).last()).value());
+String const var_name = ((var_name_end_label_).get<0>());
+String const end_label = ((var_name_end_label_).get<1>());
 
 (output += var_name);
 (output += String(" = "));
@@ -1132,10 +1161,10 @@ const String end_label = ((var_name_end_label_).get<1>());
 (output += String("; goto "));
 (output += end_label);
 (output += String(";\n"));
-__jakt_var_380 = output; goto __jakt_label_352;
+__jakt_var_393 = output; goto __jakt_label_361;
 
 }
-__jakt_label_352:; __jakt_var_380.release_value(); }));
+__jakt_label_361:; __jakt_var_393.release_value(); }));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -1147,7 +1176,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_enum(const types::CheckedEnum enum_) {
+ErrorOr<String> codegen::CodeGenerator::codegen_enum(types::CheckedEnum const enum_) {
 {
 String output = String("");
 if ((!(((((enum_).underlying_type_id)).equals(types::void_type_id()))))){
@@ -1171,12 +1200,12 @@ NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue((((name + String(" = ")) + TRY((((*this).codegen_expression(expr))))) + String(",\n")));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_381; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_394; {
 utility::todo(TRY((String::formatted(String("codegen_enum can't generate variant: {}"),variant))));
-__jakt_var_381 = String(""); goto __jakt_label_353;
+__jakt_var_394 = String(""); goto __jakt_label_362;
 
 }
-__jakt_label_353:; __jakt_var_381.release_value(); }));
+__jakt_label_362:; __jakt_var_394.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -1193,19 +1222,19 @@ utility::todo(String("Enums with a non-integer underlying type"));
 }
 
 }
-const bool is_generic = (!(((((enum_).generic_parameters)).is_empty())));
+bool const is_generic = (!(((((enum_).generic_parameters)).is_empty())));
 JaktInternal::Array<String> generic_parameter_names = (TRY((Array<String>::create_with({}))));
 {
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((((enum_).generic_parameters)).iterator());
+JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((enum_).generic_parameters)).iterator());
 for (;;){
-JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
+JaktInternal::Optional<types::CheckedGenericParameter> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-types::TypeId generic_parameter = (_magic_value.value());
+types::CheckedGenericParameter generic_parameter = (_magic_value.value());
 {
-if (((((((*this).program))->get_type(generic_parameter)))->index() == 18 /* TypeVariable */)){
-const String name = (((((*this).program))->get_type(generic_parameter))->get<types::Type::TypeVariable>()).value;
+if (((((((*this).program))->get_type(((generic_parameter).type_id))))->index() == 18 /* TypeVariable */)){
+String const name = (((((*this).program))->get_type(((generic_parameter).type_id)))->get<types::Type::TypeVariable>()).value;
 TRY((((generic_parameter_names).push(name))));
 }
 }
@@ -1224,7 +1253,7 @@ break;
 }
 types::CheckedField field = (_magic_value.value());
 {
-const types::CheckedVariable variable = ((((*this).program))->get_variable(((field).variable_id)));
+types::CheckedVariable const variable = ((((*this).program))->get_variable(((field).variable_id)));
 TRY((((common_fields).push((Tuple{((variable).name), TRY((((*this).codegen_type(((variable).type_id)))))})))));
 }
 
@@ -1241,25 +1270,25 @@ break;
 }
 types::CheckedEnumVariant variant = (_magic_value.value());
 {
-const JaktInternal::Array<JaktInternal::Tuple<String,String>> fields = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<JaktInternal::Tuple<String,String>>, ErrorOr<String>>{
+JaktInternal::Array<JaktInternal::Tuple<String,String>> const fields = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<JaktInternal::Tuple<String,String>>, ErrorOr<String>>{
 auto&& __jakt_match_variant = variant;
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedEnumVariant::Untyped>();String const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_382; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_395; {
 if (is_generic){
 (output += ((String("template<") + template_args) + String(">\n")));
 }
 (output += ((String("struct ") + name) + String(" {\n")));
-__jakt_var_382 = common_fields; goto __jakt_label_354;
+__jakt_var_395 = common_fields; goto __jakt_label_363;
 
 }
-__jakt_label_354:; __jakt_var_382.release_value(); }));
+__jakt_label_363:; __jakt_var_395.release_value(); }));
 };/*case end*/
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedEnumVariant::StructLike>();String const& name = __jakt_match_value.name;
 JaktInternal::Array<types::VarId> const& own_fields = __jakt_match_value.fields;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_383; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_396; {
 JaktInternal::Array<JaktInternal::Tuple<String,String>> fields = (TRY((Array<JaktInternal::Tuple<String,String>>::create_with({}))));
 {
 JaktInternal::ArrayIterator<types::VarId> _magic = ((own_fields).iterator());
@@ -1270,7 +1299,7 @@ break;
 }
 types::VarId field = (_magic_value.value());
 {
-const types::CheckedVariable variable = ((((*this).program))->get_variable(field));
+types::CheckedVariable const variable = ((((*this).program))->get_variable(field));
 TRY((((fields).push((Tuple{((variable).name), TRY((((*this).codegen_type(((variable).type_id)))))})))));
 }
 
@@ -1281,15 +1310,15 @@ if (is_generic){
 (output += ((String("template<") + template_args) + String(">\n")));
 }
 (output += ((String("struct ") + name) + String(" {\n")));
-__jakt_var_383 = fields; goto __jakt_label_355;
+__jakt_var_396 = fields; goto __jakt_label_364;
 
 }
-__jakt_label_355:; __jakt_var_383.release_value(); }));
+__jakt_label_364:; __jakt_var_396.release_value(); }));
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedEnumVariant::Typed>();String const& name = __jakt_match_value.name;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_384; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_397; {
 JaktInternal::Array<JaktInternal::Tuple<String,String>> fields = (TRY((Array<JaktInternal::Tuple<String,String>>::create_with({}))));
 {
 JaktInternal::ArrayIterator<JaktInternal::Tuple<String,String>> _magic = ((common_fields).iterator());
@@ -1311,18 +1340,18 @@ if (is_generic){
 (output += ((String("template<") + template_args) + String(">\n")));
 }
 (output += ((String("struct ") + name) + String("{\n")));
-__jakt_var_384 = fields; goto __jakt_label_356;
+__jakt_var_397 = fields; goto __jakt_label_365;
 
 }
-__jakt_label_356:; __jakt_var_384.release_value(); }));
+__jakt_label_365:; __jakt_var_397.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_385; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_398; {
 utility::todo(TRY((String::formatted(String("codegen enum variant: {}"),variant))));
-__jakt_var_385 = (TRY((Array<JaktInternal::Tuple<String,String>>::create_with({})))); goto __jakt_label_357;
+__jakt_var_398 = (TRY((Array<JaktInternal::Tuple<String,String>>::create_with({})))); goto __jakt_label_366;
 
 }
-__jakt_label_357:; __jakt_var_385.release_value(); }));
+__jakt_label_366:; __jakt_var_398.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -1336,9 +1365,9 @@ break;
 }
 JaktInternal::Tuple<String,String> name__type__ = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,String> jakt__name__type__ = name__type__;
-const String name = ((jakt__name__type__).get<0>());
-const String type = ((jakt__name__type__).get<1>());
+JaktInternal::Tuple<String,String> const jakt__name__type__ = name__type__;
+String const name = ((jakt__name__type__).get<0>());
+String const type = ((jakt__name__type__).get<1>());
 
 (output += TRY((String::formatted(String("{} {};\n"),type,name))));
 }
@@ -1407,7 +1436,7 @@ TRY((((variant_names).push(((variant).name())))));
 }
 }
 
-const String variant_args = utility::join(variant_arguments_array,String(", "));
+String const variant_args = utility::join(variant_arguments_array,String(", "));
 (output += TRY((String::formatted(String("struct {} : public Variant<{}>"),((enum_).name),variant_args))));
 if (((enum_).is_boxed)){
 (output += TRY((String::formatted(String(", public RefCounted<{}"),((enum_).name)))));
@@ -1464,9 +1493,9 @@ break;
 }
 JaktInternal::Tuple<String,String> field_name__type__ = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,String> jakt__field_name__type__ = field_name__type__;
-const String field_name = ((jakt__field_name__type__).get<0>());
-const String type = ((jakt__field_name__type__).get<1>());
+JaktInternal::Tuple<String,String> const jakt__field_name__type__ = field_name__type__;
+String const field_name = ((jakt__field_name__type__).get<0>());
+String const type = ((jakt__field_name__type__).get<1>());
 
 (output += TRY((String::formatted(String("{} const& {}() const {{ switch(this->index()) {{"),type,field_name))));
 {
@@ -1478,8 +1507,8 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const types::CheckedEnumVariant variant = ((((enum_).variants))[i]);
-const String name = ((variant).name());
+types::CheckedEnumVariant const variant = ((((enum_).variants))[i]);
+String const name = ((variant).name());
 (output += TRY((String::formatted(String("case {} /* {} */: "),i,name))));
 (output += TRY((String::formatted(String("return this->template get<{}::{}>().{};\n"),((enum_).name),name,field_name))));
 }
@@ -1494,7 +1523,7 @@ const String name = ((variant).name());
 }
 }
 
-const NonnullRefPtr<types::Scope> enum_scope = TRY((((((*this).program))->get_scope(((enum_).scope_id)))));
+NonnullRefPtr<types::Scope> const enum_scope = TRY((((((*this).program))->get_scope(((enum_).scope_id)))));
 {
 JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((enum_scope)->functions)).iterator());
 for (;;){
@@ -1504,10 +1533,10 @@ break;
 }
 JaktInternal::Tuple<String,types::FunctionId> function_item = (_magic_value.value());
 {
-const NonnullRefPtr<types::CheckedFunction> function_ = ((((*this).program))->get_function(((function_item).get<1>())));
-const JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> previous_function_id = ((*this).current_function);
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(((function_item).get<1>())));
+JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function_id = ((*this).current_function);
 (((*this).current_function) = static_cast<JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>>>(function_));
-ScopeGuard __jakt_var_386([&] {
+ScopeGuard __jakt_var_399([&] {
 (((*this).current_function) = previous_function_id);
 });
 if ((!(((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */)))){
@@ -1530,11 +1559,11 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_struct_type(const types::StructId id,const bool as_namespace) const {
+ErrorOr<String> codegen::CodeGenerator::codegen_struct_type(types::StructId const id,bool const as_namespace) const {
 {
 String output = String("");
-const NonnullRefPtr<types::Module> type_module = ((((*this).program))->get_module(((id).module)));
-const types::CheckedStruct checked_struct = ((((*this).program))->get_struct(id));
+NonnullRefPtr<types::Module> const type_module = ((((*this).program))->get_module(((id).module)));
+types::CheckedStruct const checked_struct = ((((*this).program))->get_struct(id));
 if (((!(as_namespace)) && ((((checked_struct).record_type)).index() == 1 /* Class */))){
 (output += String("NonnullRefPtr<"));
 if (((!(((type_module)->is_root))) && (!(((((type_module)->id)).equals(types::ModuleId(static_cast<size_t>(0ULL)))))))){
@@ -1558,7 +1587,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_struct_predecl(const types::CheckedStruct struct_) {
+ErrorOr<String> codegen::CodeGenerator::codegen_struct_predecl(types::CheckedStruct const struct_) {
 {
 if (((((struct_).definition_linkage)).index() == 1 /* External */)){
 return (String(""));
@@ -1568,13 +1597,13 @@ if ((!(((((struct_).generic_parameters)).is_empty())))){
 (output += String("template <"));
 bool first = true;
 {
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((((struct_).generic_parameters)).iterator());
+JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((struct_).generic_parameters)).iterator());
 for (;;){
-JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
+JaktInternal::Optional<types::CheckedGenericParameter> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-types::TypeId generic_parameter = (_magic_value.value());
+types::CheckedGenericParameter generic_parameter = (_magic_value.value());
 {
 if (first){
 (first = false);
@@ -1584,7 +1613,7 @@ else {
 }
 
 (output += String("typename "));
-(output += TRY((((*this).codegen_type(generic_parameter)))));
+(output += TRY((((*this).codegen_type(((generic_parameter).type_id))))));
 }
 
 }
@@ -1613,7 +1642,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_generic_match(const NonnullRefPtr<types::CheckedExpression> expr,const JaktInternal::Array<types::CheckedMatchCase> cases,const types::TypeId return_type_id,const bool all_variants_constant) {
+ErrorOr<String> codegen::CodeGenerator::codegen_generic_match(NonnullRefPtr<types::CheckedExpression> const expr,JaktInternal::Array<types::CheckedMatchCase> const cases,types::TypeId const return_type_id,bool const all_variants_constant) {
 {
 String output = String("");
 bool is_generic_enum = false;
@@ -1635,7 +1664,7 @@ break;
 }
 }
 
-const bool match_values_all_constant = (all_variants_constant && (!(is_generic_enum)));
+bool const match_values_all_constant = (all_variants_constant && (!(is_generic_enum)));
 (output += ((((*this).control_flow_state)).choose_control_flow_macro()));
 (output += (TRY((String::formatted(String("(([&]() -> JaktInternal::ExplicitValueOrControlFlow<{},{}>"),TRY((((*this).codegen_type(return_type_id)))),TRY((((*this).codegen_function_return_type((((*this).current_function).value())))))))) + String("{\n")));
 if (is_generic_enum){
@@ -1668,10 +1697,10 @@ types::TypeId const& subject_type_id = __jakt_match_value.subject_type_id;
 types::ScopeId const& scope_id = __jakt_match_value.scope_id;
 types::CheckedMatchBody const& body = __jakt_match_value.body;
 {
-const types::CheckedEnum enum_ = ((((*this).program))->get_enum(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::EnumId, ErrorOr<String>>{
+types::CheckedEnum const enum_ = ((((*this).program))->get_enum(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::EnumId, ErrorOr<String>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(subject_type_id));
 switch(__jakt_match_variant.index()) {
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
 types::EnumId const& enum_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(enum_id);
@@ -1709,7 +1738,7 @@ break;
 
 (output += TRY((String::formatted(String("if (__jakt_enum_value.index() == {} /* {} */) {{\n"),variant_index,name))));
 String variant_type_name = String("");
-const String qualifier = TRY((((*this).codegen_type_possibly_as_namespace(subject_type_id,true))));
+String const qualifier = TRY((((*this).codegen_type_possibly_as_namespace(subject_type_id,true))));
 if ((!(((qualifier).is_empty())))){
 (variant_type_name += String("typename JaktInternal::RemoveRefPtr<"));
 (variant_type_name += qualifier);
@@ -1773,8 +1802,8 @@ if ((!(first))){
 (output += String("else "));
 }
 if (((expression)->index() == 8 /* Range */)){
-const JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> from = (expression->get<types::CheckedExpression::Range>()).from;
-const JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> to = (expression->get<types::CheckedExpression::Range>()).to;
+JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const from = (expression->get<types::CheckedExpression::Range>()).from;
+JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const to = (expression->get<types::CheckedExpression::Range>()).to;
 (output += String("if (__jakt_enum_value"));
 if (((from).has_value())){
 (output += String(" >= "));
@@ -1819,7 +1848,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_checked_binary_op(const NonnullRefPtr<types::CheckedExpression> lhs,const NonnullRefPtr<types::CheckedExpression> rhs,const parser::BinaryOperator op,const types::TypeId type_id) {
+ErrorOr<String> codegen::CodeGenerator::codegen_checked_binary_op(NonnullRefPtr<types::CheckedExpression> const lhs,NonnullRefPtr<types::CheckedExpression> const rhs,parser::BinaryOperator const op,types::TypeId const type_id) {
 {
 String output = String("");
 (output += String("JaktInternal::"));
@@ -1865,10 +1894,10 @@ return (output);
 }
 }
 
-ErrorOr<JaktInternal::Array<String>> codegen::CodeGenerator::extract_dependencies_from_enum(const types::EnumId enum_id,const JaktInternal::Dictionary<String,JaktInternal::Array<String>> dependency_graph,const bool top_level) const {
+ErrorOr<JaktInternal::Array<String>> codegen::CodeGenerator::extract_dependencies_from_enum(types::EnumId const enum_id,JaktInternal::Dictionary<String,JaktInternal::Array<String>> const dependency_graph,bool const top_level) const {
 {
 JaktInternal::Array<String> dependencies = (TRY((Array<String>::create_with({}))));
-const types::CheckedEnum enum_ = ((((*this).program))->get_enum(enum_id));
+types::CheckedEnum const enum_ = ((((*this).program))->get_enum(enum_id));
 if (((((enum_).definition_linkage)).index() == 1 /* External */)){
 return (dependencies);
 }
@@ -1877,7 +1906,7 @@ return (dependencies);
 }
 TRY((((dependencies).push(TRY((((((enum_).type_id)).to_string())))))));
 if ((!(((((enum_).underlying_type_id)).equals(types::unknown_type_id()))))){
-const JaktInternal::Array<String> inner_dependencies = TRY((((*this).extract_dependencies_from(((enum_).underlying_type_id),dependency_graph,false))));
+JaktInternal::Array<String> const inner_dependencies = TRY((((*this).extract_dependencies_from(((enum_).underlying_type_id),dependency_graph,false))));
 {
 JaktInternal::ArrayIterator<String> _magic = ((inner_dependencies).iterator());
 for (;;){
@@ -1909,7 +1938,7 @@ switch(__jakt_match_variant.index()) {
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedEnumVariant::Typed>();types::TypeId const& type_id = __jakt_match_value.type_id;
 {
-const JaktInternal::Array<String> inner_dependencies = TRY((((*this).extract_dependencies_from(type_id,dependency_graph,false))));
+JaktInternal::Array<String> const inner_dependencies = TRY((((*this).extract_dependencies_from(type_id,dependency_graph,false))));
 {
 JaktInternal::ArrayIterator<String> _magic = ((inner_dependencies).iterator());
 for (;;){
@@ -1940,8 +1969,8 @@ break;
 }
 types::VarId field = (_magic_value.value());
 {
-const types::TypeId type_id = ((((((*this).program))->get_variable(field))).type_id);
-const JaktInternal::Array<String> inner_dependencies = TRY((((*this).extract_dependencies_from(type_id,dependency_graph,false))));
+types::TypeId const type_id = ((((((*this).program))->get_variable(field))).type_id);
+JaktInternal::Array<String> const inner_dependencies = TRY((((*this).extract_dependencies_from(type_id,dependency_graph,false))));
 {
 JaktInternal::ArrayIterator<String> _magic = ((inner_dependencies).iterator());
 for (;;){
@@ -1982,7 +2011,7 @@ return (dependencies);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_expression(const NonnullRefPtr<types::CheckedExpression> expression) {
+ErrorOr<String> codegen::CodeGenerator::codegen_expression(NonnullRefPtr<types::CheckedExpression> const expression) {
 {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = *expression;
@@ -1991,10 +2020,10 @@ case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Range>();JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const& from = __jakt_match_value.from;
 JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const& to = __jakt_match_value.to;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_387; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_400; {
 String output = String("");
-const NonnullRefPtr<types::Type> type = ((((*this).program))->get_type(type_id));
-const types::TypeId index_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::TypeId, ErrorOr<String>>{
+NonnullRefPtr<types::Type> const type = ((((*this).program))->get_type(type_id));
+types::TypeId const index_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::TypeId, ErrorOr<String>>{
 auto&& __jakt_match_variant = *type;
 switch(__jakt_match_variant.index()) {
 case 19: {
@@ -2034,10 +2063,10 @@ else {
 }
 
 (output += String(")})"));
-__jakt_var_387 = output; goto __jakt_label_358;
+__jakt_var_400 = output; goto __jakt_label_367;
 
 }
-__jakt_label_358:; __jakt_var_387.release_value(); }));
+__jakt_label_367:; __jakt_var_400.release_value(); }));
 };/*case end*/
 case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::OptionalNone>();return JaktInternal::ExplicitValue(String("JaktInternal::OptionalNone()"));
@@ -2054,12 +2083,12 @@ return JaktInternal::ExplicitValue(((String("(") + TRY((((*this).codegen_express
 };/*case end*/
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::QuotedString>();String const& val = __jakt_match_value.val;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_388; {
-const String escaped_value = TRY((((val).replace(String("\n"),String("\\n")))));
-__jakt_var_388 = ((String("String(\"") + escaped_value) + String("\")")); goto __jakt_label_359;
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_401; {
+String const escaped_value = TRY((((val).replace(String("\n"),String("\\n")))));
+__jakt_var_401 = ((String("String(\"") + escaped_value) + String("\")")); goto __jakt_label_368;
 
 }
-__jakt_label_359:; __jakt_var_388.release_value(); }));
+__jakt_label_368:; __jakt_var_401.release_value(); }));
 };/*case end*/
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::ByteConstant>();String const& val = __jakt_match_value.val;
@@ -2111,27 +2140,27 @@ case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::IndexedStruct>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 String const& index = __jakt_match_value.index;
 bool const& is_optional = __jakt_match_value.is_optional;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_389; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_402; {
 String output = String("");
-const String object = TRY((((*this).codegen_expression(expr))));
+String const object = TRY((((*this).codegen_expression(expr))));
 (output += String("(("));
 (output += object);
 (output += String(")"));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<String>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(((expr)->type())));
 switch(__jakt_match_variant.index()) {
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::RawPtr>();
 {
 (output += String("->"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 22: {
+case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
 types::StructId const& id = __jakt_match_value.value;
 {
-const types::CheckedStruct structure = ((((*this).program))->get_struct(id));
+types::CheckedStruct const structure = ((((*this).program))->get_struct(id));
 if ((((((structure).record_type)).index() == 1 /* Class */) && (object != String("*this")))){
 (output += String("->"));
 }
@@ -2145,7 +2174,7 @@ return JaktInternal::ExplicitValue<void>();
 case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericInstance>();types::StructId const& id = __jakt_match_value.id;
 {
-const types::CheckedStruct structure = ((((*this).program))->get_struct(id));
+types::CheckedStruct const structure = ((((*this).program))->get_struct(id));
 if ((((((structure).record_type)).index() == 1 /* Class */) && (object != String("*this")))){
 (output += String("->"));
 }
@@ -2175,38 +2204,38 @@ else {
 }
 
 (output += String(")"));
-__jakt_var_389 = output; goto __jakt_label_360;
+__jakt_var_402 = output; goto __jakt_label_369;
 
 }
-__jakt_label_360:; __jakt_var_389.release_value(); }));
+__jakt_label_369:; __jakt_var_402.release_value(); }));
 };/*case end*/
 case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::IndexedCommonEnumMember>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 String const& index = __jakt_match_value.index;
 bool const& is_optional = __jakt_match_value.is_optional;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_390; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_403; {
 String output = String("");
-const String object = TRY((((*this).codegen_expression(expr))));
+String const object = TRY((((*this).codegen_expression(expr))));
 (output += String("(("));
 (output += object);
 (output += String(")"));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<String>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(((expr)->type())));
 switch(__jakt_match_variant.index()) {
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::RawPtr>();
 {
 (output += String("->"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
 types::EnumId const& id = __jakt_match_value.value;
 {
-const types::CheckedEnum structure = ((((*this).program))->get_enum(id));
+types::CheckedEnum const structure = ((((*this).program))->get_enum(id));
 if (((((structure).record_type)).index() == 3 /* SumEnum */)){
-const bool is_boxed = (((structure).record_type).get<parser::RecordType::SumEnum>()).is_boxed;
+bool const is_boxed = (((structure).record_type).get<parser::RecordType::SumEnum>()).is_boxed;
 if ((is_boxed && (object != String("*this")))){
 (output += String("->"));
 }
@@ -2225,9 +2254,9 @@ return JaktInternal::ExplicitValue<void>();
 case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericEnumInstance>();types::EnumId const& id = __jakt_match_value.id;
 {
-const types::CheckedEnum structure = ((((*this).program))->get_enum(id));
+types::CheckedEnum const structure = ((((*this).program))->get_enum(id));
 if (((((structure).record_type)).index() == 3 /* SumEnum */)){
-const bool is_boxed = (((structure).record_type).get<parser::RecordType::SumEnum>()).is_boxed;
+bool const is_boxed = (((structure).record_type).get<parser::RecordType::SumEnum>()).is_boxed;
 if ((is_boxed && (object != String("*this")))){
 (output += String("->"));
 }
@@ -2262,10 +2291,10 @@ else {
 }
 
 (output += String(")"));
-__jakt_var_390 = output; goto __jakt_label_361;
+__jakt_var_403 = output; goto __jakt_label_370;
 
 }
-__jakt_label_361:; __jakt_var_390.release_value(); }));
+__jakt_label_370:; __jakt_var_403.release_value(); }));
 };/*case end*/
 case 26: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Block>();types::CheckedBlock const& block = __jakt_match_value.block;
@@ -2298,7 +2327,7 @@ case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::UnaryOp>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 types::CheckedUnaryOperator const& op = __jakt_match_value.op;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_391; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_404; {
 String output = String("(");
 (output += JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = op;
@@ -2320,7 +2349,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Ch
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(((expr)->type())));
 switch(__jakt_match_variant.index()) {
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::RawPtr>();
 return JaktInternal::ExplicitValue(String("*"));
 };/*case end*/
@@ -2346,19 +2375,19 @@ return JaktInternal::ExplicitValue(String("~"));
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedUnaryOperator::Is>();
 types::TypeId const& type_id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_392; {
-const String is_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_405; {
+String const is_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(type_id));
 switch(__jakt_match_variant.index()) {
-case 22: {
+case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
 types::StructId const& id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_393; {
-const NonnullRefPtr<types::Module> type_module = ((((*this).program))->get_module(((id).module)));
-__jakt_var_393 = ((((((*this).program))->get_struct(id))).name); goto __jakt_label_364;
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_406; {
+NonnullRefPtr<types::Module> const type_module = ((((*this).program))->get_module(((id).module)));
+__jakt_var_406 = ((((((*this).program))->get_struct(id))).name); goto __jakt_label_373;
 
 }
-__jakt_label_364:; __jakt_var_393.release_value(); }));
+__jakt_label_373:; __jakt_var_406.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_type(type_id)))));
@@ -2366,24 +2395,24 @@ return JaktInternal::ExplicitValue(TRY((((*this).codegen_type(type_id)))));
 }/*switch end*/
 }()
 ));
-__jakt_var_392 = ((String("is<") + is_type) + String(">(")); goto __jakt_label_363;
+__jakt_var_405 = ((String("is<") + is_type) + String(">(")); goto __jakt_label_372;
 
 }
-__jakt_label_363:; __jakt_var_392.release_value(); }));
+__jakt_label_372:; __jakt_var_405.release_value(); }));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedUnaryOperator::TypeCast>();
 types::CheckedTypeCast const& cast = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_394; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_407; {
 types::TypeId final_type_id = ((cast).type_id());
-const String cast_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
+String const cast_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = cast;
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedTypeCast::Fallible>();
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_395; {
-const NonnullRefPtr<types::Type> ty = ((((*this).program))->get_type(((cast).type_id())));
-const types::TypeId type_id = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::TypeId, ErrorOr<String>>{
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_408; {
+NonnullRefPtr<types::Type> const ty = ((((*this).program))->get_type(((cast).type_id())));
+types::TypeId const type_id = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::TypeId, ErrorOr<String>>{
 auto&& __jakt_match_variant = *ty;
 switch(__jakt_match_variant.index()) {
 case 19: {
@@ -2403,30 +2432,30 @@ if (((((*this).program))->is_integer(type_id))){
 (final_type_id = type_id);
 (cast_type = String("fallible_integer_cast"));
 }
-__jakt_var_395 = cast_type; goto __jakt_label_366;
+__jakt_var_408 = cast_type; goto __jakt_label_375;
 
 }
-__jakt_label_366:; __jakt_var_395.release_value(); }));
+__jakt_label_375:; __jakt_var_408.release_value(); }));
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedTypeCast::Infallible>();
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_396; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_409; {
 String cast_type = String("verify_cast");
 if (((((*this).program))->is_integer(type_id))){
 (cast_type = String("infallible_integer_cast"));
 }
-__jakt_var_396 = cast_type; goto __jakt_label_367;
+__jakt_var_409 = cast_type; goto __jakt_label_376;
 
 }
-__jakt_label_367:; __jakt_var_396.release_value(); }));
+__jakt_label_376:; __jakt_var_409.release_value(); }));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 ));
-__jakt_var_394 = (((cast_type + String("<")) + TRY((((*this).codegen_type(final_type_id))))) + String(">(")); goto __jakt_label_365;
+__jakt_var_407 = (((cast_type + String("<")) + TRY((((*this).codegen_type(final_type_id))))) + String(">(")); goto __jakt_label_374;
 
 }
-__jakt_label_365:; __jakt_var_394.release_value(); }));
+__jakt_label_374:; __jakt_var_407.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(String(""));
@@ -2435,7 +2464,7 @@ return JaktInternal::ExplicitValue(String(""));
 }()
 )));
 (output += String("("));
-const String object = TRY((((*this).codegen_expression(expr))));
+String const object = TRY((((*this).codegen_expression(expr))));
 (output += object);
 (output += JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = op;
@@ -2459,13 +2488,13 @@ return JaktInternal::ExplicitValue(String("))"));
 case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedUnaryOperator::IsEnumVariant>();types::CheckedEnumVariant const& enum_variant = __jakt_match_value.enum_variant;
 types::TypeId const& enum_type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_397; {
-const String name = ((enum_variant).name());
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_410; {
+String const name = ((enum_variant).name());
 String suffix = String(")");
-const types::CheckedEnum enum_ = ((((*this).program))->get_enum(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::EnumId, ErrorOr<String>>{
+types::CheckedEnum const enum_ = ((((*this).program))->get_enum(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::EnumId, ErrorOr<String>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(enum_type_id));
 switch(__jakt_match_variant.index()) {
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
 types::EnumId const& enum_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(enum_id);
@@ -2482,7 +2511,7 @@ utility::panic(TRY((String::formatted(String("Unexpected type in IsEnumVariant: 
 }/*switch end*/
 }()
 ))));
-const bool is_boxed = ((enum_).is_boxed);
+bool const is_boxed = ((enum_).is_boxed);
 if ((is_boxed && (object != String("*this")))){
 (suffix += String("->"));
 }
@@ -2510,10 +2539,10 @@ break;
 }
 
 (suffix += TRY((String::formatted(String("index() == {} /* {} */"),variant_index,name))));
-__jakt_var_397 = suffix; goto __jakt_label_368;
+__jakt_var_410 = suffix; goto __jakt_label_377;
 
 }
-__jakt_label_368:; __jakt_var_397.release_value(); }));
+__jakt_label_377:; __jakt_var_410.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(String(")"));
@@ -2522,10 +2551,10 @@ return JaktInternal::ExplicitValue(String(")"));
 }()
 )));
 (output += String(")"));
-__jakt_var_391 = output; goto __jakt_label_362;
+__jakt_var_404 = output; goto __jakt_label_371;
 
 }
-__jakt_label_362:; __jakt_var_391.release_value(); }));
+__jakt_label_371:; __jakt_var_404.release_value(); }));
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::BinaryOp>();NonnullRefPtr<types::CheckedExpression> const& lhs = __jakt_match_value.lhs;
@@ -2537,8 +2566,8 @@ return JaktInternal::ExplicitValue(TRY((((*this).codegen_binary_expression(expre
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::NumericConstant>();types::CheckedNumericConstant const& val = __jakt_match_value.val;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_398; {
-const String suffix = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_411; {
+String const suffix = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = val;
 switch(__jakt_match_variant.index()) {
 case 3: {
@@ -2559,7 +2588,7 @@ return JaktInternal::ExplicitValue(String(""));
 }/*switch end*/
 }()
 ));
-const String type_name = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
+String const type_name = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = val;
 switch(__jakt_match_variant.index()) {
 case 8: {
@@ -2572,7 +2601,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).codegen_type(type_id)))));
 }/*switch end*/
 }()
 ));
-__jakt_var_398 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
+__jakt_var_411 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = val;
 switch(__jakt_match_variant.index()) {
 case 9: {
@@ -2632,15 +2661,15 @@ return JaktInternal::ExplicitValue(TRY((String::formatted(String("static_cast<{}
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
-)); goto __jakt_label_369;
+)); goto __jakt_label_378;
 
 }
-__jakt_label_369:; __jakt_var_398.release_value(); }));
+__jakt_label_378:; __jakt_var_411.release_value(); }));
 };/*case end*/
 case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::NamespacedVar>();JaktInternal::Array<types::CheckedNamespace> const& namespaces = __jakt_match_value.namespaces;
 types::CheckedVariable const& var = __jakt_match_value.var;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_399; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_412; {
 String output = String("");
 {
 JaktInternal::ArrayIterator<types::CheckedNamespace> _magic = ((namespaces).iterator());
@@ -2657,10 +2686,10 @@ types::CheckedNamespace ns = (_magic_value.value());
 }
 }
 
-__jakt_var_399 = (output + ((var).name)); goto __jakt_label_370;
+__jakt_var_412 = (output + ((var).name)); goto __jakt_label_379;
 
 }
-__jakt_label_370:; __jakt_var_399.release_value(); }));
+__jakt_label_379:; __jakt_var_412.release_value(); }));
 };/*case end*/
 case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Match>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
@@ -2673,15 +2702,15 @@ case 18: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::EnumVariantArg>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 types::CheckedEnumVariantBinding const& arg = __jakt_match_value.arg;
 types::CheckedEnumVariant const& enum_variant = __jakt_match_value.enum_variant;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_400; {
-const String var_name = TRY((((*this).codegen_expression(expr))));
-const String enum_type = TRY((((*this).codegen_type_possibly_as_namespace(((expr)->type()),true))));
-const String variant_name = ((enum_variant).name());
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_413; {
+String const var_name = TRY((((*this).codegen_expression(expr))));
+String const enum_type = TRY((((*this).codegen_type_possibly_as_namespace(((expr)->type()),true))));
+String const variant_name = ((enum_variant).name());
 String arg_name = String("value");
 if (((enum_variant).index() == 3 /* StructLike */)){
 (arg_name = ((arg).name).value_or_lazy_evaluated([&] { return ((arg).binding); }));
 }
-const String cpp_deref_operator = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+String const cpp_deref_operator = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = (((((((*this).program))->get_enum(((enum_variant).enum_id())))).is_boxed));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(String("->"));
@@ -2691,10 +2720,10 @@ return JaktInternal::ExplicitValue(String("."));
 }
 }()))
 ;
-__jakt_var_400 = TRY((String::formatted(String("({}{}get<{}::{}>()).{}"),var_name,cpp_deref_operator,enum_type,variant_name,arg_name))); goto __jakt_label_371;
+__jakt_var_413 = TRY((String::formatted(String("({}{}get<{}::{}>()).{}"),var_name,cpp_deref_operator,enum_type,variant_name,arg_name))); goto __jakt_label_380;
 
 }
-__jakt_label_371:; __jakt_var_400.release_value(); }));
+__jakt_label_380:; __jakt_var_413.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktArray>();JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> const& vals = __jakt_match_value.vals;
@@ -2702,10 +2731,10 @@ JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const& repeat = 
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 types::TypeId const& inner_type_id = __jakt_match_value.inner_type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_401; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_414; {
 String output = String("");
 if (((repeat).has_value())){
-const NonnullRefPtr<types::CheckedExpression> repeat_val = ((repeat).value());
+NonnullRefPtr<types::CheckedExpression> const repeat_val = ((repeat).value());
 (output += String("("));
 (output += TRY((((*this).current_error_handler()))));
 (output += String("((Array<"));
@@ -2748,10 +2777,10 @@ else {
 (output += String("}))))"));
 }
 
-__jakt_var_401 = output; goto __jakt_label_372;
+__jakt_var_414 = output; goto __jakt_label_381;
 
 }
-__jakt_label_372:; __jakt_var_401.release_value(); }));
+__jakt_label_381:; __jakt_var_414.release_value(); }));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktDictionary>();JaktInternal::Array<JaktInternal::Tuple<NonnullRefPtr<types::CheckedExpression>,NonnullRefPtr<types::CheckedExpression>>> const& vals = __jakt_match_value.vals;
@@ -2759,7 +2788,7 @@ utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 types::TypeId const& key_type_id = __jakt_match_value.key_type_id;
 types::TypeId const& value_type_id = __jakt_match_value.value_type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_402; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_415; {
 String output = TRY((String::formatted(String("({}((Dictionary<{}, {}>::create_with_entries({{"),TRY((((*this).current_error_handler()))),TRY((((*this).codegen_type(key_type_id)))),TRY((((*this).codegen_type(value_type_id)))))));
 bool first = true;
 {
@@ -2771,9 +2800,9 @@ break;
 }
 JaktInternal::Tuple<NonnullRefPtr<types::CheckedExpression>,NonnullRefPtr<types::CheckedExpression>> key__value__ = (_magic_value.value());
 {
-const JaktInternal::Tuple<NonnullRefPtr<types::CheckedExpression>,NonnullRefPtr<types::CheckedExpression>> jakt__key__value__ = key__value__;
-const NonnullRefPtr<types::CheckedExpression> key = ((jakt__key__value__).get<0>());
-const NonnullRefPtr<types::CheckedExpression> value = ((jakt__key__value__).get<1>());
+JaktInternal::Tuple<NonnullRefPtr<types::CheckedExpression>,NonnullRefPtr<types::CheckedExpression>> const jakt__key__value__ = key__value__;
+NonnullRefPtr<types::CheckedExpression> const key = ((jakt__key__value__).get<0>());
+NonnullRefPtr<types::CheckedExpression> const value = ((jakt__key__value__).get<1>());
 
 if ((!(first))){
 (output += String(", "));
@@ -2793,17 +2822,17 @@ else {
 }
 
 (output += String("}))))"));
-__jakt_var_402 = output; goto __jakt_label_373;
+__jakt_var_415 = output; goto __jakt_label_382;
 
 }
-__jakt_label_373:; __jakt_var_402.release_value(); }));
+__jakt_label_382:; __jakt_var_415.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktSet>();JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> const& vals = __jakt_match_value.vals;
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 types::TypeId const& inner_type_id = __jakt_match_value.inner_type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_403; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_416; {
 String output = String("");
 (output += TRY((String::formatted(String("({}((Set<{}>::create_with_values({{"),TRY((((*this).current_error_handler()))),TRY((((*this).codegen_type(inner_type_id))))))));
 bool first = true;
@@ -2830,16 +2859,16 @@ else {
 }
 
 (output += String("}))))"));
-__jakt_var_403 = output; goto __jakt_label_374;
+__jakt_var_416 = output; goto __jakt_label_383;
 
 }
-__jakt_label_374:; __jakt_var_403.release_value(); }));
+__jakt_label_383:; __jakt_var_416.release_value(); }));
 };/*case end*/
 case 7: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktTuple>();JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> const& vals = __jakt_match_value.vals;
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_404; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_417; {
 String output = String("");
 (output += String("(Tuple{"));
 bool first = true;
@@ -2866,10 +2895,10 @@ else {
 }
 
 (output += String("})"));
-__jakt_var_404 = output; goto __jakt_label_375;
+__jakt_var_417 = output; goto __jakt_label_384;
 
 }
-__jakt_label_375:; __jakt_var_404.release_value(); }));
+__jakt_label_384:; __jakt_var_417.release_value(); }));
 };/*case end*/
 case 27: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Function>();JaktInternal::Array<types::CheckedCapture> const& captures = __jakt_match_value.captures;
@@ -2878,7 +2907,7 @@ bool const& can_throw = __jakt_match_value.can_throw;
 types::CheckedBlock const& block = __jakt_match_value.block;
 types::TypeId const& return_type_id = __jakt_match_value.return_type_id;
 JaktInternal::Optional<types::FunctionId> const& pseudo_function_id = __jakt_match_value.pseudo_function_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_405; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_418; {
 JaktInternal::Array<String> generated_captures = (TRY((Array<String>::create_with({}))));
 {
 JaktInternal::ArrayIterator<types::CheckedCapture> _magic = ((captures).iterator());
@@ -2925,7 +2954,7 @@ TRY((((generated_params).push(TRY((String::formatted(String("{} {}"),TRY((((*thi
 }
 }
 
-const String return_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+String const return_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = (can_throw);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(TRY((String::formatted(String("ErrorOr<{}>"),TRY((((*this).codegen_type(return_type_id))))))));
@@ -2937,10 +2966,10 @@ return JaktInternal::ExplicitValue(TRY((((*this).codegen_type(return_type_id))))
 ;
 String block_output = String("");
 if (((pseudo_function_id).has_value())){
-const NonnullRefPtr<types::CheckedFunction> function_ = ((((*this).program))->get_function((pseudo_function_id.value())));
-const JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> previous_function = ((*this).current_function);
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function((pseudo_function_id.value())));
+JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function = ((*this).current_function);
 (((*this).current_function) = function_);
-ScopeGuard __jakt_var_406([&] {
+ScopeGuard __jakt_var_419([&] {
 (((*this).current_function) = previous_function);
 });
 (block_output = TRY((((*this).codegen_block(block)))));
@@ -2949,23 +2978,23 @@ else {
 (block_output = TRY((((*this).codegen_block(block)))));
 }
 
-__jakt_var_405 = TRY((String::formatted(String("[{}]({}) -> {} {}"),utility::join(generated_captures,String(", ")),utility::join(generated_params,String(", ")),return_type,block_output))); goto __jakt_label_376;
+__jakt_var_418 = TRY((String::formatted(String("[{}]({}) -> {} {}"),utility::join(generated_captures,String(", ")),utility::join(generated_params,String(", ")),return_type,block_output))); goto __jakt_label_385;
 
 }
-__jakt_label_376:; __jakt_var_405.release_value(); }));
+__jakt_label_385:; __jakt_var_418.release_value(); }));
 };/*case end*/
 case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::TryBlock>();NonnullRefPtr<types::CheckedStatement> const& stmt = __jakt_match_value.stmt;
 String const& error_name = __jakt_match_value.error_name;
 types::CheckedBlock const& catch_block = __jakt_match_value.catch_block;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_407; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_420; {
 String output = String("");
-const String try_var = TRY((((*this).fresh_var())));
+String const try_var = TRY((((*this).fresh_var())));
 (output += String("auto "));
 (output += try_var);
 (output += String(" = [&]() -> ErrorOr<void> {"));
-const codegen::ControlFlowState last_control_flow = ((*this).control_flow_state);
+codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((((*this).control_flow_state)).passes_through_match) = false);
 (((((*this).control_flow_state)).passes_through_try) = true);
 (output += TRY((((*this).codegen_statement(stmt)))));
@@ -2985,10 +3014,10 @@ if ((!(((error_name).is_empty())))){
 (output += TRY((((*this).codegen_block(catch_block)))));
 (((*this).control_flow_state) = last_control_flow);
 (output += String("}"));
-__jakt_var_407 = output; goto __jakt_label_377;
+__jakt_var_420 = output; goto __jakt_label_386;
 
 }
-__jakt_label_377:; __jakt_var_407.release_value(); }));
+__jakt_label_386:; __jakt_var_420.release_value(); }));
 };/*case end*/
 case 28: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Try>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
@@ -2997,15 +3026,15 @@ JaktInternal::Optional<String> const& catch_name = __jakt_match_value.catch_name
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 types::TypeId const& inner_type_id = __jakt_match_value.inner_type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_408; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_421; {
 String output = String("");
-const String fresh_var = TRY((((*this).fresh_var())));
-const bool is_void = ((inner_type_id).equals(types::void_type_id()));
-const String try_var = TRY((((*this).fresh_var())));
-const codegen::ControlFlowState last_control_flow = ((*this).control_flow_state);
+String const fresh_var = TRY((((*this).fresh_var())));
+bool const is_void = ((inner_type_id).equals(types::void_type_id()));
+String const try_var = TRY((((*this).fresh_var())));
+codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((((*this).control_flow_state)).passes_through_match) = false);
 (((((*this).control_flow_state)).passes_through_try) = true);
-ScopeGuard __jakt_var_409([&] {
+ScopeGuard __jakt_var_422([&] {
 {
 (((*this).control_flow_state) = last_control_flow);
 }
@@ -3074,18 +3103,18 @@ if (((catch_block).has_value())){
 }
 (output += String("; })"));
 }
-__jakt_var_408 = output; goto __jakt_label_378;
+__jakt_var_421 = output; goto __jakt_label_387;
 
 }
-__jakt_label_378:; __jakt_var_408.release_value(); }));
+__jakt_label_387:; __jakt_var_421.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_410; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_423; {
 utility::todo(TRY((String::formatted(String("codegen_expression else: {}"),expression))));
-__jakt_var_410 = String(""); goto __jakt_label_379;
+__jakt_var_423 = String(""); goto __jakt_label_388;
 
 }
-__jakt_label_379:; __jakt_var_410.release_value(); }));
+__jakt_label_388:; __jakt_var_423.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -3093,10 +3122,10 @@ __jakt_label_379:; __jakt_var_410.release_value(); }));
 }
 }
 
-ErrorOr<JaktInternal::Array<String>> codegen::CodeGenerator::extract_dependencies_from_struct(const types::StructId struct_id,const JaktInternal::Dictionary<String,JaktInternal::Array<String>> dependency_graph,const bool top_level,const JaktInternal::Array<types::TypeId> args) const {
+ErrorOr<JaktInternal::Array<String>> codegen::CodeGenerator::extract_dependencies_from_struct(types::StructId const struct_id,JaktInternal::Dictionary<String,JaktInternal::Array<String>> const dependency_graph,bool const top_level,JaktInternal::Array<types::TypeId> const args) const {
 {
 JaktInternal::Array<String> dependencies = (TRY((Array<String>::create_with({}))));
-const types::CheckedStruct struct_ = ((((*this).program))->get_struct(struct_id));
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct(struct_id));
 if ((((((struct_).definition_linkage)).index() == 1 /* External */) && (((struct_).name) != String("Optional")))){
 return (dependencies);
 }
@@ -3113,14 +3142,14 @@ break;
 }
 types::TypeId inner_type = (_magic_value.value());
 {
-const JaktInternal::Array<String> inner_dependencies = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<String>, ErrorOr<JaktInternal::Array<String>>>{
+JaktInternal::Array<String> const inner_dependencies = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<String>, ErrorOr<JaktInternal::Array<String>>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(inner_type));
 switch(__jakt_match_variant.index()) {
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
 return JaktInternal::ExplicitValue(TRY((((*this).extract_dependencies_from(inner_type,dependency_graph,false)))));
 };/*case end*/
-case 22: {
+case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
 return JaktInternal::ExplicitValue(TRY((((*this).extract_dependencies_from(inner_type,dependency_graph,false)))));
 };/*case end*/
@@ -3153,7 +3182,7 @@ TRY((((dependencies).push(dependency))));
 }
 JaktInternal::Optional<types::StructId> super_struct_id = ((struct_).super_struct_id);
 while (((super_struct_id).has_value())){
-const types::CheckedStruct super_struct = ((((*this).program))->get_struct((super_struct_id.value())));
+types::CheckedStruct const super_struct = ((((*this).program))->get_struct((super_struct_id.value())));
 TRY((((dependencies).push(TRY((((((super_struct).type_id)).to_string())))))));
 (super_struct_id = ((super_struct).super_struct_id));
 }
@@ -3167,8 +3196,8 @@ break;
 }
 types::CheckedField field = (_magic_value.value());
 {
-const types::TypeId type_id = ((((((*this).program))->get_variable(((field).variable_id)))).type_id);
-const JaktInternal::Array<String> inner_dependencies = TRY((((*this).extract_dependencies_from(type_id,dependency_graph,false))));
+types::TypeId const type_id = ((((((*this).program))->get_variable(((field).variable_id)))).type_id);
+JaktInternal::Array<String> const inner_dependencies = TRY((((*this).extract_dependencies_from(type_id,dependency_graph,false))));
 {
 JaktInternal::ArrayIterator<String> _magic = ((inner_dependencies).iterator());
 for (;;){
@@ -3193,7 +3222,7 @@ return (dependencies);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_function_in_namespace(const NonnullRefPtr<types::CheckedFunction> function_,const JaktInternal::Optional<types::TypeId> containing_struct,const bool as_method) {
+ErrorOr<String> codegen::CodeGenerator::codegen_function_in_namespace(NonnullRefPtr<types::CheckedFunction> const function_,JaktInternal::Optional<types::TypeId> const containing_struct,bool const as_method) {
 {
 if ((!(((((((function_)->generics))->params)).is_empty())))){
 if (((((function_)->linkage)).index() == 1 /* External */)){
@@ -3202,7 +3231,7 @@ return (String(""));
 }
 String output = String("");
 (output += TRY((((*this).codegen_function_generic_parameters(function_)))));
-const bool is_main = ((((function_)->name) == String("main")) && (!(((containing_struct).has_value()))));
+bool const is_main = ((((function_)->name) == String("main")) && (!(((containing_struct).has_value()))));
 if (((((function_)->return_type_id)).equals(types::never_type_id()))){
 (output += String("[[noreturn]] "));
 }
@@ -3230,7 +3259,7 @@ if (is_main){
 (output += String("main"));
 }
 else {
-const String qualifier = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+String const qualifier = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = (((containing_struct).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_type_possibly_as_namespace((containing_struct.value()),true)))));
@@ -3261,7 +3290,7 @@ break;
 }
 types::CheckedParameter param = (_magic_value.value());
 {
-const types::CheckedVariable variable = ((param).variable);
+types::CheckedVariable const variable = ((param).variable);
 if ((((variable).name) == String("this"))){
 continue;
 }
@@ -3272,12 +3301,12 @@ else {
 (first = false);
 }
 
-const NonnullRefPtr<types::Type> variable_type = ((((*this).program))->get_type(((variable).type_id)));
-if (((!(((variable).is_mutable))) && (!((((variable_type)->index() == 25 /* Reference */) || ((variable_type)->index() == 26 /* MutableReference */)))))){
-(output += String("const "));
-}
+NonnullRefPtr<types::Type> const variable_type = ((((*this).program))->get_type(((variable).type_id)));
 (output += TRY((((*this).codegen_type(((variable).type_id))))));
 (output += String(" "));
+if (((!(((variable).is_mutable))) && (!((((variable_type)->index() == 27 /* Reference */) || ((variable_type)->index() == 28 /* MutableReference */)))))){
+(output += String("const "));
+}
 (output += ((variable).name));
 }
 
@@ -3292,9 +3321,9 @@ if (((!(((function_)->is_static()))) && (!(((function_)->is_mutating()))))){
 if (is_main){
 (output += String("\n\n            #ifdef _WIN32\n            SetConsoleOutputCP(CP_UTF8);\n            // Enable buffering to prevent VS from chopping up UTF-8 byte sequences\n            setvbuf(stdout, nullptr, _IOFBF, 1000);\n            #endif\n"));
 }
-const codegen::ControlFlowState last_control_flow = ((*this).control_flow_state);
+codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((*this).control_flow_state) = ((last_control_flow).enter_function()));
-const String block = TRY((((*this).codegen_block(((function_)->block)))));
+String const block = TRY((((*this).codegen_block(((function_)->block)))));
 (((*this).control_flow_state) = last_control_flow);
 (output += block);
 if (is_main){
@@ -3311,32 +3340,32 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_method_call(const NonnullRefPtr<types::CheckedExpression> expr,const types::CheckedCall call,const bool is_optional) {
+ErrorOr<String> codegen::CodeGenerator::codegen_method_call(NonnullRefPtr<types::CheckedExpression> const expr,types::CheckedCall const call,bool const is_optional) {
 {
 String output = String("");
 if (((call).callee_throws)){
 (output += TRY((((*this).current_error_handler()))));
 (output += String("(("));
 }
-const String object = TRY((((*this).codegen_expression(expr))));
+String const object = TRY((((*this).codegen_expression_and_deref_if_generic_and_needed(expr))));
 (output += String("(("));
 (output += object);
 (output += String(")"));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<String>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(((expr)->type())));
 switch(__jakt_match_variant.index()) {
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::RawPtr>();
 {
 (output += String("->"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 22: {
+case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
 types::StructId const& id = __jakt_match_value.value;
 {
-const types::CheckedStruct struct_ = ((((*this).program))->get_struct(id));
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct(id));
 if ((((((struct_).record_type)).index() == 1 /* Class */) && (object != String("*this")))){
 (output += String("->"));
 }
@@ -3350,7 +3379,7 @@ return JaktInternal::ExplicitValue<void>();
 case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericInstance>();types::StructId const& id = __jakt_match_value.id;
 {
-const types::CheckedStruct struct_ = ((((*this).program))->get_struct(id));
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct(id));
 if ((((((struct_).record_type)).index() == 1 /* Class */) && (object != String("*this")))){
 (output += String("->"));
 }
@@ -3361,11 +3390,11 @@ else {
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
 types::EnumId const& id = __jakt_match_value.value;
 {
-const types::CheckedEnum enum_ = ((((*this).program))->get_enum(id));
+types::CheckedEnum const enum_ = ((((*this).program))->get_enum(id));
 if ((((enum_).is_boxed) && (object != String("*this")))){
 (output += String("->"));
 }
@@ -3400,9 +3429,9 @@ break;
 }
 JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> ___expr__ = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> jakt_____expr__ = ___expr__;
-const String _ = ((jakt_____expr__).get<0>());
-const NonnullRefPtr<types::CheckedExpression> expr = ((jakt_____expr__).get<1>());
+JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> const jakt_____expr__ = ___expr__;
+String const _ = ((jakt_____expr__).get<0>());
+NonnullRefPtr<types::CheckedExpression> const expr = ((jakt_____expr__).get<1>());
 
 if (first){
 (first = false);
@@ -3431,7 +3460,7 @@ return (output);
 
 codegen::CodeGenerator::CodeGenerator(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, codegen::ControlFlowState a_control_flow_state, JaktInternal::Array<JaktInternal::Tuple<String,String>> a_entered_yieldable_blocks, String a_deferred_output, JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> a_current_function, bool a_inside_defer, codegen::CodegenDebugInfo a_debug_info, JaktInternal::Array<String> a_namespace_stack, size_t a_fresh_var_counter, size_t a_fresh_label_counter) :compiler(a_compiler), program(a_program), control_flow_state(a_control_flow_state), entered_yieldable_blocks(a_entered_yieldable_blocks), deferred_output(a_deferred_output), current_function(a_current_function), inside_defer(a_inside_defer), debug_info(a_debug_info), namespace_stack(a_namespace_stack), fresh_var_counter(a_fresh_var_counter), fresh_label_counter(a_fresh_label_counter){}
 
-ErrorOr<String> codegen::CodeGenerator::codegen_struct(const types::CheckedStruct struct_) {
+ErrorOr<String> codegen::CodeGenerator::codegen_struct(types::CheckedStruct const struct_) {
 {
 String output = String("");
 if (((((struct_).definition_linkage)).index() == 1 /* External */)){
@@ -3440,15 +3469,15 @@ return (String(""));
 JaktInternal::Array<String> generic_parameter_names = (TRY((Array<String>::create_with({}))));
 if ((!(((((struct_).generic_parameters)).is_empty())))){
 {
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((((struct_).generic_parameters)).iterator());
+JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((struct_).generic_parameters)).iterator());
 for (;;){
-JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
+JaktInternal::Optional<types::CheckedGenericParameter> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-types::TypeId generic_parameter = (_magic_value.value());
+types::CheckedGenericParameter generic_parameter = (_magic_value.value());
 {
-TRY((((generic_parameter_names).push(TRY((((*this).codegen_type(generic_parameter))))))));
+TRY((((generic_parameter_names).push(TRY((((*this).codegen_type(((generic_parameter).type_id)))))))));
 }
 
 }
@@ -3465,13 +3494,13 @@ String class_name_with_generics = String("");
 (class_name_with_generics += ((struct_).name));
 bool first = true;
 {
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((((struct_).generic_parameters)).iterator());
+JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((struct_).generic_parameters)).iterator());
 for (;;){
-JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
+JaktInternal::Optional<types::CheckedGenericParameter> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-types::TypeId generic_parameter = (_magic_value.value());
+types::CheckedGenericParameter generic_parameter = (_magic_value.value());
 {
 if ((!(first))){
 (class_name_with_generics += String(", "));
@@ -3481,7 +3510,7 @@ else {
 (first = false);
 }
 
-(class_name_with_generics += TRY((((*this).codegen_type(generic_parameter)))));
+(class_name_with_generics += TRY((((*this).codegen_type(((generic_parameter).type_id))))));
 }
 
 }
@@ -3491,7 +3520,7 @@ if ((!(((((struct_).generic_parameters)).is_empty())))){
 (class_name_with_generics += String(">"));
 }
 if (((((struct_).super_struct_id)).has_value())){
-const types::CheckedStruct super_struct = ((((*this).program))->get_struct((((struct_).super_struct_id).value())));
+types::CheckedStruct const super_struct = ((((*this).program))->get_struct((((struct_).super_struct_id).value())));
 (output += TRY((String::formatted(String("class {}: public {} {{\n"),((struct_).name),((super_struct).name)))));
 }
 else {
@@ -3540,7 +3569,7 @@ break;
 }
 types::CheckedField field = (_magic_value.value());
 {
-const types::CheckedVariable variable = ((((*this).program))->get_variable(((field).variable_id)));
+types::CheckedVariable const variable = ((((*this).program))->get_variable(((field).variable_id)));
 (output += TRY((((*this).codegen_type(((variable).type_id))))));
 (output += String(" "));
 (output += ((variable).name));
@@ -3550,7 +3579,7 @@ const types::CheckedVariable variable = ((((*this).program))->get_variable(((fie
 }
 }
 
-const NonnullRefPtr<types::Scope> scope = TRY((((((*this).program))->get_scope(((struct_).scope_id)))));
+NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((struct_).scope_id)))));
 {
 JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
 for (;;){
@@ -3560,10 +3589,10 @@ break;
 }
 JaktInternal::Tuple<String,types::FunctionId> fn = (_magic_value.value());
 {
-const NonnullRefPtr<types::CheckedFunction> function_ = ((((*this).program))->get_function(((fn).get<1>())));
-const JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> previous_function_id = ((*this).current_function);
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(((fn).get<1>())));
+JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function_id = ((*this).current_function);
 (((*this).current_function) = static_cast<JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>>>(function_));
-ScopeGuard __jakt_var_411([&] {
+ScopeGuard __jakt_var_424([&] {
 (((*this).current_function) = previous_function_id);
 });
 if (((((function_)->type)).index() == 1 /* ImplicitConstructor */)){
@@ -3604,7 +3633,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_enum_predecl(const types::CheckedEnum enum_) {
+ErrorOr<String> codegen::CodeGenerator::codegen_enum_predecl(types::CheckedEnum const enum_) {
 {
 String output = String("");
 if ((!(((((enum_).underlying_type_id)).equals(types::void_type_id()))))){
@@ -3616,19 +3645,19 @@ utility::todo(String("Enums with a non-integer underlying type"));
 }
 
 }
-const bool is_generic = (!(((((enum_).generic_parameters)).is_empty())));
+bool const is_generic = (!(((((enum_).generic_parameters)).is_empty())));
 JaktInternal::Array<String> template_args_array = (TRY((Array<String>::create_with({}))));
 {
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((((enum_).generic_parameters)).iterator());
+JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((enum_).generic_parameters)).iterator());
 for (;;){
-JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
+JaktInternal::Optional<types::CheckedGenericParameter> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-types::TypeId generic_parameter = (_magic_value.value());
+types::CheckedGenericParameter generic_parameter = (_magic_value.value());
 {
-if (((((((*this).program))->get_type(generic_parameter)))->index() == 18 /* TypeVariable */)){
-const String name = (((((*this).program))->get_type(generic_parameter))->get<types::Type::TypeVariable>()).value;
+if (((((((*this).program))->get_type(((generic_parameter).type_id))))->index() == 18 /* TypeVariable */)){
+String const name = (((((*this).program))->get_type(((generic_parameter).type_id)))->get<types::Type::TypeVariable>()).value;
 TRY((((template_args_array).push((String("typename ") + name)))));
 }
 }
@@ -3702,12 +3731,12 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_binary_expression(const NonnullRefPtr<types::CheckedExpression> expression,const types::TypeId type_id,const NonnullRefPtr<types::CheckedExpression> lhs,const NonnullRefPtr<types::CheckedExpression> rhs,const parser::BinaryOperator op) {
+ErrorOr<String> codegen::CodeGenerator::codegen_binary_expression(NonnullRefPtr<types::CheckedExpression> const expression,types::TypeId const type_id,NonnullRefPtr<types::CheckedExpression> const lhs,NonnullRefPtr<types::CheckedExpression> const rhs,parser::BinaryOperator const op) {
 {
 if (((op).index() == 20 /* NoneCoalescing */)){
-const types::TypeId rhs_type_id = ((rhs)->type());
-const NonnullRefPtr<types::Type> rhs_type = ((((*this).program))->get_type(rhs_type_id));
-const bool rhs_can_throw = ((rhs)->can_throw());
+types::TypeId const rhs_type_id = ((rhs)->type());
+NonnullRefPtr<types::Type> const rhs_type = ((((*this).program))->get_type(rhs_type_id));
+bool const rhs_can_throw = ((rhs)->can_throw());
 String output = String("");
 if (rhs_can_throw){
 (output += TRY((((*this).current_error_handler()))));
@@ -3715,7 +3744,7 @@ if (rhs_can_throw){
 }
 (output += TRY((((*this).codegen_expression(lhs)))));
 if (((rhs_type)->index() == 19 /* GenericInstance */)){
-const types::StructId id = (rhs_type->get<types::Type::GenericInstance>()).id;
+types::StructId const id = (rhs_type->get<types::Type::GenericInstance>()).id;
 if ((((((((*this).program))->get_struct(id))).name) == String("Optional"))){
 if (rhs_can_throw){
 (output += String(".try_value_or_lazy_evaluated_optional"));
@@ -3778,8 +3807,8 @@ String output = String("JaktInternal::arithmetic_shift_right(");
 return (output);
 }
 if ((((op).index() == 21 /* Assign */) && ((lhs)->index() == 13 /* IndexedDictionary */))){
-const NonnullRefPtr<types::CheckedExpression> expr = (lhs->get<types::CheckedExpression::IndexedDictionary>()).expr;
-const NonnullRefPtr<types::CheckedExpression> index = (lhs->get<types::CheckedExpression::IndexedDictionary>()).index;
+NonnullRefPtr<types::CheckedExpression> const expr = (lhs->get<types::CheckedExpression::IndexedDictionary>()).expr;
+NonnullRefPtr<types::CheckedExpression> const index = (lhs->get<types::CheckedExpression::IndexedDictionary>()).index;
 return (TRY((String::formatted(String("{}({}.set({}, {}))"),TRY((((*this).current_error_handler()))),TRY((((*this).codegen_expression(expr)))),TRY((((*this).codegen_expression(index)))),TRY((((*this).codegen_expression(rhs))))))));
 }
 if (((((*this).program))->is_integer(type_id))){
@@ -4051,12 +4080,12 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::B
 return JaktInternal::ExplicitValue(String(" >> "));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_412; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_425; {
 utility::todo(TRY((String::formatted(String("codegen_binary_expression {}"),op))));
-__jakt_var_412 = String(""); goto __jakt_label_380;
+__jakt_var_425 = String(""); goto __jakt_label_389;
 
 }
-__jakt_label_380:; __jakt_var_412.release_value(); }));
+__jakt_label_389:; __jakt_var_425.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -4067,7 +4096,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_namespace_predecl(const NonnullRefPtr<types::Scope> scope,const NonnullRefPtr<types::Module> current_module) {
+ErrorOr<String> codegen::CodeGenerator::codegen_namespace_predecl(NonnullRefPtr<types::Scope> const scope,NonnullRefPtr<types::Module> const current_module) {
 {
 if (((((scope)->import_path_if_extern)).has_value())){
 return (String(""));
@@ -4087,14 +4116,14 @@ break;
 }
 JaktInternal::Tuple<String,types::StructId> ___struct_id__ = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,types::StructId> jakt_____struct_id__ = ___struct_id__;
-const String _ = ((jakt_____struct_id__).get<0>());
-const types::StructId struct_id = ((jakt_____struct_id__).get<1>());
+JaktInternal::Tuple<String,types::StructId> const jakt_____struct_id__ = ___struct_id__;
+String const _ = ((jakt_____struct_id__).get<0>());
+types::StructId const struct_id = ((jakt_____struct_id__).get<1>());
 
 if ((!(((((struct_id).module)).equals(((current_module)->id)))))){
 continue;
 }
-const types::CheckedStruct struct_ = ((((*this).program))->get_struct(struct_id));
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct(struct_id));
 (output += TRY((((*this).codegen_struct_predecl(struct_)))));
 (output += String("\n"));
 }
@@ -4111,14 +4140,14 @@ break;
 }
 JaktInternal::Tuple<String,types::EnumId> ___enum_id__ = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,types::EnumId> jakt_____enum_id__ = ___enum_id__;
-const String _ = ((jakt_____enum_id__).get<0>());
-const types::EnumId enum_id = ((jakt_____enum_id__).get<1>());
+JaktInternal::Tuple<String,types::EnumId> const jakt_____enum_id__ = ___enum_id__;
+String const _ = ((jakt_____enum_id__).get<0>());
+types::EnumId const enum_id = ((jakt_____enum_id__).get<1>());
 
 if ((!(((((enum_id).module)).equals(((current_module)->id)))))){
 continue;
 }
-const types::CheckedEnum enum_ = ((((*this).program))->get_enum(enum_id));
+types::CheckedEnum const enum_ = ((((*this).program))->get_enum(enum_id));
 (output += TRY((((*this).codegen_enum_predecl(enum_)))));
 (output += String("\n"));
 }
@@ -4150,20 +4179,20 @@ break;
 }
 JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,types::FunctionId> jakt_____function_id__ = ___function_id__;
-const String _ = ((jakt_____function_id__).get<0>());
-const types::FunctionId function_id = ((jakt_____function_id__).get<1>());
+JaktInternal::Tuple<String,types::FunctionId> const jakt_____function_id__ = ___function_id__;
+String const _ = ((jakt_____function_id__).get<0>());
+types::FunctionId const function_id = ((jakt_____function_id__).get<1>());
 
 if ((!(((((function_id).module)).equals(((current_module)->id)))))){
 continue;
 }
-const NonnullRefPtr<types::CheckedFunction> function_ = ((((*this).program))->get_function(function_id));
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
 if (((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */)){
 continue;
 }
-const JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> previous_function_id = ((*this).current_function);
+JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function_id = ((*this).current_function);
 (((*this).current_function) = static_cast<JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>>>(function_));
-ScopeGuard __jakt_var_413([&] {
+ScopeGuard __jakt_var_426([&] {
 (((*this).current_function) = previous_function_id);
 });
 if (((!(((((function_)->type)).index() == 1 /* ImplicitConstructor */))) && (((function_)->name) != String("main")))){
@@ -4191,14 +4220,14 @@ return (String("TRY"));
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_namespace_qualifier(const types::ScopeId scope_id) const {
+ErrorOr<String> codegen::CodeGenerator::codegen_namespace_qualifier(types::ScopeId const scope_id) const {
 {
 String output = String("");
 JaktInternal::Optional<types::ScopeId> current_scope_id = ((TRY((((((*this).program))->get_scope(scope_id)))))->parent);
 while (((current_scope_id).has_value())){
-const NonnullRefPtr<types::Scope> scope = TRY((((((*this).program))->get_scope((current_scope_id.value())))));
+NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope((current_scope_id.value())))));
 if (((((scope)->namespace_name)).has_value())){
-const String namespace_name = (((scope)->namespace_name).value());
+String const namespace_name = (((scope)->namespace_name).value());
 (output = TRY((String::formatted(String("{}::{}"),namespace_name,output))));
 }
 (current_scope_id = ((scope)->parent));
@@ -4207,7 +4236,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_namespace_path(const types::CheckedCall call) const {
+ErrorOr<String> codegen::CodeGenerator::codegen_namespace_path(types::CheckedCall const call) const {
 {
 String output = String("");
 size_t index = static_cast<size_t>(0ULL);
@@ -4259,7 +4288,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_type_possibly_as_namespace(const types::TypeId type_id,const bool as_namespace) const {
+ErrorOr<String> codegen::CodeGenerator::codegen_type_possibly_as_namespace(types::TypeId const type_id,bool const as_namespace) const {
 {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(type_id));
@@ -4332,22 +4361,22 @@ case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Never>();
 return JaktInternal::ExplicitValue(String("void"));
 };/*case end*/
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::RawPtr>();
 types::TypeId const& type_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue((TRY((((*this).codegen_type(type_id)))) + String("*")));
 };/*case end*/
-case 25: {
+case 27: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Reference>();
 types::TypeId const& type_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue((TRY((((*this).codegen_type(type_id)))) + String(" const&")));
 };/*case end*/
-case 26: {
+case 28: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::MutableReference>();
 types::TypeId const& type_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue((TRY((((*this).codegen_type(type_id)))) + String("&")));
 };/*case end*/
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericResolvedType>();types::StructId const& id = __jakt_match_value.id;
 JaktInternal::Array<types::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_generic_type_instance(id,args,as_namespace)))));
@@ -4357,12 +4386,12 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::Gener
 JaktInternal::Array<types::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_generic_type_instance(id,args,as_namespace)))));
 };/*case end*/
-case 22: {
+case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
 types::StructId const& id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_struct_type(id,as_namespace)))));
 };/*case end*/
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
 types::EnumId const& id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_enum_type(id,as_namespace)))));
@@ -4377,11 +4406,11 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Ty
 String const& name = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(name);
 };/*case end*/
-case 27: {
+case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::Function>();JaktInternal::Array<types::TypeId> const& params = __jakt_match_value.params;
 bool const& can_throw = __jakt_match_value.can_throw;
 types::TypeId const& return_type_id = __jakt_match_value.return_type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_414; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_427; {
 String output = String("Function<");
 if (can_throw){
 (output += String("ErrorOr<"));
@@ -4415,17 +4444,22 @@ else {
 }
 
 (output += String(")>"));
-__jakt_var_414 = output; goto __jakt_label_381;
+__jakt_var_427 = output; goto __jakt_label_390;
 
 }
-__jakt_label_381:; __jakt_var_414.release_value(); }));
+__jakt_label_390:; __jakt_var_427.release_value(); }));
+};/*case end*/
+case 21: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericTraitInstance>();{
+utility::panic(String("Generic trait instance in codegen"));
+}
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_415; {
-__jakt_var_415 = String("auto"); goto __jakt_label_382;
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_428; {
+__jakt_var_428 = String("auto"); goto __jakt_label_391;
 
 }
-__jakt_label_382:; __jakt_var_415.release_value(); }));
+__jakt_label_391:; __jakt_var_428.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -4433,7 +4467,7 @@ __jakt_label_382:; __jakt_var_415.release_value(); }));
 }
 }
 
-ErrorOr<JaktInternal::Array<String>> codegen::CodeGenerator::extract_dependencies_from(const types::TypeId type_id,const JaktInternal::Dictionary<String,JaktInternal::Array<String>> dependency_graph,const bool top_level) const {
+ErrorOr<JaktInternal::Array<String>> codegen::CodeGenerator::extract_dependencies_from(types::TypeId const type_id,JaktInternal::Dictionary<String,JaktInternal::Array<String>> const dependency_graph,bool const top_level) const {
 {
 JaktInternal::Array<String> dependencies = (TRY((Array<String>::create_with({}))));
 if (((dependency_graph).contains(TRY((((type_id).to_string())))))){
@@ -4454,11 +4488,11 @@ TRY((((dependencies).push(dependency))));
 
 return (dependencies);
 }
-const NonnullRefPtr<types::Type> type_ = ((((*this).program))->get_type(type_id));
-const JaktInternal::Array<String> inner_dependencies = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<String>, ErrorOr<JaktInternal::Array<String>>>{
+NonnullRefPtr<types::Type> const type_ = ((((*this).program))->get_type(type_id));
+JaktInternal::Array<String> const inner_dependencies = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<String>, ErrorOr<JaktInternal::Array<String>>>{
 auto&& __jakt_match_variant = *type_;
 switch(__jakt_match_variant.index()) {
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
 types::EnumId const& enum_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((((*this).extract_dependencies_from_enum(enum_id,dependency_graph,top_level)))));
@@ -4467,7 +4501,7 @@ case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericEnumInstance>();types::EnumId const& id = __jakt_match_value.id;
 return JaktInternal::ExplicitValue(TRY((((*this).extract_dependencies_from_enum(id,dependency_graph,top_level)))));
 };/*case end*/
-case 22: {
+case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
 types::StructId const& id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((((*this).extract_dependencies_from_struct(id,dependency_graph,top_level,(TRY((Array<types::TypeId>::create_with({})))))))));
@@ -4502,7 +4536,7 @@ return (dependencies);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_match_body(const types::CheckedMatchBody body,const types::TypeId return_type_id) {
+ErrorOr<String> codegen::CodeGenerator::codegen_match_body(types::CheckedMatchBody const body,types::TypeId const return_type_id) {
 {
 String output = String("");
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<String>>{
@@ -4544,7 +4578,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_function_predecl(const NonnullRefPtr<types::CheckedFunction> function_,const bool as_method) {
+ErrorOr<String> codegen::CodeGenerator::codegen_function_predecl(NonnullRefPtr<types::CheckedFunction> const function_,bool const as_method) {
 {
 String output = String("");
 if (((!(((((((function_)->generics))->params)).is_empty()))) && ((((function_)->linkage)).index() == 1 /* External */))){
@@ -4573,8 +4607,8 @@ if ((as_method && ((function_)->is_static()))){
 if (((function_)->is_virtual)){
 (output += String("virtual "));
 }
-const String naked_return_type = TRY((((*this).codegen_type(((function_)->return_type_id)))));
-const String return_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+String const naked_return_type = TRY((((*this).codegen_type(((function_)->return_type_id)))));
+String const return_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = (((function_)->can_throw));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(TRY((String::formatted(String("ErrorOr<{}>"),naked_return_type))));
@@ -4610,12 +4644,12 @@ else {
 (output += String(", "));
 }
 
-const NonnullRefPtr<types::Type> param_type = ((((*this).program))->get_type(((((param).variable)).type_id)));
-if (((!(((((param).variable)).is_mutable))) && (!((((param_type)->index() == 25 /* Reference */) || ((param_type)->index() == 26 /* MutableReference */)))))){
-(output += String("const "));
-}
+NonnullRefPtr<types::Type> const param_type = ((((*this).program))->get_type(((((param).variable)).type_id)));
 (output += TRY((((*this).codegen_type(((((param).variable)).type_id))))));
 (output += String(" "));
+if (((!(((((param).variable)).is_mutable))) && (!((((param_type)->index() == 27 /* Reference */) || ((param_type)->index() == 28 /* MutableReference */)))))){
+(output += String("const "));
+}
 (output += ((((param).variable)).name));
 }
 
@@ -4641,14 +4675,14 @@ return (TRY((String::formatted(String("__jakt_var_{}"),((((*this).fresh_var_coun
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_block(const types::CheckedBlock block) {
+ErrorOr<String> codegen::CodeGenerator::codegen_block(types::CheckedBlock const block) {
 {
 String output = String("");
 if (((((block).yielded_type)).has_value())){
-const types::TypeId yielded_type = (((block).yielded_type).value());
-const String type_output = TRY((((*this).codegen_type(yielded_type))));
-const String fresh_var = TRY((((*this).fresh_var())));
-const String fresh_label = TRY((((*this).fresh_label())));
+types::TypeId const yielded_type = (((block).yielded_type).value());
+String const type_output = TRY((((*this).codegen_type(yielded_type))));
+String const fresh_var = TRY((((*this).fresh_var())));
+String const fresh_label = TRY((((*this).fresh_label())));
 TRY((((((*this).entered_yieldable_blocks)).push((Tuple{fresh_var, fresh_label})))));
 (output += String("({ Optional<"));
 (output += type_output);
@@ -4674,9 +4708,9 @@ NonnullRefPtr<types::CheckedStatement> statement = (_magic_value.value());
 
 (output += String("}\n"));
 if (((((block).yielded_type)).has_value())){
-const JaktInternal::Tuple<String,String> var_label_ = (((((*this).entered_yieldable_blocks)).pop()).value());
-const String var = ((var_label_).get<0>());
-const String label = ((var_label_).get<1>());
+JaktInternal::Tuple<String,String> const var_label_ = (((((*this).entered_yieldable_blocks)).pop()).value());
+String const var = ((var_label_).get<0>());
+String const label = ((var_label_).get<1>());
 
 (output += label);
 (output += String(":; "));
@@ -4690,7 +4724,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_checked_binary_op_assignment(const NonnullRefPtr<types::CheckedExpression> lhs,const NonnullRefPtr<types::CheckedExpression> rhs,const parser::BinaryOperator op,const types::TypeId type_id) {
+ErrorOr<String> codegen::CodeGenerator::codegen_checked_binary_op_assignment(NonnullRefPtr<types::CheckedExpression> const lhs,NonnullRefPtr<types::CheckedExpression> const rhs,parser::BinaryOperator const op,types::TypeId const type_id) {
 {
 String output = String("");
 (output += String("{"));
@@ -4739,18 +4773,18 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_enum_type(const types::EnumId id,const bool as_namespace) const {
+ErrorOr<String> codegen::CodeGenerator::codegen_enum_type(types::EnumId const id,bool const as_namespace) const {
 {
 String output = String("");
-const NonnullRefPtr<types::Module> type_module = ((((*this).program))->get_module(((id).module)));
-const types::CheckedEnum checked_enum = ((((*this).program))->get_enum(id));
+NonnullRefPtr<types::Module> const type_module = ((((*this).program))->get_module(((id).module)));
+types::CheckedEnum const checked_enum = ((((*this).program))->get_enum(id));
 if (((!(as_namespace)) && ((checked_enum).is_boxed))){
 (output += String("NonnullRefPtr<"));
 if ((!((((type_module)->is_root) || ((((type_module)->id)).equals(types::ModuleId(static_cast<size_t>(0ULL)))))))){
 (output += ((type_module)->name));
 (output += String("::"));
 }
-const String qualifier = TRY((((*this).codegen_namespace_qualifier(((checked_enum).scope_id)))));
+String const qualifier = TRY((((*this).codegen_namespace_qualifier(((checked_enum).scope_id)))));
 if ((!(((qualifier).is_empty())))){
 (output += String("typename "));
 (output += qualifier);
@@ -4763,7 +4797,7 @@ if ((!((((type_module)->is_root) || ((((type_module)->id)).equals(types::ModuleI
 (output += ((type_module)->name));
 (output += String("::"));
 }
-const String qualifier = TRY((((*this).codegen_namespace_qualifier(((checked_enum).scope_id)))));
+String const qualifier = TRY((((*this).codegen_namespace_qualifier(((checked_enum).scope_id)))));
 if ((!(((qualifier).is_empty())))){
 (output += qualifier);
 }
@@ -4774,26 +4808,26 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_constructor(const NonnullRefPtr<types::CheckedFunction> function_,const bool is_inline) {
+ErrorOr<String> codegen::CodeGenerator::codegen_constructor(NonnullRefPtr<types::CheckedFunction> const function_,bool const is_inline) {
 {
-const types::TypeId type_id = ((function_)->return_type_id);
-const NonnullRefPtr<types::Type> type_ = ((((*this).program))->get_type(type_id));
-if (((type_)->index() == 22 /* Struct */)){
-const types::StructId struct_id = (type_->get<types::Type::Struct>()).value;
-const types::CheckedStruct structure = ((((*this).program))->get_struct(struct_id));
-const String qualified_name = TRY((((*this).codegen_type_possibly_as_namespace(type_id,true))));
+types::TypeId const type_id = ((function_)->return_type_id);
+NonnullRefPtr<types::Type> const type_ = ((((*this).program))->get_type(type_id));
+if (((type_)->index() == 23 /* Struct */)){
+types::StructId const struct_id = (type_->get<types::Type::Struct>()).value;
+types::CheckedStruct const structure = ((((*this).program))->get_struct(struct_id));
+String const qualified_name = TRY((((*this).codegen_type_possibly_as_namespace(type_id,true))));
 String output = String("");
 if (((!(is_inline)) && (!(((((structure).generic_parameters)).is_empty()))))){
 (output += String("template <"));
 bool first = true;
 {
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((((structure).generic_parameters)).iterator());
+JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((structure).generic_parameters)).iterator());
 for (;;){
-JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
+JaktInternal::Optional<types::CheckedGenericParameter> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-types::TypeId type_id = (_magic_value.value());
+types::CheckedGenericParameter param = (_magic_value.value());
 {
 if (first){
 (first = false);
@@ -4803,7 +4837,7 @@ else {
 }
 
 (output += String("typename "));
-(output += TRY((((*this).codegen_type(type_id)))));
+(output += TRY((((*this).codegen_type(((param).type_id))))));
 }
 
 }
@@ -4837,7 +4871,7 @@ else {
 (first = false);
 }
 
-const types::TypeId param_type_id = ((((param).variable)).type_id);
+types::TypeId const param_type_id = ((((param).variable)).type_id);
 (output += TRY((((*this).codegen_type(param_type_id)))));
 (output += String("&& a_"));
 (output += ((((param).variable)).name));
@@ -4850,7 +4884,7 @@ const types::TypeId param_type_id = ((((param).variable)).type_id);
 if ((!(((((function_)->params)).is_empty())))){
 (output += String(": "));
 JaktInternal::Array<String> initializers = (TRY((Array<String>::create_with({}))));
-const size_t parent_constructor_parameter_count = (JaktInternal::checked_sub<size_t>(((((function_)->params)).size()),((((structure).fields)).size())));
+size_t const parent_constructor_parameter_count = (JaktInternal::checked_sub<size_t>(((((function_)->params)).size()),((((structure).fields)).size())));
 if ((parent_constructor_parameter_count > static_cast<size_t>(0ULL))){
 String parent_initializer = String("");
 (parent_initializer += ((((((*this).program))->get_struct((((structure).super_struct_id).value())))).name));
@@ -4884,7 +4918,7 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const types::CheckedParameter param = ((((function_)->params))[i]);
+types::CheckedParameter const param = ((((function_)->params))[i]);
 TRY((((initializers).push((((((((param).variable)).name) + String("(move(a_")) + ((((param).variable)).name)) + String("))"))))));
 }
 
@@ -4898,13 +4932,13 @@ String class_name_with_generics = String("");
 (class_name_with_generics += ((structure).name));
 (first = true);
 {
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((((structure).generic_parameters)).iterator());
+JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((structure).generic_parameters)).iterator());
 for (;;){
-JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
+JaktInternal::Optional<types::CheckedGenericParameter> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-types::TypeId generic_parameter = (_magic_value.value());
+types::CheckedGenericParameter generic_parameter = (_magic_value.value());
 {
 if ((!(first))){
 (class_name_with_generics += String(", "));
@@ -4914,7 +4948,7 @@ else {
 (first = false);
 }
 
-(class_name_with_generics += TRY((((*this).codegen_type(generic_parameter)))));
+(class_name_with_generics += TRY((((*this).codegen_type(((generic_parameter).type_id))))));
 }
 
 }
@@ -4926,7 +4960,7 @@ if ((!(((((structure).generic_parameters)).is_empty())))){
 if (is_inline){
 (output += String("static "));
 }
-const String qualified_namespace = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+String const qualified_namespace = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = (is_inline);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(String(""));
@@ -5063,20 +5097,20 @@ utility::panic(String("internal error: call to a constructor, but not a struct/c
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_enum_debug_description_getter(const types::CheckedEnum enum_,const bool is_inline) {
+ErrorOr<String> codegen::CodeGenerator::codegen_enum_debug_description_getter(types::CheckedEnum const enum_,bool const is_inline) {
 {
 String output = String("");
 if (((!(is_inline)) && (!(((((enum_).generic_parameters)).is_empty()))))){
 (output += String("template <"));
 bool first = true;
 {
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((((enum_).generic_parameters)).iterator());
+JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((enum_).generic_parameters)).iterator());
 for (;;){
-JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
+JaktInternal::Optional<types::CheckedGenericParameter> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-types::TypeId type_id = (_magic_value.value());
+types::CheckedGenericParameter param = (_magic_value.value());
 {
 if (first){
 (first = false);
@@ -5086,7 +5120,7 @@ else {
 }
 
 (output += String("typename "));
-(output += TRY((((*this).codegen_type(type_id)))));
+(output += TRY((((*this).codegen_type(((param).type_id))))));
 }
 
 }
@@ -5111,8 +5145,8 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const types::CheckedEnumVariant variant = ((((enum_).variants))[i]);
-const String name = ((variant).name());
+types::CheckedEnumVariant const variant = ((((enum_).variants))[i]);
+String const name = ((variant).name());
 (output += TRY((String::formatted(String("case {} /* {} */: {{\n"),i,name))));
 (output += TRY((String::formatted(String("[[maybe_unused]] auto const& that = this->template get<{}::{}>();\n"),((enum_).name),name))));
 (output += TRY((String::formatted(String("TRY(builder.append(\"{}::{}\"));\n"),((enum_).name),name))));
@@ -5136,7 +5170,7 @@ break;
 types::VarId field = (_magic_value.value());
 {
 (output += String("TRY(JaktInternal::PrettyPrint::output_indentation(builder));\n"));
-const types::CheckedVariable var = ((((*this).program))->get_variable(field));
+types::CheckedVariable const var = ((((*this).program))->get_variable(field));
 if (((((*this).program))->is_string(((var).type_id)))){
 (output += TRY((String::formatted(String("TRY(builder.appendff(\"{}: \\\"{{}}\\\"\", that.{}));\n"),((var).name),((var).name)))));
 }
@@ -5190,12 +5224,12 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_enum_match(const types::CheckedEnum enum_,const NonnullRefPtr<types::CheckedExpression> expr,const JaktInternal::Array<types::CheckedMatchCase> match_cases,const types::TypeId type_id,const bool all_variants_constant) {
+ErrorOr<String> codegen::CodeGenerator::codegen_enum_match(types::CheckedEnum const enum_,NonnullRefPtr<types::CheckedExpression> const expr,JaktInternal::Array<types::CheckedMatchCase> const match_cases,types::TypeId const type_id,bool const all_variants_constant) {
 {
 String output = String("");
 (output += ((((*this).control_flow_state)).choose_control_flow_macro()));
-const String subject = TRY((((*this).codegen_expression(expr))));
-const bool needs_deref = (((enum_).is_boxed) && (subject != String("*this")));
+String const subject = TRY((((*this).codegen_expression(expr))));
+bool const needs_deref = (((enum_).is_boxed) && (subject != String("*this")));
 if (((((enum_).underlying_type_id)).equals(types::void_type_id()))){
 (output += String("(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"));
 (output += TRY((((*this).codegen_type(type_id)))));
@@ -5229,11 +5263,11 @@ size_t const& index = __jakt_match_value.index;
 types::ScopeId const& scope_id = __jakt_match_value.scope_id;
 types::CheckedMatchBody const& body = __jakt_match_value.body;
 {
-const NonnullRefPtr<types::Type> enum_type = ((((*this).program))->get_type(subject_type_id));
-const types::EnumId enum_id = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::EnumId, ErrorOr<String>>{
+NonnullRefPtr<types::Type> const enum_type = ((((*this).program))->get_type(subject_type_id));
+types::EnumId const enum_id = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::EnumId, ErrorOr<String>>{
 auto&& __jakt_match_variant = *enum_type;
 switch(__jakt_match_variant.index()) {
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
 types::EnumId const& id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(id);
@@ -5246,8 +5280,8 @@ utility::panic(String("Expected enum type"));
 }/*switch end*/
 }()
 ));
-const types::CheckedEnum match_case_enum = ((((*this).program))->get_enum(enum_id));
-const types::CheckedEnumVariant variant = ((((match_case_enum).variants))[index]);
+types::CheckedEnum const match_case_enum = ((((*this).program))->get_enum(enum_id));
+types::CheckedEnumVariant const variant = ((((match_case_enum).variants))[index]);
 (output += (TRY((String::formatted(String("case {}: "),index))) + String("{\n")));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<String>>{
 auto&& __jakt_match_variant = variant;
@@ -5265,8 +5299,8 @@ types::TypeId const& type_id = __jakt_match_value.type_id;
 {
 (output += TRY((String::formatted(String("auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n"),TRY((((*this).codegen_type_possibly_as_namespace(subject_type_id,true)))),name))));
 if ((!(((args).is_empty())))){
-const parser::EnumVariantPatternArgument arg = ((args)[static_cast<i64>(0LL)]);
-const types::CheckedVariable var = (TRY((((((*this).program))->find_var_in_scope(scope_id,((arg).binding))))).value());
+parser::EnumVariantPatternArgument const arg = ((args)[static_cast<i64>(0LL)]);
+types::CheckedVariable const var = (TRY((((((*this).program))->find_var_in_scope(scope_id,((arg).binding))))).value());
 (output += TRY((String::formatted(String("{} const& {} = __jakt_match_value.value;\n"),TRY((((*this).codegen_type(((var).type_id))))),((arg).binding)))));
 }
 }
@@ -5287,7 +5321,7 @@ break;
 }
 parser::EnumVariantPatternArgument arg = (_magic_value.value());
 {
-const types::CheckedVariable var = (TRY((((((*this).program))->find_var_in_scope(scope_id,((arg).binding))))).value());
+types::CheckedVariable const var = (TRY((((((*this).program))->find_var_in_scope(scope_id,((arg).binding))))).value());
 (output += TRY((((*this).codegen_type(((var).type_id))))));
 (output += String(" const& "));
 (output += ((arg).binding));
@@ -5358,14 +5392,14 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_match(const NonnullRefPtr<types::CheckedExpression> expr,const JaktInternal::Array<types::CheckedMatchCase> match_cases,const types::TypeId type_id,const bool all_variants_constant) {
+ErrorOr<String> codegen::CodeGenerator::codegen_match(NonnullRefPtr<types::CheckedExpression> const expr,JaktInternal::Array<types::CheckedMatchCase> const match_cases,types::TypeId const type_id,bool const all_variants_constant) {
 {
-const codegen::ControlFlowState last_control_flow = ((*this).control_flow_state);
+codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((*this).control_flow_state) = ((((*this).control_flow_state)).enter_match()));
 String output = String("");
-const NonnullRefPtr<types::Type> expr_type = ((((*this).program))->get_type(((expr)->type())));
-if (((expr_type)->index() == 23 /* Enum */)){
-const types::EnumId enum_id = (expr_type->get<types::Type::Enum>()).value;
+NonnullRefPtr<types::Type> const expr_type = ((((*this).program))->get_type(((expr)->type())));
+if (((expr_type)->index() == 24 /* Enum */)){
+types::EnumId const enum_id = (expr_type->get<types::Type::Enum>()).value;
 (output += TRY((((*this).codegen_enum_match(((((*this).program))->get_enum(enum_id)),expr,match_cases,type_id,all_variants_constant)))));
 }
 else {
@@ -5377,12 +5411,12 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_function_return_type(const NonnullRefPtr<types::CheckedFunction> function_) {
+ErrorOr<String> codegen::CodeGenerator::codegen_function_return_type(NonnullRefPtr<types::CheckedFunction> const function_) {
 {
 if ((((function_)->is_static()) && (((function_)->name) == String("main")))){
 return (String("ErrorOr<int>"));
 }
-const String type_name = TRY((((*this).codegen_type(((function_)->return_type_id)))));
+String const type_name = TRY((((*this).codegen_type(((function_)->return_type_id)))));
 if (((function_)->can_throw)){
 return (TRY((String::formatted(String("ErrorOr<{}>"),type_name))));
 }
@@ -5390,7 +5424,7 @@ return (type_name);
 }
 }
 
-ErrorOr<JaktInternal::Dictionary<String,JaktInternal::Tuple<String,String>>> codegen::CodeGenerator::generate(const NonnullRefPtr<compiler::Compiler> compiler,const NonnullRefPtr<types::CheckedProgram> program,const bool debug_info) {
+ErrorOr<JaktInternal::Dictionary<String,JaktInternal::Tuple<String,String>>> codegen::CodeGenerator::generate(NonnullRefPtr<compiler::Compiler> const compiler,NonnullRefPtr<types::CheckedProgram> const program,bool const debug_info) {
 {
 codegen::CodeGenerator generator = codegen::CodeGenerator(compiler,program,codegen::ControlFlowState( codegen::AllowedControlExits { typename codegen::AllowedControlExits::Nothing() } ,false,false,static_cast<size_t>(0ULL)),(TRY((Array<JaktInternal::Tuple<String,String>>::create_with({})))),String(""),JaktInternal::OptionalNone(),false,codegen::CodegenDebugInfo(compiler,(TRY((Dictionary<size_t, JaktInternal::Array<codegen::LineSpan>>::create_with_entries({})))),debug_info),(TRY((Array<String>::create_with({})))),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL));
 JaktInternal::Dictionary<String,JaktInternal::Tuple<String,String>> result = (TRY((Dictionary<String, JaktInternal::Tuple<String,String>>::create_with_entries({}))));
@@ -5401,7 +5435,7 @@ String output = String("");
 (output += String("extern \"C\" __cdecl int SetConsoleOutputCP(unsigned int code_page);\n"));
 (output += String("const unsigned int CP_UTF8 = 65001;\n"));
 (output += String("#endif\n"));
-const JaktInternal::Array<types::ModuleId> sorted_modules = TRY((((generator).topologically_sort_modules())));
+JaktInternal::Array<types::ModuleId> const sorted_modules = TRY((((generator).topologically_sort_modules())));
 (output += String("namespace Jakt {\n"));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(((sorted_modules).size())),static_cast<size_t>(static_cast<size_t>(0ULL))});
@@ -5412,19 +5446,19 @@ break;
 }
 size_t idx = (_magic_value.value());
 {
-const size_t i = ((((sorted_modules)[(JaktInternal::checked_sub<size_t>(idx,static_cast<size_t>(1ULL)))])).id);
+size_t const i = ((((sorted_modules)[(JaktInternal::checked_sub<size_t>(idx,static_cast<size_t>(1ULL)))])).id);
 if ((i == static_cast<size_t>(0ULL))){
 continue;
 }
-const NonnullRefPtr<types::Module> module = ((((((generator).program))->modules))[i]);
+NonnullRefPtr<types::Module> const module = ((((((generator).program))->modules))[i]);
 ((((generator).compiler))->dbg_println(TRY((String::formatted(String("generate: module idx: {}, module.name {}"),i,((module)->name))))));
 if ((!(((module)->is_root)))){
 (output += String("namespace "));
 (output += ((module)->name));
 (output += String(" {\n"));
 }
-const types::ScopeId scope_id = types::ScopeId(((module)->id),static_cast<size_t>(0ULL));
-const NonnullRefPtr<types::Scope> scope = TRY((((((generator).program))->get_scope(scope_id))));
+types::ScopeId const scope_id = types::ScopeId(((module)->id),static_cast<size_t>(0ULL));
+NonnullRefPtr<types::Scope> const scope = TRY((((((generator).program))->get_scope(scope_id))));
 (output += TRY((((generator).codegen_namespace_predecl(scope,module)))));
 if ((!(((module)->is_root)))){
 (output += String("}\n"));
@@ -5454,14 +5488,14 @@ break;
 }
 size_t idx = (_magic_value.value());
 {
-const size_t i = ((((sorted_modules)[(JaktInternal::checked_sub<size_t>(idx,static_cast<size_t>(1ULL)))])).id);
+size_t const i = ((((sorted_modules)[(JaktInternal::checked_sub<size_t>(idx,static_cast<size_t>(1ULL)))])).id);
 if ((i == static_cast<size_t>(0ULL))){
 continue;
 }
-const NonnullRefPtr<types::Module> module = ((((((generator).program))->modules))[i]);
+NonnullRefPtr<types::Module> const module = ((((((generator).program))->modules))[i]);
 ((((generator).compiler))->dbg_println(TRY((String::formatted(String("generate: module idx: {}, module.name {} - forward: {}"),i,((module)->name),as_forward)))));
-const String header_name = TRY((String::formatted(String("{}.h"),((module)->name))));
-const String impl_name = TRY((String::formatted(String("{}.cpp"),((module)->name))));
+String const header_name = TRY((String::formatted(String("{}.h"),((module)->name))));
+String const impl_name = TRY((String::formatted(String("{}.cpp"),((module)->name))));
 if (as_forward){
 (output = String("#pragma once\n"));
 (output += String("#include \"__unified_forward.h\"\n"));
@@ -5470,8 +5504,8 @@ else {
 (output = TRY((String::formatted(String("#include \"{}\"\n"),header_name))));
 }
 
-const types::ScopeId scope_id = types::ScopeId(((module)->id),static_cast<size_t>(0ULL));
-const NonnullRefPtr<types::Scope> scope = TRY((((((generator).program))->get_scope(scope_id))));
+types::ScopeId const scope_id = types::ScopeId(((module)->id),static_cast<size_t>(0ULL));
+NonnullRefPtr<types::Scope> const scope = TRY((((((generator).program))->get_scope(scope_id))));
 if (as_forward){
 {
 JaktInternal::ArrayIterator<types::ScopeId> _magic = ((((scope)->children)).iterator());
@@ -5482,9 +5516,9 @@ break;
 }
 types::ScopeId child_scope = (_magic_value.value());
 {
-const NonnullRefPtr<types::Scope> scope = TRY((((((generator).program))->get_scope(child_scope))));
+NonnullRefPtr<types::Scope> const scope = TRY((((((generator).program))->get_scope(child_scope))));
 if (((((scope)->import_path_if_extern)).has_value())){
-const bool has_name = ((((scope)->namespace_name)).has_value());
+bool const has_name = ((((scope)->namespace_name)).has_value());
 if (has_name){
 (output += TRY((String::formatted(String("namespace {} {{\n"),(((scope)->namespace_name).value())))));
 }
@@ -5587,7 +5621,7 @@ break;
 }
 types::ModuleId id = (_magic_value.value());
 {
-const NonnullRefPtr<types::Module> module = ((((((generator).program))->modules))[((id).id)]);
+NonnullRefPtr<types::Module> const module = ((((((generator).program))->modules))[((id).id)]);
 (output += TRY((String::formatted(String("#include \"{}.h\"\n"),((module)->name)))));
 }
 
@@ -5604,7 +5638,7 @@ TRY((((((generator).namespace_stack)).push(((module)->name)))));
 }
 (output += TRY((((generator).codegen_namespace(scope,module,as_forward)))));
 if ((!(((module)->is_root)))){
-const JaktInternal::Optional<String> dummy = ((((generator).namespace_stack)).pop());
+JaktInternal::Optional<String> const dummy = ((((generator).namespace_stack)).pop());
 }
 if ((!(((module)->is_root)))){
 (output += String("}\n"));
@@ -5633,7 +5667,7 @@ return (result);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_call(const types::CheckedCall call) {
+ErrorOr<String> codegen::CodeGenerator::codegen_call(types::CheckedCall const call) {
 {
 String output = String("");
 if (((call).callee_throws)){
@@ -5644,7 +5678,7 @@ JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::
 auto __jakt_enum_value = (((call).name));
 if (__jakt_enum_value == String("print")) {
 {
-const String helper = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+String const helper = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = (((call).name));
 if (__jakt_enum_value == String("print")) {
 return JaktInternal::ExplicitValue(String("out"));
@@ -5677,9 +5711,9 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> __expr_ = ((((call).args))[i]);
-const String _ = ((__expr_).get<0>());
-const NonnullRefPtr<types::CheckedExpression> expr = ((__expr_).get<1>());
+JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> const __expr_ = ((((call).args))[i]);
+String const _ = ((__expr_).get<0>());
+NonnullRefPtr<types::CheckedExpression> const expr = ((__expr_).get<1>());
 
 (output += TRY((((*this).codegen_expression(expr)))));
 if ((i != (JaktInternal::checked_sub<size_t>(((((call).args)).size()),static_cast<size_t>(1ULL))))){
@@ -5696,7 +5730,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == String("println")) {
 {
-const String helper = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+String const helper = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = (((call).name));
 if (__jakt_enum_value == String("print")) {
 return JaktInternal::ExplicitValue(String("out"));
@@ -5729,9 +5763,9 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> __expr_ = ((((call).args))[i]);
-const String _ = ((__expr_).get<0>());
-const NonnullRefPtr<types::CheckedExpression> expr = ((__expr_).get<1>());
+JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> const __expr_ = ((((call).args))[i]);
+String const _ = ((__expr_).get<0>());
+NonnullRefPtr<types::CheckedExpression> const expr = ((__expr_).get<1>());
 
 (output += TRY((((*this).codegen_expression(expr)))));
 if ((i != (JaktInternal::checked_sub<size_t>(((((call).args)).size()),static_cast<size_t>(1ULL))))){
@@ -5748,7 +5782,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == String("eprintln")) {
 {
-const String helper = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+String const helper = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = (((call).name));
 if (__jakt_enum_value == String("print")) {
 return JaktInternal::ExplicitValue(String("out"));
@@ -5781,9 +5815,9 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> __expr_ = ((((call).args))[i]);
-const String _ = ((__expr_).get<0>());
-const NonnullRefPtr<types::CheckedExpression> expr = ((__expr_).get<1>());
+JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> const __expr_ = ((((call).args))[i]);
+String const _ = ((__expr_).get<0>());
+NonnullRefPtr<types::CheckedExpression> const expr = ((__expr_).get<1>());
 
 (output += TRY((((*this).codegen_expression(expr)))));
 if ((i != (JaktInternal::checked_sub<size_t>(((((call).args)).size()),static_cast<size_t>(1ULL))))){
@@ -5800,7 +5834,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == String("eprint")) {
 {
-const String helper = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+String const helper = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = (((call).name));
 if (__jakt_enum_value == String("print")) {
 return JaktInternal::ExplicitValue(String("out"));
@@ -5833,9 +5867,9 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> __expr_ = ((((call).args))[i]);
-const String _ = ((__expr_).get<0>());
-const NonnullRefPtr<types::CheckedExpression> expr = ((__expr_).get<1>());
+JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> const __expr_ = ((((call).args))[i]);
+String const _ = ((__expr_).get<0>());
+NonnullRefPtr<types::CheckedExpression> const expr = ((__expr_).get<1>());
 
 (output += TRY((((*this).codegen_expression(expr)))));
 if ((i != (JaktInternal::checked_sub<size_t>(((((call).args)).size()),static_cast<size_t>(1ULL))))){
@@ -5852,7 +5886,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == String("format")) {
 {
-const String helper = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+String const helper = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = (((call).name));
 if (__jakt_enum_value == String("print")) {
 return JaktInternal::ExplicitValue(String("out"));
@@ -5885,9 +5919,9 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> __expr_ = ((((call).args))[i]);
-const String _ = ((__expr_).get<0>());
-const NonnullRefPtr<types::CheckedExpression> expr = ((__expr_).get<1>());
+JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> const __expr_ = ((((call).args))[i]);
+String const _ = ((__expr_).get<0>());
+NonnullRefPtr<types::CheckedExpression> const expr = ((__expr_).get<1>());
 
 (output += TRY((((*this).codegen_expression(expr)))));
 if ((i != (JaktInternal::checked_sub<size_t>(((((call).args)).size()),static_cast<size_t>(1ULL))))){
@@ -5906,12 +5940,12 @@ else {
 {
 bool close_enum_type_wrapper = false;
 if (((((call).function_id)).has_value())){
-const types::FunctionId function_id = (((call).function_id).value());
-const NonnullRefPtr<types::CheckedFunction> function_ = ((((*this).program))->get_function(function_id));
-const NonnullRefPtr<types::Module> type_module = ((((*this).program))->get_module(((function_id).module)));
+types::FunctionId const function_id = (((call).function_id).value());
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
+NonnullRefPtr<types::Module> const type_module = ((((*this).program))->get_module(((function_id).module)));
 if ((((((function_)->type)).index() == 1 /* ImplicitConstructor */) || ((((function_)->type)).index() == 3 /* ExternalClassConstructor */))){
-const types::TypeId type_id = ((call).return_type);
-const NonnullRefPtr<types::Type> type = ((((*this).program))->get_type(type_id));
+types::TypeId const type_id = ((call).return_type);
+NonnullRefPtr<types::Type> const type = ((((*this).program))->get_type(type_id));
 if ((!((((((((type_module)->is_root) || ((type_module)->is_prelude())) || ((((function_)->linkage)).index() == 1 /* External */)) || ((((function_)->type)).index() == 4 /* Expression */)) || ((((function_)->type)).index() == 5 /* Closure */)) || ((!(((((call).namespace_)).is_empty()))) && (((((((call).namespace_))[static_cast<i64>(0LL)])).name) == ((type_module)->name))))))){
 (output += ((type_module)->name));
 (output += String("::"));
@@ -5920,11 +5954,11 @@ if ((!((((((((type_module)->is_root) || ((type_module)->is_prelude())) || ((((fu
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<String>>{
 auto&& __jakt_match_variant = *type;
 switch(__jakt_match_variant.index()) {
-case 22: {
+case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
 types::StructId const& struct_id = __jakt_match_value.value;
 {
-const types::CheckedStruct struct_ = ((((*this).program))->get_struct(struct_id));
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct(struct_id));
 if (((((struct_).record_type)).index() == 1 /* Class */)){
 (output += ((call).name));
 (output += String("::"));
@@ -5941,7 +5975,7 @@ case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericInstance>();types::StructId const& id = __jakt_match_value.id;
 JaktInternal::Array<types::TypeId> const& args = __jakt_match_value.args;
 {
-const types::CheckedStruct struct_ = ((((*this).program))->get_struct(id));
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct(id));
 if (((((struct_).record_type)).index() == 1 /* Class */)){
 (output += TRY((((*this).codegen_namespace_qualifier(((struct_).scope_id))))));
 (output += ((struct_).name));
@@ -6017,12 +6051,12 @@ else if (((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */)){
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<String>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(((function_)->return_type_id)));
 switch(__jakt_match_variant.index()) {
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
 types::EnumId const& enum_id = __jakt_match_value.value;
 {
-const types::CheckedEnum enum_ = ((((*this).program))->get_enum(enum_id));
-const NonnullRefPtr<types::Module> enum_type_module = ((((*this).program))->get_module(((enum_id).module)));
+types::CheckedEnum const enum_ = ((((*this).program))->get_enum(enum_id));
+NonnullRefPtr<types::Module> const enum_type_module = ((((*this).program))->get_module(((enum_id).module)));
 if (((enum_).is_boxed)){
 if ((!((((((((type_module)->is_root) || ((type_module)->is_prelude())) || ((((function_)->linkage)).index() == 1 /* External */)) || ((((function_)->type)).index() == 4 /* Expression */)) || ((((function_)->type)).index() == 5 /* Closure */)) || ((!(((((call).namespace_)).is_empty()))) && (((((((call).namespace_))[static_cast<i64>(0LL)])).name) == ((type_module)->name))))))){
 (output += ((type_module)->name));
@@ -6069,6 +6103,11 @@ if ((!((((((((type_module)->is_root) || ((type_module)->is_prelude())) || ((((fu
 (output += String("::"));
 }
 (output += TRY((((*this).codegen_namespace_path(call)))));
+if ((((function_)->is_static()) && (((((function_)->struct_id)).has_value()) && (((((function_)->type)).index() == 0 /* Normal */) && ((((function_)->linkage)).index() == 0 /* Internal */))))){
+types::CheckedStruct const struct_ = ((((*this).program))->get_struct((((function_)->struct_id).value())));
+(output += ((struct_).name));
+(output += String("::"));
+}
 (output += ((call).name));
 }
 
@@ -6078,7 +6117,7 @@ else {
 (output += ((call).name));
 }
 
-const JaktInternal::Array<types::TypeId> generic_parameters = ((call).type_args);
+JaktInternal::Array<types::TypeId> const generic_parameters = ((call).type_args);
 if ((!(((generic_parameters).is_empty())))){
 JaktInternal::Array<String> types = (TRY((Array<String>::create_with({}))));
 {
@@ -6131,14 +6170,14 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_generic_enum_instance(const types::EnumId id,const JaktInternal::Array<types::TypeId> args,const bool as_namespace) const {
+ErrorOr<String> codegen::CodeGenerator::codegen_generic_enum_instance(types::EnumId const id,JaktInternal::Array<types::TypeId> const args,bool const as_namespace) const {
 {
 String output = String("");
 bool close_tag = false;
-const types::CheckedEnum enum_ = ((((*this).program))->get_enum(id));
+types::CheckedEnum const enum_ = ((((*this).program))->get_enum(id));
 if (((!(as_namespace)) && ((enum_).is_boxed))){
 (output += String("NonnullRefPtr<"));
-const String qualifier = TRY((((*this).codegen_namespace_qualifier(((enum_).scope_id)))));
+String const qualifier = TRY((((*this).codegen_namespace_qualifier(((enum_).scope_id)))));
 if ((!(((qualifier).is_empty())))){
 (output += String("typename "));
 (output += qualifier);
@@ -6147,7 +6186,7 @@ if ((!(((qualifier).is_empty())))){
 (close_tag = true);
 }
 else {
-const String qualifier = TRY((((*this).codegen_namespace_qualifier(((enum_).scope_id)))));
+String const qualifier = TRY((((*this).codegen_namespace_qualifier(((enum_).scope_id)))));
 if ((!(((qualifier).is_empty())))){
 (output += String("typename "));
 (output += qualifier);
@@ -6187,7 +6226,7 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_function_generic_parameters(const NonnullRefPtr<types::CheckedFunction> function_) {
+ErrorOr<String> codegen::CodeGenerator::codegen_function_generic_parameters(NonnullRefPtr<types::CheckedFunction> const function_) {
 {
 String output = String("");
 if ((!(((((((function_)->generics))->params)).is_empty())))){
@@ -6210,23 +6249,7 @@ else {
 }
 
 (output += String("typename "));
-const types::TypeId type_id = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::TypeId, ErrorOr<String>>{
-auto&& __jakt_match_variant = generic_parameter;
-switch(__jakt_match_variant.index()) {
-case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::FunctionGenericParameter::InferenceGuide>();
-types::TypeId const& type_id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(type_id);
-};/*case end*/
-case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::FunctionGenericParameter::Parameter>();
-types::TypeId const& type_id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(type_id);
-};/*case end*/
-default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-));
-(output += TRY((((*this).codegen_type(type_id)))));
+(output += TRY((((*this).codegen_type(((generic_parameter).type_id()))))));
 }
 
 }
@@ -6238,11 +6261,11 @@ return (output);
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_ak_formatter(const String name,const JaktInternal::Array<String> generic_parameter_names) {
+ErrorOr<String> codegen::CodeGenerator::codegen_ak_formatter(String const name,JaktInternal::Array<String> const generic_parameter_names) {
 {
 String output = String("");
-const String template_args = utility::join(TRY((utility::prepend_to_each(generic_parameter_names,String("typename ")))),String(", "));
-const String generic_type_args = utility::join(generic_parameter_names,String(", "));
+String const template_args = utility::join(TRY((utility::prepend_to_each(generic_parameter_names,String("typename ")))),String(", "));
+String const generic_type_args = utility::join(generic_parameter_names,String(", "));
 String qualified_name = String("");
 {
 JaktInternal::ArrayIterator<String> _magic = ((((*this).namespace_stack)).iterator());
@@ -6274,13 +6297,13 @@ return ((output + String("};\n")));
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_constructor_predecl(const NonnullRefPtr<types::CheckedFunction> function_) {
+ErrorOr<String> codegen::CodeGenerator::codegen_constructor_predecl(NonnullRefPtr<types::CheckedFunction> const function_) {
 {
-const types::TypeId type_id = ((function_)->return_type_id);
-const NonnullRefPtr<types::Type> type_ = ((((*this).program))->get_type(type_id));
-if (((type_)->index() == 22 /* Struct */)){
-const types::StructId struct_id = (type_->get<types::Type::Struct>()).value;
-const types::CheckedStruct structure = ((((*this).program))->get_struct(struct_id));
+types::TypeId const type_id = ((function_)->return_type_id);
+NonnullRefPtr<types::Type> const type_ = ((((*this).program))->get_type(type_id));
+if (((type_)->index() == 23 /* Struct */)){
+types::StructId const struct_id = (type_->get<types::Type::Struct>()).value;
+types::CheckedStruct const structure = ((((*this).program))->get_struct(struct_id));
 if (((((structure).record_type)).index() == 1 /* Class */)){
 String output = String("");
 (output += String("protected:\n"));
@@ -6302,7 +6325,7 @@ else {
 (first = false);
 }
 
-const types::TypeId param_type_id = ((((param).variable)).type_id);
+types::TypeId const param_type_id = ((((param).variable)).type_id);
 (output += TRY((((*this).codegen_type(param_type_id)))));
 (output += String("&& a_"));
 (output += ((((param).variable)).name));
@@ -6316,13 +6339,13 @@ String class_name_with_generics = String("");
 (class_name_with_generics += ((structure).name));
 (first = true);
 {
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((((structure).generic_parameters)).iterator());
+JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((structure).generic_parameters)).iterator());
 for (;;){
-JaktInternal::Optional<types::TypeId> _magic_value = ((_magic).next());
+JaktInternal::Optional<types::CheckedGenericParameter> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-types::TypeId generic_parameter = (_magic_value.value());
+types::CheckedGenericParameter generic_parameter = (_magic_value.value());
 {
 if ((!(first))){
 (class_name_with_generics += String(", "));
@@ -6332,7 +6355,7 @@ else {
 (first = false);
 }
 
-(class_name_with_generics += TRY((((*this).codegen_type(generic_parameter)))));
+(class_name_with_generics += TRY((((*this).codegen_type(((generic_parameter).type_id))))));
 }
 
 }
@@ -6410,15 +6433,15 @@ utility::panic(String("internal error: call to a constructor, but not a struct/c
 }
 }
 
-ErrorOr<String> codegen::CodeGenerator::codegen_type(const types::TypeId type_id) const {
+ErrorOr<String> codegen::CodeGenerator::codegen_type(types::TypeId const type_id) const {
 {
 return (TRY((((*this).codegen_type_possibly_as_namespace(type_id,false)))));
 }
 }
 
-ErrorOr<void> codegen::CodeGenerator::postorder_traversal(const String encoded_type_id,JaktInternal::Set<String> visited,const JaktInternal::Dictionary<String,JaktInternal::Array<String>> encoded_dependency_graph,JaktInternal::Array<types::TypeId> output) const {
+ErrorOr<void> codegen::CodeGenerator::postorder_traversal(String const encoded_type_id,JaktInternal::Set<String> visited,JaktInternal::Dictionary<String,JaktInternal::Array<String>> const encoded_dependency_graph,JaktInternal::Array<types::TypeId> output) const {
 {
-const types::TypeId type_id = TRY((types::TypeId::from_string(encoded_type_id)));
+types::TypeId const type_id = TRY((types::TypeId::TypeId::from_string(encoded_type_id)));
 if (((visited).contains(TRY((((type_id).to_string())))))){
 return {};
 }

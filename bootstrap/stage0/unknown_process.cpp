@@ -1,7 +1,7 @@
 #include "unknown_process.h"
 namespace Jakt {
 namespace unknown_process {
-ErrorOr<unknown_process::Process> start_background_process(const JaktInternal::Array<String> args) {
+ErrorOr<unknown_process::Process> start_background_process(JaktInternal::Array<String> const args) {
 {
 warnln(String("NOT IMPLEMENTED: start_background_process {}"),args);
 return Error::from_errno(static_cast<i32>(38));

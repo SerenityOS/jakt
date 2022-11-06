@@ -7,15 +7,15 @@ namespace Jakt {
 namespace lexer {
 struct Lexer {
   public:
-size_t index;JaktInternal::Array<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::Array<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(const u8 delimiter);
+size_t index;JaktInternal::Array<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::Array<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(u8 const delimiter);
 ErrorOr<JaktInternal::Optional<lexer::Token>> next();
 ErrorOr<JaktInternal::Optional<String>> consume_comment_contents();
 ErrorOr<lexer::Token> lex_character_constant_or_name();
 lexer::Token lex_dot();
 ErrorOr<lexer::Token> lex_forward_slash();
 lexer::Token lex_question_mark();
-u8 peek_behind(const size_t steps) const;
-u8 peek_ahead(const size_t steps) const;
+u8 peek_behind(size_t const steps) const;
+u8 peek_ahead(size_t const steps) const;
 lexer::Token lex_asterisk();
 u8 peek() const;
 lexer::Token lex_percent_sign();
@@ -23,23 +23,23 @@ ErrorOr<lexer::Token> lex_number_or_name();
 lexer::Token lex_minus();
 bool eof() const;
 lexer::Token lex_ampersand();
-utility::Span span(const size_t start, const size_t end) const;
+utility::Span span(size_t const start, size_t const end) const;
 lexer::Token lex_plus();
 lexer::Token lex_exclamation_point();
 ErrorOr<lexer::LiteralSuffix> consume_numeric_literal_suffix();
 lexer::Token lex_colon();
 Lexer(size_t a_index, JaktInternal::Array<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::Array<u8>> a_comment_contents);
 
-bool valid_digit(const lexer::LiteralPrefix prefix, const u8 digit, const bool decimal_allowed);
-ErrorOr<void> error(const String message, const utility::Span span);
-ErrorOr<String> substring(const size_t start, const size_t length) const;
+bool valid_digit(lexer::LiteralPrefix const prefix, u8 const digit, bool const decimal_allowed);
+ErrorOr<void> error(String const message, utility::Span const span);
+ErrorOr<String> substring(size_t const start, size_t const length) const;
 lexer::Token lex_greater_than();
 lexer::Token lex_pipe();
 lexer::Token lex_caret();
 ErrorOr<lexer::Token> lex_number();
 lexer::Token lex_less_than();
 lexer::Token lex_equals();
-static ErrorOr<JaktInternal::Array<lexer::Token>> lex(const NonnullRefPtr<compiler::Compiler> compiler);
+static ErrorOr<JaktInternal::Array<lexer::Token>> lex(NonnullRefPtr<compiler::Compiler> const compiler);
 ErrorOr<String> debug_description() const;
 };namespace LiteralSuffix_Details {
 struct None {
@@ -862,6 +862,27 @@ Guard(_MemberT0&& member_0):
 value{ forward<_MemberT0>(member_0)}
 {}
 };
+struct Implements{
+utility::Span value;
+template<typename _MemberT0>
+Implements(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Requires{
+utility::Span value;
+template<typename _MemberT0>
+Requires(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Trait{
+utility::Span value;
+template<typename _MemberT0>
+Trait(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
 struct Garbage {
 JaktInternal::Optional<String> consumed;
 utility::Span span;
@@ -872,8 +893,8 @@ span{ forward<_MemberT1>(member_1)}
 {}
 };
 }
-struct Token : public Variant<Token_Details::SingleQuotedString, Token_Details::SingleQuotedByteString, Token_Details::QuotedString, Token_Details::Number, Token_Details::Identifier, Token_Details::Semicolon, Token_Details::Colon, Token_Details::ColonColon, Token_Details::LParen, Token_Details::RParen, Token_Details::LCurly, Token_Details::RCurly, Token_Details::LSquare, Token_Details::RSquare, Token_Details::PercentSign, Token_Details::Plus, Token_Details::Minus, Token_Details::Equal, Token_Details::PlusEqual, Token_Details::PlusPlus, Token_Details::MinusEqual, Token_Details::MinusMinus, Token_Details::AsteriskEqual, Token_Details::ForwardSlashEqual, Token_Details::PercentSignEqual, Token_Details::NotEqual, Token_Details::DoubleEqual, Token_Details::GreaterThan, Token_Details::GreaterThanOrEqual, Token_Details::LessThan, Token_Details::LessThanOrEqual, Token_Details::LeftArithmeticShift, Token_Details::LeftShift, Token_Details::LeftShiftEqual, Token_Details::RightShift, Token_Details::RightArithmeticShift, Token_Details::RightShiftEqual, Token_Details::Asterisk, Token_Details::Ampersand, Token_Details::AmpersandEqual, Token_Details::AmpersandAmpersand, Token_Details::Pipe, Token_Details::PipeEqual, Token_Details::PipePipe, Token_Details::Caret, Token_Details::CaretEqual, Token_Details::Dollar, Token_Details::Tilde, Token_Details::ForwardSlash, Token_Details::ExclamationPoint, Token_Details::QuestionMark, Token_Details::QuestionMarkQuestionMark, Token_Details::QuestionMarkQuestionMarkEqual, Token_Details::Comma, Token_Details::Dot, Token_Details::DotDot, Token_Details::Eol, Token_Details::Eof, Token_Details::FatArrow, Token_Details::Arrow, Token_Details::And, Token_Details::Anon, Token_Details::As, Token_Details::Boxed, Token_Details::Break, Token_Details::Catch, Token_Details::Class, Token_Details::Continue, Token_Details::Cpp, Token_Details::Defer, Token_Details::Else, Token_Details::Enum, Token_Details::Extern, Token_Details::False, Token_Details::For, Token_Details::Function, Token_Details::Comptime, Token_Details::If, Token_Details::Import, Token_Details::In, Token_Details::Is, Token_Details::Let, Token_Details::Loop, Token_Details::Match, Token_Details::Mut, Token_Details::Namespace, Token_Details::Not, Token_Details::Or, Token_Details::Override, Token_Details::Private, Token_Details::Public, Token_Details::Raw, Token_Details::Return, Token_Details::Restricted, Token_Details::Struct, Token_Details::This, Token_Details::Throw, Token_Details::Throws, Token_Details::True, Token_Details::Try, Token_Details::Unsafe, Token_Details::Virtual, Token_Details::Weak, Token_Details::While, Token_Details::Yield, Token_Details::Guard, Token_Details::Garbage> {
-using Variant<Token_Details::SingleQuotedString, Token_Details::SingleQuotedByteString, Token_Details::QuotedString, Token_Details::Number, Token_Details::Identifier, Token_Details::Semicolon, Token_Details::Colon, Token_Details::ColonColon, Token_Details::LParen, Token_Details::RParen, Token_Details::LCurly, Token_Details::RCurly, Token_Details::LSquare, Token_Details::RSquare, Token_Details::PercentSign, Token_Details::Plus, Token_Details::Minus, Token_Details::Equal, Token_Details::PlusEqual, Token_Details::PlusPlus, Token_Details::MinusEqual, Token_Details::MinusMinus, Token_Details::AsteriskEqual, Token_Details::ForwardSlashEqual, Token_Details::PercentSignEqual, Token_Details::NotEqual, Token_Details::DoubleEqual, Token_Details::GreaterThan, Token_Details::GreaterThanOrEqual, Token_Details::LessThan, Token_Details::LessThanOrEqual, Token_Details::LeftArithmeticShift, Token_Details::LeftShift, Token_Details::LeftShiftEqual, Token_Details::RightShift, Token_Details::RightArithmeticShift, Token_Details::RightShiftEqual, Token_Details::Asterisk, Token_Details::Ampersand, Token_Details::AmpersandEqual, Token_Details::AmpersandAmpersand, Token_Details::Pipe, Token_Details::PipeEqual, Token_Details::PipePipe, Token_Details::Caret, Token_Details::CaretEqual, Token_Details::Dollar, Token_Details::Tilde, Token_Details::ForwardSlash, Token_Details::ExclamationPoint, Token_Details::QuestionMark, Token_Details::QuestionMarkQuestionMark, Token_Details::QuestionMarkQuestionMarkEqual, Token_Details::Comma, Token_Details::Dot, Token_Details::DotDot, Token_Details::Eol, Token_Details::Eof, Token_Details::FatArrow, Token_Details::Arrow, Token_Details::And, Token_Details::Anon, Token_Details::As, Token_Details::Boxed, Token_Details::Break, Token_Details::Catch, Token_Details::Class, Token_Details::Continue, Token_Details::Cpp, Token_Details::Defer, Token_Details::Else, Token_Details::Enum, Token_Details::Extern, Token_Details::False, Token_Details::For, Token_Details::Function, Token_Details::Comptime, Token_Details::If, Token_Details::Import, Token_Details::In, Token_Details::Is, Token_Details::Let, Token_Details::Loop, Token_Details::Match, Token_Details::Mut, Token_Details::Namespace, Token_Details::Not, Token_Details::Or, Token_Details::Override, Token_Details::Private, Token_Details::Public, Token_Details::Raw, Token_Details::Return, Token_Details::Restricted, Token_Details::Struct, Token_Details::This, Token_Details::Throw, Token_Details::Throws, Token_Details::True, Token_Details::Try, Token_Details::Unsafe, Token_Details::Virtual, Token_Details::Weak, Token_Details::While, Token_Details::Yield, Token_Details::Guard, Token_Details::Garbage>::Variant;
+struct Token : public Variant<Token_Details::SingleQuotedString, Token_Details::SingleQuotedByteString, Token_Details::QuotedString, Token_Details::Number, Token_Details::Identifier, Token_Details::Semicolon, Token_Details::Colon, Token_Details::ColonColon, Token_Details::LParen, Token_Details::RParen, Token_Details::LCurly, Token_Details::RCurly, Token_Details::LSquare, Token_Details::RSquare, Token_Details::PercentSign, Token_Details::Plus, Token_Details::Minus, Token_Details::Equal, Token_Details::PlusEqual, Token_Details::PlusPlus, Token_Details::MinusEqual, Token_Details::MinusMinus, Token_Details::AsteriskEqual, Token_Details::ForwardSlashEqual, Token_Details::PercentSignEqual, Token_Details::NotEqual, Token_Details::DoubleEqual, Token_Details::GreaterThan, Token_Details::GreaterThanOrEqual, Token_Details::LessThan, Token_Details::LessThanOrEqual, Token_Details::LeftArithmeticShift, Token_Details::LeftShift, Token_Details::LeftShiftEqual, Token_Details::RightShift, Token_Details::RightArithmeticShift, Token_Details::RightShiftEqual, Token_Details::Asterisk, Token_Details::Ampersand, Token_Details::AmpersandEqual, Token_Details::AmpersandAmpersand, Token_Details::Pipe, Token_Details::PipeEqual, Token_Details::PipePipe, Token_Details::Caret, Token_Details::CaretEqual, Token_Details::Dollar, Token_Details::Tilde, Token_Details::ForwardSlash, Token_Details::ExclamationPoint, Token_Details::QuestionMark, Token_Details::QuestionMarkQuestionMark, Token_Details::QuestionMarkQuestionMarkEqual, Token_Details::Comma, Token_Details::Dot, Token_Details::DotDot, Token_Details::Eol, Token_Details::Eof, Token_Details::FatArrow, Token_Details::Arrow, Token_Details::And, Token_Details::Anon, Token_Details::As, Token_Details::Boxed, Token_Details::Break, Token_Details::Catch, Token_Details::Class, Token_Details::Continue, Token_Details::Cpp, Token_Details::Defer, Token_Details::Else, Token_Details::Enum, Token_Details::Extern, Token_Details::False, Token_Details::For, Token_Details::Function, Token_Details::Comptime, Token_Details::If, Token_Details::Import, Token_Details::In, Token_Details::Is, Token_Details::Let, Token_Details::Loop, Token_Details::Match, Token_Details::Mut, Token_Details::Namespace, Token_Details::Not, Token_Details::Or, Token_Details::Override, Token_Details::Private, Token_Details::Public, Token_Details::Raw, Token_Details::Return, Token_Details::Restricted, Token_Details::Struct, Token_Details::This, Token_Details::Throw, Token_Details::Throws, Token_Details::True, Token_Details::Try, Token_Details::Unsafe, Token_Details::Virtual, Token_Details::Weak, Token_Details::While, Token_Details::Yield, Token_Details::Guard, Token_Details::Implements, Token_Details::Requires, Token_Details::Trait, Token_Details::Garbage> {
+using Variant<Token_Details::SingleQuotedString, Token_Details::SingleQuotedByteString, Token_Details::QuotedString, Token_Details::Number, Token_Details::Identifier, Token_Details::Semicolon, Token_Details::Colon, Token_Details::ColonColon, Token_Details::LParen, Token_Details::RParen, Token_Details::LCurly, Token_Details::RCurly, Token_Details::LSquare, Token_Details::RSquare, Token_Details::PercentSign, Token_Details::Plus, Token_Details::Minus, Token_Details::Equal, Token_Details::PlusEqual, Token_Details::PlusPlus, Token_Details::MinusEqual, Token_Details::MinusMinus, Token_Details::AsteriskEqual, Token_Details::ForwardSlashEqual, Token_Details::PercentSignEqual, Token_Details::NotEqual, Token_Details::DoubleEqual, Token_Details::GreaterThan, Token_Details::GreaterThanOrEqual, Token_Details::LessThan, Token_Details::LessThanOrEqual, Token_Details::LeftArithmeticShift, Token_Details::LeftShift, Token_Details::LeftShiftEqual, Token_Details::RightShift, Token_Details::RightArithmeticShift, Token_Details::RightShiftEqual, Token_Details::Asterisk, Token_Details::Ampersand, Token_Details::AmpersandEqual, Token_Details::AmpersandAmpersand, Token_Details::Pipe, Token_Details::PipeEqual, Token_Details::PipePipe, Token_Details::Caret, Token_Details::CaretEqual, Token_Details::Dollar, Token_Details::Tilde, Token_Details::ForwardSlash, Token_Details::ExclamationPoint, Token_Details::QuestionMark, Token_Details::QuestionMarkQuestionMark, Token_Details::QuestionMarkQuestionMarkEqual, Token_Details::Comma, Token_Details::Dot, Token_Details::DotDot, Token_Details::Eol, Token_Details::Eof, Token_Details::FatArrow, Token_Details::Arrow, Token_Details::And, Token_Details::Anon, Token_Details::As, Token_Details::Boxed, Token_Details::Break, Token_Details::Catch, Token_Details::Class, Token_Details::Continue, Token_Details::Cpp, Token_Details::Defer, Token_Details::Else, Token_Details::Enum, Token_Details::Extern, Token_Details::False, Token_Details::For, Token_Details::Function, Token_Details::Comptime, Token_Details::If, Token_Details::Import, Token_Details::In, Token_Details::Is, Token_Details::Let, Token_Details::Loop, Token_Details::Match, Token_Details::Mut, Token_Details::Namespace, Token_Details::Not, Token_Details::Or, Token_Details::Override, Token_Details::Private, Token_Details::Public, Token_Details::Raw, Token_Details::Return, Token_Details::Restricted, Token_Details::Struct, Token_Details::This, Token_Details::Throw, Token_Details::Throws, Token_Details::True, Token_Details::Try, Token_Details::Unsafe, Token_Details::Virtual, Token_Details::Weak, Token_Details::While, Token_Details::Yield, Token_Details::Guard, Token_Details::Implements, Token_Details::Requires, Token_Details::Trait, Token_Details::Garbage>::Variant;
     using SingleQuotedString = Token_Details::SingleQuotedString;
     using SingleQuotedByteString = Token_Details::SingleQuotedByteString;
     using QuotedString = Token_Details::QuotedString;
@@ -980,9 +1001,12 @@ using Variant<Token_Details::SingleQuotedString, Token_Details::SingleQuotedByte
     using While = Token_Details::While;
     using Yield = Token_Details::Yield;
     using Guard = Token_Details::Guard;
+    using Implements = Token_Details::Implements;
+    using Requires = Token_Details::Requires;
+    using Trait = Token_Details::Trait;
     using Garbage = Token_Details::Garbage;
 ErrorOr<String> debug_description() const;
-static lexer::Token from_keyword_or_identifier(const String string, const utility::Span span);
+static lexer::Token from_keyword_or_identifier(String const string, utility::Span const span);
 utility::Span span() const;
 };
 }

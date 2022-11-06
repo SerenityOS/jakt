@@ -13,7 +13,7 @@ namespace Jakt {
 namespace repl {
 struct Editor {
   public:
-FILE* standard_input_file;char* line_pointer;String prompt;static ErrorOr<repl::Editor> create(const String prompt);
+FILE* standard_input_file;char* line_pointer;String prompt;static ErrorOr<repl::Editor> create(String const prompt);
 void destroy();
 Editor(FILE* a_standard_input_file, char* a_line_pointer, String a_prompt);
 
@@ -21,7 +21,7 @@ ErrorOr<repl::LineResult> get_line();
 ErrorOr<String> debug_description() const;
 };struct REPL {
   public:
-NonnullRefPtr<compiler::Compiler> compiler;typechecker::Typechecker typechecker;types::ScopeId root_scope_id;NonnullRefPtr<interpreter::InterpreterScope> root_interpreter_scope;utility::FileId file_id;static ErrorOr<repl::REPL> create(const path::Path runtime_path, const JaktInternal::Optional<String> target_triple);
+NonnullRefPtr<compiler::Compiler> compiler;typechecker::Typechecker typechecker;types::ScopeId root_scope_id;NonnullRefPtr<interpreter::InterpreterScope> root_interpreter_scope;utility::FileId file_id;static ErrorOr<repl::REPL> create(path::Path const runtime_path, JaktInternal::Optional<String> const target_triple);
 ErrorOr<void> run();
 REPL(NonnullRefPtr<compiler::Compiler> a_compiler, typechecker::Typechecker a_typechecker, types::ScopeId a_root_scope_id, NonnullRefPtr<interpreter::InterpreterScope> a_root_interpreter_scope, utility::FileId a_file_id);
 

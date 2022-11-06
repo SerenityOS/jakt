@@ -1,13 +1,13 @@
 #include "utility.h"
 namespace Jakt {
 namespace utility {
-bool is_ascii_binary(const u8 c) {
+bool is_ascii_binary(u8 const c) {
 {
 return (((c == '0') || (c == '1')));
 }
 }
 
-String join(const JaktInternal::Array<String> strings,const String separator) {
+String join(JaktInternal::Array<String> const strings,String const separator) {
 {
 String output = String("");
 size_t i = static_cast<size_t>(0ULL);
@@ -34,19 +34,19 @@ return (output);
 }
 }
 
-bool is_whitespace(const u8 byte) {
+bool is_whitespace(u8 const byte) {
 {
 return ((((byte == ' ') || (byte == '\t')) || (byte == '\r')));
 }
 }
 
-bool is_ascii_alpha(const u8 c) {
+bool is_ascii_alpha(u8 const c) {
 {
 return ((((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))));
 }
 }
 
-ErrorOr<JaktInternal::Array<String>> prepend_to_each(const JaktInternal::Array<String> strings,const String prefix) {
+ErrorOr<JaktInternal::Array<String>> prepend_to_each(JaktInternal::Array<String> const strings,String const prefix) {
 {
 JaktInternal::Array<String> output = (TRY((Array<String>::create_with({}))));
 {
@@ -68,26 +68,26 @@ return (output);
 }
 }
 
-bool is_ascii_digit(const u8 c) {
+bool is_ascii_digit(u8 const c) {
 {
 return (((c >= '0') && (c <= '9')));
 }
 }
 
-void todo(const String message) {
+void todo(String const message) {
 {
 warnln(String("TODO: {}"),message);
 abort();
 }
 }
 
-bool is_ascii_alphanumeric(const u8 c) {
+bool is_ascii_alphanumeric(u8 const c) {
 {
 return ((utility::is_ascii_alpha(c) || utility::is_ascii_digit(c)));
 }
 }
 
-ErrorOr<String> interpret_escapes(const String s) {
+ErrorOr<String> interpret_escapes(String const s) {
 {
 StringBuilder builder = TRY((StringBuilder::create()));
 bool in_escape = false;
@@ -100,7 +100,7 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const u8 c = ((s).byte_at(i));
+u8 const c = ((s).byte_at(i));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<String>>{
 auto __jakt_enum_value = (c);
 if (__jakt_enum_value == '\\') {
@@ -166,7 +166,7 @@ return (TRY((((builder).to_string()))));
 }
 }
 
-ErrorOr<JaktInternal::Array<String>> append_to_each(const JaktInternal::Array<String> strings,const String suffix) {
+ErrorOr<JaktInternal::Array<String>> append_to_each(JaktInternal::Array<String> const strings,String const suffix) {
 {
 JaktInternal::Array<String> output = (TRY((Array<String>::create_with({}))));
 {
@@ -188,26 +188,26 @@ return (output);
 }
 }
 
-bool is_ascii_octdigit(const u8 c) {
+bool is_ascii_octdigit(u8 const c) {
 {
 return (((c >= '0') && (c <= '7')));
 }
 }
 
-bool is_ascii_hexdigit(const u8 c) {
+bool is_ascii_hexdigit(u8 const c) {
 {
 return (((((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f'))) || ((c >= 'A') && (c <= 'F'))));
 }
 }
 
-[[noreturn]] void panic(const String message) {
+[[noreturn]] void panic(String const message) {
 {
 warnln(String("internal error: {}"),message);
 abort();
 }
 }
 
-ErrorOr<String> escape_for_quotes(const String s) {
+ErrorOr<String> escape_for_quotes(String const s) {
 {
 StringBuilder builder = TRY((StringBuilder::create()));
 {
@@ -219,7 +219,7 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const u8 c = ((s).byte_at(i));
+u8 const c = ((s).byte_at(i));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<String>>{
 auto __jakt_enum_value = (c);
 if (__jakt_enum_value == '"') {
@@ -265,13 +265,13 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("end: "));TRY(builder.appendff("{}", end));
 }
 TRY(builder.append(")"));return builder.to_string(); }
-bool utility::Span::contains(const utility::Span span) const {
+bool utility::Span::contains(utility::Span const span) const {
 {
 return ((((((*this).file_id)).equals(((span).file_id))) && ((((span).start) >= ((*this).start)) && (((span).end) <= ((*this).end)))));
 }
 }
 
-bool utility::Span::is_in_offset_range(const size_t start,const size_t end) const {
+bool utility::Span::is_in_offset_range(size_t const start,size_t const end) const {
 {
 return (((start <= ((*this).start)) && (end >= ((*this).end))));
 }
@@ -284,7 +284,7 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
 }
 TRY(builder.append(")"));return builder.to_string(); }
-bool utility::FileId::equals(const utility::FileId rhs) const {
+bool utility::FileId::equals(utility::FileId const rhs) const {
 {
 return ((((*this).id) == ((rhs).id)));
 }
