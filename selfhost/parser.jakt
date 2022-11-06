@@ -124,10 +124,30 @@ enum ImportName {
     }
 }
 
+enum ImportList {
+    List([ImportName])
+    All
+
+    function is_empty(this) -> bool => match this {
+        List(names) => names.is_empty()
+        All => false
+    }
+
+    function add(mut this, anon name: ImportName) throws {
+        match this {
+            List(names) => {
+                mut mutable_names = names
+                mutable_names.push(name)
+            }
+            All => {}
+        }
+    }
+}
+
 struct ParsedModuleImport {
     module_name: ImportName
     alias_name: ImportName?
-    import_list: [ImportName]
+    import_list: ImportList
 
     function is_equivalent_to(this, anon other: ParsedModuleImport) -> bool =>
         .module_name.equals(other.module_name) and .has_same_alias_than(other) and .has_same_import_semantics(other)
@@ -146,28 +166,38 @@ struct ParsedModuleImport {
         }
     }
 
-    function merge_import_list(mut this, anon list: [ImportName]) throws {
-        .import_list.add_capacity(list.size())
+    function merge_import_list(mut this, anon list: ImportList) throws {
         // generate a set of the names that exist
         mut name_set: {String} = {}
-        for import_ in .import_list.iterator() {
-            match import_ {
-                Literal(name) => name_set.add(name)
-                Comptime(expression) => {}
+        mut everything = false
+        match .import_list {
+            List(names) => {
+                for name in names.iterator() {
+                    name_set.add(name.literal_name())
+                }
+            }
+            All => {
+                everything = true
             }
         }
 
-        for import_ in list.iterator() {
-            match import_ {
-                Literal(name) => {
-                    if not name_set.contains(name) {
-                        .import_list.push(import_)
+        if not everything {
+            match list {
+                List(names) => {
+                    for name in names.iterator() {
+                        if not name_set.contains(name.literal_name()) {
+                            .import_list.add(name)
+                        }
                     }
                 }
-                Comptime(expression) => {
-                    .import_list.push(import_)
+                All => {
+                    everything = true
                 }
             }
+        }
+
+        if everything {
+            .import_list = ImportList::All
         }
     }
 }
@@ -1742,7 +1772,8 @@ struct Parser {
         mut parsed_import = ParsedModuleImport(
             module_name: ImportName::Literal(name: "", span: .empty_span())
             alias_name: None
-            import_list: [])
+            import_list: ImportList::List([])
+        )
 
         parsed_import.module_name = match .current() {
             Identifier(name, span) => match .peek(1) {
@@ -1814,7 +1845,35 @@ struct Parser {
         while not .eof() {
             match .current() {
                 Identifier(name, span) => {
-                    parsed_import.import_list.push(ImportName::Literal(name, span))
+                    if parsed_import.import_list is List(names) {
+                        mut mutable_names = names
+                        mutable_names.push(ImportName::Literal(name, span))
+                    } else {
+                        .error_with_hint(
+                            format("Already importing everything from '{}'", parsed_import.module_name.literal_name()),
+                            .current().span()
+                            "Remove the '*' to import specific names"
+                            .current().span()
+                        )
+                    }
+                    .index++
+                }
+                Asterisk => {
+                    if parsed_import.import_list is List(names) and names.is_empty() {
+                        parsed_import.import_list = ImportList::All
+                    } else {
+                        if parsed_import.import_list is All {
+                            .error(
+                                format("Cannot repeat '*' in import list for '{}'", parsed_import.module_name.literal_name()),
+                                .current().span()
+                            )
+                        } else {
+                            .error(
+                                format("Cannot mix '*' and specific names in import list for '{}'", parsed_import.module_name.literal_name()),
+                                .current().span()
+                            )
+                        }
+                    }
                     .index++
                 }
                 Comma | Eol => {
