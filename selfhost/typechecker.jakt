@@ -825,73 +825,146 @@ struct Typechecker {
             scope_imports.set(
                 key: import_name
                 value: imported_module_id) // FIXME: Add span and should this be alias span if there is an alias?
-        } else {
+        } else if import_.import_list is All {
+            let import_scope = .get_scope(ScopeId(module_id: imported_module_id, id: 0))
+            for (name, var_id) in import_scope.vars.iterator() {
+                .add_var_to_scope(
+                    scope_id
+                    name
+                    var_id
+                    span: import_.module_name.span()
+                )
+            }
+            for (name, value) in import_scope.comptime_bindings.iterator() {
+                .add_comptime_binding_to_scope(
+                    scope_id
+                    name
+                    value
+                    span: import_.module_name.span()
+                )
+            }
+            for (name, struct_id) in import_scope.structs.iterator() {
+                .add_struct_to_scope(
+                    scope_id
+                    name
+                    struct_id
+                    span: import_.module_name.span()
+                )
+            }
+            for (name, function_id) in import_scope.functions.iterator() {
+                .add_function_to_scope(
+                    parent_scope_id: scope_id
+                    name
+                    function_id
+                    span: import_.module_name.span()
+                )
+            }
+            for (name, enum_id) in import_scope.enums.iterator() {
+                .add_enum_to_scope(
+                    scope_id
+                    name
+                    enum_id
+                    span: import_.module_name.span()
+                )
+            }
+            for (name, type_id) in import_scope.types.iterator() {
+                .add_type_to_scope(
+                    scope_id
+                    type_name: name
+                    type_id
+                    span: import_.module_name.span()
+                )
+            }
+            for (name, trait_id) in import_scope.traits.iterator() {
+                .add_trait_to_scope(
+                    scope_id
+                    trait_name: name
+                    trait_id
+                    span: import_.module_name.span()
+                )
+            }
+        } else if import_.import_list is List(names) {
             let import_scope_id = ScopeId(module_id: imported_module_id, id: 0)
-            for imported_name in import_.import_list.iterator() {
+            for imported_name in names.iterator() {
                 mut found = false
                 // if it is a function, add function to scope
                 let maybe_function_id = .find_function_in_scope(
                     parent_scope_id: import_scope_id
                     function_name: imported_name.literal_name()
                 )
-                    if maybe_function_id.has_value() {
-                        found = true
-                        // NOTE: what should we do if this returns false? error is already created in the function itself and rust compiler goes on
-                        .add_function_to_scope(
-                            parent_scope_id: scope_id
-                            name: imported_name.literal_name()
-                            function_id: maybe_function_id!
-                            span: imported_name.span()
-                        )
-                    }
+                if maybe_function_id.has_value() {
+                    found = true
+                    // NOTE: what should we do if this returns false? error is already created in the function itself and rust compiler goes on
+                    .add_function_to_scope(
+                        parent_scope_id: scope_id
+                        name: imported_name.literal_name()
+                        function_id: maybe_function_id!
+                        span: imported_name.span()
+                    )
+                }
 
                 // if it is an enum, add enum to scope
                 let maybe_enum_id = .program.find_enum_in_scope(
                     scope_id: import_scope_id
                     name: imported_name.literal_name()
                 )
-                    if maybe_enum_id.has_value() {
-                        found = true
-                        // NOTE: what should we do if this returns false? error is already created in the enum itself and rust compiler goes on
-                        .add_enum_to_scope(
-                            parent_scope_id: scope_id
-                            name: imported_name.literal_name()
-                            enum_id: maybe_enum_id!
-                            span: imported_name.span()
-                        )
-                    }
+                if maybe_enum_id.has_value() {
+                    found = true
+                    // NOTE: what should we do if this returns false? error is already created in the enum itself and rust compiler goes on
+                    .add_enum_to_scope(
+                        parent_scope_id: scope_id
+                        name: imported_name.literal_name()
+                        enum_id: maybe_enum_id!
+                        span: imported_name.span()
+                    )
+                }
 
                 // if it is a type, add type to scope
                 let maybe_type_id = .find_type_in_scope(
                     scope_id: import_scope_id
                     name: imported_name.literal_name()
                 )
-                    if maybe_type_id.has_value() {
-                        found = true
-                        // NOTE: what should we do if this returns false? error is already created in the type itself and rust compiler goes on
-                        .add_type_to_scope(
-                            parent_scope_id: scope_id
-                            type_name: imported_name.literal_name()
-                            type_id: maybe_type_id!
-                            span: imported_name.span()
-                        )
-                    }
+                if maybe_type_id.has_value() {
+                    found = true
+                    // NOTE: what should we do if this returns false? error is already created in the type itself and rust compiler goes on
+                    .add_type_to_scope(
+                        parent_scope_id: scope_id
+                        type_name: imported_name.literal_name()
+                        type_id: maybe_type_id!
+                        span: imported_name.span()
+                    )
+                }
 
                 // if it is a struct, add struct to scope
                 let maybe_struct_id = .find_struct_in_scope(
                     scope_id: import_scope_id
                     name: imported_name.literal_name()
                 )
-                    if maybe_struct_id.has_value() {
-                        found = true
-                        // NOTE: what should we do if this returns false? error is already created in the struct itself and rust compiler goes on
-                        .add_struct_to_scope(
-                            parent_scope_id: scope_id
-                            name: imported_name.literal_name()
-                            struct_id: maybe_struct_id!
-                            span: imported_name.span()
-                        )
-                    }
+                if maybe_struct_id.has_value() {
+                    found = true
+                    // NOTE: what should we do if this returns false? error is already created in the struct itself and rust compiler goes on
+                    .add_struct_to_scope(
+                        parent_scope_id: scope_id
+                        name: imported_name.literal_name()
+                        struct_id: maybe_struct_id!
+                        span: imported_name.span()
+                    )
+                }
+
+                // if it is a trait, add it to the scope
+                let maybe_trait_id = .find_trait_in_scope(
+                    scope_id: import_scope_id
+                    name: imported_name.literal_name()
+                )
+                if maybe_trait_id.has_value() {
+                    found = true
+                    .add_trait_to_scope(
+                        parent_scope_id: scope_id
+                        trait_name: imported_name.literal_name()
+                        trait_id: maybe_trait_id!
+                        span: imported_name.span()
+                    )
+                }
 
                 if not found {
                     .error(
