@@ -101,16 +101,6 @@ function size_of<T>() -> usize {
     abort()
 }
 
-function bitcast_c_char(anon x: raw c_char) -> raw c_char {
-    unsafe {
-        cpp {
-            "return bit_cast<char*>(x);"
-        }
-    }
-
-    abort()
-}
-
 function join_arguments(args: [String]) throws -> String {
     // Join the arguments, but properly quote each argument so that the command line is parsed correctly.
     // All this because there's no way to pass arguments to CreateProcess separately.
@@ -145,7 +135,13 @@ function start_background_process(args: [String]) throws -> Process {
     mut pi = default_constructed<PROCESS_INFORMATION>()
 
     let command_line_string = join_arguments(args)
-    mut buffer = bitcast_c_char(command_line_string.c_string())
+    mut buffer = null<c_char>()
+ 
+    unsafe {
+        cpp {
+            "buffer = const_cast<char*>(command_line_string.c_string());"
+        }
+    }
 
     if not CreateProcess(
         lpApplicationName: null<c_char>()
