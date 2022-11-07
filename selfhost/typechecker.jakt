@@ -5072,7 +5072,6 @@ struct Typechecker {
                         is_optional
                         type_id: resolved_type_id)
                 }
-
                 .error(format("unknown member of struct: {}.{}", structure.name, field_name), span)
             }
             Type::GenericEnumInstance(id: enum_id) | Type::Enum(enum_id) => {
@@ -7650,17 +7649,14 @@ struct Typechecker {
         }
 
         guard types_match(&mut this, first.return_type_id, second.return_type_id) else {
-            eprintln("return type mismatch: {} != {}", .type_name(first.return_type_id), .type_name(second.return_type_id))
             return false
         }
 
         guard first.can_throw == second.can_throw else {
-            eprintln("throw mismatch: {} != {}", first.can_throw, second.can_throw)
             return false
         }
 
         guard first.params.size() == second.params.size() else {
-            eprintln("param count mismatch: {} != {}", first.params.size(), second.params.size())
             return false
         }
 
@@ -7669,17 +7665,14 @@ struct Typechecker {
 
         if first.is_static() {
             guard second.is_static() else {
-                eprintln("static mismatch: {} != {}", first.is_static(), second.is_static())
                 return false
             }
         } else {
             guard not second.is_static() else {
-                eprintln("static mismatch: {} != {}", first.is_static(), second.is_static())
                 return false
             }
 
             guard first.is_mutating() == second.is_mutating() else {
-                eprintln("mutating mismatch: {} != {}", first.is_mutating(), second.is_mutating())
                 return false
             }
             arg_start = 1uz
@@ -7687,7 +7680,6 @@ struct Typechecker {
 
         for i in arg_start..first.params.size() {
             guard types_match(&mut this, first.params[i].variable.type_id, second.params[i].variable.type_id) else {
-                eprintln("param {} doesn't match: {} != {}", i, .type_name(first.params[i].variable.type_id), .type_name(second.params[i].variable.type_id))
                 return false
             }
         }
