@@ -5,25 +5,6 @@
 #include "compiler.h"
 namespace Jakt {
 namespace lexer {
-namespace LiteralPrefix_Details {
-struct None {
-};
-struct Hexadecimal {
-};
-struct Octal {
-};
-struct Binary {
-};
-}
-struct LiteralPrefix : public Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary> {
-using Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary>::Variant;
-    using None = LiteralPrefix_Details::None;
-    using Hexadecimal = LiteralPrefix_Details::Hexadecimal;
-    using Octal = LiteralPrefix_Details::Octal;
-    using Binary = LiteralPrefix_Details::Binary;
-ErrorOr<String> debug_description() const;
-String to_string() const;
-};
 struct Lexer {
   public:
 size_t index;JaktInternal::Array<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::Array<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(u8 const delimiter);
@@ -100,6 +81,25 @@ using Variant<LiteralSuffix_Details::None, LiteralSuffix_Details::UZ, LiteralSuf
     using I64 = LiteralSuffix_Details::I64;
     using F32 = LiteralSuffix_Details::F32;
     using F64 = LiteralSuffix_Details::F64;
+ErrorOr<String> debug_description() const;
+String to_string() const;
+};
+namespace LiteralPrefix_Details {
+struct None {
+};
+struct Hexadecimal {
+};
+struct Octal {
+};
+struct Binary {
+};
+}
+struct LiteralPrefix : public Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary> {
+using Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary>::Variant;
+    using None = LiteralPrefix_Details::None;
+    using Hexadecimal = LiteralPrefix_Details::Hexadecimal;
+    using Octal = LiteralPrefix_Details::Octal;
+    using Binary = LiteralPrefix_Details::Binary;
 ErrorOr<String> debug_description() const;
 String to_string() const;
 };
@@ -1010,14 +1010,14 @@ static lexer::Token from_keyword_or_identifier(String const string, utility::Spa
 utility::Span span() const;
 };
 }
-template<>struct Formatter<lexer::LiteralPrefix> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralPrefix const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::Lexer> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::Lexer const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::LiteralSuffix> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralSuffix const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<lexer::LiteralPrefix> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralPrefix const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::Token> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::Token const& value) {
