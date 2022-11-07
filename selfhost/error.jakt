@@ -97,28 +97,31 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
                 print_source_line(severity, file_contents, file_span: line_spans[line_index - 1], error_span: span, line_number: line_index, largest_line_number)
             }
 
-            print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
+            // Print the lines that include the error
 
+            while line_index < line_spans.size() and span.end > line_spans[line_index].0 {
+                print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
+                if span.end <= line_spans[line_index].1 {
+                    break
+                }
+                ++line_index
+            }
+
+            // Print the error label
             for x in 0..(width + 2) {
                 eprint(" ")
             }
             eprint("│")
-
-            for x in 0..(span.start - line_spans[line_index].0 + 1) {
+            for x in 0..(span.end - line_spans[line_index].0) {
                 eprint(" ")
             }
-
             eprintln("\u001b[{}m╰─ {}\u001b[0m", severity.ansi_color_code(), message)
 
-            while line_index < line_spans.size() and span.end > line_spans[line_index].0 {
-                ++line_index
-                if line_index >= line_spans.size() {
-                    break
-                }
+            ++line_index
 
+            // Print one last line for context
+            if line_index < line_spans.size() {
                 print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
-
-                break
             }
         } else {
             ++line_index
