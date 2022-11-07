@@ -29,7 +29,7 @@ comptime capacity() throws -> bool {
 comptime set_iterator() throws -> bool {
     let set = {4u8, 5u8, 6u8, 7u8}
     mut output = ""
-    for val in set.iterator() {
+    for val in set {
         output += format("{}", val)
     }
     return output == "4567"

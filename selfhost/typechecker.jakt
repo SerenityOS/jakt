@@ -139,8 +139,8 @@ struct Typechecker {
             current = parent
         }
 
-        for current_struct_id in chain.iterator() {
-            for field in .get_struct(current_struct_id).fields.iterator() {
+        for current_struct_id in chain {
+            for field in .get_struct(current_struct_id).fields {
                 let variable = .get_variable(field.variable_id)
                 if variable.name == name {
                     return FieldRecord(struct_id: current_struct_id, field_id: field.variable_id)
@@ -286,7 +286,7 @@ struct Typechecker {
         let tokens = Lexer::lex(compiler: .compiler)
 
         if .compiler.dump_lexer {
-            for token in tokens.iterator() {
+            for token in tokens {
                 println("token: {}", token)
             }
         }
@@ -315,7 +315,7 @@ struct Typechecker {
         let tokens = Lexer::lex(compiler: .compiler)
 
         if .compiler.dump_lexer {
-            for token in tokens.iterator() {
+            for token in tokens {
                 println("token: {}", token)
             }
         }
@@ -375,7 +375,7 @@ struct Typechecker {
             if maybe_type.has_value() {
                 return maybe_type
             }
-            for child_id in scope.children.iterator() {
+            for child_id in scope.children {
                 let child_scope = .get_scope(id: child_id)
                 if not child_scope.namespace_name.has_value() {
                     let maybe_type = child_scope.types.get(name)
@@ -404,7 +404,7 @@ struct Typechecker {
             if maybe_trait.has_value() {
                 return maybe_trait
             }
-            for child_id in scope.children.iterator() {
+            for child_id in scope.children {
                 let child_scope = .get_scope(id: child_id)
                 if not child_scope.namespace_name.has_value() {
                     let maybe_trait = child_scope.traits.get(name)
@@ -433,7 +433,7 @@ struct Typechecker {
             if maybe_type.has_value() {
                 return (maybe_type!, current)
             }
-            for child_id in scope.children.iterator() {
+            for child_id in scope.children {
                 let child_scope = .get_scope(id: child_id)
                 if not child_scope.namespace_name.has_value() {
                     let maybe_type = child_scope.types.get(name)
@@ -528,7 +528,7 @@ struct Typechecker {
 
     function add_function_to_scope(mut this, parent_scope_id: ScopeId, name: String, function_id: FunctionId, span: Span) throws -> bool {
         mut scope = .get_scope(id: parent_scope_id)
-        for existing_function in scope.functions.iterator() {
+        for existing_function in scope.functions {
             if name == existing_function.0 {
                 let function_ = .get_function(existing_function.1)
                 .error_with_hint(message: format("Redefinition of function ‘{}’", name), span, hint: "previous definition here", hint_span: function_.name_span)
@@ -541,7 +541,7 @@ struct Typechecker {
 
     function add_var_to_scope(mut this, scope_id: ScopeId, name: String, var_id: VarId, span: Span) throws -> bool {
         mut scope = .get_scope(scope_id)
-        for existing_var in scope.vars.iterator() {
+        for existing_var in scope.vars {
             if name == existing_var.0 {
                 let variable_ = .get_variable(existing_var.1)
                 .error_with_hint(message: format("Redefinition of variable ‘{}’", name), span, hint: "previous definition here", hint_span: variable_.definition_span)
@@ -553,7 +553,7 @@ struct Typechecker {
 
     function add_comptime_binding_to_scope(mut this, scope_id: ScopeId, name: String, value: Value, span: Span) throws -> bool {
         mut scope = .get_scope(scope_id)
-        for existing in scope.comptime_bindings.iterator() {
+        for existing in scope.comptime_bindings {
             if name == existing.0 {
                 .error_with_hint(
                     message: format("Redefinition of comptime variable ‘{}’", name)
@@ -588,9 +588,9 @@ struct Typechecker {
             Public => CheckedVisibility::Public
             Restricted(whitelist, span) => {
                 mut restricted_scopes: [MaybeResolvedScope] = []
-                for entry in whitelist.iterator() {
+                for entry in whitelist {
                     mut parent_scope = MaybeResolvedScope::Resolved(scope_id)
-                    for ns in entry.namespace_.iterator() {
+                    for ns in entry.namespace_ {
                         parent_scope = MaybeResolvedScope::Unresolved(parent_scope, relative_name: ns)
                     }
 
@@ -615,7 +615,7 @@ struct Typechecker {
             .typecheck_namespace_fields(parsed_namespace: child_namespace,
                 scope_id: child_namespace_scope_id)
         }
-        for record in parsed_namespace.records.iterator() {
+        for record in parsed_namespace.records {
             if record.record_type is Struct or record.record_type is Class {
                 let struct_id = .find_struct_in_scope(scope_id, name: record.name)
                 if not struct_id.has_value() {
@@ -641,7 +641,7 @@ struct Typechecker {
             }
         }
 
-        for unchecked_member in parsed_fields.iterator() {
+        for unchecked_member in parsed_fields {
             let parsed_var_decl = unchecked_member.var_decl
             let checked_member_type = .typecheck_typename(parsed_type: parsed_var_decl.parsed_type, scope_id: checked_struct_scope_id, name: parsed_var_decl.name)
 
@@ -720,7 +720,7 @@ struct Typechecker {
                             }
 
                             mut result: [(String, Span)] = []
-                            for value in values.iterator() {
+                            for value in values {
                                 match value.impl {
                                     JaktString(string) => result.push((string, value.span))
                                     else => {
@@ -753,7 +753,7 @@ struct Typechecker {
 
         mut module_name_and_span: (String, Span)? = None
         mut names: [String] = []
-        for name_and_span in module_names_and_spans!.iterator() {
+        for name_and_span in module_names_and_spans! {
             names.push(name_and_span.0)
 
             mut maybe_loaded_module = .program.get_loaded_module(name_and_span.0)
@@ -840,7 +840,7 @@ struct Typechecker {
                 value: imported_module_id) // FIXME: Add span and should this be alias span if there is an alias?
         } else if import_.import_list is All {
             let import_scope = .get_scope(ScopeId(module_id: imported_module_id, id: 0))
-            for (name, var_id) in import_scope.vars.iterator() {
+            for (name, var_id) in import_scope.vars {
                 .add_var_to_scope(
                     scope_id
                     name
@@ -848,7 +848,7 @@ struct Typechecker {
                     span: import_.module_name.span()
                 )
             }
-            for (name, value) in import_scope.comptime_bindings.iterator() {
+            for (name, value) in import_scope.comptime_bindings {
                 .add_comptime_binding_to_scope(
                     scope_id
                     name
@@ -856,7 +856,7 @@ struct Typechecker {
                     span: import_.module_name.span()
                 )
             }
-            for (name, struct_id) in import_scope.structs.iterator() {
+            for (name, struct_id) in import_scope.structs {
                 .add_struct_to_scope(
                     scope_id
                     name
@@ -864,7 +864,7 @@ struct Typechecker {
                     span: import_.module_name.span()
                 )
             }
-            for (name, function_id) in import_scope.functions.iterator() {
+            for (name, function_id) in import_scope.functions {
                 .add_function_to_scope(
                     parent_scope_id: scope_id
                     name
@@ -872,7 +872,7 @@ struct Typechecker {
                     span: import_.module_name.span()
                 )
             }
-            for (name, enum_id) in import_scope.enums.iterator() {
+            for (name, enum_id) in import_scope.enums {
                 .add_enum_to_scope(
                     scope_id
                     name
@@ -880,7 +880,7 @@ struct Typechecker {
                     span: import_.module_name.span()
                 )
             }
-            for (name, type_id) in import_scope.types.iterator() {
+            for (name, type_id) in import_scope.types {
                 .add_type_to_scope(
                     scope_id
                     type_name: name
@@ -888,7 +888,7 @@ struct Typechecker {
                     span: import_.module_name.span()
                 )
             }
-            for (name, trait_id) in import_scope.traits.iterator() {
+            for (name, trait_id) in import_scope.traits {
                 .add_trait_to_scope(
                     scope_id
                     trait_name: name
@@ -898,7 +898,7 @@ struct Typechecker {
             }
         } else if import_.import_list is List(names) {
             let import_scope_id = ScopeId(module_id: imported_module_id, id: 0)
-            for imported_name in names.iterator() {
+            for imported_name in names {
                 mut found = false
                 // if it is a function, add function to scope
                 let maybe_function_id = .find_function_in_scope(
@@ -990,7 +990,7 @@ struct Typechecker {
     }
 
     function typecheck_extern_import(mut this, anon import_: ParsedExternImport, scope_id: ScopeId) throws {
-        for f in import_.assigned_namespace.functions.iterator() {
+        for f in import_.assigned_namespace.functions {
             if not f.linkage is External {
                 .error("Expected all functions in an `import extern` to be be external", f.name_span)
             }
@@ -1009,7 +1009,7 @@ struct Typechecker {
             }
         }
 
-        for record in import_.assigned_namespace.records.iterator() {
+        for record in import_.assigned_namespace.records {
             if not record.definition_linkage is External {
                 .error("Expected all records in an `import extern` to be external"
                         record.name_span)
@@ -1027,11 +1027,11 @@ struct Typechecker {
     }
 
     function typecheck_namespace_imports(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
-        for module_import in parsed_namespace.module_imports.iterator() {
+        for module_import in parsed_namespace.module_imports {
             .typecheck_module_import(module_import, scope_id)
         }
 
-        for extern_import in parsed_namespace.extern_imports.iterator() {
+        for extern_import in parsed_namespace.extern_imports {
             .typecheck_extern_import(extern_import, scope_id)
         }
     }
@@ -1043,7 +1043,7 @@ struct Typechecker {
             let child_namespace_scope_id = children[i]
             .typecheck_namespace_constructors(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id)
         }
-        for record in parsed_namespace.records.iterator() {
+        for record in parsed_namespace.records {
             match record.record_type {
                 Struct | Class => {
                     let struct_id = .find_struct_in_scope(scope_id, name: record.name)
@@ -1072,13 +1072,13 @@ struct Typechecker {
             .typecheck_namespace_function_predecl(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id)
         }
 
-        for fun in parsed_namespace.functions.iterator() {
+        for fun in parsed_namespace.functions {
             .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id, this_arg_type_id: None)
         }
 
         mut module = .current_module()
 
-        for record in parsed_namespace.records.iterator() {
+        for record in parsed_namespace.records {
             let record_scope_id = match record.record_type {
                 Struct | Class => {
                     let struct_id = .find_struct_in_scope(scope_id, name: record.name)
@@ -1095,7 +1095,7 @@ struct Typechecker {
                     yield .get_enum(enum_id!).scope_id
                 }
             }
-            for method in record.methods.iterator() {
+            for method in record.methods {
                 if not record.generic_parameters.is_empty() or not method.parsed_function.generic_parameters.is_empty() {
                     mut func = .get_function(
                         .find_function_in_scope(parent_scope_id: record_scope_id, function_name: method.parsed_function.name)!
@@ -1108,7 +1108,7 @@ struct Typechecker {
                         debug_name: format("method-checking({}::{})", record.name, func.name)
                     )
 
-                    for param in func.params.iterator() {
+                    for param in func.params {
                         .add_var_to_scope(
                             scope_id: check_scope
                             name: param.variable.name
@@ -1153,7 +1153,7 @@ struct Typechecker {
         // 1. Initialize structs
         mut struct_index: usize = 0
         mut enum_index: usize = 0
-        for parsed_record in parsed_namespace.records.iterator() {
+        for parsed_record in parsed_namespace.records {
             match parsed_record.record_type {
                 Struct | Class => { .typecheck_struct_predecl_initial(parsed_record, struct_index: struct_index++, module_struct_len, scope_id) }
                 SumEnum | ValueEnum => { .typecheck_enum_predecl_initial(parsed_record, enum_index: enum_index++, module_enum_len, scope_id) }
@@ -1164,7 +1164,7 @@ struct Typechecker {
         }
 
         // 2. Typecheck subnamespaces
-        for namespace_ in parsed_namespace.namespaces.iterator() {
+        for namespace_ in parsed_namespace.namespaces {
             // Find all predeclarations in namespaces that are children of this namespace
             mut debug_name = "namespace("
             if namespace_.name.has_value() {
@@ -1189,12 +1189,12 @@ struct Typechecker {
         }
 
         // 3. Register traits
-        for parsed_trait in parsed_namespace.traits.iterator() {
+        for parsed_trait in parsed_namespace.traits {
             .typecheck_trait_predecl(parsed_trait, scope_id)
         }
 
         // 4. Resolve default trait implementations
-        for parsed_trait in parsed_namespace.traits.iterator() {
+        for parsed_trait in parsed_namespace.traits {
             let trait_id = .find_trait_in_scope(scope_id, name: parsed_trait.name)
             guard trait_id.has_value() else {
                 .compiler.panic("can't find trait that has been previous added")
@@ -1205,7 +1205,7 @@ struct Typechecker {
         // 5. Typecheck struct predeclaration
         struct_index = 0
         enum_index = 0
-        for parsed_record in parsed_namespace.records.iterator() {
+        for parsed_record in parsed_namespace.records {
             let struct_id = StructId(module: .current_module_id, id: struct_index + module_struct_len)
             match parsed_record.record_type {
                 Struct | Class => {
@@ -1224,12 +1224,12 @@ struct Typechecker {
         }
 
         // 6. Resolve external trait implementations
-        for implementation in parsed_namespace.external_trait_implementations.iterator() {
+        for implementation in parsed_namespace.external_trait_implementations {
             let for_type = .typecheck_typename(parsed_type: implementation.for_type, scope_id, name: None)
             match .get_type(for_type) {
                 Struct(struct_id) | GenericInstance(id: struct_id) => {
                     mut struct_ = .get_struct(struct_id)
-                    for method in implementation.methods.iterator() {
+                    for method in implementation.methods {
                         mut this_arg_type_id: TypeId? = None
                         if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
                             this_arg_type_id = for_type
@@ -1249,12 +1249,12 @@ struct Typechecker {
                         trait_name_scope_id_override: scope_id
                     )
 
-                    for trait_name in implementation.traits.iterator() {
+                    for trait_name in implementation.traits {
                         let trait_id = .find_trait_in_scope(scope_id, name: trait_name.name)
                         guard trait_id.has_value() else { continue }
 
                         let trait_ = .get_trait(trait_id!)
-                        for (name, function_id) in trait_.methods.iterator() {
+                        for (name, function_id) in trait_.methods {
                             if .find_function_in_scope(parent_scope_id: struct_.scope_id, function_name: name).has_value() {
                                 continue
                             }
@@ -1275,7 +1275,7 @@ struct Typechecker {
                 }
                 Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
                     mut enum_ = .get_enum(enum_id)
-                    for method in implementation.methods.iterator() {
+                    for method in implementation.methods {
                         mut this_arg_type_id: TypeId? = None
                         if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
                             this_arg_type_id = for_type
@@ -1295,12 +1295,12 @@ struct Typechecker {
                         trait_name_scope_id_override: scope_id
                     )
 
-                    for trait_name in implementation.traits.iterator() {
+                    for trait_name in implementation.traits {
                         let trait_id = .find_trait_in_scope(scope_id, name: trait_name.name)
                         guard trait_id.has_value() else { continue }
 
                         let trait_ = .get_trait(trait_id!)
-                        for (name, function_id) in trait_.methods.iterator() {
+                        for (name, function_id) in trait_.methods {
                             if .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: name).has_value() {
                                 continue
                             }
@@ -1366,7 +1366,7 @@ struct Typechecker {
         mut generic_parameters: [CheckedGenericParameter] = module.traits[trait_id.id].generic_parameters
         generic_parameters.ensure_capacity(parsed_trait.generic_parameters.size())
 
-        for gen_parameter in parsed_trait.generic_parameters.iterator() {
+        for gen_parameter in parsed_trait.generic_parameters {
             module.types.push(Type::TypeVariable(gen_parameter.name))
 
             let parameter_type_id = TypeId(
@@ -1410,7 +1410,7 @@ struct Typechecker {
         ))
         let struct_type_id = .find_or_add_type_id(Type::Struct(synthetic_struct_id))
 
-        for parsed_function in parsed_trait.methods.iterator() {
+        for parsed_function in parsed_trait.methods {
             let method_scope_id = .create_scope(
                 parent_scope_id: trait_scope_id
                 can_throw: parsed_function.can_throw
@@ -1439,7 +1439,7 @@ struct Typechecker {
     function typecheck_trait(mut this, parsed_trait: ParsedTrait, trait_id: TraitId, scope_id: ScopeId) throws {
         let checked_trait = .program.modules[trait_id.module.id].traits[trait_id.id]
 
-        for parsed_function in parsed_trait.methods.iterator() {
+        for parsed_function in parsed_trait.methods {
             if parsed_function.block.stmts.is_empty() {
                 continue
             }
@@ -1503,7 +1503,7 @@ struct Typechecker {
         mut checked_fields: [CheckedField] = []
         mut seen_fields: {String} = {}
         if parsed_record.record_type is SumEnum(fields) {
-            for field in fields.iterator() {
+            for field in fields {
                 let var_decl = field.var_decl
                 if seen_fields.contains(var_decl.name) {
                     .error(format("Field '{}' is defined more than once", var_decl.name), var_decl.span)
@@ -1558,7 +1558,7 @@ struct Typechecker {
         mut generic_parameters: [CheckedGenericParameter] = module.enums[enum_id.id].generic_parameters
         generic_parameters.ensure_capacity(parsed_record.generic_parameters.size())
 
-        for gen_parameter in parsed_record.generic_parameters.iterator() {
+        for gen_parameter in parsed_record.generic_parameters {
             module.types.push(Type::TypeVariable(gen_parameter.name))
 
             let parameter_type_id = TypeId(
@@ -1589,7 +1589,7 @@ struct Typechecker {
         }
 
         let is_extern = parsed_record.definition_linkage is External
-        for method in parsed_record.methods.iterator() {
+        for method in parsed_record.methods {
             let func = method.parsed_function
             let method_scope_id = .create_scope(
                 parent_scope_id: enum_scope_id
@@ -1639,7 +1639,7 @@ struct Typechecker {
             let function_id = module.add_function(checked_function)
             mut generic_parameters: [FunctionGenericParameter] = []
 
-            for generic_parameter in func.generic_parameters.iterator() {
+            for generic_parameter in func.generic_parameters {
                 module.types.push(Type::TypeVariable(generic_parameter.name))
                 let type_var_type_id = TypeId(
                     module: .current_module_id
@@ -1669,7 +1669,7 @@ struct Typechecker {
 
             checked_function.generics.params = generic_parameters
 
-            for param in func.params.iterator() {
+            for param in func.params {
                 if param.variable.name == "this" {
                     let checked_variable = CheckedVariable(
                         name: param.variable.name
@@ -1800,8 +1800,8 @@ struct Typechecker {
             let inheritance_chain = .struct_inheritance_chain(struct_id)
 
             mut func = module.functions.last()!
-            for field_struct_id in inheritance_chain.iterator() {
-                for field in .get_struct(field_struct_id).fields.iterator() {
+            for field_struct_id in inheritance_chain {
+                for field in .get_struct(field_struct_id).fields {
                     let variable = .get_variable(field.variable_id)
                     func.add_param(CheckedParameter(
                         requires_label: true
@@ -1846,7 +1846,7 @@ struct Typechecker {
     ) throws {
         let trait_name_scope_id = trait_name_scope_id_override ?? scope_id
         // register the traits that this record is supposed to implement.
-        for trait_name in parsed_impl_list.iterator() {
+        for trait_name in parsed_impl_list {
             // look for the trait.
             let maybe_type_id = .find_type_in_scope(scope_id: trait_name_scope_id, name: trait_name.name)
             guard maybe_type_id.has_value() else {
@@ -1860,7 +1860,7 @@ struct Typechecker {
             }
 
             mut generic_arguments: [TypeId] = []
-            for argument in trait_name.generic_parameters.iterator() {
+            for argument in trait_name.generic_parameters {
                 let argument_type_id = .typecheck_typename(parsed_type: argument, scope_id, name: None)
                 generic_arguments.push(argument_type_id)
             }
@@ -1951,7 +1951,7 @@ struct Typechecker {
         mut generic_parameters: [CheckedGenericParameter] = module.structures[struct_id.id].generic_parameters
         generic_parameters.ensure_capacity(parsed_record.generic_parameters.size())
 
-        for gen_parameter in parsed_record.generic_parameters.iterator() {
+        for gen_parameter in parsed_record.generic_parameters {
             module.types.push(Type::TypeVariable(gen_parameter.name))
 
             let parameter_type_id = TypeId(
@@ -1979,11 +1979,11 @@ struct Typechecker {
                 scope_id: struct_scope_id
             )
 
-            for implements_entry in parsed_record.implements_list!.iterator() {
+            for implements_entry in parsed_record.implements_list! {
                 let trait_id = .find_trait_in_scope(scope_id, name: implements_entry.name)
                 guard trait_id.has_value() else { continue }
                 let trait_ = .program.modules[trait_id!.module.id].traits[trait_id!.id]
-                for (name, function_id) in trait_.methods.iterator() {
+                for (name, function_id) in trait_.methods {
                     if .find_function_in_scope(parent_scope_id: struct_scope_id, function_name: name).has_value() {
                         continue
                     }
@@ -2005,7 +2005,7 @@ struct Typechecker {
         }
 
         let is_extern = parsed_record.definition_linkage is External
-        for method in parsed_record.methods.iterator() {
+        for method in parsed_record.methods {
             let func = method.parsed_function
 
             let method_scope_id = .create_scope(parent_scope_id: struct_scope_id, can_throw: func.can_throw, debug_name: format("method({}::{})", parsed_record.name, func.name))
@@ -2050,7 +2050,7 @@ struct Typechecker {
             .current_function_id = function_id
 
 
-            for gen_parameter in func.generic_parameters.iterator() {
+            for gen_parameter in func.generic_parameters {
                 module.types.push(Type::TypeVariable(gen_parameter.name))
                 let type_var_type_id = TypeId(
                     module: .current_module_id
@@ -2070,7 +2070,7 @@ struct Typechecker {
                 .add_type_to_scope(scope_id: method_scope_id, type_name: gen_parameter.name, type_id: type_var_type_id, span: gen_parameter.span)
             }
 
-            for param in func.params.iterator() {
+            for param in func.params {
                 if param.variable.name == "this" {
                     let checked_variable = CheckedVariable(
                         name: param.variable.name
@@ -2187,7 +2187,7 @@ struct Typechecker {
             .typecheck_namespace_declarations(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id)
         }
 
-        for record in parsed_namespace.records.iterator() {
+        for record in parsed_namespace.records {
             match record.record_type {
                 Struct | Class => {
                     let struct_id = .find_struct_in_scope(scope_id, name: record.name)
@@ -2207,18 +2207,18 @@ struct Typechecker {
             }
         }
 
-        for fun in parsed_namespace.functions.iterator() {
+        for fun in parsed_namespace.functions {
             .current_function_id = .find_function_in_scope(parent_scope_id: scope_id, function_name: fun.name)
             .typecheck_function(parsed_function: fun, parent_scope_id: scope_id)
             .current_function_id = None
         }
 
-        for implementation in parsed_namespace.external_trait_implementations.iterator() {
+        for implementation in parsed_namespace.external_trait_implementations {
             let for_type = .typecheck_typename(parsed_type: implementation.for_type, scope_id, name: None)
             match .get_type(for_type) {
                 Struct(struct_id) | GenericInstance(id: struct_id) => {
                     mut struct_ = .get_struct(struct_id)
-                    for method in implementation.methods.iterator() {
+                    for method in implementation.methods {
                         if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
                             .typecheck_method(
                                 func: method.parsed_function
@@ -2234,7 +2234,7 @@ struct Typechecker {
                 }
                 Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
                     mut enum_ = .get_enum(enum_id)
-                    for method in implementation.methods.iterator() {
+                    for method in implementation.methods {
                         if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
                             .typecheck_method(
                                 func: method.parsed_function
@@ -2262,7 +2262,7 @@ struct Typechecker {
         mut common_seen_fields: {String} = {}
         mut common_fields: [VarId] = []
         mut common_params: [CheckedParameter] = []
-        for field in enum_.fields.iterator() {
+        for field in enum_.fields {
             let variable = .get_variable(field.variable_id)
             common_params.push(CheckedParameter(
                 requires_label: true,
@@ -2277,7 +2277,7 @@ struct Typechecker {
             ValueEnum(underlying_type, variants) => {
                 let underlying_type_id = .typecheck_typename(parsed_type: underlying_type, scope_id: parent_scope_id, name: None)
                 mut module = .current_module()
-                for variant in variants.iterator() {
+                for variant in variants {
                     if seen_names.contains(variant.name) {
                         .error(format("Enum variant '{}' is defined more than once", variant.name), variant.span)
                     } else {
@@ -2326,7 +2326,7 @@ struct Typechecker {
             }
             SumEnum(is_boxed, variants) => {
                 mut module = .current_module()
-                for variant in variants.iterator() {
+                for variant in variants {
                     if seen_names.contains(variant.name) {
                         .error(format("Enum variant '{}' is defined more than once", variant.name), variant.span)
                         continue
@@ -2337,21 +2337,21 @@ struct Typechecker {
 
                     if is_structlike {
                         mut seen_fields: {String} = {}
-                        for name in common_seen_fields.iterator() {
+                        for name in common_seen_fields {
                             seen_fields.add(name)
                         }
 
                         mut params: [CheckedParameter] = []
-                        for param in common_params.iterator() {
+                        for param in common_params {
                             params.push(param)
                         }
 
                         mut fields: [VarId] = []
-                        for field in common_fields.iterator() {
+                        for field in common_fields {
                             fields.push(field)
                         }
 
-                        for param in variant.params!.iterator() {
+                        for param in variant.params! {
                             if seen_fields.contains(param.name) {
                                 .error(format("Enum variant '{}' has a member named '{}' more than once", variant.name, param.name), param.span)
                                 continue
@@ -2418,7 +2418,7 @@ struct Typechecker {
                         }
                     } else if is_typed {
                         mut params: [CheckedParameter] = []
-                        for param in common_params.iterator() {
+                        for param in common_params {
                             params.push(param)
                         }
 
@@ -2477,7 +2477,7 @@ struct Typechecker {
                         }
                     } else {
                         mut params: [CheckedParameter] = []
-                        for param in common_params.iterator() {
+                        for param in common_params {
                             params.push(param)
                         }
 
@@ -2529,7 +2529,7 @@ struct Typechecker {
     }
 
     function typecheck_enum(mut this, record: ParsedRecord, enum_id: EnumId, parent_scope_id: ScopeId) throws {
-        for method in record.methods.iterator() {
+        for method in record.methods {
             .typecheck_method(
                 func: method.parsed_function
                 parent_id: StructOrEnumId::Enum(enum_id)
@@ -2552,7 +2552,7 @@ struct Typechecker {
         while super_struct_id.has_value() {
             let super_struct = .get_struct(super_struct_id!)
             let scope = .get_scope(super_struct.scope_id)
-            for function_tuple in scope.functions.iterator() {
+            for function_tuple in scope.functions {
                 let function_ = .get_function(function_tuple.1)
                 if function_.is_virtual {
                     all_virtuals[function_.name] = function_
@@ -2567,7 +2567,7 @@ struct Typechecker {
             let trait_implementations = .get_struct(struct_id).trait_implementations
             checks.ensure_capacity(trait_implementations.size())
 
-            for (trait_name, trait_id_and_generic_params) in trait_implementations.iterator() {
+            for (trait_name, trait_id_and_generic_params) in trait_implementations {
                 checks.register_trait(
                     trait_id: trait_id_and_generic_params.0
                     trait_name
@@ -2576,7 +2576,7 @@ struct Typechecker {
             }
         }
 
-        for method in record.methods.iterator() {
+        for method in record.methods {
             if method.is_override {
                 if not all_virtuals.contains(method.parsed_function.name) {
                     .error("Missing virtual for override", method.parsed_function.name_span)
@@ -2597,7 +2597,7 @@ struct Typechecker {
             let trait_implementations = .get_struct(struct_id).trait_implementations
             checks.ensure_capacity(trait_implementations.size())
 
-            for (trait_name, trait_id_and_generic_params) in trait_implementations.iterator() {
+            for (trait_name, trait_id_and_generic_params) in trait_implementations {
                 let (trait_id, generic_params) = trait_id_and_generic_params
                 let trait_ = .get_trait(trait_id)
                 if trait_.generic_parameters.size() != generic_params.size() {
@@ -2616,7 +2616,7 @@ struct Typechecker {
             }
 
             let scope = .get_scope(.get_struct(struct_id).scope_id)
-            for (name, function_id) in scope.functions.iterator() {
+            for (name, function_id) in scope.functions {
                 checks.register_method(
                     method_name: name,
                     method_id: function_id,
@@ -2666,7 +2666,7 @@ struct Typechecker {
         let function_scope_id = checked_function.function_scope_id
 
         mut module = .current_module()
-        for param in checked_function.params.iterator() {
+        for param in checked_function.params {
             let variable = param.variable
             let var_id = module.add_variable(variable)
             .add_var_to_scope(scope_id: function_scope_id, name: variable.name, var_id, span: variable.definition_span)
@@ -2775,7 +2775,7 @@ struct Typechecker {
         scope_id: ScopeId
     ) throws {
         trait_requirements.ensure_capacity(names.size())
-        for name in names.iterator() {
+        for name in names {
             let type_id = .find_type_in_scope(scope_id, name: name.name)
             guard type_id.has_value() else {
                 .error(format("Couldn't find trait ‘{}’", name.name), name.name_span)
@@ -2854,7 +2854,7 @@ struct Typechecker {
 
         // Check generic parameters
         mut i = 0
-        for generic_parameter in parsed_function.generic_parameters.iterator() {
+        for generic_parameter in parsed_function.generic_parameters {
             mut type_var_type_id = TypeId(
                 module: current_module.id
                 id: current_module.types.size()
@@ -2898,7 +2898,7 @@ struct Typechecker {
         // Check parameters
         mut first = true
         mut module = .current_module()
-        for parameter in parsed_function.params.iterator() {
+        for parameter in parsed_function.params {
             let checked_param = .typecheck_parameter(parameter, scope_id: checked_function_scope_id, first, this_arg_type_id, check_scope)
 
             checked_function.params.push(checked_param)
@@ -2989,7 +2989,7 @@ struct Typechecker {
             }
         }
 
-        for constraint in constraints.iterator() {
+        for constraint in constraints {
             let trait_name = .program.get_trait(constraint).name
             let implemented_trait: (TraitId, [TypeId])? = implemented_traits.get(trait_name)
             if not implemented_trait.has_value() or not implemented_trait!.0.equals(constraint) {
@@ -3118,7 +3118,7 @@ struct Typechecker {
 
         mut param_vars: [CheckedVariable] = []
         mut module = .current_module()
-        for param in checked_function.params.iterator() {
+        for param in checked_function.params {
             let variable = param.variable
             param_vars.push(variable)
 
@@ -3696,7 +3696,7 @@ struct Typechecker {
             yielded_type: TypeId::none()
             yielded_none: false
         )
-        for parsed_statement in parsed_block.stmts.iterator() {
+        for parsed_statement in parsed_block.stmts {
             if not checked_block.control_flow.is_reachable() {
                 .error("Unreachable code", parsed_statement.span())
             }
@@ -3765,7 +3765,7 @@ struct Typechecker {
         NamespacedName(name, namespaces, params, span) => {
             mut current_namespace_scope_id = scope_id
 
-            for ns in namespaces.iterator() {
+            for ns in namespaces {
                 let result = .find_namespace_in_scope(scope_id: current_namespace_scope_id, name: ns)
 
                 if result.has_value() {
@@ -3778,7 +3778,7 @@ struct Typechecker {
 
             mut generic_args: [TypeId] = []
 
-            for param in params.iterator() {
+            for param in params {
                 let checked_arg = .typecheck_typename(parsed_type: param, scope_id, name)
 
                 generic_args.push(checked_arg)
@@ -3836,7 +3836,7 @@ struct Typechecker {
         }
         JaktTuple(types, span) => {
             mut checked_types: [TypeId] = []
-            for parsed_type in types.iterator() {
+            for parsed_type in types {
                 checked_types.push(.typecheck_typename(parsed_type, scope_id, name))
             }
             let tuple_struct_id = .find_struct_in_prelude("Tuple")
@@ -3887,7 +3887,7 @@ struct Typechecker {
         GenericType(name, generic_parameters, span) => {
             mut checked_inner_types: [TypeId] = []
 
-            for inner_type in generic_parameters.iterator() {
+            for inner_type in generic_parameters {
                 let inner_type_id = .typecheck_typename(parsed_type: inner_type, scope_id, name)
                 checked_inner_types.push(inner_type_id)
             }
@@ -3908,7 +3908,7 @@ struct Typechecker {
                 .generic_inferences.restore(old_generic_inferences)
             }
 
-            for param in params.iterator() {
+            for param in params {
                 checked_params.push(.typecheck_parameter(parameter: param, scope_id, first, this_arg_type_id: None, check_scope: None))
                 first = false
             }
@@ -3948,7 +3948,7 @@ struct Typechecker {
             let function_id = module.add_function(checked_function)
 
             mut param_type_ids: [TypeId] = []
-            for param in checked_function.params.iterator() {
+            for param in checked_function.params {
                 param_type_ids.push(param.variable.type_id)
             }
 
@@ -4266,7 +4266,7 @@ struct Typechecker {
 
     function typecheck_guard(mut this, expr: ParsedExpression, else_block: ParsedBlock, remaining_code: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         mut seen_scope_exit = false
-        for statement in else_block.stmts.iterator() {
+        for statement in else_block.stmts {
             match statement {
                 Break | Continue | Return | Throw => {
                     seen_scope_exit = true
@@ -4395,7 +4395,7 @@ struct Typechecker {
             } else if implemented_into_iterator_trait_id.size() != 1 {
                 mut type_names = ""
                 mut first = true
-                for args in implemented_into_iterator_trait_id.iterator() {
+                for args in implemented_into_iterator_trait_id {
                     if first {
                         first = false
                     } else {
@@ -4426,7 +4426,7 @@ struct Typechecker {
             if implemented_iterable_trait_args.size() != 1 {
                 mut type_names = ""
                 mut first = true
-                for args in implemented_iterable_trait_args.iterator() {
+                for args in implemented_iterable_trait_args {
                     if first {
                         first = false
                     } else {
@@ -4593,7 +4593,7 @@ struct Typechecker {
                     IsEnumVariant(inner, bindings) => {
                         let unary_op_single_condition = ParsedExpression::UnaryOp(expr, op: UnaryOperator::Is(inner), span)
                         mut outer_if_stmts: [ParsedStatement] = []
-                        for binding in bindings.iterator() {
+                        for binding in bindings {
                             let var = ParsedVarDecl(
                                 name: binding.binding
                                 parsed_type: ParsedType::Empty
@@ -4610,7 +4610,7 @@ struct Typechecker {
                                 inner_condition = acc!
                                 outer_if_stmts.push(ParsedStatement::If(condition: inner_condition, then_block: then_block!, else_statement, span))
                             } else {
-                                for stmt in then_block!.stmts.iterator() {
+                                for stmt in then_block!.stmts {
                                     outer_if_stmts.push(stmt)
                                 }
                             }
@@ -4916,7 +4916,7 @@ struct Typechecker {
         }
 
         mut strings: [String] = []
-        for statement in block.stmts.iterator() {
+        for statement in block.stmts {
             if statement is Expression(expr)
                 and expr is QuotedString(val, span) {
                 strings.push(val)
@@ -5005,7 +5005,7 @@ struct Typechecker {
                 match .get_type(type_id) {
                     GenericInstance(id: struct_id) | Struct(struct_id) => {
                         let structure = .get_struct(struct_id)
-                        for field in structure.fields.iterator() {
+                        for field in structure.fields {
                             let member = .get_variable(field.variable_id)
 
                             if member.name == field_name {
@@ -5028,7 +5028,7 @@ struct Typechecker {
                     }
                     GenericEnumInstance(id: enum_id) | Enum(enum_id) => {
                         let enum_ = .get_enum(enum_id)
-                        for field in enum_.fields.iterator() {
+                        for field in enum_.fields {
                             let member = .get_variable(field.variable_id)
 
                             if member.name == field_name {
@@ -5080,7 +5080,7 @@ struct Typechecker {
                 }
 
                 let enum_ = .get_enum(enum_id)
-                for field in enum_.fields.iterator() {
+                for field in enum_.fields {
                     let member = .get_variable(field.variable_id)
 
                     if member.name == field_name {
@@ -5218,7 +5218,7 @@ struct Typechecker {
             }
         }
 
-        for scope in whitelist.iterator() {
+        for scope in whitelist {
             let resolved_scope = scope.try_resolve(program: .program)
             guard resolved_scope is Resolved(scope_id) else {
                 continue
@@ -5606,7 +5606,7 @@ struct Typechecker {
                         if .get_type(expr_type_id) is Enum(enum_id) {
                             let enum_ = .get_enum(enum_id)
                             mut exists = false
-                            for variant in enum_.variants.iterator() {
+                            for variant in enum_.variants {
                                 exists = match variant {
                                     StructLike(name: var_name) | Typed(name: var_name) | Untyped(name: var_name) => var_name == name
                                     else => false
@@ -5721,7 +5721,7 @@ struct Typechecker {
             mut checked_values: [CheckedExpression] = []
             mut checked_types: [TypeId] = []
 
-            for value in values.iterator() {
+            for value in values {
                 let checked_value= .typecheck_expression(value, scope_id, safety_mode, type_hint: None)
                 let type_id = checked_value.type()
                 if type_id.equals(VOID_TYPE_ID) {
@@ -5904,7 +5904,7 @@ struct Typechecker {
     }
 
     function get_enum_variant(mut this, enum_: CheckedEnum, variant_name: String) throws -> CheckedEnumVariant? {
-        for variant in enum_.variants.iterator() {
+        for variant in enum_.variants {
             if variant.name() == variant_name {
                 return variant
             }
@@ -5926,11 +5926,11 @@ struct Typechecker {
         }
         mut checked_vars: [CheckedVariable] = []
         mut checked_enum_variant_bindings: [CheckedEnumVariantBinding] = []
-        for field in fields.iterator() {
+        for field in fields {
             checked_vars.push(.get_variable(field))
         }
-        for binding in bindings.iterator() {
-            for var in checked_vars.iterator() {
+        for binding in bindings {
+            for var in checked_vars {
                 let binding_name = binding.name ?? binding.binding
                 let type_id = var.type_id
                 if binding_name == var.name {
@@ -5968,7 +5968,7 @@ struct Typechecker {
         
         let lambda_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "lambda")
         mut checked_captures: [CheckedCapture] = []
-        for capture in captures.iterator() {
+        for capture in captures {
             if .find_var_in_scope(scope_id, var: capture.name()).has_value() {
                 checked_captures.push(match capture {
                     ByValue(name, span) => CheckedCapture::ByValue(name, span)
@@ -5983,7 +5983,7 @@ struct Typechecker {
         mut module = .current_module()
         mut checked_params: [CheckedParameter] = []
         mut first = true
-        for param in params.iterator() {
+        for param in params {
             let checked_param = .typecheck_parameter(parameter: param, scope_id, first, this_arg_type_id: None, check_scope: None)
             checked_params.push(checked_param)
             let var_id = module.add_variable(checked_param.variable)
@@ -6042,7 +6042,7 @@ struct Typechecker {
 
     function typecheck_namespaced_var_or_simple_enum_constructor_call(mut this, name: String, namespace_: [String], scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?, span: Span) throws -> CheckedExpression {
         mut scopes = [scope_id]
-        for ns in namespace_.iterator() {
+        for ns in namespace_ {
             let scope = scopes[scopes.size() - 1]
             let ns_in_scope = .find_namespace_in_scope(scope_id: scope, name: ns)
             let enum_in_scope = .program.find_enum_in_scope(scope_id: scope, name: ns)
@@ -6146,7 +6146,7 @@ struct Typechecker {
         }
 
         mut vals: [CheckedExpression] = []
-        for value in values.iterator() {
+        for value in values {
             let checked_expr = .typecheck_expression(value, scope_id, safety_mode, type_hint: inner_hint)
             let current_value_type_id = checked_expr.type()
             if current_value_type_id.equals(void_type_id()) {
@@ -6205,7 +6205,7 @@ struct Typechecker {
         // TODO: type hints
         mut inner_hint: TypeId? = None
 
-        for value in values.iterator() {
+        for value in values {
             let checked_value = .typecheck_expression(expr: value, scope_id, safety_mode, type_hint: inner_hint)
             let current_value_type_id = checked_value.type()
             if inner_type_id.equals(unknown_type_id()) {
@@ -6257,7 +6257,7 @@ struct Typechecker {
     function typecheck_generic_arguments_method_call(mut this, checked_expr: CheckedExpression, call: ParsedCall, scope_id: ScopeId, span: Span, is_optional: bool, safety_mode: SafetyMode) throws -> CheckedExpression {
         mut checked_args: [(String, CheckedExpression)] = []
         checked_args.ensure_capacity(call.args.size())
-        for (name, _, expr) in call.args.iterator() {
+        for (name, _, expr) in call.args {
             let checked_arg_expr = .typecheck_expression(
                 expr
                 scope_id
@@ -6268,7 +6268,7 @@ struct Typechecker {
         }
 
         mut checked_type_args: [TypeId] = []
-        for type_arg in call.type_args.iterator() {
+        for type_arg in call.type_args {
             checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id, name: None))
         }
 
@@ -6330,15 +6330,15 @@ struct Typechecker {
                 covered_name = name
 
                 mut field_variables: [CheckedVariable] = []
-                for var_id in fields.iterator() {
+                for var_id in fields {
                     field_variables.push(.program.get_variable(var_id))
                 }
                 mut seen_names: {String} = {}
-                for arg in variant_arguments.iterator() {
+                for arg in variant_arguments {
                     if not arg.name.has_value() {
                         mut found_field_name = false
                         mut field_names: [String] = []
-                        for var in field_variables.iterator() {
+                        for var in field_variables {
                             field_names.push(var.name)
                             if var.name == arg.binding {
                                 found_field_name = true
@@ -6346,7 +6346,7 @@ struct Typechecker {
                         }
                         if not found_field_name {
                             mut unused_field_names: [String] = []
-                            for field_name in field_names.iterator() {
+                            for field_name in field_names {
                                 if seen_names.contains(field_name) {
                                     continue
                                 }
@@ -6368,7 +6368,7 @@ struct Typechecker {
                     }
                     seen_names.add(arg_name)
                     mut matched_field_variable: CheckedVariable? = None
-                    for var in field_variables.iterator() {
+                    for var in field_variables {
                         if var.name == arg_name {
                             matched_field_variable = var
                         }
@@ -6462,8 +6462,8 @@ struct Typechecker {
 
                 let case_count = cases.size()
                 mut current_case_index = 0uz
-                for case_ in cases.iterator() {
-                    for pattern in case_.patterns.iterator() {
+                for case_ in cases {
+                    for pattern in case_.patterns {
                         match pattern {
                             EnumVariant(variant_names, variant_arguments, arguments_span) => {
                                 mut variant_names_ = variant_names
@@ -6488,7 +6488,7 @@ struct Typechecker {
                                 mut i = 0uz
                                 mut matched_variant: CheckedEnumVariant? = None
                                 mut variant_index: usize? = None
-                                for v in enum_.variants.iterator() {
+                                for v in enum_.variants {
                                     if v.name() == variant_names_[1].0 {
                                         matched_variant = v
                                         variant_index = i
@@ -6534,7 +6534,7 @@ struct Typechecker {
 
                                 if variant_arguments.size() > 0 {
                                     mut variant_index = 0uz
-                                    for variant in enum_.variants.iterator() {
+                                    for variant in enum_.variants {
                                         if not covered_variants.contains(variant.name()) {
                                             expanded_catch_all = true
 
@@ -6591,11 +6591,11 @@ struct Typechecker {
                 mut enum_variant_names: [String] = []
                 mut missing_variants: [String] = []
 
-                for variant in enum_.variants.iterator() {
+                for variant in enum_.variants {
                     enum_variant_names.push(variant.name())
                 }
 
-                for variant in enum_variant_names.iterator() {
+                for variant in enum_variant_names {
                     if not covered_variants.contains(variant) {
                         missing_variants.push(variant)
                     }
@@ -6621,8 +6621,8 @@ struct Typechecker {
 
                 let case_count = cases.size()
                 mut current_case_index = 0uz
-                for case_ in cases.iterator() {
-                    for pattern in case_.patterns.iterator() {
+                for case_ in cases {
+                    for pattern in case_.patterns {
                         match pattern {
                             EnumVariant(variant_names, variant_arguments, arguments_span) => {
                                 if is_value_match {
@@ -6847,7 +6847,7 @@ struct Typechecker {
             value_hint = args[1]
         }
 
-        for (key, value) in values.iterator() {
+        for (key, value) in values {
             let checked_key = .typecheck_expression(key, scope_id, safety_mode, type_hint: key_hint)
             let current_key_type_id = checked_key.type()
 
@@ -7025,7 +7025,7 @@ struct Typechecker {
             .generic_inferences.restore(old_generic_inferences)
         }
 
-        for name in call.namespace_.iterator() {
+        for name in call.namespace_ {
             resolved_namespaces.push(ResolvedNamespace(name, generic_parameters: None))
         }
 
@@ -7069,7 +7069,7 @@ struct Typechecker {
 
         match call.name {
             "print" | "println" | "eprintln" | "eprint" | "format" => {
-                for arg in call.args.iterator() {
+                for arg in call.args {
                     let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
 
                     args.push((call.name, checked_arg))
@@ -7083,11 +7083,11 @@ struct Typechecker {
             else => {
                 if not resolved_function_id.has_value() {
                     mut checked_type_args: [TypeId] = []
-                    for type_arg in call.type_args.iterator() {
+                    for type_arg in call.type_args {
                         checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, name: None))
                     }
 
-                    for arg in call.args.iterator() {
+                    for arg in call.args {
                         let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
 
                         args.push((call.name, checked_arg))
@@ -7128,7 +7128,7 @@ struct Typechecker {
 
                 // If the user gave us explicit type arguments, let's use them in our substitutions
                 mut type_arg_index = 0uz
-                for parsed_type in call.type_args.iterator() {
+                for parsed_type in call.type_args {
                     let checked_type = .typecheck_typename(parsed_type, scope_id: caller_scope_id, name: None)
                     if callee.generics.params.size() <= type_arg_index {
                         .error("Trying to access generic parameter out of bounds", parsed_type.span())
@@ -7235,7 +7235,7 @@ struct Typechecker {
                     .ignore_errors = old_ignore_errors
                 }
 
-                for generic_typevar in callee.generics.params.iterator() {
+                for generic_typevar in callee.generics.params {
                     if generic_typevar.kind is Parameter {
                         let substitution = .generic_inferences.get(generic_typevar.type_id().to_string())
                         if substitution.has_value() {
@@ -7343,7 +7343,7 @@ struct Typechecker {
                 }
             }
 
-            for argument in args.iterator() {
+            for argument in args {
                 let value = try interpreter.execute_expression(
                     expr: argument.1,
                     scope: eval_scope
@@ -7414,8 +7414,8 @@ struct Typechecker {
 
     function check_implicit_constructor_argument_access(mut this, caller_scope_id: ScopeId, call: ParsedCall, struct_: CheckedStruct)  throws {
         if not .scope_can_access(accessor:caller_scope_id, accessee:struct_.scope_id) {
-            for arg in call.args.iterator() {
-                for field in struct_.fields.iterator() {
+            for arg in call.args {
+                for field in struct_.fields {
                     let variable = .get_variable(field.variable_id)
                     if (variable.name == arg.0 and variable.visibility is Private) {
                         .error(format("Can't access field '{}' when calling implicit constructor of '{}' because it is marked private", variable.name, struct_.name), arg.1)
@@ -7429,7 +7429,7 @@ struct Typechecker {
     function resolve_default_params(mut this, params: [CheckedParameter], args: [(String, Span, ParsedExpression)], scope_id: ScopeId, safety_mode: SafetyMode, arg_offset: usize, span: Span) throws -> [(String, Span, CheckedExpression)] {
         mut params_with_default_value = 0uz
 
-        for param in params.iterator() {
+        for param in params {
             if param.default_value.has_value() {
                 params_with_default_value++
             }
@@ -7540,7 +7540,7 @@ struct Typechecker {
             Struct(struct_id) | GenericInstance(id: struct_id) => {
                 let struct_ = .get_struct(struct_id)
                 mut implementations: [[TypeId]] = []
-                for (_, trait_descriptor) in struct_.trait_implementations.iterator() {
+                for (_, trait_descriptor) in struct_.trait_implementations {
                     if trait_descriptor.0.equals(trait_id) {
                         implementations.push(trait_descriptor.1)
                     }
@@ -7550,7 +7550,7 @@ struct Typechecker {
             Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
                 let enum_ = .get_enum(enum_id)
                 mut implementations: [[TypeId]] = []
-                for (_, trait_descriptor) in enum_.trait_implementations.iterator() {
+                for (_, trait_descriptor) in enum_.trait_implementations {
                     if trait_descriptor.0.equals(trait_id) {
                         implementations.push(trait_descriptor.1)
                     }
@@ -7587,7 +7587,7 @@ struct Typechecker {
             }
 
             mut found = false
-            for implemented_generic_arguments in trait_implementations.iterator() {
+            for implemented_generic_arguments in trait_implementations {
                 if implemented_generic_arguments.size() != passed_generic_arguments.size() {
                     continue
                 }
@@ -7730,7 +7730,7 @@ struct TraitImplCheck {
         missing_methods.ensure_capacity(trait_methods.size())
 
 
-        for (method_name, method_id) in trait_methods.iterator() {
+        for (method_name, method_id) in trait_methods {
             missing_methods.set(method_name, method_id)
         }
 
@@ -7738,10 +7738,10 @@ struct TraitImplCheck {
     }
 
     function throw_errors(mut this, record_decl_span: Span, typechecker: &mut Typechecker) throws {
-        for (trait_name, missing_methods) in .missing_methods.iterator() {
+        for (trait_name, missing_methods) in .missing_methods {
             let unmatched_signatures = .unmatched_signatures[trait_name]
             let private_matching_methods = .private_matching_methods[trait_name]
-            for (method_name, trait_method_id) in missing_methods.iterator() {
+            for (method_name, trait_method_id) in missing_methods {
                 let already_implemented_for = .already_implemented_for.get(method_name)
                 let unmatched_signature = unmatched_signatures.get(method_name)
                 let private_matching_method = private_matching_methods.get(method_name)
@@ -7797,7 +7797,7 @@ struct TraitImplCheck {
         let method = typechecker.get_function(method_id)
 
         // search for a matching method
-        for (trait_name, methods) in .missing_methods.iterator() {
+        for (trait_name, methods) in .missing_methods {
             let trait_method_id = methods.get(method_name)
 
             guard trait_method_id.has_value() else {

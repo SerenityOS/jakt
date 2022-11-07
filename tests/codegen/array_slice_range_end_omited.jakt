@@ -2,7 +2,7 @@
 /// - output: "two\nthree\n"
 
 function main() {
-    for c in ["one", "two", "three"][1..].iterator() {
+    for c in ["one", "two", "three"][1..] {
         println("{}", c)
     }
 }

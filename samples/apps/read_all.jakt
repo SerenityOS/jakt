@@ -4,7 +4,7 @@
 function parse_to_string(file_path: String) throws -> String {
     mut file = File::open_for_reading(file_path)
     mut builder = StringBuilder::create()
-    for b in file.read_all().iterator() {
+    for b in file.read_all() {
         builder.append(b)
     }
     return builder.to_string()

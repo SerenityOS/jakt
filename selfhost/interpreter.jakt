@@ -151,7 +151,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
     }
     JaktTuple(fields, type_id) => {
         mut vals: [CheckedExpression] = []
-        for field in fields.iterator() {
+        for field in fields {
             vals.push(value_to_checked_expression(field, interpreter))
         }
         yield CheckedExpression::JaktTuple(vals, span: this_value.span, type_id)
@@ -166,7 +166,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
         }
 
         mut materialised_fields: [CheckedExpression] = []
-        for field in fields.iterator() {
+        for field in fields {
             materialised_fields.push(value_to_checked_expression(field, interpreter))
         }
 
@@ -213,7 +213,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
     }
     Enum(fields, enum_id, constructor) => {
         mut materialised_fields: [CheckedExpression] = []
-        for field in fields.iterator() {
+        for field in fields {
             materialised_fields.push(value_to_checked_expression(field, interpreter))
         }
 
@@ -264,7 +264,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
     }
     JaktArray(values, type_id) => {
         mut vals: [CheckedExpression] = []
-        for value in values.iterator() {
+        for value in values {
             vals.push(value_to_checked_expression(value, interpreter))
         }
 
@@ -338,7 +338,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
 
         mut inherited_scope = interpreter.program.get_scope(inherited_scope_id)
         mut statements: [CheckedStatement] = []
-        for capture in captures.iterator() {
+        for capture in captures {
             let value = value_to_checked_expression(capture.1, interpreter)
             let var_id = interpreter.program.get_module(id: type_id.module).add_variable(CheckedVariable(
                 name: capture.0
@@ -358,7 +358,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
         }
 
         // Then append all the statements in the block
-        for statement in block.statements.iterator() {
+        for statement in block.statements {
             statements.push(statement)
         }
 
@@ -370,7 +370,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
             yielded_none: block.yielded_none
         )
 
-        for param in checked_params.iterator() {
+        for param in checked_params {
             println("Param: {}", interpreter.program.type_name(param.variable.type_id))
         }
 
@@ -417,7 +417,7 @@ class InterpreterScope {
         mut current_id: ScopeId? = scope_id
         while current_id.has_value() {
             let scope = program.get_scope(current_id!)
-            for pair in scope.comptime_bindings.iterator() {
+            for pair in scope.comptime_bindings {
                 if bindings.contains(pair.0) {
                     continue
                 }
@@ -493,7 +493,7 @@ class InterpreterScope {
             .parent!.type_map_for_substitution_helper(map)
         }
 
-        for pair in .type_bindings.iterator() {
+        for pair in .type_bindings {
             map.set(pair.0, pair.1.to_string())
         }
     }
@@ -581,7 +581,7 @@ class Interpreter {
 
     public function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
 
-        for module in .program.modules.iterator() {
+        for module in .program.modules {
             for id in 0..module.types.size() {
                 if module.types[id].equals(type) {
                     return TypeId(module: module.id, id)
@@ -1110,7 +1110,7 @@ class Interpreter {
                     
                     mut file = File::open_for_reading(path)
                     mut result_values: [Value] = []
-                    for byte in file.read_all().iterator() {
+                    for byte in file.read_all() {
                         result_values.push(Value(
                             impl: ValueImpl::U8(byte)
                             span: call_span
@@ -1255,7 +1255,7 @@ class Interpreter {
                         }
                     }
                     mut data: [u8] = []
-                    for val in data_values.iterator() {
+                    for val in data_values {
                         data.push(match val.impl {
                             U8(x) => x
                             else => {panic("expected byte")}
@@ -1746,7 +1746,7 @@ class Interpreter {
                 "contains" => match this_argument!.impl {
                     JaktArray(values) => {
                         mut found = false
-                        for value in values.iterator() {
+                        for value in values {
                             if value.impl.equals(arguments[0].impl) {
                                 found = true
                                 break
@@ -2132,7 +2132,7 @@ class Interpreter {
                         CChar(c) => {
                             let values = value.split(c)
                             mut result: [Value] = []
-                            for value in values.iterator() {
+                            for value in values {
                                 result.push(Value(impl: ValueImpl::JaktString(value), span: call_span))
                             }
                             let array_struct_id = .program.find_struct_in_prelude("Array")
@@ -2774,7 +2774,7 @@ class Interpreter {
                     }
                 }
 
-                for var in vars.iterator() {
+                for var in vars {
                     guard var is VarDecl(var_id, init) else {
                         panic("expected vardecl")
                     }
@@ -3013,7 +3013,7 @@ class Interpreter {
     }
 
     public function execute_block(mut this, block: CheckedBlock, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
-        for statement in block.statements.iterator() {
+        for statement in block.statements {
             .enter_span(statement.span() ?? call_span)
             defer .leave_span()
             match .execute_statement(statement, scope, call_span) {
@@ -5186,7 +5186,7 @@ class Interpreter {
         Call(call, span) => {
             if not call.function_id.has_value() {
                 mut arguments: [Value] = []
-                for arg in call.args.iterator() {
+                for arg in call.args {
                     arguments.push(match .execute_expression(arg.1, scope) {
                         Return(value) => {
                             return StatementResult::Return(value)
@@ -5227,7 +5227,7 @@ class Interpreter {
             }
             mut this_argument: Value? = None
             mut arguments: [Value] = []
-            for arg in call.args.iterator() {
+            for arg in call.args {
                 arguments.push(match .execute_expression(arg.1, scope) {
                     Return(value) => {
                         return StatementResult::Return(value)
@@ -5349,7 +5349,7 @@ class Interpreter {
 
             if not call.function_id.has_value() {
                 mut arguments: [Value] = []
-                for arg in call.args.iterator() {
+                for arg in call.args {
                     arguments.push(match .execute_expression(arg.1, scope) {
                         Return(value) => {
                             return StatementResult::Return(value)
@@ -5382,7 +5382,7 @@ class Interpreter {
 
             let function_to_run = .program.get_function(id: call.function_id!)
             mut arguments: [Value] = []
-            for arg in call.args.iterator() {
+            for arg in call.args {
                 arguments.push(match .execute_expression(arg.1, scope) {
                     Return(value) => {
                         return StatementResult::Return(value)
@@ -5543,7 +5543,7 @@ class Interpreter {
                     let struct_ = .program.get_struct(struct_id)
                     mut idx = 0
                     mut found_index: i64? = None
-                    for field in struct_.fields.iterator() {
+                    for field in struct_.fields {
                         if .program.get_variable(field.variable_id).name == index {
                             found_index = idx
                             break
@@ -5587,7 +5587,7 @@ class Interpreter {
                     let enum_ = .program.get_enum(enum_id)
                     mut idx = 0
                     mut found_index: i64? = None
-                    for field in enum_.fields.iterator() {
+                    for field in enum_.fields {
                         if .program.get_variable(field.variable_id).name == index {
                             found_index = idx
                             break
@@ -5610,7 +5610,7 @@ class Interpreter {
         JaktDictionary(vals, span, type_id) => {
             mut keys: [Value] = []
             mut values: [Value] = []
-            for (k, v) in vals.iterator() {
+            for (k, v) in vals {
                 let key = match .execute_expression(k, scope) {
                     Return(value) => {
                         return StatementResult::Return(value)
@@ -5733,7 +5733,7 @@ class Interpreter {
             }
             else => {
                 mut values: [Value] = []
-                for value in vals.iterator() {
+                for value in vals {
                     let val = match .execute_expression(value, scope) {
                         Return(value) => {
                             return StatementResult::Return(value)
@@ -5820,7 +5820,7 @@ class Interpreter {
                     mut found_variant_index: usize? = None
                     mut span: Span? = None
 
-                    for match_case in match_cases.iterator() {
+                    for match_case in match_cases {
                         match match_case {
                             EnumVariant(name, args, index, body, marker_span) => {
                                 if name != constructor_name {
@@ -5866,9 +5866,9 @@ class Interpreter {
                             }
                             StructLike(fields: variant_fields) => {
                                 mut i = 0
-                                for var_id in variant_fields.iterator() {
+                                for var_id in variant_fields {
                                     let field = .program.get_variable(var_id)
-                                    for arg in found_args!.iterator() {
+                                    for arg in found_args! {
                                         let matched_name = arg.name ?? arg.binding
                                         if matched_name == field.name {
                                             new_scope.bindings.set(
@@ -5906,7 +5906,7 @@ class Interpreter {
                     mut found_body: CheckedMatchBody? = None
                     mut span: Span? = None
 
-                    for match_case in match_cases.iterator() {
+                    for match_case in match_cases {
                         match match_case {
                             Expression(body, expression, marker_span) => {
                                 let value_to_match_against = match .execute_expression(expression, scope) {
@@ -5993,7 +5993,7 @@ class Interpreter {
             yield match value.impl {
                 Enum(fields,  enum_id, constructor) => {
                     mut found_variant: CheckedEnumVariant? = None
-                    for variant in .program.get_enum(enum_id).variants.iterator() {
+                    for variant in .program.get_enum(enum_id).variants {
                         if variant.name() == enum_variant.name() {
                             found_variant = variant
                             break
@@ -6004,7 +6004,7 @@ class Interpreter {
                         Typed => StatementResult::JustValue(fields[0])
                         StructLike(fields: variant_fields) => {
                             mut i = 0
-                            for var_id in variant_fields.iterator() {
+                            for var_id in variant_fields {
                                 let field = .program.get_variable(var_id)
                                 let matched_name = arg.name ?? arg.binding
                                 if matched_name == field.name {
@@ -6027,7 +6027,7 @@ class Interpreter {
         }
         JaktTuple(vals, span, type_id) => {
             mut fields: [Value] = []
-            for val in vals.iterator() {
+            for val in vals {
                 let value = match .execute_expression(val, scope) {
                     JustValue(value) => value
                     Return(value) => {
@@ -6052,7 +6052,7 @@ class Interpreter {
         }
         JaktSet(vals, span, type_id) => {
             mut values: [Value] = []
-            for v in vals.iterator() {
+            for v in vals {
                 let val = match .execute_expression(v, scope) {
                     Return(value) => {
                         return StatementResult::Return(value)
@@ -6086,7 +6086,7 @@ class Interpreter {
         Function(captures, params, return_type_id, type_id, block, span, can_throw) => {
             // First, resolve the captures
             mut resolved_captures: [String:Value] = [:]
-            for capture in captures.iterator() {
+            for capture in captures {
                 let name = capture.name()
                 guard capture is ByValue else {
                     .error(
@@ -6102,7 +6102,7 @@ class Interpreter {
             let type_map = scope.type_map_for_substitution()
             mut resolved_params: [String:(TypeId, CheckedExpression?)] = [:]
             mut checked_params: [CheckedParameter] = []
-            for param in params.iterator() {
+            for param in params {
                 let param_type_id = .program.substitute_typevars_in_type(
                     type_id: param.variable.type_id
                     generic_inferences: type_map

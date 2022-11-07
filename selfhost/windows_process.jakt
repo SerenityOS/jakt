@@ -106,7 +106,7 @@ function join_arguments(args: [String]) throws -> String {
     // All this because there's no way to pass arguments to CreateProcess separately.
     mut joined_builder = StringBuilder::create()
     mut first = true
-    for arg in args.iterator() {
+    for arg in args {
         if first {
             first = false
         } else {

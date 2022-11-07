@@ -16,11 +16,11 @@ function todo(anon message: String) {
 function add_arrays<T>(anon a: [T], anon b: [T]) throws -> [T] {
     mut result: [T] = []
 
-    for x in a.iterator() {
+    for x in a {
         result.push(x)
     }
 
-    for x in b.iterator() {
+    for x in b {
         result.push(x)
     }
 
@@ -31,7 +31,7 @@ function join(anon strings: [String], separator: String) -> String {
     mut output = ""
 
     mut i = 0uz
-    for s in strings.iterator() {
+    for s in strings {
         output += s
         if i < strings.size() - 1 {
             output += separator
@@ -44,7 +44,7 @@ function join(anon strings: [String], separator: String) -> String {
 
 function prepend_to_each(anon strings: [String], prefix: String) throws -> [String] {
     mut output: [String] = []
-    for str in strings.iterator() {
+    for str in strings {
         output.push(prefix + str)
     }
     return output
@@ -52,7 +52,7 @@ function prepend_to_each(anon strings: [String], prefix: String) throws -> [Stri
 
 function append_to_each(anon strings: [String], suffix: String) throws -> [String] {
     mut output: [String] = []
-    for str in strings.iterator() {
+    for str in strings {
         output.push(str + suffix)
     }
     return output
@@ -80,7 +80,7 @@ struct FileId {
 
 function extend_array<T>(mut target: [T], extend_with: [T]) throws {
     target.add_capacity(extend_with.size())
-    for v in extend_with.iterator() {
+    for v in extend_with {
         target.push(v)
     }
 }

@@ -123,7 +123,7 @@ struct CodegenDebugInfo {
     }
 
     function gather_line_spans(mut this) throws {
-        for file in .compiler.file_ids.iterator() {
+        for file in .compiler.file_ids {
 
             if file.0 == "__prelude__" {
                 continue
@@ -184,8 +184,8 @@ struct CodeGenerator {
     function topologically_sort_modules(this) throws -> [ModuleId] {
         mut in_degrees: [usize:i64] = [:]
 
-        for module in .program.modules.iterator() {
-            for imported_module in module.imports.iterator() {
+        for module in .program.modules {
+            for imported_module in module.imports {
                 let existing = in_degrees.get(imported_module.id) ?? 0
                 in_degrees.set(imported_module.id, existing + 1)
             }
@@ -196,7 +196,7 @@ struct CodeGenerator {
         }
 
         mut stack: [ModuleId] = []
-        for module in .program.modules.iterator() {
+        for module in .program.modules {
             if in_degrees[module.id.id] == 0 {
                 stack.push(module.id)
             }
@@ -206,7 +206,7 @@ struct CodeGenerator {
         while not stack.is_empty() {
             let id = stack.pop()!
             sorted_modules.push(id)
-            for imported_module in .program.modules[id.id].imports.iterator() {
+            for imported_module in .program.modules[id.id].imports {
                 let module_in_degrees = in_degrees[imported_module.id]
                 in_degrees.set(imported_module.id, module_in_degrees - 1)
                 if module_in_degrees == 1 {
@@ -289,7 +289,7 @@ struct CodeGenerator {
         )
 
 
-        for as_forward in [true, false].iterator() {
+        for as_forward in [true, false] {
             for idx in sorted_modules.size()..0 {
                 // Module forward declarations header (if as_forward), or module implementation (if not as_forward)
                 let i = sorted_modules[idx - 1].id
@@ -315,14 +315,14 @@ struct CodeGenerator {
                 let scope = generator.program.get_scope(scope_id)
 
                 if as_forward {
-                    for child_scope in scope.children.iterator() {
+                    for child_scope in scope.children {
                         let scope = generator.program.get_scope(scope_id: child_scope)
                         if scope.import_path_if_extern.has_value() {
                             let has_name = scope.namespace_name.has_value()
                             if has_name {
                                 output += format("namespace {} {{\n", scope.namespace_name!)
                             }
-                            for action in scope.before_extern_include.iterator() {
+                            for action in scope.before_extern_include {
                                 match action {
                                     Define(name, value) => {
                                         output += format("#ifdef {}\n", name)
@@ -338,7 +338,7 @@ struct CodeGenerator {
                                 }
                             }
                             output += format("#include <{}>\n", scope.import_path_if_extern!)
-                            for action in scope.after_extern_include.iterator() {
+                            for action in scope.after_extern_include {
                                 match action {
                                     Define(name, value) => {
                                         output += format("#ifdef {}\n", name)
@@ -358,7 +358,7 @@ struct CodeGenerator {
                             }
                         }
                     }
-                    for id in module.imports.iterator() {
+                    for id in module.imports {
                         let module = generator.program.modules[id.id]
                         output += format("#include \"{}.h\"\n", module.name)
                     }
@@ -406,7 +406,7 @@ struct CodeGenerator {
         }
         visited.add(type_id.to_string())
         if encoded_dependency_graph.contains(encoded_type_id) {
-            for dependency in encoded_dependency_graph.get(encoded_type_id)!.iterator() {
+            for dependency in encoded_dependency_graph.get(encoded_type_id)! {
                 .postorder_traversal(encoded_type_id: dependency, visited, encoded_dependency_graph, output)
             }
         }
@@ -416,7 +416,7 @@ struct CodeGenerator {
     function produce_codegen_dependency_graph(this, scope: Scope) throws -> [String : [String]] {
         mut dependency_graph: [String : [String]] = [:]
 
-        for type_ in scope.types.iterator() {
+        for type_ in scope.types {
             dependency_graph.set(type_.1.to_string(), .extract_dependencies_from(type_id: type_.1, dependency_graph, top_level: true))
         }
 
@@ -427,7 +427,7 @@ struct CodeGenerator {
         mut dependencies: [String] = []
 
         if dependency_graph.contains(type_id.to_string()) {
-            for dependency in dependency_graph.get(type_id.to_string())!.iterator() {
+            for dependency in dependency_graph.get(type_id.to_string())! {
                 dependencies.push(dependency)
             }
             return dependencies
@@ -442,7 +442,7 @@ struct CodeGenerator {
             else => []
         }
 
-        for dependency in inner_dependencies.iterator() {
+        for dependency in inner_dependencies {
             dependencies.push(dependency)
         }
 
@@ -466,23 +466,23 @@ struct CodeGenerator {
         dependencies.push(enum_.type_id.to_string())
         if not enum_.underlying_type_id.equals(unknown_type_id()) {
             let inner_dependencies = .extract_dependencies_from(type_id: enum_.underlying_type_id, dependency_graph, top_level: false)
-            for dependency in inner_dependencies.iterator() {
+            for dependency in inner_dependencies {
                 dependencies.push(dependency)
             }
         }
-        for variant in enum_.variants.iterator() {
+        for variant in enum_.variants {
             match variant {
                 Typed(type_id) => {
                     let inner_dependencies = .extract_dependencies_from(type_id, dependency_graph, top_level: false)
-                    for dependency in inner_dependencies.iterator() {
+                    for dependency in inner_dependencies {
                         dependencies.push(dependency)
                     }
                 }
                 StructLike(fields) => {
-                    for field in fields.iterator() {
+                    for field in fields {
                         let type_id = .program.get_variable(field).type_id
                         let inner_dependencies = .extract_dependencies_from(type_id, dependency_graph, top_level: false)
-                        for dependency in inner_dependencies.iterator() {
+                        for dependency in inner_dependencies {
                             dependencies.push(dependency)
                         }
                     }
@@ -511,13 +511,13 @@ struct CodeGenerator {
         }
 
         if not args.is_empty() {
-            for inner_type in args.iterator() {
+            for inner_type in args {
                 let inner_dependencies = match .program.get_type(inner_type) {
                     Enum | Struct => .extract_dependencies_from(type_id: inner_type, dependency_graph, top_level: false)
                     else => []
                 }
 
-                for dependency in inner_dependencies.iterator() {
+                for dependency in inner_dependencies {
                     dependencies.push(dependency)
                 }
             }
@@ -532,10 +532,10 @@ struct CodeGenerator {
 
         dependencies.push(struct_.type_id.to_string())
         // The struct's fields are also dependencies.
-        for field in struct_.fields.iterator() {
+        for field in struct_.fields {
             let type_id = .program.get_variable(field.variable_id).type_id
             let inner_dependencies = .extract_dependencies_from(type_id, dependency_graph, top_level: false)
-            for dependency in inner_dependencies.iterator() {
+            for dependency in inner_dependencies {
                 dependencies.push(dependency)
             }
         }
@@ -551,10 +551,10 @@ struct CodeGenerator {
         if as_forward {
             mut output = ""
             let encoded_dependency_graph = .produce_codegen_dependency_graph(scope)
-            for entry in encoded_dependency_graph.iterator() {
+            for entry in encoded_dependency_graph {
                 let traversal: [TypeId] = []
                 .postorder_traversal(encoded_type_id: entry.0, visited: seen_types, dependency_graph: encoded_dependency_graph, output: traversal)
-                for type_id in traversal.iterator() {
+                for type_id in traversal {
                     let type_ = .program.get_type(type_id)
                     match type_ {
                         Enum(enum_id) => {
@@ -590,7 +590,7 @@ struct CodeGenerator {
                 }
             }
 
-            for (_, struct_id) in scope.structs.iterator() {
+            for (_, struct_id) in scope.structs {
                 if not struct_id.module.equals(current_module.id) {
                     continue
                 }
@@ -602,7 +602,7 @@ struct CodeGenerator {
                 output += "\n"
             }
 
-            for (_, enum_id) in scope.enums.iterator() {
+            for (_, enum_id) in scope.enums {
                 if not enum_id.module.equals(current_module.id) {
                     continue
                 }
@@ -614,7 +614,7 @@ struct CodeGenerator {
                 output += "\n"
             }
 
-            for (_, function_id) in scope.functions.iterator() {
+            for (_, function_id) in scope.functions {
                 if not function_id.module.equals(current_module.id) {
                     continue
                 }
@@ -635,7 +635,7 @@ struct CodeGenerator {
                 }
             }
 
-            for child_scope_id in scope.children.iterator() {
+            for child_scope_id in scope.children {
                 let child_scope = .program.get_scope(child_scope_id)
                 if child_scope.namespace_name.has_value() {
                     let name = child_scope.namespace_name!
@@ -654,7 +654,7 @@ struct CodeGenerator {
         }
 
         mut output = ""
-        for (_, function_id) in scope.functions.iterator() {
+        for (_, function_id) in scope.functions {
             if not function_id.module.equals(current_module.id) {
                 continue
             }
@@ -675,7 +675,7 @@ struct CodeGenerator {
             }
         }
 
-        for (_, struct_id) in scope.structs.iterator() {
+        for (_, struct_id) in scope.structs {
             if not struct_id.module.equals(current_module.id) {
                 continue
             }
@@ -692,7 +692,7 @@ struct CodeGenerator {
             output += .codegen_debug_description_getter(struct_)
 
             let scope = .program.get_scope(struct_.scope_id)
-            for (_, function_id) in scope.functions.iterator() {
+            for (_, function_id) in scope.functions {
                 let function_ = .program.get_function(function_id)
                 let previous_function = .current_function
                 .current_function = function_
@@ -708,7 +708,7 @@ struct CodeGenerator {
             }
         }
 
-        for (_, enum_id) in scope.enums.iterator() {
+        for (_, enum_id) in scope.enums {
             if not enum_id.module.equals(current_module.id) {
                 continue
             }
@@ -727,7 +727,7 @@ struct CodeGenerator {
             }
 
             let scope = .program.get_scope(enum_.scope_id)
-            for (_, function_id) in scope.functions.iterator() {
+            for (_, function_id) in scope.functions {
                 let function_ = .program.get_function(function_id)
                 let previous_function = .current_function
                 .current_function = function_
@@ -739,7 +739,7 @@ struct CodeGenerator {
             }
         }
 
-        for child_scope_id in scope.children.iterator() {
+        for child_scope_id in scope.children {
             let child_scope = .program.get_scope(child_scope_id)
             if child_scope.namespace_name.has_value() {
                 let name = child_scope.namespace_name!
@@ -767,7 +767,7 @@ struct CodeGenerator {
             output += scope.namespace_name!
             output += " {\n"
         }
-        for (_, struct_id) in scope.structs.iterator() {
+        for (_, struct_id) in scope.structs {
             if not struct_id.module.equals(current_module.id) {
                 continue
             }
@@ -776,7 +776,7 @@ struct CodeGenerator {
             output += "\n"
         }
 
-        for (_, enum_id) in scope.enums.iterator() {
+        for (_, enum_id) in scope.enums {
             if not enum_id.module.equals(current_module.id) {
                 continue
             }
@@ -785,11 +785,11 @@ struct CodeGenerator {
             output += "\n"
         }
 
-        for child in scope.children.iterator() {
+        for child in scope.children {
             output += .codegen_namespace_predecl(scope: .program.get_scope(child), current_module)
         }
 
-        for (_, function_id) in scope.functions.iterator() {
+        for (_, function_id) in scope.functions {
             if not function_id.module.equals(current_module.id) {
                 continue
             }
@@ -820,7 +820,7 @@ struct CodeGenerator {
         if not function_.generics.params.is_empty() {
             output += "template <"
             mut first = true
-            for generic_parameter in function_.generics.params.iterator() {
+            for generic_parameter in function_.generics.params {
                 if first {
                     first = false
                 } else {
@@ -885,7 +885,7 @@ struct CodeGenerator {
         output += "("
 
         mut first = true
-        for param in function_.params.iterator() {
+        for param in function_.params {
             if first and param.variable.name == "this" {
                 continue
             }
@@ -929,7 +929,7 @@ struct CodeGenerator {
         if not struct_.generic_parameters.is_empty() {
             output += "template <"
             mut first = true
-            for generic_parameter in struct_.generic_parameters.iterator() {
+            for generic_parameter in struct_.generic_parameters {
                 if first {
                     first = false
                 } else {
@@ -962,7 +962,7 @@ struct CodeGenerator {
 
         mut generic_parameter_names: [String] = []
         if not struct_.generic_parameters.is_empty() {
-            for generic_parameter in struct_.generic_parameters.iterator() {
+            for generic_parameter in struct_.generic_parameters {
                 generic_parameter_names.push(.codegen_type(generic_parameter.type_id))
             }
 
@@ -974,7 +974,7 @@ struct CodeGenerator {
                 mut class_name_with_generics = ""
                 class_name_with_generics += struct_.name
                 mut first = true
-                for generic_parameter in struct_.generic_parameters.iterator() {
+                for generic_parameter in struct_.generic_parameters {
                     if not first {
                         class_name_with_generics += ", "
                     } else {
@@ -1010,7 +1010,7 @@ struct CodeGenerator {
             else => {}
         }
 
-        for field in struct_.fields.iterator() {
+        for field in struct_.fields {
             let variable = .program.get_variable(field.variable_id)
             output += .codegen_type(variable.type_id)
             output += " "
@@ -1019,7 +1019,7 @@ struct CodeGenerator {
         }
 
         let scope = .program.get_scope(struct_.scope_id)
-        for fn in scope.functions.iterator() {
+        for fn in scope.functions {
 
             let function_ = .program.get_function(fn.1)
 
@@ -1069,7 +1069,7 @@ struct CodeGenerator {
 
         let is_generic = not enum_.generic_parameters.is_empty()
         mut template_args_array: [String] = []
-        for generic_parameter in enum_.generic_parameters.iterator() {
+        for generic_parameter in enum_.generic_parameters {
             if .program.get_type(generic_parameter.type_id) is TypeVariable(name) {
                 template_args_array.push("typename " + name)
             }
@@ -1077,7 +1077,7 @@ struct CodeGenerator {
         mut template_args = join(template_args_array, separator: ", ")
 
         output += format("namespace {}_Details", enum_.name) + " {\n"
-        for variant in enum_.variants.iterator() {
+        for variant in enum_.variants {
             match variant {
                 Untyped(name) | StructLike(name) | Typed(name) => {
                     if is_generic {
@@ -1103,7 +1103,7 @@ struct CodeGenerator {
         if not enum_.underlying_type_id.equals(void_type_id()) {
             if .program.is_integer(enum_.underlying_type_id) {
                 output += "enum class " + enum_.name + ": " + .codegen_type(enum_.underlying_type_id) + " {\n"
-                for variant in enum_.variants.iterator() {
+                for variant in enum_.variants {
                     output += match variant {
                         WithValue(name, expr) => name + " = " + .codegen_expression(expr) + ",\n"
                         else => {
@@ -1120,7 +1120,7 @@ struct CodeGenerator {
 
         let is_generic = not enum_.generic_parameters.is_empty()
         mut generic_parameter_names: [String] = []
-        for generic_parameter in enum_.generic_parameters.iterator() {
+        for generic_parameter in enum_.generic_parameters {
             if .program.get_type(generic_parameter.type_id) is TypeVariable(name) {
                 generic_parameter_names.push(name)
             }
@@ -1128,13 +1128,13 @@ struct CodeGenerator {
         mut template_args = join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", ")
 
         mut common_fields: [(String, String)] = []
-        for field in enum_.fields.iterator() {
+        for field in enum_.fields {
             let variable = .program.get_variable(field.variable_id)
             common_fields.push((variable.name, .codegen_type(variable.type_id)))
         }
 
         output += "namespace " + enum_.name + "_Details {\n"
-        for variant in enum_.variants.iterator() {
+        for variant in enum_.variants {
             let fields = match variant {
                 Untyped(name) => {
                     if is_generic {
@@ -1145,7 +1145,7 @@ struct CodeGenerator {
                 }
                 StructLike(name, fields: own_fields) => {
                     mut fields: [(String, String)] = []
-                    for field in own_fields.iterator() {
+                    for field in own_fields {
                         let variable = .program.get_variable(field)
                         fields.push((variable.name, .codegen_type(variable.type_id)))
                     }
@@ -1158,7 +1158,7 @@ struct CodeGenerator {
                 }
                 Typed(name, type_id) => {
                     mut fields: [(String, String)] = []
-                    for field in common_fields.iterator() {
+                    for field in common_fields {
                         fields.push(field)
                     }
                     fields.push(("value", .codegen_type(type_id)))
@@ -1175,7 +1175,7 @@ struct CodeGenerator {
                 }
             }
 
-            for (name, type) in fields.iterator() {
+            for (name, type) in fields {
                 output += format("{} {};\n", type, name)
             }
             if not fields.is_empty() {
@@ -1205,7 +1205,7 @@ struct CodeGenerator {
         }
         mut variant_names: [String] = []
         mut variant_arguments_array: [String] = []
-        for variant in enum_.variants.iterator() {
+        for variant in enum_.variants {
             mut argument = enum_.name + "_Details::" + variant.name()
             if is_generic {
                 argument += format("<{}>", join(generic_parameter_names, separator: ", "))
@@ -1226,7 +1226,7 @@ struct CodeGenerator {
         output += " {\n"
         output += "using Variant<" + variant_args + ">::Variant;\n"
 
-        for name in variant_names.iterator() {
+        for name in variant_names {
             output += "    using " +  name + " = " + enum_.name + "_Details::" + name
             if is_generic {
                 output += "<"
@@ -1252,7 +1252,7 @@ struct CodeGenerator {
             output += .codegen_enum_debug_description_getter(enum_, is_inline: true)
         }
 
-        for (field_name, type) in common_fields.iterator() {
+        for (field_name, type) in common_fields {
             output += format("{} const& {}() const {{ switch(this->index()) {{", type, field_name)
             for i in 0..enum_.variants.size() {
                 let variant = enum_.variants[i]
@@ -1265,7 +1265,7 @@ struct CodeGenerator {
         }
 
         let enum_scope = .program.get_scope(enum_.scope_id)
-        for function_item in enum_scope.functions.iterator() {
+        for function_item in enum_scope.functions {
             let function_ = .program.get_function(function_item.1)
 
             let previous_function_id = .current_function
@@ -1294,7 +1294,7 @@ struct CodeGenerator {
         if not is_inline and not struct_.generic_parameters.is_empty() {
             output += "template <"
             mut first = true
-            for param in struct_.generic_parameters.iterator() {
+            for param in struct_.generic_parameters {
                 if first {
                     first = false
                 } else {
@@ -1318,7 +1318,7 @@ struct CodeGenerator {
         output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
 
         mut i = 0uz
-        for field in struct_.fields.iterator() {
+        for field in struct_.fields {
             let field_var = .program.get_variable(field.variable_id)
             output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));"
             output += format("TRY(builder.append(\"{}: \"));", field_var.name)
@@ -1357,7 +1357,7 @@ struct CodeGenerator {
         if not is_inline and not enum_.generic_parameters.is_empty() {
             output += "template <"
             mut first = true
-            for param in enum_.generic_parameters.iterator() {
+            for param in enum_.generic_parameters {
                 if first {
                     first = false
                 } else {
@@ -1390,7 +1390,7 @@ struct CodeGenerator {
                     output += "{\n";
                     output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
                     mut i = 0uz
-                    for field in fields.iterator() {
+                    for field in fields {
                         output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));\n"
                         let var = .program.get_variable(field)
                         if .program.is_string(var.type_id){
@@ -1431,7 +1431,7 @@ struct CodeGenerator {
         let generic_type_args = join(generic_parameter_names, separator: ", ")
 
         mut qualified_name = ""
-        for namespace_ in .namespace_stack.iterator() {
+        for namespace_ in .namespace_stack {
             qualified_name += format("{}::", namespace_)
         }
 
@@ -1667,7 +1667,7 @@ struct CodeGenerator {
                     }
                     // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
                     mut variant_index = 0;
-                    for variant in enum_.variants.iterator() {
+                    for variant in enum_.variants {
                         if variant.name() == name{
                             break
                         }
@@ -1712,7 +1712,7 @@ struct CodeGenerator {
         }
         NamespacedVar(namespaces, var) => {
             mut output = ""
-            for ns in namespaces.iterator() {
+            for ns in namespaces {
                 output += ns.name + "::"
             }
             yield output + var.name
@@ -1752,7 +1752,7 @@ struct CodeGenerator {
                 output += .codegen_type(inner_type_id)
                 output += ">::create_with({"
                 mut first = true
-                for val in vals.iterator() {
+                for val in vals {
                     if not first {
                         output += ", "
                     } else {
@@ -1773,7 +1773,7 @@ struct CodeGenerator {
                 .codegen_type(value_type_id))
 
             mut first = true
-            for (key, value) in vals.iterator() {
+            for (key, value) in vals {
                 if not first {
                     output += ", "
                 } else {
@@ -1795,7 +1795,7 @@ struct CodeGenerator {
             mut output = ""
             output += format("({}((Set<{}>::create_with_values({{", .current_error_handler(), .codegen_type(inner_type_id))
             mut first = true
-            for value in vals.iterator() {
+            for value in vals {
                 if not first {
                     output += ", "
                 } else {
@@ -1810,7 +1810,7 @@ struct CodeGenerator {
             mut output = ""
             output += "(Tuple{"
             mut first = true
-            for val in vals.iterator() {
+            for val in vals {
                 if not first {
                     output += ", "
                 } else {
@@ -1825,14 +1825,14 @@ struct CodeGenerator {
         }
         Function(captures, params, can_throw, block, return_type_id, pseudo_function_id) => {
             mut generated_captures: [String] = []
-            for capture in captures.iterator() {
+            for capture in captures {
                 generated_captures.push(match capture {
                     ByValue => capture.name()
                     ByReference | ByMutableReference => format("&{}", capture.name())
                 })
             }
             mut generated_params: [String] = []
-            for param in params.iterator() {
+            for param in params {
                 generated_params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name))
             }
             let return_type = match can_throw {
@@ -2003,7 +2003,7 @@ struct CodeGenerator {
         mut output = ""
 
         mut is_generic_enum: bool = false
-        for case_ in cases.iterator() {
+        for case_ in cases {
             if case_ is EnumVariant {
                 is_generic_enum = true
                 break
@@ -2030,7 +2030,7 @@ struct CodeGenerator {
 
         mut has_default = false
         mut first = true
-        for case_ in cases.iterator() {
+        for case_ in cases {
             match case_ {
                 EnumVariant(name, args, subject_type_id, scope_id, body) => {
                     let enum_ = .program.get_enum(match .program.get_type(subject_type_id) {
@@ -2042,7 +2042,7 @@ struct CodeGenerator {
                     })
                     // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
                     mut variant_index = 0;
-                    for variant in enum_.variants.iterator() {
+                    for variant in enum_.variants {
                         if variant.name() == name{
                             break
                         }
@@ -2064,7 +2064,7 @@ struct CodeGenerator {
                     output += variant_type_name
                     output += ">();\n"
 
-                    for arg in args.iterator() {
+                    for arg in args {
                         output += "auto& "
                         output += arg.binding
                         output += " = __jakt_match_value."
@@ -2153,7 +2153,7 @@ struct CodeGenerator {
             output += "switch(__jakt_match_variant.index()) {\n"
 
             mut has_default = false
-            for match_case in match_cases.iterator() {
+            for match_case in match_cases {
                 match match_case {
                     EnumVariant(name, args, subject_type_id, index, scope_id, body) => {
                         let enum_type = .program.get_type(subject_type_id)
@@ -2195,7 +2195,7 @@ struct CodeGenerator {
                                     name)
 
                                 if not args.is_empty() {
-                                    for arg in args.iterator() {
+                                    for arg in args {
                                         let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
                                         output += .codegen_type(var.type_id)
                                         output += " const& "
@@ -2568,7 +2568,7 @@ struct CodeGenerator {
 
         if not generic_parameters.is_empty() {
             mut types: [String] = []
-            for gen_param in generic_parameters.iterator() {
+            for gen_param in generic_parameters {
                 types.push(.codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: false))
             }
             output += format("<{}>", join(types, separator: ", "))
@@ -2577,7 +2577,7 @@ struct CodeGenerator {
         output += "("
 
         mut first = true
-        for (_, expr) in call.args.iterator() {
+        for (_, expr) in call.args {
             if first {
                 first = false
             } else {
@@ -2669,7 +2669,7 @@ struct CodeGenerator {
                                     output += struct_.name
                                     output += "<"
                                     mut first = true
-                                    for arg in args.iterator() {
+                                    for arg in args {
                                         if not first {
                                             output += ", "
                                         } else {
@@ -2682,7 +2682,7 @@ struct CodeGenerator {
                                     output += call.name
                                     output += "<"
                                     mut first = true
-                                    for arg in args.iterator() {
+                                    for arg in args {
                                         if not first {
                                             output += ", "
                                         } else {
@@ -2773,14 +2773,14 @@ struct CodeGenerator {
 
                 if not generic_parameters.is_empty() {
                     mut types: [String] = []
-                    for gen_param in generic_parameters.iterator() {
+                    for gen_param in generic_parameters {
                         types.push(.codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: false))
                     }
                     output += format("<{}>", join(types, separator: ", "))
                 }
 
                 mut arguments: [String] = []
-                for arg in call.args.iterator() {
+                for arg in call.args {
                     arguments.push(.codegen_expression(arg.1))
                 }
 
@@ -2804,7 +2804,7 @@ struct CodeGenerator {
 
         mut index: usize = 0
 
-        for namespace_ in call.namespace_.iterator() {
+        for namespace_ in call.namespace_ {
             // hack warning: this is to get around C++'s limitation that a constructor
             // can't be called like other static methods
             if index == call.namespace_.size() - 1 and namespace_.name == call.name {
@@ -2815,7 +2815,7 @@ struct CodeGenerator {
             if namespace_.generic_parameters.has_value() {
                 output += "<"
                 mut i: usize = 0
-                for param in namespace_.generic_parameters!.iterator() {
+                for param in namespace_.generic_parameters! {
                     output += .codegen_type(param)
                     if i != namespace_.generic_parameters!.size() - 1 {
                         output += ","
@@ -2851,7 +2851,7 @@ struct CodeGenerator {
 
         output += "{\n"
 
-        for statement in block.statements.iterator() {
+        for statement in block.statements {
             output += .codegen_statement(statement)
         }
 
@@ -2958,7 +2958,7 @@ struct CodeGenerator {
                 mut output = ""
                 output += .codegen_statement(statement: var_decl)
 
-                for v in vars.iterator() {
+                for v in vars {
                     output += .codegen_statement(statement: v)
                 }
                 yield output
@@ -2981,7 +2981,7 @@ struct CodeGenerator {
             }
             InlineCpp(lines) => {
                 mut output = ""
-                for line in lines.iterator() {
+                for line in lines {
                     mut escaped_line = line
                     escaped_line = escaped_line.replace(replace: "\\\"", with: "\"")
                     escaped_line = escaped_line.replace(replace: "\\\\", with: "\\")
@@ -3079,7 +3079,7 @@ struct CodeGenerator {
             }
             output += "("
             mut first = true
-            for param in params.iterator() {
+            for param in params {
                 if first {
                     first = false
                 } else {
@@ -3137,7 +3137,7 @@ struct CodeGenerator {
             output += struct_.name
             output += "<"
             mut first = true
-            for type_id in args.iterator() {
+            for type_id in args {
                 if not first {
                     output += ","
                 } else {
@@ -3179,7 +3179,7 @@ struct CodeGenerator {
         }
         output += "<"
         mut first = true
-        for type_id in args.iterator() {
+        for type_id in args {
             if not first {
                 output += ", "
             } else {
@@ -3294,7 +3294,7 @@ struct CodeGenerator {
 
             output += format("explicit {}(", function_.name)
             mut first = true
-            for param in function_.params.iterator() {
+            for param in function_.params {
                 if not first {
                     output += ", "
                 } else {
@@ -3312,7 +3312,7 @@ struct CodeGenerator {
             class_name_with_generics += structure.name
 
             first = true
-            for generic_parameter in structure.generic_parameters.iterator() {
+            for generic_parameter in structure.generic_parameters {
                 if not first {
                     class_name_with_generics += ", "
                 } else {
@@ -3331,7 +3331,7 @@ struct CodeGenerator {
             output += "("
 
             first = true
-            for param in function_.params.iterator() {
+            for param in function_.params {
                 if not first {
                     output += ", "
                 } else {
@@ -3352,7 +3352,7 @@ struct CodeGenerator {
         output += "("
 
         mut first = true
-        for param in function_.params.iterator() {
+        for param in function_.params {
             if not first {
                 output += ", "
             } else {
@@ -3383,7 +3383,7 @@ struct CodeGenerator {
         if not is_inline and not structure.generic_parameters.is_empty() {
             output += "template <"
             mut first = true
-            for param in structure.generic_parameters.iterator() {
+            for param in structure.generic_parameters {
                 if first {
                     first = false
                 } else {
@@ -3404,7 +3404,7 @@ struct CodeGenerator {
             }
 
             mut first = true
-            for param in function_.params.iterator() {
+            for param in function_.params {
                 if not first {
                     output += ", "
                 } else {
@@ -3430,7 +3430,7 @@ struct CodeGenerator {
                     parent_initializer += "("
 
                     mut strings: [String] = []
-                    for param in function_.params[0..parent_constructor_parameter_count].iterator() {
+                    for param in function_.params[0..parent_constructor_parameter_count] {
                         strings.push("move(a_" + param.variable.name + ")")
                     }
                     parent_initializer += join(strings, separator: ", ")
@@ -3452,7 +3452,7 @@ struct CodeGenerator {
             class_name_with_generics += structure.name
 
             first = true
-            for generic_parameter in structure.generic_parameters.iterator() {
+            for generic_parameter in structure.generic_parameters {
                 if not first {
                     class_name_with_generics += ", "
                 } else {
@@ -3478,7 +3478,7 @@ struct CodeGenerator {
             output += "("
 
             first = true
-            for param in function_.params.iterator() {
+            for param in function_.params {
                 if not first {
                     output += ", "
                 } else {
@@ -3493,7 +3493,7 @@ struct CodeGenerator {
             output += format(") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", .current_error_handler(), class_name_with_generics)
 
             first = true
-            for param in function_.params.iterator() {
+            for param in function_.params {
                 if not first {
                     output += ", "
                 } else {
@@ -3518,7 +3518,7 @@ struct CodeGenerator {
         output += "("
 
         mut first = true
-        for param in function_.params.iterator() {
+        for param in function_.params {
             if not first {
                 output += ", "
             } else {
@@ -3536,7 +3536,7 @@ struct CodeGenerator {
         }
 
         first = true
-        for param in function_.params.iterator() {
+        for param in function_.params {
             if not first {
                 output += ", "
             } else {
@@ -3606,7 +3606,7 @@ struct CodeGenerator {
         }
 
         mut first = true
-        for param in function_.params.iterator() {
+        for param in function_.params {
             let variable = param.variable
             if variable.name == "this" {
                 continue
