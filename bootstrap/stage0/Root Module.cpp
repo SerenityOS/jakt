@@ -92,10 +92,10 @@ JaktInternal::Optional<u32> const end_input = ((((parts)[static_cast<i64>(1LL)])
 if ((!(((end_input).has_value())))){
 return (JaktInternal::OptionalNone());
 }
-__jakt_var_697 = (infallible_integer_cast<size_t>(((end_input.value())))); goto __jakt_label_641;
+__jakt_var_697 = (infallible_integer_cast<size_t>(((end_input.value())))); goto __jakt_label_642;
 
 }
-__jakt_label_641:; __jakt_var_697.release_value(); }));
+__jakt_label_642:; __jakt_var_697.release_value(); }));
 }
 else {
 {
@@ -535,10 +535,10 @@ TRY((((passed_arguments).push(types::Value(TRY((types::ValueImpl::template creat
 }
 }
 
-__jakt_var_700 = (TRY((Array<types::Value>::create_with({types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktArray>(passed_arguments,(((((first_main_param.value())).variable)).type_id)))),call_span)})))); goto __jakt_label_642;
+__jakt_var_700 = (TRY((Array<types::Value>::create_with({types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktArray>(passed_arguments,(((((first_main_param.value())).variable)).type_id)))),call_span)})))); goto __jakt_label_643;
 
 }
-__jakt_label_642:; __jakt_var_700.release_value(); }));
+__jakt_label_643:; __jakt_var_700.release_value(); }));
 }
 else {
 return JaktInternal::ExplicitValue((TRY((Array<types::Value>::create_with({})))));

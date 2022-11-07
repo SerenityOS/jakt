@@ -6,28 +6,6 @@
 #include "compiler.h"
 namespace Jakt {
 namespace interpreter {
-namespace ExecutionResult_Details {
-struct Return{
-types::Value value;
-template<typename _MemberT0>
-Return(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Throw{
-types::Value value;
-template<typename _MemberT0>
-Throw(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct ExecutionResult : public Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw> {
-using Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw>::Variant;
-    using Return = ExecutionResult_Details::Return;
-    using Throw = ExecutionResult_Details::Throw;
-ErrorOr<String> debug_description() const;
-};
 enum class InterpretError: i32 {
 CallToExternalFunction = (infallible_integer_cast<i32>((static_cast<i32>(42)))),
 MismatchingArguments = (infallible_integer_cast<i32>((static_cast<u64>(43ULL)))),
@@ -36,28 +14,6 @@ InvalidType = (infallible_integer_cast<i32>((static_cast<u64>(45ULL)))),
 UnknownVariable = (infallible_integer_cast<i32>((static_cast<u64>(46ULL)))),
 Unimplemented = (infallible_integer_cast<i32>((static_cast<u64>(47ULL)))),
 UnwrapOptionalNone = (infallible_integer_cast<i32>((static_cast<u64>(48ULL)))),
-};
-namespace Deferred_Details {
-struct Expression{
-NonnullRefPtr<types::CheckedExpression> value;
-template<typename _MemberT0>
-Expression(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Statement{
-NonnullRefPtr<types::CheckedStatement> value;
-template<typename _MemberT0>
-Statement(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct Deferred : public Variant<Deferred_Details::Expression, Deferred_Details::Statement> {
-using Variant<Deferred_Details::Expression, Deferred_Details::Statement>::Variant;
-    using Expression = Deferred_Details::Expression;
-    using Statement = Deferred_Details::Statement;
-ErrorOr<String> debug_description() const;
 };
 namespace StatementResult_Details {
 struct Return{
@@ -103,6 +59,28 @@ using Variant<StatementResult_Details::Return, StatementResult_Details::Throw, S
     using JustValue = StatementResult_Details::JustValue;
 ErrorOr<String> debug_description() const;
 };
+namespace Deferred_Details {
+struct Expression{
+NonnullRefPtr<types::CheckedExpression> value;
+template<typename _MemberT0>
+Expression(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Statement{
+NonnullRefPtr<types::CheckedStatement> value;
+template<typename _MemberT0>
+Statement(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct Deferred : public Variant<Deferred_Details::Expression, Deferred_Details::Statement> {
+using Variant<Deferred_Details::Expression, Deferred_Details::Statement>::Variant;
+    using Expression = Deferred_Details::Expression;
+    using Statement = Deferred_Details::Statement;
+ErrorOr<String> debug_description() const;
+};
 class InterpreterScope : public RefCounted<InterpreterScope>, public Weakable<InterpreterScope> {
   public:
 virtual ~InterpreterScope() = default;
@@ -146,20 +124,42 @@ ErrorOr<void> enter_span(utility::Span const span);
 ErrorOr<interpreter::StatementResult> execute_block(types::CheckedBlock const block, NonnullRefPtr<interpreter::InterpreterScope> scope, utility::Span const call_span);
 ErrorOr<types::TypeId> find_or_add_type_id(NonnullRefPtr<types::Type> const type);
 ErrorOr<String> debug_description() const;
-};}
-template<>struct Formatter<interpreter::ExecutionResult> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, interpreter::ExecutionResult const& value) {
+};namespace ExecutionResult_Details {
+struct Return{
+types::Value value;
+template<typename _MemberT0>
+Return(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Throw{
+types::Value value;
+template<typename _MemberT0>
+Throw(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct ExecutionResult : public Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw> {
+using Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw>::Variant;
+    using Return = ExecutionResult_Details::Return;
+    using Throw = ExecutionResult_Details::Throw;
+ErrorOr<String> debug_description() const;
+};
+}
+template<>struct Formatter<interpreter::StatementResult> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, interpreter::StatementResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<interpreter::Deferred> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, interpreter::Deferred const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<interpreter::StatementResult> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, interpreter::StatementResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<interpreter::InterpreterScope> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, interpreter::InterpreterScope const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<interpreter::Interpreter> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, interpreter::Interpreter const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<interpreter::ExecutionResult> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, interpreter::ExecutionResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 } // namespace Jakt
