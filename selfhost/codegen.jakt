@@ -2559,7 +2559,21 @@ struct CodeGenerator {
             output += "map([&](auto& _value) { return _value."
         }
 
+        let generic_parameters = call.type_args
+        if not generic_parameters.is_empty() {
+            output += "template "
+        }
+
         output += call.name
+
+        if not generic_parameters.is_empty() {
+            mut types: [String] = []
+            for gen_param in generic_parameters.iterator() {
+                types.push(.codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: false))
+            }
+            output += format("<{}>", join(types, separator: ", "))
+        }
+
         output += "("
 
         mut first = true
