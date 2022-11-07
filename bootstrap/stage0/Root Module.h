@@ -1,5 +1,6 @@
 #pragma once
 #include "__unified_forward.h"
+#include "jakt__prelude__prelude.h"
 #include "jakt__libc__io.h"
 #include "jakt__arguments.h"
 #include "compiler.h"

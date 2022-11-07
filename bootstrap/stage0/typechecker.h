@@ -11,7 +11,12 @@
 #include "interpreter.h"
 namespace Jakt {
 namespace typechecker {
-struct Typechecker {
+struct AlreadyImplementedFor {
+  public:
+String trait_name;utility::Span encounter_span;AlreadyImplementedFor(String a_trait_name, utility::Span a_encounter_span);
+
+ErrorOr<String> debug_description() const;
+};struct Typechecker {
   public:
 NonnullRefPtr<compiler::Compiler> compiler;NonnullRefPtr<types::CheckedProgram> program;types::ModuleId current_module_id;JaktInternal::Optional<types::TypeId> current_struct_type_id;JaktInternal::Optional<types::FunctionId> current_function_id;bool inside_defer;size_t checkidx;bool ignore_errors;bool dump_type_hints;bool dump_try_hints;u64 lambda_count;types::GenericInferences generic_inferences;bool is_floating(types::TypeId const type_id) const;
 ErrorOr<JaktInternal::Tuple<types::CheckedMatchBody,JaktInternal::Optional<types::TypeId>>> typecheck_match_body(parser::ParsedMatchBody const body, types::ScopeId const scope_id, types::SafetyMode const safety_mode, types::GenericInferences& generic_inferences, JaktInternal::Optional<types::TypeId> const final_result_type, utility::Span const span);
@@ -45,6 +50,7 @@ ErrorOr<NonnullRefPtr<types::CheckedStatement>> typecheck_defer(NonnullRefPtr<pa
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_unary_operation(NonnullRefPtr<types::CheckedExpression> const checked_expr, types::CheckedUnaryOperator const checked_op, utility::Span const span, types::ScopeId const scope_id, types::SafetyMode const safety_mode);
 ErrorOr<void> typecheck_module(parser::ParsedNamespace const parsed_namespace, types::ScopeId const scope_id);
 ErrorOr<void> typecheck_namespace_declarations(parser::ParsedNamespace const parsed_namespace, types::ScopeId const scope_id);
+ErrorOr<JaktInternal::Array<JaktInternal::Array<types::TypeId>>> find_all_implementations_of_trait(types::TypeId const type_id, types::TraitId const trait_id);
 ErrorOr<types::TypeId> substitute_typevars_in_type(types::TypeId const type_id, types::GenericInferences const generic_inferences);
 ErrorOr<types::StructId> find_struct_in_prelude(String const name) const;
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> cast_to_underlying(NonnullRefPtr<parser::ParsedExpression> const expr, types::ScopeId const scope_id, NonnullRefPtr<parser::ParsedType> const parsed_type);
@@ -93,7 +99,7 @@ ErrorOr<void> typecheck_namespace_fields(parser::ParsedNamespace const parsed_na
 ErrorOr<void> typecheck_and_specialize_generic_function(types::FunctionId const function_id, JaktInternal::Array<types::TypeId> const generic_arguments, types::ScopeId const parent_scope_id, JaktInternal::Optional<types::TypeId> const this_type_id, types::GenericInferences const generic_substitutions, JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> const type_args, utility::Span const call_span);
 ErrorOr<JaktInternal::Optional<parser::ParsedNamespace>> lex_and_parse_file_contents(utility::FileId const file_id);
 types::BlockControlFlow statement_control_flow(NonnullRefPtr<types::CheckedStatement> const statement) const;
-ErrorOr<void> fill_trait_implementation_list(JaktInternal::Array<parser::ParsedNameWithGenericParameters> const parsed_impl_list, JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TraitId,JaktInternal::Array<types::TypeId>>>& trait_implementations, types::ScopeId const scope_id);
+ErrorOr<void> fill_trait_implementation_list(JaktInternal::Array<parser::ParsedNameWithGenericParameters> const parsed_impl_list, JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TraitId,JaktInternal::Array<types::TypeId>>>& trait_implementations, types::ScopeId const scope_id, JaktInternal::Optional<types::ScopeId> const trait_name_scope_id_override);
 ErrorOr<void> specialize_trait(types::TraitId const trait_id, JaktInternal::Array<types::TypeId> const generic_parameters);
 NonnullRefPtr<types::CheckedTrait> get_trait(types::TraitId const id) const;
 NonnullRefPtr<types::CheckedFunction> get_function(types::FunctionId const id) const;
@@ -155,11 +161,6 @@ ErrorOr<void> typecheck_namespace_constructors(parser::ParsedNamespace const par
 ErrorOr<bool> add_struct_to_scope(types::ScopeId const scope_id, String const name, types::StructId const struct_id, utility::Span const span);
 ErrorOr<void> fill_trait_requirements(JaktInternal::Array<parser::ParsedNameWithGenericParameters> const names, JaktInternal::Array<types::TraitId>& trait_requirements, types::ScopeId const scope_id);
 ErrorOr<String> debug_description() const;
-};struct AlreadyImplementedFor {
-  public:
-String trait_name;utility::Span encounter_span;AlreadyImplementedFor(String a_trait_name, utility::Span a_encounter_span);
-
-ErrorOr<String> debug_description() const;
 };struct TraitImplCheck {
   public:
 JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,types::FunctionId>> missing_methods;JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> unmatched_signatures;JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> private_matching_methods;JaktInternal::Dictionary<String,typechecker::AlreadyImplementedFor> already_implemented_for;ErrorOr<void> ensure_capacity(size_t const count);
@@ -171,11 +172,11 @@ ErrorOr<void> register_method(String const method_name, types::FunctionId const 
 ErrorOr<void> throw_errors(utility::Span const record_decl_span, typechecker::Typechecker& typechecker);
 ErrorOr<String> debug_description() const;
 };}
-template<>struct Formatter<typechecker::Typechecker> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, typechecker::Typechecker const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<typechecker::AlreadyImplementedFor> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, typechecker::AlreadyImplementedFor const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<typechecker::Typechecker> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, typechecker::Typechecker const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<typechecker::TraitImplCheck> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, typechecker::TraitImplCheck const& value) {

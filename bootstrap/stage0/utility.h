@@ -16,6 +16,55 @@ Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
 
 ErrorOr<String> debug_description() const;
 };template <typename T>
+ErrorOr<JaktInternal::Array<T>> add_arrays(JaktInternal::Array<T> const a,JaktInternal::Array<T> const b) {
+{
+JaktInternal::Array<T> result = (TRY((Array<T>::create_with({}))));
+{
+JaktInternal::ArrayIterator<T> _magic = ((a).iterator());
+for (;;){
+JaktInternal::Optional<T> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+T x = (_magic_value.value());
+{
+TRY((((result).push(x))));
+}
+
+}
+}
+
+{
+JaktInternal::ArrayIterator<T> _magic = ((b).iterator());
+for (;;){
+JaktInternal::Optional<T> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+T x = (_magic_value.value());
+{
+TRY((((result).push(x))));
+}
+
+}
+}
+
+return (result);
+}
+}
+
+template <typename T>
+T* null() {
+{
+{
+return nullptr;
+}
+
+abort();
+}
+}
+
+template <typename T>
 ErrorOr<void> extend_array(JaktInternal::Array<T> target,JaktInternal::Array<T> const extend_with) {
 {
 TRY((((target).add_capacity(((extend_with).size())))));
@@ -36,17 +85,6 @@ TRY((((target).push(v))));
 
 }
 return {};
-}
-
-template <typename T>
-T* null() {
-{
-{
-return nullptr;
-}
-
-abort();
-}
 }
 
 template <typename T>

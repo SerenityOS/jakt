@@ -173,10 +173,10 @@ TRY((((builder).append_string(TRY((repl::serialize_ast_node(((vals)[i]))))))));
 }
 
 TRY((((builder).append_string(String(")")))));
-__jakt_var_622 = TRY((((builder).to_string()))); goto __jakt_label_583;
+__jakt_var_622 = TRY((((builder).to_string()))); goto __jakt_label_584;
 
 }
-__jakt_label_583:; __jakt_var_622.release_value(); }));
+__jakt_label_584:; __jakt_var_622.release_value(); }));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Range>();JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const& from = __jakt_match_value.from;
@@ -190,10 +190,10 @@ String to_output = String("");
 if (((to).has_value())){
 (to_output = TRY((repl::serialize_ast_node((to.value())))));
 }
-__jakt_var_623 = TRY((String::formatted(String("{}..{}"),from_output,to_output))); goto __jakt_label_584;
+__jakt_var_623 = TRY((String::formatted(String("{}..{}"),from_output,to_output))); goto __jakt_label_585;
 
 }
-__jakt_label_584:; __jakt_var_623.release_value(); }));
+__jakt_label_585:; __jakt_var_623.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktArray>();JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> const& vals = __jakt_match_value.vals;
@@ -219,10 +219,10 @@ TRY((((builder).append_string(TRY((repl::serialize_ast_node(((vals)[i]))))))));
 }
 
 TRY((((builder).append_string(String("]")))));
-__jakt_var_624 = TRY((((builder).to_string()))); goto __jakt_label_585;
+__jakt_var_624 = TRY((((builder).to_string()))); goto __jakt_label_586;
 
 }
-__jakt_label_585:; __jakt_var_624.release_value(); }));
+__jakt_label_586:; __jakt_var_624.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktSet>();JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> const& vals = __jakt_match_value.vals;
@@ -248,10 +248,10 @@ TRY((((builder).append_string(TRY((repl::serialize_ast_node(((vals)[i]))))))));
 }
 
 TRY((((builder).append_string(String("}")))));
-__jakt_var_625 = TRY((((builder).to_string()))); goto __jakt_label_586;
+__jakt_var_625 = TRY((((builder).to_string()))); goto __jakt_label_587;
 
 }
-__jakt_label_586:; __jakt_var_625.release_value(); }));
+__jakt_label_587:; __jakt_var_625.release_value(); }));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktDictionary>();JaktInternal::Array<JaktInternal::Tuple<NonnullRefPtr<types::CheckedExpression>,NonnullRefPtr<types::CheckedExpression>>> const& vals = __jakt_match_value.vals;
@@ -280,10 +280,10 @@ TRY((((builder).append_string(TRY((repl::serialize_ast_node(((val).get<1>())))))
 }
 
 TRY((((builder).append_string(String("]")))));
-__jakt_var_626 = TRY((((builder).to_string()))); goto __jakt_label_587;
+__jakt_var_626 = TRY((((builder).to_string()))); goto __jakt_label_588;
 
 }
-__jakt_label_587:; __jakt_var_626.release_value(); }));
+__jakt_label_588:; __jakt_var_626.release_value(); }));
 };/*case end*/
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::IndexedExpression>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
@@ -327,10 +327,10 @@ TRY((((builder).append_string(String("::")))));
 }
 
 TRY((((builder).append_string(((var).name)))));
-__jakt_var_627 = TRY((((builder).to_string()))); goto __jakt_label_588;
+__jakt_var_627 = TRY((((builder).to_string()))); goto __jakt_label_589;
 
 }
-__jakt_label_588:; __jakt_var_627.release_value(); }));
+__jakt_label_589:; __jakt_var_627.release_value(); }));
 };/*case end*/
 case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Var>();types::CheckedVariable const& var = __jakt_match_value.var;
@@ -393,10 +393,10 @@ TRY((((builder).append_string(TRY((repl::serialize_ast_node(((arg).get<1>())))))
 }
 
 TRY((((builder).append_string(String(")")))));
-__jakt_var_628 = TRY((((builder).to_string()))); goto __jakt_label_589;
+__jakt_var_628 = TRY((((builder).to_string()))); goto __jakt_label_590;
 
 }
-__jakt_label_589:; __jakt_var_628.release_value(); }));
+__jakt_label_590:; __jakt_var_628.release_value(); }));
 };/*case end*/
 case 30: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedExpression::Garbage>();

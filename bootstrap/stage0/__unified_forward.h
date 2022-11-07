@@ -5,6 +5,10 @@ extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
 const unsigned int CP_UTF8 = 65001;
 #endif
 namespace Jakt {
+namespace jakt__prelude__iteration {
+}
+namespace jakt__prelude__prelude {
+}
 namespace jakt__libc__io {
 }
 namespace jakt__arguments {
@@ -17,14 +21,18 @@ struct Span;
 struct FileId;
 bool is_ascii_binary(u8 const c);
 
-String join(JaktInternal::Array<String> const strings, String const separator);
+bool is_ascii_alpha(u8 const c);
+
+template <typename T>
+ErrorOr<JaktInternal::Array<T>> add_arrays(JaktInternal::Array<T> const a, JaktInternal::Array<T> const b);
 
 bool is_whitespace(u8 const byte);
 
 template <typename T>
-ErrorOr<void> extend_array(JaktInternal::Array<T> target, JaktInternal::Array<T> const extend_with);
+T* null();
 
-bool is_ascii_alpha(u8 const c);
+template <typename T>
+ErrorOr<void> extend_array(JaktInternal::Array<T> target, JaktInternal::Array<T> const extend_with);
 
 ErrorOr<JaktInternal::Array<String>> prepend_to_each(JaktInternal::Array<String> const strings, String const prefix);
 
@@ -38,8 +46,7 @@ ErrorOr<String> interpret_escapes(String const s);
 
 ErrorOr<JaktInternal::Array<String>> append_to_each(JaktInternal::Array<String> const strings, String const suffix);
 
-template <typename T>
-T* null();
+String join(JaktInternal::Array<String> const strings, String const separator);
 
 bool is_ascii_octdigit(u8 const c);
 
@@ -243,7 +250,7 @@ struct ParsedGenericParameter;
 struct EnumVariantPatternArgument;
 struct ParsedBlock;
 struct ParsedRecord;
-struct ParsedVarDecl;
+struct ParsedExternalTraitImplementation;
 struct ParsedFunction;
 struct ParsedExternImport;
 struct ParsedModuleImport;
@@ -256,6 +263,7 @@ struct Parser;
 struct ParsedCall;
 struct ParsedNamespace;
 struct ParsedName;
+struct ParsedVarDecl;
 struct ParsedMethod;
 struct ParsedField;
 struct ParsedParameter;
@@ -300,11 +308,11 @@ struct Garbage;
 }
 struct ParsedExpression;
 
-namespace TypeCast_Details {
-struct Fallible;
-struct Infallible;
+namespace ImportList_Details {
+struct List;
+struct All;
 }
-struct TypeCast;
+struct ImportList;
 
 namespace ParsedCapture_Details {
 struct ByValue;
@@ -448,6 +456,12 @@ struct Function;
 struct Empty;
 }
 struct ParsedType;
+
+namespace TypeCast_Details {
+struct Fallible;
+struct Infallible;
+}
+struct TypeCast;
 
 namespace NumericConstant_Details {
 struct I8;

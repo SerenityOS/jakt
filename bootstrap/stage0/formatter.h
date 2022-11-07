@@ -4,55 +4,32 @@
 #include "lexer.h"
 namespace Jakt {
 namespace formatter {
-namespace BreakablePoint_Details {
-struct Paren {
-size_t point;
-size_t length;
-template<typename _MemberT0, typename _MemberT1>
-Paren(_MemberT0&& member_0, _MemberT1&& member_1):
-point{ forward<_MemberT0>(member_0)},
-length{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Curly {
-size_t point;
-size_t length;
-template<typename _MemberT0, typename _MemberT1>
-Curly(_MemberT0&& member_0, _MemberT1&& member_1):
-point{ forward<_MemberT0>(member_0)},
-length{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Square {
-size_t point;
-size_t length;
-template<typename _MemberT0, typename _MemberT1>
-Square(_MemberT0&& member_0, _MemberT1&& member_1):
-point{ forward<_MemberT0>(member_0)},
-length{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Logical {
-size_t point;
-size_t length;
-template<typename _MemberT0, typename _MemberT1>
-Logical(_MemberT0&& member_0, _MemberT1&& member_1):
-point{ forward<_MemberT0>(member_0)},
-length{ forward<_MemberT1>(member_1)}
-{}
-};
-}
-struct BreakablePoint : public Variant<BreakablePoint_Details::Paren, BreakablePoint_Details::Curly, BreakablePoint_Details::Square, BreakablePoint_Details::Logical> {
-using Variant<BreakablePoint_Details::Paren, BreakablePoint_Details::Curly, BreakablePoint_Details::Square, BreakablePoint_Details::Logical>::Variant;
-    using Paren = BreakablePoint_Details::Paren;
-    using Curly = BreakablePoint_Details::Curly;
-    using Square = BreakablePoint_Details::Square;
-    using Logical = BreakablePoint_Details::Logical;
+struct Stage0 {
+  public:
+JaktInternal::Array<lexer::Token> tokens;size_t index;JaktInternal::Array<formatter::State> states;size_t indent;bool already_seen_enclosure_in_current_line;JaktInternal::Array<size_t> dedents_to_skip;bool debug;ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
+ErrorOr<void> replace_state(formatter::State const state);
+formatter::State state() const;
+ErrorOr<void> push_state(formatter::State const state);
+static ErrorOr<formatter::Stage0> for_tokens(JaktInternal::Array<lexer::Token> const tokens, bool const debug);
+static ErrorOr<formatter::Stage0> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::Array<u8> const source, bool const debug);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_impl(bool const reconsume);
+lexer::Token peek(i64 const offset) const;
+bool line_has_indent() const;
+static ErrorOr<JaktInternal::Array<u8>> to_array(String const x);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> formatted_peek();
+void pop_state();
+Stage0(JaktInternal::Array<lexer::Token> a_tokens, size_t a_index, JaktInternal::Array<formatter::State> a_states, size_t a_indent, bool a_already_seen_enclosure_in_current_line, JaktInternal::Array<size_t> a_dedents_to_skip, bool a_debug);
+
+lexer::Token consume();
 ErrorOr<String> debug_description() const;
-size_t length() const;
-size_t point() const;
-};
-namespace Entity_Details {
+};struct FormattedToken {
+  public:
+lexer::Token token;size_t indent;JaktInternal::Array<u8> trailing_trivia;JaktInternal::Array<u8> preceding_trivia;FormattedToken(lexer::Token a_token, size_t a_indent, JaktInternal::Array<u8> a_trailing_trivia, JaktInternal::Array<u8> a_preceding_trivia);
+
+ErrorOr<String> token_text() const;
+ErrorOr<String> debug_text() const;
+ErrorOr<String> debug_description() const;
+};namespace Entity_Details {
 struct Struct {
 };
 struct Enum {
@@ -236,37 +213,60 @@ using Variant<State_Details::Toplevel, State_Details::Import, State_Details::Imp
 ErrorOr<String> debug_description() const;
 ErrorOr<String> name() const;
 };
-struct FormattedToken {
-  public:
-lexer::Token token;size_t indent;JaktInternal::Array<u8> trailing_trivia;JaktInternal::Array<u8> preceding_trivia;FormattedToken(lexer::Token a_token, size_t a_indent, JaktInternal::Array<u8> a_trailing_trivia, JaktInternal::Array<u8> a_preceding_trivia);
-
-ErrorOr<String> token_text() const;
-ErrorOr<String> debug_text() const;
-ErrorOr<String> debug_description() const;
-};struct ReflowState {
+struct ReflowState {
   public:
 formatter::FormattedToken token;formatter::State state;size_t enclosures_to_ignore;ReflowState(formatter::FormattedToken a_token, formatter::State a_state, size_t a_enclosures_to_ignore);
 
 ErrorOr<String> debug_description() const;
-};struct Stage0 {
-  public:
-JaktInternal::Array<lexer::Token> tokens;size_t index;JaktInternal::Array<formatter::State> states;size_t indent;bool already_seen_enclosure_in_current_line;JaktInternal::Array<size_t> dedents_to_skip;bool debug;ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
-ErrorOr<void> replace_state(formatter::State const state);
-formatter::State state() const;
-ErrorOr<void> push_state(formatter::State const state);
-static ErrorOr<formatter::Stage0> for_tokens(JaktInternal::Array<lexer::Token> const tokens, bool const debug);
-static ErrorOr<formatter::Stage0> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::Array<u8> const source, bool const debug);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_impl(bool const reconsume);
-lexer::Token peek(i64 const offset) const;
-bool line_has_indent() const;
-static ErrorOr<JaktInternal::Array<u8>> to_array(String const x);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> formatted_peek();
-void pop_state();
-Stage0(JaktInternal::Array<lexer::Token> a_tokens, size_t a_index, JaktInternal::Array<formatter::State> a_states, size_t a_indent, bool a_already_seen_enclosure_in_current_line, JaktInternal::Array<size_t> a_dedents_to_skip, bool a_debug);
-
-lexer::Token consume();
+};namespace BreakablePoint_Details {
+struct Paren {
+size_t point;
+size_t length;
+template<typename _MemberT0, typename _MemberT1>
+Paren(_MemberT0&& member_0, _MemberT1&& member_1):
+point{ forward<_MemberT0>(member_0)},
+length{ forward<_MemberT1>(member_1)}
+{}
+};
+struct Curly {
+size_t point;
+size_t length;
+template<typename _MemberT0, typename _MemberT1>
+Curly(_MemberT0&& member_0, _MemberT1&& member_1):
+point{ forward<_MemberT0>(member_0)},
+length{ forward<_MemberT1>(member_1)}
+{}
+};
+struct Square {
+size_t point;
+size_t length;
+template<typename _MemberT0, typename _MemberT1>
+Square(_MemberT0&& member_0, _MemberT1&& member_1):
+point{ forward<_MemberT0>(member_0)},
+length{ forward<_MemberT1>(member_1)}
+{}
+};
+struct Logical {
+size_t point;
+size_t length;
+template<typename _MemberT0, typename _MemberT1>
+Logical(_MemberT0&& member_0, _MemberT1&& member_1):
+point{ forward<_MemberT0>(member_0)},
+length{ forward<_MemberT1>(member_1)}
+{}
+};
+}
+struct BreakablePoint : public Variant<BreakablePoint_Details::Paren, BreakablePoint_Details::Curly, BreakablePoint_Details::Square, BreakablePoint_Details::Logical> {
+using Variant<BreakablePoint_Details::Paren, BreakablePoint_Details::Curly, BreakablePoint_Details::Square, BreakablePoint_Details::Logical>::Variant;
+    using Paren = BreakablePoint_Details::Paren;
+    using Curly = BreakablePoint_Details::Curly;
+    using Square = BreakablePoint_Details::Square;
+    using Logical = BreakablePoint_Details::Logical;
 ErrorOr<String> debug_description() const;
-};struct Formatter {
+size_t length() const;
+size_t point() const;
+};
+struct Formatter {
   public:
 formatter::Stage0 token_provider;JaktInternal::Array<formatter::ReflowState> current_line;size_t current_line_length;size_t max_allowed_line_length;JaktInternal::Array<formatter::BreakablePoint> breakable_points_in_current_line;JaktInternal::Array<formatter::ReflowState> tokens_to_reflow;JaktInternal::Array<JaktInternal::Optional<lexer::Token>> replace_commas_in_enclosure;size_t enclosures_to_ignore;bool in_condition_expr;bool in_condition_expr_indented;JaktInternal::Optional<size_t> logical_break_indent;size_t empty_line_count;ErrorOr<JaktInternal::Optional<JaktInternal::Array<formatter::FormattedToken>>> next();
 static bool should_ignore_state(formatter::State const state);
@@ -328,8 +328,11 @@ return (TRY((((((xs)[(JaktInternal::Range<size_t>{static_cast<size_t>(0LL),stati
 }
 
 }
-template<>struct Formatter<formatter::BreakablePoint> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, formatter::BreakablePoint const& value) {
+template<>struct Formatter<formatter::Stage0> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, formatter::Stage0 const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<formatter::FormattedToken> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, formatter::FormattedToken const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<formatter::Entity> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::Entity const& value) {
@@ -340,14 +343,11 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<formatter::State> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::State const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<formatter::FormattedToken> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, formatter::FormattedToken const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<formatter::ReflowState> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::ReflowState const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<formatter::Stage0> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, formatter::Stage0 const& value) {
+template<>struct Formatter<formatter::BreakablePoint> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, formatter::BreakablePoint const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<formatter::Formatter> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::Formatter const& value) {
