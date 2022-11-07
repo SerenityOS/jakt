@@ -1075,6 +1075,75 @@ struct Typechecker {
         for fun in parsed_namespace.functions.iterator() {
             .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id, this_arg_type_id: None)
         }
+
+        mut module = .current_module()
+
+        for record in parsed_namespace.records.iterator() {
+            let record_scope_id = match record.record_type {
+                Struct | Class => {
+                    let struct_id = .find_struct_in_scope(scope_id, name: record.name)
+                    if not struct_id.has_value() {
+                        continue
+                    }
+                    yield .get_struct(struct_id!).scope_id
+                }
+                else => {
+                    let enum_id = .program.find_enum_in_scope(scope_id, name: record.name)
+                    if not enum_id.has_value() {
+                        continue
+                    }
+                    yield .get_enum(enum_id!).scope_id
+                }
+            }
+            for method in record.methods.iterator() {
+                if not record.generic_parameters.is_empty() or not method.parsed_function.generic_parameters.is_empty() {
+                    mut func = .get_function(
+                        .find_function_in_scope(parent_scope_id: record_scope_id, function_name: method.parsed_function.name)!
+                    )
+                    let method_scope_id = func.function_scope_id
+
+                    let check_scope = .create_scope(
+                        parent_scope_id: method_scope_id
+                        can_throw: func.can_throw
+                        debug_name: format("method-checking({}::{})", record.name, func.name)
+                    )
+
+                    for param in func.params.iterator() {
+                        .add_var_to_scope(
+                            scope_id: check_scope
+                            name: param.variable.name
+                            var_id: module.add_variable(param.variable)
+                            span: param.variable.definition_span
+                        )
+                    }
+
+                    let old_ignore_errors = .ignore_errors
+                    .ignore_errors = true
+                    let block = .typecheck_block(
+                        parsed_block: method.parsed_function.block
+                        parent_scope_id: check_scope
+                        safety_mode: SafetyMode::Safe
+                    )
+                    .ignore_errors = old_ignore_errors
+
+                    let function_return_type_id = func.return_type_id
+
+                    mut return_type_id: TypeId = builtin(BuiltinType::Void)
+                    if function_return_type_id.equals(unknown_type_id()) {
+                        if not block.statements.is_empty() {
+                            if block.statements.last()! is Return(val) and val.has_value() {
+                                return_type_id = .resolve_type_var(type_var_type_id: val!.type(), scope_id: method_scope_id)
+                            }
+                        }
+                    } else {
+                        return_type_id = .resolve_type_var(type_var_type_id: function_return_type_id, scope_id)
+                    }
+
+                    func.block = block
+                    func.return_type_id = return_type_id
+                }
+            }
+        }
     }
 
     function typecheck_namespace_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
@@ -1980,10 +2049,6 @@ struct Typechecker {
             let previous_index = .current_function_id
             .current_function_id = function_id
 
-            mut check_scope: ScopeId? = None
-            if is_generic {
-                check_scope = .create_scope(parent_scope_id: method_scope_id, can_throw: func.can_throw, debug_name: format("method-checking({}::{})", parsed_record.name, func.name))
-            }
 
             for gen_parameter in func.generic_parameters.iterator() {
                 module.types.push(Type::TypeVariable(gen_parameter.name))
@@ -2022,10 +2087,6 @@ struct Typechecker {
                         default_value: None
                     ))
 
-                    if check_scope.has_value() {
-                        let var_id = module.add_variable(checked_variable)
-                        .add_var_to_scope(scope_id: check_scope!, name: param.variable.name, var_id, span: param.variable.span)
-                    }
                 } else {
                     let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id, name: param.variable.name)
 
@@ -2063,10 +2124,6 @@ struct Typechecker {
                         default_value: checked_default_value
                     ))
 
-                    if check_scope.has_value() {
-                        let var_id = module.add_variable(checked_variable)
-                        .add_var_to_scope(scope_id: check_scope!, name: param.variable.name, var_id, span: param.variable.span)
-                    }
                 }
             }
 
@@ -2086,31 +2143,6 @@ struct Typechecker {
 
             let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: method_scope_id, name: None)
             checked_function.return_type_id = function_return_type_id
-
-            if is_generic {
-                if not check_scope.has_value() {
-                    .compiler.panic("Generic method with generic parameters must have a check scope")
-                }
-
-                let old_ignore_errors = .ignore_errors
-                .ignore_errors = true
-                let block = .typecheck_block(parsed_block: func.block, parent_scope_id: check_scope!, safety_mode: SafetyMode::Safe)
-                .ignore_errors = old_ignore_errors
-
-                mut return_type_id: TypeId = builtin(BuiltinType::Void)
-                if function_return_type_id.equals(unknown_type_id()) {
-                    if not block.statements.is_empty() {
-                        if block.statements.last()! is Return(val) and val.has_value() {
-                            return_type_id = .resolve_type_var(type_var_type_id: val!.type(), scope_id: method_scope_id)
-                        }
-                    }
-                } else {
-                    return_type_id = .resolve_type_var(type_var_type_id: function_return_type_id, scope_id)
-                }
-
-                checked_function.block = block
-                checked_function.return_type_id = return_type_id
-            }
 
             module.functions[function_id.id] = checked_function
             .current_function_id = previous_index
