@@ -3,7 +3,7 @@ import lexer { Lexer, Token }
 
 function concat<T>(anon xs: [T], anon y: T) throws -> [T] {
     mut ys: [T] = []
-    for x in xs.iterator() {
+    for x in xs {
         ys.push(x)
     }
     ys.push(y)
@@ -411,7 +411,7 @@ struct Stage0 {
                 FormattedToken(token, indent: 0, trailing_trivia: [], preceding_trivia: []).debug_text(),
                 .indent
             )
-            for state in .states.iterator() {
+            for state in .states {
                 eprintln("- State: {}", state)
             }
             eprintln()
@@ -693,7 +693,7 @@ struct Stage0 {
                     mut overflow = false
                     mut current_len = 0uz
                     let indent_amount = 4uz
-                    for item in collection.iterator() {
+                    for item in collection {
                         if (current_len + item.length() + 2) > (120 - indent_amount) {
                             overflow = true
                             output += "\n"
@@ -2673,7 +2673,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
             .in_condition_expr_indented = false
             .logical_break_indent = None
             mut result: [FormattedToken] = []
-            for state in line.iterator() {
+            for state in line {
                 result.push(state.token)
             }
 
@@ -2999,7 +2999,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         .fixup_closing_enclosures(&mut line)
 
         mut result: [FormattedToken] = []
-        for state in line.iterator() {
+        for state in line {
             result.push(state.token)
         }
 

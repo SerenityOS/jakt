@@ -717,7 +717,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         let contents = .comment_contents!
         .comment_contents = None
         mut builder = StringBuilder::create()
-        for c in contents.iterator() {
+        for c in contents {
             builder.append(c)
         }
 

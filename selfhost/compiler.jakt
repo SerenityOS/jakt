@@ -30,12 +30,12 @@ class Compiler {
         // FIXME: This method of enumerating errors might be a problem for really huge code bases.
         //        So at some point we might want to use better data structures here.
         mut idx = 0uz
-        for file in .files.iterator() {
+        for file in .files {
             mut file_contents: [u8]? = None
             let file_name = file.to_string()
 
             // Only display the errors that belong to this file
-            for error in .errors.iterator() {
+            for error in .errors {
                 let span = error.span()
 
                 if span.file_id.id == idx {
@@ -154,7 +154,7 @@ class Compiler {
         // Note: Checking this after the replacement!
         let standard_module_name = "jakt"
 
-        for include_path in .include_paths.iterator() {
+        for include_path in .include_paths {
             let candidate_path = Path::from_parts([include_path, module_name + ".jakt"])
             if candidate_path.exists() {
                 return candidate_path
@@ -168,7 +168,7 @@ class Compiler {
                 return candidate_path
             }
         }
-        for include_path in .include_paths.iterator() {
+        for include_path in .include_paths {
             let candidate_path = Path::from_parts([include_path, module_name + ".jakt"])
             if candidate_path.exists() {
                 return candidate_path

@@ -14,7 +14,7 @@ struct Path {
 
     function from_parts(anon parts: [String]) throws -> Path {
         mut path = Path(path: ".")
-        for part in parts.iterator() {
+        for part in parts {
             path = path.join(part)
         }
         return path

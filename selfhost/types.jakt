@@ -38,14 +38,14 @@ struct GenericInferences {
         return final_mapped_result ?? type
     }
 
-    function iterator(this) => .values.iterator()
+    function iterator(this) => .values
 
     function perform_checkpoint(mut this, reset: bool = true) throws -> [String:String] {
         let result = .values
         .values = [:]
 
         if not reset {
-            for (key, value) in result.iterator() {
+            for (key, value) in result {
                 .values[key] = value
             }
         }
@@ -689,7 +689,7 @@ class FunctionGenerics {
             return true
         }
 
-        for specialization in .specializations.iterator() {
+        for specialization in .specializations {
             mut matched = true
 
             if types.size() == specialization.size() {
@@ -1214,7 +1214,7 @@ boxed enum CheckedExpression {
     function control_flow(this) -> BlockControlFlow => match this {
         Match(expr, match_cases, span, type_id, all_variants_constant) => {
             mut control_flow: BlockControlFlow? = None
-            for case_ in match_cases.iterator() {
+            for case_ in match_cases {
                 let case_control_flow = match case_ {
                     EnumVariant(body) | Expression(body) | CatchAll(body) => match body {
                         Block(block) => block.control_flow
@@ -1376,7 +1376,7 @@ class CheckedProgram {
             if maybe_enum.has_value() {
                 return maybe_enum
             }
-            for child_id in scope.children.iterator() {
+            for child_id in scope.children {
                 let child_scope = .get_scope(id: child_id)
                 if not child_scope.namespace_name.has_value() {
                     let maybe_enum = child_scope.enums.get(name)
@@ -1405,7 +1405,7 @@ class CheckedProgram {
             if maybe_trait.has_value() {
                 return maybe_trait
             }
-            for child_id in scope.children.iterator() {
+            for child_id in scope.children {
                 let child_scope = .get_scope(id: child_id)
                 if not child_scope.namespace_name.has_value() {
                     let maybe_trait = child_scope.traits.get(name)
@@ -1461,7 +1461,7 @@ class CheckedProgram {
             if maybe_scope.has_value() {
                 return maybe_scope
             }
-            for child_id in scope.children.iterator() {
+            for child_id in scope.children {
                 let child_scope = .get_scope(id: child_id)
                 if not child_scope.namespace_name.has_value() {
                     let maybe_scope = child_scope.structs.get(name)
@@ -1492,7 +1492,7 @@ class CheckedProgram {
         loop {
             let scope = .get_scope(current)
 
-            for child in scope.children.iterator() {
+            for child in scope.children {
                 let child_scope = .get_scope(child)
                 if child_scope.namespace_name.has_value() {
                     if name == child_scope.namespace_name.value() {
@@ -1501,10 +1501,10 @@ class CheckedProgram {
                 }
             }
 
-            for child_id in scope.children.iterator() {
+            for child_id in scope.children {
                 let child_scope = .get_scope(id: child_id)
                 if not child_scope.namespace_name.has_value() {
-                    for scope in .get_scope(child_id).children.iterator() {
+                    for scope in .get_scope(child_id).children {
                         let descendant_scope = .get_scope(scope)
                         if descendant_scope.namespace_name.has_value() {
                             if name == descendant_scope.namespace_name.value() {
@@ -1546,7 +1546,7 @@ class CheckedProgram {
             let scope_id = queue.pop()!
             {
                 mut was_visited = false
-                for visited_id in visited.iterator() {
+                for visited_id in visited {
                     if visited_id.equals(scope_id) {
                         was_visited = true
                         break
@@ -1563,7 +1563,7 @@ class CheckedProgram {
                 return maybe_function
             }
             // search inside inline namespaces
-            for child_scope_id in scope.children.iterator() {
+            for child_scope_id in scope.children {
                 let scope = .get_scope(id: child_scope_id)
                 if not scope.namespace_name.has_value() {
                     queue.push(child_scope_id)
@@ -1638,7 +1638,7 @@ class CheckedProgram {
             Trait(id) => .get_trait(id).name
             Function(params, return_type_id) => {
                 mut param_names: [String] = []
-                for x in params.iterator() {
+                for x in params {
                     param_names.push(.type_name(x))
                 }
 
@@ -1653,7 +1653,7 @@ class CheckedProgram {
 
                 output += "<"
                 mut first = true
-                for arg in args.iterator() {
+                for arg in args {
                     if not first {
                         output += ", "
                     } else {
@@ -1672,7 +1672,7 @@ class CheckedProgram {
 
                 output += "<"
                 mut first = true
-                for arg in args.iterator() {
+                for arg in args {
                     if not first {
                         output += ", "
                     } else {
@@ -1711,7 +1711,7 @@ class CheckedProgram {
                 } else if id.equals(tuple_struct_id) {
                     output = "("
                     mut first = true
-                    for arg in args.iterator() {
+                    for arg in args {
                         if not first {
                             output += ", "
                         } else {
@@ -1727,7 +1727,7 @@ class CheckedProgram {
                     output = structure.name
                     output += "<"
                     mut first = true
-                    for arg in args.iterator() {
+                    for arg in args {
                         if not first {
                             output += ", "
                         } else {
@@ -1744,7 +1744,7 @@ class CheckedProgram {
                 mut output = .get_struct(id).name
                 mut first = true
                 output += "<"
-                for arg in args.iterator() {
+                for arg in args {
                     if not first {
                         output += ", "
                     } else {
@@ -1764,7 +1764,7 @@ class CheckedProgram {
     }
 
     public function find_or_add_type_id(mut this, anon type: Type, module_id: ModuleId) throws -> TypeId {
-        for module in .modules.iterator() {
+        for module in .modules {
             for id in 0..module.types.size() {
                 if module.types[id].equals(type) {
                     return TypeId(module: module.id, id)
@@ -1807,7 +1807,7 @@ class CheckedProgram {
             GenericTraitInstance(id, args) => {
                 mut new_args: [TypeId] = []
                 new_args.ensure_capacity(args.size())
-                for arg in args.iterator() {
+                for arg in args {
                     new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
                 }
 
@@ -1816,7 +1816,7 @@ class CheckedProgram {
             GenericInstance(id, args) => {
                 mut new_args:[TypeId] = []
                 new_args.ensure_capacity(args.size())
-                for arg in args.iterator() {
+                for arg in args {
                     new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
                 }
 
@@ -1825,7 +1825,7 @@ class CheckedProgram {
             GenericEnumInstance(id, args) => {
                 mut new_args:[TypeId] = []
                 new_args.ensure_capacity(args.size())
-                for arg in args.iterator() {
+                for arg in args {
                     new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
                 }
                 return .find_or_add_type_id(Type::GenericEnumInstance(id, args: new_args), module_id)
@@ -1835,7 +1835,7 @@ class CheckedProgram {
                 if not struct_.generic_parameters.is_empty() {
                     mut new_args:[TypeId] = []
                     new_args.ensure_capacity(struct_.generic_parameters.size())
-                    for arg in struct_.generic_parameters.iterator() {
+                    for arg in struct_.generic_parameters {
                         new_args.push(.substitute_typevars_in_type(type_id: arg.type_id, generic_inferences, module_id))
                     }
                     return .find_or_add_type_id(Type::GenericInstance(id: struct_id, args: new_args), module_id)
@@ -1846,7 +1846,7 @@ class CheckedProgram {
                 if not enum_.generic_parameters.is_empty() {
                     mut new_args:[TypeId] = []
                     new_args.ensure_capacity(enum_.generic_parameters.size())
-                    for arg in enum_.generic_parameters.iterator() {
+                    for arg in enum_.generic_parameters {
                         new_args.push(.substitute_typevars_in_type(type_id: arg.type_id, generic_inferences, module_id))
                     }
                     return .find_or_add_type_id(Type::GenericEnumInstance(id: enum_id, args: new_args), module_id)
@@ -1874,7 +1874,7 @@ class CheckedProgram {
                 mut new_params:[TypeId] = []
                 new_params.ensure_capacity(params.size())
                 mut is_different = false
-                for param in params.iterator() {
+                for param in params {
                     let new_param = .substitute_typevars_in_type(type_id: param, generic_inferences, module_id)
                     is_different = is_different or not new_param.equals(param)
                     new_params.push(new_param)
@@ -1988,7 +1988,7 @@ boxed enum ValueImpl {
         CInt(x) => ValueImpl::CInt(x)
         Struct(fields, struct_id, constructor) => {
             mut fields_copy: [Value] = [];
-            for field in fields.iterator() {
+            for field in fields {
                 fields_copy.push(field.copy());
             }
             yield ValueImpl::Struct(fields: fields_copy, struct_id, constructor)
@@ -1996,32 +1996,32 @@ boxed enum ValueImpl {
         Class(fields, struct_id, constructor) => ValueImpl::Class(fields, struct_id, constructor)
         Enum(fields, enum_id, constructor) => {
             mut fields_copy: [Value] = [];
-            for field in fields.iterator() {
+            for field in fields {
                 fields_copy.push(field.copy());
             }
             yield ValueImpl::Enum(fields: fields_copy, enum_id, constructor)
         }
         JaktArray(values, type_id) => {
             mut values_copy: [Value] = [];
-            for value in values.iterator() {
+            for value in values {
                 values_copy.push(value.copy());
             }
             yield ValueImpl::JaktArray(values: values_copy, type_id)
         }
         JaktDictionary(keys, values, type_id) => {
             mut values_copy: [Value] = []
-            for value in values.iterator() {
+            for value in values {
                 values_copy.push(value.copy())
             }
             mut keys_copy: [Value] = []
-            for key in keys.iterator() {
+            for key in keys {
                 keys_copy.push(key.copy())
             }
             yield ValueImpl::JaktDictionary(keys: keys_copy, values: values_copy, type_id)
         }
         JaktSet(values, type_id) => {
             mut values_copy: [Value] = []
-            for value in values.iterator() {
+            for value in values {
                 values_copy.push(value.copy())
             }
             yield ValueImpl::JaktSet(values: values_copy, type_id)
@@ -2031,7 +2031,7 @@ boxed enum ValueImpl {
         OptionalNone => ValueImpl::OptionalNone
         JaktTuple(fields, type_id) => {
             mut values_copy: [Value] = [];
-            for value in fields.iterator() {
+            for value in fields {
                 values_copy.push(value.copy());
             }
             yield ValueImpl::JaktTuple(fields: values_copy, type_id)

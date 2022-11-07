@@ -10,7 +10,7 @@ function main() {
     
     println("slice size: {}", slice.size())
 
-    for y in slice.iterator() {
+    for y in slice {
         println("{}", y)
     }
 

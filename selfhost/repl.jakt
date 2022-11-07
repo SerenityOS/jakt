@@ -168,7 +168,7 @@ function serialize_ast_node(anon node: CheckedExpression) throws -> String => ma
     | IndexedStruct(expr, index) => format("{}.{}", serialize_ast_node(expr), index)
     NamespacedVar(namespaces, var) => {
         mut builder = StringBuilder::create()
-        for namespace_ in namespaces.iterator() {
+        for namespace_ in namespaces {
             builder.append_string(namespace_.name)
             builder.append_string("::")
         }
@@ -182,7 +182,7 @@ function serialize_ast_node(anon node: CheckedExpression) throws -> String => ma
     Call(call) => {
         mut builder = StringBuilder::create()
 
-        for namespace_ in call.namespace_.iterator() {
+        for namespace_ in call.namespace_ {
             builder.append_string(namespace_.name)
             builder.append_string("::")
         }

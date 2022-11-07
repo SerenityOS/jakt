@@ -52,7 +52,7 @@ struct ParallelExecutionPool {
             pids_to_remove.set(finished_pid!, finished_status)
         }
 
-        for (index, process) in .pids.iterator() {
+        for (index, process) in .pids {
             // Swallow errors here, we'll get ECHLD for at least the one above
             let status = try poll_process_exit(&process) catch {
                 pids_to_remove.set(index, finished_status)
@@ -63,7 +63,7 @@ struct ParallelExecutionPool {
             }
         }
 
-        for (index, status) in pids_to_remove.iterator() {
+        for (index, status) in pids_to_remove {
             .pids.remove(index)
             .completed.set(index, status)
         }
@@ -76,7 +76,7 @@ struct ParallelExecutionPool {
     }
 
     function kill_all(mut this) throws -> void {
-        for (_, process) in .pids.iterator() {
+        for (_, process) in .pids {
             forcefully_kill_process(&process)
         }
     }
@@ -101,8 +101,8 @@ struct Builder {
         compiler_invocation: &function(input_filename: String, output_filename: String) throws -> [String]
     ) throws -> void {
         mut ids: {usize} = {}
-        for file_name in .files_to_compile.iterator() {
-            for (id, exit_result) in .pool.completed.iterator() {
+        for file_name in .files_to_compile {
+            for (id, exit_result) in .pool.completed {
                 if exit_result.exit_code != 0 {
                     eprintln("Error: Compilation failed")
                     .pool.kill_all()
@@ -127,7 +127,7 @@ struct Builder {
 
         .pool.wait_for_all_jobs_to_complete()
 
-        for (id, exit_result) in .pool.completed.iterator() {
+        for (id, exit_result) in .pool.completed {
             if exit_result.exit_code != 0 {
                 eprintln("Error: Compilation failed")
                 throw Error::from_errno(1)
@@ -143,7 +143,7 @@ struct Builder {
             "cr"
             archive_filename
         ]
-        for file in .linked_files.iterator() {
+        for file in .linked_files {
             args.push(file)
         }
 
@@ -167,10 +167,10 @@ struct Builder {
             "-o"
             output_filename
         ]
-        for file in .linked_files.iterator() {
+        for file in .linked_files {
             args.push(file)
         }
-        for arg in extra_arguments.iterator() {
+        for arg in extra_arguments {
             args.push(arg)
         }
 

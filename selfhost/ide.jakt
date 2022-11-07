@@ -67,7 +67,7 @@ struct JaktSymbol {
         json_builder.append_string(format("\"selection_range\": {{\"start\": {}, \"end\": {}}},", this.selection_range.start, this.selection_range.end))
         mut child_symbols : [String] = []
         child_symbols.ensure_capacity(this.children.size())
-        for child in this.children.iterator() {
+        for child in this.children {
             child_symbols.push(child.to_json())
         }
         json_builder.append_string(format("\"children\": [{}]", join(child_symbols, separator: ",")))
@@ -78,16 +78,16 @@ struct JaktSymbol {
 
 function find_symbols_in_namespace(anon namespace_: ParsedNamespace) throws -> [JaktSymbol] {
     mut symbols: [JaktSymbol] = []
-    for record in namespace_.records.iterator() {
+    for record in namespace_.records {
         symbols.push(record_to_symbol(record))
     }
 
-    for function_ in namespace_.functions.iterator() {
+    for function_ in namespace_.functions {
         symbols.push(function_to_symbol(function_, kind: "function"))
     }
 
-    for sub_namespace in namespace_.namespaces.iterator() {
-        for child_symbol in find_symbols_in_namespace(sub_namespace).iterator() {
+    for sub_namespace in namespace_.namespaces {
+        for child_symbol in find_symbols_in_namespace(sub_namespace) {
             symbols.push(child_symbol)
         }
     }
@@ -98,7 +98,7 @@ function find_symbols_in_namespace(anon namespace_: ParsedNamespace) throws -> [
     }
 
     mut namespace_span = namespace_.name_span!
-    for child in symbols.iterator() {
+    for child in symbols {
         namespace_span = merge_spans(namespace_.name_span!, child.range)
     }
     return [JaktSymbol(
@@ -117,28 +117,28 @@ function record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
 
     let record_kind = match record.record_type {
         Struct(fields) => {
-            for field in fields.iterator() {
+            for field in fields {
                 children.push(JaktSymbol(name: field.var_decl.name, detail: None, kind: "field", range: field.var_decl.span, selection_range: field.var_decl.span, children: []))
             }
             yield "struct"
         }
         Class(fields) => {
-            for field in fields.iterator() {
+            for field in fields {
                 children.push(JaktSymbol(name: field.var_decl.name, detail: None, kind: "field", range: field.var_decl.span, selection_range: field.var_decl.span, children: []))
             }
             yield "class"
         }
         ValueEnum(variants) => {
-            for variant in variants.iterator() {
+            for variant in variants {
                 children.push(JaktSymbol(name: variant.name, detail: None, kind: "enum-member", range: variant.span, selection_range: variant.span, children: []))
             }
             yield "enum"
         }
         SumEnum(variants) => {
-            for variant in variants.iterator() {
+            for variant in variants {
                 mut variant_children: [JaktSymbol] = []
                 if variant.params.has_value() {
-                    for param in variant.params!.iterator() {
+                    for param in variant.params! {
                         if param.name != "" {
                             variant_children.push(JaktSymbol(name: param.name, detail: None, kind: "field", range: param.span, selection_range: param.span, children: []))
                         }
@@ -150,7 +150,7 @@ function record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
         }
         Garbage => "garbage"
     }
-    for method in record.methods.iterator() {
+    for method in record.methods {
         let function_symbol = function_to_symbol(method.parsed_function, kind: "method")
         children.push(function_symbol)
         record_span = merge_spans(record_span, function_symbol.range)
@@ -169,7 +169,7 @@ function record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
 function function_to_symbol(anon function_: ParsedFunction, kind: String) throws -> JaktSymbol {
     mut function_span = function_.name_span
 
-    for stmt in function_.block.stmts.iterator() {
+    for stmt in function_.block.stmts {
         function_span = merge_spans(function_span, stmt.span())
     }
 
@@ -293,7 +293,7 @@ function find_typename_in_program(program: CheckedProgram, span: Span) throws ->
             NameSet(names) => {
                 mut output = ""
                 mut first = true
-                for name in names.iterator() {
+                for name in names {
                     if not first {
                         output += " | "
                     } else {
@@ -321,7 +321,7 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
         Enum(enum_id) => {
             let enum_ = program.get_enum(enum_id)
             let scope = program.get_scope(enum_.scope_id)
-            for function_name in scope.functions.keys().iterator() {
+            for function_name in scope.functions.keys() {
                 let function_id = scope.functions.get(function_name)!
 
                 let checked_function = program.get_function(function_id)
@@ -353,14 +353,14 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
         Struct(struct_id) => {
             let structure = program.get_struct(struct_id)
 
-            for field in structure.fields.iterator() {
+            for field in structure.fields {
                 let field_var = program.get_variable(field.variable_id)
                 output.push(field_var.name)
             }
 
             let scope = program.get_scope(structure.scope_id)
 
-            for function_name in scope.functions.keys().iterator() {
+            for function_name in scope.functions.keys() {
                 let function_id = scope.functions.get(function_name)!
 
                 let checked_function = program.get_function(function_id)
@@ -393,14 +393,14 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
             // FIXME: this is a copy of the above
             let structure = program.get_struct(struct_id)
 
-            for field in structure.fields.iterator() {
+            for field in structure.fields {
                 let field_var = program.get_variable(field.variable_id)
                 output.push(field_var.name)
             }
 
             let scope = program.get_scope(structure.scope_id)
 
-            for function_name in scope.functions.keys().iterator() {
+            for function_name in scope.functions.keys() {
                 let function_id = scope.functions.get(function_name)!
 
                 let checked_function = program.get_function(function_id)
@@ -466,14 +466,14 @@ function find_span_in_program(program: CheckedProgram, span: Span) throws -> Usa
 }
 
 function find_span_in_scope(program: CheckedProgram, scope: Scope, span: Span) throws -> Usage? {
-    for scope_var in scope.vars.iterator() {
+    for scope_var in scope.vars {
         let var = program.get_variable(scope_var.1)
         if var.definition_span.contains(span) {
             return Some(Usage::Typename(var.type_id))
         }
     }
 
-    for function_id in scope.functions.iterator() {
+    for function_id in scope.functions {
         let checked_function = program.get_function(function_id.1)
         let usage = find_span_in_function(program, checked_function, span)
         if usage.has_value() {
@@ -481,7 +481,7 @@ function find_span_in_scope(program: CheckedProgram, scope: Scope, span: Span) t
         }
     }
 
-    for struct_id in scope.structs.iterator() {
+    for struct_id in scope.structs {
         let checked_struct = program.get_struct(struct_id.1)
         let usage = find_span_in_struct(program, checked_struct, span)
         if usage.has_value() {
@@ -489,7 +489,7 @@ function find_span_in_scope(program: CheckedProgram, scope: Scope, span: Span) t
         }
     }
 
-    for enum_id in scope.enums.iterator() {
+    for enum_id in scope.enums {
         let checked_enum = program.get_enum(enum_id.1)
         let usage = find_span_in_enum(program, checked_enum, span)
         if usage.has_value() {
@@ -497,7 +497,7 @@ function find_span_in_scope(program: CheckedProgram, scope: Scope, span: Span) t
         }
     }
 
-    for child in scope.children.iterator() {
+    for child in scope.children {
         let scope = program.get_scope(child)
 
         let usage = find_span_in_scope(program, scope, span)
@@ -512,10 +512,10 @@ function find_span_in_scope(program: CheckedProgram, scope: Scope, span: Span) t
 function find_span_in_enum(program: CheckedProgram, checked_enum: CheckedEnum, span: Span) throws -> Usage? {
     let scope = program.get_scope(checked_enum.scope_id)
 
-    for variant in checked_enum.variants.iterator() {
+    for variant in checked_enum.variants {
         match variant {
             StructLike(name, fields, span: variant_span) => {
-                for field in fields.iterator() {
+                for field in fields {
                     let var = program.get_variable(field)
 
                     if var.definition_span.contains(span) {
@@ -552,7 +552,7 @@ function find_span_in_enum(program: CheckedProgram, checked_enum: CheckedEnum, s
 function find_span_in_struct(program: CheckedProgram, checked_struct: CheckedStruct, span: Span) throws -> Usage? {
     let scope = program.get_scope(checked_struct.scope_id)
 
-    for field in checked_struct.fields.iterator() {
+    for field in checked_struct.fields {
         let variable = program.get_variable(field.variable_id)
 
         if variable.definition_span.contains(span) {
@@ -572,7 +572,7 @@ function find_span_in_function(program: CheckedProgram, checked_function: Checke
         }
     }
 
-    for param in checked_function.params.iterator() {
+    for param in checked_function.params {
         if param.variable.definition_span.contains(span) {
             return Some(Usage::Typename(param.variable.type_id))
         }
@@ -582,7 +582,7 @@ function find_span_in_function(program: CheckedProgram, checked_function: Checke
 }
 
 function find_span_in_block(program: CheckedProgram, block: CheckedBlock, span: Span) throws -> Usage? {
-    for statement in block.statements.iterator() {
+    for statement in block.statements {
         let found = find_span_in_statement(program, statement, span)
         if found.has_value() {
             return found
@@ -660,7 +660,7 @@ function find_span_in_statement(program: CheckedProgram, statement: CheckedState
             yield find_span_in_block(program, block, span)
         }
         DestructuringAssignment(vars, var_decl) => {
-            for var in vars.iterator() {
+            for var in vars {
                 let found = find_span_in_statement(program, statement: var, span)
                 if found.has_value() {
                     return found
@@ -685,7 +685,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
             yield find_span_in_expression(program, expr: rhs, span)
         }
         JaktArray(vals, repeat) => {
-            for val in vals.iterator() {
+            for val in vals {
                 let found = find_span_in_expression(program, expr: val, span)
                 if found.has_value() {
                     return found
@@ -698,7 +698,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
         }
         Block(block) => find_span_in_block(program, block, span)
         Call(call, span: call_span) => {
-            for (_, expr) in call.args.iterator() {
+            for (_, expr) in call.args {
                 let found = find_span_in_expression(program, expr, span)
                 if found.has_value() {
                     return found
@@ -710,7 +710,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
             yield none
         }
         JaktDictionary(vals) => {
-            for (key, value) in vals.iterator() {
+            for (key, value) in vals {
                 mut found = find_span_in_expression(program, expr: key, span)
                 if found.has_value() {
                     return found
@@ -746,7 +746,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                 }
 
                 if program.get_type(type_id) is Struct(struct_id) {
-                    for field in program.get_struct(struct_id).fields.iterator() {
+                    for field in program.get_struct(struct_id).fields {
                         let var = program.get_variable(field.variable_id)
                         if index != var.name {
                             continue
@@ -777,7 +777,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
             yield find_span_in_expression(program, expr: index, span)
         }
         Match(expr, match_cases, span: match_span, type_id) => {
-            for match_case in match_cases.iterator() {
+            for match_case in match_cases {
                 let found = match match_case {
                     EnumVariant(name, args, subject_type_id, index, scope_id, body, marker_span) => {
                         if marker_span.contains(span) {
@@ -811,7 +811,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                                     // can't be duplicate, but I'll leave previous implementation from Rust based
                                     mut names: {String} = {}
                                     let enum_ = program.get_enum(enum_id)
-                                    for variant in enum_.variants.iterator() {
+                                    for variant in enum_.variants {
                                         names.add(variant.name())
                                     }
                                     yield names
@@ -823,7 +823,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
 
                             mut remaining_cases = all_cases
 
-                            for other_case in match_cases.iterator() {
+                            for other_case in match_cases {
                                 if other_case is EnumVariant(name) {
                                     remaining_cases.remove(name)
                                 }
@@ -833,7 +833,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                                 false => {
                                     mut cases_array: [String] = []
                                     cases_array.ensure_capacity(remaining_cases.size())
-                                    for name in remaining_cases.iterator() {
+                                    for name in remaining_cases {
                                         cases_array.push(name)
                                     }
                                     yield Some(Usage::NameSet(cases_array))
@@ -862,7 +862,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
             if found.has_value() {
                 return found
             }
-            for (_, expr) in call.args.iterator() {
+            for (_, expr) in call.args {
                 found = find_span_in_expression(program, expr, span)
                 if found.has_value() {
                     return found
@@ -961,7 +961,7 @@ function get_function_signature(program: CheckedProgram, function_id: FunctionId
     if not checked_function.generics.params.is_empty() {
         generic_parameters += "<"
 
-        for parameter in checked_function.generics.params.iterator() {
+        for parameter in checked_function.generics.params {
 
             let generic_type = program.type_name(parameter.type_id())
 
@@ -980,7 +980,7 @@ function get_function_signature(program: CheckedProgram, function_id: FunctionId
     mut parameters = ""
     is_first_param = true
 
-    for param in checked_function.params.iterator() {
+    for param in checked_function.params {
         let anon_value = match param.requires_label {
             true => ""
             else => "anon "
@@ -1089,7 +1089,7 @@ function get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> 
         Trait(trait_id) => program.get_trait(trait_id).name
         Function(params, return_type_id) => {
             mut param_names: [String] = []
-            for x in params.iterator() {
+            for x in params {
                 param_names.push(program.type_name(x))
             }
 
@@ -1249,7 +1249,7 @@ function get_enum_variant_signature(program: CheckedProgram, name: String, type_
     if not variants.is_empty() {
         output += "("
         mut first = true
-        for (variant_name, variant_type_id) in variants.iterator() {
+        for (variant_name, variant_type_id) in variants {
             if first {
                 first = false
             } else {
@@ -1284,9 +1284,9 @@ function get_enum_variant_signature(program: CheckedProgram, name: String, type_
 
 function get_enum_variant_signature_from_type_id_and_name(program: CheckedProgram, type_id: TypeId, name: String) throws -> String {
     let mod = program.modules[type_id.module.id]
-    for enum_ in mod.enums.iterator() {
+    for enum_ in mod.enums {
         if enum_.type_id.equals(type_id) {
-            for variant in enum_.variants.iterator() {
+            for variant in enum_.variants {
                 match variant {
                     Untyped(name: v_name) => {
                         if v_name == name {
@@ -1341,12 +1341,12 @@ function get_enum_variant_signature_from_type_id_and_name(program: CheckedProgra
 }
 
 function get_enum_variant_usage_from_type_id_and_name(program: CheckedProgram, type_id: TypeId, name: String) throws -> Usage {
-    for enum_ in program.get_module(type_id.module).enums.iterator() {
+    for enum_ in program.get_module(type_id.module).enums {
         if not enum_.type_id.equals(type_id) {
             continue
         }
 
-        for variant in enum_.variants.iterator() {
+        for variant in enum_.variants {
             if variant.name() == name {
                 let variants = enum_variant_fields(program, checked_enum_variant: variant)
                 let number_constant = match variant {
@@ -1371,7 +1371,7 @@ function enum_variant_fields(program: CheckedProgram, checked_enum_variant: Chec
     return match checked_enum_variant {
         StructLike(fields) => {
             mut output: [(String?, TypeId)] = []
-            for field in fields.iterator() {
+            for field in fields {
                 let variable = program.get_variable(field)
                 let var_name = Some(variable.name)
                 let o = (var_name, variable.type_id)
@@ -1391,14 +1391,14 @@ function get_constructor_signature(program: CheckedProgram, function_id: Functio
     let checked_function = program.get_function(function_id)
     let type_id = checked_function.return_type_id
     let mod = program.modules[type_id.module.id]
-    for struct_ in mod.structures.iterator() {
+    for struct_ in mod.structures {
         if struct_.type_id.equals(type_id) {
             mut output = get_type_signature(program, type_id)
 
             output += "("
 
             mut first = true
-            for field in struct_.fields.iterator() {
+            for field in struct_.fields {
                 if first {
                     first = false
                 } else {

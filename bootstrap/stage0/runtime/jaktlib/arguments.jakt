@@ -10,7 +10,7 @@ struct ArgsParser {
 
     function flag(mut this, anon names: [String]) throws -> bool {
         for i in 0...args.size() {
-            for name in names.iterator() {
+            for name in names {
                 if .args[i] == name {
                     .removed_indices.push(i)
                     return true
@@ -23,7 +23,7 @@ struct ArgsParser {
 
     function option(mut this, anon names: [String]) throws -> String? {
         for i in 1...args.size() {
-            for name in names.iterator() {
+            for name in names {
                 if .args[i] == name {
                     if .args.size() <= i+1 {
                         eprintln("The option '{}' requires a value, but none was supplied", name)
@@ -49,7 +49,7 @@ struct ArgsParser {
     {
         mut result: [String] = []
         for i in 1...args.size() {
-            for name in names.iterator() {
+            for name in names {
                 if .args[i] == name {
                     if .args.size() <= i + 1 {
                         eprintln("The option '{}' requires a value, but none was supplied", name)
@@ -73,7 +73,7 @@ struct ArgsParser {
     function from_args(anon args: [String]) throws -> ArgsParser {
         mut parser = ArgsParser(args, removed_indices: [], definitely_positional_args: [])
         mut i = 0uz
-        for arg in parser.args.iterator() {
+        for arg in parser.args {
             if arg == "--" {
                 parser.definitely_positional_args = parser.args[(i+1)..parser.args.size()].to_array()
                 parser.args = parser.args[0..i].to_array()
@@ -94,7 +94,7 @@ struct ArgsParser {
             }
         }
 
-        for arg in .definitely_positional_args.iterator() {
+        for arg in .definitely_positional_args {
             remaining.push(arg)
         }
 

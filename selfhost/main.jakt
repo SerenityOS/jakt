@@ -233,7 +233,7 @@ function main(args: [String]) {
     mut first_arg = true
     mut interpreted_main_arguments: [String] = []
 
-    for arg in positional_arguments.iterator() {
+    for arg in positional_arguments {
         if first_arg {
             first_arg = false
             continue
@@ -305,7 +305,7 @@ function main(args: [String]) {
     let tokens = Lexer::lex(compiler)
 
     if lexer_debug {
-        for token in tokens.iterator() {
+        for token in tokens {
             println("token: {}", token)
         }
     }
@@ -322,12 +322,12 @@ function main(args: [String]) {
     if format or format_debug {
         mut on_new_line = true
         for formatted_line in Formatter::for_tokens(tokens, debug: format_debug) {
-            for formatted_token in formatted_line.iterator() {
+            for formatted_token in formatted_line {
                 if not formatted_token.token.span().is_in_offset_range(start: format_range!.start, end: format_range!.end) {
                     continue
                 }
 
-                for byte in formatted_token.preceding_trivia.iterator() {
+                for byte in formatted_token.preceding_trivia {
                     print("{:c}", byte)
                 }
 
@@ -366,7 +366,7 @@ function main(args: [String]) {
                     }
                 }
 
-                for byte in formatted_token.trailing_trivia.iterator() {
+                for byte in formatted_token.trailing_trivia {
                     print("{:c}", byte)
                 }
 
@@ -388,7 +388,7 @@ function main(args: [String]) {
         let symbols = ide::find_symbols_in_namespace(parsed_namespace)
 
         mut symbol_representations: [String] = []
-        for symbol in symbols.iterator() {
+        for symbol in symbols {
             symbol_representations.push(symbol.to_json())
         }
         println("[{}]", join(symbol_representations, separator: ","))
@@ -410,13 +410,13 @@ function main(args: [String]) {
         // Find the main function
         let prelude_scope_id = ScopeId(module_id: ModuleId(id: 0), id: 0)
         mut main_function_id: FunctionId? = None
-        for module in checked_program.modules.iterator() {
-            for scope in module.scopes.iterator() {
+        for module in checked_program.modules {
+            for scope in module.scopes {
                 if not (scope.parent?.equals(prelude_scope_id) ?? false) {
                     continue
                 }
 
-                for function_ in scope.functions.iterator() {
+                for function_ in scope.functions {
                     if function_.0 == "main" {
                         main_function_id = function_.1
                         break
@@ -443,7 +443,7 @@ function main(args: [String]) {
         let arguments = match first_main_param.has_value() {
             true => {
                 mut passed_arguments: [Value] = [Value(impl: ValueImpl::JaktString(file_name!), span: call_span)]
-                for argument in interpreted_main_arguments.iterator() {
+                for argument in interpreted_main_arguments {
                     passed_arguments.push(Value(impl: ValueImpl::JaktString(argument), span: call_span))
                 }
                 yield [Value(
@@ -528,7 +528,7 @@ function main(args: [String]) {
 
         print("{{\"completions\": [");
         mut first = true
-        for completion in result.iterator() {
+        for completion in result {
             if not first {
                 print(", ")
             } else {
@@ -562,7 +562,7 @@ function main(args: [String]) {
         make_directory(path: binary_dir.to_string())
     }
 
-    for (file, contents_and_path) in codegen_result.iterator() {
+    for (file, contents_and_path) in codegen_result {
         let (contents, module_file_path) = contents_and_path
 
         let path = binary_dir.join(file)
@@ -598,7 +598,7 @@ function main(args: [String]) {
 
     if build_executable or run_executable {
         mut files: [String] = []
-        for (file_name, _) in codegen_result.iterator() {
+        for (file_name, _) in codegen_result {
             if file_name.ends_with(".h") {
                 continue
             }
@@ -648,12 +648,12 @@ function main(args: [String]) {
             extra_arguments.push(runtime_lib_path.join(library_name("main")).to_string())
             extra_arguments.push(runtime_lib_path.join(library_name("runtime")).to_string())
 
-            for path in extra_lib_paths.iterator() {
+            for path in extra_lib_paths {
                 extra_arguments.push("-L")
                 extra_arguments.push(path)
             }
 
-            for lib in extra_link_libs.iterator() {
+            for lib in extra_link_libs {
                 extra_arguments.push("-l")
                 extra_arguments.push(lib)
             }

@@ -4,7 +4,7 @@
 function main() {
     mut list = [(1, "Hello"), (2, "World")]
 
-    for (idx, word) in list.iterator() {
+    for (idx, word) in list {
         println("{}, {}" idx, word)
     }
 }

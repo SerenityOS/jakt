@@ -151,7 +151,7 @@ function print_usage()  {
 function compare_test(bytes: [u8], expected: String) throws -> bool {
     // first, build up the content to compare to
     mut builder = StringBuilder::create()
-    for b in bytes.iterator() {
+    for b in bytes {
         builder.append(b)
     }
 
@@ -170,7 +170,7 @@ function compare_error(bytes: [u8], expected: String) throws -> bool {
     // first, build up the content to compare to
     mut builder = StringBuilder::create()
 
-    for b in bytes.iterator() {
+    for b in bytes {
         if b == 0xd {
             // skip
         } else if b == 0xa {
@@ -681,7 +681,7 @@ function main(args: [String]) {
     }
 
     if not parsed_options.errors.is_empty() {
-        for error in parsed_options.errors.iterator() {
+        for error in parsed_options.errors {
             eprintln("Error: {}", error)
         }
         print_usage()
@@ -695,7 +695,7 @@ function main(args: [String]) {
     tests.ensure_capacity(parsed_options.files.size())
 
     // parse all files to collect the actual work we have to do
-    for file_name in parsed_options.files.iterator() {
+    for file_name in parsed_options.files {
         mut file = File::open_for_reading(file_name)
         let contents = file.read_all()
         let result = Parser::parse(input: contents)
@@ -748,7 +748,7 @@ function main(args: [String]) {
     )
 
     // delete directories
-    for dir in directories.iterator() {
+    for dir in directories {
         for file in fs::list_directory(path: dir) {
             if file == "." or file == ".." {
                 continue
@@ -771,7 +771,7 @@ function main(args: [String]) {
         eprintln("Showing why tests failed:")
         let reasons = run_result.failed_reasons!
         mut is_first = true
-        for file in reasons.keys().iterator() {
+        for file in reasons.keys() {
             if not is_first {
                 eprintln("----------------------------------------")
             } else {
@@ -835,7 +835,7 @@ function main(args: [String]) {
                 }
             }
 
-            for line in output.split('\n').iterator() {
+            for line in output.split('\n') {
                 eprintln("\x1b[m\x1b[1m|\x1b[m\t{}", line)
             }
         }
@@ -843,7 +843,7 @@ function main(args: [String]) {
         if not bad_formatted_tests.is_empty() {
             eprintln("==============================")
             eprintln("These tests failed to parse because they didn't have an expectation or skip message:")
-            for file in bad_formatted_tests.iterator() {
+            for file in bad_formatted_tests {
                 eprintln("\x1b[1m|\x1b[m\t{}", file)
             }
         }
@@ -858,7 +858,7 @@ function main(args: [String]) {
 function bytes_to_string(anon bytes: [u8]) throws -> String {
     mut builder = StringBuilder::create()
 
-    for byte in bytes.iterator() {
+    for byte in bytes {
         builder.append(byte)
     }
 
