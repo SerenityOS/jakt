@@ -1,5 +1,5 @@
 /// Expect:
-/// - stderr: "Runtime error: Error(code=1)"
+/// - stderr: "Runtime error: Error(code: 1)"
 
 struct Iter implements(ThrowingIterable<i64>) {
     function next(mut this) throws -> i64? {

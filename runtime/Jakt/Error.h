@@ -7,6 +7,7 @@
 #pragma once
 
 #include <Jakt/Optional.h>
+#include <Jakt/StringView.h>
 #include <Jakt/Try.h>
 #include <Jakt/Variant.h>
 
@@ -22,10 +23,12 @@ namespace Jakt {
 class Error {
 public:
     static Error from_errno(int code) { return Error(code); }
+    static Error from_string_literal(StringView string) { return Error(string); }
 
     bool is_errno() const { return m_code != 0; }
 
     int code() const { return m_code; }
+    StringView string() const { return m_string; }
 
 protected:
     Error(int code)
@@ -33,8 +36,14 @@ protected:
     {
     }
 
+    Error(StringView string)
+        : m_string(string)
+    {
+    }
+
 private:
     int m_code { 0 };
+    StringView m_string;
 };
 
 template<typename T, typename ErrorType>
