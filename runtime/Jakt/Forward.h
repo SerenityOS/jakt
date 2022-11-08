@@ -84,3 +84,10 @@ template<typename T, typename = void>
 struct Formatter;
 
 }
+
+namespace JaktInternal {
+template<typename T>
+class Array;
+}
+
+using JaktInternal::Array;

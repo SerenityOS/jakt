@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <Builtins/Array.h>
 #include <Jakt/CharacterTypes.h>
 #include <Jakt/MemMem.h>
 #include <Jakt/Memory.h>

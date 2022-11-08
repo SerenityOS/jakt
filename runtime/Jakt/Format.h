@@ -584,7 +584,9 @@ template<>
 struct Formatter<Error> : Formatter<FormatString> {
     ErrorOr<void> format(FormatBuilder& builder, Error const& error)
     {
-        return Formatter<FormatString>::format(builder, "Error(code={})", error.code());
+        if (error.string().is_empty())
+            return Formatter<FormatString>::format(builder, "Error(code: {})", error.code());
+        return Formatter<FormatString>::format(builder, "Error(message: '{}', code: {})", error.string(), error.code());
     }
 };
 
