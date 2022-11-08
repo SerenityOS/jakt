@@ -243,6 +243,7 @@ boxed enum Type {
     Reference(TypeId)
     MutableReference(TypeId)
     Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
+    Self
 
     function specificity(this, program: CheckedProgram, base_specificity: i64 = 1<<31) => match this {
         TypeVariable => 0
@@ -312,6 +313,7 @@ boxed enum Type {
         Reference => "Reference"
         MutableReference => "MutableReference"
         Function => "Function"
+        Self => "Self"
     }
 
     function equals(this, anon rhs: Type) -> bool {
@@ -347,8 +349,10 @@ boxed enum Type {
             return true
         } else if this is CInt and rhs is CInt {
             return true
+        } else if this is Self and rhs is Self {
+            return true
         }
-        
+
         match this {
             TypeVariable(lhs_name) => {
                 if rhs is TypeVariable(rhs_name) {
@@ -358,7 +362,7 @@ boxed enum Type {
                 }
             }
             GenericInstance(id: lhs_id, args: lhs_args) => {
-                guard rhs is GenericInstance(id: rhs_id, args: rhs_args) 
+                guard rhs is GenericInstance(id: rhs_id, args: rhs_args)
                     and lhs_id.equals(rhs_id)
                     and lhs_args.size() == rhs_args.size() else {
                     return false
@@ -1732,6 +1736,7 @@ class CheckedProgram {
             Unknown => "unknown"
             JaktString => "String"
             Trait(id) => .get_trait(id).name
+            Self => "Self"
             Function(params, return_type_id) => {
                 mut param_names: [String] = []
                 for x in params {

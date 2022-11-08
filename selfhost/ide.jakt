@@ -226,6 +226,7 @@ function find_type_definition_for_type_id(program: CheckedProgram, type_id: Type
         JaktString => span
         Function => span
         Trait(id) => program.get_trait(id).name_span
+        Self => span
         GenericInstance(id: struct_id, args) => {
             mut output = span
             if struct_id.equals(array_struct_id) or struct_id.equals(optional_struct_id) or struct_id.equals(range_struct_id) or struct_id.equals(set_struct_id) or struct_id.equals(tuple_struct_id) or struct_id.equals(weak_ptr_struct_id) {
@@ -1037,6 +1038,7 @@ function get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> 
         CChar => "c_char"
         TypeVariable(name) => name
         Unknown => ""
+        Self => "Self"
         Trait(trait_id) => program.get_trait(trait_id).name
         Function(params, return_type_id) => {
             mut param_names: [String] = []

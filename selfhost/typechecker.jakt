@@ -1412,6 +1412,12 @@ struct Typechecker {
 
     function typecheck_trait_predecl(mut this, parsed_trait: ParsedTrait, scope_id: ScopeId) throws {
         let trait_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("trait({})", parsed_trait.name))
+        .add_type_to_scope(
+            scope_id: trait_scope_id
+            type_name: "Self"
+            type_id: .find_or_add_type_id(Type::Self)
+            span: parsed_trait.name_span
+        )
 
         mut checked_trait = CheckedTrait(
             name: parsed_trait.name
@@ -2736,6 +2742,7 @@ struct Typechecker {
             for (name, overload_set) in scope.functions {
                 for function_id in overload_set {
                     checks.register_method(
+                        self_type_id: struct_type_id,
                         method_name: name,
                         method_id: function_id,
                         typechecker: &mut this
@@ -7868,7 +7875,7 @@ struct Typechecker {
     }
 
     function implements_trait(mut this, type_id: TypeId, trait_id: TraitId, generic_arguments: [TypeId]? = None) throws -> bool {
-        let has_matching_trait = function(
+        let has_matching_trait = function[type_id](
             trait_implementations: [[TypeId]]
             trait_id: TraitId
             passed_generic_arguments: [TypeId]
@@ -7917,13 +7924,27 @@ struct Typechecker {
     }
 
     // NOTE: function trait requirements aren't currently taken into account.
-    function signatures_match(mut this, anon first: CheckedFunction, anon second: CheckedFunction) throws -> bool {
-        let types_match = function(anon typechecker: &mut Typechecker, anon a: TypeId, anon b: TypeId) throws -> bool {
+    function signatures_match(mut this, anon self_type_id: TypeId, anon first: CheckedFunction, anon second: CheckedFunction) throws -> bool {
+        let types_match = function[self_type_id](anon typechecker: &mut Typechecker, anon a: TypeId, anon b: TypeId) throws -> bool {
             let mapped_a = typechecker.generic_inferences.map(a)
             let mapped_b = typechecker.generic_inferences.map(b)
 
             return match typechecker.get_type(mapped_a) {
                 Trait(id) => typechecker.implements_trait(type_id: mapped_b, trait_id: id)
+                Self => {
+                    let old_ignore_errors = typechecker.ignore_errors
+                    typechecker.ignore_errors = true
+                    defer {
+                        typechecker.ignore_errors = old_ignore_errors
+                    }
+
+                    yield typechecker.check_types_for_compat(
+                        lhs_type_id: self_type_id
+                        rhs_type_id: mapped_b
+                        generic_inferences: &mut typechecker.generic_inferences
+                        span: Span(file_id: FileId(id: 0), start: 0, end: 0) // NOTE: This won't show up anywhere (as the errors are ignored)
+                    )
+                }
                 GenericTraitInstance(id, args) => typechecker.implements_trait(type_id: mapped_b, trait_id: id, generic_arguments: args)
                 else => {
                     let old_ignore_errors = typechecker.ignore_errors
@@ -8087,7 +8108,7 @@ struct TraitImplCheck {
         }
     }
 
-    function register_method(mut this, method_name: String, method_id: FunctionId, typechecker: &mut Typechecker) throws {
+    function register_method(mut this, self_type_id: TypeId, method_name: String, method_id: FunctionId, typechecker: &mut Typechecker) throws {
         let method = typechecker.get_function(method_id)
 
         // search for a matching method
@@ -8100,7 +8121,7 @@ struct TraitImplCheck {
             let trait_method = typechecker.get_function(trait_method_id!)
 
 
-            guard typechecker.signatures_match(trait_method, method) else {
+            guard typechecker.signatures_match(self_type_id, trait_method, method) else {
                 .unmatched_signatures[trait_name].set(method_name, method.name_span)
                 continue
             }
