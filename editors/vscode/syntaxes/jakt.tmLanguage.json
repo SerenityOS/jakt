@@ -15,6 +15,9 @@
       "include": "#struct"
     },
     {
+      "include": "#trait"
+    },
+    {
       "include": "#variable-declaration"
     },
     {
@@ -210,6 +213,29 @@
           ]
         },
         {
+          "name": "meta.type.implements.jakt",
+          "begin": "(?<=(?:class|struct|enum).*?)\\s*(implements)(\\()",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.type.implements.jakt"
+            },
+            "2": {
+              "name": "punctuation.begin.bracket.jakt"
+            }
+          },
+          "end": "(\\))",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.end.bracket.jakt"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#types"
+            }
+          ]
+        },
+        {
           "name": "meta.type.enum.body.jakt",
           "begin": "(?<=\\benum\\b.*?)(\\{)",
           "beginCaptures": {
@@ -255,6 +281,62 @@
               "name": "punctuation.begin.brace.jakt"
             }
           }
+        }
+      ]
+    },
+    "trait": {
+      "patterns": [
+        {
+          "name": "meta.type.trait.jakt",
+          "match": "\\b(trait)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
+          "captures": {
+            "1": {
+              "name": "keyword.type.trait.jakt"
+            },
+            "2": {
+              "name": "entity.name.type.trait.jakt"
+            }
+          }
+        },
+        {
+          "name": "meta.block.trait.jakt",
+          "begin": "(?<=(?:trait).*?)(\\{)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.begin.brace.jakt"
+            }
+          },
+          "end": "(\\})",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.end.brace.jakt"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        },
+        {
+          "name": "meta.type.generic-arguments.jakt",
+          "begin": "(?<=(?:trait).*?)\\s*(<)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.begin.angle-bracket.jakt"
+            }
+          },
+          "end": "(>)",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.end.angle-bracket.jakt"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#types"
+            }
+          ]
         }
       ]
     },
@@ -352,6 +434,32 @@
           "endCaptures": {
             "1": {
               "name": "punctuation.end.angle-bracket.jakt"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#types"
+            }
+          ]
+        },
+        {
+          "name": "storage.type.generic-requires.jakt",
+          "begin": "\\b((?:[A-Z]|_)(?:\\w|_|[0-9])*)\\s*(requires)(\\()",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.type.other.jakt"
+            },
+            "2": {
+              "name": "keyword.type.requires.jakt"
+            },
+            "3": {
+              "name": "punctuation.begin.bracket.jakt"
+            }
+          },
+          "end": "(\\))",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.end.bracket.jakt"
             }
           },
           "patterns": [
