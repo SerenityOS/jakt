@@ -559,7 +559,15 @@
               "name": "punctuation.arrow.thin.jakt"
             }
           },
-          "end": "(?=\\{|$)",
+          "end": "(?=(\\{)|$|(\\=\\>))",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.begin.bracket"
+            },
+            "2": {
+              "name": "keyword.operator.fat-arrow.jakt"
+            }
+          },
           "patterns": [
             {
               "include": "#types"
@@ -578,6 +586,21 @@
           "patterns": [
             {
               "include": "#types"
+            }
+          ]
+        },
+        {
+          "name": "meta.function.return-shorthand.jakt",
+          "begin": "(?<=(?:function|comptime).*?)(\\=\\>)",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.operator.fat-arrow.jakt"
+            }
+          },
+          "end": "$",
+          "patterns": [
+            {
+              "include": "$self"
             }
           ]
         },
