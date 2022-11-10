@@ -1,0 +1,41 @@
+/// Expect:
+/// - output: "I'm so boring\nI'm so boring\nI'm so boring\nI'm not boring\nI'm not boring, but I'm doing it twice\n"
+
+trait Fancy {
+    function do_something(this) -> void
+    function do_something_twice(this) -> void {
+        .do_something()
+        .do_something()
+    }
+}
+
+struct Boring implements(Fancy) {
+    function do_something(this) -> void {
+        println("I'm so boring")
+    }
+
+    // Note that we don't have to implement `do_something_twice` here, because it has a default implementation.
+}
+
+struct Better implements(Fancy) {
+    function do_something(this) -> void {
+        println("I'm not boring")
+    }
+
+    // However, a custom implementation is still valid.
+    function do_something_twice(this) -> void {
+        println("I'm not boring, but I'm doing it twice")
+    }
+}
+
+function main() {
+    let boring = Boring()
+    
+    boring.do_something()
+    boring.do_something_twice()
+
+    let better = Better()
+
+    better.do_something()
+    better.do_something_twice()
+}

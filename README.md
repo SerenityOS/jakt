@@ -439,7 +439,7 @@ struct Boring implements(Fancy) {
 
 struct Better implements(Fancy) {
     function do_something(this) -> void {
-        println("I'm not boring)
+        println("I'm not boring")
     }
 
     // However, a custom implementation is still valid.
