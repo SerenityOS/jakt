@@ -1972,38 +1972,6 @@ struct Typechecker {
             .add_type_to_scope(scope_id: struct_scope_id, type_name: gen_parameter.name, type_id: parameter_type_id, span: gen_parameter.span)
         }
 
-        if parsed_record.implements_list.has_value() {
-            .fill_trait_implementation_list(
-                parsed_record.implements_list!
-                &mut module.structures[struct_id.id].trait_implementations
-                scope_id: struct_scope_id
-            )
-
-            for implements_entry in parsed_record.implements_list! {
-                let trait_id = .find_trait_in_scope(scope_id, name: implements_entry.name)
-                guard trait_id.has_value() else { continue }
-                let trait_ = .program.modules[trait_id!.module.id].traits[trait_id!.id]
-                for (name, function_id) in trait_.methods {
-                    if .find_function_in_scope(parent_scope_id: struct_scope_id, function_name: name).has_value() {
-                        continue
-                    }
-
-                    let function_ = .program.modules[function_id.module.id].functions[function_id.id]
-
-                    if function_.block.statements.is_empty() {
-                        continue
-                    }
-
-                    .add_function_to_scope(
-                        parent_scope_id: struct_scope_id
-                        name: name
-                        function_id: function_id
-                        span: implements_entry.name_span
-                    )
-                }
-            }
-        }
-
         let is_extern = parsed_record.definition_linkage is External
         for method in parsed_record.methods {
             let func = method.parsed_function
@@ -2146,6 +2114,38 @@ struct Typechecker {
 
             module.functions[function_id.id] = checked_function
             .current_function_id = previous_index
+        }
+
+        if parsed_record.implements_list.has_value() {
+            .fill_trait_implementation_list(
+                parsed_record.implements_list!
+                &mut module.structures[struct_id.id].trait_implementations
+                scope_id: struct_scope_id
+            )
+
+            for implements_entry in parsed_record.implements_list! {
+                let trait_id = .find_trait_in_scope(scope_id, name: implements_entry.name)
+                guard trait_id.has_value() else { continue }
+                let trait_ = .program.modules[trait_id!.module.id].traits[trait_id!.id]
+                for (name, function_id) in trait_.methods {
+                    if .find_function_in_scope(parent_scope_id: struct_scope_id, function_name: name).has_value() {
+                        continue
+                    }
+
+                    let function_ = .program.modules[function_id.module.id].functions[function_id.id]
+
+                    if function_.block.statements.is_empty() {
+                        continue
+                    }
+
+                    .add_function_to_scope(
+                        parent_scope_id: struct_scope_id
+                        name: name
+                        function_id: function_id
+                        span: implements_entry.name_span
+                    )
+                }
+            }
         }
 
         module.structures[struct_id.id].generic_parameters = generic_parameters
