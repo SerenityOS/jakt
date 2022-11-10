@@ -212,6 +212,7 @@ function main(args: [String]) {
     let interpret_run = args_parser.flag(["-r", "--run"])
 
     let format = args_parser.flag(["-f", "--format"])
+    let format_inplace = args_parser.flag(["-fi", "--format-inplace"])
     let format_debug = args_parser.flag(["-fd", "--format-debug"])
     let input_format_range = args_parser.option(["-fr", "--format-range"]) ?? ""
 
@@ -329,7 +330,9 @@ function main(args: [String]) {
         return 1
     }
 
-    if format or format_debug {
+    mut formatted_file = StringBuilder::create()
+
+    if format or format_debug or format_inplace {
         mut on_new_line = true
         for formatted_line in Formatter::for_tokens(tokens, debug: format_debug) {
             for formatted_token in formatted_line {
@@ -338,7 +341,7 @@ function main(args: [String]) {
                 }
 
                 for byte in formatted_token.preceding_trivia {
-                    print("{:c}", byte)
+                    formatted_file.append(byte)
                 }
 
                 match formatted_token.token {
@@ -357,34 +360,43 @@ function main(args: [String]) {
                                 else => " "
                             }
 
-                            print("{}//{}{}", lhs_space, space, comment!)
+                            formatted_file.append_string(format("{}//{}{}", lhs_space, space, comment!))
                         }
                         on_new_line = true
                     }
                     Garbage(consumed) => {
                         if consumed.has_value() {
-                            print("{}", consumed!)
+                            formatted_file.append_string(format("{}", consumed!))
                         }
                     }
                     else => {
                         if on_new_line {
-                            // println("(indent: {})", formatted_token.indent)
-                            print(indent(formatted_token.indent))
+                            formatted_file.append_string(format("{}", indent(formatted_token.indent)))
                         }
-                        print("{}", formatted_token.token_text())
+                        formatted_file.append_string(format("{}", formatted_token.token_text()))
                         on_new_line = false
                     }
                 }
 
                 for byte in formatted_token.trailing_trivia {
-                    print("{:c}", byte)
+                    formatted_file.append_string(format("{:c}", byte))
                 }
 
                 if formatted_token.token is Eol {
-                    println()
+                    formatted_file.append_string("\n")
                 }
             }
         }
+
+        if format_inplace {
+            write_to_file(
+                data: formatted_file.to_string()
+                output_filename: file_path.to_string()
+            )
+        } else {
+            print("{}", formatted_file.to_string())
+        }
+
         return 0
     }
 
