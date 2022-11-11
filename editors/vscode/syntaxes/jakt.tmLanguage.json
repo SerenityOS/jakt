@@ -784,8 +784,16 @@
           "match": "\\b(as)\\b\\s"
         },
         {
-          "name": "keyword.control.other.jakt",
-          "match": "\\b(import)\\b"
+          "name": "keyword.control.import.jakt",
+          "match": "\\b(import)(?:\\s*)(?:(\\bextern\\s+c)|(\\bextern))?\\b",
+          "captures": {
+            "2": {
+              "name": "keyword.control.import.extern-c.jakt"
+            },
+            "3": {
+              "name": "keyword.control.import.extern.jakt"
+            }
+          }
         },
         {
           "name": "meta.control.match.jakt",
