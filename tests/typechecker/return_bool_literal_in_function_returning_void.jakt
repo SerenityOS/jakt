@@ -1,0 +1,6 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘String’, but got ‘bool’\n"
+
+function baz() -> String {
+    return false
+}

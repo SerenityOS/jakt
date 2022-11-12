@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘void’, but got ‘bool’\n"
+
+function foo() -> void {
+    return true
+}
+
+function bar() -> void {
+    guard true else {
+        return true
+    }
+}
