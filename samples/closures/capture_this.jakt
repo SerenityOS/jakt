@@ -1,0 +1,22 @@
+/// Expect:
+/// - output: "0\n1\n"
+
+struct Foo {
+    bar: i64
+
+    function baz(mut this) {
+        let lambda = function[this]() {
+            println("{}", this.bar)
+            this.bar++
+        }
+
+        lambda()
+    }
+}
+
+function main() {
+    mut foo = Foo(bar: 0)
+
+    foo.baz()
+    foo.baz()
+}

@@ -3928,6 +3928,11 @@ struct Parser {
                     captures.push(ParsedCapture::ByValue(name, span: .current().span()))
                     .index++
                 }
+                This => {
+                    // NOTE: We capture `this` "by value" here, but `this` is actually a raw reference
+                    captures.push(ParsedCapture::ByValue(name: "this", span: .current().span()))
+                    .index++
+                }
                 Comma | Eol => {
                     .index++
                 }
