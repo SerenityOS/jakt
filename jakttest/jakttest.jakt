@@ -660,8 +660,24 @@ struct TestScheduler {
             unsafe { cpp { "fflush(stderr);" }}
         }
 
-        while not scheduler.running_tests.is_empty() {
-            scheduler.poll_running_tests()
+	// NOTE: wait for SIGCHLD on non win32, same as in `wait_for_free_dictionary`.
+        unsafe {
+            cpp { "#ifndef _WIN32" }
+            cpp { "sigset_t set;" }
+            cpp { "int signal;"   }
+            cpp { "sigemptyset(&set);" }
+            cpp { "sigaddset(&set, SIGCHLD);" }
+            cpp { "#endif" }
+
+            while not scheduler.running_tests.is_empty() {
+                unsafe {
+                    cpp { "#ifndef _WIN32" }
+                    cpp { "if (sigwait(&set, &signal) > 0)" }
+                    cpp { "    return Error::from_errno(errno);" }
+                    cpp { "#endif" }
+                }
+                scheduler.poll_running_tests()
+            }
         }
         eprint("\r\x1b[2K")
         unsafe { cpp { "fflush(stderr);" }}
