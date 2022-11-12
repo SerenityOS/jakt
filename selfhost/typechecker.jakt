@@ -5405,7 +5405,11 @@ struct Typechecker {
 
     function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression => match expr {
         IndexedStruct(expr, field_name, span, is_optional) => .typecheck_indexed_struct(expr, field_name, scope_id, is_optional, safety_mode, span)
-        Boolean(val, span) => CheckedExpression::Boolean(val, span)
+        Boolean(val, span) => {
+            .unify_with_type(found_type: builtin(BuiltinType::Bool), expected_type: type_hint, rhs_span: span)
+
+            yield CheckedExpression::Boolean(val, span)
+        }
         NumericConstant(val, span) => {
             mut type_hint_unwrapped = type_hint
             if type_hint.has_value() and .get_type(type_hint!) is GenericInstance(id, args) {
