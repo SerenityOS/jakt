@@ -1,0 +1,21 @@
+/// Expect:
+/// - output: "success\nsuccess\nsuccess\n"
+
+function main() {
+  let abc = 123;
+
+  match abc {
+    100..200 | 300..400 => println("success")
+    else => println("failure")
+  }
+
+  match abc {
+    1..10 | 100..400 => println("success")
+    else => println("failure")
+  }
+
+  match abc {
+    1..10 | 200..400 => println("failure")
+    else => println("success")
+  }
+}
