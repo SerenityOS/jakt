@@ -4012,7 +4012,7 @@ struct Parser {
         match .current() {
             RSquare | Eol | Comma | RParen => {}
             else => {
-                to = .parse_expression(allow_assignments: false, allow_newlines: false)
+                to = .parse_operand()
             }
         }
         
@@ -4077,7 +4077,7 @@ struct Parser {
                     match .current() {
                         RSquare | Eol | Comma | RParen => {}
                         else => {
-                            to = .parse_expression(allow_assignments: false, allow_newlines: false)
+                            to = .parse_operand()
                             span_end = to!.span()
                         }
                     }
