@@ -6451,27 +6451,24 @@ struct Typechecker {
                         }
                     }
 
-                    match matched_field_variable.has_value() {
-                        true => {
-                            let substituted_type_id = .substitute_typevars_in_type(type_id: matched_field_variable!.type_id, generic_inferences: .generic_inferences)
-                            let matched_span = matched_field_variable!.definition_span
-                            if .dump_type_hints {
-                                .dump_type_hint(type_id: matched_field_variable!.type_id, span: arg.span)
-                            }
+                    if matched_field_variable.has_value() {
+                        let substituted_type_id = .substitute_typevars_in_type(type_id: matched_field_variable!.type_id, generic_inferences: .generic_inferences)
+                        let matched_span = matched_field_variable!.definition_span
+                        if .dump_type_hints {
+                            .dump_type_hint(type_id: matched_field_variable!.type_id, span: arg.span)
+                        }
 
-                            let var_id = module.add_variable(CheckedVariable(
-                                name: arg.binding
-                                type_id: substituted_type_id
-                                is_mutable: false
-                                definition_span: matched_span
-                                type_span: None
-                                visibility: CheckedVisibility::Public
-                            ))
-                            .add_var_to_scope(scope_id: new_scope_id, name: arg.binding, var_id, span: matched_span)
-                        }
-                        else => {
-                            .error(format("Match case argument '{}' does not exist in struct-like enum variant '{}'", arg_name, name), arg.span)
-                        }
+                        let var_id = module.add_variable(CheckedVariable(
+                            name: arg.binding
+                            type_id: substituted_type_id
+                            is_mutable: false
+                            definition_span: matched_span
+                            type_span: None
+                            visibility: CheckedVisibility::Public
+                        ))
+                        .add_var_to_scope(scope_id: new_scope_id, name: arg.binding, var_id, span: matched_span)
+                    } else {
+                        .error(format("Match case argument '{}' does not exist in struct-like enum variant '{}'", arg_name, name), arg.span)
                     }
                 }
             }
