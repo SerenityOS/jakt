@@ -10,7 +10,7 @@ function concat<T>(anon xs: [T], anon y: T) throws -> [T] {
     return ys
 }
 
-function init<T>(anon xs: [T]) throws -> [T] => xs[..xs.size() - 1].to_array()
+function init<T>(anon xs: [T]) throws -> [T] => xs[..(xs.size() - 1)].to_array()
 
 function collapse<T>(anon x: Optional<T>?) -> T? => match x.has_value() {
     true => x!

@@ -1967,8 +1967,8 @@ struct CodeGenerator {
 
             yield output
         }
-        else => {
-            todo(format("codegen_expression else: {}", expression))
+        Garbage(span) => {
+            todo(format("codegen_expression of bad AST node in {} at {}..{}", this.compiler.get_file_path(span.file_id), span.start, span.end))
             yield ""
         }
     }

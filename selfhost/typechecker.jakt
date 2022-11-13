@@ -7193,7 +7193,7 @@ struct Typechecker {
                 mut resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(params: callee.generics.base_params, args: call.args, scope_id: caller_scope_id, safety_mode, arg_offset, span)
 
                 if callee.generics.base_params.size() == resolved_args.size() + arg_offset {
-                    for i in 0..callee.generics.base_params.size()-arg_offset {
+                    for i in 0..(callee.generics.base_params.size() - arg_offset) {
                         let (name, span, checked_arg) = resolved_args[i]
 
                         .check_types_for_compat(
