@@ -1,6 +1,6 @@
 import os { platform_process }
 import path { Path }
-import platform_process () {
+import platform_process() {
     Process
     ExitPollResult
     start_background_process
