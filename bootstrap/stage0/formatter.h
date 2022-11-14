@@ -300,21 +300,7 @@ template <typename T>
 ErrorOr<JaktInternal::Array<T>> concat(JaktInternal::Array<T> const xs,T const y) {
 {
 JaktInternal::Array<T> ys = (TRY((Array<T>::create_with({}))));
-{
-JaktInternal::ArrayIterator<T> _magic = ((xs).iterator());
-for (;;){
-JaktInternal::Optional<T> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-T x = (_magic_value.value());
-{
-TRY((((ys).push(x))));
-}
-
-}
-}
-
+TRY((((ys).push_values(xs))));
 TRY((((ys).push(y))));
 return (ys);
 }

@@ -249,9 +249,9 @@ inline String ___jakt_get_target_triple_string()
     return String(__JAKT_BUILD_TARGET);
 #else
 // Pure guesswork.
-#   if defined(_WIN32)
+#   if defined(_WIN64)
     return String("x86_64-pc-windows-msvc");
-#   elif defined(_WIN64)
+#   elif defined(_WIN32)
     return String("i686-pc-windows-msvc");
 #   elif defined(__linux__)
     return String("x86_64-pc-linux-gnu");

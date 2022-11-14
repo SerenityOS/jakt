@@ -72,13 +72,34 @@ size_t const width = ((TRY((String::formatted(String("{}"),largest_line_number))
 while ((line_index < ((line_spans).size()))){
 if (((((span).start) >= ((((line_spans)[line_index])).get<0>())) && (((span).start) <= ((((line_spans)[line_index])).get<1>())))){
 size_t const column_index = (JaktInternal::checked_sub<size_t>(((span).start),((((line_spans)[line_index])).get<0>())));
-warnln(String("----- \u001b[33m{}:{}:{}\u001b[0m"),file_name,(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),(JaktInternal::checked_add<size_t>(column_index,static_cast<size_t>(1ULL))));
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_add<size_t>(width,static_cast<size_t>(2ULL))))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t x = (_magic_value.value());
+{
+warn(String("─"));
+}
+
+}
+}
+
+warnln(String("┬─ \u001b[33m{}:{}:{}\u001b[0m"),file_name,(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),(JaktInternal::checked_add<size_t>(column_index,static_cast<size_t>(1ULL))));
 if ((line_index > static_cast<size_t>(0ULL))){
 TRY((error::print_source_line(severity,file_contents,((line_spans)[(JaktInternal::checked_sub<size_t>(line_index,static_cast<size_t>(1ULL)))]),span,line_index,largest_line_number)));
 }
+while (((line_index < ((line_spans).size())) && (((span).end) > ((((line_spans)[line_index])).get<0>())))){
 TRY((error::print_source_line(severity,file_contents,((line_spans)[line_index]),span,(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),largest_line_number)));
+if ((((span).end) <= ((((line_spans)[line_index])).get<1>()))){
+break;
+}
+(++(line_index));
+}
 {
-JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_add<size_t>((JaktInternal::checked_add<size_t>((JaktInternal::checked_sub<size_t>(((span).start),((((line_spans)[line_index])).get<0>()))),width)),static_cast<size_t>(4ULL))))});
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_add<size_t>(width,static_cast<size_t>(2ULL))))});
 for (;;){
 JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -92,14 +113,26 @@ warn(String(" "));
 }
 }
 
-warnln(String("\u001b[{}m^- {}\u001b[0m"),TRY((((severity).ansi_color_code()))),message);
-while (((line_index < ((line_spans).size())) && (((span).end) > ((((line_spans)[line_index])).get<0>())))){
-(++(line_index));
-if ((line_index >= ((line_spans).size()))){
+warn(String("│"));
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_sub<size_t>(((span).end),((((line_spans)[line_index])).get<0>()))))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
 break;
 }
+size_t x = (_magic_value.value());
+{
+warn(String(" "));
+}
+
+}
+}
+
+warnln(String("\u001b[{}m╰─ {}\u001b[0m"),TRY((((severity).ansi_color_code()))),message);
+(++(line_index));
+if ((line_index < ((line_spans).size()))){
 TRY((error::print_source_line(severity,file_contents,((line_spans)[line_index]),span,(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),largest_line_number)));
-break;
 }
 }
 else {
@@ -107,7 +140,23 @@ else {
 }
 
 }
-warnln(String("\u001b[0m-----"));
+warn(String("\u001b[0m"));
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_add<size_t>(width,static_cast<size_t>(2ULL))))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t x = (_magic_value.value());
+{
+warn(String("─"));
+}
+
+}
+}
+
+warnln(String("┴─"));
 }
 return {};
 }
@@ -133,7 +182,7 @@ warn(String(" "));
 }
 }
 
-warn(String(" | "));
+warn(String(" │ "));
 while ((index <= ((file_span).get<1>()))){
 u8 c = ' ';
 if ((index < ((file_span).get<1>()))){

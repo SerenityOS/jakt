@@ -65,29 +65,6 @@ abort();
 }
 
 template <typename T>
-ErrorOr<void> extend_array(JaktInternal::Array<T> target,JaktInternal::Array<T> const extend_with) {
-{
-TRY((((target).add_capacity(((extend_with).size())))));
-{
-JaktInternal::ArrayIterator<T> _magic = ((extend_with).iterator());
-for (;;){
-JaktInternal::Optional<T> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-T v = (_magic_value.value());
-{
-TRY((((target).push(v))));
-}
-
-}
-}
-
-}
-return {};
-}
-
-template <typename T>
 T* allocate(size_t const count) {
 {
 {

@@ -7,15 +7,42 @@ return (((c == '0') || (c == '1')));
 }
 }
 
-bool is_ascii_alpha(u8 const c) {
+String join(JaktInternal::Array<String> const strings,String const separator) {
 {
-return ((((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))));
+String output = String("");
+size_t i = static_cast<size_t>(0ULL);
+{
+JaktInternal::ArrayIterator<String> _magic = ((strings).iterator());
+for (;;){
+JaktInternal::Optional<String> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+String s = (_magic_value.value());
+{
+(output += s);
+if ((i < (JaktInternal::checked_sub<size_t>(((strings).size()),static_cast<size_t>(1ULL))))){
+(output += separator);
+}
+((i++));
+}
+
+}
+}
+
+return (output);
 }
 }
 
 bool is_whitespace(u8 const byte) {
 {
 return ((((byte == ' ') || (byte == '\t')) || (byte == '\r')));
+}
+}
+
+bool is_ascii_alpha(u8 const c) {
+{
+return ((((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))));
 }
 }
 
@@ -152,33 +179,6 @@ break;
 String str = (_magic_value.value());
 {
 TRY((((output).push((str + suffix)))));
-}
-
-}
-}
-
-return (output);
-}
-}
-
-String join(JaktInternal::Array<String> const strings,String const separator) {
-{
-String output = String("");
-size_t i = static_cast<size_t>(0ULL);
-{
-JaktInternal::ArrayIterator<String> _magic = ((strings).iterator());
-for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-String s = (_magic_value.value());
-{
-(output += s);
-if ((i < (JaktInternal::checked_sub<size_t>(((strings).size()),static_cast<size_t>(1ULL))))){
-(output += separator);
-}
-((i++));
 }
 
 }

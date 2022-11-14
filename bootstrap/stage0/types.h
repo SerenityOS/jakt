@@ -396,14 +396,15 @@ template<typename V, typename... Args> static auto create(Args&&... args) {
 return adopt_nonnull_ref_or_enomem(new (nothrow) Type(V(forward<Args>(args)...)));
 }
 ErrorOr<String> debug_description() const;
-bool is_signed() const;
-u64 max() const;
 bool equals(NonnullRefPtr<types::Type> const rhs) const;
-String constructor_name() const;
 i64 get_bits() const;
+i64 specificity(NonnullRefPtr<types::CheckedProgram> const program, i64 const base_specificity) const;
 bool is_builtin() const;
-i64 min() const;
 ErrorOr<types::TypeId> flip_signedness() const;
+u64 max() const;
+String constructor_name() const;
+i64 min() const;
+bool is_signed() const;
 };
 struct LoadedModule {
   public:
@@ -560,8 +561,8 @@ types::CheckedEnum get_enum(types::EnumId const id) const;
 ErrorOr<JaktInternal::Optional<types::TraitId>> find_trait_in_scope(types::ScopeId const scope_id, String const name) const;
 NonnullRefPtr<types::CheckedTrait> get_trait(types::TraitId const id) const;
 ErrorOr<String> type_name(types::TypeId const type_id) const;
+ErrorOr<JaktInternal::Optional<JaktInternal::Array<types::FunctionId>>> find_functions_with_name_in_scope(types::ScopeId const parent_scope_id, String const function_name) const;
 ErrorOr<JaktInternal::Optional<types::CheckedVariable>> find_var_in_scope(types::ScopeId const scope_id, String const var) const;
-ErrorOr<JaktInternal::Optional<types::FunctionId>> find_function_in_scope(types::ScopeId const parent_scope_id, String const function_name) const;
 types::CheckedStruct get_struct(types::StructId const id) const;
 ErrorOr<JaktInternal::Optional<types::StructId>> check_and_extract_weak_ptr(types::StructId const struct_id, JaktInternal::Array<types::TypeId> const args) const;
 ErrorOr<JaktInternal::Optional<types::EnumId>> find_enum_in_scope(types::ScopeId const scope_id, String const name) const;
@@ -924,7 +925,7 @@ struct GenericInferences {
   public:
 JaktInternal::Dictionary<String,String> values;GenericInferences(JaktInternal::Dictionary<String,String> a_values);
 
-JaktInternal::DictionaryIterator<String,String> iterator() const;
+JaktInternal::Dictionary<String,String> iterator() const;
 void restore(JaktInternal::Dictionary<String,String> const checkpoint);
 String map(String const type) const;
 JaktInternal::Optional<String> get(String const key) const;
@@ -1611,10 +1612,10 @@ utility::Span span() const;
 class Scope : public RefCounted<Scope>, public Weakable<Scope> {
   public:
 virtual ~Scope() = default;
-JaktInternal::Optional<String> namespace_name;JaktInternal::Dictionary<String,types::VarId> vars;JaktInternal::Dictionary<String,types::Value> comptime_bindings;JaktInternal::Dictionary<String,types::StructId> structs;JaktInternal::Dictionary<String,types::FunctionId> functions;JaktInternal::Dictionary<String,types::EnumId> enums;JaktInternal::Dictionary<String,types::TypeId> types;JaktInternal::Dictionary<String,types::TraitId> traits;JaktInternal::Dictionary<String,types::ModuleId> imports;JaktInternal::Optional<types::ScopeId> parent;JaktInternal::Array<types::ScopeId> children;bool can_throw;JaktInternal::Optional<String> import_path_if_extern;JaktInternal::Array<parser::IncludeAction> after_extern_include;JaktInternal::Array<parser::IncludeAction> before_extern_include;String debug_name;protected:
-explicit Scope(JaktInternal::Optional<String>&& a_namespace_name, JaktInternal::Dictionary<String,types::VarId>&& a_vars, JaktInternal::Dictionary<String,types::Value>&& a_comptime_bindings, JaktInternal::Dictionary<String,types::StructId>&& a_structs, JaktInternal::Dictionary<String,types::FunctionId>&& a_functions, JaktInternal::Dictionary<String,types::EnumId>&& a_enums, JaktInternal::Dictionary<String,types::TypeId>&& a_types, JaktInternal::Dictionary<String,types::TraitId>&& a_traits, JaktInternal::Dictionary<String,types::ModuleId>&& a_imports, JaktInternal::Optional<types::ScopeId>&& a_parent, JaktInternal::Array<types::ScopeId>&& a_children, bool&& a_can_throw, JaktInternal::Optional<String>&& a_import_path_if_extern, JaktInternal::Array<parser::IncludeAction>&& a_after_extern_include, JaktInternal::Array<parser::IncludeAction>&& a_before_extern_include, String&& a_debug_name);
+JaktInternal::Optional<String> namespace_name;JaktInternal::Dictionary<String,types::VarId> vars;JaktInternal::Dictionary<String,types::Value> comptime_bindings;JaktInternal::Dictionary<String,types::StructId> structs;JaktInternal::Dictionary<String,JaktInternal::Array<types::FunctionId>> functions;JaktInternal::Dictionary<String,types::EnumId> enums;JaktInternal::Dictionary<String,types::TypeId> types;JaktInternal::Dictionary<String,types::TraitId> traits;JaktInternal::Dictionary<String,types::ModuleId> imports;JaktInternal::Optional<types::ScopeId> parent;JaktInternal::Array<types::ScopeId> children;bool can_throw;JaktInternal::Optional<String> import_path_if_extern;JaktInternal::Array<parser::IncludeAction> after_extern_include;JaktInternal::Array<parser::IncludeAction> before_extern_include;String debug_name;protected:
+explicit Scope(JaktInternal::Optional<String>&& a_namespace_name, JaktInternal::Dictionary<String,types::VarId>&& a_vars, JaktInternal::Dictionary<String,types::Value>&& a_comptime_bindings, JaktInternal::Dictionary<String,types::StructId>&& a_structs, JaktInternal::Dictionary<String,JaktInternal::Array<types::FunctionId>>&& a_functions, JaktInternal::Dictionary<String,types::EnumId>&& a_enums, JaktInternal::Dictionary<String,types::TypeId>&& a_types, JaktInternal::Dictionary<String,types::TraitId>&& a_traits, JaktInternal::Dictionary<String,types::ModuleId>&& a_imports, JaktInternal::Optional<types::ScopeId>&& a_parent, JaktInternal::Array<types::ScopeId>&& a_children, bool&& a_can_throw, JaktInternal::Optional<String>&& a_import_path_if_extern, JaktInternal::Array<parser::IncludeAction>&& a_after_extern_include, JaktInternal::Array<parser::IncludeAction>&& a_before_extern_include, String&& a_debug_name);
 public:
-static ErrorOr<NonnullRefPtr<Scope>> create(JaktInternal::Optional<String> namespace_name, JaktInternal::Dictionary<String,types::VarId> vars, JaktInternal::Dictionary<String,types::Value> comptime_bindings, JaktInternal::Dictionary<String,types::StructId> structs, JaktInternal::Dictionary<String,types::FunctionId> functions, JaktInternal::Dictionary<String,types::EnumId> enums, JaktInternal::Dictionary<String,types::TypeId> types, JaktInternal::Dictionary<String,types::TraitId> traits, JaktInternal::Dictionary<String,types::ModuleId> imports, JaktInternal::Optional<types::ScopeId> parent, JaktInternal::Array<types::ScopeId> children, bool can_throw, JaktInternal::Optional<String> import_path_if_extern, JaktInternal::Array<parser::IncludeAction> after_extern_include, JaktInternal::Array<parser::IncludeAction> before_extern_include, String debug_name);
+static ErrorOr<NonnullRefPtr<Scope>> create(JaktInternal::Optional<String> namespace_name, JaktInternal::Dictionary<String,types::VarId> vars, JaktInternal::Dictionary<String,types::Value> comptime_bindings, JaktInternal::Dictionary<String,types::StructId> structs, JaktInternal::Dictionary<String,JaktInternal::Array<types::FunctionId>> functions, JaktInternal::Dictionary<String,types::EnumId> enums, JaktInternal::Dictionary<String,types::TypeId> types, JaktInternal::Dictionary<String,types::TraitId> traits, JaktInternal::Dictionary<String,types::ModuleId> imports, JaktInternal::Optional<types::ScopeId> parent, JaktInternal::Array<types::ScopeId> children, bool can_throw, JaktInternal::Optional<String> import_path_if_extern, JaktInternal::Array<parser::IncludeAction> after_extern_include, JaktInternal::Array<parser::IncludeAction> before_extern_include, String debug_name);
 
 ErrorOr<String> debug_description() const;
 };class CheckedFunction : public RefCounted<CheckedFunction>, public Weakable<CheckedFunction> {
@@ -1629,6 +1630,7 @@ explicit CheckedFunction(String&& a_name, utility::Span&& a_name_span, types::Ch
 public:
 static ErrorOr<NonnullRefPtr<CheckedFunction>> create(String name, utility::Span name_span, types::CheckedVisibility visibility, types::TypeId return_type_id, JaktInternal::Optional<utility::Span> return_type_span, JaktInternal::Array<types::CheckedParameter> params, NonnullRefPtr<types::FunctionGenerics> generics, types::CheckedBlock block, bool can_throw, parser::FunctionType type, parser::FunctionLinkage linkage, types::ScopeId function_scope_id, JaktInternal::Optional<types::StructId> struct_id, bool is_instantiated, JaktInternal::Optional<parser::ParsedFunction> parsed_function, bool is_comptime, bool is_virtual, bool is_override);
 
+ErrorOr<bool> signature_matches(NonnullRefPtr<types::CheckedFunction> const other) const;
 ErrorOr<void> add_param(types::CheckedParameter const checked_param);
 ErrorOr<void> set_params(JaktInternal::Array<types::CheckedParameter> const checked_params);
 ErrorOr<String> debug_description() const;

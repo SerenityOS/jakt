@@ -207,6 +207,41 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(builder.append(")"));return builder.to_string(); }
 parser::ParsedFunction::ParsedFunction(String a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::Array<parser::ParsedParameter> a_params, JaktInternal::Array<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow) :name(a_name), name_span(a_name_span), visibility(a_visibility), params(a_params), generic_parameters(a_generic_parameters), block(a_block), return_type(a_return_type), return_type_span(a_return_type_span), can_throw(a_can_throw), type(a_type), linkage(a_linkage), must_instantiate(a_must_instantiate), is_comptime(a_is_comptime), is_fat_arrow(a_is_fat_arrow){}
 
+bool parser::ParsedFunction::equals(parser::ParsedFunction const other) const {
+{
+if (((((((*this).name) != ((other).name)) || (((*this).can_throw) != ((other).can_throw))) || (((*this).is_comptime) != ((other).is_comptime))) || (((*this).is_fat_arrow) != ((other).is_fat_arrow)))){
+return (false);
+}
+if ((!(((((*this).block)).equals(((other).block)))))){
+return (false);
+}
+if ((((((*this).params)).size()) != ((((other).params)).size()))){
+return (false);
+}
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).params)).size()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t param_index = (_magic_value.value());
+{
+if ((!(((((((*this).params))[param_index])).equals(((((other).params))[param_index])))))){
+return (false);
+}
+}
+
+}
+}
+
+if ((((((*this).generic_parameters)).size()) != ((((other).generic_parameters)).size()))){
+return (false);
+}
+return (true);
+}
+}
+
 ErrorOr<String> parser::ParsedExternImport::debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedExternImport("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_c: "));TRY(builder.appendff("{}, ", is_c));
@@ -2197,7 +2232,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-(to = TRY((((*this).parse_expression(false,false)))));
+(to = TRY((((*this).parse_operand()))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -4055,21 +4090,7 @@ NonnullRefPtr<parser::ParsedStatement> const var_decl = TRY((parser::ParsedState
 NonnullRefPtr<parser::ParsedStatement> const destructured_vars_stmt = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::DestructuringAssignment>(destructured_var_decls,var_decl,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
 JaktInternal::Array<NonnullRefPtr<parser::ParsedStatement>> block_stmts = (TRY((Array<NonnullRefPtr<parser::ParsedStatement>>::create_with({}))));
 TRY((((block_stmts).push(destructured_vars_stmt))));
-{
-JaktInternal::ArrayIterator<NonnullRefPtr<parser::ParsedStatement>> _magic = ((((block).stmts)).iterator());
-for (;;){
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedStatement>> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-NonnullRefPtr<parser::ParsedStatement> stmt = (_magic_value.value());
-{
-TRY((((block_stmts).push(stmt))));
-}
-
-}
-}
-
+TRY((((block_stmts).push_values(((block).stmts)))));
 (((block).stmts) = block_stmts);
 }
 return (TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::For>(iterator_name,name_span,range,block,TRY((parser::merge_spans(start_span,((((*this).previous())).span()))))))));
@@ -6001,21 +6022,7 @@ if (__jakt_enum_value == String("before_include")) {
 ((((*this).index)++));
 JaktInternal::Optional<JaktInternal::Array<parser::IncludeAction>> const actions = TRY((((*this).parse_include_action())));
 if (((actions).has_value())){
-{
-JaktInternal::ArrayIterator<parser::IncludeAction> _magic = (((actions.value())).iterator());
-for (;;){
-JaktInternal::Optional<parser::IncludeAction> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-parser::IncludeAction action = (_magic_value.value());
-{
-TRY((((((parsed_import).before_include)).push(action))));
-}
-
-}
-}
-
+TRY((((((parsed_import).before_include)).push_values((actions.value())))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6025,21 +6032,7 @@ else if (__jakt_enum_value == String("after_include")) {
 ((((*this).index)++));
 JaktInternal::Optional<JaktInternal::Array<parser::IncludeAction>> const actions = TRY((((*this).parse_include_action())));
 if (((actions).has_value())){
-{
-JaktInternal::ArrayIterator<parser::IncludeAction> _magic = (((actions.value())).iterator());
-for (;;){
-JaktInternal::Optional<parser::IncludeAction> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-parser::IncludeAction action = (_magic_value.value());
-{
-TRY((((((parsed_import).after_include)).push(action))));
-}
-
-}
-}
-
+TRY((((((parsed_import).after_include)).push_values((actions.value())))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6721,6 +6714,14 @@ case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();String const& name = __jakt_match_value.name;
 {
 TRY((((captures).push( parser::ParsedCapture { typename parser::ParsedCapture::ByValue(name,((((*this).current())).span())) } ))));
+((((*this).index)++));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 95: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::This>();
+{
+TRY((((captures).push( parser::ParsedCapture { typename parser::ParsedCapture::ByValue(String("this"),((((*this).current())).span())) } ))));
 ((((*this).index)++));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7445,7 +7446,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-(to = TRY((((*this).parse_expression(false,false)))));
+(to = TRY((((*this).parse_operand()))));
 (span_end = (((to.value()))->span()));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7909,36 +7910,8 @@ parser::ParsedExternImport extern_import = (_magic_value.value());
 {
 if (TRY((((extern_import).is_equivalent_to(import_))))){
 TRY((((((extern_import).assigned_namespace)).merge_with(((import_).assigned_namespace)))));
-{
-JaktInternal::ArrayIterator<parser::IncludeAction> _magic = ((((import_).before_include)).iterator());
-for (;;){
-JaktInternal::Optional<parser::IncludeAction> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-parser::IncludeAction action = (_magic_value.value());
-{
-TRY((((((extern_import).before_include)).push(action))));
-}
-
-}
-}
-
-{
-JaktInternal::ArrayIterator<parser::IncludeAction> _magic = ((((import_).after_include)).iterator());
-for (;;){
-JaktInternal::Optional<parser::IncludeAction> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-parser::IncludeAction action = (_magic_value.value());
-{
-TRY((((((extern_import).after_include)).push(action))));
-}
-
-}
-}
-
+TRY((((((extern_import).before_include)).push_values(((import_).before_include)))));
+TRY((((((extern_import).after_include)).push_values(((import_).after_include)))));
 return {};
 }
 }
@@ -7953,8 +7926,8 @@ return {};
 
 ErrorOr<void> parser::ParsedNamespace::merge_with(parser::ParsedNamespace const namespace_) {
 {
-TRY((utility::extend_array<parser::ParsedFunction>(((*this).functions),((namespace_).functions))));
-TRY((utility::extend_array<parser::ParsedRecord>(((*this).records),((namespace_).records))));
+TRY((((((*this).functions)).push_values(((namespace_).functions)))));
+TRY((((((*this).records)).push_values(((namespace_).records)))));
 TRY((((((*this).module_imports)).add_capacity(((((namespace_).module_imports)).size())))));
 {
 JaktInternal::ArrayIterator<parser::ParsedModuleImport> _magic = ((((namespace_).module_imports)).iterator());
@@ -11486,43 +11459,344 @@ return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktIn
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Name>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 0 /* Name */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Name>();String const& lhs_name = __jakt_match_value.name;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 0: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Name>();String const& rhs_name = __jakt_match_value.name;
+return JaktInternal::ExplicitValue((lhs_name == rhs_name));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::NamespacedName>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 1 /* NamespacedName */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::NamespacedName>();String const& lhs_name = __jakt_match_value.name;
+JaktInternal::Array<String> const& lhs_namespaces = __jakt_match_value.namespaces;
+JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> const& lhs_params = __jakt_match_value.params;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 1: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::NamespacedName>();String const& rhs_name = __jakt_match_value.name;
+JaktInternal::Array<String> const& rhs_namespaces = __jakt_match_value.namespaces;
+JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> const& rhs_params = __jakt_match_value.params;
+{
+if ((lhs_name != rhs_name)){
+return (false);
+}
+if ((((lhs_namespaces).size()) != ((rhs_namespaces).size()))){
+return (false);
+}
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((lhs_namespaces).size()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t namespace_index = (_magic_value.value());
+{
+if ((((lhs_namespaces)[namespace_index]) != ((rhs_namespaces)[namespace_index]))){
+return (false);
+}
+}
+
+}
+}
+
+if ((((lhs_params).size()) != ((rhs_params).size()))){
+return (false);
+}
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((lhs_params).size()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t param_index = (_magic_value.value());
+{
+if ((!(((((lhs_params)[param_index]))->equals(((rhs_params)[param_index])))))){
+return (false);
+}
+}
+
+}
+}
+
+return (true);
+}
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 2: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::GenericType>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 2 /* GenericType */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::GenericType>();String const& lhs_name = __jakt_match_value.name;
+JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> const& lhs_generic_parameters = __jakt_match_value.generic_parameters;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 2: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::GenericType>();String const& rhs_name = __jakt_match_value.name;
+JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> const& rhs_generic_parameters = __jakt_match_value.generic_parameters;
+{
+if ((lhs_name != rhs_name)){
+return (false);
+}
+if ((((lhs_generic_parameters).size()) != ((rhs_generic_parameters).size()))){
+return (false);
+}
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((lhs_generic_parameters).size()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t param_index = (_magic_value.value());
+{
+if ((!(((((lhs_generic_parameters)[param_index]))->equals(((rhs_generic_parameters)[param_index])))))){
+return (false);
+}
+}
+
+}
+}
+
+return (true);
+}
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 3: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktArray>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 3 /* JaktArray */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktArray>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 3: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktArray>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 4: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Dictionary>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 4 /* Dictionary */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Dictionary>();NonnullRefPtr<parser::ParsedType> const& lhs_key = __jakt_match_value.key;
+NonnullRefPtr<parser::ParsedType> const& lhs_value = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 4: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Dictionary>();NonnullRefPtr<parser::ParsedType> const& rhs_key = __jakt_match_value.key;
+NonnullRefPtr<parser::ParsedType> const& rhs_value = __jakt_match_value.value;
+return JaktInternal::ExplicitValue((((lhs_key)->equals(rhs_key)) && ((lhs_value)->equals(rhs_value))));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 5: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktTuple>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 5 /* JaktTuple */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktTuple>();JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> const& lhs_types = __jakt_match_value.types;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 5: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktTuple>();JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> const& rhs_types = __jakt_match_value.types;
+{
+if ((((lhs_types).size()) != ((rhs_types).size()))){
+return (false);
+}
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((lhs_types).size()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t type_index = (_magic_value.value());
+{
+if ((!(((((lhs_types)[type_index]))->equals(((rhs_types)[type_index])))))){
+return (false);
+}
+}
+
+}
+}
+
+return (true);
+}
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 6: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Set>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 6 /* Set */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Set>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 6: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Set>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 7: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Optional>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 7 /* Optional */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Optional>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 7: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Optional>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Reference>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 8 /* Reference */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Reference>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 8: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Reference>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 9: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::MutableReference>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 9 /* MutableReference */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::MutableReference>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 9: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::MutableReference>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 10: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::RawPtr>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 10 /* RawPtr */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::RawPtr>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 10: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::RawPtr>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 11: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::WeakPtr>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 11 /* WeakPtr */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::WeakPtr>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 11: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::WeakPtr>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 12: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Function>();return JaktInternal::ExplicitValue(((rhs_parsed_type)->index() == 12 /* Function */));
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Function>();JaktInternal::Array<parser::ParsedParameter> const& lhs_params = __jakt_match_value.params;
+bool const& lhs_can_throw = __jakt_match_value.can_throw;
+NonnullRefPtr<parser::ParsedType> const& lhs_return_type = __jakt_match_value.return_type;
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *rhs_parsed_type;
+switch(__jakt_match_variant.index()) {
+case 12: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Function>();JaktInternal::Array<parser::ParsedParameter> const& rhs_params = __jakt_match_value.params;
+bool const& rhs_can_throw = __jakt_match_value.can_throw;
+NonnullRefPtr<parser::ParsedType> const& rhs_return_type = __jakt_match_value.return_type;
+{
+if ((lhs_can_throw != rhs_can_throw)){
+return (false);
+}
+if ((!(((lhs_return_type)->equals(rhs_return_type))))){
+return (false);
+}
+if ((((lhs_params).size()) != ((rhs_params).size()))){
+return (false);
+}
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((lhs_params).size()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t param_index = (_magic_value.value());
+{
+if ((!(((((lhs_params)[param_index])).equals(((rhs_params)[param_index])))))){
+return (false);
+}
+}
+
+}
+}
+
+return (true);
+}
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+}/*switch end*/
+}()
+)));
 };/*case end*/
 case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::ParsedType::Empty>();

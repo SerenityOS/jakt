@@ -19,6 +19,7 @@ extern struct Array<T> {
     function resize(mut this, anon size: usize) throws
     function shrink(mut this, anon size: usize) -> void
     function push(mut this, anon value: T) throws
+    function push_values(mut this, anon other: &Array<T>) throws
     function pop(mut this) -> T?
     function iterator(this) -> ArrayIterator<T>
     function first(this) -> T?
