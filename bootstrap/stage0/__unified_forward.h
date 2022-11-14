@@ -21,18 +21,14 @@ struct Span;
 struct FileId;
 bool is_ascii_binary(u8 const c);
 
-bool is_ascii_alpha(u8 const c);
+String join(JaktInternal::Array<String> const strings, String const separator);
 
 template <typename T>
 ErrorOr<JaktInternal::Array<T>> add_arrays(JaktInternal::Array<T> const a, JaktInternal::Array<T> const b);
 
 bool is_whitespace(u8 const byte);
 
-template <typename T>
-T* null();
-
-template <typename T>
-ErrorOr<void> extend_array(JaktInternal::Array<T> target, JaktInternal::Array<T> const extend_with);
+bool is_ascii_alpha(u8 const c);
 
 ErrorOr<JaktInternal::Array<String>> prepend_to_each(JaktInternal::Array<String> const strings, String const prefix);
 
@@ -46,7 +42,8 @@ ErrorOr<String> interpret_escapes(String const s);
 
 ErrorOr<JaktInternal::Array<String>> append_to_each(JaktInternal::Array<String> const strings, String const suffix);
 
-String join(JaktInternal::Array<String> const strings, String const separator);
+template <typename T>
+T* null();
 
 bool is_ascii_octdigit(u8 const c);
 
@@ -839,6 +836,12 @@ namespace typechecker {
 struct AlreadyImplementedFor;
 struct Typechecker;
 struct TraitImplCheck;
+namespace FunctionMatchResult_Details {
+struct MatchSuccess;
+struct MatchError;
+}
+struct FunctionMatchResult;
+
 }
 namespace codegen {
 struct LineSpan;
@@ -994,6 +997,8 @@ ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_expression(NonnullRefPt
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_block(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedBlock const block, utility::Span const span);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
+
+ErrorOr<JaktInternal::Array<String>> find_function_completions_in_scope(NonnullRefPtr<types::Scope> const scope, NonnullRefPtr<types::CheckedProgram> const program);
 
 ErrorOr<JaktInternal::Array<ide::JaktSymbol>> find_symbols_in_namespace(parser::ParsedNamespace const namespace_);
 

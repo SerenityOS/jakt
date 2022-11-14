@@ -377,12 +377,12 @@ auto&& __jakt_match_variant = *((((*this).program))->get_type(((expression)->typ
 switch(__jakt_match_variant.index()) {
 case 18: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::TypeVariable>();
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_383; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_390; {
 String const contents = TRY((((*this).codegen_expression(expression))));
-__jakt_var_383 = TRY((String::formatted(String("(*([]<typename V>(V const& value) {{ if constexpr (IsSpecializationOf<V, NonnullRefPtr>) return &*value; else return &value; }})({}))"),contents))); goto __jakt_label_356;
+__jakt_var_390 = TRY((String::formatted(String("(*([]<typename V>(V const& value) {{ if constexpr (IsSpecializationOf<V, NonnullRefPtr>) return &*value; else return &value; }})({}))"),contents))); goto __jakt_label_362;
 
 }
-__jakt_label_356:; __jakt_var_383.release_value(); }));
+__jakt_label_362:; __jakt_var_390.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_expression(expression)))));
@@ -537,25 +537,34 @@ continue;
 }
 
 {
-JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
+JaktInternal::DictionaryIterator<String,JaktInternal::Array<types::FunctionId>> _magic = ((((scope)->functions)).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> ___overload_set__ = (_magic_value.value());
 {
-JaktInternal::Tuple<String,types::FunctionId> const jakt_____function_id__ = ___function_id__;
-String const _ = ((jakt_____function_id__).get<0>());
-types::FunctionId const function_id = ((jakt_____function_id__).get<1>());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> const jakt_____overload_set__ = ___overload_set__;
+String const _ = ((jakt_____overload_set__).get<0>());
+JaktInternal::Array<types::FunctionId> const overload_set = ((jakt_____overload_set__).get<1>());
 
+{
+JaktInternal::ArrayIterator<types::FunctionId> _magic = ((overload_set).iterator());
+for (;;){
+JaktInternal::Optional<types::FunctionId> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::FunctionId function_id = (_magic_value.value());
+{
 if ((!(((((function_id).module)).equals(((current_module)->id)))))){
 continue;
 }
 NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
 JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function = ((*this).current_function);
 (((*this).current_function) = function_);
-ScopeGuard __jakt_var_384([&] {
+ScopeGuard __jakt_var_391([&] {
 (((*this).current_function) = previous_function);
 });
 if (((((((function_)->linkage)).index() == 1 /* External */) || ((((function_)->type)).index() == 1 /* ImplicitConstructor */)) || ((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))){
@@ -565,6 +574,11 @@ if ((!(((((((function_)->generics))->params)).is_empty())))){
 (output += TRY((((*this).codegen_function(function_,false)))));
 (output += String("\n"));
 }
+}
+
+}
+}
+
 }
 
 }
@@ -599,25 +613,34 @@ return (output);
 }
 String output = String("");
 {
-JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
+JaktInternal::DictionaryIterator<String,JaktInternal::Array<types::FunctionId>> _magic = ((((scope)->functions)).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> ___overload_set__ = (_magic_value.value());
 {
-JaktInternal::Tuple<String,types::FunctionId> const jakt_____function_id__ = ___function_id__;
-String const _ = ((jakt_____function_id__).get<0>());
-types::FunctionId const function_id = ((jakt_____function_id__).get<1>());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> const jakt_____overload_set__ = ___overload_set__;
+String const _ = ((jakt_____overload_set__).get<0>());
+JaktInternal::Array<types::FunctionId> const overload_set = ((jakt_____overload_set__).get<1>());
 
+{
+JaktInternal::ArrayIterator<types::FunctionId> _magic = ((overload_set).iterator());
+for (;;){
+JaktInternal::Optional<types::FunctionId> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::FunctionId function_id = (_magic_value.value());
+{
 if ((!(((((function_id).module)).equals(((current_module)->id)))))){
 continue;
 }
 NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
 JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function = ((*this).current_function);
 (((*this).current_function) = function_);
-ScopeGuard __jakt_var_385([&] {
+ScopeGuard __jakt_var_392([&] {
 (((*this).current_function) = previous_function);
 });
 if (((((((function_)->linkage)).index() == 1 /* External */) || ((((function_)->type)).index() == 1 /* ImplicitConstructor */)) || ((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))){
@@ -627,6 +650,11 @@ if (((((((function_)->generics))->params)).is_empty())){
 (output += TRY((((*this).codegen_function(function_,false)))));
 (output += String("\n"));
 }
+}
+
+}
+}
+
 }
 
 }
@@ -658,22 +686,31 @@ continue;
 (output += TRY((((*this).codegen_debug_description_getter(struct_,false)))));
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((struct_).scope_id)))));
 {
-JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
+JaktInternal::DictionaryIterator<String,JaktInternal::Array<types::FunctionId>> _magic = ((((scope)->functions)).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> ___overload_set__ = (_magic_value.value());
 {
-JaktInternal::Tuple<String,types::FunctionId> const jakt_____function_id__ = ___function_id__;
-String const _ = ((jakt_____function_id__).get<0>());
-types::FunctionId const function_id = ((jakt_____function_id__).get<1>());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> const jakt_____overload_set__ = ___overload_set__;
+String const _ = ((jakt_____overload_set__).get<0>());
+JaktInternal::Array<types::FunctionId> const overload_set = ((jakt_____overload_set__).get<1>());
 
+{
+JaktInternal::ArrayIterator<types::FunctionId> _magic = ((overload_set).iterator());
+for (;;){
+JaktInternal::Optional<types::FunctionId> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::FunctionId function_id = (_magic_value.value());
+{
 NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
 JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function = ((*this).current_function);
 (((*this).current_function) = function_);
-ScopeGuard __jakt_var_386([&] {
+ScopeGuard __jakt_var_393([&] {
 (((*this).current_function) = previous_function);
 });
 if (((((function_)->type)).index() == 1 /* ImplicitConstructor */)){
@@ -684,6 +721,11 @@ else if (((!(((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))
 (output += TRY((((*this).codegen_function_in_namespace(function_,((struct_).type_id),false)))));
 (output += String("\n"));
 }
+}
+
+}
+}
+
 }
 
 }
@@ -722,28 +764,42 @@ if (((((enum_).underlying_type_id)).equals(types::void_type_id()))){
 }
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((enum_).scope_id)))));
 {
-JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
+JaktInternal::DictionaryIterator<String,JaktInternal::Array<types::FunctionId>> _magic = ((((scope)->functions)).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> ___overload_set__ = (_magic_value.value());
 {
-JaktInternal::Tuple<String,types::FunctionId> const jakt_____function_id__ = ___function_id__;
-String const _ = ((jakt_____function_id__).get<0>());
-types::FunctionId const function_id = ((jakt_____function_id__).get<1>());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> const jakt_____overload_set__ = ___overload_set__;
+String const _ = ((jakt_____overload_set__).get<0>());
+JaktInternal::Array<types::FunctionId> const overload_set = ((jakt_____overload_set__).get<1>());
 
+{
+JaktInternal::ArrayIterator<types::FunctionId> _magic = ((overload_set).iterator());
+for (;;){
+JaktInternal::Optional<types::FunctionId> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::FunctionId function_id = (_magic_value.value());
+{
 NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
 JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function = ((*this).current_function);
 (((*this).current_function) = function_);
-ScopeGuard __jakt_var_387([&] {
+ScopeGuard __jakt_var_394([&] {
 (((*this).current_function) = previous_function);
 });
 if (((!(((((function_)->type)).index() == 1 /* ImplicitConstructor */))) && ((!(((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))) && (!(((function_)->is_comptime)))))){
 (output += TRY((((*this).codegen_function_in_namespace(function_,((enum_).type_id),false)))));
 (output += String("\n"));
 }
+}
+
+}
+}
+
 }
 
 }
@@ -942,7 +998,7 @@ return JaktInternal::ExplicitValue((TRY((((*this).codegen_expression(expr)))) + 
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::Defer>();NonnullRefPtr<types::CheckedStatement> const& statement = __jakt_match_value.statement;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_388; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_395; {
 String output = String("");
 (output += String("ScopeGuard "));
 (output += TRY((((*this).fresh_var()))));
@@ -955,10 +1011,10 @@ bool const old_inside_defer = ((*this).inside_defer);
 (output += String("});"));
 (((*this).control_flow_state) = last_control_flow);
 (((*this).inside_defer) = old_inside_defer);
-__jakt_var_388 = output; goto __jakt_label_357;
+__jakt_var_395 = output; goto __jakt_label_363;
 
 }
-__jakt_label_357:; __jakt_var_388.release_value(); }));
+__jakt_label_363:; __jakt_var_395.release_value(); }));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::Return>();JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const& val = __jakt_match_value.val;
@@ -968,8 +1024,8 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(((String("return (") + TRY((((*this).codegen_expression((val.value())))))) + String(");")));
 }
 else {
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_389; {
-__jakt_var_389 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_396; {
+__jakt_var_396 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<String>>{
 auto __jakt_enum_value = ((((((*this).current_function).value()))->can_throw));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(String("return {};"));
@@ -978,17 +1034,17 @@ else {
 return JaktInternal::ExplicitValue(String("return;"));
 }
 }()))
-; goto __jakt_label_358;
+; goto __jakt_label_364;
 
 }
-__jakt_label_358:; __jakt_var_389.release_value(); }));
+__jakt_label_364:; __jakt_var_396.release_value(); }));
 }
 }()))
 );
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::Loop>();types::CheckedBlock const& block = __jakt_match_value.block;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_390; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_397; {
 String output = String("");
 if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())).has_value()))){
 (output += TRY((String::formatted(String("\n#line {}\n"),TRY((((((*this).debug_info)).span_to_source_location((((statement)->span()).value())))))))));
@@ -1000,15 +1056,15 @@ codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state)
 String const block_str = TRY((((*this).codegen_block(block))));
 (((*this).control_flow_state) = last_control_flow);
 (output += block_str);
-__jakt_var_390 = output; goto __jakt_label_359;
+__jakt_var_397 = output; goto __jakt_label_365;
 
 }
-__jakt_label_359:; __jakt_var_390.release_value(); }));
+__jakt_label_365:; __jakt_var_397.release_value(); }));
 };/*case end*/
 case 7: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::While>();NonnullRefPtr<types::CheckedExpression> const& condition = __jakt_match_value.condition;
 types::CheckedBlock const& block = __jakt_match_value.block;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_391; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_398; {
 String output = String("");
 if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())).has_value()))){
 (output += TRY((String::formatted(String("\n#line {}\n"),TRY((((((*this).debug_info)).span_to_source_location((((statement)->span()).value())))))))));
@@ -1025,10 +1081,10 @@ String const code = TRY((((*this).codegen_block(block))));
 }
 
 (add_newline = false);
-__jakt_var_391 = output; goto __jakt_label_360;
+__jakt_var_398 = output; goto __jakt_label_366;
 
 }
-__jakt_label_360:; __jakt_var_391.release_value(); }));
+__jakt_label_366:; __jakt_var_398.release_value(); }));
 };/*case end*/
 case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::Block>();types::CheckedBlock const& block = __jakt_match_value.block;
@@ -1043,7 +1099,7 @@ utility::panic(String("Garbage statement in codegen"));
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::DestructuringAssignment>();JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> const& vars = __jakt_match_value.vars;
 NonnullRefPtr<types::CheckedStatement> const& var_decl = __jakt_match_value.var_decl;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_392; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_399; {
 String output = String("");
 (output += TRY((((*this).codegen_statement(var_decl)))));
 {
@@ -1061,15 +1117,15 @@ NonnullRefPtr<types::CheckedStatement> v = (_magic_value.value());
 }
 }
 
-__jakt_var_392 = output; goto __jakt_label_361;
+__jakt_var_399 = output; goto __jakt_label_367;
 
 }
-__jakt_label_361:; __jakt_var_392.release_value(); }));
+__jakt_label_367:; __jakt_var_399.release_value(); }));
 };/*case end*/
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::VarDecl>();types::VarId const& var_id = __jakt_match_value.var_id;
 NonnullRefPtr<types::CheckedExpression> const& init = __jakt_match_value.init;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_393; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_400; {
 types::CheckedVariable const var = ((((*this).program))->get_variable(var_id));
 String output = String("");
 NonnullRefPtr<types::Type> const var_type = ((((*this).program))->get_type(((var).type_id)));
@@ -1082,14 +1138,14 @@ if (((!(((var).is_mutable))) && (!((((var_type)->index() == 27 /* Reference */) 
 (output += String(" = "));
 (output += TRY((((*this).codegen_expression(init)))));
 (output += String(";"));
-__jakt_var_393 = output; goto __jakt_label_362;
+__jakt_var_400 = output; goto __jakt_label_368;
 
 }
-__jakt_label_362:; __jakt_var_393.release_value(); }));
+__jakt_label_368:; __jakt_var_400.release_value(); }));
 };/*case end*/
 case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::InlineCpp>();JaktInternal::Array<String> const& lines = __jakt_match_value.lines;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_394; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_401; {
 String output = String("");
 {
 JaktInternal::ArrayIterator<String> _magic = ((lines).iterator());
@@ -1109,16 +1165,16 @@ String escaped_line = line;
 }
 }
 
-__jakt_var_394 = output; goto __jakt_label_363;
+__jakt_var_401 = output; goto __jakt_label_369;
 
 }
-__jakt_label_363:; __jakt_var_394.release_value(); }));
+__jakt_label_369:; __jakt_var_401.release_value(); }));
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::If>();NonnullRefPtr<types::CheckedExpression> const& condition = __jakt_match_value.condition;
 types::CheckedBlock const& then_block = __jakt_match_value.then_block;
 JaktInternal::Optional<NonnullRefPtr<types::CheckedStatement>> const& else_statement = __jakt_match_value.else_statement;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_395; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_402; {
 String output = String("");
 if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())).has_value()))){
 (output += TRY((String::formatted(String("\n#line {}\n"),TRY((((((*this).debug_info)).span_to_source_location((((statement)->span()).value())))))))));
@@ -1138,15 +1194,15 @@ return JaktInternal::ExplicitValue(String(""));
 }()))
 );
 (add_newline = false);
-__jakt_var_395 = output; goto __jakt_label_364;
+__jakt_var_402 = output; goto __jakt_label_370;
 
 }
-__jakt_label_364:; __jakt_var_395.release_value(); }));
+__jakt_label_370:; __jakt_var_402.release_value(); }));
 };/*case end*/
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::Yield>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_396; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_403; {
 String output = String("");
 if ((((((*this).entered_yieldable_blocks)).size()) == static_cast<size_t>(0ULL))){
 utility::panic(String("Must be in a block to yield"));
@@ -1161,10 +1217,10 @@ String const end_label = ((var_name_end_label_).get<1>());
 (output += String("; goto "));
 (output += end_label);
 (output += String(";\n"));
-__jakt_var_396 = output; goto __jakt_label_365;
+__jakt_var_403 = output; goto __jakt_label_371;
 
 }
-__jakt_label_365:; __jakt_var_396.release_value(); }));
+__jakt_label_371:; __jakt_var_403.release_value(); }));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -1200,12 +1256,12 @@ NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue((((name + String(" = ")) + TRY((((*this).codegen_expression(expr))))) + String(",\n")));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_397; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_404; {
 utility::todo(TRY((String::formatted(String("codegen_enum can't generate variant: {}"),variant))));
-__jakt_var_397 = String(""); goto __jakt_label_366;
+__jakt_var_404 = String(""); goto __jakt_label_372;
 
 }
-__jakt_label_366:; __jakt_var_397.release_value(); }));
+__jakt_label_372:; __jakt_var_404.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -1275,20 +1331,20 @@ auto&& __jakt_match_variant = variant;
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedEnumVariant::Untyped>();String const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_398; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_405; {
 if (is_generic){
 (output += ((String("template<") + template_args) + String(">\n")));
 }
 (output += ((String("struct ") + name) + String(" {\n")));
-__jakt_var_398 = common_fields; goto __jakt_label_367;
+__jakt_var_405 = common_fields; goto __jakt_label_373;
 
 }
-__jakt_label_367:; __jakt_var_398.release_value(); }));
+__jakt_label_373:; __jakt_var_405.release_value(); }));
 };/*case end*/
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedEnumVariant::StructLike>();String const& name = __jakt_match_value.name;
 JaktInternal::Array<types::VarId> const& own_fields = __jakt_match_value.fields;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_399; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_406; {
 JaktInternal::Array<JaktInternal::Tuple<String,String>> fields = (TRY((Array<JaktInternal::Tuple<String,String>>::create_with({}))));
 {
 JaktInternal::ArrayIterator<types::VarId> _magic = ((own_fields).iterator());
@@ -1310,15 +1366,15 @@ if (is_generic){
 (output += ((String("template<") + template_args) + String(">\n")));
 }
 (output += ((String("struct ") + name) + String(" {\n")));
-__jakt_var_399 = fields; goto __jakt_label_368;
+__jakt_var_406 = fields; goto __jakt_label_374;
 
 }
-__jakt_label_368:; __jakt_var_399.release_value(); }));
+__jakt_label_374:; __jakt_var_406.release_value(); }));
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedEnumVariant::Typed>();String const& name = __jakt_match_value.name;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_400; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_407; {
 JaktInternal::Array<JaktInternal::Tuple<String,String>> fields = (TRY((Array<JaktInternal::Tuple<String,String>>::create_with({}))));
 {
 JaktInternal::ArrayIterator<JaktInternal::Tuple<String,String>> _magic = ((common_fields).iterator());
@@ -1340,18 +1396,18 @@ if (is_generic){
 (output += ((String("template<") + template_args) + String(">\n")));
 }
 (output += ((String("struct ") + name) + String("{\n")));
-__jakt_var_400 = fields; goto __jakt_label_369;
+__jakt_var_407 = fields; goto __jakt_label_375;
 
 }
-__jakt_label_369:; __jakt_var_400.release_value(); }));
+__jakt_label_375:; __jakt_var_407.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_401; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Array<JaktInternal::Tuple<String,String>>> __jakt_var_408; {
 utility::todo(TRY((String::formatted(String("codegen enum variant: {}"),variant))));
-__jakt_var_401 = (TRY((Array<JaktInternal::Tuple<String,String>>::create_with({})))); goto __jakt_label_370;
+__jakt_var_408 = (TRY((Array<JaktInternal::Tuple<String,String>>::create_with({})))); goto __jakt_label_376;
 
 }
-__jakt_label_370:; __jakt_var_401.release_value(); }));
+__jakt_label_376:; __jakt_var_408.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -1525,18 +1581,31 @@ String const name = ((variant).name());
 
 NonnullRefPtr<types::Scope> const enum_scope = TRY((((((*this).program))->get_scope(((enum_).scope_id)))));
 {
-JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((enum_scope)->functions)).iterator());
+JaktInternal::DictionaryIterator<String,JaktInternal::Array<types::FunctionId>> _magic = ((((enum_scope)->functions)).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<String,types::FunctionId> function_item = (_magic_value.value());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> ___overload_set__ = (_magic_value.value());
 {
-NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(((function_item).get<1>())));
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> const jakt_____overload_set__ = ___overload_set__;
+String const _ = ((jakt_____overload_set__).get<0>());
+JaktInternal::Array<types::FunctionId> const overload_set = ((jakt_____overload_set__).get<1>());
+
+{
+JaktInternal::ArrayIterator<types::FunctionId> _magic = ((overload_set).iterator());
+for (;;){
+JaktInternal::Optional<types::FunctionId> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::FunctionId function_id = (_magic_value.value());
+{
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
 JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function_id = ((*this).current_function);
 (((*this).current_function) = static_cast<JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>>>(function_));
-ScopeGuard __jakt_var_402([&] {
+ScopeGuard __jakt_var_409([&] {
 (((*this).current_function) = previous_function_id);
 });
 if ((!(((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */)))){
@@ -1548,6 +1617,11 @@ else {
 }
 
 }
+}
+
+}
+}
+
 }
 
 }
@@ -2020,7 +2094,7 @@ case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Range>();JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const& from = __jakt_match_value.from;
 JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const& to = __jakt_match_value.to;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_403; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_410; {
 String output = String("");
 NonnullRefPtr<types::Type> const type = ((((*this).program))->get_type(type_id));
 types::TypeId const index_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::TypeId, ErrorOr<String>>{
@@ -2063,10 +2137,10 @@ else {
 }
 
 (output += String(")})"));
-__jakt_var_403 = output; goto __jakt_label_371;
+__jakt_var_410 = output; goto __jakt_label_377;
 
 }
-__jakt_label_371:; __jakt_var_403.release_value(); }));
+__jakt_label_377:; __jakt_var_410.release_value(); }));
 };/*case end*/
 case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::OptionalNone>();return JaktInternal::ExplicitValue(String("JaktInternal::OptionalNone()"));
@@ -2083,12 +2157,12 @@ return JaktInternal::ExplicitValue(((String("(") + TRY((((*this).codegen_express
 };/*case end*/
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::QuotedString>();String const& val = __jakt_match_value.val;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_404; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_411; {
 String const escaped_value = TRY((((val).replace(String("\n"),String("\\n")))));
-__jakt_var_404 = ((String("String(\"") + escaped_value) + String("\")")); goto __jakt_label_372;
+__jakt_var_411 = ((String("String(\"") + escaped_value) + String("\")")); goto __jakt_label_378;
 
 }
-__jakt_label_372:; __jakt_var_404.release_value(); }));
+__jakt_label_378:; __jakt_var_411.release_value(); }));
 };/*case end*/
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::ByteConstant>();String const& val = __jakt_match_value.val;
@@ -2140,7 +2214,7 @@ case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::IndexedStruct>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 String const& index = __jakt_match_value.index;
 bool const& is_optional = __jakt_match_value.is_optional;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_405; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_412; {
 String output = String("");
 String const object = TRY((((*this).codegen_expression(expr))));
 (output += String("(("));
@@ -2204,16 +2278,16 @@ else {
 }
 
 (output += String(")"));
-__jakt_var_405 = output; goto __jakt_label_373;
+__jakt_var_412 = output; goto __jakt_label_379;
 
 }
-__jakt_label_373:; __jakt_var_405.release_value(); }));
+__jakt_label_379:; __jakt_var_412.release_value(); }));
 };/*case end*/
 case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::IndexedCommonEnumMember>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 String const& index = __jakt_match_value.index;
 bool const& is_optional = __jakt_match_value.is_optional;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_406; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_413; {
 String output = String("");
 String const object = TRY((((*this).codegen_expression(expr))));
 (output += String("(("));
@@ -2291,10 +2365,10 @@ else {
 }
 
 (output += String(")"));
-__jakt_var_406 = output; goto __jakt_label_374;
+__jakt_var_413 = output; goto __jakt_label_380;
 
 }
-__jakt_label_374:; __jakt_var_406.release_value(); }));
+__jakt_label_380:; __jakt_var_413.release_value(); }));
 };/*case end*/
 case 26: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Block>();types::CheckedBlock const& block = __jakt_match_value.block;
@@ -2327,7 +2401,7 @@ case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::UnaryOp>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 types::CheckedUnaryOperator const& op = __jakt_match_value.op;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_407; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_414; {
 String output = String("(");
 (output += JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = op;
@@ -2375,19 +2449,19 @@ return JaktInternal::ExplicitValue(String("~"));
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedUnaryOperator::Is>();
 types::TypeId const& type_id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_408; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_415; {
 String const is_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(type_id));
 switch(__jakt_match_variant.index()) {
 case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
 types::StructId const& id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_409; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_416; {
 NonnullRefPtr<types::Module> const type_module = ((((*this).program))->get_module(((id).module)));
-__jakt_var_409 = ((((((*this).program))->get_struct(id))).name); goto __jakt_label_377;
+__jakt_var_416 = ((((((*this).program))->get_struct(id))).name); goto __jakt_label_383;
 
 }
-__jakt_label_377:; __jakt_var_409.release_value(); }));
+__jakt_label_383:; __jakt_var_416.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_type(type_id)))));
@@ -2395,22 +2469,22 @@ return JaktInternal::ExplicitValue(TRY((((*this).codegen_type(type_id)))));
 }/*switch end*/
 }()
 ));
-__jakt_var_408 = ((String("is<") + is_type) + String(">(")); goto __jakt_label_376;
+__jakt_var_415 = ((String("is<") + is_type) + String(">(")); goto __jakt_label_382;
 
 }
-__jakt_label_376:; __jakt_var_408.release_value(); }));
+__jakt_label_382:; __jakt_var_415.release_value(); }));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedUnaryOperator::TypeCast>();
 types::CheckedTypeCast const& cast = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_410; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_417; {
 types::TypeId final_type_id = ((cast).type_id());
 String const cast_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = cast;
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedTypeCast::Fallible>();
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_411; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_418; {
 NonnullRefPtr<types::Type> const ty = ((((*this).program))->get_type(((cast).type_id())));
 types::TypeId const type_id = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::TypeId, ErrorOr<String>>{
 auto&& __jakt_match_variant = *ty;
@@ -2432,30 +2506,30 @@ if (((((*this).program))->is_integer(type_id))){
 (final_type_id = type_id);
 (cast_type = String("fallible_integer_cast"));
 }
-__jakt_var_411 = cast_type; goto __jakt_label_379;
+__jakt_var_418 = cast_type; goto __jakt_label_385;
 
 }
-__jakt_label_379:; __jakt_var_411.release_value(); }));
+__jakt_label_385:; __jakt_var_418.release_value(); }));
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedTypeCast::Infallible>();
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_412; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_419; {
 String cast_type = String("verify_cast");
 if (((((*this).program))->is_integer(type_id))){
 (cast_type = String("infallible_integer_cast"));
 }
-__jakt_var_412 = cast_type; goto __jakt_label_380;
+__jakt_var_419 = cast_type; goto __jakt_label_386;
 
 }
-__jakt_label_380:; __jakt_var_412.release_value(); }));
+__jakt_label_386:; __jakt_var_419.release_value(); }));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 ));
-__jakt_var_410 = (((cast_type + String("<")) + TRY((((*this).codegen_type(final_type_id))))) + String(">(")); goto __jakt_label_378;
+__jakt_var_417 = (((cast_type + String("<")) + TRY((((*this).codegen_type(final_type_id))))) + String(">(")); goto __jakt_label_384;
 
 }
-__jakt_label_378:; __jakt_var_410.release_value(); }));
+__jakt_label_384:; __jakt_var_417.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(String(""));
@@ -2488,7 +2562,7 @@ return JaktInternal::ExplicitValue(String("))"));
 case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedUnaryOperator::IsEnumVariant>();types::CheckedEnumVariant const& enum_variant = __jakt_match_value.enum_variant;
 types::TypeId const& enum_type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_413; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_420; {
 String const name = ((enum_variant).name());
 String suffix = String(")");
 types::CheckedEnum const enum_ = ((((*this).program))->get_enum(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::EnumId, ErrorOr<String>>{
@@ -2539,10 +2613,10 @@ break;
 }
 
 (suffix += TRY((String::formatted(String("index() == {} /* {} */"),variant_index,name))));
-__jakt_var_413 = suffix; goto __jakt_label_381;
+__jakt_var_420 = suffix; goto __jakt_label_387;
 
 }
-__jakt_label_381:; __jakt_var_413.release_value(); }));
+__jakt_label_387:; __jakt_var_420.release_value(); }));
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedUnaryOperator::RawAddress>();
@@ -2555,10 +2629,10 @@ return JaktInternal::ExplicitValue(String(")"));
 }()
 )));
 (output += String(")"));
-__jakt_var_407 = output; goto __jakt_label_375;
+__jakt_var_414 = output; goto __jakt_label_381;
 
 }
-__jakt_label_375:; __jakt_var_407.release_value(); }));
+__jakt_label_381:; __jakt_var_414.release_value(); }));
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::BinaryOp>();NonnullRefPtr<types::CheckedExpression> const& lhs = __jakt_match_value.lhs;
@@ -2570,7 +2644,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).codegen_binary_expression(expre
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::NumericConstant>();types::CheckedNumericConstant const& val = __jakt_match_value.val;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_414; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_421; {
 String const suffix = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = val;
 switch(__jakt_match_variant.index()) {
@@ -2605,7 +2679,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).codegen_type(type_id)))));
 }/*switch end*/
 }()
 ));
-__jakt_var_414 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
+__jakt_var_421 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<String>>{
 auto&& __jakt_match_variant = val;
 switch(__jakt_match_variant.index()) {
 case 9: {
@@ -2665,15 +2739,15 @@ return JaktInternal::ExplicitValue(TRY((String::formatted(String("static_cast<{}
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
-)); goto __jakt_label_382;
+)); goto __jakt_label_388;
 
 }
-__jakt_label_382:; __jakt_var_414.release_value(); }));
+__jakt_label_388:; __jakt_var_421.release_value(); }));
 };/*case end*/
 case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::NamespacedVar>();JaktInternal::Array<types::CheckedNamespace> const& namespaces = __jakt_match_value.namespaces;
 types::CheckedVariable const& var = __jakt_match_value.var;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_415; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_422; {
 String output = String("");
 {
 JaktInternal::ArrayIterator<types::CheckedNamespace> _magic = ((namespaces).iterator());
@@ -2690,10 +2764,10 @@ types::CheckedNamespace ns = (_magic_value.value());
 }
 }
 
-__jakt_var_415 = (output + ((var).name)); goto __jakt_label_383;
+__jakt_var_422 = (output + ((var).name)); goto __jakt_label_389;
 
 }
-__jakt_label_383:; __jakt_var_415.release_value(); }));
+__jakt_label_389:; __jakt_var_422.release_value(); }));
 };/*case end*/
 case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Match>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
@@ -2706,7 +2780,7 @@ case 18: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::EnumVariantArg>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 types::CheckedEnumVariantBinding const& arg = __jakt_match_value.arg;
 types::CheckedEnumVariant const& enum_variant = __jakt_match_value.enum_variant;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_416; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_423; {
 String const var_name = TRY((((*this).codegen_expression(expr))));
 String const enum_type = TRY((((*this).codegen_type_possibly_as_namespace(((expr)->type()),true))));
 String const variant_name = ((enum_variant).name());
@@ -2724,10 +2798,10 @@ return JaktInternal::ExplicitValue(String("."));
 }
 }()))
 ;
-__jakt_var_416 = TRY((String::formatted(String("({}{}get<{}::{}>()).{}"),var_name,cpp_deref_operator,enum_type,variant_name,arg_name))); goto __jakt_label_384;
+__jakt_var_423 = TRY((String::formatted(String("({}{}get<{}::{}>()).{}"),var_name,cpp_deref_operator,enum_type,variant_name,arg_name))); goto __jakt_label_390;
 
 }
-__jakt_label_384:; __jakt_var_416.release_value(); }));
+__jakt_label_390:; __jakt_var_423.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktArray>();JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> const& vals = __jakt_match_value.vals;
@@ -2735,7 +2809,7 @@ JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const& repeat = 
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 types::TypeId const& inner_type_id = __jakt_match_value.inner_type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_417; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_424; {
 String output = String("");
 if (((repeat).has_value())){
 NonnullRefPtr<types::CheckedExpression> const repeat_val = ((repeat).value());
@@ -2781,10 +2855,10 @@ else {
 (output += String("}))))"));
 }
 
-__jakt_var_417 = output; goto __jakt_label_385;
+__jakt_var_424 = output; goto __jakt_label_391;
 
 }
-__jakt_label_385:; __jakt_var_417.release_value(); }));
+__jakt_label_391:; __jakt_var_424.release_value(); }));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktDictionary>();JaktInternal::Array<JaktInternal::Tuple<NonnullRefPtr<types::CheckedExpression>,NonnullRefPtr<types::CheckedExpression>>> const& vals = __jakt_match_value.vals;
@@ -2792,7 +2866,7 @@ utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 types::TypeId const& key_type_id = __jakt_match_value.key_type_id;
 types::TypeId const& value_type_id = __jakt_match_value.value_type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_418; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_425; {
 String output = TRY((String::formatted(String("({}((Dictionary<{}, {}>::create_with_entries({{"),TRY((((*this).current_error_handler()))),TRY((((*this).codegen_type(key_type_id)))),TRY((((*this).codegen_type(value_type_id)))))));
 bool first = true;
 {
@@ -2826,17 +2900,17 @@ else {
 }
 
 (output += String("}))))"));
-__jakt_var_418 = output; goto __jakt_label_386;
+__jakt_var_425 = output; goto __jakt_label_392;
 
 }
-__jakt_label_386:; __jakt_var_418.release_value(); }));
+__jakt_label_392:; __jakt_var_425.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktSet>();JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> const& vals = __jakt_match_value.vals;
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 types::TypeId const& inner_type_id = __jakt_match_value.inner_type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_419; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_426; {
 String output = String("");
 (output += TRY((String::formatted(String("({}((Set<{}>::create_with_values({{"),TRY((((*this).current_error_handler()))),TRY((((*this).codegen_type(inner_type_id))))))));
 bool first = true;
@@ -2863,16 +2937,16 @@ else {
 }
 
 (output += String("}))))"));
-__jakt_var_419 = output; goto __jakt_label_387;
+__jakt_var_426 = output; goto __jakt_label_393;
 
 }
-__jakt_label_387:; __jakt_var_419.release_value(); }));
+__jakt_label_393:; __jakt_var_426.release_value(); }));
 };/*case end*/
 case 7: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktTuple>();JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> const& vals = __jakt_match_value.vals;
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_420; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_427; {
 String output = String("");
 (output += String("(Tuple{"));
 bool first = true;
@@ -2899,10 +2973,10 @@ else {
 }
 
 (output += String("})"));
-__jakt_var_420 = output; goto __jakt_label_388;
+__jakt_var_427 = output; goto __jakt_label_394;
 
 }
-__jakt_label_388:; __jakt_var_420.release_value(); }));
+__jakt_label_394:; __jakt_var_427.release_value(); }));
 };/*case end*/
 case 27: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Function>();JaktInternal::Array<types::CheckedCapture> const& captures = __jakt_match_value.captures;
@@ -2911,7 +2985,7 @@ bool const& can_throw = __jakt_match_value.can_throw;
 types::CheckedBlock const& block = __jakt_match_value.block;
 types::TypeId const& return_type_id = __jakt_match_value.return_type_id;
 JaktInternal::Optional<types::FunctionId> const& pseudo_function_id = __jakt_match_value.pseudo_function_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_421; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_428; {
 JaktInternal::Array<String> generated_captures = (TRY((Array<String>::create_with({}))));
 {
 JaktInternal::ArrayIterator<types::CheckedCapture> _magic = ((captures).iterator());
@@ -2973,7 +3047,7 @@ if (((pseudo_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function((pseudo_function_id.value())));
 JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function = ((*this).current_function);
 (((*this).current_function) = function_);
-ScopeGuard __jakt_var_422([&] {
+ScopeGuard __jakt_var_429([&] {
 (((*this).current_function) = previous_function);
 });
 (block_output = TRY((((*this).codegen_block(block)))));
@@ -2982,17 +3056,17 @@ else {
 (block_output = TRY((((*this).codegen_block(block)))));
 }
 
-__jakt_var_421 = TRY((String::formatted(String("[{}]({}) -> {} {}"),utility::join(generated_captures,String(", ")),utility::join(generated_params,String(", ")),return_type,block_output))); goto __jakt_label_389;
+__jakt_var_428 = TRY((String::formatted(String("[{}]({}) -> {} {}"),utility::join(generated_captures,String(", ")),utility::join(generated_params,String(", ")),return_type,block_output))); goto __jakt_label_395;
 
 }
-__jakt_label_389:; __jakt_var_421.release_value(); }));
+__jakt_label_395:; __jakt_var_428.release_value(); }));
 };/*case end*/
 case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::TryBlock>();NonnullRefPtr<types::CheckedStatement> const& stmt = __jakt_match_value.stmt;
 String const& error_name = __jakt_match_value.error_name;
 types::CheckedBlock const& catch_block = __jakt_match_value.catch_block;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_423; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_430; {
 String output = String("");
 String const try_var = TRY((((*this).fresh_var())));
 (output += String("auto "));
@@ -3018,10 +3092,10 @@ if ((!(((error_name).is_empty())))){
 (output += TRY((((*this).codegen_block(catch_block)))));
 (((*this).control_flow_state) = last_control_flow);
 (output += String("}"));
-__jakt_var_423 = output; goto __jakt_label_390;
+__jakt_var_430 = output; goto __jakt_label_396;
 
 }
-__jakt_label_390:; __jakt_var_423.release_value(); }));
+__jakt_label_396:; __jakt_var_430.release_value(); }));
 };/*case end*/
 case 28: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Try>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
@@ -3030,7 +3104,7 @@ JaktInternal::Optional<String> const& catch_name = __jakt_match_value.catch_name
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 types::TypeId const& inner_type_id = __jakt_match_value.inner_type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_424; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_431; {
 String output = String("");
 String const fresh_var = TRY((((*this).fresh_var())));
 bool const is_void = ((inner_type_id).equals(types::void_type_id()));
@@ -3038,7 +3112,7 @@ String const try_var = TRY((((*this).fresh_var())));
 codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((((*this).control_flow_state)).passes_through_match) = false);
 (((((*this).control_flow_state)).passes_through_try) = true);
-ScopeGuard __jakt_var_425([&] {
+ScopeGuard __jakt_var_432([&] {
 {
 (((*this).control_flow_state) = last_control_flow);
 }
@@ -3107,20 +3181,22 @@ if (((catch_block).has_value())){
 }
 (output += String("; })"));
 }
-__jakt_var_424 = output; goto __jakt_label_391;
+__jakt_var_431 = output; goto __jakt_label_397;
 
 }
-__jakt_label_391:; __jakt_var_424.release_value(); }));
+__jakt_label_397:; __jakt_var_431.release_value(); }));
 };/*case end*/
-default: {
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_426; {
-utility::todo(TRY((String::formatted(String("codegen_expression else: {}"),expression))));
-__jakt_var_426 = String(""); goto __jakt_label_392;
+case 30: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedExpression::Garbage>();
+utility::Span const& span = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_433; {
+utility::todo(TRY((String::formatted(String("codegen_expression of bad AST node in {} at {}..{}"),TRY((((((*this).compiler))->get_file_path(((span).file_id))))),((span).start),((span).end)))));
+__jakt_var_433 = String(""); goto __jakt_label_398;
 
 }
-__jakt_label_392:; __jakt_var_426.release_value(); }));
+__jakt_label_398:; __jakt_var_433.release_value(); }));
 };/*case end*/
-}/*switch end*/
+default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 )));
 }
@@ -3608,18 +3684,31 @@ types::CheckedVariable const variable = ((((*this).program))->get_variable(((fie
 
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((struct_).scope_id)))));
 {
-JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
+JaktInternal::DictionaryIterator<String,JaktInternal::Array<types::FunctionId>> _magic = ((((scope)->functions)).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<String,types::FunctionId> fn = (_magic_value.value());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> ___overload_set__ = (_magic_value.value());
 {
-NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(((fn).get<1>())));
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> const jakt_____overload_set__ = ___overload_set__;
+String const _ = ((jakt_____overload_set__).get<0>());
+JaktInternal::Array<types::FunctionId> const overload_set = ((jakt_____overload_set__).get<1>());
+
+{
+JaktInternal::ArrayIterator<types::FunctionId> _magic = ((overload_set).iterator());
+for (;;){
+JaktInternal::Optional<types::FunctionId> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::FunctionId function_id = (_magic_value.value());
+{
 JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function_id = ((*this).current_function);
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
 (((*this).current_function) = static_cast<JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>>>(function_));
-ScopeGuard __jakt_var_427([&] {
+ScopeGuard __jakt_var_434([&] {
 (((*this).current_function) = previous_function_id);
 });
 if (((((function_)->type)).index() == 1 /* ImplicitConstructor */)){
@@ -3640,6 +3729,11 @@ else {
 (output += TRY((((*this).codegen_function(function_,true)))));
 }
 
+}
+
+}
+
+}
 }
 
 }
@@ -4107,12 +4201,12 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::B
 return JaktInternal::ExplicitValue(String(" >> "));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_428; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_435; {
 utility::todo(TRY((String::formatted(String("codegen_binary_expression {}"),op))));
-__jakt_var_428 = String(""); goto __jakt_label_393;
+__jakt_var_435 = String(""); goto __jakt_label_399;
 
 }
-__jakt_label_393:; __jakt_var_428.release_value(); }));
+__jakt_label_399:; __jakt_var_435.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -4198,18 +4292,27 @@ types::ScopeId child = (_magic_value.value());
 }
 
 {
-JaktInternal::DictionaryIterator<String,types::FunctionId> _magic = ((((scope)->functions)).iterator());
+JaktInternal::DictionaryIterator<String,JaktInternal::Array<types::FunctionId>> _magic = ((((scope)->functions)).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<String,types::FunctionId>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<String,types::FunctionId> ___function_id__ = (_magic_value.value());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> ___overload_set__ = (_magic_value.value());
 {
-JaktInternal::Tuple<String,types::FunctionId> const jakt_____function_id__ = ___function_id__;
-String const _ = ((jakt_____function_id__).get<0>());
-types::FunctionId const function_id = ((jakt_____function_id__).get<1>());
+JaktInternal::Tuple<String,JaktInternal::Array<types::FunctionId>> const jakt_____overload_set__ = ___overload_set__;
+String const _ = ((jakt_____overload_set__).get<0>());
+JaktInternal::Array<types::FunctionId> const overload_set = ((jakt_____overload_set__).get<1>());
 
+{
+JaktInternal::ArrayIterator<types::FunctionId> _magic = ((overload_set).iterator());
+for (;;){
+JaktInternal::Optional<types::FunctionId> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::FunctionId function_id = (_magic_value.value());
+{
 if ((!(((((function_id).module)).equals(((current_module)->id)))))){
 continue;
 }
@@ -4219,13 +4322,18 @@ continue;
 }
 JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function_id = ((*this).current_function);
 (((*this).current_function) = static_cast<JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>>>(function_));
-ScopeGuard __jakt_var_429([&] {
+ScopeGuard __jakt_var_436([&] {
 (((*this).current_function) = previous_function_id);
 });
 if (((!(((((function_)->type)).index() == 1 /* ImplicitConstructor */))) && (((function_)->name) != String("main")))){
 (output += TRY((((*this).codegen_function_predecl(function_,false)))));
 (output += String("\n"));
 }
+}
+
+}
+}
+
 }
 
 }
@@ -4437,7 +4545,7 @@ case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::Function>();JaktInternal::Array<types::TypeId> const& params = __jakt_match_value.params;
 bool const& can_throw = __jakt_match_value.can_throw;
 types::TypeId const& return_type_id = __jakt_match_value.return_type_id;
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_430; {
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_437; {
 String output = String("Function<");
 if (can_throw){
 (output += String("ErrorOr<"));
@@ -4471,10 +4579,10 @@ else {
 }
 
 (output += String(")>"));
-__jakt_var_430 = output; goto __jakt_label_394;
+__jakt_var_437 = output; goto __jakt_label_400;
 
 }
-__jakt_label_394:; __jakt_var_430.release_value(); }));
+__jakt_label_400:; __jakt_var_437.release_value(); }));
 };/*case end*/
 case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericTraitInstance>();{
@@ -4482,11 +4590,11 @@ utility::panic(String("Generic trait instance in codegen"));
 }
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_431; {
-__jakt_var_431 = String("auto"); goto __jakt_label_395;
+return JaktInternal::ExplicitValue(({ Optional<String> __jakt_var_438; {
+__jakt_var_438 = String("auto"); goto __jakt_label_401;
 
 }
-__jakt_label_395:; __jakt_var_431.release_value(); }));
+__jakt_label_401:; __jakt_var_438.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
