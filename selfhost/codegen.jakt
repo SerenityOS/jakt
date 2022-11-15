@@ -1744,7 +1744,7 @@ struct CodeGenerator {
                 true => "->"
                 else => "."
             }
-            yield format("({}{}get<{}::{}>()).{}", var_name, cpp_deref_operator, enum_type, variant_name, arg_name)
+            yield format("(({}){}get<{}::{}>()).{}", var_name, cpp_deref_operator, enum_type, variant_name, arg_name)
         }
         JaktArray(vals, repeat, span, type_id, inner_type_id) => {
             mut output = ""
