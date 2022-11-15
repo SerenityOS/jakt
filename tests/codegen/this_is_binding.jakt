@@ -1,0 +1,17 @@
+/// Expect:
+/// - output: "123\n"
+
+enum E {
+    A(i64)
+
+    function go(this) {
+        if this is A(foo) {
+            println("{}", foo)
+        }
+    }
+}
+
+function main() {
+    let e = E::A(123)
+    e.go()
+}
