@@ -6394,7 +6394,7 @@ struct Typechecker {
                         let var_id = module.add_variable(CheckedVariable(
                             name: variant_argument.binding
                             type_id: variable_type_id
-                            is_mutable: false
+                            is_mutable: variant_argument.is_mutable
                             definition_span: span
                             type_span: None
                             visibility: CheckedVisibility::Public
@@ -6461,7 +6461,7 @@ struct Typechecker {
                         let var_id = module.add_variable(CheckedVariable(
                             name: arg.binding
                             type_id: substituted_type_id
-                            is_mutable: false
+                            is_mutable: arg.is_mutable
                             definition_span: matched_span
                             type_span: None
                             visibility: CheckedVisibility::Public

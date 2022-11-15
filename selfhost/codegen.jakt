@@ -2196,7 +2196,13 @@ struct CodeGenerator {
                                 if not args.is_empty() {
                                     let arg = args[0]
                                     let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
-                                    output += format("{} const& {} = __jakt_match_value.value;\n", .codegen_type(var.type_id), arg.binding)
+                                    output += .codegen_type(var.type_id)
+                                    if not var.is_mutable {
+                                        output += " const"
+                                    }
+                                    output += "& "
+                                    output += arg.binding
+                                    output += " = __jakt_match_value.value;\n"
                                 }
                             }
                             StructLike(name, fields) => {
@@ -2212,7 +2218,10 @@ struct CodeGenerator {
                                     for arg in args {
                                         let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
                                         output += .codegen_type(var.type_id)
-                                        output += " const& "
+                                        if not var.is_mutable {
+                                            output += " const"
+                                        }
+                                        output += "& "
                                         output += arg.binding
                                         output += " = __jakt_match_value."
                                         output += arg.name.value_or(arg.binding)
