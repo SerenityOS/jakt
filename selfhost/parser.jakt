@@ -793,6 +793,8 @@ struct EnumVariantPatternArgument {
     name: String?
     binding: String
     span: Span
+    is_reference: bool
+    is_mutable: bool
 
     function equals(this, anon rhs_variant_pattern_argument: EnumVariantPatternArgument) -> bool {
         if .binding != rhs_variant_pattern_argument.binding {
@@ -801,6 +803,14 @@ struct EnumVariantPatternArgument {
 
         if .name.has_value() and rhs_variant_pattern_argument.name.has_value() {
             return .name! == rhs_variant_pattern_argument.name!
+        }
+
+        if .is_reference != rhs_variant_pattern_argument.is_reference {
+            return false
+        }
+
+        if .is_mutable != rhs_variant_pattern_argument.is_mutable {
+            return false
         }
 
         return not .name.has_value() and not rhs_variant_pattern_argument.name.has_value()
@@ -4617,9 +4627,20 @@ struct Parser {
             has_parens = true
             .index++
 
+            mut is_reference = false
+            mut is_mutable = false
+
             while not .eof() {
                 .skip_newlines()
                 match .current() {
+                    Ampersand => {
+                        is_reference = true
+                        .index++
+                    }
+                    Mut => {
+                        is_mutable = true
+                        .index++
+                    }
                     Identifier(name: arg_name) => {
                         if .peek(1) is Colon {
                             .index += 2
@@ -4629,18 +4650,25 @@ struct Parser {
                                 variant_arguments.push(EnumVariantPatternArgument(
                                     name: Some(arg_name)
                                     binding: arg_binding
-                                    span)
-                                )
+                                    span
+                                    is_reference
+                                    is_mutable
+                                ))
                             } else {
                                 .error("Expected binding after ‘:’", .current().span())
                             }
                         } else {
                             variant_arguments.push(EnumVariantPatternArgument(
-                                        name: None
-                                        binding: arg_name
-                                        span: .current().span()))
+                                name: None
+                                binding: arg_name
+                                span: .current().span()
+                                is_reference
+                                is_mutable
+                            ))
                             .index++
                         }
+                        is_reference = false
+                        is_mutable = false
                     }
                     Comma => {
                         .index++
