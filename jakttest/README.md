@@ -31,7 +31,7 @@ ninja -C build jakttest
 To run the tests, just use the binary:
 
 ```shell
-./build/jakttest
+./build/bin/jakttest
 ```
 
 ## On customizing behavior
@@ -42,7 +42,7 @@ defaults, but you can always customize it. To see them all, check the output
 of:
 
 ```shell
-./build/jakttest -h
+./build/bin/jakttest -h
 ```
 
 ## Test format
