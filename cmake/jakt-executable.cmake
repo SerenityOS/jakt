@@ -49,15 +49,15 @@ endfunction()
 function(add_jakt_executable executable)
   cmake_parse_arguments(PARSE_ARGV 1 JAKT_EXECUTABLE "" "MAIN_SOURCE;RUNTIME_DIRECTORY;COMPILER" "MODULE_SOURCES;STDLIB_SOURCES;INCLUDES")
   set(main_source "${CMAKE_CURRENT_LIST_DIR}/${JAKT_EXECUTABLE_MAIN_SOURCE}" )
-  set(runtime_path "${CMAKE_CURRENT_LIST_DIR}/runtime" )
   get_filename_component(main_base "${main_source}" NAME_WE)
+  get_filename_component(main_directory "${main_source}" DIRECTORY)
 
-  list(APPEND cpp_files "Root Module.cpp")
-  foreach (file ${JAKT_EXECUTABLE_STDLIB_SOURCES})
-      list(APPEND cpp_files "${file}")
-  endforeach()
+  set(cpp_files
+    "Root Module.cpp"
+    ${JAKT_EXECUTABLE_STDLIB_SOURCES}
+  )
 
-  foreach(module_source ${JAKT_EXECUTABLE_MODULE_SOURCES})
+  foreach(module_source IN LISTS JAKT_EXECUTABLE_MODULE_SOURCES)
     get_filename_component(module_base "${module_source}" NAME_WE)
     list(APPEND cpp_files "${module_base}.cpp")
   endforeach()
@@ -67,13 +67,16 @@ function(add_jakt_executable executable)
   endif()
 
   if (NOT JAKT_EXECUTABLE_RUNTIME_DIRECTORY)
-    set(JAKT_EXECUTABLE_COMPILER_INCLUDES "$<TARGET_PROPERTY:${JAKT_EXECUTABLE_COMPILER},INTERFACE_INCLUDE_DIRECTORIES>")
+    set(runtime_path "$<TARGET_PROPERTY:${JAKT_EXECUTABLE_COMPILER},INTERFACE_INCLUDE_DIRECTORIES>")
   else()
-    set(JAKT_EXECUTABLE_COMPILER_INCLUDES "${JAKT_EXECUTABLE_RUNTIME_DIRECTORY}")
+    set(runtime_path "${JAKT_EXECUTABLE_RUNTIME_DIRECTORY}")
   endif()
 
-  list(APPEND JAKT_EXECUTABLE_COMPILER_INCLUDES ${JAKT_EXECUTABLE_INCLUDES})
-  list(PREPEND JAKT_EXECUTABLE_COMPILER_INCLUDES .)
+  set(JAKT_EXECUTABLE_COMPILER_INCLUDES
+    "${main_directory}"
+    "${runtime_path}"
+    ${JAKT_EXECUTABLE_INCLUDES}
+  )
   list(REMOVE_DUPLICATES JAKT_EXECUTABLE_COMPILER_INCLUDES)
 
   set(binary_tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/${executable}_tmp")
@@ -100,12 +103,17 @@ function(add_jakt_executable executable)
   add_custom_target("generate_${executable}" DEPENDS ${cpp_files})
 
   add_executable("${executable}")
-  foreach(file ${cpp_files})
+  foreach(file IN LISTS cpp_files)
     target_sources("${executable}" PRIVATE "${file}")
     set_source_files_properties("${file}" PROPERTIES GENERATED TRUE)
   endforeach()
 
   add_jakt_compiler_flags("${executable}")
+
+  target_include_directories("${executable}" BEFORE PRIVATE "$<BUILD_INTERFACE:${runtime_path}>")
+  foreach(path IN LISTS JAKT_EXECUTABLE_INCLUDES)
+    target_include_directories("${executable}" PRIVATE "$<BUILD_INTERFACE:${path}>")
+  endforeach()
 
   target_link_libraries("${executable}" PRIVATE Jakt::jakt_main)
   target_link_libraries("${executable}" PRIVATE Jakt::jakt_runtime)
