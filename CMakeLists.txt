@@ -53,8 +53,11 @@ add_executable(jakt_stage0 "${JAKT_STAGE0_SOURCES}")
 add_executable(Jakt::jakt_stage0 ALIAS jakt_stage0)
 add_jakt_compiler_flags(jakt_stage0)
 target_include_directories(jakt_stage0
-  PUBLIC
+  PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime>
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime>
+  PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
 )
 target_link_libraries(jakt_stage0 PRIVATE Jakt::jakt_runtime Jakt::jakt_main)
@@ -121,9 +124,12 @@ add_jakt_executable(jakt_stage1
   RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime"
 )
 
-target_include_directories(jakt_stage1 PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>)
+target_include_directories(jakt_stage1
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
+  PUBLIC
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
+)
 add_executable(Jakt::jakt_stage1 ALIAS jakt_stage1)
 apply_output_rules(jakt_stage1)
 
@@ -135,9 +141,11 @@ if (FINAL_STAGE GREATER_EQUAL 2)
     STDLIB_SOURCES ${SELFHOST_STDLIB_SOURCES}
     RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime"
   )
-  target_include_directories(jakt_stage2 PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
+  target_include_directories(jakt_stage2
+    INTERFACE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
+    PUBLIC
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
   )
   add_executable(Jakt::jakt_stage2 ALIAS jakt_stage2)
   apply_output_rules(jakt_stage2)
@@ -187,10 +195,6 @@ if (JAKT_BUILD_TESTING)
      jakttest/fs.cpp
      jakttest/os.cpp
      jakttest/process.cpp
-  )
-  target_include_directories(jakttest PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/jakttest>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/jakttest>
   )
   apply_output_rules(jakttest)
 endif()
