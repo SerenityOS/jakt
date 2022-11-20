@@ -1535,7 +1535,8 @@ struct CodeGenerator {
             output += object
             output += ")"
 
-            match .program.get_type(expr.type()) {
+            let expression_type = .program.get_type(expr.type())
+            match expression_type {
                 RawPtr => {
                     output += "->"
                 }
@@ -1552,7 +1553,19 @@ struct CodeGenerator {
                 }
             }
             if is_optional {
-                output += "map([](auto& _value) { return _value."
+                output += "map([](auto& _value) { return _value"
+                mut access_operator = "."
+                if expression_type is GenericInstance(args) and args.size() > 0 {
+                    match .program.get_type(args[0]) {
+                        Struct(id) | GenericInstance(id) => {
+                            if .program.get_struct(id).record_type is Class {
+                                access_operator = "->"
+                            }
+                        }
+                        else => {}
+                    }
+                }
+                output += access_operator
                 output += index
                 output += "; })"
             } else {
@@ -2553,7 +2566,8 @@ struct CodeGenerator {
         output += object
         output += ")"
 
-        match .program.get_type(expr.type()) {
+        let expression_type = .program.get_type(expr.type())
+        match expression_type {
             RawPtr => {
                 output += "->"
             }
@@ -2579,7 +2593,19 @@ struct CodeGenerator {
         }
 
         if is_optional {
-            output += "map([&](auto& _value) { return _value."
+            output += "map([&](auto& _value) { return _value"
+            mut access_operator = "."
+            if expression_type is GenericInstance(args) and args.size() > 0 {
+                match .program.get_type(args[0]) {
+                    Struct(id) | GenericInstance(id) => {
+                        if .program.get_struct(id).record_type is Class {
+                            access_operator = "->"
+                        }
+                    }
+                    else => {}
+                }
+            }
+            output += access_operator
         }
 
         let generic_parameters = call.type_args
