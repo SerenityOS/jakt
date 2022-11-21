@@ -13,7 +13,7 @@ import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
 import formatter { Formatter }
-import utility { Span, escape_for_quotes, join}
+import utility { Span, escape_for_quotes, join, write_to_file}
 import lexer { Lexer }
 import parser { Parser }
 import interpreter { Interpreter, InterpreterScope, value_to_checked_expression }
@@ -676,13 +676,4 @@ function main(args: [String]) {
     if run_executable {
         return system(output_filename.c_string())
     }
-}
-
-function write_to_file(data: String, output_filename: String) throws {
-    mut outfile = File::open_for_writing(output_filename)
-    mut bytes: [u8] = []
-    for i in 0..data.length() {
-        bytes.push(data.byte_at(i))
-    }
-    outfile.write(bytes)
 }
