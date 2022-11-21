@@ -41,6 +41,7 @@ jobs:
         with:
           # ninja version to download. Default: 1.10.0
           version: 1.10.0
+          dest: ${{ github.workspace }}/ninja_bin
 
       - name: Install macOS dependencies
         if: ${{ matrix.platform == 'macos-latest' }}
@@ -48,7 +49,7 @@ jobs:
 
       - name: Build Jakt Stage 1
         run: |
-          cmake -GNinja -B build -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }} -DCMAKE_BUILD_TYPE=Release -DFINAL_STAGE=1
+          cmake -GNinja -B build -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }} -DCMAKE_BUILD_TYPE=Release -DFINAL_STAGE=1 -DCMAKE_INSTALL_PREFIX=jakt-install
           cmake --build build
 
       - name: Test Jakt Stage 1
@@ -62,6 +63,36 @@ jobs:
 
       - name: Test Jakt Stage 2
         run: ./build/bin/jakttest
+
+      - name: Install jakt
+        run: cmake --install build
+
+      - name: Create project and build with jakt
+        working-directory: ${{ github.workspace }}
+        run: |
+          ./jakt-install/bin/jakt --create TestProjectJakt
+          cd TestProjectJakt
+          ../jakt-install/bin/jakt -O src/main.jakt -o TestProjectJakt
+          if ! ./build/TestProjectJakt | grep -q "Hello, World!";
+          then
+            echo "::error :^( failed, failing job"
+            exit 1
+          fi
+      - name: Create project and build with cmake
+        working-directory: ${{ github.workspace }}
+        run: |
+          ./jakt-install/bin/jakt --create TestProjectCMake
+          cd TestProjectCMake
+          cmake -GNinja -B build \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH=${{ github.workspace }}/jakt-install
+          cmake --build build
+          if ! ./build/TestProjectCMake | grep -q "Hello, World!";
+          then
+            echo "::error :^( failed, failing job"
+            exit 1
+          fi
 
   selfhost-windows:
     strategy:
@@ -77,13 +108,45 @@ jobs:
        with:
          # ninja version to download. Default: 1.10.0
          version: 1.10.0
+         dest: ${{ github.workspace }}/ninja_bin
      - name: Configure CMake
-       run: cmake -B build -G Ninja -DFINAL_STAGE=1 -DCMAKE_CXX_COMPILER=clang.exe -DCMAKE_BUILD_TYPE=Release
+       run: cmake -B build -G Ninja -DFINAL_STAGE=1 -DCMAKE_CXX_COMPILER=clang.exe -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=jakt-install
 
      - name: Build Jakt Stage 1 Selfhost
        run: cmake --build build
 
      - name: Test Jakt Stage 1
+       run: .\build\bin\jakttest.exe
+
+     # FIXME: Share this better with unix job?
+     - name: Install jakt
+       run: cmake --install build
+
+     - name: Create project and build with jakt
+       working-directory: ${{ github.workspace }}
+       shell: bash
        run: |
-         ls -l build
-         .\build\bin\jakttest.exe
+         ./jakt-install/bin/jakt.exe --create TestProjectJakt
+         cd TestProjectJakt
+         ../jakt-install/bin/jakt.exe -O src/main.jakt -o TestProjectJakt
+         if ! ./build/TestProjectJakt.exe | grep -q "Hello, World!";
+         then
+           echo "::error :^( failed, failing job"
+           exit 1
+         fi
+     - name: Create project and build with cmake
+       working-directory: ${{ github.workspace }}
+       shell: bash
+       run: |
+         ./jakt-install/bin/jakt.exe --create TestProjectCMake
+         cd TestProjectCMake
+         cmake -GNinja -B build \
+           -DCMAKE_CXX_COMPILER=clang.exe \
+           -DCMAKE_BUILD_TYPE=Release \
+           -DCMAKE_PREFIX_PATH="${{ github.workspace }}/jakt-install"
+         cmake --build build
+         if ! ./build/TestProjectCMake.exe | grep -q "Hello, World!";
+         then
+           echo "::error :^( failed, failing job"
+           exit 1
+         fi
