@@ -1,11 +1,30 @@
 import windows_errno { errno_value }
+import utility { allocate, null }
 
 import extern c "direct.h" {
     extern function _mkdir(path: raw c_char) -> i32
+    extern function _getcwd(anon mut buffer: raw c_char, anon maxlen: i32) -> raw c_char
 }
 
 function make_directory(path: String) throws {
     if _mkdir(path: path.c_string()) != 0 {
         throw Error::from_errno(errno_value())
     }
+}
+
+function current_directory() throws -> String {
+    let buffer_size : i32 = 4096; // Roughly PATH_MAX
+    mut buffer = allocate<c_char>(count: buffer_size as! usize + 1)
+    defer {
+        unsafe { cpp { "free(buffer);" } }
+    }
+
+    let buf = _getcwd(buffer, buffer_size)
+    if buf == null<c_char>() {
+        throw Error::from_errno(errno_value())
+    }
+
+    mut b = StringBuilder::create()
+    b.append_c_string(buf)
+    return b.to_string()
 }

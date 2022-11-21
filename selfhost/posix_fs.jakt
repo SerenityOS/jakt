@@ -1,8 +1,13 @@
 import os { platform_module }
 import platform_module("errno") { errno_value }
+import utility { allocate, null }
 
 import extern c "sys/stat.h" {
     extern function mkdir(anon pathname: raw c_char, anon mode: u32) -> c_int
+}
+
+import extern c "unistd.h" {
+    extern function getcwd(anon mut buf: raw c_char, anon size: usize) -> raw c_char
 }
 
 function make_directory(path: String) throws {
@@ -12,4 +17,21 @@ function make_directory(path: String) throws {
     }
 
     throw Error::from_errno(errno_value())
+}
+
+function current_directory() throws -> String {
+    let buffer_size : usize = 4096; // Roughly PATH_MAX
+    mut buffer = allocate<c_char>(count: buffer_size  + 1)
+    defer {
+        unsafe { cpp { "free(buffer);" } }
+    }
+
+    let buf = getcwd(buffer, buffer_size)
+    if buf == null<c_char>() {
+        throw Error::from_errno(errno_value())
+    }
+
+    mut b = StringBuilder::create()
+    b.append_c_string(buf)
+    return b.to_string()
 }
