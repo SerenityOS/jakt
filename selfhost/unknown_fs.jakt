@@ -2,3 +2,8 @@ function make_directory(path: String) throws {
     eprintln("NOT IMPLEMENTED: make_directory {}", path)
     throw Error::from_errno(38)
 }
+
+function current_directory() throws -> String {
+    eprintln("NOT IMPLEMENTED: current_directory")
+    throw Error::from_errno(38)
+}
