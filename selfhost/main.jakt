@@ -170,6 +170,7 @@ function main(args: [String]) {
     let install_base_path = current_executable_path.parent().parent()
     let default_runtime_path = install_base_path.join("include/runtime")
     let default_runtime_library_path = install_base_path.join("lib")
+    let default_compiler_path = match is_windows() { true => "clang-cl", else => "clang++" }
 
     let optimize = args_parser.flag(["-O"])
     let lexer_debug = args_parser.flag(["-dl"])
@@ -194,7 +195,7 @@ function main(args: [String]) {
     let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? default_runtime_path.to_string()
     let binary_dir = Path::from_string(args_parser.option(["-B", "--binary-dir"]) ?? "build")
     let dot_clang_format_path = args_parser.option(["-D", "--dot-clang-format-path"])
-    let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? "clang++"
+    let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? default_compiler_path
     let archiver_path = args_parser.option(["-A", "--archiver"])
     let link_archive = args_parser.option(["-a", "--link-archive"])
     let extra_include_paths = args_parser.option_multiple(["-I"])
