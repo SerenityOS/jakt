@@ -70,6 +70,7 @@ set(SELFHOST_SOURCES
   selfhost/interpreter.jakt
   selfhost/lexer.jakt
   selfhost/parser.jakt
+  selfhost/project.jakt
   selfhost/repl.jakt
   selfhost/typechecker.jakt
   selfhost/types.jakt

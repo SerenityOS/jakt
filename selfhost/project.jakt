@@ -1,0 +1,121 @@
+/// Expect:
+/// - output: ""
+
+// Copyright (c) 2022, Andrew Kaster <akaster@serenityos.org>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+
+import os { platform_fs }
+import platform_fs() { current_directory, make_directory }
+import utility { write_to_file }
+
+struct Project
+{
+    name: String
+
+    function populate(this) throws {
+        let current_directory = current_directory()
+        let project_directory = current_directory + "/" + .name
+
+        println("Creating jakt project in {}..", project_directory)
+        make_directory(path: project_directory)
+        make_directory(path: project_directory + "/src")
+
+        print("\tGenerating CMakeLists.txt...")
+        .create_template_cmake_lists(project_directory)
+        println(" done")
+        print("\tGenerating jakt source code...")
+        .create_sample_jakt_files(project_directory)
+        println(" done")
+        print("\tGenerating README.md...")
+        .create_readme(project_directory)
+        println(" done")
+
+        println("Done!")
+    }
+
+    function create_template_cmake_lists(this, project_directory : String) throws {
+        let cml_contents = "cmake_minimum_required(VERSION 3.20)
+project(" + .name + "
+   VERSION 1.0.0
+   LANGUAGES CXX
+)
+
+find_package(Jakt REQUIRED)
+
+add_jakt_executable(" + .name + "
+   MAIN_SOURCE src/main.jakt
+   MODULE_SOURCES
+     src/second_module.jakt
+)
+"
+
+        write_to_file(data: cml_contents, output_filename: project_directory + "/CMakeLists.txt")
+    }
+
+    function create_sample_jakt_files(this, project_directory: String) throws {
+        let main_jakt = "import second_module { get_string }
+
+function main() throws -> c_int {
+    println(\"{}!\", get_string())
+    return 0
+}
+"
+
+        let second_module_jakt = "function get_string() throws -> String {
+    return \"Hello, World\"
+}
+"
+
+        write_to_file(data: main_jakt, output_filename: project_directory + "/src/main.jakt")
+        write_to_file(data: second_module_jakt, output_filename: project_directory + "/src/second_module.jakt")
+    }
+
+    function create_readme(this, project_directory: String) throws {
+        let readme_text = "# Example Jakt Project
+
+This example jakt project has two modules, hurray!
+
+## Building with jakt
+
+```console
+jakt src/main.jakt -o " + .name + "
+```
+
+## Building with CMake
+
+Make sure to install the ``jakt`` compiler somewhere. For example, ``/path/to/jakt-install``.
+
+This can be done by cloning ``jakt``, and running the following commands from its directory:
+
+```console
+jakt> cmake -GNinja -B build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_INSTALL_PREFIX=/path/to/jakt-install
+jakt> cmake --build build
+jakt> cmake --install build
+```
+
+Next you can build this project by configuring CMake to know where to find the ``jakt`` cmake helper scripts.
+
+```console
+> cmake -GNinja -B build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_PREFIX_PATH=/path/to/jakt-install
+> cmake --build build
+```
+
+## Running the application
+
+After building, the program will be in the ``build`` directory
+
+```console
+./build/" + .name + "
+```
+
+Which should print:
+
+```console
+Hello, World!
+```
+"
+
+        write_to_file(data: readme_text, output_filename: project_directory + "/README.md")
+    }
+}
