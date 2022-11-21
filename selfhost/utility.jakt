@@ -58,6 +58,15 @@ function append_to_each(anon strings: [String], suffix: String) throws -> [Strin
     return output
 }
 
+function write_to_file(data: String, output_filename: String) throws {
+    mut outfile = File::open_for_writing(output_filename)
+    mut bytes: [u8] = []
+    for i in 0..data.length() {
+        bytes.push(data.byte_at(i))
+    }
+    outfile.write(bytes)
+}
+
 struct Span {
     file_id: FileId
     start: usize
