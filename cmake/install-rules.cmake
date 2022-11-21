@@ -103,5 +103,5 @@ endif()
 install(CODE "execute_process(COMMAND \
                               ${CMAKE_COMMAND} -E ${LINK_COMMAND} \
                                                   \"${final_stage_install_target}\" \
-                                                  ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/jakt${CMAKE_EXECUTABLE_SUFFIX})"
+                                                  \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/jakt${CMAKE_EXECUTABLE_SUFFIX}\")"
 )
