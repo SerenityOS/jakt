@@ -20,6 +20,7 @@ import interpreter { Interpreter, InterpreterScope, value_to_checked_expression 
 import typechecker { Typechecker }
 import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImpl }
 import repl { REPL, serialize_ast_node }
+import project { Project }
 import ide
 import path { Path }
 import os { platform_fs, platform_module, Target }
@@ -78,6 +79,7 @@ function help() -> String {
     output += "  -t,--goto-type-def INDEX\t\tReturn the span for the type definition at index.\n"
     output += "  -e,--hover INDEX\t\t\tReturn the type of element at index.\n"
     output += "  -m,--completions INDEX\t\tReturn dot completions at index.\n"
+    output += "  --create NAME\t\tCreate sample project in $PWD/NAME\n"
     return output
 }
 
@@ -204,6 +206,7 @@ function main(args: [String]) {
     let hover = args_parser.option(["-e", "--hover"])
     let completions = args_parser.option(["-m", "--completions"])
     let print_symbols = args_parser.flag(["--print-symbols"])
+    let project_name = args_parser.option(["--create"])
 
     let interpret_run = args_parser.flag(["-r", "--run"])
 
@@ -223,6 +226,12 @@ function main(args: [String]) {
     }
 
     let positional_arguments = args_parser.remaining_arguments()
+
+    if project_name.has_value() {
+        let project = Project(name: project_name!)
+        project.populate()
+        return 0
+    }
 
     // FIXME: Remove this when parallel runs on windows work correctly.
     if is_windows() {
