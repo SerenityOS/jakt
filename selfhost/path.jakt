@@ -65,6 +65,10 @@ struct Path {
         return Path::from_string(join_builder.to_string())
     }
 
+    function is_dot(this) -> bool {
+        return .path == "." or .path == ".."
+    }
+
     function extension(this) throws -> String {
         for i in ((.path.length() - 1)..0).inclusive() {
             let c = .path.byte_at(i)

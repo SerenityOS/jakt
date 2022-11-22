@@ -100,20 +100,4 @@ struct ArgsParser {
 
         return remaining
     }
-
-}
-
-function escape_for_quotes(anon s: String) throws -> String {
-    mut builder = StringBuilder::create()
-    for i in 0..s.length() {
-        let c = s.byte_at(i)
-        match c {
-            b'"' =>  { builder.append_string("\\\"") }
-            b'\\' => { builder.append_string("\\\\") }
-            b'\n' => { builder.append_string("\\n") }
-            else =>  { builder.append(c) }
-        }
-    }
-
-    return builder.to_string()
 }

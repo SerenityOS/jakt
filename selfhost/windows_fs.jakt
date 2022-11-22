@@ -1,9 +1,26 @@
 import windows_errno { errno_value }
+import path { Path }
 import utility { allocate, null }
 
 import extern c "direct.h" {
     extern function _mkdir(path: raw c_char) -> i32
     extern function _getcwd(anon mut buffer: raw c_char, anon maxlen: i32) -> raw c_char
+}
+
+import extern c "windows.h" {
+    extern struct WIN32_FIND_DATA {
+        dwFileAttributes: u32
+        cFileName: raw c_char
+    }
+
+    extern function FindFirstFile(anon pathname: raw c_char, anon data: raw WIN32_FIND_DATA) -> raw void
+    extern function FindNextFile(anon hfind: raw void, anon data: raw WIN32_FIND_DATA) -> bool
+    extern function FindClose(anon hfind: raw void) -> c_int
+} before_include define {
+    WIN32_LEAN_AND_MEAN = "1"
+    NOMINMAX = "1"
+} after_include undefine {
+    Yield
 }
 
 function make_directory(path: String) throws {
@@ -27,4 +44,96 @@ function current_directory() throws -> String {
     mut b = StringBuilder::create()
     b.append_c_string(buf)
     return b.to_string()
+}
+
+class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
+    path: Path
+    dir_fd: raw void
+    first_file: (Path, bool)?
+
+    public function next(mut this) throws -> (Path, bool)? {
+        if .first_file.has_value() {
+            let file = .first_file!
+            .first_file = None
+
+            if not file.0.is_dot() {
+                return file
+            }
+        }
+
+        mut data = default_constructed<WIN32_FIND_DATA>()
+
+        if FindNextFile(.dir_fd, &raw data) {
+            let file_tuple = .file_from_data(data)
+
+            if file_tuple.has_value() and not file_tuple!.0.is_dot() {
+                return file_tuple
+            } else {
+                return .next()
+            }
+        } else {
+            FindClose(.dir_fd)
+
+            return None
+        }
+    }
+
+    private function is_directory(mut this) throws -> bool {
+        mut data = default_constructed<WIN32_FIND_DATA>()
+
+        let search_path = format("{}\\*", .path.to_string())
+
+        .dir_fd = FindFirstFile(search_path.c_string(), &raw data)
+
+        unsafe {
+            // FIXME: Extern constant support
+            cpp {
+                "if (((*this).dir_fd) == INVALID_HANDLE_VALUE)"
+                "return false;"
+            }
+        }
+
+        let file_tuple = .file_from_data(data)
+        if file_tuple.has_value() {
+            .first_file = file_tuple!
+
+            return true
+        }
+
+        return false
+    }
+
+    private function file_from_data(mut this, data: WIN32_FIND_DATA) throws -> (Path, bool)? {
+        mut builder = StringBuilder::create()
+        builder.append_c_string(data.cFileName)
+
+        let is_directory: bool = (data.dwFileAttributes & 0x10) != 0
+
+        return (Path::from_string(builder.to_string()), is_directory)
+    }
+
+    public function from_path(path: Path) throws -> DirectoryIterator? {
+        mut dir_fd = default_constructed<raw void>()
+
+        mut directory_iterator = DirectoryIterator(path, dir_fd, first_file: None)
+        if not directory_iterator.is_directory() {
+            return None
+        }
+
+        return directory_iterator
+    }
+
+    public function get_path(this) -> Path {
+        return .path
+    }
+}
+
+function default_constructed<T>() -> T {
+    unsafe {
+        cpp {
+            "return T{};"
+        }
+    }
+
+    abort()
 }

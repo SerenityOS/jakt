@@ -8,13 +8,14 @@
 
 import jakt::libc::io { system }
 import jakt::arguments { ArgsParser }
+import jakt::file_iterator { RecursiveFileIterator }
 
 import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
 import formatter { Formatter }
 import utility { Span, escape_for_quotes, join, write_to_file}
-import lexer { Lexer }
+import lexer { Lexer, Token }
 import parser { Parser }
 import interpreter { Interpreter, InterpreterScope, value_to_checked_expression }
 import typechecker { Typechecker }
@@ -22,13 +23,14 @@ import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImp
 import repl { REPL, serialize_ast_node }
 import project { Project }
 import ide
-import path { Path }
+import path { Path, get_path_separator }
 import os { platform_fs, platform_module, Target }
 
 import build { Builder }
 
 import platform_fs() {
     make_directory
+    DirectoryIterator
 }
 
 import platform_module("compiler") {
@@ -58,7 +60,8 @@ function help() -> String {
     output += "  -c,--check-only\t\t\tOnly check the code for errors.\n"
     output += "  -j,--json-errors\t\t\tEmit machine-readable (JSON) errors.\n"
     output += "  -H,--type-hints\t\t\tEmit machine-readable type hints (for IDE integration).\n"
-    output += "  -f,--format\t\t\t\tEmit the formatted document.\n"
+    output += "  -f,--format\t\t\t\tFormat a file or directory and output the result.\n"
+    output += "  -fi,--format-inplace\t\t\t\tFormat a file or directory and save the result inplace.\n"
     output += "  -fd,--format-debug\t\t\tOutput debug info for the formatter.\n"
     output += "  -fr,--format-range\t\t\tEmit part of the document with formatting applied.\n"
     output += "  --try-hints\t\t\t\tEmit machine-readable try hints (for IDE integration).\n"
@@ -307,6 +310,32 @@ function main(args: [String]) {
 
     compiler.load_prelude()
 
+    if format or format_debug or format_inplace {
+        let directory_or_file_paths = RecursiveFileIterator::make(directory: file_path, extension: "jakt")
+        for directory_or_file_path in directory_or_file_paths {
+            let file_id = compiler.get_file_id_or_register(directory_or_file_path)
+            let file_is_set = compiler.set_current_file(file_id)
+            if not file_is_set {
+                return 1
+            }
+
+            let format_range = parse_format_range(
+                range: input_format_range
+                input_file_length: compiler.current_file_contents.size()
+            )
+            if not format_range.has_value() {
+                eprintln("invalid format range '{}', expected <start>(:<end>?)", input_format_range)
+                return 1
+            }
+
+            let tokens = Lexer::lex(compiler)
+
+            format_output(file_path: directory_or_file_path, tokens, format_range, format_debug, format_inplace)
+        }
+
+        return 0
+    }
+
     let main_file_id = compiler.get_file_id_or_register(file_path)
     let file_is_set = compiler.set_current_file(main_file_id)
     if not file_is_set {
@@ -319,85 +348,6 @@ function main(args: [String]) {
         for token in tokens {
             println("token: {}", token)
         }
-    }
-
-    let format_range = parse_format_range(
-        range: input_format_range
-        input_file_length: compiler.current_file_contents.size()
-    )
-    if not format_range.has_value() {
-        eprintln("invalid format range '{}', expected <start>(:<end>?)", input_format_range)
-        return 1
-    }
-
-    mut formatted_file = StringBuilder::create()
-
-    if format or format_debug or format_inplace {
-        mut on_new_line = true
-        for formatted_line in Formatter::for_tokens(tokens, debug: format_debug) {
-            for formatted_token in formatted_line {
-                if not formatted_token.token.span().is_in_offset_range(start: format_range!.start, end: format_range!.end) {
-                    continue
-                }
-
-                for byte in formatted_token.preceding_trivia {
-                    formatted_file.append(byte)
-                }
-
-                match formatted_token.token {
-                    Eol(comment) => {
-                        if comment.has_value() {
-                            mut next_char = b' '
-                            if comment!.length() != 0 {
-                                next_char = comment!.byte_at(0)
-                            }
-                            let space = match next_char {
-                                b' ' | b'\t' | b'/' => ""
-                                else => " "
-                            }
-                            let lhs_space = match on_new_line {
-                                true => indent(formatted_token.indent)
-                                else => " "
-                            }
-
-                            formatted_file.append_string(format("{}//{}{}", lhs_space, space, comment!))
-                        }
-                        on_new_line = true
-                    }
-                    Garbage(consumed) => {
-                        if consumed.has_value() {
-                            formatted_file.append_string(format("{}", consumed!))
-                        }
-                    }
-                    else => {
-                        if on_new_line {
-                            formatted_file.append_string(format("{}", indent(formatted_token.indent)))
-                        }
-                        formatted_file.append_string(format("{}", formatted_token.token_text()))
-                        on_new_line = false
-                    }
-                }
-
-                for byte in formatted_token.trailing_trivia {
-                    formatted_file.append_string(format("{:c}", byte))
-                }
-
-                if formatted_token.token is Eol {
-                    formatted_file.append_string("\n")
-                }
-            }
-        }
-
-        if format_inplace {
-            write_to_file(
-                data: formatted_file.to_string()
-                output_filename: file_path.to_string()
-            )
-        } else {
-            print("{}", formatted_file.to_string())
-        }
-
-        return 0
     }
 
     let parsed_namespace = Parser::parse(compiler, tokens)
@@ -697,5 +647,73 @@ function main(args: [String]) {
 
     if run_executable {
         return system(output_filename.c_string())
+    }
+}
+
+function format_output(file_path: Path, tokens: [Token], format_range: FormatRange?, format_debug: bool, format_inplace: bool) throws {
+    mut formatted_file = StringBuilder::create()
+
+    mut on_new_line = true
+    for formatted_line in Formatter::for_tokens(tokens, debug: format_debug) {
+        for formatted_token in formatted_line {
+            if not formatted_token.token.span().is_in_offset_range(start: format_range!.start, end: format_range!.end) {
+                continue
+            }
+
+            for byte in formatted_token.preceding_trivia {
+                formatted_file.append(byte)
+            }
+
+            match formatted_token.token {
+                Eol(comment) => {
+                    if comment.has_value() {
+                        mut next_char = b' '
+                        if comment!.length() != 0 {
+                            next_char = comment!.byte_at(0)
+                        }
+                        let space = match next_char {
+                            b' ' | b'\t' | b'/' => ""
+                            else => " "
+                        }
+                        let lhs_space = match on_new_line {
+                            true => indent(formatted_token.indent)
+                            else => " "
+                        }
+
+                        formatted_file.append_string(format("{}//{}{}", lhs_space, space, comment!))
+                    }
+                    on_new_line = true
+                }
+                Garbage(consumed) => {
+                    if consumed.has_value() {
+                        formatted_file.append_string(format("{}", consumed!))
+                    }
+                }
+                else => {
+                    if on_new_line {
+                        formatted_file.append_string(format("{}", indent(formatted_token.indent)))
+                    }
+                    formatted_file.append_string(format("{}", formatted_token.token_text()))
+                    on_new_line = false
+                }
+            }
+
+            for byte in formatted_token.trailing_trivia {
+                formatted_file.append_string(format("{:c}", byte))
+            }
+
+            if formatted_token.token is Eol {
+                formatted_file.append_string("\n")
+            }
+        }
+    }
+
+    if format_inplace {
+        write_to_file(
+            data: formatted_file.to_string()
+            output_filename: file_path.to_string()
+        )
+    } else {
+        print("{}", formatted_file.to_string())
     }
 }
