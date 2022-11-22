@@ -115,6 +115,7 @@ endif()
 set(SELFHOST_STDLIB_SOURCES
   jakt__libc__io.cpp
   jakt__arguments.cpp
+  jakt__file_iterator.cpp
 )
 
 add_jakt_executable(jakt_stage1

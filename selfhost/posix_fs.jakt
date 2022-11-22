@@ -1,4 +1,5 @@
 import os { platform_module }
+import path { Path }
 import platform_module("errno") { errno_value }
 import utility { allocate, null }
 
@@ -8,6 +9,18 @@ import extern c "sys/stat.h" {
 
 import extern c "unistd.h" {
     extern function getcwd(anon mut buf: raw c_char, anon size: usize) -> raw c_char
+}
+
+import extern "dirent.h" {
+    extern struct DIR {}
+    extern struct dirent {
+        d_name: raw c_char
+        d_type: u32
+    }
+
+    extern function opendir(anon pathname: raw c_char) -> raw DIR
+    extern function readdir(anon dir_fd: raw DIR) -> raw dirent
+    extern function closedir(anon dir_fd: raw DIR) -> c_int
 }
 
 function make_directory(path: String) throws {
@@ -34,4 +47,52 @@ function current_directory() throws -> String {
     mut b = StringBuilder::create()
     b.append_c_string(buf)
     return b.to_string()
+}
+
+class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
+    path: Path
+    dir_fd: raw DIR
+
+    public function next(mut this) throws -> (Path, bool)? {
+        let file = readdir(.dir_fd)
+
+        if file == null<dirent>() {
+            closedir(.dir_fd)
+
+            return None
+        }
+
+        mut builder = StringBuilder::create()
+        mut is_directory = false
+
+        unsafe {
+            builder.append_c_string((*file).d_name)
+
+            // FIXME: Extern constant support
+            cpp {
+                "if ((*file).d_type == DT_DIR)"
+                "is_directory = true;"
+            }
+        }
+
+        let filename = builder.to_string()
+        if filename == "." or filename == ".." {
+            return .next()
+        }
+
+        return (Path::from_string(filename), is_directory)
+    }
+
+    public function get_path(this) -> Path {
+        return .path
+    }
+
+    public function from_path(path: Path) throws -> DirectoryIterator? {
+        let dir_fd = opendir(path.to_string().c_string())
+        if dir_fd == null<DIR>() {
+            return None
+        }
+
+        return DirectoryIterator(path, dir_fd)
+    }
 }

@@ -1,0 +1,60 @@
+// Copyright (c) 2022, Rob Ryan <rob@robryan.me>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+
+import path { Path, get_path_separator }
+import os { platform_fs, platform_module, Target }
+
+import platform_fs() {
+    DirectoryIterator
+}
+
+class RecursiveFileIterator implements(ThrowingIterable<Path>) {
+    private extension: String
+    private directory_list: [Path]
+    private current_directory: DirectoryIterator?
+    
+    public function make(directory: Path, extension: String) throws -> RecursiveFileIterator {
+        return RecursiveFileIterator(extension, directory_list: [directory], current_directory: None)
+    }
+
+    public function next(mut this) throws -> Path?  {
+        if not .current_directory.has_value() {
+            if .directory_list.size() > 0 {
+                let path = .directory_list.pop()!
+
+                .current_directory = DirectoryIterator::from_path(path)
+
+                if not .current_directory.has_value() {
+                    return path
+                }
+            } else {
+                return None
+            }
+        }
+
+        let next = .current_directory!.next()
+
+        if next.has_value() {
+            mut new_path = .current_directory!.get_path().join(next!.0.to_string())
+
+            if next!.1 {
+                .directory_list.push(new_path)
+
+                return .next()
+            }
+
+            if new_path.extension() == .extension {
+                return new_path
+            } else {
+                return .next()
+            }
+        } else if not .directory_list.is_empty() {
+            .current_directory = DirectoryIterator::from_path(path: .directory_list.pop()!)
+
+            return .next()
+        }
+
+        return None
+    }
+}
