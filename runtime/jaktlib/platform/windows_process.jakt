@@ -1,5 +1,5 @@
 import utility { allocate, join, null }
-import windows_errno { errno_value }
+import jakt::platform::windows_errno { errno_value }
 
 import extern c "windows.h" {
     extern function GetLastError() -> i32

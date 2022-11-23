@@ -27,7 +27,7 @@ import types {
 }
 import types
 import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo }
-import path { Path }
+import jakt::path { Path }
 import compiler { Compiler }
 import interpreter { Interpreter, InterpreterScope, ExecutionResult, value_to_checked_expression }
 

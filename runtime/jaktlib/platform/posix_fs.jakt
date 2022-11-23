@@ -1,6 +1,6 @@
-import os { platform_module }
-import path { Path }
-import platform_module("errno") { errno_value }
+import jakt::path { Path }
+import jakt::platform { platform_module, platform_errno }
+import platform_errno() { errno_value }
 import utility { allocate, null }
 
 import extern c "sys/stat.h" {

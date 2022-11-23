@@ -13,6 +13,26 @@ function todo(anon message: String) {
     abort()
 }
 
+function null<T>() -> raw T {
+    unsafe {
+        cpp {
+            "return nullptr;"
+        }
+    }
+
+    abort()
+}
+
+function allocate<T>(count: usize) -> raw T {
+    unsafe {
+        cpp {
+            "return static_cast<T*>(malloc(count * sizeof(T)));"
+        }
+    }
+
+    abort()
+}
+
 function add_arrays<T>(anon a: [T], anon b: [T]) throws -> [T] {
     mut result: [T] = []
 
@@ -138,26 +158,6 @@ function interpret_escapes(anon s: String) throws -> String {
     }
 
     return builder.to_string()
-}
-
-function null<T>() -> raw T {
-    unsafe {
-        cpp {
-            "return nullptr;"
-        }
-    }
-
-    abort()
-}
-
-function allocate<T>(count: usize) -> raw T {
-    unsafe {
-        cpp {
-            "return static_cast<T*>(malloc(count * sizeof(T)));"
-        }
-    }
-
-    abort()
 }
 
 function is_ascii_alpha(anon c: u8) => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
