@@ -1,7 +1,7 @@
 import error { JaktError, print_error, print_error_json }
 import utility
 import utility { FileId }
-import path { Path, get_path_separator }
+import jakt::path { Path, get_path_separator }
 
 class Compiler {
     public files: [Path]

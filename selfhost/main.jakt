@@ -23,8 +23,8 @@ import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImp
 import repl { REPL, serialize_ast_node }
 import project { Project }
 import ide
-import path { Path, get_path_separator }
-import os { platform_fs, platform_module, Target }
+import jakt::path { Path, get_path_separator }
+import jakt::platform { platform_fs, platform_module, platform_compiler, is_windows, library_name }
 
 import build { Builder }
 
@@ -33,11 +33,9 @@ import platform_fs() {
     DirectoryIterator
 }
 
-import platform_module("compiler") {
+import platform_compiler() {
     run_compiler
 }
-
-comptime is_windows() throws -> bool => Target::active().os == "windows"
 
 function usage() => "usage: jakt [-h] [OPTIONS] <filename>"
 function help() -> String {
@@ -143,11 +141,6 @@ function value_or_throw<T>(anon maybe: T?) throws -> T {
     }
 
     throw Error::from_errno(1)
-}
-
-comptime library_name(anon name: String) throws -> String => match Target::active().os {
-    "windows" => format("jakt_{}.lib", name)
-    else => format("libjakt_{}.a", name)
 }
 
 function main(args: [String]) {

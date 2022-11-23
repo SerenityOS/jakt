@@ -1,4 +1,4 @@
-import path { Path }
+import jakt::path { Path }
 
 function run_compiler(
     cxx_compiler_path: String

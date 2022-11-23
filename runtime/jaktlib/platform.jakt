@@ -1,0 +1,83 @@
+struct Target {
+    arch: String
+    platform: String
+    os: String
+    abi: String
+
+    function active() throws -> Target {
+        let triple = ___jakt_get_target_triple_string()
+        let parts = triple.split('-')
+        if parts.size() != 4 {
+            eprintln("Invalid target triple '{}'", triple)
+            throw Error::from_errno(22)
+        }
+
+        return Target(
+            arch: parts[0],
+            platform: parts[1],
+            os: parts[2],
+            abi: parts[3]
+        )
+    }
+}
+
+function platform_import_names() throws -> [String] {
+    let target = Target::active()
+
+    return match target.os {
+        "windows" => match target.arch {
+            "x86_64" => ["win64", "windows"]
+            "i686" => ["win32", "windows"]
+            else => ["windows"]
+        }
+        "darwin" => ["darwin", "posix"]
+        "linux" | "openbsd" | "serenity" => [target.os, "posix"]
+        else => [target.os, "unknown"]
+    }
+}
+
+function add_to_each(anon strings: [String], prefix: String, suffix: String) throws -> [String] {
+    mut output: [String] = []
+    for str in strings {
+        output.push(prefix + str + suffix)
+    }
+    return output
+}
+
+function last_namespace_separator(anon name: String) -> usize? {
+    mut i = name.length() - 1
+    while (i >= 2) {
+        if name.byte_at(i) == b':' and name.byte_at(i-1) == b':' {
+            return i + 1
+        }
+
+        i--
+    }
+
+    return None
+}
+
+comptime platform_module(anon mut name: String) throws -> [String] {
+    // handle namespaced platform specific imports
+    mut prefix = ""
+    let sepatator = last_namespace_separator(name)
+    if sepatator.has_value() {
+        let name_length = name.length()
+        prefix = name.substring(start: 0, length: sepatator!)
+        name = name.substring(start: sepatator!, length: name_length - sepatator!) 
+    }
+
+    return add_to_each(platform_import_names(), prefix, suffix: format("_{}", name))
+}
+
+comptime platform_process() throws -> [String] => platform_module("jakt::platform::process")
+comptime platform_fs() throws -> [String] => platform_module("jakt::platform::fs")
+comptime platform_compiler() throws -> [String] => platform_module("jakt::platform::compiler")
+comptime platform_errno() throws -> [String] => platform_module("jakt::platform::errno")
+
+comptime is_windows() throws -> bool => Target::active().os == "windows"
+
+comptime library_name(anon name: String) throws -> String => match Target::active().os {
+    "windows" => format("jakt_{}.lib", name)
+    else => format("libjakt_{}.a", name)
+}

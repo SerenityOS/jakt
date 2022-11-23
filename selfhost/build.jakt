@@ -1,5 +1,5 @@
-import os { platform_process }
-import path { Path }
+import jakt::platform { platform_process }
+import jakt::path { Path }
 import platform_process() {
     Process
     ExitPollResult

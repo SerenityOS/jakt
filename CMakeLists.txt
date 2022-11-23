@@ -88,45 +88,45 @@ set(SELFHOST_SOURCES
   selfhost/typechecker.jakt
   selfhost/types.jakt
   selfhost/utility.jakt
-  selfhost/os.jakt
-  selfhost/path.jakt
 )
-
-if(CMAKE_HOST_WIN32)
-  list(APPEND SELFHOST_SOURCES
-    selfhost/windows_fs.jakt
-    selfhost/windows_errno.jakt
-    selfhost/windows_process.jakt
-    selfhost/windows_compiler.jakt
-  )
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  list(APPEND SELFHOST_SOURCES
-    selfhost/posix_fs.jakt
-    selfhost/darwin_errno.jakt
-    selfhost/posix_process.jakt
-    selfhost/posix_compiler.jakt
-  )
-elseif(CMAKE_HOST_UNIX)
-  list(APPEND SELFHOST_SOURCES
-    selfhost/posix_fs.jakt
-    selfhost/posix_errno.jakt
-    selfhost/posix_process.jakt
-    selfhost/posix_compiler.jakt
-  )
-else()
-  list(APPEND SELFHOST_SOURCES
-    selfhost/unknown_fs.jakt
-    selfhost/unknown_process.jakt
-    selfhost/unknown_compiler.jakt
-  )
-endif()
 
 # FIXME: STDLIB target needed
 set(SELFHOST_STDLIB_SOURCES
   jakt__libc__io.cpp
   jakt__arguments.cpp
   jakt__file_iterator.cpp
+  jakt__platform.cpp
+  jakt__path.cpp
 )
+
+if(CMAKE_HOST_WIN32)
+  list(APPEND SELFHOST_STDLIB_SOURCES
+    jakt__platform__windows_fs.cpp
+    jakt__platform__windows_errno.cpp
+    jakt__platform__windows_process.cpp
+    jakt__platform__windows_compiler.cpp
+  )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  list(APPEND SELFHOST_STDLIB_SOURCES
+    jakt__platform__posix_fs.cpp
+    jakt__platform__darwin_errno.cpp
+    jakt__platform__posix_process.cpp
+    jakt__platform__posix_compiler.cpp
+  )
+elseif(CMAKE_HOST_UNIX)
+  list(APPEND SELFHOST_STDLIB_SOURCES
+    jakt__platform__posix_fs.cpp
+    jakt__platform__posix_errno.cpp
+    jakt__platform__posix_process.cpp
+    jakt__platform__posix_compiler.cpp
+  )
+else()
+  list(APPEND SELFHOST_STDLIB_SOURCES
+    jakt__platform__unknown_fs.cpp
+    jakt__platform__unknown_process.cpp
+    jakt__platform__unknown_compiler.cpp
+  )
+endif()
 
 add_jakt_executable(jakt_stage1
   COMPILER jakt_stage0

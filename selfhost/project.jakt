@@ -5,7 +5,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import os { platform_fs }
+import jakt::platform { platform_fs }
 import platform_fs() { current_directory, make_directory }
 import utility { write_to_file }
 

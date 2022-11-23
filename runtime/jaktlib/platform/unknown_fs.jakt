@@ -1,4 +1,4 @@
-import path { Path }
+import jakt::path { Path }
 
 function make_directory(path: String) throws {
     eprintln("NOT IMPLEMENTED: make_directory {}", path)

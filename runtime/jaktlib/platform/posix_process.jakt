@@ -1,6 +1,7 @@
-import os { platform_module }
+import jakt::platform { platform_module, platform_errno }
 import utility { null }
-import platform_module("errno") { errno_value }
+import platform_errno() { errno_value }
+
 import extern c "signal.h" {}
 import extern c "sys/wait.h" {
     extern function WEXITSTATUS(anon status: i32) -> i32
