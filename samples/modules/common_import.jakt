@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "PASS\n"
+
+import jakt::arguments { ArgsParser }
+import c { test_common_import }
+
+function main() {
+    mut args_parser = ArgsParser::from_args(["-h"])
+
+    if test_common_import(args: args_parser) {
+        println("PASS")
+    }
+}
