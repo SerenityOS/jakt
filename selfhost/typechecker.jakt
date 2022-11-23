@@ -814,8 +814,10 @@ struct Typechecker {
 
         let (module_name, module_span) = module_name_and_span!
 
+        let sanitized_module_name = module_name.replace(replace: ":", with: "_")
+
         mut imported_module_id = ModuleId(id: 0)
-        mut maybe_loaded_module = .program.get_loaded_module(module_name)
+        mut maybe_loaded_module = .program.get_loaded_module(sanitized_module_name)
         if not maybe_loaded_module.has_value() {
             let maybe_file_name = .compiler.search_for_path(module_name)
             let file_name = match maybe_file_name.has_value() {
@@ -836,8 +838,6 @@ struct Typechecker {
             }
 
             let original_current_module_id = .current_module_id
-
-            let sanitized_module_name = module_name.replace(replace: ":", with: "_")
             imported_module_id = .create_module(name: sanitized_module_name, is_root: false, path: file_name.to_string())
             .program.set_loaded_module(
                 module_name: sanitized_module_name
