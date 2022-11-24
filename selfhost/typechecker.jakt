@@ -7029,6 +7029,7 @@ struct Typechecker {
             }
 
             .error(format("Not a namespace, enum, class, or struct: ‘{}’", join(call.namespace_, separator: "::")), span)
+            return []
         }
 
         // 1. Look for a variable in the current scope with this name.
