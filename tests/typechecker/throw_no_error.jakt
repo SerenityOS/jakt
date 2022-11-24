@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "throw expression does not produce an error"
+/// - error: "Throw expression does not produce an error"
 
 function foo() throws -> u32 {
     throw 1

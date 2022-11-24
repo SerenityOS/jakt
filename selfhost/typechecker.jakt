@@ -1035,7 +1035,7 @@ struct Typechecker {
             }
 
             if not f.block.stmts.is_empty() {
-                .error("imported extern function is not allowed to have a body"
+                .error("Imported extern function is not allowed to have a body"
                         f.name_span)
             }
         }
@@ -3398,7 +3398,7 @@ struct Typechecker {
                     if lhs_enum_id.equals(rhs_enum_id) {
                         let lhs_enum = .get_enum(lhs_enum_id)
                         guard lhs_args.size() == rhs_args.size() else {
-                            .error(format("mismatched number of generic parameters for {}", lhs_enum.name), span)
+                            .error(format("Mismatched number of generic parameters for {}", lhs_enum.name), span)
                             return false
                         }
 
@@ -3513,7 +3513,7 @@ struct Typechecker {
                         let rhs_args = args
                         let lhs_struct = .get_struct(lhs_struct_id)
                         guard lhs_args.size() == rhs_args.size() else {
-                            .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
+                            .error(format("Mismatched number of generic parameters for {}", lhs_struct.name), span)
                             return false
                         }
 
@@ -3567,7 +3567,7 @@ struct Typechecker {
                         if enum_id.equals(id) {
                             let lhs_enum = .get_enum(enum_id)
                             if args.size() != lhs_enum.generic_parameters.size() {
-                                .error(format("mismatched number of generic parameters for {}", lhs_enum.name), span)
+                                .error(format("Mismatched number of generic parameters for {}", lhs_enum.name), span)
                                 return false
                             }
 
@@ -3629,7 +3629,7 @@ struct Typechecker {
 
                         let lhs_struct = .get_struct(lhs_struct_id)
                         if args.size() != lhs_struct.generic_parameters.size() {
-                            .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
+                            .error(format("Mismatched number of generic parameters for {}", lhs_struct.name), span)
                             return false
                         }
 
@@ -4057,7 +4057,7 @@ struct Typechecker {
             return .find_or_add_type_id(Type::GenericTraitInstance(id: trait_id!, args: checked_inner_types))
         }
 
-        .error(format("could not find {}", name), span)
+        .error(format("Could not find {}", name), span)
         return unknown_type_id()
     }
 
@@ -4240,11 +4240,11 @@ struct Typechecker {
             }
             LogicalAnd | LogicalOr => {
                 if not lhs_type_id.equals(builtin(BuiltinType::Bool)) {
-                    .error("left side of logical binary operation is not a boolean", lhs_span)
+                    .error("Left side of logical binary operation is not a boolean", lhs_span)
                 }
 
                 if not rhs_type_id.equals(builtin(BuiltinType::Bool)) {
-                    .error("right side of logical binary operation is not a boolean", rhs_span)
+                    .error("Right side of logical binary operation is not a boolean", rhs_span)
                 }
 
                 type_id = builtin(BuiltinType::Bool)
@@ -4414,7 +4414,7 @@ struct Typechecker {
     ) throws -> CheckedStatement {
         let maybe_span = block.find_yield_span()
         if maybe_span.has_value() {
-            .error("a 'for' loop block is not allowed to yield values", maybe_span!)
+            .error("A 'for' loop block is not allowed to yield values", maybe_span!)
         }
 
         // Translate `for x in expr { body }` to
@@ -4950,7 +4950,7 @@ struct Typechecker {
 
         let error_type_id = .find_type_in_prelude("Error")
         if not checked_expr.type().equals(error_type_id) {
-            .error("throw expression does not produce an error", expr.span())
+            .error("Throw expression does not produce an error", expr.span())
         }
 
         let scope = .get_scope(scope_id)
@@ -5102,7 +5102,7 @@ struct Typechecker {
                             }
                         }
 
-                        .error(format("unknown member of struct: {}.{}", structure.name, field_name), span)
+                        .error(format("Unknown member of struct: {}.{}", structure.name, field_name), span)
                     }
                     GenericEnumInstance(id: enum_id) | Enum(enum_id) => {
                         let enum_ = .get_enum(enum_id)
@@ -5125,7 +5125,7 @@ struct Typechecker {
                             }
                         }
 
-                        .error(format("unknown common member of enum: {}.{}", enum_.name, field_name), span)
+                        .error(format("Unknown common member of enum: {}.{}", enum_.name, field_name), span)
                     }
                     else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
                 }
@@ -5177,7 +5177,7 @@ struct Typechecker {
                     }
                 }
 
-                .error(format("unknown common member of enum: {}.{}", enum_.name, field_name), span)
+                .error(format("Unknown common member of enum: {}.{}", enum_.name, field_name), span)
             }
             else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
         }
