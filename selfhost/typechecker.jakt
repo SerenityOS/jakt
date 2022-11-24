@@ -7253,6 +7253,8 @@ struct Typechecker {
                 if call.name == "format" {
                     return_type = builtin(BuiltinType::JaktString)
                     callee_throws = true
+                } else {
+                    return_type = void_type_id()
                 }
             }
             else => {
