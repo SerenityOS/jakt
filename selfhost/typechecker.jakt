@@ -7186,7 +7186,7 @@ struct Typechecker {
 
     function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructOrEnumId?, safety_mode: SafetyMode, mut type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
         mut args: [(String, CheckedExpression)] = []
-        mut return_type = builtin(BuiltinType::Void)
+        mut return_type = builtin(BuiltinType::Unknown)
         mut generic_arguments: [TypeId] = []
         mut callee_throws = false
         mut resolved_namespaces: [ResolvedNamespace] = []
