@@ -3246,6 +3246,10 @@ struct Typechecker {
         mut return_type_id = VOID_TYPE_ID
         if function_return_type_id.equals(UNKNOWN_TYPE_ID) {
             return_type_id = .infer_function_return_type(block)
+            if return_type_id.equals(UNKNOWN_TYPE_ID) {
+                // Functions are void by default if type cannot be inferred.
+                return_type_id = VOID_TYPE_ID
+            }
         } else {
             return_type_id = .resolve_type_var(
                 type_var_type_id: function_return_type_id,
@@ -7286,7 +7290,7 @@ struct Typechecker {
                     }
                 }
 
-                if not resolved_function_id.has_value(){
+                if not resolved_function_id.has_value() {
                     if not resolved_function_id_candidates.is_empty() {
                         .error("No function with matching signature found.", span)
                         for match_error in errors_while_trying_to_find_matching_function.iterator() {
@@ -7323,6 +7327,10 @@ struct Typechecker {
                 let callee = .get_function(resolved_function_id!)
                 callee_throws = callee.can_throw
                 return_type = callee.return_type_id
+
+                if return_type.equals(unknown_type_id()) {
+                    return_type = void_type_id()
+                }
 
                 let scope_containing_callee = .get_scope(callee.function_scope_id).parent!
 
