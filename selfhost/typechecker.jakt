@@ -3721,7 +3721,7 @@ struct Typechecker {
                 }
             }
             else => {
-                if generic_inferences.map(rhs_type_id_string) != generic_inferences.map(lhs_type_id_string) {
+                if generic_inferences.map_name(rhs_type_id_string) != generic_inferences.map_name(lhs_type_id_string) {
                     .error(
                         format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                         span
@@ -5055,11 +5055,40 @@ struct Typechecker {
         return checked_expr
     }
 
+    function map_generic_arguments(mut this, type_id: TypeId, args: [TypeId]) throws {
+        match .get_type(type_id) {
+            GenericInstance(id, args) => {
+                let struct_ = .get_struct(id)
+                .generic_inferences.set_all(
+                    keys: struct_.generic_parameters
+                    values: args
+                )
+            }
+            GenericEnumInstance(id, args) => {
+                let enum_ = .get_enum(id)
+                .generic_inferences.set_all(
+                    keys: enum_.generic_parameters
+                    values: args
+                )
+            }
+            GenericTraitInstance(id, args) => {
+                let trait_ = .get_trait(id)
+                .generic_inferences.set_all(
+                    keys: trait_.generic_parameters
+                    values: args
+                )
+            }
+            else => {
+            }
+        }
+    }
+
     function typecheck_indexed_struct(mut this, expr: ParsedExpression, field_name: String, scope_id: ScopeId, is_optional: bool, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
         let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
         let checked_expr_type_id = checked_expr.type()
         let checked_expr_type = .get_type(checked_expr_type_id)
         let optional_struct_id = .find_struct_in_prelude("Optional")
+
         match checked_expr_type {
             Type::GenericInstance(id, args) => {
                 mut type_id = checked_expr_type_id
@@ -5078,7 +5107,13 @@ struct Typechecker {
                     type_id = args[0]
                 }
 
-                match .get_type(type_id) {
+                let type = .get_type(type_id)
+                let checkpoint = .generic_inferences.perform_checkpoint(reset: false)
+                defer .generic_inferences.restore(checkpoint)
+
+                .map_generic_arguments(type_id, args)
+
+                match type {
                     GenericInstance(id: struct_id) | Struct(struct_id) => {
                         let structure = .get_struct(struct_id)
                         for field in structure.fields {
@@ -5150,10 +5185,15 @@ struct Typechecker {
                 }
                 .error(format("unknown member of struct: {}.{}", structure.name, field_name), span)
             }
-            Type::GenericEnumInstance(id: enum_id) | Type::Enum(enum_id) => {
+            Type::GenericEnumInstance(id: enum_id, args) | Type::Enum(enum_id) default(args: [TypeId] = []) => {
                 if is_optional {
                     .error("Optional chaining is not allowed on non-optional types", span)
                 }
+
+                let checkpoint = .generic_inferences.perform_checkpoint(reset: false)
+                defer .generic_inferences.restore(checkpoint)
+
+                .map_generic_arguments(type_id: checked_expr_type_id, args)
 
                 let enum_ = .get_enum(enum_id)
                 for field in enum_.fields {
@@ -7687,6 +7727,7 @@ struct Typechecker {
         mut current_type_id = type_var_type_id
 
         loop {
+            current_type_id = .generic_inferences.map(current_type_id)
             let type_var_type = .get_type(current_type_id)
             if type_var_type is TypeVariable(type_name) {
                 let maybe_found_type_id = .find_type_in_scope(scope_id, name: type_name)
@@ -7831,8 +7872,8 @@ struct Typechecker {
     // NOTE: function trait requirements aren't currently taken into account.
     function signatures_match(mut this, anon first: CheckedFunction, anon second: CheckedFunction) throws -> bool {
         let types_match = function(anon typechecker: &mut Typechecker, anon a: TypeId, anon b: TypeId) throws -> bool {
-            let mapped_a = TypeId::from_string(typechecker.generic_inferences.map(a.to_string()))
-            let mapped_b = TypeId::from_string(typechecker.generic_inferences.map(b.to_string()))
+            let mapped_a = typechecker.generic_inferences.map(a)
+            let mapped_b = typechecker.generic_inferences.map(b)
 
             return match typechecker.get_type(mapped_a) {
                 Trait(id) => typechecker.implements_trait(type_id: mapped_b, trait_id: id)
