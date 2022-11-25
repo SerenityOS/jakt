@@ -994,6 +994,7 @@ struct FieldRecord {
 struct CheckedField {
     variable_id: VarId
     default_value: CheckedExpression?
+    default_value_expression: ParsedExpression?
 }
 
 struct CheckedStruct {
