@@ -16,7 +16,7 @@ struct GenericInferences {
             abort()
         }
 
-        let mapped_value = .map(value)
+        let mapped_value = .map_name(value)
         if key == mapped_value {
             return
         }
@@ -24,11 +24,19 @@ struct GenericInferences {
         .values[key] = mapped_value
     }
 
+    function set_all(mut this, keys: [CheckedGenericParameter], values: [TypeId]) throws {
+        for i in 0..(keys.size()) {
+            let key = keys[i].type_id.to_string()
+            let value = values[i].to_string()
+            .set(key, value)
+        }
+    }
+
     function get(this, anon key: String) -> String? {
         return .values.get(key)
     }
 
-    function map(this, anon type: String) -> String {
+    function map_name(this, anon type: String) -> String {
         mut mapped = .values.get(type)
         mut final_mapped_result = mapped
         while mapped.has_value() {
@@ -36,6 +44,10 @@ struct GenericInferences {
             mapped = .values.get(mapped!)
         }
         return final_mapped_result ?? type
+    }
+
+    function map(this, anon type_id: TypeId) throws -> TypeId {
+        return TypeId::from_string(.map_name(type_id.to_string()))
     }
 
     function iterator(this) => .values

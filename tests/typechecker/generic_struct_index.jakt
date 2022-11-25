@@ -1,0 +1,14 @@
+/// Expect:
+/// - error: "Binary comparison between incompatible types (String vs i64)"
+
+struct Foo<A> {
+    a: A
+}
+
+function main() {
+    let x = Foo(a: "test")
+    let y = Foo(a: 1)
+
+    x.a == y.a
+}
+
