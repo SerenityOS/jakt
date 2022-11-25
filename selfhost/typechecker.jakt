@@ -610,6 +610,7 @@ struct Typechecker {
         .typecheck_namespace_fields(parsed_namespace, scope_id)
         .typecheck_namespace_constructors(parsed_namespace, scope_id)
         .typecheck_namespace_function_predecl(parsed_namespace, scope_id)
+        .typecheck_namespace_default_fields(parsed_namespace, scope_id)
         .typecheck_namespace_declarations(parsed_namespace, scope_id)
     }
 
@@ -687,16 +688,65 @@ struct Typechecker {
                 type_span: None
                 visibility: .typecheck_visibility(visibility: unchecked_member.visibility, scope_id: checked_struct_scope_id)
             ))
-            mut default_value: CheckedExpression? = None
-            if unchecked_member.default_value.has_value() {
-                default_value = .typecheck_expression(
-                    unchecked_member.default_value!,
-                    scope_id: checked_struct_scope_id,
-                    safety_mode: SafetyMode::Safe,
-                    type_hint: None
-                )
+
+            structure.fields.push(
+                CheckedField(variable_id, default_value: None, default_value_expression: unchecked_member.default_value)
+            )
+        }
+    }
+
+    function typecheck_namespace_default_fields(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
+        let children = .get_scope(id: scope_id).children
+        for i in 0..parsed_namespace.namespaces.size() {
+            let child_namespace = parsed_namespace.namespaces[i]
+            let child_namespace_scope_id = children[i]
+            .typecheck_namespace_default_fields(parsed_namespace: child_namespace,
+                scope_id: child_namespace_scope_id)
+        }
+        for record in parsed_namespace.records {
+            if record.record_type is Struct or record.record_type is Class {
+                let struct_id = .find_struct_in_scope(scope_id, name: record.name)
+                if not struct_id.has_value() {
+                    .compiler.panic("can't find previously added struct")
+                }
+                .typecheck_struct_default_fields(parsed_record: record, struct_id: struct_id!, scope_id)
             }
-            structure.fields.push(CheckedField(variable_id, default_value))
+        }
+    }
+
+    function typecheck_struct_default_fields(mut this, parsed_record: ParsedRecord, struct_id: StructId, scope_id: ScopeId) throws {
+        mut structure = .get_struct(struct_id)
+
+        let checked_struct_scope_id = structure.scope_id
+        let struct_type_id = .find_or_add_type_id(Type::Struct(struct_id))
+        let previous_struct_type_id = .current_struct_type_id
+        .current_struct_type_id = struct_type_id
+        defer {
+            .current_struct_type_id = previous_struct_type_id
+        }
+
+        let parsed_fields = match parsed_record.record_type {
+            Struct(fields) => fields
+            Class(fields) => fields
+            else => {
+                .compiler.panic("typecheck_struct_default_fields cannot handle non-structs")
+            }
+        }
+
+        mut index = 0
+        for unchecked_member in parsed_fields {
+            defer index += 1
+
+            if not unchecked_member.default_value.has_value() or structure.fields[index].default_value.has_value() {
+                continue
+            }
+
+            structure.fields[index].default_value = .typecheck_expression(
+                unchecked_member.default_value!,
+                scope_id: checked_struct_scope_id,
+                safety_mode: SafetyMode::Safe,
+                type_hint: None
+            )
         }
     }
 
@@ -1566,7 +1616,7 @@ struct Typechecker {
 
                 mut module = .current_module()
                 let variable_id = module.add_variable(checked_var)
-                checked_fields.push(CheckedField(variable_id, default_value))
+                checked_fields.push(CheckedField(variable_id, default_value, default_value_expression: field.default_value))
             }
         }
 
@@ -1842,6 +1892,15 @@ struct Typechecker {
             for field_struct_id in inheritance_chain {
                 for field in .get_struct(field_struct_id).fields {
                     let variable = .get_variable(field.variable_id)
+                    mut default_value = field.default_value
+                    if not default_value.has_value() and field.default_value_expression.has_value() {
+                        field.default_value = .typecheck_expression(
+                            field.default_value_expression!
+                            scope_id: block_scope_id
+                            safety_mode: SafetyMode::Safe
+                            type_hint: variable.type_id
+                        )
+                    }
                     func.add_param(CheckedParameter(
                         requires_label: true
                         variable: variable

@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: ""
+
+struct Foo {} 
+struct Bar {
+    foo: Foo = Foo()
+}
+
+function main() {
+    let bar = Bar()
+}
