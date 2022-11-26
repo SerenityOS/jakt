@@ -21,6 +21,18 @@ using Variant<Mutability_Details::DoesNotApply, Mutability_Details::Immutable, M
     using Mutable = Mutability_Details::Mutable;
 ErrorOr<String> debug_description() const;
 };
+namespace VarType_Details {
+struct Variable {
+};
+struct Field {
+};
+}
+struct VarType : public Variant<VarType_Details::Variable, VarType_Details::Field> {
+using Variant<VarType_Details::Variable, VarType_Details::Field>::Variant;
+    using Variable = VarType_Details::Variable;
+    using Field = VarType_Details::Field;
+ErrorOr<String> debug_description() const;
+};
 struct JaktSymbol {
   public:
 String name;JaktInternal::Optional<String> detail;String kind;utility::Span range;utility::Span selection_range;JaktInternal::Array<ide::JaktSymbol> children;JaktSymbol(String a_name, JaktInternal::Optional<String> a_detail, String a_kind, utility::Span a_range, utility::Span a_selection_range, JaktInternal::Array<ide::JaktSymbol> a_children);
@@ -43,18 +55,6 @@ using Variant<VarVisibility_Details::DoesNotApply, VarVisibility_Details::Public
     using Public = VarVisibility_Details::Public;
     using Private = VarVisibility_Details::Private;
     using Restricted = VarVisibility_Details::Restricted;
-ErrorOr<String> debug_description() const;
-};
-namespace VarType_Details {
-struct Variable {
-};
-struct Field {
-};
-}
-struct VarType : public Variant<VarType_Details::Variable, VarType_Details::Field> {
-using Variant<VarType_Details::Variable, VarType_Details::Field>::Variant;
-    using Variable = VarType_Details::Variable;
-    using Field = VarType_Details::Field;
 ErrorOr<String> debug_description() const;
 };
 namespace Usage_Details {
@@ -127,14 +127,14 @@ ErrorOr<String> debug_description() const;
 template<>struct Formatter<ide::Mutability> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, ide::Mutability const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<ide::VarType> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, ide::VarType const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<ide::JaktSymbol> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, ide::JaktSymbol const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<ide::VarVisibility> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, ide::VarVisibility const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<ide::VarType> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, ide::VarType const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<ide::Usage> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, ide::Usage const& value) {

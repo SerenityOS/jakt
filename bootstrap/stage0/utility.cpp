@@ -7,42 +7,15 @@ return (((c == '0') || (c == '1')));
 }
 }
 
-String join(JaktInternal::Array<String> const strings,String const separator) {
+bool is_ascii_alpha(u8 const c) {
 {
-String output = String("");
-size_t i = static_cast<size_t>(0ULL);
-{
-JaktInternal::ArrayIterator<String> _magic = ((strings).iterator());
-for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-String s = (_magic_value.value());
-{
-(output += s);
-if ((i < (JaktInternal::checked_sub<size_t>(((strings).size()),static_cast<size_t>(1ULL))))){
-(output += separator);
-}
-((i++));
-}
-
-}
-}
-
-return (output);
+return ((((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))));
 }
 }
 
 bool is_whitespace(u8 const byte) {
 {
 return ((((byte == ' ') || (byte == '\t')) || (byte == '\r')));
-}
-}
-
-bool is_ascii_alpha(u8 const c) {
-{
-return ((((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))));
 }
 }
 
@@ -179,6 +152,57 @@ break;
 String str = (_magic_value.value());
 {
 TRY((((output).push((str + suffix)))));
+}
+
+}
+}
+
+return (output);
+}
+}
+
+ErrorOr<void> write_to_file(String const data,String const output_filename) {
+{
+NonnullRefPtr<File> outfile = TRY((File::open_for_writing(output_filename)));
+JaktInternal::Array<u8> bytes = (TRY((Array<u8>::create_with({}))));
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((data).length()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+TRY((((bytes).push(((data).byte_at(i))))));
+}
+
+}
+}
+
+TRY((((outfile)->write(bytes))));
+}
+return {};
+}
+
+String join(JaktInternal::Array<String> const strings,String const separator) {
+{
+String output = String("");
+size_t i = static_cast<size_t>(0ULL);
+{
+JaktInternal::ArrayIterator<String> _magic = ((strings).iterator());
+for (;;){
+JaktInternal::Optional<String> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+String s = (_magic_value.value());
+{
+(output += s);
+if ((i < (JaktInternal::checked_sub<size_t>(((strings).size()),static_cast<size_t>(1ULL))))){
+(output += separator);
+}
+((i++));
 }
 
 }

@@ -9,26 +9,23 @@ namespace jakt__prelude__iteration {
 }
 namespace jakt__prelude__prelude {
 }
-namespace jakt__libc__io {
-}
 namespace jakt__arguments {
 struct ArgsParser;
-ErrorOr<String> escape_for_quotes(String const s);
-
 }
 namespace utility {
 struct Span;
 struct FileId;
 bool is_ascii_binary(u8 const c);
 
-String join(JaktInternal::Array<String> const strings, String const separator);
+bool is_ascii_alpha(u8 const c);
 
 template <typename T>
 ErrorOr<JaktInternal::Array<T>> add_arrays(JaktInternal::Array<T> const a, JaktInternal::Array<T> const b);
 
 bool is_whitespace(u8 const byte);
 
-bool is_ascii_alpha(u8 const c);
+template <typename T>
+T* null();
 
 ErrorOr<JaktInternal::Array<String>> prepend_to_each(JaktInternal::Array<String> const strings, String const prefix);
 
@@ -42,8 +39,9 @@ ErrorOr<String> interpret_escapes(String const s);
 
 ErrorOr<JaktInternal::Array<String>> append_to_each(JaktInternal::Array<String> const strings, String const suffix);
 
-template <typename T>
-T* null();
+ErrorOr<void> write_to_file(String const data, String const output_filename);
+
+String join(JaktInternal::Array<String> const strings, String const separator);
 
 bool is_ascii_octdigit(u8 const c);
 
@@ -56,6 +54,31 @@ ErrorOr<String> escape_for_quotes(String const s);
 template <typename T>
 T* allocate(size_t const count);
 
+}
+namespace os {
+struct Target;
+
+
+
+ErrorOr<JaktInternal::Array<String>> platform_import_names();
+
+}
+namespace unknown_path {
+
+
+}
+namespace path {
+struct Path;
+}
+namespace unknown_fs {
+class DirectoryIterator;
+ErrorOr<void> make_directory(String const path);
+
+ErrorOr<String> current_directory();
+
+}
+namespace jakt__file_iterator {
+class RecursiveFileIterator;
 }
 namespace error {
 namespace JaktError_Details {
@@ -82,21 +105,6 @@ ErrorOr<void> display_message_with_span_json(error::MessageSeverity const severi
 
 ErrorOr<void> print_error(String const file_name, JaktInternal::Optional<JaktInternal::Array<u8>> const file_contents, error::JaktError const error);
 
-}
-namespace os {
-struct Target;
-
-
-
-ErrorOr<JaktInternal::Array<String>> platform_import_names();
-
-}
-namespace unknown_path {
-
-
-}
-namespace path {
-struct Path;
 }
 namespace compiler {
 class Compiler;
@@ -244,8 +252,9 @@ struct LiteralPrefix;
 }
 namespace parser {
 struct ParsedGenericParameter;
+struct ParsedField;
 struct EnumVariantPatternArgument;
-struct ParsedBlock;
+struct ParsedPatternDefault;
 struct ParsedRecord;
 struct ParsedExternalTraitImplementation;
 struct ParsedFunction;
@@ -254,7 +263,7 @@ struct ParsedModuleImport;
 struct ParsedVariable;
 struct ParsedNameWithGenericParameters;
 struct SumEnumVariant;
-struct ParsedMatchCase;
+struct ParsedBlock;
 struct ParsedTrait;
 struct Parser;
 struct ParsedCall;
@@ -262,7 +271,7 @@ struct ParsedNamespace;
 struct ParsedName;
 struct ParsedVarDecl;
 struct ParsedMethod;
-struct ParsedField;
+struct ParsedMatchCase;
 struct ParsedParameter;
 struct ValueEnumVariant;
 struct VisibilityRestriction;
@@ -934,6 +943,9 @@ String serialize_unary_operation(types::CheckedUnaryOperator const op, String co
 ErrorOr<String> serialize_ast_node(NonnullRefPtr<types::CheckedExpression> const node);
 
 }
+namespace project {
+struct Project;
+}
 namespace ide {
 struct JaktSymbol;
 namespace Mutability_Details {
@@ -1037,28 +1049,24 @@ namespace build {
 struct Builder;
 struct ParallelExecutionPool;
 }
-namespace unknown_fs {
-ErrorOr<void> make_directory(String const path);
-
-}
 namespace unknown_compiler {
 ErrorOr<JaktInternal::Array<String>> run_compiler(String const cxx_compiler_path, String const cpp_filename, String const output_filename, String const runtime_path, JaktInternal::Array<String> const extra_include_paths, JaktInternal::Array<String> const extra_lib_paths, JaktInternal::Array<String> const extra_link_libs, bool const optimize, JaktInternal::Array<String> const extra_compiler_flags);
 
 }
 struct FormatRange;
-ErrorOr<void> write_to_file(String const data, String const output_filename);
+ErrorOr<void> format_output(path::Path const file_path, JaktInternal::Array<lexer::Token> const tokens, JaktInternal::Optional<FormatRange> const format_range, bool const format_debug, bool const format_inplace);
+
+
+ErrorOr<String> indent(size_t const level);
 
 
 String help();
 
-ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(String const range, size_t const input_file_length);
+String usage();
 
-ErrorOr<String> indent(size_t const level);
+ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(String const range, size_t const input_file_length);
 
 template <typename T>
 ErrorOr<T> value_or_throw(JaktInternal::Optional<T> const maybe);
-
-String usage();
-
 
 } // namespace Jakt

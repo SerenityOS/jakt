@@ -10,6 +10,7 @@ String path;static ErrorOr<path::Path> from_parts(JaktInternal::Array<String> co
 static JaktInternal::Optional<size_t> last_slash(String const path);
 Path(String a_path);
 
+bool is_dot() const;
 String to_string() const;
 ErrorOr<String> extension() const;
 ErrorOr<JaktInternal::Tuple<String,String>> split_at_last_slash() const;

@@ -1,57 +1,6 @@
 #include "jakt__arguments.h"
 namespace Jakt {
 namespace jakt__arguments {
-ErrorOr<String> escape_for_quotes(String const s) {
-{
-StringBuilder builder = TRY((StringBuilder::create()));
-{
-JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((s).length()))});
-for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-size_t i = (_magic_value.value());
-{
-u8 const c = ((s).byte_at(i));
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<String>>{
-auto __jakt_enum_value = (c);
-if (__jakt_enum_value == '"') {
-{
-TRY((((builder).append_string(String("\\\"")))));
-}
-return JaktInternal::ExplicitValue<void>();
-}
-else if (__jakt_enum_value == '\\') {
-{
-TRY((((builder).append_string(String("\\\\")))));
-}
-return JaktInternal::ExplicitValue<void>();
-}
-else if (__jakt_enum_value == '\n') {
-{
-TRY((((builder).append_string(String("\\n")))));
-}
-return JaktInternal::ExplicitValue<void>();
-}
-else {
-{
-TRY((((builder).append(c))));
-}
-return JaktInternal::ExplicitValue<void>();
-}
-return JaktInternal::ExplicitValue<void>();
-}()))
-;
-}
-
-}
-}
-
-return (TRY((((builder).to_string()))));
-}
-}
-
 ErrorOr<String> jakt__arguments::ArgsParser::debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ArgsParser("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("args: "));TRY(builder.appendff("{}, ", args));
