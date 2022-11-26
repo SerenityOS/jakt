@@ -2058,6 +2058,8 @@ struct CodeGenerator {
         mut has_default = false
         mut first = true
         for case_ in cases {
+            let defaults = case_.defaults
+
             match case_ {
                 EnumVariant(name, args, subject_type_id, scope_id, body) => {
                     let enum_ = .program.get_enum(match .program.get_type(subject_type_id) {
@@ -2099,6 +2101,10 @@ struct CodeGenerator {
                         output += ";\n"
                     }
 
+                    for default_ in defaults {
+                        output += .codegen_statement(statement: default_)
+                    }
+
                     output += .codegen_match_body(body, return_type_id)
                     output += "}\n"
                 }
@@ -2115,6 +2121,11 @@ struct CodeGenerator {
                     } else {
                         output += "else {\n"
                     }
+
+                    for default_ in defaults {
+                        output += .codegen_statement(statement: default_)
+                    }
+
                     output += .codegen_match_body(body, return_type_id)
                     output += "}\n"
                 }
@@ -2246,6 +2257,11 @@ struct CodeGenerator {
                                 todo(format("codegen_enum_match match variant else: {}", variant))
                             }
                         }
+
+                        for default_ in match_case.defaults {
+                            output += .codegen_statement(statement: default_)
+                        }
+
                         output += .codegen_match_body(body, return_type_id: type_id)
                         output += "};/*case end*/\n"
                     }
@@ -2253,6 +2269,10 @@ struct CodeGenerator {
                         has_default = true
 
                         output += "default: {\n"
+                        for default_ in match_case.defaults {
+                            output += .codegen_statement(statement: default_)
+                        }
+
                         output += .codegen_match_body(body, return_type_id: type_id)
                         output += "};/*case end*/\n"
                     }

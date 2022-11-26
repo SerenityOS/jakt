@@ -12,8 +12,8 @@ import parser {
     BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, FunctionLinkage, FunctionType, ImportList, ImportName
     NumericConstant, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport, ParsedField
     ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedMethod, ParsedModuleImport, ParsedName
-    ParsedNameWithGenericParameters, ParsedNamespace, ParsedParameter, ParsedRecord, ParsedStatement, ParsedTrait
-    ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator, Visibility
+    ParsedNameWithGenericParameters, ParsedNamespace, ParsedParameter, ParsedPatternDefault, ParsedRecord
+    ParsedStatement, ParsedTrait, ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator, Visibility
 }
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant
@@ -4377,11 +4377,13 @@ struct Typechecker {
                     expr: checked_condition,
                     match_cases: [
                         CheckedMatchCase::Expression(
+                            defaults: []
                             expression: CheckedExpression::Boolean(val: true, span)
                             body: CheckedMatchBody::Expression(CheckedExpression::Block(block: checked_block, span, type_id: checked_block.yielded_type!))
                             marker_span: span
                         ),
                         CheckedMatchCase::CatchAll(
+                            defaults: []
                             has_arguments: false
                             body: CheckedMatchBody::Block(checked_else_block)
                             marker_span: span
@@ -6366,10 +6368,26 @@ struct Typechecker {
         )
     }
 
-    function typecheck_match_variant(mut this, case_: ParsedMatchCase, subject_type_id: TypeId, variant_index: usize, final_result_type: TypeId?, variant: CheckedEnumVariant, variant_arguments: [EnumVariantPatternArgument], arguments_span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> (String?, CheckedMatchCase, TypeId?) {
+    function typecheck_match_variant(
+        mut this
+        case_: ParsedMatchCase
+        subject_type_id: TypeId
+        variant_index: usize
+        final_result_type: TypeId?
+        variant: CheckedEnumVariant
+        variant_arguments: [EnumVariantPatternArgument]
+        default_bindings: [String:ParsedPatternDefault]
+        arguments_span: Span
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+    ) throws -> (String?, CheckedMatchCase, TypeId?) {
         mut covered_name: String? = None
 
-        let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant.name()))
+        let new_scope_id = .create_scope(
+            parent_scope_id: scope_id
+            can_throw: .get_scope(scope_id).can_throw
+            debug_name: format("catch-enum-variant({})", variant.name())
+        )
         mut module = .current_module()
         match variant {
             Untyped(name) => {
@@ -6477,6 +6495,18 @@ struct Typechecker {
             }
         }
 
+        mut defaults: [CheckedStatement] = []
+        for (_, default_) in default_bindings {
+            let checked_var_decl = .typecheck_var_decl(
+                var: default_.variable
+                init: default_.value
+                scope_id: new_scope_id
+                safety_mode
+                span: default_.variable.span
+            )
+            defaults.push(checked_var_decl)
+        }
+
         let (checked_body, result_type) = .typecheck_match_body(
             body: case_.body
             scope_id: new_scope_id
@@ -6487,6 +6517,7 @@ struct Typechecker {
         )
 
         let checked_match_case = CheckedMatchCase::EnumVariant(
+            defaults
             name: variant.name()
             args: variant_arguments
             subject_type_id
@@ -6583,6 +6614,7 @@ struct Typechecker {
                                     final_result_type
                                     variant: matched_variant!
                                     variant_arguments
+                                    default_bindings: pattern.defaults
                                     arguments_span
                                     scope_id
                                     safety_mode
@@ -6619,6 +6651,7 @@ struct Typechecker {
                                                 final_result_type
                                                 variant
                                                 variant_arguments
+                                                default_bindings: pattern.defaults
                                                 arguments_span
                                                 scope_id
                                                 safety_mode
@@ -6635,7 +6668,23 @@ struct Typechecker {
                                         variant_index++
                                     }
                                 } else {
-                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
+                                    let new_scope_id = .create_scope(
+                                        parent_scope_id: scope_id
+                                        can_throw: .get_scope(scope_id).can_throw
+                                        debug_name: "catch-all"
+                                    )
+                                    mut defaults: [CheckedStatement] = []
+                                    for (_, default_) in pattern.defaults {
+                                        let checked_var_decl = .typecheck_var_decl(
+                                            var: default_.variable
+                                            init: default_.value
+                                            scope_id: new_scope_id
+                                            safety_mode
+                                            span: default_.variable.span
+                                        )
+                                        defaults.push(checked_var_decl)
+                                    }
+
                                     let (checked_body, result_type) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
@@ -6647,6 +6696,7 @@ struct Typechecker {
                                     final_result_type = result_type
 
                                     let checked_match_case = CheckedMatchCase::CatchAll(
+                                        defaults
                                         has_arguments: false
                                         body: checked_body
                                         marker_span: case_.marker_span
@@ -6715,6 +6765,18 @@ struct Typechecker {
                                 // We don't know what the enum type is, but we have the type var for it, so generate a generic enum match.
                                 // note that this will be fully checked when this match expression is actually instantiated.
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
+                                mut defaults: [CheckedStatement] = []
+                                for (_, default_) in pattern.defaults {
+                                    let checked_var_decl = .typecheck_var_decl(
+                                        var: default_.variable
+                                        init: default_.value
+                                        scope_id: new_scope_id
+                                        safety_mode
+                                        span: default_.variable.span
+                                    )
+                                    defaults.push(checked_var_decl)
+                                }
+
                                 let (checked_body, result_type) = .typecheck_match_body(
                                     body: case_.body
                                     scope_id: new_scope_id
@@ -6726,6 +6788,7 @@ struct Typechecker {
                                 final_result_type = result_type
 
                                 let checked_match_case = CheckedMatchCase::EnumVariant(
+                                    defaults
                                     name: variant_names.last()!.0
                                     args: variant_arguments
                                     subject_type_id
@@ -6750,6 +6813,18 @@ struct Typechecker {
                                 // FIXME: bindings shouldn't be allowed for generic else but we can't just put an error here as the generic version
                                 // is typechecked with ignore errors
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
+                                mut defaults: [CheckedStatement] = []
+                                for (_, default_) in pattern.defaults {
+                                    let checked_var_decl = .typecheck_var_decl(
+                                        var: default_.variable
+                                        init: default_.value
+                                        scope_id: new_scope_id
+                                        safety_mode
+                                        span: default_.variable.span
+                                    )
+                                    defaults.push(checked_var_decl)
+                                }
+
                                 let (checked_body, result_type) = .typecheck_match_body(
                                     body: case_.body
                                     scope_id: new_scope_id
@@ -6761,6 +6836,7 @@ struct Typechecker {
                                 final_result_type = result_type
 
                                 let checked_match_case = CheckedMatchCase::CatchAll(
+                                    defaults
                                     has_arguments: variant_arguments.size() != 0
                                     body: checked_body
                                     marker_span: case_.marker_span
@@ -6810,6 +6886,10 @@ struct Typechecker {
                                     span: case_.marker_span
                                 )
 
+                                if not pattern.defaults.is_empty() {
+                                    .error("Expression patterns cannot have default bindings", case_.marker_span)
+                                }
+
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-expression({})", expr))
                                 let (checked_body, result_type) = .typecheck_match_body(
                                     body: case_.body
@@ -6822,6 +6902,7 @@ struct Typechecker {
                                 final_result_type = result_type
 
                                 let checked_match_case = CheckedMatchCase::Expression(
+                                    defaults: []
                                     expression: checked_expression
                                     body: checked_body
                                     marker_span: case_.marker_span

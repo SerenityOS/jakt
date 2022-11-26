@@ -817,7 +817,14 @@ struct EnumVariantPatternArgument {
     }
 }
 
+struct ParsedPatternDefault {
+    variable: ParsedVarDecl
+    value: ParsedExpression
+}
+
 enum ParsedMatchPattern {
+    defaults: [String:ParsedPatternDefault]
+
     EnumVariant(
         variant_names: [(String, Span)]
         variant_arguments: [EnumVariantPatternArgument]
@@ -830,7 +837,28 @@ enum ParsedMatchPattern {
     )
     Invalid
 
-    function equals(this, anon rhs_parsed_match_pattern: ParsedMatchPattern) -> bool => match this {
+    function defaults_equal(this, anon defaults: [String:ParsedPatternDefault]) -> bool {
+        if defaults.size() != .defaults.size() {
+            return false
+        }
+
+        for (name, default_) in .defaults {
+            let matching = defaults.get(name)
+            if not matching.has_value() {
+                return false
+            }
+            if not matching!.value.equals(default_.value) {
+                return false
+            }
+            if matching!.variable.is_mutable != default_.variable.is_mutable {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    function equals(this, anon rhs_parsed_match_pattern: ParsedMatchPattern) -> bool => .defaults_equal(rhs_parsed_match_pattern.defaults) and match this {
         EnumVariant(variant_names: lhs_variant_names, variant_arguments: lhs_variant_arguments) => match rhs_parsed_match_pattern {
             EnumVariant(variant_names: rhs_variant_names, variant_arguments: rhs_variant_arguments) => {
                 guard lhs_variant_names.size() == rhs_variant_names.size() and lhs_variant_arguments.size() == rhs_variant_arguments.size() else {
@@ -4548,8 +4576,58 @@ struct Parser {
         mut patterns: [ParsedMatchPattern] = []
         .skip_newlines()
         while not .eof() {
-            let pattern = .parse_match_pattern()
-            patterns.push(pattern)
+            mut pattern = .parse_match_pattern()
+            defer patterns.push(pattern)
+            mut defaults = pattern.defaults
+
+            .skip_newlines()
+            if .current() is Identifier(name) and name == "default" {
+                // parse default(var_decl*)
+                mut defaults = pattern.defaults
+                .index += 1
+                if not .current() is LParen {
+                    .error(
+                        message: "Expected '(' after 'default'",
+                        span: .current().span()
+                    )
+                    continue
+                }
+                .index += 1
+
+                while not .current() is RParen and not .eof() {
+                    let is_mutable = .current() is Mut
+                    if is_mutable {
+                        .index++
+                    }
+
+                    let declaration = .parse_variable_declaration(is_mutable)
+                    let value = match .current() {
+                        Equal => {
+                            .index++
+                            yield .parse_expression(allow_assignments: false, allow_newlines: false)
+                        }
+                        else => {
+                            .error("Expected initializer", .current().span())
+                            yield ParsedExpression::Garbage(.current().span())
+                        }
+                    }
+
+                    defaults.set(
+                        declaration.name
+                        ParsedPatternDefault(
+                            variable: declaration
+                            value
+                        )
+                    )
+                }
+
+                if .current() is RParen {
+                    .index += 1
+                } else {
+                    .error("Expected a ')' to end 'defaults' list", .current().span())
+                }
+            }
+
             .skip_newlines()
             if .current() is Pipe {
                 .index++
@@ -4567,7 +4645,7 @@ struct Parser {
         | QuotedString
         | SingleQuotedString
         | SingleQuotedByteString
-        | LParen => ParsedMatchPattern::Expression(.parse_operand())
+        | LParen => ParsedMatchPattern::Expression(defaults: [:], .parse_operand())
 
         Else => {
             .index++
@@ -4578,6 +4656,7 @@ struct Parser {
             let arguments_span = merge_spans(arguments_start, arguments_end)
 
             yield ParsedMatchPattern::CatchAll(
+                defaults: [:]
                 variant_arguments
                 arguments_span
             )
@@ -4585,16 +4664,24 @@ struct Parser {
 
         Identifier => {
             mut variant_names: [(String, Span)] = []
+            mut just_saw_name = false
 
             while not .eof() {
                 .skip_newlines()
                 match .current() {
                     Identifier(name) => {
+                        if just_saw_name {
+                            break
+                        }
+
+                        just_saw_name = true
+
                         .index++
                         variant_names.push((name, .current().span()))
                     }
                     ColonColon => {
                         .index++
+                        just_saw_name = false
                     }
                     else => {
                         break
@@ -4608,6 +4695,7 @@ struct Parser {
             let arguments_span = merge_spans(arguments_start, arguments_end)
 
             yield ParsedMatchPattern::EnumVariant(
+                defaults: [:]
                 variant_names
                 variant_arguments
                 arguments_span
@@ -4616,7 +4704,7 @@ struct Parser {
 
         else => {
             .error("Expected pattern or ‘else’", .current().span())
-            yield ParsedMatchPattern::Invalid
+            yield ParsedMatchPattern::Invalid(defaults: [:])
         }
     }
 
