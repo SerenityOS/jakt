@@ -11,6 +11,49 @@
 #include "interpreter.h"
 namespace Jakt {
 namespace typechecker {
+struct AlreadyImplementedFor {
+  public:
+String trait_name;utility::Span encounter_span;AlreadyImplementedFor(String a_trait_name, utility::Span a_encounter_span);
+
+ErrorOr<String> debug_description() const;
+};struct TraitImplCheck {
+  public:
+JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,types::FunctionId>> missing_methods;JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> unmatched_signatures;JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> private_matching_methods;JaktInternal::Dictionary<String,typechecker::AlreadyImplementedFor> already_implemented_for;ErrorOr<void> ensure_capacity(size_t const count);
+static ErrorOr<typechecker::TraitImplCheck> make();
+TraitImplCheck(JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,types::FunctionId>> a_missing_methods, JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> a_unmatched_signatures, JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> a_private_matching_methods, JaktInternal::Dictionary<String,typechecker::AlreadyImplementedFor> a_already_implemented_for);
+
+ErrorOr<void> register_trait(types::TraitId const trait_id, String const trait_name, JaktInternal::Dictionary<String,types::FunctionId> const trait_methods);
+ErrorOr<void> register_method(String const method_name, types::FunctionId const method_id, typechecker::Typechecker& typechecker);
+ErrorOr<void> throw_errors(utility::Span const record_decl_span, typechecker::Typechecker& typechecker);
+ErrorOr<String> debug_description() const;
+};namespace FunctionMatchResult_Details {
+struct MatchSuccess {
+JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> args;
+JaktInternal::Optional<types::TypeId> maybe_this_type_id;
+JaktInternal::Dictionary<String,String> used_generic_inferences;
+i64 specificity;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
+MatchSuccess(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+args{ forward<_MemberT0>(member_0)},
+maybe_this_type_id{ forward<_MemberT1>(member_1)},
+used_generic_inferences{ forward<_MemberT2>(member_2)},
+specificity{ forward<_MemberT3>(member_3)}
+{}
+};
+struct MatchError {
+JaktInternal::Array<error::JaktError> errors;
+template<typename _MemberT0>
+MatchError(_MemberT0&& member_0):
+errors{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct FunctionMatchResult : public Variant<FunctionMatchResult_Details::MatchSuccess, FunctionMatchResult_Details::MatchError> {
+using Variant<FunctionMatchResult_Details::MatchSuccess, FunctionMatchResult_Details::MatchError>::Variant;
+    using MatchSuccess = FunctionMatchResult_Details::MatchSuccess;
+    using MatchError = FunctionMatchResult_Details::MatchError;
+ErrorOr<String> debug_description() const;
+};
 struct Typechecker {
   public:
 NonnullRefPtr<compiler::Compiler> compiler;NonnullRefPtr<types::CheckedProgram> program;types::ModuleId current_module_id;JaktInternal::Optional<types::TypeId> current_struct_type_id;JaktInternal::Optional<types::FunctionId> current_function_id;bool inside_defer;size_t checkidx;bool ignore_errors;bool dump_type_hints;bool dump_try_hints;u64 lambda_count;types::GenericInferences generic_inferences;bool is_floating(types::TypeId const type_id) const;
@@ -28,7 +71,7 @@ ErrorOr<bool> signatures_match(NonnullRefPtr<types::CheckedFunction> const first
 ErrorOr<String> type_name(types::TypeId const type_id) const;
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_namespaced_var_or_simple_enum_constructor_call(String const name, JaktInternal::Array<String> const namespace_, types::ScopeId const scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<types::TypeId> const type_hint, utility::Span const span);
 NonnullRefPtr<types::Module> current_module() const;
-ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<String>,types::CheckedMatchCase,JaktInternal::Optional<types::TypeId>>> typecheck_match_variant(parser::ParsedMatchCase const case_, types::TypeId const subject_type_id, size_t const variant_index, JaktInternal::Optional<types::TypeId> const final_result_type, types::CheckedEnumVariant const variant, JaktInternal::Array<parser::EnumVariantPatternArgument> const variant_arguments, utility::Span const arguments_span, types::ScopeId const scope_id, types::SafetyMode const safety_mode);
+ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<String>,types::CheckedMatchCase,JaktInternal::Optional<types::TypeId>>> typecheck_match_variant(parser::ParsedMatchCase const case_, types::TypeId const subject_type_id, size_t const variant_index, JaktInternal::Optional<types::TypeId> const final_result_type, types::CheckedEnumVariant const variant, JaktInternal::Array<parser::EnumVariantPatternArgument> const variant_arguments, JaktInternal::Dictionary<String,parser::ParsedPatternDefault> const default_bindings, utility::Span const arguments_span, types::ScopeId const scope_id, types::SafetyMode const safety_mode);
 ErrorOr<void> error_with_hint(String const message, utility::Span const span, String const hint, utility::Span const hint_span);
 ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<types::TypeId,types::ScopeId>>> find_type_scope(types::ScopeId const scope_id, String const name) const;
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_indexed_tuple(NonnullRefPtr<parser::ParsedExpression> const expr, size_t const index, types::ScopeId const scope_id, bool const is_optional, types::SafetyMode const safety_mode, utility::Span const span);
@@ -158,52 +201,9 @@ ErrorOr<void> typecheck_namespace_constructors(parser::ParsedNamespace const par
 ErrorOr<bool> add_struct_to_scope(types::ScopeId const scope_id, String const name, types::StructId const struct_id, utility::Span const span);
 ErrorOr<void> fill_trait_requirements(JaktInternal::Array<parser::ParsedNameWithGenericParameters> const names, JaktInternal::Array<types::TraitId>& trait_requirements, types::ScopeId const scope_id);
 ErrorOr<String> debug_description() const;
-};struct TraitImplCheck {
-  public:
-JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,types::FunctionId>> missing_methods;JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> unmatched_signatures;JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> private_matching_methods;JaktInternal::Dictionary<String,typechecker::AlreadyImplementedFor> already_implemented_for;ErrorOr<void> ensure_capacity(size_t const count);
-static ErrorOr<typechecker::TraitImplCheck> make();
-TraitImplCheck(JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,types::FunctionId>> a_missing_methods, JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> a_unmatched_signatures, JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> a_private_matching_methods, JaktInternal::Dictionary<String,typechecker::AlreadyImplementedFor> a_already_implemented_for);
-
-ErrorOr<void> register_trait(types::TraitId const trait_id, String const trait_name, JaktInternal::Dictionary<String,types::FunctionId> const trait_methods);
-ErrorOr<void> register_method(String const method_name, types::FunctionId const method_id, typechecker::Typechecker& typechecker);
-ErrorOr<void> throw_errors(utility::Span const record_decl_span, typechecker::Typechecker& typechecker);
-ErrorOr<String> debug_description() const;
-};namespace FunctionMatchResult_Details {
-struct MatchSuccess {
-JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> args;
-JaktInternal::Optional<types::TypeId> maybe_this_type_id;
-JaktInternal::Dictionary<String,String> used_generic_inferences;
-i64 specificity;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
-MatchSuccess(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
-args{ forward<_MemberT0>(member_0)},
-maybe_this_type_id{ forward<_MemberT1>(member_1)},
-used_generic_inferences{ forward<_MemberT2>(member_2)},
-specificity{ forward<_MemberT3>(member_3)}
-{}
-};
-struct MatchError {
-JaktInternal::Array<error::JaktError> errors;
-template<typename _MemberT0>
-MatchError(_MemberT0&& member_0):
-errors{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct FunctionMatchResult : public Variant<FunctionMatchResult_Details::MatchSuccess, FunctionMatchResult_Details::MatchError> {
-using Variant<FunctionMatchResult_Details::MatchSuccess, FunctionMatchResult_Details::MatchError>::Variant;
-    using MatchSuccess = FunctionMatchResult_Details::MatchSuccess;
-    using MatchError = FunctionMatchResult_Details::MatchError;
-ErrorOr<String> debug_description() const;
-};
-struct AlreadyImplementedFor {
-  public:
-String trait_name;utility::Span encounter_span;AlreadyImplementedFor(String a_trait_name, utility::Span a_encounter_span);
-
-ErrorOr<String> debug_description() const;
 };}
-template<>struct Formatter<typechecker::Typechecker> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, typechecker::Typechecker const& value) {
+template<>struct Formatter<typechecker::AlreadyImplementedFor> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, typechecker::AlreadyImplementedFor const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<typechecker::TraitImplCheck> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, typechecker::TraitImplCheck const& value) {
@@ -211,7 +211,7 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<typechecker::FunctionMatchResult> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, typechecker::FunctionMatchResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<typechecker::AlreadyImplementedFor> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, typechecker::AlreadyImplementedFor const& value) {
+template<>struct Formatter<typechecker::Typechecker> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, typechecker::Typechecker const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 } // namespace Jakt

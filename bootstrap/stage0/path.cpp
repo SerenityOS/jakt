@@ -44,6 +44,12 @@ return (i);
 
 path::Path::Path(String a_path) :path(a_path){}
 
+bool path::Path::is_dot() const {
+{
+return (((((*this).path) == String(".")) || (((*this).path) == String(".."))));
+}
+}
+
 String path::Path::to_string() const {
 {
 return (((*this).path));

@@ -11,38 +11,6 @@ size_t id;ModuleId(size_t a_id);
 
 bool equals(types::ModuleId const rhs) const;
 ErrorOr<String> debug_description() const;
-};struct StructId {
-  public:
-types::ModuleId module;size_t id;bool equals(types::StructId const rhs) const;
-StructId(types::ModuleId a_module, size_t a_id);
-
-ErrorOr<String> debug_description() const;
-};struct VarId {
-  public:
-types::ModuleId module;size_t id;VarId(types::ModuleId a_module, size_t a_id);
-
-ErrorOr<String> debug_description() const;
-};struct FieldRecord {
-  public:
-types::StructId struct_id;types::VarId field_id;FieldRecord(types::StructId a_struct_id, types::VarId a_field_id);
-
-ErrorOr<String> debug_description() const;
-};struct ScopeId {
-  public:
-types::ModuleId module_id;size_t id;bool equals(types::ScopeId const other) const;
-ScopeId(types::ModuleId a_module_id, size_t a_id);
-
-ErrorOr<String> debug_description() const;
-};class FunctionGenerics : public RefCounted<FunctionGenerics>, public Weakable<FunctionGenerics> {
-  public:
-virtual ~FunctionGenerics() = default;
-types::ScopeId base_scope_id;JaktInternal::Array<types::CheckedParameter> base_params;JaktInternal::Array<types::FunctionGenericParameter> params;JaktInternal::Array<JaktInternal::Array<types::TypeId>> specializations;protected:
-explicit FunctionGenerics(types::ScopeId&& a_base_scope_id, JaktInternal::Array<types::CheckedParameter>&& a_base_params, JaktInternal::Array<types::FunctionGenericParameter>&& a_params, JaktInternal::Array<JaktInternal::Array<types::TypeId>>&& a_specializations);
-public:
-static ErrorOr<NonnullRefPtr<FunctionGenerics>> create(types::ScopeId base_scope_id, JaktInternal::Array<types::CheckedParameter> base_params, JaktInternal::Array<types::FunctionGenericParameter> params, JaktInternal::Array<JaktInternal::Array<types::TypeId>> specializations);
-
-bool is_specialized_for_types(JaktInternal::Array<types::TypeId> const types) const;
-ErrorOr<String> debug_description() const;
 };struct TypeId {
   public:
 types::ModuleId module;size_t id;ErrorOr<String> to_string() const;
@@ -51,6 +19,185 @@ bool equals(types::TypeId const rhs) const;
 TypeId(types::ModuleId a_module, size_t a_id);
 
 static ErrorOr<types::TypeId> from_string(String const type_id_string);
+ErrorOr<String> debug_description() const;
+};namespace CheckedVisibility_Details {
+struct Public {
+};
+struct Private {
+};
+struct Restricted {
+JaktInternal::Array<NonnullRefPtr<types::MaybeResolvedScope>> scopes;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+Restricted(_MemberT0&& member_0, _MemberT1&& member_1):
+scopes{ forward<_MemberT0>(member_0)},
+span{ forward<_MemberT1>(member_1)}
+{}
+};
+}
+struct CheckedVisibility : public Variant<CheckedVisibility_Details::Public, CheckedVisibility_Details::Private, CheckedVisibility_Details::Restricted> {
+using Variant<CheckedVisibility_Details::Public, CheckedVisibility_Details::Private, CheckedVisibility_Details::Restricted>::Variant;
+    using Public = CheckedVisibility_Details::Public;
+    using Private = CheckedVisibility_Details::Private;
+    using Restricted = CheckedVisibility_Details::Restricted;
+ErrorOr<String> debug_description() const;
+};
+struct CheckedVariable {
+  public:
+String name;types::TypeId type_id;bool is_mutable;utility::Span definition_span;JaktInternal::Optional<utility::Span> type_span;types::CheckedVisibility visibility;CheckedVariable(String a_name, types::TypeId a_type_id, bool a_is_mutable, utility::Span a_definition_span, JaktInternal::Optional<utility::Span> a_type_span, types::CheckedVisibility a_visibility);
+
+ErrorOr<String> debug_description() const;
+};struct CheckedParameter {
+  public:
+bool requires_label;types::CheckedVariable variable;JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> default_value;CheckedParameter(bool a_requires_label, types::CheckedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> a_default_value);
+
+ErrorOr<String> debug_description() const;
+};namespace NumberConstant_Details {
+struct Signed{
+i64 value;
+template<typename _MemberT0>
+Signed(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Unsigned{
+u64 value;
+template<typename _MemberT0>
+Unsigned(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Floating{
+f64 value;
+template<typename _MemberT0>
+Floating(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct NumberConstant : public Variant<NumberConstant_Details::Signed, NumberConstant_Details::Unsigned, NumberConstant_Details::Floating> {
+using Variant<NumberConstant_Details::Signed, NumberConstant_Details::Unsigned, NumberConstant_Details::Floating>::Variant;
+    using Signed = NumberConstant_Details::Signed;
+    using Unsigned = NumberConstant_Details::Unsigned;
+    using Floating = NumberConstant_Details::Floating;
+ErrorOr<String> debug_description() const;
+size_t to_usize() const;
+bool can_fit_number(types::TypeId const type_id, NonnullRefPtr<types::CheckedProgram> const program) const;
+};
+struct VarId {
+  public:
+types::ModuleId module;size_t id;VarId(types::ModuleId a_module, size_t a_id);
+
+ErrorOr<String> debug_description() const;
+};namespace SafetyMode_Details {
+struct Safe {
+};
+struct Unsafe {
+};
+}
+struct SafetyMode : public Variant<SafetyMode_Details::Safe, SafetyMode_Details::Unsafe> {
+using Variant<SafetyMode_Details::Safe, SafetyMode_Details::Unsafe>::Variant;
+    using Safe = SafetyMode_Details::Safe;
+    using Unsafe = SafetyMode_Details::Unsafe;
+ErrorOr<String> debug_description() const;
+};
+struct ScopeId {
+  public:
+types::ModuleId module_id;size_t id;bool equals(types::ScopeId const other) const;
+ScopeId(types::ModuleId a_module_id, size_t a_id);
+
+ErrorOr<String> debug_description() const;
+};namespace BlockControlFlow_Details {
+struct AlwaysReturns {
+};
+struct AlwaysTransfersControl {
+bool might_break;
+template<typename _MemberT0>
+AlwaysTransfersControl(_MemberT0&& member_0):
+might_break{ forward<_MemberT0>(member_0)}
+{}
+};
+struct NeverReturns {
+};
+struct MayReturn {
+};
+struct PartialAlwaysReturns {
+bool might_break;
+template<typename _MemberT0>
+PartialAlwaysReturns(_MemberT0&& member_0):
+might_break{ forward<_MemberT0>(member_0)}
+{}
+};
+struct PartialAlwaysTransfersControl {
+bool might_break;
+template<typename _MemberT0>
+PartialAlwaysTransfersControl(_MemberT0&& member_0):
+might_break{ forward<_MemberT0>(member_0)}
+{}
+};
+struct PartialNeverReturns {
+bool might_break;
+template<typename _MemberT0>
+PartialNeverReturns(_MemberT0&& member_0):
+might_break{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct BlockControlFlow : public Variant<BlockControlFlow_Details::AlwaysReturns, BlockControlFlow_Details::AlwaysTransfersControl, BlockControlFlow_Details::NeverReturns, BlockControlFlow_Details::MayReturn, BlockControlFlow_Details::PartialAlwaysReturns, BlockControlFlow_Details::PartialAlwaysTransfersControl, BlockControlFlow_Details::PartialNeverReturns> {
+using Variant<BlockControlFlow_Details::AlwaysReturns, BlockControlFlow_Details::AlwaysTransfersControl, BlockControlFlow_Details::NeverReturns, BlockControlFlow_Details::MayReturn, BlockControlFlow_Details::PartialAlwaysReturns, BlockControlFlow_Details::PartialAlwaysTransfersControl, BlockControlFlow_Details::PartialNeverReturns>::Variant;
+    using AlwaysReturns = BlockControlFlow_Details::AlwaysReturns;
+    using AlwaysTransfersControl = BlockControlFlow_Details::AlwaysTransfersControl;
+    using NeverReturns = BlockControlFlow_Details::NeverReturns;
+    using MayReturn = BlockControlFlow_Details::MayReturn;
+    using PartialAlwaysReturns = BlockControlFlow_Details::PartialAlwaysReturns;
+    using PartialAlwaysTransfersControl = BlockControlFlow_Details::PartialAlwaysTransfersControl;
+    using PartialNeverReturns = BlockControlFlow_Details::PartialNeverReturns;
+ErrorOr<String> debug_description() const;
+bool always_transfers_control() const;
+types::BlockControlFlow partial() const;
+bool always_returns() const;
+types::BlockControlFlow updated(types::BlockControlFlow const second) const;
+bool may_break() const;
+bool is_reachable() const;
+bool never_returns() const;
+types::BlockControlFlow definitive() const;
+bool may_return() const;
+types::BlockControlFlow unify_with(types::BlockControlFlow const second) const;
+};
+struct CheckedBlock {
+  public:
+JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> statements;types::ScopeId scope_id;types::BlockControlFlow control_flow;JaktInternal::Optional<types::TypeId> yielded_type;bool yielded_none;CheckedBlock(JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> a_statements, types::ScopeId a_scope_id, types::BlockControlFlow a_control_flow, JaktInternal::Optional<types::TypeId> a_yielded_type, bool a_yielded_none);
+
+ErrorOr<String> debug_description() const;
+};struct StructId {
+  public:
+types::ModuleId module;size_t id;bool equals(types::StructId const rhs) const;
+StructId(types::ModuleId a_module, size_t a_id);
+
+ErrorOr<String> debug_description() const;
+};class CheckedFunction : public RefCounted<CheckedFunction>, public Weakable<CheckedFunction> {
+  public:
+virtual ~CheckedFunction() = default;
+String name;utility::Span name_span;types::CheckedVisibility visibility;types::TypeId return_type_id;JaktInternal::Optional<utility::Span> return_type_span;JaktInternal::Array<types::CheckedParameter> params;NonnullRefPtr<types::FunctionGenerics> generics;types::CheckedBlock block;bool can_throw;parser::FunctionType type;parser::FunctionLinkage linkage;types::ScopeId function_scope_id;JaktInternal::Optional<types::StructId> struct_id;bool is_instantiated;JaktInternal::Optional<parser::ParsedFunction> parsed_function;bool is_comptime;bool is_virtual;bool is_override;bool is_static() const;
+bool is_mutating() const;
+parser::ParsedFunction to_parsed_function() const;
+bool is_specialized_for_types(JaktInternal::Array<types::TypeId> const types) const;
+protected:
+explicit CheckedFunction(String&& a_name, utility::Span&& a_name_span, types::CheckedVisibility&& a_visibility, types::TypeId&& a_return_type_id, JaktInternal::Optional<utility::Span>&& a_return_type_span, JaktInternal::Array<types::CheckedParameter>&& a_params, NonnullRefPtr<types::FunctionGenerics>&& a_generics, types::CheckedBlock&& a_block, bool&& a_can_throw, parser::FunctionType&& a_type, parser::FunctionLinkage&& a_linkage, types::ScopeId&& a_function_scope_id, JaktInternal::Optional<types::StructId>&& a_struct_id, bool&& a_is_instantiated, JaktInternal::Optional<parser::ParsedFunction>&& a_parsed_function, bool&& a_is_comptime, bool&& a_is_virtual, bool&& a_is_override);
+public:
+static ErrorOr<NonnullRefPtr<CheckedFunction>> create(String name, utility::Span name_span, types::CheckedVisibility visibility, types::TypeId return_type_id, JaktInternal::Optional<utility::Span> return_type_span, JaktInternal::Array<types::CheckedParameter> params, NonnullRefPtr<types::FunctionGenerics> generics, types::CheckedBlock block, bool can_throw, parser::FunctionType type, parser::FunctionLinkage linkage, types::ScopeId function_scope_id, JaktInternal::Optional<types::StructId> struct_id, bool is_instantiated, JaktInternal::Optional<parser::ParsedFunction> parsed_function, bool is_comptime, bool is_virtual, bool is_override);
+
+ErrorOr<bool> signature_matches(NonnullRefPtr<types::CheckedFunction> const other) const;
+ErrorOr<void> add_param(types::CheckedParameter const checked_param);
+ErrorOr<void> set_params(JaktInternal::Array<types::CheckedParameter> const checked_params);
+ErrorOr<String> debug_description() const;
+};struct Value {
+  public:
+NonnullRefPtr<types::ValueImpl> impl;utility::Span span;ErrorOr<types::Value> copy() const;
+Value(NonnullRefPtr<types::ValueImpl> a_impl, utility::Span a_span);
+
+ErrorOr<types::Value> cast(types::Value const expected, utility::Span const span) const;
+String type_name() const;
 ErrorOr<String> debug_description() const;
 };namespace CheckedTypeCast_Details {
 struct Fallible{
@@ -145,7 +292,86 @@ String name() const;
 bool equals(types::CheckedEnumVariant const other) const;
 utility::Span span() const;
 };
-namespace CheckedUnaryOperator_Details {
+struct LoadedModule {
+  public:
+types::ModuleId module_id;utility::FileId file_id;LoadedModule(types::ModuleId a_module_id, utility::FileId a_file_id);
+
+ErrorOr<String> debug_description() const;
+};namespace CheckedCapture_Details {
+struct ByValue {
+String name;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+ByValue(_MemberT0&& member_0, _MemberT1&& member_1):
+name{ forward<_MemberT0>(member_0)},
+span{ forward<_MemberT1>(member_1)}
+{}
+};
+struct ByReference {
+String name;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+ByReference(_MemberT0&& member_0, _MemberT1&& member_1):
+name{ forward<_MemberT0>(member_0)},
+span{ forward<_MemberT1>(member_1)}
+{}
+};
+struct ByMutableReference {
+String name;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+ByMutableReference(_MemberT0&& member_0, _MemberT1&& member_1):
+name{ forward<_MemberT0>(member_0)},
+span{ forward<_MemberT1>(member_1)}
+{}
+};
+}
+struct CheckedCapture : public Variant<CheckedCapture_Details::ByValue, CheckedCapture_Details::ByReference, CheckedCapture_Details::ByMutableReference> {
+using Variant<CheckedCapture_Details::ByValue, CheckedCapture_Details::ByReference, CheckedCapture_Details::ByMutableReference>::Variant;
+    using ByValue = CheckedCapture_Details::ByValue;
+    using ByReference = CheckedCapture_Details::ByReference;
+    using ByMutableReference = CheckedCapture_Details::ByMutableReference;
+ErrorOr<String> debug_description() const;
+String name() const;
+utility::Span span() const;
+};
+namespace StructOrEnumId_Details {
+struct Struct{
+types::StructId value;
+template<typename _MemberT0>
+Struct(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Enum{
+types::EnumId value;
+template<typename _MemberT0>
+Enum(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct StructOrEnumId : public Variant<StructOrEnumId_Details::Struct, StructOrEnumId_Details::Enum> {
+using Variant<StructOrEnumId_Details::Struct, StructOrEnumId_Details::Enum>::Variant;
+    using Struct = StructOrEnumId_Details::Struct;
+    using Enum = StructOrEnumId_Details::Enum;
+ErrorOr<String> debug_description() const;
+};
+class Module : public RefCounted<Module>, public Weakable<Module> {
+  public:
+virtual ~Module() = default;
+types::ModuleId id;String name;JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>> functions;JaktInternal::Array<types::CheckedStruct> structures;JaktInternal::Array<types::CheckedEnum> enums;JaktInternal::Array<NonnullRefPtr<types::Scope>> scopes;JaktInternal::Array<NonnullRefPtr<types::Type>> types;JaktInternal::Array<NonnullRefPtr<types::CheckedTrait>> traits;JaktInternal::Array<types::CheckedVariable> variables;JaktInternal::Array<types::ModuleId> imports;String resolved_import_path;bool is_root;protected:
+explicit Module(types::ModuleId&& a_id, String&& a_name, JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>>&& a_functions, JaktInternal::Array<types::CheckedStruct>&& a_structures, JaktInternal::Array<types::CheckedEnum>&& a_enums, JaktInternal::Array<NonnullRefPtr<types::Scope>>&& a_scopes, JaktInternal::Array<NonnullRefPtr<types::Type>>&& a_types, JaktInternal::Array<NonnullRefPtr<types::CheckedTrait>>&& a_traits, JaktInternal::Array<types::CheckedVariable>&& a_variables, JaktInternal::Array<types::ModuleId>&& a_imports, String&& a_resolved_import_path, bool&& a_is_root);
+public:
+static ErrorOr<NonnullRefPtr<Module>> create(types::ModuleId id, String name, JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>> functions, JaktInternal::Array<types::CheckedStruct> structures, JaktInternal::Array<types::CheckedEnum> enums, JaktInternal::Array<NonnullRefPtr<types::Scope>> scopes, JaktInternal::Array<NonnullRefPtr<types::Type>> types, JaktInternal::Array<NonnullRefPtr<types::CheckedTrait>> traits, JaktInternal::Array<types::CheckedVariable> variables, JaktInternal::Array<types::ModuleId> imports, String resolved_import_path, bool is_root);
+
+ErrorOr<types::TypeId> new_type_variable();
+ErrorOr<types::FunctionId> add_function(NonnullRefPtr<types::CheckedFunction> const checked_function);
+bool is_prelude() const;
+ErrorOr<types::VarId> add_variable(types::CheckedVariable const checked_variable);
+types::FunctionId next_function_id() const;
+ErrorOr<String> debug_description() const;
+};namespace CheckedUnaryOperator_Details {
 struct PreIncrement {
 };
 struct PostIncrement {
@@ -212,270 +438,15 @@ using Variant<CheckedUnaryOperator_Details::PreIncrement, CheckedUnaryOperator_D
     using IsEnumVariant = CheckedUnaryOperator_Details::IsEnumVariant;
 ErrorOr<String> debug_description() const;
 };
-struct TraitId {
-  public:
-types::ModuleId module;size_t id;bool equals(types::TraitId const other) const;
-TraitId(types::ModuleId a_module, size_t a_id);
-
-ErrorOr<String> debug_description() const;
-};struct FunctionId {
+struct FunctionId {
   public:
 types::ModuleId module;size_t id;bool equals(types::FunctionId const rhs) const;
 FunctionId(types::ModuleId a_module, size_t a_id);
 
 ErrorOr<String> debug_description() const;
-};namespace Type_Details {
-struct Void {
-};
-struct Bool {
-};
-struct U8 {
-};
-struct U16 {
-};
-struct U32 {
-};
-struct U64 {
-};
-struct I8 {
-};
-struct I16 {
-};
-struct I32 {
-};
-struct I64 {
-};
-struct F32 {
-};
-struct F64 {
-};
-struct Usize {
-};
-struct JaktString {
-};
-struct CChar {
-};
-struct CInt {
-};
-struct Unknown {
-};
-struct Never {
-};
-struct TypeVariable{
-String value;
-template<typename _MemberT0>
-TypeVariable(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct GenericInstance {
-types::StructId id;
-JaktInternal::Array<types::TypeId> args;
-template<typename _MemberT0, typename _MemberT1>
-GenericInstance(_MemberT0&& member_0, _MemberT1&& member_1):
-id{ forward<_MemberT0>(member_0)},
-args{ forward<_MemberT1>(member_1)}
-{}
-};
-struct GenericEnumInstance {
-types::EnumId id;
-JaktInternal::Array<types::TypeId> args;
-template<typename _MemberT0, typename _MemberT1>
-GenericEnumInstance(_MemberT0&& member_0, _MemberT1&& member_1):
-id{ forward<_MemberT0>(member_0)},
-args{ forward<_MemberT1>(member_1)}
-{}
-};
-struct GenericTraitInstance {
-types::TraitId id;
-JaktInternal::Array<types::TypeId> args;
-template<typename _MemberT0, typename _MemberT1>
-GenericTraitInstance(_MemberT0&& member_0, _MemberT1&& member_1):
-id{ forward<_MemberT0>(member_0)},
-args{ forward<_MemberT1>(member_1)}
-{}
-};
-struct GenericResolvedType {
-types::StructId id;
-JaktInternal::Array<types::TypeId> args;
-template<typename _MemberT0, typename _MemberT1>
-GenericResolvedType(_MemberT0&& member_0, _MemberT1&& member_1):
-id{ forward<_MemberT0>(member_0)},
-args{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Struct{
-types::StructId value;
-template<typename _MemberT0>
-Struct(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Enum{
-types::EnumId value;
-template<typename _MemberT0>
-Enum(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct RawPtr{
-types::TypeId value;
-template<typename _MemberT0>
-RawPtr(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Trait{
-types::TraitId value;
-template<typename _MemberT0>
-Trait(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Reference{
-types::TypeId value;
-template<typename _MemberT0>
-Reference(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct MutableReference{
-types::TypeId value;
-template<typename _MemberT0>
-MutableReference(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Function {
-JaktInternal::Array<types::TypeId> params;
-bool can_throw;
-types::TypeId return_type_id;
-types::FunctionId pseudo_function_id;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
-Function(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
-params{ forward<_MemberT0>(member_0)},
-can_throw{ forward<_MemberT1>(member_1)},
-return_type_id{ forward<_MemberT2>(member_2)},
-pseudo_function_id{ forward<_MemberT3>(member_3)}
-{}
-};
-}
-struct Type : public Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericTraitInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Trait, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function>, public RefCounted<Type> {
-using Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericTraitInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Trait, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function>::Variant;
-    using Void = Type_Details::Void;
-    using Bool = Type_Details::Bool;
-    using U8 = Type_Details::U8;
-    using U16 = Type_Details::U16;
-    using U32 = Type_Details::U32;
-    using U64 = Type_Details::U64;
-    using I8 = Type_Details::I8;
-    using I16 = Type_Details::I16;
-    using I32 = Type_Details::I32;
-    using I64 = Type_Details::I64;
-    using F32 = Type_Details::F32;
-    using F64 = Type_Details::F64;
-    using Usize = Type_Details::Usize;
-    using JaktString = Type_Details::JaktString;
-    using CChar = Type_Details::CChar;
-    using CInt = Type_Details::CInt;
-    using Unknown = Type_Details::Unknown;
-    using Never = Type_Details::Never;
-    using TypeVariable = Type_Details::TypeVariable;
-    using GenericInstance = Type_Details::GenericInstance;
-    using GenericEnumInstance = Type_Details::GenericEnumInstance;
-    using GenericTraitInstance = Type_Details::GenericTraitInstance;
-    using GenericResolvedType = Type_Details::GenericResolvedType;
-    using Struct = Type_Details::Struct;
-    using Enum = Type_Details::Enum;
-    using RawPtr = Type_Details::RawPtr;
-    using Trait = Type_Details::Trait;
-    using Reference = Type_Details::Reference;
-    using MutableReference = Type_Details::MutableReference;
-    using Function = Type_Details::Function;
-template<typename V, typename... Args> static auto create(Args&&... args) {
-return adopt_nonnull_ref_or_enomem(new (nothrow) Type(V(forward<Args>(args)...)));
-}
-ErrorOr<String> debug_description() const;
-bool equals(NonnullRefPtr<types::Type> const rhs) const;
-i64 get_bits() const;
-i64 specificity(NonnullRefPtr<types::CheckedProgram> const program, i64 const base_specificity) const;
-bool is_builtin() const;
-ErrorOr<types::TypeId> flip_signedness() const;
-u64 max() const;
-String constructor_name() const;
-i64 min() const;
-bool is_signed() const;
-};
-struct LoadedModule {
+};struct CheckedCall {
   public:
-types::ModuleId module_id;utility::FileId file_id;LoadedModule(types::ModuleId a_module_id, utility::FileId a_file_id);
-
-ErrorOr<String> debug_description() const;
-};struct CheckedEnum {
-  public:
-String name;utility::Span name_span;JaktInternal::Array<types::CheckedGenericParameter> generic_parameters;JaktInternal::Array<types::CheckedEnumVariant> variants;JaktInternal::Array<types::CheckedField> fields;types::ScopeId scope_id;parser::DefinitionLinkage definition_linkage;JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TraitId,JaktInternal::Array<types::TypeId>>> trait_implementations;parser::RecordType record_type;types::TypeId underlying_type_id;types::TypeId type_id;bool is_boxed;CheckedEnum(String a_name, utility::Span a_name_span, JaktInternal::Array<types::CheckedGenericParameter> a_generic_parameters, JaktInternal::Array<types::CheckedEnumVariant> a_variants, JaktInternal::Array<types::CheckedField> a_fields, types::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TraitId,JaktInternal::Array<types::TypeId>>> a_trait_implementations, parser::RecordType a_record_type, types::TypeId a_underlying_type_id, types::TypeId a_type_id, bool a_is_boxed);
-
-ErrorOr<String> debug_description() const;
-};namespace BlockControlFlow_Details {
-struct AlwaysReturns {
-};
-struct AlwaysTransfersControl {
-bool might_break;
-template<typename _MemberT0>
-AlwaysTransfersControl(_MemberT0&& member_0):
-might_break{ forward<_MemberT0>(member_0)}
-{}
-};
-struct NeverReturns {
-};
-struct MayReturn {
-};
-struct PartialAlwaysReturns {
-bool might_break;
-template<typename _MemberT0>
-PartialAlwaysReturns(_MemberT0&& member_0):
-might_break{ forward<_MemberT0>(member_0)}
-{}
-};
-struct PartialAlwaysTransfersControl {
-bool might_break;
-template<typename _MemberT0>
-PartialAlwaysTransfersControl(_MemberT0&& member_0):
-might_break{ forward<_MemberT0>(member_0)}
-{}
-};
-struct PartialNeverReturns {
-bool might_break;
-template<typename _MemberT0>
-PartialNeverReturns(_MemberT0&& member_0):
-might_break{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct BlockControlFlow : public Variant<BlockControlFlow_Details::AlwaysReturns, BlockControlFlow_Details::AlwaysTransfersControl, BlockControlFlow_Details::NeverReturns, BlockControlFlow_Details::MayReturn, BlockControlFlow_Details::PartialAlwaysReturns, BlockControlFlow_Details::PartialAlwaysTransfersControl, BlockControlFlow_Details::PartialNeverReturns> {
-using Variant<BlockControlFlow_Details::AlwaysReturns, BlockControlFlow_Details::AlwaysTransfersControl, BlockControlFlow_Details::NeverReturns, BlockControlFlow_Details::MayReturn, BlockControlFlow_Details::PartialAlwaysReturns, BlockControlFlow_Details::PartialAlwaysTransfersControl, BlockControlFlow_Details::PartialNeverReturns>::Variant;
-    using AlwaysReturns = BlockControlFlow_Details::AlwaysReturns;
-    using AlwaysTransfersControl = BlockControlFlow_Details::AlwaysTransfersControl;
-    using NeverReturns = BlockControlFlow_Details::NeverReturns;
-    using MayReturn = BlockControlFlow_Details::MayReturn;
-    using PartialAlwaysReturns = BlockControlFlow_Details::PartialAlwaysReturns;
-    using PartialAlwaysTransfersControl = BlockControlFlow_Details::PartialAlwaysTransfersControl;
-    using PartialNeverReturns = BlockControlFlow_Details::PartialNeverReturns;
-ErrorOr<String> debug_description() const;
-bool always_transfers_control() const;
-types::BlockControlFlow partial() const;
-bool always_returns() const;
-types::BlockControlFlow updated(types::BlockControlFlow const second) const;
-bool may_break() const;
-bool is_reachable() const;
-bool never_returns() const;
-types::BlockControlFlow definitive() const;
-bool may_return() const;
-types::BlockControlFlow unify_with(types::BlockControlFlow const second) const;
-};
-struct CheckedBlock {
-  public:
-JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> statements;types::ScopeId scope_id;types::BlockControlFlow control_flow;JaktInternal::Optional<types::TypeId> yielded_type;bool yielded_none;CheckedBlock(JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> a_statements, types::ScopeId a_scope_id, types::BlockControlFlow a_control_flow, JaktInternal::Optional<types::TypeId> a_yielded_type, bool a_yielded_none);
+JaktInternal::Array<types::ResolvedNamespace> namespace_;String name;JaktInternal::Array<JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>>> args;JaktInternal::Array<types::TypeId> type_args;JaktInternal::Optional<types::FunctionId> function_id;types::TypeId return_type;bool callee_throws;CheckedCall(JaktInternal::Array<types::ResolvedNamespace> a_namespace_, String a_name, JaktInternal::Array<JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>>> a_args, JaktInternal::Array<types::TypeId> a_type_args, JaktInternal::Optional<types::FunctionId> a_function_id, types::TypeId a_return_type, bool a_callee_throws);
 
 ErrorOr<String> debug_description() const;
 };namespace CheckedMatchBody_Details {
@@ -500,91 +471,383 @@ using Variant<CheckedMatchBody_Details::Expression, CheckedMatchBody_Details::Bl
     using Block = CheckedMatchBody_Details::Block;
 ErrorOr<String> debug_description() const;
 };
-namespace CheckedVisibility_Details {
-struct Public {
+namespace CheckedMatchCase_Details {
+struct EnumVariant {
+JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> defaults;
+String name;
+JaktInternal::Array<parser::EnumVariantPatternArgument> args;
+types::TypeId subject_type_id;
+size_t index;
+types::ScopeId scope_id;
+types::CheckedMatchBody body;
+utility::Span marker_span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6, typename _MemberT7>
+EnumVariant(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6, _MemberT7&& member_7):
+defaults{ forward<_MemberT0>(member_0)},
+name{ forward<_MemberT1>(member_1)},
+args{ forward<_MemberT2>(member_2)},
+subject_type_id{ forward<_MemberT3>(member_3)},
+index{ forward<_MemberT4>(member_4)},
+scope_id{ forward<_MemberT5>(member_5)},
+body{ forward<_MemberT6>(member_6)},
+marker_span{ forward<_MemberT7>(member_7)}
+{}
 };
-struct Private {
+struct Expression {
+JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> defaults;
+NonnullRefPtr<types::CheckedExpression> expression;
+types::CheckedMatchBody body;
+utility::Span marker_span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
+Expression(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+defaults{ forward<_MemberT0>(member_0)},
+expression{ forward<_MemberT1>(member_1)},
+body{ forward<_MemberT2>(member_2)},
+marker_span{ forward<_MemberT3>(member_3)}
+{}
 };
-struct Restricted {
-JaktInternal::Array<NonnullRefPtr<types::MaybeResolvedScope>> scopes;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-Restricted(_MemberT0&& member_0, _MemberT1&& member_1):
-scopes{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
+struct CatchAll {
+JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> defaults;
+bool has_arguments;
+types::CheckedMatchBody body;
+utility::Span marker_span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
+CatchAll(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+defaults{ forward<_MemberT0>(member_0)},
+has_arguments{ forward<_MemberT1>(member_1)},
+body{ forward<_MemberT2>(member_2)},
+marker_span{ forward<_MemberT3>(member_3)}
 {}
 };
 }
-struct CheckedVisibility : public Variant<CheckedVisibility_Details::Public, CheckedVisibility_Details::Private, CheckedVisibility_Details::Restricted> {
-using Variant<CheckedVisibility_Details::Public, CheckedVisibility_Details::Private, CheckedVisibility_Details::Restricted>::Variant;
-    using Public = CheckedVisibility_Details::Public;
-    using Private = CheckedVisibility_Details::Private;
-    using Restricted = CheckedVisibility_Details::Restricted;
+struct CheckedMatchCase : public Variant<CheckedMatchCase_Details::EnumVariant, CheckedMatchCase_Details::Expression, CheckedMatchCase_Details::CatchAll> {
+using Variant<CheckedMatchCase_Details::EnumVariant, CheckedMatchCase_Details::Expression, CheckedMatchCase_Details::CatchAll>::Variant;
+    using EnumVariant = CheckedMatchCase_Details::EnumVariant;
+    using Expression = CheckedMatchCase_Details::Expression;
+    using CatchAll = CheckedMatchCase_Details::CatchAll;
 ErrorOr<String> debug_description() const;
+JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> const& defaults() const { switch(this->index()) {case 0 /* EnumVariant */: return this->template get<CheckedMatchCase::EnumVariant>().defaults;
+case 1 /* Expression */: return this->template get<CheckedMatchCase::Expression>().defaults;
+case 2 /* CatchAll */: return this->template get<CheckedMatchCase::CatchAll>().defaults;
+default: VERIFY_NOT_REACHED();
+}
+}
 };
-struct ResolvedNamespace {
+namespace ValueImpl_Details {
+struct Void {
+};
+struct Bool{
+bool value;
+template<typename _MemberT0>
+Bool(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct U8{
+u8 value;
+template<typename _MemberT0>
+U8(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct U16{
+u16 value;
+template<typename _MemberT0>
+U16(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct U32{
+u32 value;
+template<typename _MemberT0>
+U32(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct U64{
+u64 value;
+template<typename _MemberT0>
+U64(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct I8{
+i8 value;
+template<typename _MemberT0>
+I8(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct I16{
+i16 value;
+template<typename _MemberT0>
+I16(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct I32{
+i32 value;
+template<typename _MemberT0>
+I32(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct I64{
+i64 value;
+template<typename _MemberT0>
+I64(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct F32{
+f32 value;
+template<typename _MemberT0>
+F32(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct F64{
+f64 value;
+template<typename _MemberT0>
+F64(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct USize{
+size_t value;
+template<typename _MemberT0>
+USize(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct JaktString{
+String value;
+template<typename _MemberT0>
+JaktString(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct CChar{
+char value;
+template<typename _MemberT0>
+CChar(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct CInt{
+int value;
+template<typename _MemberT0>
+CInt(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Struct {
+JaktInternal::Array<types::Value> fields;
+types::StructId struct_id;
+JaktInternal::Optional<types::FunctionId> constructor;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+Struct(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+fields{ forward<_MemberT0>(member_0)},
+struct_id{ forward<_MemberT1>(member_1)},
+constructor{ forward<_MemberT2>(member_2)}
+{}
+};
+struct Class {
+JaktInternal::Array<types::Value> fields;
+types::StructId struct_id;
+JaktInternal::Optional<types::FunctionId> constructor;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+Class(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+fields{ forward<_MemberT0>(member_0)},
+struct_id{ forward<_MemberT1>(member_1)},
+constructor{ forward<_MemberT2>(member_2)}
+{}
+};
+struct Enum {
+JaktInternal::Array<types::Value> fields;
+types::EnumId enum_id;
+types::FunctionId constructor;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+Enum(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+fields{ forward<_MemberT0>(member_0)},
+enum_id{ forward<_MemberT1>(member_1)},
+constructor{ forward<_MemberT2>(member_2)}
+{}
+};
+struct JaktArray {
+JaktInternal::Array<types::Value> values;
+types::TypeId type_id;
+template<typename _MemberT0, typename _MemberT1>
+JaktArray(_MemberT0&& member_0, _MemberT1&& member_1):
+values{ forward<_MemberT0>(member_0)},
+type_id{ forward<_MemberT1>(member_1)}
+{}
+};
+struct JaktDictionary {
+JaktInternal::Array<types::Value> keys;
+JaktInternal::Array<types::Value> values;
+types::TypeId type_id;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+JaktDictionary(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+keys{ forward<_MemberT0>(member_0)},
+values{ forward<_MemberT1>(member_1)},
+type_id{ forward<_MemberT2>(member_2)}
+{}
+};
+struct JaktSet {
+JaktInternal::Array<types::Value> values;
+types::TypeId type_id;
+template<typename _MemberT0, typename _MemberT1>
+JaktSet(_MemberT0&& member_0, _MemberT1&& member_1):
+values{ forward<_MemberT0>(member_0)},
+type_id{ forward<_MemberT1>(member_1)}
+{}
+};
+struct RawPtr{
+NonnullRefPtr<types::ValueImpl> value;
+template<typename _MemberT0>
+RawPtr(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct OptionalSome {
+types::Value value;
+template<typename _MemberT0>
+OptionalSome(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct OptionalNone {
+};
+struct JaktTuple {
+JaktInternal::Array<types::Value> fields;
+types::TypeId type_id;
+template<typename _MemberT0, typename _MemberT1>
+JaktTuple(_MemberT0&& member_0, _MemberT1&& member_1):
+fields{ forward<_MemberT0>(member_0)},
+type_id{ forward<_MemberT1>(member_1)}
+{}
+};
+struct Function {
+JaktInternal::Dictionary<String,types::Value> captures;
+JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TypeId,JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>>>> params;
+types::TypeId return_type_id;
+types::TypeId type_id;
+types::CheckedBlock block;
+bool can_throw;
+JaktInternal::Array<types::CheckedParameter> checked_params;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6>
+Function(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6):
+captures{ forward<_MemberT0>(member_0)},
+params{ forward<_MemberT1>(member_1)},
+return_type_id{ forward<_MemberT2>(member_2)},
+type_id{ forward<_MemberT3>(member_3)},
+block{ forward<_MemberT4>(member_4)},
+can_throw{ forward<_MemberT5>(member_5)},
+checked_params{ forward<_MemberT6>(member_6)}
+{}
+};
+}
+struct ValueImpl : public Variant<ValueImpl_Details::Void, ValueImpl_Details::Bool, ValueImpl_Details::U8, ValueImpl_Details::U16, ValueImpl_Details::U32, ValueImpl_Details::U64, ValueImpl_Details::I8, ValueImpl_Details::I16, ValueImpl_Details::I32, ValueImpl_Details::I64, ValueImpl_Details::F32, ValueImpl_Details::F64, ValueImpl_Details::USize, ValueImpl_Details::JaktString, ValueImpl_Details::CChar, ValueImpl_Details::CInt, ValueImpl_Details::Struct, ValueImpl_Details::Class, ValueImpl_Details::Enum, ValueImpl_Details::JaktArray, ValueImpl_Details::JaktDictionary, ValueImpl_Details::JaktSet, ValueImpl_Details::RawPtr, ValueImpl_Details::OptionalSome, ValueImpl_Details::OptionalNone, ValueImpl_Details::JaktTuple, ValueImpl_Details::Function>, public RefCounted<ValueImpl> {
+using Variant<ValueImpl_Details::Void, ValueImpl_Details::Bool, ValueImpl_Details::U8, ValueImpl_Details::U16, ValueImpl_Details::U32, ValueImpl_Details::U64, ValueImpl_Details::I8, ValueImpl_Details::I16, ValueImpl_Details::I32, ValueImpl_Details::I64, ValueImpl_Details::F32, ValueImpl_Details::F64, ValueImpl_Details::USize, ValueImpl_Details::JaktString, ValueImpl_Details::CChar, ValueImpl_Details::CInt, ValueImpl_Details::Struct, ValueImpl_Details::Class, ValueImpl_Details::Enum, ValueImpl_Details::JaktArray, ValueImpl_Details::JaktDictionary, ValueImpl_Details::JaktSet, ValueImpl_Details::RawPtr, ValueImpl_Details::OptionalSome, ValueImpl_Details::OptionalNone, ValueImpl_Details::JaktTuple, ValueImpl_Details::Function>::Variant;
+    using Void = ValueImpl_Details::Void;
+    using Bool = ValueImpl_Details::Bool;
+    using U8 = ValueImpl_Details::U8;
+    using U16 = ValueImpl_Details::U16;
+    using U32 = ValueImpl_Details::U32;
+    using U64 = ValueImpl_Details::U64;
+    using I8 = ValueImpl_Details::I8;
+    using I16 = ValueImpl_Details::I16;
+    using I32 = ValueImpl_Details::I32;
+    using I64 = ValueImpl_Details::I64;
+    using F32 = ValueImpl_Details::F32;
+    using F64 = ValueImpl_Details::F64;
+    using USize = ValueImpl_Details::USize;
+    using JaktString = ValueImpl_Details::JaktString;
+    using CChar = ValueImpl_Details::CChar;
+    using CInt = ValueImpl_Details::CInt;
+    using Struct = ValueImpl_Details::Struct;
+    using Class = ValueImpl_Details::Class;
+    using Enum = ValueImpl_Details::Enum;
+    using JaktArray = ValueImpl_Details::JaktArray;
+    using JaktDictionary = ValueImpl_Details::JaktDictionary;
+    using JaktSet = ValueImpl_Details::JaktSet;
+    using RawPtr = ValueImpl_Details::RawPtr;
+    using OptionalSome = ValueImpl_Details::OptionalSome;
+    using OptionalNone = ValueImpl_Details::OptionalNone;
+    using JaktTuple = ValueImpl_Details::JaktTuple;
+    using Function = ValueImpl_Details::Function;
+template<typename V, typename... Args> static auto create(Args&&... args) {
+return adopt_nonnull_ref_or_enomem(new (nothrow) ValueImpl(V(forward<Args>(args)...)));
+}
+ErrorOr<String> debug_description() const;
+bool equals(NonnullRefPtr<types::ValueImpl> const other) const;
+ErrorOr<NonnullRefPtr<types::ValueImpl>> copy() const;
+};
+namespace MaybeResolvedScope_Details {
+struct Resolved{
+types::ScopeId value;
+template<typename _MemberT0>
+Resolved(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Unresolved {
+NonnullRefPtr<types::MaybeResolvedScope> parent_scope;
+String relative_name;
+template<typename _MemberT0, typename _MemberT1>
+Unresolved(_MemberT0&& member_0, _MemberT1&& member_1):
+parent_scope{ forward<_MemberT0>(member_0)},
+relative_name{ forward<_MemberT1>(member_1)}
+{}
+};
+}
+struct MaybeResolvedScope : public Variant<MaybeResolvedScope_Details::Resolved, MaybeResolvedScope_Details::Unresolved>, public RefCounted<MaybeResolvedScope> {
+using Variant<MaybeResolvedScope_Details::Resolved, MaybeResolvedScope_Details::Unresolved>::Variant;
+    using Resolved = MaybeResolvedScope_Details::Resolved;
+    using Unresolved = MaybeResolvedScope_Details::Unresolved;
+template<typename V, typename... Args> static auto create(Args&&... args) {
+return adopt_nonnull_ref_or_enomem(new (nothrow) MaybeResolvedScope(V(forward<Args>(args)...)));
+}
+ErrorOr<String> debug_description() const;
+ErrorOr<NonnullRefPtr<types::MaybeResolvedScope>> try_resolve(NonnullRefPtr<types::CheckedProgram> const program) const;
+};
+struct CheckedNamespace {
+  public:
+String name;types::ScopeId scope;CheckedNamespace(String a_name, types::ScopeId a_scope);
+
+ErrorOr<String> debug_description() const;
+};struct CheckedGenericParameter {
+  public:
+types::TypeId type_id;JaktInternal::Array<types::TraitId> constraints;utility::Span span;CheckedGenericParameter(types::TypeId a_type_id, JaktInternal::Array<types::TraitId> a_constraints, utility::Span a_span);
+
+static ErrorOr<types::CheckedGenericParameter> make(types::TypeId const type_id, utility::Span const span);
+ErrorOr<String> debug_description() const;
+};struct ResolvedNamespace {
   public:
 String name;JaktInternal::Optional<JaktInternal::Array<types::TypeId>> generic_parameters;ResolvedNamespace(String a_name, JaktInternal::Optional<JaktInternal::Array<types::TypeId>> a_generic_parameters);
 
 ErrorOr<String> debug_description() const;
-};struct CheckedStruct {
+};struct TraitId {
   public:
-String name;utility::Span name_span;JaktInternal::Array<types::CheckedGenericParameter> generic_parameters;JaktInternal::Array<types::CheckedField> fields;types::ScopeId scope_id;parser::DefinitionLinkage definition_linkage;JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TraitId,JaktInternal::Array<types::TypeId>>> trait_implementations;parser::RecordType record_type;types::TypeId type_id;JaktInternal::Optional<types::StructId> super_struct_id;CheckedStruct(String a_name, utility::Span a_name_span, JaktInternal::Array<types::CheckedGenericParameter> a_generic_parameters, JaktInternal::Array<types::CheckedField> a_fields, types::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TraitId,JaktInternal::Array<types::TypeId>>> a_trait_implementations, parser::RecordType a_record_type, types::TypeId a_type_id, JaktInternal::Optional<types::StructId> a_super_struct_id);
+types::ModuleId module;size_t id;bool equals(types::TraitId const other) const;
+TraitId(types::ModuleId a_module, size_t a_id);
 
 ErrorOr<String> debug_description() const;
-};class CheckedProgram : public RefCounted<CheckedProgram>, public Weakable<CheckedProgram> {
+};struct CheckedEnumVariantBinding {
   public:
-virtual ~CheckedProgram() = default;
-NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Array<NonnullRefPtr<types::Module>> modules;JaktInternal::Dictionary<String,types::LoadedModule> loaded_modules;bool is_floating(types::TypeId const type_id) const;
-bool is_signed(types::TypeId const type_id) const;
-ErrorOr<JaktInternal::Optional<types::StructId>> find_struct_in_scope(types::ScopeId const scope_id, String const name) const;
-ErrorOr<void> set_loaded_module(String const module_name, types::LoadedModule const loaded_module);
-bool is_integer(types::TypeId const type_id) const;
-ErrorOr<types::ScopeId> create_scope(JaktInternal::Optional<types::ScopeId> const parent_scope_id, bool const can_throw, String const debug_name, types::ModuleId const module_id);
-NonnullRefPtr<types::Module> get_module(types::ModuleId const id) const;
-ErrorOr<types::TypeId> substitute_typevars_in_type_helper(types::TypeId const type_id, types::GenericInferences const generic_inferences, types::ModuleId const module_id);
-bool is_string(types::TypeId const type_id) const;
-types::ScopeId prelude_scope_id() const;
-protected:
-explicit CheckedProgram(NonnullRefPtr<compiler::Compiler>&& a_compiler, JaktInternal::Array<NonnullRefPtr<types::Module>>&& a_modules, JaktInternal::Dictionary<String,types::LoadedModule>&& a_loaded_modules);
-public:
-static ErrorOr<NonnullRefPtr<CheckedProgram>> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::Array<NonnullRefPtr<types::Module>> modules, JaktInternal::Dictionary<String,types::LoadedModule> loaded_modules);
+JaktInternal::Optional<String> name;String binding;types::TypeId type_id;utility::Span span;CheckedEnumVariantBinding(JaktInternal::Optional<String> a_name, String a_binding, types::TypeId a_type_id, utility::Span a_span);
 
-NonnullRefPtr<types::CheckedFunction> get_function(types::FunctionId const id) const;
-ErrorOr<JaktInternal::Optional<types::Value>> find_comptime_binding_in_scope(types::ScopeId const scope_id, String const name) const;
-i64 get_bits(types::TypeId const type_id) const;
-NonnullRefPtr<types::Type> get_type(types::TypeId const id) const;
-ErrorOr<types::TypeId> find_or_add_type_id(NonnullRefPtr<types::Type> const type, types::ModuleId const module_id);
-ErrorOr<types::StructId> find_struct_in_prelude(String const name) const;
-ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<types::ScopeId,bool>>> find_namespace_in_scope(types::ScopeId const scope_id, String const name) const;
-types::CheckedEnum get_enum(types::EnumId const id) const;
-ErrorOr<JaktInternal::Optional<types::TraitId>> find_trait_in_scope(types::ScopeId const scope_id, String const name) const;
-NonnullRefPtr<types::CheckedTrait> get_trait(types::TraitId const id) const;
-ErrorOr<String> type_name(types::TypeId const type_id) const;
-ErrorOr<JaktInternal::Optional<JaktInternal::Array<types::FunctionId>>> find_functions_with_name_in_scope(types::ScopeId const parent_scope_id, String const function_name) const;
-ErrorOr<JaktInternal::Optional<types::CheckedVariable>> find_var_in_scope(types::ScopeId const scope_id, String const var) const;
-types::CheckedStruct get_struct(types::StructId const id) const;
-ErrorOr<JaktInternal::Optional<types::StructId>> check_and_extract_weak_ptr(types::StructId const struct_id, JaktInternal::Array<types::TypeId> const args) const;
-ErrorOr<JaktInternal::Optional<types::EnumId>> find_enum_in_scope(types::ScopeId const scope_id, String const name) const;
-JaktInternal::Optional<types::LoadedModule> get_loaded_module(String const module_name) const;
-bool is_numeric(types::TypeId const type_id) const;
-types::CheckedVariable get_variable(types::VarId const id) const;
-ErrorOr<types::TypeId> substitute_typevars_in_type(types::TypeId const type_id, types::GenericInferences const generic_inferences, types::ModuleId const module_id);
-ErrorOr<NonnullRefPtr<types::Scope>> get_scope(types::ScopeId const id) const;
 ErrorOr<String> debug_description() const;
-};class Module : public RefCounted<Module>, public Weakable<Module> {
+};struct FieldRecord {
   public:
-virtual ~Module() = default;
-types::ModuleId id;String name;JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>> functions;JaktInternal::Array<types::CheckedStruct> structures;JaktInternal::Array<types::CheckedEnum> enums;JaktInternal::Array<NonnullRefPtr<types::Scope>> scopes;JaktInternal::Array<NonnullRefPtr<types::Type>> types;JaktInternal::Array<NonnullRefPtr<types::CheckedTrait>> traits;JaktInternal::Array<types::CheckedVariable> variables;JaktInternal::Array<types::ModuleId> imports;String resolved_import_path;bool is_root;protected:
-explicit Module(types::ModuleId&& a_id, String&& a_name, JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>>&& a_functions, JaktInternal::Array<types::CheckedStruct>&& a_structures, JaktInternal::Array<types::CheckedEnum>&& a_enums, JaktInternal::Array<NonnullRefPtr<types::Scope>>&& a_scopes, JaktInternal::Array<NonnullRefPtr<types::Type>>&& a_types, JaktInternal::Array<NonnullRefPtr<types::CheckedTrait>>&& a_traits, JaktInternal::Array<types::CheckedVariable>&& a_variables, JaktInternal::Array<types::ModuleId>&& a_imports, String&& a_resolved_import_path, bool&& a_is_root);
-public:
-static ErrorOr<NonnullRefPtr<Module>> create(types::ModuleId id, String name, JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>> functions, JaktInternal::Array<types::CheckedStruct> structures, JaktInternal::Array<types::CheckedEnum> enums, JaktInternal::Array<NonnullRefPtr<types::Scope>> scopes, JaktInternal::Array<NonnullRefPtr<types::Type>> types, JaktInternal::Array<NonnullRefPtr<types::CheckedTrait>> traits, JaktInternal::Array<types::CheckedVariable> variables, JaktInternal::Array<types::ModuleId> imports, String resolved_import_path, bool is_root);
+types::StructId struct_id;types::VarId field_id;FieldRecord(types::StructId a_struct_id, types::VarId a_field_id);
 
-ErrorOr<types::TypeId> new_type_variable();
-ErrorOr<types::FunctionId> add_function(NonnullRefPtr<types::CheckedFunction> const checked_function);
-bool is_prelude() const;
-ErrorOr<types::VarId> add_variable(types::CheckedVariable const checked_variable);
-types::FunctionId next_function_id() const;
+ErrorOr<String> debug_description() const;
+};struct CheckedVarDecl {
+  public:
+String name;bool is_mutable;utility::Span span;types::TypeId type_id;CheckedVarDecl(String a_name, bool a_is_mutable, utility::Span a_span, types::TypeId a_type_id);
+
 ErrorOr<String> debug_description() const;
 };namespace CheckedStatement_Details {
 struct Expression {
@@ -751,188 +1014,7 @@ ErrorOr<String> debug_description() const;
 static JaktInternal::Optional<NonnullRefPtr<types::CheckedStatement>> none();
 JaktInternal::Optional<utility::Span> span() const;
 };
-struct Value {
-  public:
-NonnullRefPtr<types::ValueImpl> impl;utility::Span span;ErrorOr<types::Value> copy() const;
-Value(NonnullRefPtr<types::ValueImpl> a_impl, utility::Span a_span);
-
-ErrorOr<types::Value> cast(types::Value const expected, utility::Span const span) const;
-String type_name() const;
-ErrorOr<String> debug_description() const;
-};struct CheckedEnumVariantBinding {
-  public:
-JaktInternal::Optional<String> name;String binding;types::TypeId type_id;utility::Span span;CheckedEnumVariantBinding(JaktInternal::Optional<String> a_name, String a_binding, types::TypeId a_type_id, utility::Span a_span);
-
-ErrorOr<String> debug_description() const;
-};struct CheckedVariable {
-  public:
-String name;types::TypeId type_id;bool is_mutable;utility::Span definition_span;JaktInternal::Optional<utility::Span> type_span;types::CheckedVisibility visibility;CheckedVariable(String a_name, types::TypeId a_type_id, bool a_is_mutable, utility::Span a_definition_span, JaktInternal::Optional<utility::Span> a_type_span, types::CheckedVisibility a_visibility);
-
-ErrorOr<String> debug_description() const;
-};namespace NumberConstant_Details {
-struct Signed{
-i64 value;
-template<typename _MemberT0>
-Signed(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Unsigned{
-u64 value;
-template<typename _MemberT0>
-Unsigned(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Floating{
-f64 value;
-template<typename _MemberT0>
-Floating(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct NumberConstant : public Variant<NumberConstant_Details::Signed, NumberConstant_Details::Unsigned, NumberConstant_Details::Floating> {
-using Variant<NumberConstant_Details::Signed, NumberConstant_Details::Unsigned, NumberConstant_Details::Floating>::Variant;
-    using Signed = NumberConstant_Details::Signed;
-    using Unsigned = NumberConstant_Details::Unsigned;
-    using Floating = NumberConstant_Details::Floating;
-ErrorOr<String> debug_description() const;
-size_t to_usize() const;
-bool can_fit_number(types::TypeId const type_id, NonnullRefPtr<types::CheckedProgram> const program) const;
-};
-struct CheckedGenericParameter {
-  public:
-types::TypeId type_id;JaktInternal::Array<types::TraitId> constraints;utility::Span span;CheckedGenericParameter(types::TypeId a_type_id, JaktInternal::Array<types::TraitId> a_constraints, utility::Span a_span);
-
-static ErrorOr<types::CheckedGenericParameter> make(types::TypeId const type_id, utility::Span const span);
-ErrorOr<String> debug_description() const;
-};namespace FunctionGenericParameterKind_Details {
-struct InferenceGuide {
-};
-struct Parameter {
-};
-}
-struct FunctionGenericParameterKind : public Variant<FunctionGenericParameterKind_Details::InferenceGuide, FunctionGenericParameterKind_Details::Parameter> {
-using Variant<FunctionGenericParameterKind_Details::InferenceGuide, FunctionGenericParameterKind_Details::Parameter>::Variant;
-    using InferenceGuide = FunctionGenericParameterKind_Details::InferenceGuide;
-    using Parameter = FunctionGenericParameterKind_Details::Parameter;
-ErrorOr<String> debug_description() const;
-};
-namespace StructOrEnumId_Details {
-struct Struct{
-types::StructId value;
-template<typename _MemberT0>
-Struct(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Enum{
-types::EnumId value;
-template<typename _MemberT0>
-Enum(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct StructOrEnumId : public Variant<StructOrEnumId_Details::Struct, StructOrEnumId_Details::Enum> {
-using Variant<StructOrEnumId_Details::Struct, StructOrEnumId_Details::Enum>::Variant;
-    using Struct = StructOrEnumId_Details::Struct;
-    using Enum = StructOrEnumId_Details::Enum;
-ErrorOr<String> debug_description() const;
-};
-struct CheckedParameter {
-  public:
-bool requires_label;types::CheckedVariable variable;JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> default_value;CheckedParameter(bool a_requires_label, types::CheckedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> a_default_value);
-
-ErrorOr<String> debug_description() const;
-};class CheckedTrait : public RefCounted<CheckedTrait>, public Weakable<CheckedTrait> {
-  public:
-virtual ~CheckedTrait() = default;
-String name;utility::Span name_span;JaktInternal::Dictionary<String,types::FunctionId> methods;JaktInternal::Array<types::CheckedGenericParameter> generic_parameters;types::ScopeId scope_id;protected:
-explicit CheckedTrait(String&& a_name, utility::Span&& a_name_span, JaktInternal::Dictionary<String,types::FunctionId>&& a_methods, JaktInternal::Array<types::CheckedGenericParameter>&& a_generic_parameters, types::ScopeId&& a_scope_id);
-public:
-static ErrorOr<NonnullRefPtr<CheckedTrait>> create(String name, utility::Span name_span, JaktInternal::Dictionary<String,types::FunctionId> methods, JaktInternal::Array<types::CheckedGenericParameter> generic_parameters, types::ScopeId scope_id);
-
-ErrorOr<String> debug_description() const;
-};struct CheckedNamespace {
-  public:
-String name;types::ScopeId scope;CheckedNamespace(String a_name, types::ScopeId a_scope);
-
-ErrorOr<String> debug_description() const;
-};namespace BuiltinType_Details {
-struct Void {
-};
-struct Bool {
-};
-struct U8 {
-};
-struct U16 {
-};
-struct U32 {
-};
-struct U64 {
-};
-struct I8 {
-};
-struct I16 {
-};
-struct I32 {
-};
-struct I64 {
-};
-struct F32 {
-};
-struct F64 {
-};
-struct Usize {
-};
-struct JaktString {
-};
-struct CChar {
-};
-struct CInt {
-};
-struct Unknown {
-};
-struct Never {
-};
-}
-struct BuiltinType : public Variant<BuiltinType_Details::Void, BuiltinType_Details::Bool, BuiltinType_Details::U8, BuiltinType_Details::U16, BuiltinType_Details::U32, BuiltinType_Details::U64, BuiltinType_Details::I8, BuiltinType_Details::I16, BuiltinType_Details::I32, BuiltinType_Details::I64, BuiltinType_Details::F32, BuiltinType_Details::F64, BuiltinType_Details::Usize, BuiltinType_Details::JaktString, BuiltinType_Details::CChar, BuiltinType_Details::CInt, BuiltinType_Details::Unknown, BuiltinType_Details::Never> {
-using Variant<BuiltinType_Details::Void, BuiltinType_Details::Bool, BuiltinType_Details::U8, BuiltinType_Details::U16, BuiltinType_Details::U32, BuiltinType_Details::U64, BuiltinType_Details::I8, BuiltinType_Details::I16, BuiltinType_Details::I32, BuiltinType_Details::I64, BuiltinType_Details::F32, BuiltinType_Details::F64, BuiltinType_Details::Usize, BuiltinType_Details::JaktString, BuiltinType_Details::CChar, BuiltinType_Details::CInt, BuiltinType_Details::Unknown, BuiltinType_Details::Never>::Variant;
-    using Void = BuiltinType_Details::Void;
-    using Bool = BuiltinType_Details::Bool;
-    using U8 = BuiltinType_Details::U8;
-    using U16 = BuiltinType_Details::U16;
-    using U32 = BuiltinType_Details::U32;
-    using U64 = BuiltinType_Details::U64;
-    using I8 = BuiltinType_Details::I8;
-    using I16 = BuiltinType_Details::I16;
-    using I32 = BuiltinType_Details::I32;
-    using I64 = BuiltinType_Details::I64;
-    using F32 = BuiltinType_Details::F32;
-    using F64 = BuiltinType_Details::F64;
-    using Usize = BuiltinType_Details::Usize;
-    using JaktString = BuiltinType_Details::JaktString;
-    using CChar = BuiltinType_Details::CChar;
-    using CInt = BuiltinType_Details::CInt;
-    using Unknown = BuiltinType_Details::Unknown;
-    using Never = BuiltinType_Details::Never;
-ErrorOr<String> debug_description() const;
-size_t id() const;
-};
-struct GenericInferences {
-  public:
-JaktInternal::Dictionary<String,String> values;GenericInferences(JaktInternal::Dictionary<String,String> a_values);
-
-JaktInternal::Dictionary<String,String> iterator() const;
-void restore(JaktInternal::Dictionary<String,String> const checkpoint);
-String map(String const type) const;
-JaktInternal::Optional<String> get(String const key) const;
-ErrorOr<JaktInternal::Dictionary<String,String>> perform_checkpoint(bool const reset);
-ErrorOr<void> set(String const key, String const value);
-ErrorOr<String> debug_description() const;
-};namespace CheckedNumericConstant_Details {
+namespace CheckedNumericConstant_Details {
 struct I8{
 i8 value;
 template<typename _MemberT0>
@@ -1027,59 +1109,35 @@ using Variant<CheckedNumericConstant_Details::I8, CheckedNumericConstant_Details
 ErrorOr<String> debug_description() const;
 JaktInternal::Optional<types::NumberConstant> number_constant() const;
 };
-namespace CheckedMatchCase_Details {
-struct EnumVariant {
-String name;
-JaktInternal::Array<parser::EnumVariantPatternArgument> args;
-types::TypeId subject_type_id;
-size_t index;
-types::ScopeId scope_id;
-types::CheckedMatchBody body;
-utility::Span marker_span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6>
-EnumVariant(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6):
-name{ forward<_MemberT0>(member_0)},
-args{ forward<_MemberT1>(member_1)},
-subject_type_id{ forward<_MemberT2>(member_2)},
-index{ forward<_MemberT3>(member_3)},
-scope_id{ forward<_MemberT4>(member_4)},
-body{ forward<_MemberT5>(member_5)},
-marker_span{ forward<_MemberT6>(member_6)}
-{}
+struct CheckedField {
+  public:
+types::VarId variable_id;JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> default_value;CheckedField(types::VarId a_variable_id, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> a_default_value);
+
+ErrorOr<String> debug_description() const;
+};struct CheckedStruct {
+  public:
+String name;utility::Span name_span;JaktInternal::Array<types::CheckedGenericParameter> generic_parameters;JaktInternal::Array<types::CheckedField> fields;types::ScopeId scope_id;parser::DefinitionLinkage definition_linkage;JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TraitId,JaktInternal::Array<types::TypeId>>> trait_implementations;parser::RecordType record_type;types::TypeId type_id;JaktInternal::Optional<types::StructId> super_struct_id;CheckedStruct(String a_name, utility::Span a_name_span, JaktInternal::Array<types::CheckedGenericParameter> a_generic_parameters, JaktInternal::Array<types::CheckedField> a_fields, types::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TraitId,JaktInternal::Array<types::TypeId>>> a_trait_implementations, parser::RecordType a_record_type, types::TypeId a_type_id, JaktInternal::Optional<types::StructId> a_super_struct_id);
+
+ErrorOr<String> debug_description() const;
+};namespace FunctionGenericParameterKind_Details {
+struct InferenceGuide {
 };
-struct Expression {
-NonnullRefPtr<types::CheckedExpression> expression;
-types::CheckedMatchBody body;
-utility::Span marker_span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-Expression(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-expression{ forward<_MemberT0>(member_0)},
-body{ forward<_MemberT1>(member_1)},
-marker_span{ forward<_MemberT2>(member_2)}
-{}
-};
-struct CatchAll {
-bool has_arguments;
-types::CheckedMatchBody body;
-utility::Span marker_span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-CatchAll(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-has_arguments{ forward<_MemberT0>(member_0)},
-body{ forward<_MemberT1>(member_1)},
-marker_span{ forward<_MemberT2>(member_2)}
-{}
+struct Parameter {
 };
 }
-struct CheckedMatchCase : public Variant<CheckedMatchCase_Details::EnumVariant, CheckedMatchCase_Details::Expression, CheckedMatchCase_Details::CatchAll> {
-using Variant<CheckedMatchCase_Details::EnumVariant, CheckedMatchCase_Details::Expression, CheckedMatchCase_Details::CatchAll>::Variant;
-    using EnumVariant = CheckedMatchCase_Details::EnumVariant;
-    using Expression = CheckedMatchCase_Details::Expression;
-    using CatchAll = CheckedMatchCase_Details::CatchAll;
+struct FunctionGenericParameterKind : public Variant<FunctionGenericParameterKind_Details::InferenceGuide, FunctionGenericParameterKind_Details::Parameter> {
+using Variant<FunctionGenericParameterKind_Details::InferenceGuide, FunctionGenericParameterKind_Details::Parameter>::Variant;
+    using InferenceGuide = FunctionGenericParameterKind_Details::InferenceGuide;
+    using Parameter = FunctionGenericParameterKind_Details::Parameter;
 ErrorOr<String> debug_description() const;
 };
-struct CheckedCall {
+class CheckedTrait : public RefCounted<CheckedTrait>, public Weakable<CheckedTrait> {
   public:
-JaktInternal::Array<types::ResolvedNamespace> namespace_;String name;JaktInternal::Array<JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>>> args;JaktInternal::Array<types::TypeId> type_args;JaktInternal::Optional<types::FunctionId> function_id;types::TypeId return_type;bool callee_throws;CheckedCall(JaktInternal::Array<types::ResolvedNamespace> a_namespace_, String a_name, JaktInternal::Array<JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>>> a_args, JaktInternal::Array<types::TypeId> a_type_args, JaktInternal::Optional<types::FunctionId> a_function_id, types::TypeId a_return_type, bool a_callee_throws);
+virtual ~CheckedTrait() = default;
+String name;utility::Span name_span;JaktInternal::Dictionary<String,types::FunctionId> methods;JaktInternal::Array<types::CheckedGenericParameter> generic_parameters;types::ScopeId scope_id;protected:
+explicit CheckedTrait(String&& a_name, utility::Span&& a_name_span, JaktInternal::Dictionary<String,types::FunctionId>&& a_methods, JaktInternal::Array<types::CheckedGenericParameter>&& a_generic_parameters, types::ScopeId&& a_scope_id);
+public:
+static ErrorOr<NonnullRefPtr<CheckedTrait>> create(String name, utility::Span name_span, JaktInternal::Dictionary<String,types::FunctionId> methods, JaktInternal::Array<types::CheckedGenericParameter> generic_parameters, types::ScopeId scope_id);
 
 ErrorOr<String> debug_description() const;
 };namespace CheckedExpression_Details {
@@ -1519,97 +1577,17 @@ types::TypeId type() const;
 types::BlockControlFlow control_flow() const;
 bool is_mutable(NonnullRefPtr<types::CheckedProgram> const program) const;
 };
-namespace SafetyMode_Details {
-struct Safe {
-};
-struct Unsafe {
-};
-}
-struct SafetyMode : public Variant<SafetyMode_Details::Safe, SafetyMode_Details::Unsafe> {
-using Variant<SafetyMode_Details::Safe, SafetyMode_Details::Unsafe>::Variant;
-    using Safe = SafetyMode_Details::Safe;
-    using Unsafe = SafetyMode_Details::Unsafe;
-ErrorOr<String> debug_description() const;
-};
-struct FunctionGenericParameter {
+class FunctionGenerics : public RefCounted<FunctionGenerics>, public Weakable<FunctionGenerics> {
   public:
-types::FunctionGenericParameterKind kind;types::CheckedGenericParameter checked_parameter;static ErrorOr<types::FunctionGenericParameter> parameter(types::TypeId const type_id, utility::Span const span);
-types::TypeId type_id() const;
-FunctionGenericParameter(types::FunctionGenericParameterKind a_kind, types::CheckedGenericParameter a_checked_parameter);
+virtual ~FunctionGenerics() = default;
+types::ScopeId base_scope_id;JaktInternal::Array<types::CheckedParameter> base_params;JaktInternal::Array<types::FunctionGenericParameter> params;JaktInternal::Array<JaktInternal::Array<types::TypeId>> specializations;protected:
+explicit FunctionGenerics(types::ScopeId&& a_base_scope_id, JaktInternal::Array<types::CheckedParameter>&& a_base_params, JaktInternal::Array<types::FunctionGenericParameter>&& a_params, JaktInternal::Array<JaktInternal::Array<types::TypeId>>&& a_specializations);
+public:
+static ErrorOr<NonnullRefPtr<FunctionGenerics>> create(types::ScopeId base_scope_id, JaktInternal::Array<types::CheckedParameter> base_params, JaktInternal::Array<types::FunctionGenericParameter> params, JaktInternal::Array<JaktInternal::Array<types::TypeId>> specializations);
 
+bool is_specialized_for_types(JaktInternal::Array<types::TypeId> const types) const;
 ErrorOr<String> debug_description() const;
-};namespace MaybeResolvedScope_Details {
-struct Resolved{
-types::ScopeId value;
-template<typename _MemberT0>
-Resolved(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Unresolved {
-NonnullRefPtr<types::MaybeResolvedScope> parent_scope;
-String relative_name;
-template<typename _MemberT0, typename _MemberT1>
-Unresolved(_MemberT0&& member_0, _MemberT1&& member_1):
-parent_scope{ forward<_MemberT0>(member_0)},
-relative_name{ forward<_MemberT1>(member_1)}
-{}
-};
-}
-struct MaybeResolvedScope : public Variant<MaybeResolvedScope_Details::Resolved, MaybeResolvedScope_Details::Unresolved>, public RefCounted<MaybeResolvedScope> {
-using Variant<MaybeResolvedScope_Details::Resolved, MaybeResolvedScope_Details::Unresolved>::Variant;
-    using Resolved = MaybeResolvedScope_Details::Resolved;
-    using Unresolved = MaybeResolvedScope_Details::Unresolved;
-template<typename V, typename... Args> static auto create(Args&&... args) {
-return adopt_nonnull_ref_or_enomem(new (nothrow) MaybeResolvedScope(V(forward<Args>(args)...)));
-}
-ErrorOr<String> debug_description() const;
-ErrorOr<NonnullRefPtr<types::MaybeResolvedScope>> try_resolve(NonnullRefPtr<types::CheckedProgram> const program) const;
-};
-struct CheckedVarDecl {
-  public:
-String name;bool is_mutable;utility::Span span;types::TypeId type_id;CheckedVarDecl(String a_name, bool a_is_mutable, utility::Span a_span, types::TypeId a_type_id);
-
-ErrorOr<String> debug_description() const;
-};namespace CheckedCapture_Details {
-struct ByValue {
-String name;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-ByValue(_MemberT0&& member_0, _MemberT1&& member_1):
-name{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct ByReference {
-String name;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-ByReference(_MemberT0&& member_0, _MemberT1&& member_1):
-name{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct ByMutableReference {
-String name;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-ByMutableReference(_MemberT0&& member_0, _MemberT1&& member_1):
-name{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-}
-struct CheckedCapture : public Variant<CheckedCapture_Details::ByValue, CheckedCapture_Details::ByReference, CheckedCapture_Details::ByMutableReference> {
-using Variant<CheckedCapture_Details::ByValue, CheckedCapture_Details::ByReference, CheckedCapture_Details::ByMutableReference>::Variant;
-    using ByValue = CheckedCapture_Details::ByValue;
-    using ByReference = CheckedCapture_Details::ByReference;
-    using ByMutableReference = CheckedCapture_Details::ByMutableReference;
-ErrorOr<String> debug_description() const;
-String name() const;
-utility::Span span() const;
-};
-class Scope : public RefCounted<Scope>, public Weakable<Scope> {
+};class Scope : public RefCounted<Scope>, public Weakable<Scope> {
   public:
 virtual ~Scope() = default;
 JaktInternal::Optional<String> namespace_name;JaktInternal::Dictionary<String,types::VarId> vars;JaktInternal::Dictionary<String,types::Value> comptime_bindings;JaktInternal::Dictionary<String,types::StructId> structs;JaktInternal::Dictionary<String,JaktInternal::Array<types::FunctionId>> functions;JaktInternal::Dictionary<String,types::EnumId> enums;JaktInternal::Dictionary<String,types::TypeId> types;JaktInternal::Dictionary<String,types::TraitId> traits;JaktInternal::Dictionary<String,types::ModuleId> imports;JaktInternal::Optional<types::ScopeId> parent;JaktInternal::Array<types::ScopeId> children;bool can_throw;JaktInternal::Optional<String> import_path_if_extern;JaktInternal::Array<parser::IncludeAction> after_extern_include;JaktInternal::Array<parser::IncludeAction> before_extern_include;String debug_name;protected:
@@ -1618,299 +1596,354 @@ public:
 static ErrorOr<NonnullRefPtr<Scope>> create(JaktInternal::Optional<String> namespace_name, JaktInternal::Dictionary<String,types::VarId> vars, JaktInternal::Dictionary<String,types::Value> comptime_bindings, JaktInternal::Dictionary<String,types::StructId> structs, JaktInternal::Dictionary<String,JaktInternal::Array<types::FunctionId>> functions, JaktInternal::Dictionary<String,types::EnumId> enums, JaktInternal::Dictionary<String,types::TypeId> types, JaktInternal::Dictionary<String,types::TraitId> traits, JaktInternal::Dictionary<String,types::ModuleId> imports, JaktInternal::Optional<types::ScopeId> parent, JaktInternal::Array<types::ScopeId> children, bool can_throw, JaktInternal::Optional<String> import_path_if_extern, JaktInternal::Array<parser::IncludeAction> after_extern_include, JaktInternal::Array<parser::IncludeAction> before_extern_include, String debug_name);
 
 ErrorOr<String> debug_description() const;
-};class CheckedFunction : public RefCounted<CheckedFunction>, public Weakable<CheckedFunction> {
-  public:
-virtual ~CheckedFunction() = default;
-String name;utility::Span name_span;types::CheckedVisibility visibility;types::TypeId return_type_id;JaktInternal::Optional<utility::Span> return_type_span;JaktInternal::Array<types::CheckedParameter> params;NonnullRefPtr<types::FunctionGenerics> generics;types::CheckedBlock block;bool can_throw;parser::FunctionType type;parser::FunctionLinkage linkage;types::ScopeId function_scope_id;JaktInternal::Optional<types::StructId> struct_id;bool is_instantiated;JaktInternal::Optional<parser::ParsedFunction> parsed_function;bool is_comptime;bool is_virtual;bool is_override;bool is_static() const;
-bool is_mutating() const;
-parser::ParsedFunction to_parsed_function() const;
-bool is_specialized_for_types(JaktInternal::Array<types::TypeId> const types) const;
-protected:
-explicit CheckedFunction(String&& a_name, utility::Span&& a_name_span, types::CheckedVisibility&& a_visibility, types::TypeId&& a_return_type_id, JaktInternal::Optional<utility::Span>&& a_return_type_span, JaktInternal::Array<types::CheckedParameter>&& a_params, NonnullRefPtr<types::FunctionGenerics>&& a_generics, types::CheckedBlock&& a_block, bool&& a_can_throw, parser::FunctionType&& a_type, parser::FunctionLinkage&& a_linkage, types::ScopeId&& a_function_scope_id, JaktInternal::Optional<types::StructId>&& a_struct_id, bool&& a_is_instantiated, JaktInternal::Optional<parser::ParsedFunction>&& a_parsed_function, bool&& a_is_comptime, bool&& a_is_virtual, bool&& a_is_override);
-public:
-static ErrorOr<NonnullRefPtr<CheckedFunction>> create(String name, utility::Span name_span, types::CheckedVisibility visibility, types::TypeId return_type_id, JaktInternal::Optional<utility::Span> return_type_span, JaktInternal::Array<types::CheckedParameter> params, NonnullRefPtr<types::FunctionGenerics> generics, types::CheckedBlock block, bool can_throw, parser::FunctionType type, parser::FunctionLinkage linkage, types::ScopeId function_scope_id, JaktInternal::Optional<types::StructId> struct_id, bool is_instantiated, JaktInternal::Optional<parser::ParsedFunction> parsed_function, bool is_comptime, bool is_virtual, bool is_override);
-
-ErrorOr<bool> signature_matches(NonnullRefPtr<types::CheckedFunction> const other) const;
-ErrorOr<void> add_param(types::CheckedParameter const checked_param);
-ErrorOr<void> set_params(JaktInternal::Array<types::CheckedParameter> const checked_params);
-ErrorOr<String> debug_description() const;
-};namespace ValueImpl_Details {
+};namespace Type_Details {
 struct Void {
 };
-struct Bool{
-bool value;
-template<typename _MemberT0>
-Bool(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct Bool {
 };
-struct U8{
-u8 value;
-template<typename _MemberT0>
-U8(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct U8 {
 };
-struct U16{
-u16 value;
-template<typename _MemberT0>
-U16(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct U16 {
 };
-struct U32{
-u32 value;
-template<typename _MemberT0>
-U32(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct U32 {
 };
-struct U64{
-u64 value;
-template<typename _MemberT0>
-U64(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct U64 {
 };
-struct I8{
-i8 value;
-template<typename _MemberT0>
-I8(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct I8 {
 };
-struct I16{
-i16 value;
-template<typename _MemberT0>
-I16(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct I16 {
 };
-struct I32{
-i32 value;
-template<typename _MemberT0>
-I32(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct I32 {
 };
-struct I64{
-i64 value;
-template<typename _MemberT0>
-I64(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct I64 {
 };
-struct F32{
-f32 value;
-template<typename _MemberT0>
-F32(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct F32 {
 };
-struct F64{
-f64 value;
-template<typename _MemberT0>
-F64(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct F64 {
 };
-struct USize{
-size_t value;
-template<typename _MemberT0>
-USize(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+struct Usize {
 };
-struct JaktString{
+struct JaktString {
+};
+struct CChar {
+};
+struct CInt {
+};
+struct Unknown {
+};
+struct Never {
+};
+struct TypeVariable{
 String value;
 template<typename _MemberT0>
-JaktString(_MemberT0&& member_0):
+TypeVariable(_MemberT0&& member_0):
 value{ forward<_MemberT0>(member_0)}
 {}
 };
-struct CChar{
-char value;
-template<typename _MemberT0>
-CChar(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct CInt{
-int value;
-template<typename _MemberT0>
-CInt(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Struct {
-JaktInternal::Array<types::Value> fields;
-types::StructId struct_id;
-JaktInternal::Optional<types::FunctionId> constructor;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-Struct(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-fields{ forward<_MemberT0>(member_0)},
-struct_id{ forward<_MemberT1>(member_1)},
-constructor{ forward<_MemberT2>(member_2)}
-{}
-};
-struct Class {
-JaktInternal::Array<types::Value> fields;
-types::StructId struct_id;
-JaktInternal::Optional<types::FunctionId> constructor;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-Class(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-fields{ forward<_MemberT0>(member_0)},
-struct_id{ forward<_MemberT1>(member_1)},
-constructor{ forward<_MemberT2>(member_2)}
-{}
-};
-struct Enum {
-JaktInternal::Array<types::Value> fields;
-types::EnumId enum_id;
-types::FunctionId constructor;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-Enum(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-fields{ forward<_MemberT0>(member_0)},
-enum_id{ forward<_MemberT1>(member_1)},
-constructor{ forward<_MemberT2>(member_2)}
-{}
-};
-struct JaktArray {
-JaktInternal::Array<types::Value> values;
-types::TypeId type_id;
+struct GenericInstance {
+types::StructId id;
+JaktInternal::Array<types::TypeId> args;
 template<typename _MemberT0, typename _MemberT1>
-JaktArray(_MemberT0&& member_0, _MemberT1&& member_1):
-values{ forward<_MemberT0>(member_0)},
-type_id{ forward<_MemberT1>(member_1)}
+GenericInstance(_MemberT0&& member_0, _MemberT1&& member_1):
+id{ forward<_MemberT0>(member_0)},
+args{ forward<_MemberT1>(member_1)}
 {}
 };
-struct JaktDictionary {
-JaktInternal::Array<types::Value> keys;
-JaktInternal::Array<types::Value> values;
-types::TypeId type_id;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-JaktDictionary(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-keys{ forward<_MemberT0>(member_0)},
-values{ forward<_MemberT1>(member_1)},
-type_id{ forward<_MemberT2>(member_2)}
-{}
-};
-struct JaktSet {
-JaktInternal::Array<types::Value> values;
-types::TypeId type_id;
+struct GenericEnumInstance {
+types::EnumId id;
+JaktInternal::Array<types::TypeId> args;
 template<typename _MemberT0, typename _MemberT1>
-JaktSet(_MemberT0&& member_0, _MemberT1&& member_1):
-values{ forward<_MemberT0>(member_0)},
-type_id{ forward<_MemberT1>(member_1)}
+GenericEnumInstance(_MemberT0&& member_0, _MemberT1&& member_1):
+id{ forward<_MemberT0>(member_0)},
+args{ forward<_MemberT1>(member_1)}
+{}
+};
+struct GenericTraitInstance {
+types::TraitId id;
+JaktInternal::Array<types::TypeId> args;
+template<typename _MemberT0, typename _MemberT1>
+GenericTraitInstance(_MemberT0&& member_0, _MemberT1&& member_1):
+id{ forward<_MemberT0>(member_0)},
+args{ forward<_MemberT1>(member_1)}
+{}
+};
+struct GenericResolvedType {
+types::StructId id;
+JaktInternal::Array<types::TypeId> args;
+template<typename _MemberT0, typename _MemberT1>
+GenericResolvedType(_MemberT0&& member_0, _MemberT1&& member_1):
+id{ forward<_MemberT0>(member_0)},
+args{ forward<_MemberT1>(member_1)}
+{}
+};
+struct Struct{
+types::StructId value;
+template<typename _MemberT0>
+Struct(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Enum{
+types::EnumId value;
+template<typename _MemberT0>
+Enum(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
 {}
 };
 struct RawPtr{
-NonnullRefPtr<types::ValueImpl> value;
+types::TypeId value;
 template<typename _MemberT0>
 RawPtr(_MemberT0&& member_0):
 value{ forward<_MemberT0>(member_0)}
 {}
 };
-struct OptionalSome {
-types::Value value;
+struct Trait{
+types::TraitId value;
 template<typename _MemberT0>
-OptionalSome(_MemberT0&& member_0):
+Trait(_MemberT0&& member_0):
 value{ forward<_MemberT0>(member_0)}
 {}
 };
-struct OptionalNone {
+struct Reference{
+types::TypeId value;
+template<typename _MemberT0>
+Reference(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
-struct JaktTuple {
-JaktInternal::Array<types::Value> fields;
-types::TypeId type_id;
-template<typename _MemberT0, typename _MemberT1>
-JaktTuple(_MemberT0&& member_0, _MemberT1&& member_1):
-fields{ forward<_MemberT0>(member_0)},
-type_id{ forward<_MemberT1>(member_1)}
+struct MutableReference{
+types::TypeId value;
+template<typename _MemberT0>
+MutableReference(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
 {}
 };
 struct Function {
-JaktInternal::Dictionary<String,types::Value> captures;
-JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TypeId,JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>>>> params;
-types::TypeId return_type_id;
-types::TypeId type_id;
-types::CheckedBlock block;
+JaktInternal::Array<types::TypeId> params;
 bool can_throw;
-JaktInternal::Array<types::CheckedParameter> checked_params;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6>
-Function(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6):
-captures{ forward<_MemberT0>(member_0)},
-params{ forward<_MemberT1>(member_1)},
+types::TypeId return_type_id;
+types::FunctionId pseudo_function_id;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
+Function(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+params{ forward<_MemberT0>(member_0)},
+can_throw{ forward<_MemberT1>(member_1)},
 return_type_id{ forward<_MemberT2>(member_2)},
-type_id{ forward<_MemberT3>(member_3)},
-block{ forward<_MemberT4>(member_4)},
-can_throw{ forward<_MemberT5>(member_5)},
-checked_params{ forward<_MemberT6>(member_6)}
+pseudo_function_id{ forward<_MemberT3>(member_3)}
 {}
 };
 }
-struct ValueImpl : public Variant<ValueImpl_Details::Void, ValueImpl_Details::Bool, ValueImpl_Details::U8, ValueImpl_Details::U16, ValueImpl_Details::U32, ValueImpl_Details::U64, ValueImpl_Details::I8, ValueImpl_Details::I16, ValueImpl_Details::I32, ValueImpl_Details::I64, ValueImpl_Details::F32, ValueImpl_Details::F64, ValueImpl_Details::USize, ValueImpl_Details::JaktString, ValueImpl_Details::CChar, ValueImpl_Details::CInt, ValueImpl_Details::Struct, ValueImpl_Details::Class, ValueImpl_Details::Enum, ValueImpl_Details::JaktArray, ValueImpl_Details::JaktDictionary, ValueImpl_Details::JaktSet, ValueImpl_Details::RawPtr, ValueImpl_Details::OptionalSome, ValueImpl_Details::OptionalNone, ValueImpl_Details::JaktTuple, ValueImpl_Details::Function>, public RefCounted<ValueImpl> {
-using Variant<ValueImpl_Details::Void, ValueImpl_Details::Bool, ValueImpl_Details::U8, ValueImpl_Details::U16, ValueImpl_Details::U32, ValueImpl_Details::U64, ValueImpl_Details::I8, ValueImpl_Details::I16, ValueImpl_Details::I32, ValueImpl_Details::I64, ValueImpl_Details::F32, ValueImpl_Details::F64, ValueImpl_Details::USize, ValueImpl_Details::JaktString, ValueImpl_Details::CChar, ValueImpl_Details::CInt, ValueImpl_Details::Struct, ValueImpl_Details::Class, ValueImpl_Details::Enum, ValueImpl_Details::JaktArray, ValueImpl_Details::JaktDictionary, ValueImpl_Details::JaktSet, ValueImpl_Details::RawPtr, ValueImpl_Details::OptionalSome, ValueImpl_Details::OptionalNone, ValueImpl_Details::JaktTuple, ValueImpl_Details::Function>::Variant;
-    using Void = ValueImpl_Details::Void;
-    using Bool = ValueImpl_Details::Bool;
-    using U8 = ValueImpl_Details::U8;
-    using U16 = ValueImpl_Details::U16;
-    using U32 = ValueImpl_Details::U32;
-    using U64 = ValueImpl_Details::U64;
-    using I8 = ValueImpl_Details::I8;
-    using I16 = ValueImpl_Details::I16;
-    using I32 = ValueImpl_Details::I32;
-    using I64 = ValueImpl_Details::I64;
-    using F32 = ValueImpl_Details::F32;
-    using F64 = ValueImpl_Details::F64;
-    using USize = ValueImpl_Details::USize;
-    using JaktString = ValueImpl_Details::JaktString;
-    using CChar = ValueImpl_Details::CChar;
-    using CInt = ValueImpl_Details::CInt;
-    using Struct = ValueImpl_Details::Struct;
-    using Class = ValueImpl_Details::Class;
-    using Enum = ValueImpl_Details::Enum;
-    using JaktArray = ValueImpl_Details::JaktArray;
-    using JaktDictionary = ValueImpl_Details::JaktDictionary;
-    using JaktSet = ValueImpl_Details::JaktSet;
-    using RawPtr = ValueImpl_Details::RawPtr;
-    using OptionalSome = ValueImpl_Details::OptionalSome;
-    using OptionalNone = ValueImpl_Details::OptionalNone;
-    using JaktTuple = ValueImpl_Details::JaktTuple;
-    using Function = ValueImpl_Details::Function;
+struct Type : public Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericTraitInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Trait, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function>, public RefCounted<Type> {
+using Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericTraitInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Trait, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function>::Variant;
+    using Void = Type_Details::Void;
+    using Bool = Type_Details::Bool;
+    using U8 = Type_Details::U8;
+    using U16 = Type_Details::U16;
+    using U32 = Type_Details::U32;
+    using U64 = Type_Details::U64;
+    using I8 = Type_Details::I8;
+    using I16 = Type_Details::I16;
+    using I32 = Type_Details::I32;
+    using I64 = Type_Details::I64;
+    using F32 = Type_Details::F32;
+    using F64 = Type_Details::F64;
+    using Usize = Type_Details::Usize;
+    using JaktString = Type_Details::JaktString;
+    using CChar = Type_Details::CChar;
+    using CInt = Type_Details::CInt;
+    using Unknown = Type_Details::Unknown;
+    using Never = Type_Details::Never;
+    using TypeVariable = Type_Details::TypeVariable;
+    using GenericInstance = Type_Details::GenericInstance;
+    using GenericEnumInstance = Type_Details::GenericEnumInstance;
+    using GenericTraitInstance = Type_Details::GenericTraitInstance;
+    using GenericResolvedType = Type_Details::GenericResolvedType;
+    using Struct = Type_Details::Struct;
+    using Enum = Type_Details::Enum;
+    using RawPtr = Type_Details::RawPtr;
+    using Trait = Type_Details::Trait;
+    using Reference = Type_Details::Reference;
+    using MutableReference = Type_Details::MutableReference;
+    using Function = Type_Details::Function;
 template<typename V, typename... Args> static auto create(Args&&... args) {
-return adopt_nonnull_ref_or_enomem(new (nothrow) ValueImpl(V(forward<Args>(args)...)));
+return adopt_nonnull_ref_or_enomem(new (nothrow) Type(V(forward<Args>(args)...)));
 }
 ErrorOr<String> debug_description() const;
-bool equals(NonnullRefPtr<types::ValueImpl> const other) const;
-ErrorOr<NonnullRefPtr<types::ValueImpl>> copy() const;
+bool equals(NonnullRefPtr<types::Type> const rhs) const;
+i64 get_bits() const;
+i64 specificity(NonnullRefPtr<types::CheckedProgram> const program, i64 const base_specificity) const;
+bool is_builtin() const;
+ErrorOr<types::TypeId> flip_signedness() const;
+u64 max() const;
+String constructor_name() const;
+i64 min() const;
+bool is_signed() const;
 };
-struct CheckedField {
+struct CheckedEnum {
   public:
-types::VarId variable_id;JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> default_value;CheckedField(types::VarId a_variable_id, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> a_default_value);
+String name;utility::Span name_span;JaktInternal::Array<types::CheckedGenericParameter> generic_parameters;JaktInternal::Array<types::CheckedEnumVariant> variants;JaktInternal::Array<types::CheckedField> fields;types::ScopeId scope_id;parser::DefinitionLinkage definition_linkage;JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TraitId,JaktInternal::Array<types::TypeId>>> trait_implementations;parser::RecordType record_type;types::TypeId underlying_type_id;types::TypeId type_id;bool is_boxed;CheckedEnum(String a_name, utility::Span a_name_span, JaktInternal::Array<types::CheckedGenericParameter> a_generic_parameters, JaktInternal::Array<types::CheckedEnumVariant> a_variants, JaktInternal::Array<types::CheckedField> a_fields, types::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<String,JaktInternal::Tuple<types::TraitId,JaktInternal::Array<types::TypeId>>> a_trait_implementations, parser::RecordType a_record_type, types::TypeId a_underlying_type_id, types::TypeId a_type_id, bool a_is_boxed);
 
+ErrorOr<String> debug_description() const;
+};namespace BuiltinType_Details {
+struct Void {
+};
+struct Bool {
+};
+struct U8 {
+};
+struct U16 {
+};
+struct U32 {
+};
+struct U64 {
+};
+struct I8 {
+};
+struct I16 {
+};
+struct I32 {
+};
+struct I64 {
+};
+struct F32 {
+};
+struct F64 {
+};
+struct Usize {
+};
+struct JaktString {
+};
+struct CChar {
+};
+struct CInt {
+};
+struct Unknown {
+};
+struct Never {
+};
+}
+struct BuiltinType : public Variant<BuiltinType_Details::Void, BuiltinType_Details::Bool, BuiltinType_Details::U8, BuiltinType_Details::U16, BuiltinType_Details::U32, BuiltinType_Details::U64, BuiltinType_Details::I8, BuiltinType_Details::I16, BuiltinType_Details::I32, BuiltinType_Details::I64, BuiltinType_Details::F32, BuiltinType_Details::F64, BuiltinType_Details::Usize, BuiltinType_Details::JaktString, BuiltinType_Details::CChar, BuiltinType_Details::CInt, BuiltinType_Details::Unknown, BuiltinType_Details::Never> {
+using Variant<BuiltinType_Details::Void, BuiltinType_Details::Bool, BuiltinType_Details::U8, BuiltinType_Details::U16, BuiltinType_Details::U32, BuiltinType_Details::U64, BuiltinType_Details::I8, BuiltinType_Details::I16, BuiltinType_Details::I32, BuiltinType_Details::I64, BuiltinType_Details::F32, BuiltinType_Details::F64, BuiltinType_Details::Usize, BuiltinType_Details::JaktString, BuiltinType_Details::CChar, BuiltinType_Details::CInt, BuiltinType_Details::Unknown, BuiltinType_Details::Never>::Variant;
+    using Void = BuiltinType_Details::Void;
+    using Bool = BuiltinType_Details::Bool;
+    using U8 = BuiltinType_Details::U8;
+    using U16 = BuiltinType_Details::U16;
+    using U32 = BuiltinType_Details::U32;
+    using U64 = BuiltinType_Details::U64;
+    using I8 = BuiltinType_Details::I8;
+    using I16 = BuiltinType_Details::I16;
+    using I32 = BuiltinType_Details::I32;
+    using I64 = BuiltinType_Details::I64;
+    using F32 = BuiltinType_Details::F32;
+    using F64 = BuiltinType_Details::F64;
+    using Usize = BuiltinType_Details::Usize;
+    using JaktString = BuiltinType_Details::JaktString;
+    using CChar = BuiltinType_Details::CChar;
+    using CInt = BuiltinType_Details::CInt;
+    using Unknown = BuiltinType_Details::Unknown;
+    using Never = BuiltinType_Details::Never;
+ErrorOr<String> debug_description() const;
+size_t id() const;
+};
+class CheckedProgram : public RefCounted<CheckedProgram>, public Weakable<CheckedProgram> {
+  public:
+virtual ~CheckedProgram() = default;
+NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Array<NonnullRefPtr<types::Module>> modules;JaktInternal::Dictionary<String,types::LoadedModule> loaded_modules;bool is_floating(types::TypeId const type_id) const;
+bool is_signed(types::TypeId const type_id) const;
+ErrorOr<JaktInternal::Optional<types::StructId>> find_struct_in_scope(types::ScopeId const scope_id, String const name) const;
+ErrorOr<void> set_loaded_module(String const module_name, types::LoadedModule const loaded_module);
+bool is_integer(types::TypeId const type_id) const;
+ErrorOr<types::ScopeId> create_scope(JaktInternal::Optional<types::ScopeId> const parent_scope_id, bool const can_throw, String const debug_name, types::ModuleId const module_id);
+NonnullRefPtr<types::Module> get_module(types::ModuleId const id) const;
+ErrorOr<types::TypeId> substitute_typevars_in_type_helper(types::TypeId const type_id, types::GenericInferences const generic_inferences, types::ModuleId const module_id);
+bool is_string(types::TypeId const type_id) const;
+types::ScopeId prelude_scope_id() const;
+protected:
+explicit CheckedProgram(NonnullRefPtr<compiler::Compiler>&& a_compiler, JaktInternal::Array<NonnullRefPtr<types::Module>>&& a_modules, JaktInternal::Dictionary<String,types::LoadedModule>&& a_loaded_modules);
+public:
+static ErrorOr<NonnullRefPtr<CheckedProgram>> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::Array<NonnullRefPtr<types::Module>> modules, JaktInternal::Dictionary<String,types::LoadedModule> loaded_modules);
+
+NonnullRefPtr<types::CheckedFunction> get_function(types::FunctionId const id) const;
+ErrorOr<JaktInternal::Optional<types::Value>> find_comptime_binding_in_scope(types::ScopeId const scope_id, String const name) const;
+i64 get_bits(types::TypeId const type_id) const;
+NonnullRefPtr<types::Type> get_type(types::TypeId const id) const;
+ErrorOr<types::TypeId> find_or_add_type_id(NonnullRefPtr<types::Type> const type, types::ModuleId const module_id);
+ErrorOr<types::StructId> find_struct_in_prelude(String const name) const;
+ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<types::ScopeId,bool>>> find_namespace_in_scope(types::ScopeId const scope_id, String const name) const;
+types::CheckedEnum get_enum(types::EnumId const id) const;
+ErrorOr<JaktInternal::Optional<types::TraitId>> find_trait_in_scope(types::ScopeId const scope_id, String const name) const;
+NonnullRefPtr<types::CheckedTrait> get_trait(types::TraitId const id) const;
+ErrorOr<String> type_name(types::TypeId const type_id) const;
+ErrorOr<JaktInternal::Optional<JaktInternal::Array<types::FunctionId>>> find_functions_with_name_in_scope(types::ScopeId const parent_scope_id, String const function_name) const;
+ErrorOr<JaktInternal::Optional<types::CheckedVariable>> find_var_in_scope(types::ScopeId const scope_id, String const var) const;
+types::CheckedStruct get_struct(types::StructId const id) const;
+ErrorOr<JaktInternal::Optional<types::StructId>> check_and_extract_weak_ptr(types::StructId const struct_id, JaktInternal::Array<types::TypeId> const args) const;
+ErrorOr<JaktInternal::Optional<types::EnumId>> find_enum_in_scope(types::ScopeId const scope_id, String const name) const;
+JaktInternal::Optional<types::LoadedModule> get_loaded_module(String const module_name) const;
+bool is_numeric(types::TypeId const type_id) const;
+types::CheckedVariable get_variable(types::VarId const id) const;
+ErrorOr<types::TypeId> substitute_typevars_in_type(types::TypeId const type_id, types::GenericInferences const generic_inferences, types::ModuleId const module_id);
+ErrorOr<NonnullRefPtr<types::Scope>> get_scope(types::ScopeId const id) const;
+ErrorOr<String> debug_description() const;
+};struct FunctionGenericParameter {
+  public:
+types::FunctionGenericParameterKind kind;types::CheckedGenericParameter checked_parameter;static ErrorOr<types::FunctionGenericParameter> parameter(types::TypeId const type_id, utility::Span const span);
+types::TypeId type_id() const;
+FunctionGenericParameter(types::FunctionGenericParameterKind a_kind, types::CheckedGenericParameter a_checked_parameter);
+
+ErrorOr<String> debug_description() const;
+};struct GenericInferences {
+  public:
+JaktInternal::Dictionary<String,String> values;GenericInferences(JaktInternal::Dictionary<String,String> a_values);
+
+JaktInternal::Dictionary<String,String> iterator() const;
+void restore(JaktInternal::Dictionary<String,String> const checkpoint);
+String map(String const type) const;
+JaktInternal::Optional<String> get(String const key) const;
+ErrorOr<JaktInternal::Dictionary<String,String>> perform_checkpoint(bool const reset);
+ErrorOr<void> set(String const key, String const value);
 ErrorOr<String> debug_description() const;
 };}
 template<>struct Formatter<types::ModuleId> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::ModuleId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::StructId> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::StructId const& value) {
+template<>struct Formatter<types::TypeId> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::TypeId const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedVisibility> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedVisibility const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedVariable> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedVariable const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedParameter> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedParameter const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::NumberConstant> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::NumberConstant const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::VarId> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::VarId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::FieldRecord> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::FieldRecord const& value) {
+template<>struct Formatter<types::SafetyMode> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::SafetyMode const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::ScopeId> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::ScopeId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::FunctionGenerics> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::FunctionGenerics const& value) {
+template<>struct Formatter<types::BlockControlFlow> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::BlockControlFlow const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::TypeId> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::TypeId const& value) {
+template<>struct Formatter<types::CheckedBlock> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedBlock const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::StructId> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::StructId const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedFunction> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedFunction const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::Value> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::Value const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::CheckedTypeCast> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedTypeCast const& value) {
@@ -1921,124 +1954,103 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<types::CheckedEnumVariant> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedEnumVariant const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedUnaryOperator> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedUnaryOperator const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::TraitId> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::TraitId const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::FunctionId> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::FunctionId const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::Type> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::Type const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::LoadedModule> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::LoadedModule const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedEnum> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedEnum const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::BlockControlFlow> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::BlockControlFlow const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedBlock> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedBlock const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedMatchBody> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedMatchBody const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedVisibility> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedVisibility const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::ResolvedNamespace> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::ResolvedNamespace const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedStruct> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedStruct const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedProgram> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedProgram const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::Module> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::Module const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedStatement> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedStatement const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::Value> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::Value const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedEnumVariantBinding> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedEnumVariantBinding const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedVariable> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedVariable const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::NumberConstant> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::NumberConstant const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedGenericParameter> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedGenericParameter const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::FunctionGenericParameterKind> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::FunctionGenericParameterKind const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::StructOrEnumId> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::StructOrEnumId const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedParameter> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedParameter const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedTrait> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedTrait const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedNamespace> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedNamespace const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::BuiltinType> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::BuiltinType const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::GenericInferences> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::GenericInferences const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedNumericConstant> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedNumericConstant const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedMatchCase> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedMatchCase const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedCall> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedCall const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedExpression> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedExpression const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::SafetyMode> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::SafetyMode const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::FunctionGenericParameter> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::FunctionGenericParameter const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::MaybeResolvedScope> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::MaybeResolvedScope const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedVarDecl> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedVarDecl const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::CheckedCapture> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedCapture const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::Scope> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::Scope const& value) {
+template<>struct Formatter<types::StructOrEnumId> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::StructOrEnumId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedFunction> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedFunction const& value) {
+template<>struct Formatter<types::Module> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::Module const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedUnaryOperator> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedUnaryOperator const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::FunctionId> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::FunctionId const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedCall> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedCall const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedMatchBody> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedMatchBody const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedMatchCase> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedMatchCase const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::ValueImpl> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::ValueImpl const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::MaybeResolvedScope> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::MaybeResolvedScope const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedNamespace> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedNamespace const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedGenericParameter> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedGenericParameter const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::ResolvedNamespace> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::ResolvedNamespace const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::TraitId> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::TraitId const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedEnumVariantBinding> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedEnumVariantBinding const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::FieldRecord> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::FieldRecord const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedVarDecl> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedVarDecl const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedStatement> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedStatement const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedNumericConstant> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedNumericConstant const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::CheckedField> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedField const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedStruct> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedStruct const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::FunctionGenericParameterKind> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::FunctionGenericParameterKind const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedTrait> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedTrait const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedExpression> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedExpression const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::FunctionGenerics> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::FunctionGenerics const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::Scope> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::Scope const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::Type> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::Type const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedEnum> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedEnum const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::BuiltinType> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::BuiltinType const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedProgram> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedProgram const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::FunctionGenericParameter> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::FunctionGenericParameter const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::GenericInferences> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::GenericInferences const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 } // namespace Jakt

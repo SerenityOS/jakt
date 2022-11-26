@@ -3,6 +3,20 @@
 #include "utility.h"
 namespace Jakt {
 namespace error {
+namespace MessageSeverity_Details {
+struct Hint {
+};
+struct Error {
+};
+}
+struct MessageSeverity : public Variant<MessageSeverity_Details::Hint, MessageSeverity_Details::Error> {
+using Variant<MessageSeverity_Details::Hint, MessageSeverity_Details::Error>::Variant;
+    using Hint = MessageSeverity_Details::Hint;
+    using Error = MessageSeverity_Details::Error;
+ErrorOr<String> debug_description() const;
+ErrorOr<String> ansi_color_code() const;
+ErrorOr<String> name() const;
+};
 namespace JaktError_Details {
 struct Message {
 String message;
@@ -34,25 +48,11 @@ using Variant<JaktError_Details::Message, JaktError_Details::MessageWithHint>::V
 ErrorOr<String> debug_description() const;
 utility::Span span() const;
 };
-namespace MessageSeverity_Details {
-struct Hint {
-};
-struct Error {
-};
 }
-struct MessageSeverity : public Variant<MessageSeverity_Details::Hint, MessageSeverity_Details::Error> {
-using Variant<MessageSeverity_Details::Hint, MessageSeverity_Details::Error>::Variant;
-    using Hint = MessageSeverity_Details::Hint;
-    using Error = MessageSeverity_Details::Error;
-ErrorOr<String> debug_description() const;
-ErrorOr<String> ansi_color_code() const;
-ErrorOr<String> name() const;
-};
-}
-template<>struct Formatter<error::JaktError> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, error::JaktError const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<error::MessageSeverity> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, error::MessageSeverity const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<error::JaktError> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, error::JaktError const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 } // namespace Jakt
