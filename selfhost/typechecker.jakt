@@ -5899,8 +5899,10 @@ struct Typechecker {
             mut checked_values: [CheckedExpression] = []
             mut checked_types: [TypeId] = []
 
+            let optional_struct_id = .find_struct_in_prelude("Optional")
+
             for value in values {
-                let checked_value= .typecheck_expression(value, scope_id, safety_mode, type_hint: None)
+                let checked_value = .typecheck_expression(value, scope_id, safety_mode, type_hint: None)
                 let type_id = checked_value.type()
                 if type_id.equals(VOID_TYPE_ID) {
                     .error("Cannot create a tuple that contains a value of type void", value.span())
@@ -5909,10 +5911,39 @@ struct Typechecker {
                 checked_values.push(checked_value)
             }
 
+            // if a type is Optional wrap the value in Some() if it isn't already 
+            if type_hint.has_value() and .get_type(type_hint!) is GenericInstance(id, args) and checked_types.size() == args.size() {
+                for i in 0..args.size() {
+                    mut value_type = checked_types[i]
+                    let unified = .unify(lhs: args[i], lhs_span: span, rhs: value_type, rhs_span: span)
+                    if unified.has_value() {
+                        mut type_optional = false
+                        if .get_type(unified!) is GenericInstance(id) and id.equals(optional_struct_id) {
+                            type_optional = true
+                        }
+
+                        mut value_optional = false
+                        if .get_type(value_type) is GenericInstance(id) and id.equals(optional_struct_id) {
+                            value_optional = true
+                        }
+
+                        checked_types[i] = unified!
+
+                        if type_optional and not value_optional and not checked_values[i] is OptionalSome {
+                            if checked_values[i] is OptionalNone and .get_type(unified!) is GenericInstance(id, args) {
+                                value_type = args[0]
+                            }
+
+                            let optional_type = Type::GenericInstance(id: optional_struct_id, args: [value_type])
+                            let optional_type_id = .find_or_add_type_id(optional_type)
+                            checked_values[i] = CheckedExpression::OptionalSome(expr: checked_values[i], span, type_id: optional_type_id)
+                        }
+                    }
+                }
+            }
+
             let tuple_struct_id = .find_struct_in_prelude("Tuple")
             let type_id = .find_or_add_type_id(Type::GenericInstance(id: tuple_struct_id, args: checked_types))
-
-            // FIXME: Unify type
 
             if type_hint.has_value() {
                 .check_types_for_compat(
@@ -5961,50 +5992,7 @@ struct Typechecker {
                 }
             }
         }
-        IndexedTuple(expr, index, is_optional, span) => {
-            let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
-
-            let tuple_struct_id = .find_struct_in_prelude("Tuple")
-            let optional_struct_id = .find_struct_in_prelude("Optional")
-            mut expr_type_id = unknown_type_id()
-
-            if .get_type(checked_expr.type()) is GenericInstance(id, args) {
-                if id.equals(tuple_struct_id) {
-                    if is_optional {
-                        .error("Optional chaining is not allowed on a non-optional tuple type", span)
-                    }
-                    if (index >= args.size()){
-                        .error("Tuple index past the end of the tuple", span)
-                    } else {
-                        expr_type_id = args[index]
-                    }
-                } else if is_optional and id.equals(optional_struct_id) {
-                    let inner_type_id = args[0]
-                    if .get_type(inner_type_id) is GenericInstance(id, args) {
-                        if id.equals(tuple_struct_id) {
-                            if (index >= args.size()){
-                                .error("Optional-chained tuple index past the end of the tuple", span)
-                            } else {
-                                expr_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [args[index]]))
-                            }
-                        }
-                    } else {
-                        .error("Optional-chained tuple index used on non-tuple value", span)
-                    }
-                }
-            } else if is_optional {
-                .error("Optional-chained tuple index used on non-tuple value", span)
-            } else {
-                .error("Tuple index used on non-tuple value", span)
-            }
-
-            yield CheckedExpression::IndexedTuple(
-                expr: checked_expr
-                index: index
-                span
-                is_optional
-                type_id: expr_type_id)
-        }
+        IndexedTuple(expr, index, is_optional, span) => .typecheck_indexed_tuple(expr, index, scope_id, is_optional, safety_mode, span)
         Garbage(span) => CheckedExpression::Garbage(span)
         NamespacedVar(name, namespace_, span) => .typecheck_namespaced_var_or_simple_enum_constructor_call(name, namespace_, scope_id, safety_mode, type_hint, span)
         Match(expr, cases, marker_span) => .typecheck_match(expr, cases, span: marker_span, scope_id, safety_mode, type_hint)

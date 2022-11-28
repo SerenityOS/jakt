@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "(false, None)\n"
+
+function test() -> (bool?, bool?) {
+    return (false, None)
+}
+
+function main() {
+    println("{}", test())
+}
