@@ -3398,7 +3398,6 @@ struct Typechecker {
     }
 
     function typecheck_function(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
-
         if not parsed_function.generic_parameters.is_empty() and not parsed_function.must_instantiate {
             return
         }
@@ -4727,6 +4726,7 @@ struct Typechecker {
             scope_id
             span: iterable_expr.span()
         )
+
         if not iterable_trait_implementation.has_value() {
             let into_iterator_trait_implementation = .find_any_singular_trait_implementation(
                 type_id: iterable_expr.type()
@@ -4828,8 +4828,8 @@ struct Typechecker {
                                         ),
                                         call: ParsedCall(
                                             namespace_: [],
-                                                name: "next",
-                                                args: [],
+                                            name: "next",
+                                            args: [],
                                             type_args: []
                                         ),
                                         is_optional: false
@@ -5885,7 +5885,7 @@ struct Typechecker {
             let checked_expr_type_id = checked_expr.type()
             mut found_optional = false
 
-            let parent_id = match .get_type(.final_type_resolution_form(checked_expr_type_id, scope_id)) {
+            let parent_id: StructLikeId? = match .get_type(.final_type_resolution_form(checked_expr_type_id, scope_id)) {
                 Struct(id) => Some(StructLikeId::Struct(id))
                 Enum(id) => Some(StructLikeId::Enum(id))
                 JaktString => Some(StructLikeId::Struct(.find_struct_in_prelude("String")))
@@ -5925,9 +5925,8 @@ struct Typechecker {
                         )
                         span: checked_expr.span()
                     )
-                    let none: StructLikeId? = None
-
-                    yield none
+                    
+                    yield None
                 }
             }
 
@@ -7778,12 +7777,12 @@ struct Typechecker {
                             args,
                             type_args: checked_type_args,
                             function_id: None,
-                            return_type,
+                            return_type: builtin(BuiltinType::Unknown),
                             callee_throws
                             external_name: None
                         ),
                         span,
-                        type_id: return_type
+                        type_id: builtin(BuiltinType::Unknown)
                     )
                 }
 
@@ -7808,6 +7807,7 @@ struct Typechecker {
                     )
                     .ignore_errors = old_ignore_errors
                 }
+
                 return_type = .substitute_typevars_in_type(type_id: return_type, generic_inferences: .generic_inferences)
 
                 if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {

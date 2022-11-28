@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "1\n2\n3\nA\nB\nC\n"
+
+function foo<T>(anon xs: T) {
+    for x in xs.iterator() {
+        println("{}", x)
+    }
+}
+
+function main() {
+    let arr = [1, 2, 3]
+
+    foo(arr)
+
+    let str_arr = ["A", "B", "C"]
+
+    foo(str_arr)
+}
