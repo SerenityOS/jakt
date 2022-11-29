@@ -236,6 +236,11 @@ public:
         return array;
     }
 
+    ErrorOr<void> operator+=(DynamicArray<T> const& b)
+    {
+        return push_values(b);
+    }
+
     bool is_empty() const { return m_storage->is_empty(); }
     size_t size() const { return m_storage->size(); }
     size_t capacity() const { return m_storage->capacity(); }
@@ -487,6 +492,18 @@ ArraySlice<T> ArraySlice<T>::slice(size_t offset, size_t size) const
 {
     return { *m_storage, offset, size };
 }
+
+template<typename T>
+ErrorOr<DynamicArray<T>> operator+(DynamicArray<T> const& a, DynamicArray<T> const& b)
+{
+    auto array = TRY(DynamicArray<T>::create_empty());
+    TRY(array.ensure_capacity(a.size() + b.size()));
+    TRY(array.push_values(a));
+    TRY(array.push_values(b));
+
+    return array;
+}
+
 }
 
 namespace Jakt {

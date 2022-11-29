@@ -2344,6 +2344,16 @@ struct CodeGenerator {
         return type_name
     }
 
+    function is_array(this, expression: CheckedExpression) -> bool {
+        if expression is JaktArray {
+            return true
+        }
+
+        let type_ = .program.get_type(expression.type())
+
+        return type_ is GenericInstance(id) and .program.get_struct(lhs_id).name == "Array"
+    }
+
     function codegen_binary_expression(mut this, expression: CheckedExpression, type_id: TypeId, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator) throws -> String {
         if op is NoneCoalescing {
             let rhs_type_id = rhs.type()
@@ -2414,6 +2424,22 @@ struct CodeGenerator {
                 .current_error_handler()
                 .codegen_expression(expr)
                 .codegen_expression(index)
+                .codegen_expression(rhs)
+            )
+        }
+
+        // When using + or += to concat 2 arrays it needs to be wrapped in TRY/MUST
+        if (op is Add or op is AddAssign) and .is_array(expression: lhs) and .is_array(expression: rhs) {
+            let op_output = match op {
+                Add => " + "
+                else => " += "
+            } 
+
+            return format(
+                "{}({}{}{})"
+                .current_error_handler()
+                .codegen_expression(lhs)
+                op_output
                 .codegen_expression(rhs)
             )
         }

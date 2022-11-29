@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "[\"hello\", \"world\", \"sup\", \"everyone\", \"test\", \"test1\", \"test2\"]\n"
+
+function main() {
+    let a = ["hello", "world"]
+    let b = ["sup", "everyone"]
+
+    mut c = a + b + ["test"]
+
+    c += ["test1", "test2"]
+
+    println("{}", c)
+}
