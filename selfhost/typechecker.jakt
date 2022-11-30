@@ -2361,7 +2361,7 @@ struct Typechecker {
             let method_scope_id = .create_scope(parent_scope_id: struct_scope_id, can_throw: func.can_throw, debug_name: format("method({}::{})", parsed_record.name, func.name))
             let block_scope_id = .create_scope(parent_scope_id: method_scope_id, can_throw: func.can_throw, debug_name: format("method-block({}::{})", parsed_record.name, func.name))
 
-            let is_generic = not parsed_record.generic_parameters.is_empty() or not func.generic_parameters.is_empty()
+            let is_generic = not func.generic_parameters.is_empty()
 
             mut checked_function = CheckedFunction(
                 name: func.name
@@ -2421,7 +2421,7 @@ struct Typechecker {
                     )
                 }
 
-                checked_function.generics.params.push(parameter)
+                // checked_function.generics.params.push(parameter)
                 .add_type_to_scope(scope_id: method_scope_id, type_name: gen_parameter.name, type_id: type_var_type_id, span: gen_parameter.span)
             }
 
@@ -3475,16 +3475,17 @@ struct Typechecker {
         generic_substitutions: GenericInferences
         type_args: [ParsedType]
         call_span: Span
-    ) throws {
+    ) throws -> FunctionId {
         mut checked_function = .get_function(function_id)
         checked_function.generics.specializations.push(generic_arguments)
 
         mut module = .current_module()
 
-        let function_id = module.next_function_id()
         if not checked_function.parsed_function.has_value() {
-            return
+            return function_id
         }
+
+        let new_function_id = module.next_function_id()
         mut parsed_function = checked_function.to_parsed_function()
         let scope_id = .create_scope(
             parent_scope_id: checked_function.generics.base_scope_id
@@ -3532,12 +3533,15 @@ struct Typechecker {
         parsed_function.must_instantiate = true
         checked_function.is_instantiated = true
 
-        .current_function_id = Some(function_id)
+        .current_function_id = Some(new_function_id)
         .typecheck_function_predecl(parsed_function, parent_scope_id: scope_id, this_arg_type_id: this_type_id, generics: checked_function.generics)
         .typecheck_function(parsed_function, parent_scope_id: scope_id)
         .current_function_id = None
 
-        checked_function.function_scope_id = scope_id
+        mut base_scope = .get_scope(.get_scope(checked_function.generics.base_scope_id).parent!)
+        base_scope.functions.get(checked_function.name)!.push(new_function_id)
+
+        return new_function_id
     }
 
     fn typecheck_jakt_main(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
@@ -8219,7 +8223,7 @@ struct Typechecker {
                 maybe_this_type_id = .substitute_typevars_in_type(type_id: maybe_this_type_id!, generic_inferences: .generic_inferences)
             }
 
-            .typecheck_and_specialize_generic_function(
+            resolved_function_id = .typecheck_and_specialize_generic_function(
                 function_id: generic_checked_function_to_instantiate!
                 generic_arguments,
                 parent_scope_id: callee_scope_id,
