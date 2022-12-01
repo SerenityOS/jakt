@@ -1,5 +1,6 @@
 import compiler { Compiler }
 import lexer { Lexer, Token }
+import jakt::sorter { Sorter, SortType }
 
 function concat<T>(anon xs: [T], anon y: T) throws -> [T] {
     mut ys: [T] = []
@@ -704,7 +705,7 @@ struct Stage0 {
                         }
                         token = .consume()
                     }
-                    bubble_sort(collection)
+                    Sorter::sort(values: collection, sort_type: SortType::Ascending)
                     mut first = true
                     mut overflow = false
                     mut current_len = 0uz
@@ -3020,21 +3021,5 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         }
 
         return result
-    }
-}
-
-function bubble_sort(anon mut values: [String]) {
-    mut i = 0
-    while i < values.size() as! i64 - 1 {
-        mut j = 0
-        while j < (values.size() as! i64) - i - 1 {
-            if values[j] > values[j + 1] {
-                let tmp = values[j]
-                values[j] = values[j + 1]
-                values[j + 1] = tmp
-            }
-            ++j
-        }
-        ++i
     }
 }
