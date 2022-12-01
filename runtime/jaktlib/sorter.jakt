@@ -1,0 +1,78 @@
+// Copyright (c) 2022, Rob Ryan <rob@robryan.me>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+
+enum SortType {
+    Ascending
+    Descending
+}
+
+struct Sorter {
+    // FIXME: This reference is here so that produce_codegen_dependency_graph will give Sorter a dependancy on SortType
+    // Generic functions are codegened in the header so their params probably also need to be dependancies
+    sort_type: SortType
+
+    function sort<T>(mut values: [T], sorter: &function(anon item_a: &T, anon item_b: &T) -> i8) {
+        Sorter::sort_inner(values, sorter)
+    }
+
+    function sort<T>(mut values: [T], sort_type: SortType) {
+        let sorter: function(anon item_a: &T, anon item_b: &T) -> i8 = match sort_type {
+            Descending => {
+                yield function(anon item_a: &T, anon item_b: &T) -> i8 {
+                    if item_a > item_b {
+                        return -1
+                    } else if item_a < item_b {
+                        return 1
+                    } else {
+                        return 0
+                    }
+                }
+            }
+            else => {
+                yield function(anon item_a: &T, anon item_b: &T) -> i8 {
+                    if item_a > item_b {
+                        return 1
+                    } else if item_a < item_b {
+                        return -1
+                    } else {
+                        return 0
+                    }
+                }
+            }
+        }
+
+        Sorter::sort_inner(values, &sorter)
+    }
+
+    function sort_inner<T>(mut values: [T], sorter: &function(anon item_a: &T, anon item_b: &T) -> i8, low: i32 = 0, mut high: i32 = -1i32) {
+        if high == -1i32 {
+            high = values.size() as! i32 - 1
+        }
+
+        if low < high {
+            let pivot = values[high]
+            mut pi: i32 = low - 1
+
+            for j in low..high {
+                if sorter(values[j], pivot) <= 0 {
+                    pi++
+
+                    let tmp = values[j]
+                    values[j] = values[pi]
+                    values[pi] = tmp
+                }
+            }
+
+            pi++
+            if pi != high {
+                let tmp = values[high]
+                values[high] = values[pi]
+                values[pi] = tmp
+            }
+
+            Sorter::sort_inner(values, sorter, low, high: pi - 1)
+            Sorter::sort_inner(values, sorter, low: pi+1, high)
+        }
+    }
+}
