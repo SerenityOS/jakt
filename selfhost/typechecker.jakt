@@ -19,11 +19,11 @@ import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant
     CheckedEnumVariantBinding, CheckedExpression, CheckedField, CheckedFunction, CheckedGenericParameter
     CheckedMatchBody, CheckedMatchCase, CheckedNamespace, CheckedNumericConstant, CheckedParameter, CheckedProgram
-    CheckedStatement, CheckedStruct, CheckedTrait, CheckedTypeCast, CheckedUnaryOperator, CheckedVariable
-    CheckedVisibility, EnumId, FieldRecord, FunctionGenericParameter, FunctionGenerics, FunctionId
+    CheckedStatement, CheckedStringLiteral, CheckedStruct, CheckedTrait, CheckedTypeCast, CheckedUnaryOperator
+    CheckedVariable, CheckedVisibility, EnumId, FieldRecord, FunctionGenericParameter, FunctionGenerics, FunctionId
     GenericInferences, LoadedModule, MaybeResolvedScope, Module, ModuleId, NumberConstant, ResolvedNamespace
-    SafetyMode, Scope, ScopeId, StructId, StructOrEnumId, TraitId, Type, TypeId, Value, VarId, builtin
-    never_type_id, unknown_type_id, void_type_id
+    SafetyMode, Scope, ScopeId, StringLiteral, StructId, StructOrEnumId, TraitId, Type, TypeId, Value, VarId
+    builtin, never_type_id, unknown_type_id, void_type_id
 }
 import types
 import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo }
@@ -5098,7 +5098,13 @@ struct Typechecker {
             type_hint = Some(.get_function(.current_function_id!).return_type_id)
         }
 
-        let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(condition: expr!, acc: None, then_block: None, else_statement: None, span)
+        let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
+            condition: expr!
+            acc: None
+            then_block: None
+            else_statement: None
+            span
+        )
         let checked_expr = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint, span)
 
         return CheckedStatement::Return(val: checked_expr, span)
@@ -5585,7 +5591,23 @@ struct Typechecker {
         return expr
     }
 
-    function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression => match expr {
+    function strip_optional_from_type(mut this, anon type_id: TypeId) throws -> TypeId => match .get_type(type_id) {
+        GenericInstance(id, args) => {
+            if id.equals(.find_struct_in_prelude(name: "Optional")) {
+                return args[0]
+            }
+            yield type_id
+        }
+        else => type_id
+    }
+
+    function typecheck_expression(
+        mut this
+        anon expr: ParsedExpression
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        type_hint: TypeId?
+    ) throws -> CheckedExpression => match expr {
         IndexedStruct(expr, field_name, span, is_optional) => .typecheck_indexed_struct(expr, field_name, scope_id, is_optional, safety_mode, span)
         Boolean(val, span) => {
             .unify_with_type(found_type: builtin(BuiltinType::Bool), expected_type: type_hint, rhs_span: span)
@@ -5623,8 +5645,51 @@ struct Typechecker {
                 .dump_try_hint(span)
             }
 
-            .unify_with_type(found_type: builtin(BuiltinType::JaktString), expected_type: type_hint, rhs_span: span)
-            yield CheckedExpression::QuotedString(val, span)
+            yield match type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
+                true => {
+                    mut type_id = .strip_optional_from_type(.generic_inferences.map(type_hint!))
+                    if not type_id.equals(builtin(BuiltinType::JaktString)) and .get_type(type_id).is_concrete() {
+                        let from_string_literal_trait_id = .find_trait_in_scope(scope_id, name: "FromStringLiteral")!
+                        let implemented_from_string_literal_traits = .find_all_implementations_of_trait(
+                            type_id
+                            trait_id: from_string_literal_trait_id
+                        )
+                        if implemented_from_string_literal_traits.is_empty() {
+                            .error_with_hint(
+                                format("Type {} cannot be used as an overloaded string literal type", .type_name(type_id)),
+                                span,
+                                format("Consider implementing the FromStringLiteral trait for {}", .type_name(type_id)),
+                                span
+                            )
+                            type_id = builtin(BuiltinType::JaktString)
+                        }
+                    } else if not .get_type(type_id).is_concrete() {
+                        type_id = builtin(BuiltinType::JaktString)
+                    }
+
+                    .unify(
+                        lhs: type_hint!
+                        lhs_span: span
+                        rhs: type_id
+                        rhs_span: span
+                    )
+
+                    yield CheckedExpression::QuotedString(
+                        val: CheckedStringLiteral(
+                            value: StringLiteral::Static(val)
+                            type_id
+                        )
+                        span
+                    )
+                }
+                else => CheckedExpression::QuotedString(
+                    val: CheckedStringLiteral(
+                        value: StringLiteral::Static(val)
+                        type_id: builtin(BuiltinType::JaktString)
+                    )
+                    span
+                )
+            }
         }
         Call(call, span) => {
             yield .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: false)

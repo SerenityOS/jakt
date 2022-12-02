@@ -12,7 +12,7 @@ import typechecker {
     Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId,
     CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id, never_type_id, builtin,
     CheckedVariable, VarId }
-import utility { panic, todo, join, prepend_to_each, Span }
+import utility { Span, interpret_escapes, join, panic, prepend_to_each, todo }
 import compiler { Compiler }
 
 enum AllowedControlExits {
@@ -1513,8 +1513,12 @@ struct CodeGenerator {
         OptionalSome(expr, type_id) => "static_cast<" + .codegen_type(type_id) + ">(" + .codegen_expression(expr) + ")"
         ForcedUnwrap(expr, type_id) => "(" + .codegen_expression(expr) + ".value())"
         QuotedString(val) => {
-            let escaped_value = val.replace(replace: "\n", with: "\\n")
-            yield "String(\"" + escaped_value + "\")"
+            let original_string = val.to_string()
+            let escaped_value = original_string.replace(replace: "\n", with: "\\n")
+            yield match val.type_id.equals(builtin(BuiltinType::JaktString)) {
+                true => "Jakt::String(\"" + escaped_value + "\")"
+                else => format("{}::from_string_literal(\"{}\"sv)", .codegen_type(val.type_id), escaped_value)
+            }
         }
         ByteConstant(val) => "'" + val + "'"
         CharacterConstant(val) => "'" + val + "'"
@@ -1526,7 +1530,7 @@ struct CodeGenerator {
         IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedTuple(expr, index, is_optional) => match is_optional {
             true => format("(({}).map([](auto& _value) {{ return _value.template get<{}>(); }}))", .codegen_expression(expr), index)
-            else => format("(({}).get<{}>())", .codegen_expression(expr), index)
+            else => format("(({}).template get<{}>())", .codegen_expression(expr), index)
         }
         IndexedStruct(expr, index, is_optional) => {
             mut output = ""
