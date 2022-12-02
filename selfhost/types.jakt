@@ -245,6 +245,11 @@ boxed enum Type {
     Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
     Self
 
+    function is_concrete(this) -> bool => match this {
+        TypeVariable | Self | Unknown => false
+        else => true
+    }
+
     function specificity(this, program: CheckedProgram, base_specificity: i64 = 1<<31) => match this {
         TypeVariable => 0
         GenericInstance(args) => {
@@ -1176,6 +1181,21 @@ enum CheckedNumericConstant {
     }
 }
 
+enum StringLiteral {
+    Static(String)
+
+    function to_string(this) -> String => match this {
+        Static(value) => value
+    }
+}
+
+struct CheckedStringLiteral {
+    value: StringLiteral
+    type_id: TypeId
+
+    function to_string(this) -> String => .value.to_string()
+}
+
 enum CheckedTypeCast {
     Fallible(TypeId)
     Infallible(TypeId)
@@ -1219,7 +1239,7 @@ enum CheckedMatchCase {
 boxed enum CheckedExpression {
     Boolean(val: bool, span: Span)
     NumericConstant(val: CheckedNumericConstant, span: Span, type_id: TypeId)
-    QuotedString(val: String, span: Span)
+    QuotedString(val: CheckedStringLiteral, span: Span)
     ByteConstant(val: String, span: Span)
     CharacterConstant(val: String, span: Span)
     UnaryOp(expr: CheckedExpression, op: CheckedUnaryOperator, span: Span, type_id: TypeId)
@@ -1301,7 +1321,7 @@ boxed enum CheckedExpression {
 
     function type(this) -> TypeId => match this {
         Boolean => builtin(BuiltinType::Bool)
-        QuotedString => builtin(BuiltinType::JaktString)
+        QuotedString(val) => val.type_id
         ByteConstant => builtin(BuiltinType::U8)
         CharacterConstant => builtin(BuiltinType::CChar)
         EnumVariantArg(arg) => arg.type_id
@@ -2007,7 +2027,7 @@ class CheckedProgram {
                     )
                     replacement_params.push(new_param)
                 }
-                
+
                 let new_function = CheckedFunction(
                     name: previous_function.name
                     name_span: previous_function.name_span
@@ -2056,6 +2076,7 @@ boxed enum ValueImpl {
     F64(f64)
     USize(usize)
     JaktString(String)
+    StringView(String)
     CChar(c_char)
     CInt(c_int)
     Struct(fields: [Value], struct_id: StructId, constructor: FunctionId?)
@@ -2085,6 +2106,7 @@ boxed enum ValueImpl {
         F64(x) => ValueImpl::F64(x)
         USize(x) => ValueImpl::USize(x)
         JaktString(x) => ValueImpl::JaktString(x)
+        StringView(x) => ValueImpl::StringView(x)
         CChar(x) => ValueImpl::CChar(x)
         CInt(x) => ValueImpl::CInt(x)
         Struct(fields, struct_id, constructor) => {
@@ -2155,6 +2177,7 @@ boxed enum ValueImpl {
         F64(x) => match other { F64(y) => y == x else => false }
         USize(x) => match other { USize(y) => y == x else => false }
         JaktString(x) => match other { JaktString(y) => y == x else => false }
+        StringView(x) => match other { StringView(y) => y == x else => false }
         CChar(x) => match other { CChar(y) => y == x else => false }
         CInt(x) => match other { CInt(y) => y == x else => false }
         else => false
@@ -2181,6 +2204,7 @@ struct Value {
         F64 => "f64"
         USize => "usize"
         JaktString => "String"
+        StringView => "StringView"
         CChar => "c_char"
         CInt => "c_int"
         Struct => "struct <T>"
@@ -2195,6 +2219,7 @@ struct Value {
         JaktTuple => "Tuple"
         Function => "Function"
     }
+
     function cast(this, anon expected: Value, span: Span) throws -> Value => match .impl {
         U8(value) => match expected.impl {
             U16 => Value(impl: ValueImpl::U16(value as! u16), span: span)
@@ -2207,7 +2232,7 @@ struct Value {
             U32 => Value(impl: ValueImpl::U32(value as! u32), span: span)
             U64 => Value(impl: ValueImpl::U64(value as! u64), span: span)
             USize => Value(impl: ValueImpl::USize(value as! usize), span: span)
-            else => this 
+            else => this
         }
         U32(value) => match expected.impl {
             U64 => Value(impl: ValueImpl::U64(value as! u64), span: span)

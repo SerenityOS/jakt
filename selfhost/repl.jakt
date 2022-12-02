@@ -1,4 +1,7 @@
-import typechecker { Typechecker, Interpreter, LoadedModule, ModuleId, ScopeId, TypeId, CheckedProgram, SafetyMode, InterpreterScope, CheckedUnaryOperator, CheckedExpression, GenericInferences }
+import typechecker {
+    BuiltinType, CheckedExpression, CheckedProgram, CheckedUnaryOperator, GenericInferences, Interpreter
+    InterpreterScope, LoadedModule, ModuleId, SafetyMode, ScopeId, TypeId, Typechecker, builtin
+}
 import compiler { Compiler, FileId }
 import lexer { Lexer }
 import parser { Parser }
@@ -94,7 +97,10 @@ function serialize_ast_node(anon node: CheckedExpression) throws -> String => ma
         F64(value) => format("{}f64", value)
         USize(value) => format("{}uz", value)
     }
-    QuotedString(val) => format("\"{}\"", val)
+    QuotedString(val) => match val.type_id.equals(builtin(BuiltinType::JaktString)) {
+        true => format("\"{}\"", val.to_string())
+        else => format("(overloaded) \"{}\"", val.to_string())
+    }
     ByteConstant(val) => format("b'{}'", val)
     CharacterConstant(val) => format("'{}'", val)
     UnaryOp(expr, op) => serialize_unary_operation(op, serialize_ast_node(expr))

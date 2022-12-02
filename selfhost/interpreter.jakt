@@ -1,9 +1,9 @@
 import types {
-    BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedExpression, CheckedEnum,
-    CheckedMatchBody, CheckedNumericConstant, CheckedProgram, CheckedStatement, EnumId,
-    BinaryOperator, CheckedEnumVariant, CheckedVariable, CheckedVisibility, CheckedParameter,
-    EnumVariantPatternArgument, FunctionId, ModuleId, ResolvedNamespace, ScopeId, Span, StructId,
-    GenericInferences, Scope, Type, TypeId, VarId, Value, ValueImpl, builtin, unknown_type_id,
+    BinaryOperator, BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedEnum, CheckedEnumVariant
+    CheckedExpression, CheckedMatchBody, CheckedNumericConstant, CheckedParameter, CheckedProgram, CheckedStatement
+    CheckedStringLiteral, CheckedVariable, CheckedVisibility, EnumId, EnumVariantPatternArgument, FunctionId
+    GenericInferences, ModuleId, ResolvedNamespace, Scope, ScopeId, Span, StringLiteral, StructId, Type, TypeId
+    Value, ValueImpl, VarId, builtin, unknown_type_id
 }
 import utility { escape_for_quotes, interpret_escapes, panic }
 import error { JaktError }
@@ -137,7 +137,21 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
     F32(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F32(x), span: this_value.span, type_id: builtin(BuiltinType::F32))
     F64(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F64(x), span: this_value.span, type_id: builtin(BuiltinType::F64))
     USize(x) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(x as! u64), span: this_value.span, type_id: builtin(BuiltinType::Usize))
-    JaktString(x) => CheckedExpression::QuotedString(val: escape_for_quotes(x), span: this_value.span)
+    JaktString(x) => CheckedExpression::QuotedString(
+        val: CheckedStringLiteral(
+            value: StringLiteral::Static(escape_for_quotes(x))
+            type_id: builtin(BuiltinType::JaktString)
+        )
+        span: this_value.span
+    )
+    // FIXME: Translate this to an actual StringView lel
+    StringView(x) => CheckedExpression::QuotedString(
+        val: CheckedStringLiteral(
+            value: StringLiteral::Static(escape_for_quotes(x))
+            type_id: builtin(BuiltinType::JaktString)
+        )
+        span: this_value.span
+    )
     CChar(x) => CheckedExpression::CharacterConstant(val: format("{}", x), span: this_value.span)
     CInt(x)  => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(x as! i32), span: this_value.span, type_id: builtin(BuiltinType::CInt))
     OptionalNone => CheckedExpression::OptionalNone(span: this_value.span, type_id: unknown_type_id())
@@ -2519,7 +2533,15 @@ class Interpreter {
         }
     }
 
-    public function execute(mut this, anon function_to_run_id: FunctionId, mut namespace_: [ResolvedNamespace]?, this_argument: Value?, arguments: [Value], call_span: Span, invocation_scope: InterpreterScope? = None) throws -> ExecutionResult {
+    public function execute(
+        mut this
+        anon function_to_run_id: FunctionId
+        mut namespace_: [ResolvedNamespace]?
+        this_argument: Value?
+        arguments: [Value]
+        call_span: Span
+        invocation_scope: InterpreterScope? = None
+    ) throws -> ExecutionResult {
         let function_to_run = .program.get_function(function_to_run_id)
         .enter_span(call_span)
         let old_function_id = .current_function_id
@@ -2571,10 +2593,10 @@ class Interpreter {
         }
 
         if function_to_run.params.size() - this_offset != arguments.size() {
-            .compiler.errors.push(JaktError::Message(
+            .error(
                 message: format("Function called with wrong number of arguments, expected {} but got {}", function_to_run.params.size(), arguments.size()),
                 span: call_span
-            ));
+            )
             throw Error::from_errno(InterpretError::MismatchingArguments as! i32)
         }
 
@@ -5693,7 +5715,53 @@ class Interpreter {
             F32(x) => Value(impl: ValueImpl::F32(x), span: span)
             F64(x) => Value(impl: ValueImpl::F64(x), span: span)
         })
-        QuotedString(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(interpret_escapes(val)), span: span))
+        QuotedString(val, span) => match val.type_id.equals(builtin(BuiltinType::JaktString)) {
+            true => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(interpret_escapes(val.to_string())), span: span))
+            else => {
+                let function_id = match .program.get_type(val.type_id) {
+                    Struct(struct_id) | GenericInstance(id: struct_id) => {
+                        let scope = .program.get_scope(.program.get_struct(struct_id).scope_id)
+                        let overloads = scope.functions.get("from_string_literal")
+                        if not overloads.has_value() {
+                            panic(format("Failed to find a from_string_literal overload in {}", .program.type_name(val.type_id)))
+                        }
+                        // For now, pick the first.
+                        // FIXME: Pick the correct overload
+                        yield overloads!.first()!
+                    }
+                    Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
+                        let scope = .program.get_scope(.program.get_enum(enum_id).scope_id)
+                        let overloads = scope.functions.get("from_string_literal")
+                        if not overloads.has_value() {
+                            panic("Failed to find a from_string_literal overload")
+                        }
+                        // For now, pick the first.
+                        // FIXME: Pick the correct overload
+                        yield overloads!.first()!
+                    }
+                    else => {
+                        .error(format("Invalid type {} for string literal", .program.get_type(val.type_id)), span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                }
+
+                let ns: [ResolvedNamespace] = []
+                yield match .execute(
+                    function_to_run_id: function_id
+                    namespace_: Some(ns)
+                    this_argument: None
+                    arguments: [Value(
+                        impl: ValueImpl::JaktString(interpret_escapes(val.to_string()))
+                        span: span
+                    )]
+                    call_span: span
+                    invocation_scope: scope
+                ) {
+                    Return(value) => StatementResult::JustValue(value)
+                    Throw(value) => StatementResult::Throw(value)
+                }
+            }
+        }
         CharacterConstant(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::CChar(val.byte_at(0) as! c_char), span: span))
         JaktArray(vals, repeat, span, type_id) => match repeat.has_value() {
             true => {
