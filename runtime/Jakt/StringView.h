@@ -64,6 +64,7 @@ public:
     [[nodiscard]] ReadonlyBytes bytes() const { return { m_characters, m_length }; }
 
     constexpr char const& operator[](size_t index) const { return m_characters[index]; }
+    constexpr char const& byte_at(size_t index) const { return m_characters[index]; }
 
     using ConstIterator = SimpleIterator<const StringView, char const>;
 
