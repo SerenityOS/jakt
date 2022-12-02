@@ -121,9 +121,18 @@ extern struct Range<T> {
     function exclusive(this) -> Range<T>
 }
 
+extern struct StringView {
+    function to_string(this) throws -> String
+    function length(this) -> usize
+    function byte_at(this, anon index: usize) -> u8
+}
+
 extern struct Error {
     function code(this) -> i32
+    function string(this) -> StringView
+
     function from_errno(anon errno: i32) -> Error
+    function from_string_literal(anon string: StringView) -> Error
 }
 
 extern class File {
