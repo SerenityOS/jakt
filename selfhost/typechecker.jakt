@@ -36,6 +36,11 @@ enum FunctionMatchResult {
     MatchError(errors: [JaktError])
 }
 
+struct TraitImplementationDescriptor {
+    trait_id: TraitId
+    implemented_type_args: [TypeId]
+}
+
 struct Typechecker {
     compiler: Compiler
     program: CheckedProgram
@@ -423,6 +428,41 @@ struct Typechecker {
                 current = scope.parent.value()
             } else {
                 break
+            }
+        }
+
+        return None
+    }
+
+    function find_singular_trait_implementation(mut this, type_id: TypeId, trait_name: String, scope_id: ScopeId, span: Span) throws -> TraitImplementationDescriptor? {
+        let trait_id = .find_trait_in_scope(scope_id, name: trait_name)
+        if not trait_id.has_value() {
+            return None
+        }
+
+        let trait_impls = .find_all_implementations_of_trait(type_id, trait_id: trait_id!)
+        if trait_impls.is_empty() {
+            return None
+        }
+
+        if trait_impls.size() > 1 {
+            .error(
+                message: format("type ‘{}’ implements trait ‘{}’ more than once, but a singular implementation is allowed", .type_name(type_id), trait_name)
+                span
+            )
+        }
+
+        return TraitImplementationDescriptor(
+            trait_id: trait_id!
+            implemented_type_args: trait_impls[0]
+        )
+    }
+
+    function find_any_singular_trait_implementation(mut this, type_id: TypeId, trait_names: [String], scope_id: ScopeId, span: Span) throws -> TraitImplementationDescriptor? {
+        for trait_name in trait_names {
+            let maybe_impl = .find_singular_trait_implementation(type_id, trait_name, scope_id, span)
+            if maybe_impl.has_value() {
+                return maybe_impl
             }
         }
 
@@ -4503,32 +4543,21 @@ struct Typechecker {
 
         mut expression_to_iterate = range
 
-        let iterable_trait_id = .find_trait_in_scope(scope_id, name: "Iterable")!
-        let throwing_iterable_trait_id = .find_trait_in_scope(scope_id, name: "ThrowingIterable")!
-
-        let implemented_iterable_trait_args = add_arrays(
-            .find_all_implementations_of_trait(
-                type_id: iterable_expr.type()
-                trait_id: iterable_trait_id
-            ), .find_all_implementations_of_trait(
-                type_id: iterable_expr.type()
-                trait_id: throwing_iterable_trait_id
-            )
+        let iterable_trait_implementation = .find_any_singular_trait_implementation(
+            type_id: iterable_expr.type()
+            trait_names: ["Iterable", "ThrowingIterable"]
+            scope_id
+            span: iterable_expr.span()
         )
-        if implemented_iterable_trait_args.is_empty() {
-            let into_iterator_trait_id = .find_trait_in_scope(scope_id, name: "IntoIterator")!
-            let into_throwing_iterator_trait_id = .find_trait_in_scope(scope_id, name: "IntoThrowingIterator")!
-
-            let implemented_into_iterator_trait_id = add_arrays(
-                .find_all_implementations_of_trait(
-                    type_id: iterable_expr.type()
-                    trait_id: into_iterator_trait_id
-                ), .find_all_implementations_of_trait(
-                    type_id: iterable_expr.type()
-                    trait_id: into_throwing_iterator_trait_id
-                )
+        if not iterable_trait_implementation.has_value() {
+            let into_iterator_trait_implementation = .find_any_singular_trait_implementation(
+                type_id: iterable_expr.type()
+                trait_names: ["IntoIterator", "IntoThrowingIterator"]
+                scope_id
+                span: iterable_expr.span()
             )
-            if implemented_into_iterator_trait_id.is_empty() {
+
+            if not into_iterator_trait_implementation.has_value() {
                 .error_with_hint(
                     "Iterable expression is not iterable", range.span(),
                     format(
@@ -4536,23 +4565,8 @@ struct Typechecker {
                         .type_name(iterable_expr.type())
                     ), range.span()
                 )
-            } else if implemented_into_iterator_trait_id.size() != 1 {
-                mut type_names = ""
-                mut first = true
-                for args in implemented_into_iterator_trait_id {
-                    if first {
-                        first = false
-                    } else {
-                        type_names += ", "
-                    }
-                    type_names += format("‘IntoIterator<{}>’", .type_name(args[0]))
-                }
-                .error_with_hint(
-                    "Iterable expression implements multiple versions of the IntoIterator trait", range.span(),
-                    format("This expression's type implements {}, but only one is allowed", type_names), range.span(),
-                )
             } else {
-                resolved_iterable_result_type = implemented_into_iterator_trait_id[0][0]
+                resolved_iterable_result_type = into_iterator_trait_implementation!.implemented_type_args[0]
                 // We need to call the `.iterator()` method on the iterable
                 expression_to_iterate = ParsedExpression::MethodCall(
                     expr: range
@@ -4567,23 +4581,7 @@ struct Typechecker {
                 )
             }
         } else {
-            if implemented_iterable_trait_args.size() != 1 {
-                mut type_names = ""
-                mut first = true
-                for args in implemented_iterable_trait_args {
-                    if first {
-                        first = false
-                    } else {
-                        type_names += ", "
-                    }
-                    type_names += format("‘Iterable<{}>’", .type_name(args[0]))
-                }
-                .error_with_hint(
-                    "Iterable expression implements multiple versions of the Iterable trait", range.span(),
-                    format("This expression's type implements {}, but only one is allowed", type_names), range.span(),
-                )
-            }
-            resolved_iterable_result_type = implemented_iterable_trait_args[0][0]
+            resolved_iterable_result_type = iterable_trait_implementation!.implemented_type_args[0]
         }
 
         // let iterable_expr = .typecheck_expression(range, scope_id, safety_mode, type_hint: None)
@@ -5649,12 +5647,8 @@ struct Typechecker {
                 true => {
                     mut type_id = .strip_optional_from_type(.generic_inferences.map(type_hint!))
                     if not type_id.equals(builtin(BuiltinType::JaktString)) and .get_type(type_id).is_concrete() {
-                        let from_string_literal_trait_id = .find_trait_in_scope(scope_id, name: "FromStringLiteral")!
-                        let implemented_from_string_literal_traits = .find_all_implementations_of_trait(
-                            type_id
-                            trait_id: from_string_literal_trait_id
-                        )
-                        if implemented_from_string_literal_traits.is_empty() {
+                        let trait_implementation = .find_any_singular_trait_implementation(type_id, trait_names: ["FromStringLiteral", "ThrowingFromStringLiteral"], scope_id, span)
+                        if not trait_implementation.has_value() {
                             .error_with_hint(
                                 format("Type {} cannot be used as an overloaded string literal type", .type_name(type_id)),
                                 span,
