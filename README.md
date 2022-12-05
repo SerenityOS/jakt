@@ -187,6 +187,32 @@ foo.set(9)
 
 To reduce repetitive `this.` spam in methods, the shorthand `.foo` expands to `this.foo`.
 
+## Strings
+
+Strings are provided in the language mainly as the type `String`, which is a reference-counted (and heap-allocated) string type.
+String literals are written with double quotes, like `"Hello, world!"`.
+
+### Overloaded string literals
+
+String literals are of type `String` by default; however, they can be used to implicitly construct any type that implements the `FromStringLiteral` (or `ThrowingFromStringLiteral`) trait. In the language prelude, currently only `StringView` implements this trait, which can be used only to refer to strings with a static lifetime:
+```jakt
+let foo: StringView = "foo" // This string is not allocated on the heap, and foo is only a fat pointer to the static string.
+```
+
+Overloaded string literals can be used by providing a type hint, whether by explicit type annotations, or by passing the literal to a function that expects a specific type:
+```jakt
+struct NotString implements(FromStringLiteral) {
+    function from_string_literal(anon string: StringView) -> NotString => NotString()
+}
+
+function test(x: NotString) {}
+
+function main() {
+    let foo: NotString = "foo"
+    test(x: "Some string literal")
+}
+```
+
 ## Arrays
 
 Dynamic arrays are provided via a built-in `Array<T>` type. They can grow and shrink at runtime.
