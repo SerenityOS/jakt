@@ -1517,7 +1517,10 @@ struct CodeGenerator {
             let escaped_value = original_string.replace(replace: "\n", with: "\\n")
             yield match val.type_id.equals(builtin(BuiltinType::JaktString)) {
                 true => "Jakt::String(\"" + escaped_value + "\")"
-                else => format("{}::from_string_literal(\"{}\"sv)", .codegen_type(val.type_id), escaped_value)
+                else => {
+                    let error_handler = match val.may_throw { true => "TRY", else => "" }
+                    yield format("{}({}::from_string_literal(\"{}\"sv))", error_handler, .codegen_type(val.type_id), escaped_value)
+                }
             }
         }
         ByteConstant(val) => "'" + val + "'"
