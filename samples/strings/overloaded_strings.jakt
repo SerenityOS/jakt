@@ -1,0 +1,42 @@
+/// Expect:
+/// - output: "1024\n42\nbest string ever\n"
+
+struct ActuallyANumber implements(FromStringLiteral) {
+    value: i32
+
+    function from_string_literal(anon str: StringView) -> ActuallyANumber {
+        mut value = 0i32
+        for i in 0..str.length() {
+            value = value * 10 + (str.byte_at(i) - b'0') as! i32
+        }
+
+        return ActuallyANumber(value)
+    }
+}
+
+struct BadString implements(ThrowingFromStringLiteral) {
+    function from_string_literal(anon str: StringView) throws -> BadString {
+        throw Error::from_string_literal(str)
+    }
+}
+
+function value_of(anon x: ActuallyANumber) -> i32 {
+    return x.value
+}
+
+function is_a_good_string(anon x: BadString) -> bool {
+    return true
+}
+
+function main() {
+    let x: ActuallyANumber = "1024"
+    println("{}", x.value)
+
+    println("{}", value_of("42"))
+
+    try {
+        println("{}", is_a_good_string("best string ever"))
+    } catch e {
+        println("{}", e.string())
+    }
+}
