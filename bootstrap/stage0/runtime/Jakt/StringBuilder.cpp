@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <Builtins/Array.h>
 #include <Jakt/Checked.h>
 #include <Jakt/StdLibExtras.h>
 #include <Jakt/StringBuilder.h>

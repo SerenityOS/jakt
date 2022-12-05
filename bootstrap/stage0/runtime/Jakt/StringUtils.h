@@ -9,7 +9,6 @@
 
 #include <Jakt/Concepts.h>
 #include <Jakt/Forward.h>
-#include <Builtins/Array.h>
 
 namespace Jakt {
 

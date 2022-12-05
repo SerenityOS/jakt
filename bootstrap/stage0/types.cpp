@@ -87,6 +87,41 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("values: "));TRY(builder.appendff("{}", values));
 }
 TRY(builder.append(")"));return builder.to_string(); }
+ErrorOr<void> types::GenericInferences::set_all(JaktInternal::Array<types::CheckedGenericParameter> const keys,JaktInternal::Array<types::TypeId> const values) {
+{
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((keys).size()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+String const key = TRY((((((((keys)[i])).type_id)).to_string())));
+String const value = TRY((((((values)[i])).to_string())));
+TRY((((*this).set(key,value))));
+}
+
+}
+}
+
+}
+return {};
+}
+
+String types::GenericInferences::map_name(String const type) const {
+{
+JaktInternal::Optional<String> mapped = ((((*this).values)).get(type));
+JaktInternal::Optional<String> final_mapped_result = mapped;
+while (((mapped).has_value())){
+(final_mapped_result = mapped);
+(mapped = ((((*this).values)).get((mapped.value()))));
+}
+return (final_mapped_result.value_or_lazy_evaluated([&] { return type; }));
+}
+}
+
 types::GenericInferences::GenericInferences(JaktInternal::Dictionary<String,String> a_values) :values(a_values){}
 
 JaktInternal::Dictionary<String,String> types::GenericInferences::iterator() const {
@@ -101,15 +136,9 @@ void types::GenericInferences::restore(JaktInternal::Dictionary<String,String> c
 }
 }
 
-String types::GenericInferences::map(String const type) const {
+ErrorOr<types::TypeId> types::GenericInferences::map(types::TypeId const type_id) const {
 {
-JaktInternal::Optional<String> mapped = ((((*this).values)).get(type));
-JaktInternal::Optional<String> final_mapped_result = mapped;
-while (((mapped).has_value())){
-(final_mapped_result = mapped);
-(mapped = ((((*this).values)).get((mapped.value()))));
-}
-return (final_mapped_result.value_or_lazy_evaluated([&] { return type; }));
+return (TRY((types::TypeId::TypeId::from_string(((*this).map_name(TRY((((type_id).to_string())))))))));
 }
 }
 
@@ -154,7 +183,7 @@ if ((key == value)){
 outln(String("Warning: Generic parameter {} is being bound to itself"),key);
 abort();
 }
-String const mapped_value = ((*this).map(value));
+String const mapped_value = ((*this).map_name(value));
 if ((key == mapped_value)){
 return {};
 }
@@ -914,6 +943,10 @@ case 26: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Trait>();
 types::TraitId const& id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(((((*this).get_trait(id)))->name));
+};/*case end*/
+case 30: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Self>();
+return JaktInternal::ExplicitValue(String("Self"));
 };/*case end*/
 case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::Function>();JaktInternal::Array<types::TypeId> const& params = __jakt_match_value.params;
@@ -2228,10 +2261,11 @@ types::CheckedEnumVariantBinding::CheckedEnumVariantBinding(JaktInternal::Option
 ErrorOr<String> types::CheckedField::debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedField("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("variable_id: "));TRY(builder.appendff("{}, ", variable_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("default_value: "));TRY(builder.appendff("{}", default_value));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("default_value: "));TRY(builder.appendff("{}, ", default_value));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("default_value_expression: "));TRY(builder.appendff("{}", default_value_expression));
 }
 TRY(builder.append(")"));return builder.to_string(); }
-types::CheckedField::CheckedField(types::VarId a_variable_id, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> a_default_value) :variable_id(a_variable_id), default_value(a_default_value){}
+types::CheckedField::CheckedField(types::VarId a_variable_id, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> a_default_value, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_default_value_expression) :variable_id(a_variable_id), default_value(a_default_value), default_value_expression(a_default_value_expression){}
 
 ErrorOr<String> types::SafetyMode::debug_description() const {
 auto builder = TRY(StringBuilder::create());
@@ -2444,6 +2478,10 @@ TRY(builder.appendff("pseudo_function_id: {}", that.pseudo_function_id));
 }
 TRY(builder.append(")"));
 break;}
+case 30 /* Self */: {
+[[maybe_unused]] auto const& that = this->template get<Type::Self>();
+TRY(builder.append("Type::Self"));
+break;}
 }
 return builder.to_string();
 }
@@ -2495,6 +2533,9 @@ else if ((((*this).index() == 14 /* CChar */) && ((rhs)->index() == 14 /* CChar 
 return (true);
 }
 else if ((((*this).index() == 15 /* CInt */) && ((rhs)->index() == 15 /* CInt */))){
+return (true);
+}
+else if ((((*this).index() == 30 /* Self */) && ((rhs)->index() == 30 /* Self */))){
 return (true);
 }
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, bool>{
@@ -3227,6 +3268,10 @@ return JaktInternal::ExplicitValue(String("MutableReference"));
 };/*case end*/
 case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::Function>();return JaktInternal::ExplicitValue(String("Function"));
+};/*case end*/
+case 30: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Self>();
+return JaktInternal::ExplicitValue(String("Self"));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()

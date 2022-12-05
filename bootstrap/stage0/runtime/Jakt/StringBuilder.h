@@ -6,16 +6,15 @@
 
 #pragma once
 
-#include <Builtins/Array.h>
 #include <Builtins/Dictionary.h>
 #include <Builtins/Set.h>
 #include <Jakt/Format.h>
 #include <Jakt/Forward.h>
+#include <Jakt/PrettyPrint.h>
 #include <Jakt/String.h>
 #include <Jakt/StringView.h>
 #include <Jakt/Tuple.h>
 #include <stdarg.h>
-#include <Jakt/PrettyPrint.h>
 
 namespace Jakt {
 
