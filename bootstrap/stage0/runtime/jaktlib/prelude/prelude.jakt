@@ -1,1 +1,2 @@
 import jakt::prelude::iteration { IntoIterator, IntoThrowingIterator, Iterable, ThrowingIterable }
+import jakt::prelude::string { FromStringLiteral, ThrowingFromStringLiteral }

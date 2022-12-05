@@ -49,7 +49,7 @@ return (((c >= '0') && (c <= '9')));
 
 void todo(String const message) {
 {
-warnln(String("TODO: {}"),message);
+warnln(Jakt::String("TODO: {}"),message);
 abort();
 }
 }
@@ -187,7 +187,7 @@ return {};
 
 String join(JaktInternal::Array<String> const strings,String const separator) {
 {
-String output = String("");
+String output = Jakt::String("");
 size_t i = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<String> _magic = ((strings).iterator());
@@ -226,7 +226,7 @@ return (((((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f'))) || ((c >= 'A
 
 [[noreturn]] void panic(String const message) {
 {
-warnln(String("internal error: {}"),message);
+warnln(Jakt::String("internal error: {}"),message);
 abort();
 }
 }
@@ -248,19 +248,19 @@ JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::Expl
 auto __jakt_enum_value = (c);
 if (__jakt_enum_value == '"') {
 {
-TRY((((builder).append_string(String("\\\"")))));
+TRY((((builder).append_string(Jakt::String("\\\"")))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == '\\') {
 {
-TRY((((builder).append_string(String("\\\\")))));
+TRY((((builder).append_string(Jakt::String("\\\\")))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == '\n') {
 {
-TRY((((builder).append_string(String("\\n")))));
+TRY((((builder).append_string(Jakt::String("\\n")))));
 }
 return JaktInternal::ExplicitValue<void>();
 }

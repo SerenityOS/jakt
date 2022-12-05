@@ -3,7 +3,7 @@ namespace Jakt {
 namespace unknown_fs {
 ErrorOr<void> make_directory(String const path) {
 {
-warnln(String("NOT IMPLEMENTED: make_directory {}"),path);
+warnln(Jakt::String("NOT IMPLEMENTED: make_directory {}"),path);
 return Error::from_errno(static_cast<i32>(38));
 }
 return {};
@@ -11,7 +11,7 @@ return {};
 
 ErrorOr<String> current_directory() {
 {
-warnln(String("NOT IMPLEMENTED: current_directory"));
+warnln(Jakt::String("NOT IMPLEMENTED: current_directory"));
 return Error::from_errno(static_cast<i32>(38));
 }
 }
@@ -22,21 +22,21 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(builder.append(")"));return builder.to_string(); }
 ErrorOr<JaktInternal::Optional<NonnullRefPtr<unknown_fs::DirectoryIterator>>> unknown_fs::DirectoryIterator::from_path(path::Path const path) {
 {
-warnln(String("NOT IMPLEMENTED: DirectoryIterator::from_path(path: {})"),path);
+warnln(Jakt::String("NOT IMPLEMENTED: DirectoryIterator::from_path(path: {})"),path);
 return Error::from_errno(static_cast<i32>(38));
 }
 }
 
 ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<path::Path,bool>>> unknown_fs::DirectoryIterator::next() {
 {
-warnln(String("NOT IMPLEMENTED: DirectoryIterator::next()"));
+warnln(Jakt::String("NOT IMPLEMENTED: DirectoryIterator::next()"));
 return Error::from_errno(static_cast<i32>(38));
 }
 }
 
 ErrorOr<path::Path> unknown_fs::DirectoryIterator::get_path() const {
 {
-warnln(String("NOT IMPLEMENTED: DirectoryIterator::get_path()"));
+warnln(Jakt::String("NOT IMPLEMENTED: DirectoryIterator::get_path()"));
 return Error::from_errno(static_cast<i32>(38));
 }
 }

@@ -36,21 +36,21 @@ auto&& __jakt_match_variant = ((*this).token);
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::SingleQuotedString>();String const& quote = __jakt_match_value.quote;
-return JaktInternal::ExplicitValue(TRY((String::formatted(String("'{}'"),quote))));
+return JaktInternal::ExplicitValue(TRY((String::formatted(Jakt::String("'{}'"),quote))));
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::SingleQuotedByteString>();String const& quote = __jakt_match_value.quote;
-return JaktInternal::ExplicitValue(TRY((String::formatted(String("b'{}'"),quote))));
+return JaktInternal::ExplicitValue(TRY((String::formatted(Jakt::String("b'{}'"),quote))));
 };/*case end*/
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::QuotedString>();String const& quote = __jakt_match_value.quote;
-return JaktInternal::ExplicitValue(TRY((String::formatted(String("\"{}\""),quote))));
+return JaktInternal::ExplicitValue(TRY((String::formatted(Jakt::String("\"{}\""),quote))));
 };/*case end*/
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Number>();lexer::LiteralPrefix const& prefix = __jakt_match_value.prefix;
 String const& number = __jakt_match_value.number;
 lexer::LiteralSuffix const& suffix = __jakt_match_value.suffix;
-return JaktInternal::ExplicitValue(TRY((String::formatted(String("{}{}{}"),((prefix).to_string()),number,((suffix).to_string())))));
+return JaktInternal::ExplicitValue(TRY((String::formatted(Jakt::String("{}{}{}"),((prefix).to_string()),number,((suffix).to_string())))));
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();String const& name = __jakt_match_value.name;
@@ -58,421 +58,421 @@ return JaktInternal::ExplicitValue(name);
 };/*case end*/
 case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Semicolon>();
-return JaktInternal::ExplicitValue(String(";"));
+return JaktInternal::ExplicitValue(Jakt::String(";"));
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Colon>();
-return JaktInternal::ExplicitValue(String(":"));
+return JaktInternal::ExplicitValue(Jakt::String(":"));
 };/*case end*/
 case 7: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ColonColon>();
-return JaktInternal::ExplicitValue(String("::"));
+return JaktInternal::ExplicitValue(Jakt::String("::"));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-return JaktInternal::ExplicitValue(String("("));
+return JaktInternal::ExplicitValue(Jakt::String("("));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
-return JaktInternal::ExplicitValue(String(")"));
+return JaktInternal::ExplicitValue(Jakt::String(")"));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
-return JaktInternal::ExplicitValue(String("{"));
+return JaktInternal::ExplicitValue(Jakt::String("{"));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
-return JaktInternal::ExplicitValue(String("}"));
+return JaktInternal::ExplicitValue(Jakt::String("}"));
 };/*case end*/
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LSquare>();
-return JaktInternal::ExplicitValue(String("["));
+return JaktInternal::ExplicitValue(Jakt::String("["));
 };/*case end*/
 case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RSquare>();
-return JaktInternal::ExplicitValue(String("]"));
+return JaktInternal::ExplicitValue(Jakt::String("]"));
 };/*case end*/
 case 14: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PercentSign>();
-return JaktInternal::ExplicitValue(String("%"));
+return JaktInternal::ExplicitValue(Jakt::String("%"));
 };/*case end*/
 case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Plus>();
-return JaktInternal::ExplicitValue(String("+"));
+return JaktInternal::ExplicitValue(Jakt::String("+"));
 };/*case end*/
 case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Minus>();
-return JaktInternal::ExplicitValue(String("-"));
+return JaktInternal::ExplicitValue(Jakt::String("-"));
 };/*case end*/
 case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Equal>();
-return JaktInternal::ExplicitValue(String("="));
+return JaktInternal::ExplicitValue(Jakt::String("="));
 };/*case end*/
 case 18: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PlusEqual>();
-return JaktInternal::ExplicitValue(String("+="));
+return JaktInternal::ExplicitValue(Jakt::String("+="));
 };/*case end*/
 case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PlusPlus>();
-return JaktInternal::ExplicitValue(String("++"));
+return JaktInternal::ExplicitValue(Jakt::String("++"));
 };/*case end*/
 case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::MinusEqual>();
-return JaktInternal::ExplicitValue(String("-="));
+return JaktInternal::ExplicitValue(Jakt::String("-="));
 };/*case end*/
 case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::MinusMinus>();
-return JaktInternal::ExplicitValue(String("--"));
+return JaktInternal::ExplicitValue(Jakt::String("--"));
 };/*case end*/
 case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AsteriskEqual>();
-return JaktInternal::ExplicitValue(String("*="));
+return JaktInternal::ExplicitValue(Jakt::String("*="));
 };/*case end*/
 case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlashEqual>();
-return JaktInternal::ExplicitValue(String("/="));
+return JaktInternal::ExplicitValue(Jakt::String("/="));
 };/*case end*/
 case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PercentSignEqual>();
-return JaktInternal::ExplicitValue(String("%="));
+return JaktInternal::ExplicitValue(Jakt::String("%="));
 };/*case end*/
 case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::NotEqual>();
-return JaktInternal::ExplicitValue(String("!="));
+return JaktInternal::ExplicitValue(Jakt::String("!="));
 };/*case end*/
 case 26: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::DoubleEqual>();
-return JaktInternal::ExplicitValue(String("=="));
+return JaktInternal::ExplicitValue(Jakt::String("=="));
 };/*case end*/
 case 27: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThan>();
-return JaktInternal::ExplicitValue(String(">"));
+return JaktInternal::ExplicitValue(Jakt::String(">"));
 };/*case end*/
 case 28: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThanOrEqual>();
-return JaktInternal::ExplicitValue(String(">="));
+return JaktInternal::ExplicitValue(Jakt::String(">="));
 };/*case end*/
 case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThan>();
-return JaktInternal::ExplicitValue(String("<"));
+return JaktInternal::ExplicitValue(Jakt::String("<"));
 };/*case end*/
 case 30: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThanOrEqual>();
-return JaktInternal::ExplicitValue(String("<="));
+return JaktInternal::ExplicitValue(Jakt::String("<="));
 };/*case end*/
 case 31: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftArithmeticShift>();
-return JaktInternal::ExplicitValue(String("<<<"));
+return JaktInternal::ExplicitValue(Jakt::String("<<<"));
 };/*case end*/
 case 32: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftShift>();
-return JaktInternal::ExplicitValue(String("<<"));
+return JaktInternal::ExplicitValue(Jakt::String("<<"));
 };/*case end*/
 case 33: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftShiftEqual>();
-return JaktInternal::ExplicitValue(String("<<="));
+return JaktInternal::ExplicitValue(Jakt::String("<<="));
 };/*case end*/
 case 34: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightShift>();
-return JaktInternal::ExplicitValue(String(">>"));
+return JaktInternal::ExplicitValue(Jakt::String(">>"));
 };/*case end*/
 case 35: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightArithmeticShift>();
-return JaktInternal::ExplicitValue(String(">>>"));
+return JaktInternal::ExplicitValue(Jakt::String(">>>"));
 };/*case end*/
 case 36: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightShiftEqual>();
-return JaktInternal::ExplicitValue(String(">>="));
+return JaktInternal::ExplicitValue(Jakt::String(">>="));
 };/*case end*/
 case 37: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Asterisk>();
-return JaktInternal::ExplicitValue(String("*"));
+return JaktInternal::ExplicitValue(Jakt::String("*"));
 };/*case end*/
 case 38: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Ampersand>();
-return JaktInternal::ExplicitValue(String("&"));
+return JaktInternal::ExplicitValue(Jakt::String("&"));
 };/*case end*/
 case 39: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AmpersandEqual>();
-return JaktInternal::ExplicitValue(String("&="));
+return JaktInternal::ExplicitValue(Jakt::String("&="));
 };/*case end*/
 case 40: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AmpersandAmpersand>();
-return JaktInternal::ExplicitValue(String("&&"));
+return JaktInternal::ExplicitValue(Jakt::String("&&"));
 };/*case end*/
 case 41: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pipe>();
-return JaktInternal::ExplicitValue(String("|"));
+return JaktInternal::ExplicitValue(Jakt::String("|"));
 };/*case end*/
 case 42: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PipeEqual>();
-return JaktInternal::ExplicitValue(String("|="));
+return JaktInternal::ExplicitValue(Jakt::String("|="));
 };/*case end*/
 case 43: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PipePipe>();
-return JaktInternal::ExplicitValue(String("||"));
+return JaktInternal::ExplicitValue(Jakt::String("||"));
 };/*case end*/
 case 44: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Caret>();
-return JaktInternal::ExplicitValue(String("^"));
+return JaktInternal::ExplicitValue(Jakt::String("^"));
 };/*case end*/
 case 45: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::CaretEqual>();
-return JaktInternal::ExplicitValue(String("^="));
+return JaktInternal::ExplicitValue(Jakt::String("^="));
 };/*case end*/
 case 46: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dollar>();
-return JaktInternal::ExplicitValue(String("$"));
+return JaktInternal::ExplicitValue(Jakt::String("$"));
 };/*case end*/
 case 47: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Tilde>();
-return JaktInternal::ExplicitValue(String("~"));
+return JaktInternal::ExplicitValue(Jakt::String("~"));
 };/*case end*/
 case 48: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlash>();
-return JaktInternal::ExplicitValue(String("/"));
+return JaktInternal::ExplicitValue(Jakt::String("/"));
 };/*case end*/
 case 49: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ExclamationPoint>();
-return JaktInternal::ExplicitValue(String("!"));
+return JaktInternal::ExplicitValue(Jakt::String("!"));
 };/*case end*/
 case 50: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMark>();
-return JaktInternal::ExplicitValue(String("?"));
+return JaktInternal::ExplicitValue(Jakt::String("?"));
 };/*case end*/
 case 51: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMark>();
-return JaktInternal::ExplicitValue(String("??"));
+return JaktInternal::ExplicitValue(Jakt::String("??"));
 };/*case end*/
 case 52: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMarkEqual>();
-return JaktInternal::ExplicitValue(String("??="));
+return JaktInternal::ExplicitValue(Jakt::String("??="));
 };/*case end*/
 case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
-return JaktInternal::ExplicitValue(String(","));
+return JaktInternal::ExplicitValue(Jakt::String(","));
 };/*case end*/
 case 54: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dot>();
-return JaktInternal::ExplicitValue(String("."));
+return JaktInternal::ExplicitValue(Jakt::String("."));
 };/*case end*/
 case 55: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::DotDot>();
-return JaktInternal::ExplicitValue(String(".."));
+return JaktInternal::ExplicitValue(Jakt::String(".."));
 };/*case end*/
 case 56: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(String(""));
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(Jakt::String(""));
 };/*case end*/
 case 57: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Eof>();
-return JaktInternal::ExplicitValue(String(""));
+return JaktInternal::ExplicitValue(Jakt::String(""));
 };/*case end*/
 case 58: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::FatArrow>();
-return JaktInternal::ExplicitValue(String("=>"));
+return JaktInternal::ExplicitValue(Jakt::String("=>"));
 };/*case end*/
 case 59: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Arrow>();
-return JaktInternal::ExplicitValue(String("->"));
+return JaktInternal::ExplicitValue(Jakt::String("->"));
 };/*case end*/
 case 60: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::And>();
-return JaktInternal::ExplicitValue(String("and"));
+return JaktInternal::ExplicitValue(Jakt::String("and"));
 };/*case end*/
 case 61: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Anon>();
-return JaktInternal::ExplicitValue(String("anon"));
+return JaktInternal::ExplicitValue(Jakt::String("anon"));
 };/*case end*/
 case 62: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::As>();
-return JaktInternal::ExplicitValue(String("as"));
+return JaktInternal::ExplicitValue(Jakt::String("as"));
 };/*case end*/
 case 63: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Boxed>();
-return JaktInternal::ExplicitValue(String("boxed"));
+return JaktInternal::ExplicitValue(Jakt::String("boxed"));
 };/*case end*/
 case 64: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Break>();
-return JaktInternal::ExplicitValue(String("break"));
+return JaktInternal::ExplicitValue(Jakt::String("break"));
 };/*case end*/
 case 65: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Catch>();
-return JaktInternal::ExplicitValue(String("catch"));
+return JaktInternal::ExplicitValue(Jakt::String("catch"));
 };/*case end*/
 case 66: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Class>();
-return JaktInternal::ExplicitValue(String("class"));
+return JaktInternal::ExplicitValue(Jakt::String("class"));
 };/*case end*/
 case 67: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Continue>();
-return JaktInternal::ExplicitValue(String("continue"));
+return JaktInternal::ExplicitValue(Jakt::String("continue"));
 };/*case end*/
 case 68: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Cpp>();
-return JaktInternal::ExplicitValue(String("cpp"));
+return JaktInternal::ExplicitValue(Jakt::String("cpp"));
 };/*case end*/
 case 69: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Defer>();
-return JaktInternal::ExplicitValue(String("defer"));
+return JaktInternal::ExplicitValue(Jakt::String("defer"));
 };/*case end*/
 case 70: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Else>();
-return JaktInternal::ExplicitValue(String("else"));
+return JaktInternal::ExplicitValue(Jakt::String("else"));
 };/*case end*/
 case 71: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Enum>();
-return JaktInternal::ExplicitValue(String("enum"));
+return JaktInternal::ExplicitValue(Jakt::String("enum"));
 };/*case end*/
 case 72: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Extern>();
-return JaktInternal::ExplicitValue(String("extern"));
+return JaktInternal::ExplicitValue(Jakt::String("extern"));
 };/*case end*/
 case 73: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::False>();
-return JaktInternal::ExplicitValue(String("false"));
+return JaktInternal::ExplicitValue(Jakt::String("false"));
 };/*case end*/
 case 74: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
-return JaktInternal::ExplicitValue(String("for"));
+return JaktInternal::ExplicitValue(Jakt::String("for"));
 };/*case end*/
 case 75: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Function>();
-return JaktInternal::ExplicitValue(String("function"));
+return JaktInternal::ExplicitValue(Jakt::String("function"));
 };/*case end*/
 case 76: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comptime>();
-return JaktInternal::ExplicitValue(String("comptime"));
+return JaktInternal::ExplicitValue(Jakt::String("comptime"));
 };/*case end*/
 case 77: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
-return JaktInternal::ExplicitValue(String("if"));
+return JaktInternal::ExplicitValue(Jakt::String("if"));
 };/*case end*/
 case 78: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Import>();
-return JaktInternal::ExplicitValue(String("import"));
+return JaktInternal::ExplicitValue(Jakt::String("import"));
 };/*case end*/
 case 79: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::In>();
-return JaktInternal::ExplicitValue(String("in"));
+return JaktInternal::ExplicitValue(Jakt::String("in"));
 };/*case end*/
 case 80: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Is>();
-return JaktInternal::ExplicitValue(String("is"));
+return JaktInternal::ExplicitValue(Jakt::String("is"));
 };/*case end*/
 case 81: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Let>();
-return JaktInternal::ExplicitValue(String("let"));
+return JaktInternal::ExplicitValue(Jakt::String("let"));
 };/*case end*/
 case 82: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Loop>();
-return JaktInternal::ExplicitValue(String("loop"));
+return JaktInternal::ExplicitValue(Jakt::String("loop"));
 };/*case end*/
 case 83: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
-return JaktInternal::ExplicitValue(String("match"));
+return JaktInternal::ExplicitValue(Jakt::String("match"));
 };/*case end*/
 case 84: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Mut>();
-return JaktInternal::ExplicitValue(String("mut"));
+return JaktInternal::ExplicitValue(Jakt::String("mut"));
 };/*case end*/
 case 85: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Namespace>();
-return JaktInternal::ExplicitValue(String("namespace"));
+return JaktInternal::ExplicitValue(Jakt::String("namespace"));
 };/*case end*/
 case 86: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Not>();
-return JaktInternal::ExplicitValue(String("not"));
+return JaktInternal::ExplicitValue(Jakt::String("not"));
 };/*case end*/
 case 87: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Or>();
-return JaktInternal::ExplicitValue(String("or"));
+return JaktInternal::ExplicitValue(Jakt::String("or"));
 };/*case end*/
 case 89: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Private>();
-return JaktInternal::ExplicitValue(String("private"));
+return JaktInternal::ExplicitValue(Jakt::String("private"));
 };/*case end*/
 case 90: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
-return JaktInternal::ExplicitValue(String("public"));
+return JaktInternal::ExplicitValue(Jakt::String("public"));
 };/*case end*/
 case 91: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Raw>();
-return JaktInternal::ExplicitValue(String("raw"));
+return JaktInternal::ExplicitValue(Jakt::String("raw"));
 };/*case end*/
 case 92: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Return>();
-return JaktInternal::ExplicitValue(String("return"));
+return JaktInternal::ExplicitValue(Jakt::String("return"));
 };/*case end*/
 case 93: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Restricted>();
-return JaktInternal::ExplicitValue(String("restricted"));
+return JaktInternal::ExplicitValue(Jakt::String("restricted"));
 };/*case end*/
 case 94: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Struct>();
-return JaktInternal::ExplicitValue(String("struct"));
+return JaktInternal::ExplicitValue(Jakt::String("struct"));
 };/*case end*/
 case 95: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::This>();
-return JaktInternal::ExplicitValue(String("this"));
+return JaktInternal::ExplicitValue(Jakt::String("this"));
 };/*case end*/
 case 96: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throw>();
-return JaktInternal::ExplicitValue(String("throw"));
+return JaktInternal::ExplicitValue(Jakt::String("throw"));
 };/*case end*/
 case 97: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throws>();
-return JaktInternal::ExplicitValue(String("throws"));
+return JaktInternal::ExplicitValue(Jakt::String("throws"));
 };/*case end*/
 case 98: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::True>();
-return JaktInternal::ExplicitValue(String("true"));
+return JaktInternal::ExplicitValue(Jakt::String("true"));
 };/*case end*/
 case 99: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Try>();
-return JaktInternal::ExplicitValue(String("try"));
+return JaktInternal::ExplicitValue(Jakt::String("try"));
 };/*case end*/
 case 100: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Unsafe>();
-return JaktInternal::ExplicitValue(String("unsafe"));
+return JaktInternal::ExplicitValue(Jakt::String("unsafe"));
 };/*case end*/
 case 102: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Weak>();
-return JaktInternal::ExplicitValue(String("weak"));
+return JaktInternal::ExplicitValue(Jakt::String("weak"));
 };/*case end*/
 case 103: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
-return JaktInternal::ExplicitValue(String("while"));
+return JaktInternal::ExplicitValue(Jakt::String("while"));
 };/*case end*/
 case 104: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Yield>();
-return JaktInternal::ExplicitValue(String("yield"));
+return JaktInternal::ExplicitValue(Jakt::String("yield"));
 };/*case end*/
 case 105: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
-return JaktInternal::ExplicitValue(String("guard"));
+return JaktInternal::ExplicitValue(Jakt::String("guard"));
 };/*case end*/
 case 88: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Override>();
-return JaktInternal::ExplicitValue(String("override"));
+return JaktInternal::ExplicitValue(Jakt::String("override"));
 };/*case end*/
 case 101: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Virtual>();
-return JaktInternal::ExplicitValue(String("virtual"));
+return JaktInternal::ExplicitValue(Jakt::String("virtual"));
 };/*case end*/
 case 106: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Implements>();
-return JaktInternal::ExplicitValue(String("implements"));
+return JaktInternal::ExplicitValue(Jakt::String("implements"));
 };/*case end*/
 case 107: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Requires>();
-return JaktInternal::ExplicitValue(String("requires"));
+return JaktInternal::ExplicitValue(Jakt::String("requires"));
 };/*case end*/
 case 108: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Trait>();
-return JaktInternal::ExplicitValue(String("trait"));
+return JaktInternal::ExplicitValue(Jakt::String("trait"));
 };/*case end*/
 case 109: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Garbage>();return JaktInternal::ExplicitValue(String(""));
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Garbage>();return JaktInternal::ExplicitValue(Jakt::String(""));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -487,15 +487,15 @@ auto&& __jakt_match_variant = ((*this).token);
 switch(__jakt_match_variant.index()) {
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();String const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(TRY((String::formatted(String("Identifier: {}"),name))));
+return JaktInternal::ExplicitValue(TRY((String::formatted(Jakt::String("Identifier: {}"),name))));
 };/*case end*/
 case 56: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();JaktInternal::Optional<String> const& comment = __jakt_match_value.comment;
-return JaktInternal::ExplicitValue(TRY((String::formatted(String("Eol: {}"),comment.value_or_lazy_evaluated([&] { return String(""); })))));
+return JaktInternal::ExplicitValue(TRY((String::formatted(Jakt::String("Eol: {}"),comment.value_or_lazy_evaluated([&] { return Jakt::String(""); })))));
 };/*case end*/
 case 57: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Eof>();
-return JaktInternal::ExplicitValue(String("Eof"));
+return JaktInternal::ExplicitValue(Jakt::String("Eof"));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(TRY((((*this).token_text()))));
@@ -1515,7 +1515,7 @@ ErrorOr<formatter::Stage0> formatter::Stage0::create(NonnullRefPtr<compiler::Com
 {
 JaktInternal::Array<u8> const old_file_contents = ((compiler)->current_file_contents);
 (((compiler)->current_file_contents) = source);
-ScopeGuard __jakt_var_448([&] {
+ScopeGuard __jakt_var_456([&] {
 {
 (((compiler)->current_file_contents) = old_file_contents);
 }
@@ -1561,7 +1561,7 @@ else if (((((((*this).dedents_to_skip)).last()).value()) > static_cast<size_t>(0
 }
 }
 }
-ScopeGuard __jakt_var_449([&] {
+ScopeGuard __jakt_var_457([&] {
 {
 if ((indent_change > static_cast<i64>(0LL))){
 ({auto& _jakt_ref = ((*this).indent);_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, (infallible_integer_cast<size_t>((indent_change))));});
@@ -1574,7 +1574,7 @@ else if ((indent_change < static_cast<i64>(0LL))){
 });
 if (((*this).debug)){
 warnln();
-warnln(String("Token: {} -- Indent: {}"),TRY((((formatter::FormattedToken(token,static_cast<size_t>(0ULL),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({})))))).debug_text()))),((*this).indent));
+warnln(Jakt::String("Token: {} -- Indent: {}"),TRY((((formatter::FormattedToken(token,static_cast<size_t>(0ULL),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({})))))).debug_text()))),((*this).indent));
 {
 JaktInternal::ArrayIterator<formatter::State> _magic = ((((*this).states)).iterator());
 for (;;){
@@ -1584,7 +1584,7 @@ break;
 }
 formatter::State state = (_magic_value.value());
 {
-warnln(String("- State: {}"),state);
+warnln(Jakt::String("- State: {}"),state);
 }
 
 }
@@ -1604,168 +1604,168 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 71: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Enum>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_450; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_458; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::EntityDeclaration(formatter::Entity::from_token(((token))),(!(((token).index() == 85 /* Namespace */))),false,static_cast<size_t>(0ULL)) } ))));
 JaktInternal::Array<u8> trailing_trivia = (TRY((Array<u8>::create_with({}))));
 if ((((token).index() == 85 /* Namespace */) || (!(((((*this).peek(static_cast<i64>(0LL)))).index() == 29 /* LessThan */))))){
 TRY((((trailing_trivia).push(' '))));
 }
-__jakt_var_450 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_404;
+__jakt_var_458 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_412;
 
 }
-__jakt_label_404:; __jakt_var_450.release_value(); }));
+__jakt_label_412:; __jakt_var_458.release_value(); }));
 };/*case end*/
 case 66: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Class>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_451; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_459; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::EntityDeclaration(formatter::Entity::from_token(((token))),(!(((token).index() == 85 /* Namespace */))),false,static_cast<size_t>(0ULL)) } ))));
 JaktInternal::Array<u8> trailing_trivia = (TRY((Array<u8>::create_with({}))));
 if ((((token).index() == 85 /* Namespace */) || (!(((((*this).peek(static_cast<i64>(0LL)))).index() == 29 /* LessThan */))))){
 TRY((((trailing_trivia).push(' '))));
 }
-__jakt_var_451 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_405;
+__jakt_var_459 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_413;
 
 }
-__jakt_label_405:; __jakt_var_451.release_value(); }));
+__jakt_label_413:; __jakt_var_459.release_value(); }));
 };/*case end*/
 case 94: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Struct>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_452; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_460; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::EntityDeclaration(formatter::Entity::from_token(((token))),(!(((token).index() == 85 /* Namespace */))),false,static_cast<size_t>(0ULL)) } ))));
 JaktInternal::Array<u8> trailing_trivia = (TRY((Array<u8>::create_with({}))));
 if ((((token).index() == 85 /* Namespace */) || (!(((((*this).peek(static_cast<i64>(0LL)))).index() == 29 /* LessThan */))))){
 TRY((((trailing_trivia).push(' '))));
 }
-__jakt_var_452 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_406;
+__jakt_var_460 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_414;
 
 }
-__jakt_label_406:; __jakt_var_452.release_value(); }));
+__jakt_label_414:; __jakt_var_460.release_value(); }));
 };/*case end*/
 case 75: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Function>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_453; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_461; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::EntityDeclaration(formatter::Entity::from_token(((token))),(!(((token).index() == 85 /* Namespace */))),false,static_cast<size_t>(0ULL)) } ))));
 JaktInternal::Array<u8> trailing_trivia = (TRY((Array<u8>::create_with({}))));
 if ((((token).index() == 85 /* Namespace */) || (!(((((*this).peek(static_cast<i64>(0LL)))).index() == 29 /* LessThan */))))){
 TRY((((trailing_trivia).push(' '))));
 }
-__jakt_var_453 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_407;
+__jakt_var_461 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_415;
 
 }
-__jakt_label_407:; __jakt_var_453.release_value(); }));
+__jakt_label_415:; __jakt_var_461.release_value(); }));
 };/*case end*/
 case 76: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comptime>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_454; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_462; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::EntityDeclaration(formatter::Entity::from_token(((token))),(!(((token).index() == 85 /* Namespace */))),false,static_cast<size_t>(0ULL)) } ))));
 JaktInternal::Array<u8> trailing_trivia = (TRY((Array<u8>::create_with({}))));
 if ((((token).index() == 85 /* Namespace */) || (!(((((*this).peek(static_cast<i64>(0LL)))).index() == 29 /* LessThan */))))){
 TRY((((trailing_trivia).push(' '))));
 }
-__jakt_var_454 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_408;
+__jakt_var_462 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_416;
 
 }
-__jakt_label_408:; __jakt_var_454.release_value(); }));
+__jakt_label_416:; __jakt_var_462.release_value(); }));
 };/*case end*/
 case 85: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Namespace>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_455; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_463; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::EntityDeclaration(formatter::Entity::from_token(((token))),(!(((token).index() == 85 /* Namespace */))),false,static_cast<size_t>(0ULL)) } ))));
 JaktInternal::Array<u8> trailing_trivia = (TRY((Array<u8>::create_with({}))));
 if ((((token).index() == 85 /* Namespace */) || (!(((((*this).peek(static_cast<i64>(0LL)))).index() == 29 /* LessThan */))))){
 TRY((((trailing_trivia).push(' '))));
 }
-__jakt_var_455 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_409;
+__jakt_var_463 = formatter::FormattedToken(token,((*this).indent),trailing_trivia,(TRY((Array<u8>::create_with({}))))); goto __jakt_label_417;
 
 }
-__jakt_label_409:; __jakt_var_455.release_value(); }));
+__jakt_label_417:; __jakt_var_463.release_value(); }));
 };/*case end*/
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LSquare>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_456; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_464; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::Toplevel(open_parens,open_curlies,(JaktInternal::checked_add<size_t>(open_squares,static_cast<size_t>(1ULL)))) } ))));
-__jakt_var_456 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_410;
+__jakt_var_464 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_418;
 
 }
-__jakt_label_410:; __jakt_var_456.release_value(); }));
+__jakt_label_418:; __jakt_var_464.release_value(); }));
 };/*case end*/
 case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RSquare>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_457; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_465; {
 if ((open_squares == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::Toplevel(open_parens,open_curlies,(JaktInternal::checked_sub<size_t>(open_squares,static_cast<size_t>(1ULL)))) } ))));
-__jakt_var_457 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_411;
+__jakt_var_465 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_419;
 
 }
-__jakt_label_411:; __jakt_var_457.release_value(); }));
+__jakt_label_419:; __jakt_var_465.release_value(); }));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_458; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_466; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::Toplevel((JaktInternal::checked_add<size_t>(open_parens,static_cast<size_t>(1ULL))),open_curlies,open_squares) } ))));
-__jakt_var_458 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_412;
+__jakt_var_466 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_420;
 
 }
-__jakt_label_412:; __jakt_var_458.release_value(); }));
+__jakt_label_420:; __jakt_var_466.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_459; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_467; {
 if ((open_parens == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::Toplevel((JaktInternal::checked_sub<size_t>(open_parens,static_cast<size_t>(1ULL))),open_curlies,open_squares) } ))));
-__jakt_var_459 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_413;
+__jakt_var_467 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_421;
 
 }
-__jakt_label_413:; __jakt_var_459.release_value(); }));
+__jakt_label_421:; __jakt_var_467.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_460; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_468; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::Toplevel(open_parens,(JaktInternal::checked_add<size_t>(open_curlies,static_cast<size_t>(1ULL))),open_squares) } ))));
-__jakt_var_460 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_414;
+__jakt_var_468 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_422;
 
 }
-__jakt_label_414:; __jakt_var_460.release_value(); }));
+__jakt_label_422:; __jakt_var_468.release_value(); }));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_461; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_469; {
 if ((open_curlies == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_sub<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::Toplevel(open_parens,(JaktInternal::checked_sub<size_t>(open_curlies,static_cast<size_t>(1ULL))),open_squares) } ))));
-__jakt_var_461 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_415;
+__jakt_var_469 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_423;
 
 }
-__jakt_label_415:; __jakt_var_461.release_value(); }));
+__jakt_label_423:; __jakt_var_469.release_value(); }));
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Colon>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_462; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_470; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),true) } ))));
-__jakt_var_462 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_416;
+__jakt_var_470 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_424;
 
 }
-__jakt_label_416:; __jakt_var_462.release_value(); }));
+__jakt_label_424:; __jakt_var_470.release_value(); }));
 };/*case end*/
 case 78: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Import>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_463; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_471; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::Import(((((*this).peek(static_cast<i64>(0LL)))).index() == 72 /* Extern */)) } ))));
-__jakt_var_463 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_417;
+__jakt_var_471 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_425;
 
 }
-__jakt_label_417:; __jakt_var_463.release_value(); }));
+__jakt_label_425:; __jakt_var_471.release_value(); }));
 };/*case end*/
 case 90: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
@@ -1793,12 +1793,12 @@ return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).inde
 };/*case end*/
 case 93: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Restricted>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_464; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_472; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::RestrictionList() } ))));
-__jakt_var_464 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_418;
+__jakt_var_472 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_426;
 
 }
-__jakt_label_418:; __jakt_var_464.release_value(); }));
+__jakt_label_426:; __jakt_var_472.release_value(); }));
 };/*case end*/
 case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
@@ -1825,7 +1825,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::To
 return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))));
 };/*case end*/
 case 4: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_465; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_473; {
 if (((!(is_extern)) && ((((*this).peek(static_cast<i64>(0LL)))).index() == 8 /* LParen */))){
 TRY((((*this).push_state( formatter::State { typename formatter::State::StatementContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),JaktInternal::OptionalNone(),false, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,static_cast<size_t>(0ULL)) } ))));
 return (formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))));
@@ -1833,14 +1833,14 @@ return (formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create
 if (((!(is_extern)) && ((!(((((*this).peek(static_cast<i64>(0LL)))).index() == 10 /* LCurly */))) && (!(((((*this).peek(static_cast<i64>(0LL)))).index() == 62 /* As */)))))){
 ((*this).pop_state());
 }
-__jakt_var_465 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_419;
+__jakt_var_473 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_427;
 
 }
-__jakt_label_419:; __jakt_var_465.release_value(); }));
+__jakt_label_427:; __jakt_var_473.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_466; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_474; {
 if (is_extern){
 TRY((((*this).push_state( formatter::State { typename formatter::State::Toplevel(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL)) } ))));
 }
@@ -1848,24 +1848,24 @@ else {
 TRY((((*this).push_state( formatter::State { typename formatter::State::ImportList(true) } ))));
 }
 
-__jakt_var_466 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_420;
+__jakt_var_474 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_428;
 
 }
-__jakt_label_420:; __jakt_var_466.release_value(); }));
+__jakt_label_428:; __jakt_var_474.release_value(); }));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_467; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_475; {
 ((*this).pop_state());
-__jakt_var_467 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_421;
+__jakt_var_475 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_429;
 
 }
-__jakt_label_421:; __jakt_var_467.release_value(); }));
+__jakt_label_429:; __jakt_var_475.release_value(); }));
 };/*case end*/
 case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_468; {
-__jakt_var_468 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_476; {
+__jakt_var_476 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -1876,10 +1876,10 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-)),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_422;
+)),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_430;
 
 }
-__jakt_label_422:; __jakt_var_468.release_value(); }));
+__jakt_label_430:; __jakt_var_476.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))));
@@ -1903,12 +1903,12 @@ return (TRY((((*this).next_impl(true)))));
 };/*case end*/
 case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_469; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_477; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::ImportList(true) } ))));
-__jakt_var_469 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_423;
+__jakt_var_477 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_431;
 
 }
-__jakt_label_423:; __jakt_var_469.release_value(); }));
+__jakt_label_431:; __jakt_var_477.release_value(); }));
 };/*case end*/
 case 56: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();{
@@ -1916,9 +1916,9 @@ return (TRY((((*this).next()))));
 }
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_470; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_478; {
 JaktInternal::Array<String> collection = (TRY((Array<String>::create_with({}))));
-String output = String("");
+String output = Jakt::String("");
 utility::Span const span = ((token).span());
 while ((!(((token).index() == 11 /* RCurly */)))){
 if (((token).index() == 4 /* Identifier */)){
@@ -1943,7 +1943,7 @@ String item = (_magic_value.value());
 {
 if (((JaktInternal::checked_add<size_t>((JaktInternal::checked_add<size_t>(current_len,((item).length()))),static_cast<size_t>(2ULL))) > (JaktInternal::checked_sub<size_t>(static_cast<size_t>(120ULL),indent_amount)))){
 (overflow = true);
-(output += String("\n"));
+(output += Jakt::String("\n"));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(indent_amount)});
 for (;;){
@@ -1953,7 +1953,7 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-(output += String(" "));
+(output += Jakt::String(" "));
 }
 
 }
@@ -1962,7 +1962,7 @@ size_t i = (_magic_value.value());
 (current_len = indent_amount);
 }
 else if ((!(first))){
-(output += String(", "));
+(output += Jakt::String(", "));
 ({auto& _jakt_ref = current_len;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(2ULL));});
 }
 else {
@@ -1986,25 +1986,25 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-(output = (String(" ") + output));
+(output = (Jakt::String(" ") + output));
 }
 
 }
 }
 
-(output = (String("\n") + output));
-(output += String("\n"));
+(output = (Jakt::String("\n") + output));
+(output += Jakt::String("\n"));
 }
 else {
-(output = ((String(" ") + output) + String(" ")));
+(output = ((Jakt::String(" ") + output) + Jakt::String(" ")));
 }
 
 ((*this).pop_state());
 ((((*this).index)--));
-__jakt_var_470 = formatter::FormattedToken( lexer::Token { typename lexer::Token::Identifier(output,span) } ,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_424;
+__jakt_var_478 = formatter::FormattedToken( lexer::Token { typename lexer::Token::Identifier(output,span) } ,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_432;
 
 }
-__jakt_label_424:; __jakt_var_470.release_value(); }));
+__jakt_label_432:; __jakt_var_478.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -2020,18 +2020,18 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThan>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_471; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_479; {
 if (accept_generics){
 TRY((((*this).replace_state( formatter::State { typename formatter::State::EntityDeclaration(entity,accept_generics,true,(JaktInternal::checked_add<size_t>(generic_nesting,static_cast<size_t>(1ULL)))) } ))));
 }
-__jakt_var_471 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_425;
+__jakt_var_479 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_433;
 
 }
-__jakt_label_425:; __jakt_var_471.release_value(); }));
+__jakt_label_433:; __jakt_var_479.release_value(); }));
 };/*case end*/
 case 27: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThan>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_472; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_480; {
 if (accept_generics){
 if ((generic_nesting > static_cast<size_t>(1ULL))){
 TRY((((*this).replace_state( formatter::State { typename formatter::State::EntityDeclaration(entity,accept_generics,has_generics,(JaktInternal::checked_sub<size_t>(generic_nesting,static_cast<size_t>(1ULL)))) } ))));
@@ -2041,20 +2041,20 @@ TRY((((*this).replace_state( formatter::State { typename formatter::State::Entit
 }
 
 }
-__jakt_var_472 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_426;
+__jakt_var_480 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_434;
 
 }
-__jakt_label_426:; __jakt_var_472.release_value(); }));
+__jakt_label_434:; __jakt_var_480.release_value(); }));
 };/*case end*/
 case 4: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_473; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_481; {
 if (((generic_nesting == static_cast<size_t>(0ULL)) && ((!(((((*this).peek(static_cast<i64>(0LL)))).index() == 29 /* LessThan */))) && (!(has_generics))))){
 TRY((((*this).replace_state( formatter::State { typename formatter::State::EntityDefinition(entity) } ))));
 }
-__jakt_var_473 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_427;
+__jakt_var_481 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_435;
 
 }
-__jakt_label_427:; __jakt_var_473.release_value(); }));
+__jakt_label_435:; __jakt_var_481.release_value(); }));
 };/*case end*/
 case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
@@ -2062,20 +2062,20 @@ return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).inde
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_474; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_482; {
 ((*this).pop_state());
-__jakt_var_474 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_428;
+__jakt_var_482 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_436;
 
 }
-__jakt_label_428:; __jakt_var_474.release_value(); }));
+__jakt_label_436:; __jakt_var_482.release_value(); }));
 };/*case end*/
 case 56: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_475; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_483; {
 ((*this).pop_state());
-__jakt_var_475 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_429;
+__jakt_var_483 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_437;
 
 }
-__jakt_label_429:; __jakt_var_475.release_value(); }));
+__jakt_label_437:; __jakt_var_483.release_value(); }));
 };/*case end*/
 case 90: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
@@ -2095,12 +2095,12 @@ return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).inde
 };/*case end*/
 case 93: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Restricted>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_476; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_484; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::RestrictionList() } ))));
-__jakt_var_476 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_430;
+__jakt_var_484 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_438;
 
 }
-__jakt_label_430:; __jakt_var_476.release_value(); }));
+__jakt_label_438:; __jakt_var_484.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))));
@@ -2121,9 +2121,9 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_477; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_485; {
 ((*this).pop_state());
-__jakt_var_477 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_485 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek((-(static_cast<i64>(1LL)))));
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -2138,16 +2138,16 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-))); goto __jakt_label_431;
+))); goto __jakt_label_439;
 
 }
-__jakt_label_431:; __jakt_var_477.release_value(); }));
+__jakt_label_439:; __jakt_var_485.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_478; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_486; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::Toplevel(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL)) } ))));
-__jakt_var_478 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_486 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -2162,10 +2162,10 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-)),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_432;
+)),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_440;
 
 }
-__jakt_label_432:; __jakt_var_478.release_value(); }));
+__jakt_label_440:; __jakt_var_486.release_value(); }));
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Colon>();
@@ -2192,9 +2192,9 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_479; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_487; {
 ((*this).pop_state());
-__jakt_var_479 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_487 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek((-(static_cast<i64>(1LL)))));
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -2209,16 +2209,16 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-))); goto __jakt_label_433;
+))); goto __jakt_label_441;
 
 }
-__jakt_label_433:; __jakt_var_479.release_value(); }));
+__jakt_label_441:; __jakt_var_487.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_480; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_488; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::Toplevel(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL)) } ))));
-__jakt_var_480 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_488 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -2233,10 +2233,10 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-)),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_434;
+)),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_442;
 
 }
-__jakt_label_434:; __jakt_var_480.release_value(); }));
+__jakt_label_442:; __jakt_var_488.release_value(); }));
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Colon>();
@@ -2263,9 +2263,9 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_481; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_489; {
 ((*this).pop_state());
-__jakt_var_481 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_489 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek((-(static_cast<i64>(1LL)))));
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -2280,16 +2280,16 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-))); goto __jakt_label_435;
+))); goto __jakt_label_443;
 
 }
-__jakt_label_435:; __jakt_var_481.release_value(); }));
+__jakt_label_443:; __jakt_var_489.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_482; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_490; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::Toplevel(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL)) } ))));
-__jakt_var_482 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_490 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -2304,10 +2304,10 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-)),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_436;
+)),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_444;
 
 }
-__jakt_label_436:; __jakt_var_482.release_value(); }));
+__jakt_label_444:; __jakt_var_490.release_value(); }));
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Colon>();
@@ -2335,7 +2335,7 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 58: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::FatArrow>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_483; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_491; {
 bool const next_is_eol = ((((*this).peek(static_cast<i64>(0LL)))).index() == 56 /* Eol */);
 TRY((((*this).replace_state( formatter::State { typename formatter::State::EntityDefinition( formatter::Entity { typename formatter::Entity::Function(true,next_is_eol) } ) } ))));
 if (next_is_eol){
@@ -2351,28 +2351,28 @@ if (next_is_eol){
 (eols_allowed = static_cast<size_t>(1ULL));
 }
 TRY((((*this).push_state( formatter::State { typename formatter::State::StatementContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),eols_allowed,false, formatter::ExpressionMode { typename formatter::ExpressionMode::BeforeExpressions() } ,static_cast<size_t>(0ULL)) } ))));
-__jakt_var_483 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_437;
+__jakt_var_491 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_445;
 
 }
-__jakt_label_437:; __jakt_var_483.release_value(); }));
+__jakt_label_445:; __jakt_var_491.release_value(); }));
 };/*case end*/
 case 59: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Arrow>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_484; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_492; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false) } ))));
-__jakt_var_484 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_438;
+__jakt_var_492 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_446;
 
 }
-__jakt_label_438:; __jakt_var_484.release_value(); }));
+__jakt_label_446:; __jakt_var_492.release_value(); }));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_485; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_493; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::ParameterList(static_cast<size_t>(0ULL)) } ))));
-__jakt_var_485 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_439;
+__jakt_var_493 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_447;
 
 }
-__jakt_label_439:; __jakt_var_485.release_value(); }));
+__jakt_label_447:; __jakt_var_493.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
@@ -2392,24 +2392,24 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({})))));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_486; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_494; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::StatementContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),JaktInternal::OptionalNone(),false, formatter::ExpressionMode { typename formatter::ExpressionMode::OutsideExpression() } ,static_cast<size_t>(0ULL)) } ))));
-__jakt_var_486 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_440;
+__jakt_var_494 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_448;
 
 }
-__jakt_label_440:; __jakt_var_486.release_value(); }));
+__jakt_label_448:; __jakt_var_494.release_value(); }));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_487; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_495; {
 ((*this).pop_state());
-__jakt_var_487 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_441;
+__jakt_var_495 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_449;
 
 }
-__jakt_label_441:; __jakt_var_487.release_value(); }));
+__jakt_label_449:; __jakt_var_495.release_value(); }));
 };/*case end*/
 case 56: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_488; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_496; {
 if ((!(arrow))){
 return (TRY((((*this).next()))));
 }
@@ -2425,10 +2425,10 @@ else if (((((((*this).dedents_to_skip)).last()).value()) > static_cast<size_t>(0
 ({auto& _jakt_ref = ((((*this).dedents_to_skip))[(JaktInternal::checked_sub<size_t>(((((*this).dedents_to_skip)).size()),static_cast<size_t>(1ULL)))]);_jakt_ref = JaktInternal::checked_sub<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 }
 }
-__jakt_var_488 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_442;
+__jakt_var_496 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_450;
 
 }
-__jakt_label_442:; __jakt_var_488.release_value(); }));
+__jakt_label_450:; __jakt_var_496.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))));
@@ -2455,137 +2455,34 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 81: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Let>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_489; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_497; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::OutsideExpression() } ,dedents_on_open_curly) } ))));
 TRY((((*this).push_state( formatter::State { typename formatter::State::VariableDeclaration(static_cast<size_t>(0ULL)) } ))));
-__jakt_var_489 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_443;
+__jakt_var_497 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_451;
 
 }
-__jakt_label_443:; __jakt_var_489.release_value(); }));
+__jakt_label_451:; __jakt_var_497.release_value(); }));
 };/*case end*/
 case 84: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Mut>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_490; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_498; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 if (((expression_mode).index() == 0 /* OutsideExpression */)){
 TRY((((*this).push_state( formatter::State { typename formatter::State::VariableDeclaration(static_cast<size_t>(0ULL)) } ))));
 }
-__jakt_var_490 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_444;
-
-}
-__jakt_label_444:; __jakt_var_490.release_value(); }));
-};/*case end*/
-case 83: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_491; {
-size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
-auto&& __jakt_match_variant = token;
-switch(__jakt_match_variant.index()) {
-case 83: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_492; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_492 = indent; goto __jakt_label_446;
-
-}
-__jakt_label_446:; __jakt_var_492.release_value(); }));
-};/*case end*/
-case 74: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_493; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_493 = indent; goto __jakt_label_447;
-
-}
-__jakt_label_447:; __jakt_var_493.release_value(); }));
-};/*case end*/
-case 103: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_494; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_494 = indent; goto __jakt_label_448;
-
-}
-__jakt_label_448:; __jakt_var_494.release_value(); }));
-};/*case end*/
-case 77: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_495; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_495 = indent; goto __jakt_label_449;
-
-}
-__jakt_label_449:; __jakt_var_495.release_value(); }));
-};/*case end*/
-case 105: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_496; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_496 = indent; goto __jakt_label_450;
-
-}
-__jakt_label_450:; __jakt_var_496.release_value(); }));
-};/*case end*/
-default: {
-return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
-};/*case end*/
-}/*switch end*/
-}()
-));
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
-({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
-__jakt_var_491 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_445;
-
-}
-__jakt_label_445:; __jakt_var_491.release_value(); }));
-};/*case end*/
-case 74: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_497; {
-size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
-auto&& __jakt_match_variant = token;
-switch(__jakt_match_variant.index()) {
-case 83: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_498; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_498 = indent; goto __jakt_label_452;
+__jakt_var_498 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_452;
 
 }
 __jakt_label_452:; __jakt_var_498.release_value(); }));
 };/*case end*/
-case 74: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_499; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_499 = indent; goto __jakt_label_453;
-
-}
-__jakt_label_453:; __jakt_var_499.release_value(); }));
-};/*case end*/
-case 103: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+case 83: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_499; {
+size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+auto&& __jakt_match_variant = token;
+switch(__jakt_match_variant.index()) {
+case 83: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_500; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2596,8 +2493,8 @@ __jakt_var_500 = indent; goto __jakt_label_454;
 }
 __jakt_label_454:; __jakt_var_500.release_value(); }));
 };/*case end*/
-case 77: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+case 74: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_501; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2608,8 +2505,8 @@ __jakt_var_501 = indent; goto __jakt_label_455;
 }
 __jakt_label_455:; __jakt_var_501.release_value(); }));
 };/*case end*/
-case 105: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+case 103: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_502; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2620,27 +2517,20 @@ __jakt_var_502 = indent; goto __jakt_label_456;
 }
 __jakt_label_456:; __jakt_var_502.release_value(); }));
 };/*case end*/
-default: {
-return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
-};/*case end*/
-}/*switch end*/
-}()
-));
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
-({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
-__jakt_var_497 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_451;
+case 77: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_503; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_503 = indent; goto __jakt_label_457;
 
 }
-__jakt_label_451:; __jakt_var_497.release_value(); }));
+__jakt_label_457:; __jakt_var_503.release_value(); }));
 };/*case end*/
-case 103: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_503; {
-size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
-auto&& __jakt_match_variant = token;
-switch(__jakt_match_variant.index()) {
-case 83: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
+case 105: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_504; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2651,20 +2541,27 @@ __jakt_var_504 = indent; goto __jakt_label_458;
 }
 __jakt_label_458:; __jakt_var_504.release_value(); }));
 };/*case end*/
-case 74: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_505; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_505 = indent; goto __jakt_label_459;
+default: {
+return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
+};/*case end*/
+}/*switch end*/
+}()
+));
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
+({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
+__jakt_var_499 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_453;
 
 }
-__jakt_label_459:; __jakt_var_505.release_value(); }));
+__jakt_label_453:; __jakt_var_499.release_value(); }));
 };/*case end*/
-case 103: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+case 74: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_505; {
+size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+auto&& __jakt_match_variant = token;
+switch(__jakt_match_variant.index()) {
+case 83: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_506; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2675,8 +2572,8 @@ __jakt_var_506 = indent; goto __jakt_label_460;
 }
 __jakt_label_460:; __jakt_var_506.release_value(); }));
 };/*case end*/
-case 77: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+case 74: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_507; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2687,8 +2584,8 @@ __jakt_var_507 = indent; goto __jakt_label_461;
 }
 __jakt_label_461:; __jakt_var_507.release_value(); }));
 };/*case end*/
-case 105: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+case 103: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_508; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2699,27 +2596,20 @@ __jakt_var_508 = indent; goto __jakt_label_462;
 }
 __jakt_label_462:; __jakt_var_508.release_value(); }));
 };/*case end*/
-default: {
-return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
-};/*case end*/
-}/*switch end*/
-}()
-));
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
-({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
-__jakt_var_503 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_457;
-
-}
-__jakt_label_457:; __jakt_var_503.release_value(); }));
-};/*case end*/
 case 77: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_509; {
-size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
-auto&& __jakt_match_variant = token;
-switch(__jakt_match_variant.index()) {
-case 83: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_509; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_509 = indent; goto __jakt_label_463;
+
+}
+__jakt_label_463:; __jakt_var_509.release_value(); }));
+};/*case end*/
+case 105: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_510; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2730,20 +2620,27 @@ __jakt_var_510 = indent; goto __jakt_label_464;
 }
 __jakt_label_464:; __jakt_var_510.release_value(); }));
 };/*case end*/
-case 74: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_511; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_511 = indent; goto __jakt_label_465;
+default: {
+return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
+};/*case end*/
+}/*switch end*/
+}()
+));
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
+({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
+__jakt_var_505 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_459;
 
 }
-__jakt_label_465:; __jakt_var_511.release_value(); }));
+__jakt_label_459:; __jakt_var_505.release_value(); }));
 };/*case end*/
 case 103: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_511; {
+size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+auto&& __jakt_match_variant = token;
+switch(__jakt_match_variant.index()) {
+case 83: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_512; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2754,8 +2651,8 @@ __jakt_var_512 = indent; goto __jakt_label_466;
 }
 __jakt_label_466:; __jakt_var_512.release_value(); }));
 };/*case end*/
-case 77: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+case 74: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_513; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2766,8 +2663,8 @@ __jakt_var_513 = indent; goto __jakt_label_467;
 }
 __jakt_label_467:; __jakt_var_513.release_value(); }));
 };/*case end*/
-case 105: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+case 103: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_514; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2778,27 +2675,20 @@ __jakt_var_514 = indent; goto __jakt_label_468;
 }
 __jakt_label_468:; __jakt_var_514.release_value(); }));
 };/*case end*/
-default: {
-return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
-};/*case end*/
-}/*switch end*/
-}()
-));
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
-({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
-__jakt_var_509 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_463;
+case 77: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_515; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_515 = indent; goto __jakt_label_469;
 
 }
-__jakt_label_463:; __jakt_var_509.release_value(); }));
+__jakt_label_469:; __jakt_var_515.release_value(); }));
 };/*case end*/
-case 99: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Try>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_515; {
-size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
-auto&& __jakt_match_variant = token;
-switch(__jakt_match_variant.index()) {
-case 83: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
+case 105: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_516; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2809,20 +2699,27 @@ __jakt_var_516 = indent; goto __jakt_label_470;
 }
 __jakt_label_470:; __jakt_var_516.release_value(); }));
 };/*case end*/
-case 74: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_517; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_517 = indent; goto __jakt_label_471;
+default: {
+return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
+};/*case end*/
+}/*switch end*/
+}()
+));
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
+({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
+__jakt_var_511 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_465;
 
 }
-__jakt_label_471:; __jakt_var_517.release_value(); }));
+__jakt_label_465:; __jakt_var_511.release_value(); }));
 };/*case end*/
-case 103: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+case 77: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_517; {
+size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+auto&& __jakt_match_variant = token;
+switch(__jakt_match_variant.index()) {
+case 83: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_518; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2833,8 +2730,8 @@ __jakt_var_518 = indent; goto __jakt_label_472;
 }
 __jakt_label_472:; __jakt_var_518.release_value(); }));
 };/*case end*/
-case 77: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+case 74: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_519; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2845,8 +2742,8 @@ __jakt_var_519 = indent; goto __jakt_label_473;
 }
 __jakt_label_473:; __jakt_var_519.release_value(); }));
 };/*case end*/
-case 105: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+case 103: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_520; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2857,27 +2754,20 @@ __jakt_var_520 = indent; goto __jakt_label_474;
 }
 __jakt_label_474:; __jakt_var_520.release_value(); }));
 };/*case end*/
-default: {
-return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
-};/*case end*/
-}/*switch end*/
-}()
-));
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
-({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
-__jakt_var_515 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_469;
+case 77: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_521; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_521 = indent; goto __jakt_label_475;
 
 }
-__jakt_label_469:; __jakt_var_515.release_value(); }));
+__jakt_label_475:; __jakt_var_521.release_value(); }));
 };/*case end*/
-case 82: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Loop>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_521; {
-size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
-auto&& __jakt_match_variant = token;
-switch(__jakt_match_variant.index()) {
-case 83: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
+case 105: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_522; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2888,20 +2778,27 @@ __jakt_var_522 = indent; goto __jakt_label_476;
 }
 __jakt_label_476:; __jakt_var_522.release_value(); }));
 };/*case end*/
-case 74: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_523; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_523 = indent; goto __jakt_label_477;
+default: {
+return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
+};/*case end*/
+}/*switch end*/
+}()
+));
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
+({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
+__jakt_var_517 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_471;
 
 }
-__jakt_label_477:; __jakt_var_523.release_value(); }));
+__jakt_label_471:; __jakt_var_517.release_value(); }));
 };/*case end*/
-case 103: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+case 99: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Try>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_523; {
+size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+auto&& __jakt_match_variant = token;
+switch(__jakt_match_variant.index()) {
+case 83: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_524; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2912,8 +2809,8 @@ __jakt_var_524 = indent; goto __jakt_label_478;
 }
 __jakt_label_478:; __jakt_var_524.release_value(); }));
 };/*case end*/
-case 77: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+case 74: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_525; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2924,8 +2821,8 @@ __jakt_var_525 = indent; goto __jakt_label_479;
 }
 __jakt_label_479:; __jakt_var_525.release_value(); }));
 };/*case end*/
-case 105: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+case 103: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_526; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2936,27 +2833,20 @@ __jakt_var_526 = indent; goto __jakt_label_480;
 }
 __jakt_label_480:; __jakt_var_526.release_value(); }));
 };/*case end*/
-default: {
-return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
-};/*case end*/
-}/*switch end*/
-}()
-));
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
-({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
-__jakt_var_521 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_475;
+case 77: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_527; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_527 = indent; goto __jakt_label_481;
 
 }
-__jakt_label_475:; __jakt_var_521.release_value(); }));
+__jakt_label_481:; __jakt_var_527.release_value(); }));
 };/*case end*/
 case 105: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_527; {
-size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
-auto&& __jakt_match_variant = token;
-switch(__jakt_match_variant.index()) {
-case 83: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_528; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2967,20 +2857,27 @@ __jakt_var_528 = indent; goto __jakt_label_482;
 }
 __jakt_label_482:; __jakt_var_528.release_value(); }));
 };/*case end*/
-case 74: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_529; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_529 = indent; goto __jakt_label_483;
+default: {
+return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
+};/*case end*/
+}/*switch end*/
+}()
+));
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
+({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
+__jakt_var_523 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_477;
 
 }
-__jakt_label_483:; __jakt_var_529.release_value(); }));
+__jakt_label_477:; __jakt_var_523.release_value(); }));
 };/*case end*/
-case 103: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+case 82: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Loop>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_529; {
+size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+auto&& __jakt_match_variant = token;
+switch(__jakt_match_variant.index()) {
+case 83: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_530; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -2991,8 +2888,8 @@ __jakt_var_530 = indent; goto __jakt_label_484;
 }
 __jakt_label_484:; __jakt_var_530.release_value(); }));
 };/*case end*/
-case 77: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+case 74: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_531; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -3003,8 +2900,8 @@ __jakt_var_531 = indent; goto __jakt_label_485;
 }
 __jakt_label_485:; __jakt_var_531.release_value(); }));
 };/*case end*/
-case 105: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+case 103: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_532; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -3015,27 +2912,20 @@ __jakt_var_532 = indent; goto __jakt_label_486;
 }
 __jakt_label_486:; __jakt_var_532.release_value(); }));
 };/*case end*/
-default: {
-return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
-};/*case end*/
-}/*switch end*/
-}()
-));
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
-({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
-__jakt_var_527 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_481;
+case 77: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_533; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_533 = indent; goto __jakt_label_487;
 
 }
-__jakt_label_481:; __jakt_var_527.release_value(); }));
+__jakt_label_487:; __jakt_var_533.release_value(); }));
 };/*case end*/
-case 69: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Defer>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_533; {
-size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
-auto&& __jakt_match_variant = token;
-switch(__jakt_match_variant.index()) {
-case 83: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
+case 105: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_534; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -3046,20 +2936,27 @@ __jakt_var_534 = indent; goto __jakt_label_488;
 }
 __jakt_label_488:; __jakt_var_534.release_value(); }));
 };/*case end*/
-case 74: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_535; {
-size_t indent = static_cast<size_t>(1ULL);
-if (((*this).line_has_indent())){
-(indent = static_cast<size_t>(0ULL));
-}
-__jakt_var_535 = indent; goto __jakt_label_489;
+default: {
+return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
+};/*case end*/
+}/*switch end*/
+}()
+));
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
+({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
+__jakt_var_529 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_483;
 
 }
-__jakt_label_489:; __jakt_var_535.release_value(); }));
+__jakt_label_483:; __jakt_var_529.release_value(); }));
 };/*case end*/
-case 103: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+case 105: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_535; {
+size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+auto&& __jakt_match_variant = token;
+switch(__jakt_match_variant.index()) {
+case 83: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_536; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -3070,8 +2967,8 @@ __jakt_var_536 = indent; goto __jakt_label_490;
 }
 __jakt_label_490:; __jakt_var_536.release_value(); }));
 };/*case end*/
-case 77: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+case 74: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_537; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -3082,8 +2979,8 @@ __jakt_var_537 = indent; goto __jakt_label_491;
 }
 __jakt_label_491:; __jakt_var_537.release_value(); }));
 };/*case end*/
-case 105: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+case 103: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_538; {
 size_t indent = static_cast<size_t>(1ULL);
 if (((*this).line_has_indent())){
@@ -3094,6 +2991,30 @@ __jakt_var_538 = indent; goto __jakt_label_492;
 }
 __jakt_label_492:; __jakt_var_538.release_value(); }));
 };/*case end*/
+case 77: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_539; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_539 = indent; goto __jakt_label_493;
+
+}
+__jakt_label_493:; __jakt_var_539.release_value(); }));
+};/*case end*/
+case 105: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_540; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_540 = indent; goto __jakt_label_494;
+
+}
+__jakt_label_494:; __jakt_var_540.release_value(); }));
+};/*case end*/
 default: {
 return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
 };/*case end*/
@@ -3102,16 +3023,95 @@ return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
 ));
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
 ({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
-__jakt_var_533 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_487;
+__jakt_var_535 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_489;
 
 }
-__jakt_label_487:; __jakt_var_533.release_value(); }));
+__jakt_label_489:; __jakt_var_535.release_value(); }));
+};/*case end*/
+case 69: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Defer>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_541; {
+size_t const added_indent = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+auto&& __jakt_match_variant = token;
+switch(__jakt_match_variant.index()) {
+case 83: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_542; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_542 = indent; goto __jakt_label_496;
+
+}
+__jakt_label_496:; __jakt_var_542.release_value(); }));
+};/*case end*/
+case 74: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_543; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_543 = indent; goto __jakt_label_497;
+
+}
+__jakt_label_497:; __jakt_var_543.release_value(); }));
+};/*case end*/
+case 103: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_544; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_544 = indent; goto __jakt_label_498;
+
+}
+__jakt_label_498:; __jakt_var_544.release_value(); }));
+};/*case end*/
+case 77: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_545; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_545 = indent; goto __jakt_label_499;
+
+}
+__jakt_label_499:; __jakt_var_545.release_value(); }));
+};/*case end*/
+case 105: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_546; {
+size_t indent = static_cast<size_t>(1ULL);
+if (((*this).line_has_indent())){
+(indent = static_cast<size_t>(0ULL));
+}
+__jakt_var_546 = indent; goto __jakt_label_500;
+
+}
+__jakt_label_500:; __jakt_var_546.release_value(); }));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue(static_cast<size_t>(0ULL));
+};/*case end*/
+}/*switch end*/
+}()
+));
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_add<size_t>(dedents_on_open_curly,added_indent))) } ))));
+({auto& _jakt_ref = indent_change;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, (infallible_integer_cast<i64>((added_indent))));});
+__jakt_var_541 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_495;
+
+}
+__jakt_label_495:; __jakt_var_541.release_value(); }));
 };/*case end*/
 case 65: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Catch>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_539; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_547; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::OutsideExpression() } ,dedents_on_open_curly) } ))));
-__jakt_var_539 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_547 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -3145,16 +3145,16 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-))); goto __jakt_label_493;
+))); goto __jakt_label_501;
 
 }
-__jakt_label_493:; __jakt_var_539.release_value(); }));
+__jakt_label_501:; __jakt_var_547.release_value(); }));
 };/*case end*/
 case 70: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Else>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_540; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_548; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::OutsideExpression() } ,dedents_on_open_curly) } ))));
-__jakt_var_540 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_548 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -3188,13 +3188,13 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-))); goto __jakt_label_494;
+))); goto __jakt_label_502;
 
 }
-__jakt_label_494:; __jakt_var_540.release_value(); }));
+__jakt_label_502:; __jakt_var_548.release_value(); }));
 };/*case end*/
 case 56: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_541; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_549; {
 if ((((expression_mode).index() == 1 /* BeforeExpressions */) && ((((*this).peek(static_cast<i64>(0LL)))).index() == 56 /* Eol */))){
 return (TRY((((*this).next()))));
 }
@@ -3228,25 +3228,25 @@ else if (((((((*this).dedents_to_skip)).last()).value()) > static_cast<size_t>(0
 }
 
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,new_arrow_indents,new_allow_eol,inserted_comma,new_expression_mode,dedents_on_open_curly) } ))));
-__jakt_var_541 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_495;
+__jakt_var_549 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_503;
 
 }
-__jakt_label_495:; __jakt_var_541.release_value(); }));
+__jakt_label_503:; __jakt_var_549.release_value(); }));
 };/*case end*/
 case 75: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Function>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_542; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_550; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::FunctionTypeContext(false) } ))));
-__jakt_var_542 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_496;
+__jakt_var_550 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_504;
 
 }
-__jakt_label_496:; __jakt_var_542.release_value(); }));
+__jakt_label_504:; __jakt_var_550.release_value(); }));
 };/*case end*/
 case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<formatter::FormattedToken>> __jakt_var_543; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<formatter::FormattedToken>> __jakt_var_551; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_543 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<formatter::FormattedToken>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_551 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<formatter::FormattedToken>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -3257,10 +3257,10 @@ return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).inde
 };/*case end*/
 }/*switch end*/
 }()
-)); goto __jakt_label_497;
+)); goto __jakt_label_505;
 
 }
-__jakt_label_497:; __jakt_var_543.release_value(); }));
+__jakt_label_505:; __jakt_var_551.release_value(); }));
 };/*case end*/
 case 92: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Return>();
@@ -3269,28 +3269,28 @@ auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Semicolon>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_544; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_552; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::OutsideExpression() } ,dedents_on_open_curly) } ))));
-__jakt_var_544 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_498;
+__jakt_var_552 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_506;
 
 }
-__jakt_label_498:; __jakt_var_544.release_value(); }));
+__jakt_label_506:; __jakt_var_552.release_value(); }));
 };/*case end*/
 case 56: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_545; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_553; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::OutsideExpression() } ,dedents_on_open_curly) } ))));
-__jakt_var_545 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_499;
+__jakt_var_553 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_507;
 
 }
-__jakt_label_499:; __jakt_var_545.release_value(); }));
+__jakt_label_507:; __jakt_var_553.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_546; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_554; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_546 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_500;
+__jakt_var_554 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_508;
 
 }
-__jakt_label_500:; __jakt_var_546.release_value(); }));
+__jakt_label_508:; __jakt_var_554.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -3303,28 +3303,28 @@ auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Semicolon>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_547; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_555; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::OutsideExpression() } ,dedents_on_open_curly) } ))));
-__jakt_var_547 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_501;
+__jakt_var_555 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_509;
 
 }
-__jakt_label_501:; __jakt_var_547.release_value(); }));
+__jakt_label_509:; __jakt_var_555.release_value(); }));
 };/*case end*/
 case 56: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_548; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_556; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::OutsideExpression() } ,dedents_on_open_curly) } ))));
-__jakt_var_548 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_502;
+__jakt_var_556 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_510;
 
 }
-__jakt_label_502:; __jakt_var_548.release_value(); }));
+__jakt_label_510:; __jakt_var_556.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_549; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_557; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_549 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_503;
+__jakt_var_557 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_511;
 
 }
-__jakt_label_503:; __jakt_var_549.release_value(); }));
+__jakt_label_511:; __jakt_var_557.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -3337,28 +3337,28 @@ auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Semicolon>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_550; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_558; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::OutsideExpression() } ,dedents_on_open_curly) } ))));
-__jakt_var_550 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_504;
+__jakt_var_558 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_512;
 
 }
-__jakt_label_504:; __jakt_var_550.release_value(); }));
+__jakt_label_512:; __jakt_var_558.release_value(); }));
 };/*case end*/
 case 56: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_551; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_559; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::OutsideExpression() } ,dedents_on_open_curly) } ))));
-__jakt_var_551 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_505;
+__jakt_var_559 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_513;
 
 }
-__jakt_label_505:; __jakt_var_551.release_value(); }));
+__jakt_label_513:; __jakt_var_559.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_552; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_560; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_552 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_506;
+__jakt_var_560 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_514;
 
 }
-__jakt_label_506:; __jakt_var_552.release_value(); }));
+__jakt_label_514:; __jakt_var_560.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -3366,7 +3366,7 @@ __jakt_label_506:; __jakt_var_552.release_value(); }));
 };/*case end*/
 case 58: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::FatArrow>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_553; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_561; {
 bool const next_is_eol = ((((*this).peek(static_cast<i64>(0LL)))).index() == 56 /* Eol */);
 size_t new_arrow_indents = arrow_indents;
 if (next_is_eol){
@@ -3391,67 +3391,67 @@ return JaktInternal::ExplicitValue( formatter::ExpressionMode { typename formatt
 }/*switch end*/
 }()
 )),dedents_on_open_curly) } ))));
-__jakt_var_553 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_507;
+__jakt_var_561 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_515;
 
 }
-__jakt_label_507:; __jakt_var_553.release_value(); }));
+__jakt_label_515:; __jakt_var_561.release_value(); }));
 };/*case end*/
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LSquare>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_554; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_562; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,(JaktInternal::checked_add<size_t>(open_squares,static_cast<size_t>(1ULL))),arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_554 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_508;
+__jakt_var_562 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_516;
 
 }
-__jakt_label_508:; __jakt_var_554.release_value(); }));
+__jakt_label_516:; __jakt_var_562.release_value(); }));
 };/*case end*/
 case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RSquare>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_555; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_563; {
 if ((open_squares == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,(JaktInternal::checked_sub<size_t>(open_squares,static_cast<size_t>(1ULL))),arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_555 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_509;
+__jakt_var_563 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_517;
 
 }
-__jakt_label_509:; __jakt_var_555.release_value(); }));
+__jakt_label_517:; __jakt_var_563.release_value(); }));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_556; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_564; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext((JaktInternal::checked_add<size_t>(open_parens,static_cast<size_t>(1ULL))),open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_556 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_510;
+__jakt_var_564 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_518;
 
 }
-__jakt_label_510:; __jakt_var_556.release_value(); }));
+__jakt_label_518:; __jakt_var_564.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_557; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_565; {
 if ((open_parens == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext((JaktInternal::checked_sub<size_t>(open_parens,static_cast<size_t>(1ULL))),open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::InExpression() } ,dedents_on_open_curly) } ))));
-__jakt_var_557 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_511;
+__jakt_var_565 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_519;
 
 }
-__jakt_label_511:; __jakt_var_557.release_value(); }));
+__jakt_label_519:; __jakt_var_565.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_558; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_566; {
 size_t dedented = static_cast<size_t>(0ULL);
 if ((dedents_on_open_curly > static_cast<size_t>(0ULL))){
 ({auto& _jakt_ref = ((*this).indent);_jakt_ref = JaktInternal::checked_sub<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 (dedented = static_cast<size_t>(1ULL));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,(JaktInternal::checked_add<size_t>(open_curlies,static_cast<size_t>(1ULL))),open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,(JaktInternal::checked_sub<size_t>(dedents_on_open_curly,dedented))) } ))));
-__jakt_var_558 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_566 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = expression_mode;
 switch(__jakt_match_variant.index()) {
 case 2: {
@@ -3518,21 +3518,21 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-))); goto __jakt_label_512;
+))); goto __jakt_label_520;
 
 }
-__jakt_label_512:; __jakt_var_558.release_value(); }));
+__jakt_label_520:; __jakt_var_566.release_value(); }));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_559; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_567; {
 if ((open_curlies == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_sub<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,(JaktInternal::checked_sub<size_t>(open_curlies,static_cast<size_t>(1ULL))),open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::InExpression() } ,dedents_on_open_curly) } ))));
-__jakt_var_559 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_567 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek((-(static_cast<i64>(1LL)))));
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -3547,25 +3547,25 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-))); goto __jakt_label_513;
+))); goto __jakt_label_521;
 
 }
-__jakt_label_513:; __jakt_var_559.release_value(); }));
+__jakt_label_521:; __jakt_var_567.release_value(); }));
 };/*case end*/
 case 86: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Not>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_560; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_568; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_560 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_514;
+__jakt_var_568 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_522;
 
 }
-__jakt_label_514:; __jakt_var_560.release_value(); }));
+__jakt_label_522:; __jakt_var_568.release_value(); }));
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Colon>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_561; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_569; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_561 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_569 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 13: {
@@ -3577,151 +3577,79 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
 };/*case end*/
 }/*switch end*/
 }()
-)),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_515;
-
-}
-__jakt_label_515:; __jakt_var_561.release_value(); }));
-};/*case end*/
-case 16: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Minus>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_562; {
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-JaktInternal::Array<u8> const trivia = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
-auto&& __jakt_match_variant = expression_mode;
-switch(__jakt_match_variant.index()) {
-case 3: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename formatter::ExpressionMode::InExpression>();
-return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
-};/*case end*/
-default: {
-return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({})))));
-};/*case end*/
-}/*switch end*/
-}()
-));
-__jakt_var_562 = formatter::FormattedToken(token,((*this).indent),trivia,trivia); goto __jakt_label_516;
-
-}
-__jakt_label_516:; __jakt_var_562.release_value(); }));
-};/*case end*/
-case 37: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Asterisk>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_563; {
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-JaktInternal::Array<u8> const trivia = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
-auto&& __jakt_match_variant = expression_mode;
-switch(__jakt_match_variant.index()) {
-case 3: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename formatter::ExpressionMode::InExpression>();
-return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
-};/*case end*/
-default: {
-return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({})))));
-};/*case end*/
-}/*switch end*/
-}()
-));
-__jakt_var_563 = formatter::FormattedToken(token,((*this).indent),trivia,trivia); goto __jakt_label_517;
-
-}
-__jakt_label_517:; __jakt_var_563.release_value(); }));
-};/*case end*/
-case 38: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Ampersand>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_564; {
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-JaktInternal::Array<u8> const trivia = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
-auto&& __jakt_match_variant = expression_mode;
-switch(__jakt_match_variant.index()) {
-case 3: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename formatter::ExpressionMode::InExpression>();
-return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
-};/*case end*/
-default: {
-return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({})))));
-};/*case end*/
-}/*switch end*/
-}()
-));
-__jakt_var_564 = formatter::FormattedToken(token,((*this).indent),trivia,trivia); goto __jakt_label_518;
-
-}
-__jakt_label_518:; __jakt_var_564.release_value(); }));
-};/*case end*/
-case 14: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PercentSign>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_565; {
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_565 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_519;
-
-}
-__jakt_label_519:; __jakt_var_565.release_value(); }));
-};/*case end*/
-case 15: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Plus>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_566; {
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_566 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_520;
-
-}
-__jakt_label_520:; __jakt_var_566.release_value(); }));
-};/*case end*/
-case 17: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Equal>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_567; {
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_567 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_521;
-
-}
-__jakt_label_521:; __jakt_var_567.release_value(); }));
-};/*case end*/
-case 41: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pipe>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_568; {
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_568 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_522;
-
-}
-__jakt_label_522:; __jakt_var_568.release_value(); }));
-};/*case end*/
-case 18: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PlusEqual>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_569; {
-TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_569 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_523;
+)),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_523;
 
 }
 __jakt_label_523:; __jakt_var_569.release_value(); }));
 };/*case end*/
-case 20: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::MinusEqual>();
+case 16: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Minus>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_570; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_570 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_524;
+JaktInternal::Array<u8> const trivia = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+auto&& __jakt_match_variant = expression_mode;
+switch(__jakt_match_variant.index()) {
+case 3: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename formatter::ExpressionMode::InExpression>();
+return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({})))));
+};/*case end*/
+}/*switch end*/
+}()
+));
+__jakt_var_570 = formatter::FormattedToken(token,((*this).indent),trivia,trivia); goto __jakt_label_524;
 
 }
 __jakt_label_524:; __jakt_var_570.release_value(); }));
 };/*case end*/
-case 22: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AsteriskEqual>();
+case 37: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Asterisk>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_571; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_571 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_525;
+JaktInternal::Array<u8> const trivia = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+auto&& __jakt_match_variant = expression_mode;
+switch(__jakt_match_variant.index()) {
+case 3: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename formatter::ExpressionMode::InExpression>();
+return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({})))));
+};/*case end*/
+}/*switch end*/
+}()
+));
+__jakt_var_571 = formatter::FormattedToken(token,((*this).indent),trivia,trivia); goto __jakt_label_525;
 
 }
 __jakt_label_525:; __jakt_var_571.release_value(); }));
 };/*case end*/
-case 23: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlashEqual>();
+case 38: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Ampersand>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_572; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_572 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_526;
+JaktInternal::Array<u8> const trivia = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+auto&& __jakt_match_variant = expression_mode;
+switch(__jakt_match_variant.index()) {
+case 3: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename formatter::ExpressionMode::InExpression>();
+return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({' '})))));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({})))));
+};/*case end*/
+}/*switch end*/
+}()
+));
+__jakt_var_572 = formatter::FormattedToken(token,((*this).indent),trivia,trivia); goto __jakt_label_526;
 
 }
 __jakt_label_526:; __jakt_var_572.release_value(); }));
 };/*case end*/
-case 24: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PercentSignEqual>();
+case 14: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PercentSign>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_573; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_573 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_527;
@@ -3729,8 +3657,8 @@ __jakt_var_573 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_527:; __jakt_var_573.release_value(); }));
 };/*case end*/
-case 25: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::NotEqual>();
+case 15: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Plus>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_574; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_574 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_528;
@@ -3738,8 +3666,8 @@ __jakt_var_574 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_528:; __jakt_var_574.release_value(); }));
 };/*case end*/
-case 26: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::DoubleEqual>();
+case 17: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Equal>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_575; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_575 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_529;
@@ -3747,8 +3675,8 @@ __jakt_var_575 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_529:; __jakt_var_575.release_value(); }));
 };/*case end*/
-case 27: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThan>();
+case 41: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pipe>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_576; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_576 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_530;
@@ -3756,8 +3684,8 @@ __jakt_var_576 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_530:; __jakt_var_576.release_value(); }));
 };/*case end*/
-case 28: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThanOrEqual>();
+case 18: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PlusEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_577; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_577 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_531;
@@ -3765,8 +3693,8 @@ __jakt_var_577 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_531:; __jakt_var_577.release_value(); }));
 };/*case end*/
-case 29: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThan>();
+case 20: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::MinusEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_578; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_578 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_532;
@@ -3774,8 +3702,8 @@ __jakt_var_578 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_532:; __jakt_var_578.release_value(); }));
 };/*case end*/
-case 30: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThanOrEqual>();
+case 22: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AsteriskEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_579; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_579 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_533;
@@ -3783,8 +3711,8 @@ __jakt_var_579 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_533:; __jakt_var_579.release_value(); }));
 };/*case end*/
-case 31: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftArithmeticShift>();
+case 23: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlashEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_580; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_580 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_534;
@@ -3792,8 +3720,8 @@ __jakt_var_580 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_534:; __jakt_var_580.release_value(); }));
 };/*case end*/
-case 32: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftShift>();
+case 24: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PercentSignEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_581; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_581 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_535;
@@ -3801,8 +3729,8 @@ __jakt_var_581 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_535:; __jakt_var_581.release_value(); }));
 };/*case end*/
-case 34: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightShift>();
+case 25: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::NotEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_582; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_582 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_536;
@@ -3810,8 +3738,8 @@ __jakt_var_582 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_536:; __jakt_var_582.release_value(); }));
 };/*case end*/
-case 33: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftShiftEqual>();
+case 26: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::DoubleEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_583; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_583 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_537;
@@ -3819,8 +3747,8 @@ __jakt_var_583 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_537:; __jakt_var_583.release_value(); }));
 };/*case end*/
-case 35: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightArithmeticShift>();
+case 27: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThan>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_584; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_584 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_538;
@@ -3828,8 +3756,8 @@ __jakt_var_584 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_538:; __jakt_var_584.release_value(); }));
 };/*case end*/
-case 36: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightShiftEqual>();
+case 28: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThanOrEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_585; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_585 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_539;
@@ -3837,8 +3765,8 @@ __jakt_var_585 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_539:; __jakt_var_585.release_value(); }));
 };/*case end*/
-case 39: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AmpersandEqual>();
+case 29: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThan>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_586; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_586 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_540;
@@ -3846,8 +3774,8 @@ __jakt_var_586 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_540:; __jakt_var_586.release_value(); }));
 };/*case end*/
-case 42: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PipeEqual>();
+case 30: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThanOrEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_587; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_587 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_541;
@@ -3855,8 +3783,8 @@ __jakt_var_587 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_541:; __jakt_var_587.release_value(); }));
 };/*case end*/
-case 44: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Caret>();
+case 31: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftArithmeticShift>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_588; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_588 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_542;
@@ -3864,8 +3792,8 @@ __jakt_var_588 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_542:; __jakt_var_588.release_value(); }));
 };/*case end*/
-case 45: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::CaretEqual>();
+case 32: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftShift>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_589; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_589 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_543;
@@ -3873,8 +3801,8 @@ __jakt_var_589 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_543:; __jakt_var_589.release_value(); }));
 };/*case end*/
-case 48: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlash>();
+case 34: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightShift>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_590; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_590 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_544;
@@ -3882,8 +3810,8 @@ __jakt_var_590 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_544:; __jakt_var_590.release_value(); }));
 };/*case end*/
-case 51: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMark>();
+case 33: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftShiftEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_591; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_591 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_545;
@@ -3891,8 +3819,8 @@ __jakt_var_591 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_545:; __jakt_var_591.release_value(); }));
 };/*case end*/
-case 52: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMarkEqual>();
+case 35: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightArithmeticShift>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_592; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_592 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_546;
@@ -3900,8 +3828,8 @@ __jakt_var_592 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_546:; __jakt_var_592.release_value(); }));
 };/*case end*/
-case 60: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::And>();
+case 36: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightShiftEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_593; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_593 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_547;
@@ -3909,8 +3837,8 @@ __jakt_var_593 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_547:; __jakt_var_593.release_value(); }));
 };/*case end*/
-case 79: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::In>();
+case 39: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AmpersandEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_594; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_594 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_548;
@@ -3918,8 +3846,8 @@ __jakt_var_594 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_548:; __jakt_var_594.release_value(); }));
 };/*case end*/
-case 87: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Or>();
+case 42: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PipeEqual>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_595; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_595 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_549;
@@ -3927,14 +3855,86 @@ __jakt_var_595 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8
 }
 __jakt_label_549:; __jakt_var_595.release_value(); }));
 };/*case end*/
-case 80: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Is>();
+case 44: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Caret>();
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_596; {
-TRY((((*this).push_state( formatter::State { typename formatter::State::MatchPattern(static_cast<size_t>(0ULL),false) } ))));
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
 __jakt_var_596 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_550;
 
 }
 __jakt_label_550:; __jakt_var_596.release_value(); }));
+};/*case end*/
+case 45: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::CaretEqual>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_597; {
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
+__jakt_var_597 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_551;
+
+}
+__jakt_label_551:; __jakt_var_597.release_value(); }));
+};/*case end*/
+case 48: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlash>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_598; {
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
+__jakt_var_598 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_552;
+
+}
+__jakt_label_552:; __jakt_var_598.release_value(); }));
+};/*case end*/
+case 51: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMark>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_599; {
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
+__jakt_var_599 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_553;
+
+}
+__jakt_label_553:; __jakt_var_599.release_value(); }));
+};/*case end*/
+case 52: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMarkEqual>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_600; {
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
+__jakt_var_600 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_554;
+
+}
+__jakt_label_554:; __jakt_var_600.release_value(); }));
+};/*case end*/
+case 60: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::And>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_601; {
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
+__jakt_var_601 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_555;
+
+}
+__jakt_label_555:; __jakt_var_601.release_value(); }));
+};/*case end*/
+case 79: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::In>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_602; {
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
+__jakt_var_602 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_556;
+
+}
+__jakt_label_556:; __jakt_var_602.release_value(); }));
+};/*case end*/
+case 87: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Or>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_603; {
+TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
+__jakt_var_603 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_557;
+
+}
+__jakt_label_557:; __jakt_var_603.release_value(); }));
+};/*case end*/
+case 80: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Is>();
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_604; {
+TRY((((*this).push_state( formatter::State { typename formatter::State::MatchPattern(static_cast<size_t>(0ULL),false) } ))));
+__jakt_var_604 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_558;
+
+}
+__jakt_label_558:; __jakt_var_604.release_value(); }));
 };/*case end*/
 case 62: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::As>();
@@ -3963,11 +3963,11 @@ auto&& __jakt_match_variant = ((*this).peek((-(static_cast<i64>(1LL)))));
 switch(__jakt_match_variant.index()) {
 case 62: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::As>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_597; {
-__jakt_var_597 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_551;
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_605; {
+__jakt_var_605 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_559;
 
 }
-__jakt_label_551:; __jakt_var_597.release_value(); }));
+__jakt_label_559:; __jakt_var_605.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))));
@@ -3983,11 +3983,11 @@ auto&& __jakt_match_variant = ((*this).peek((-(static_cast<i64>(1LL)))));
 switch(__jakt_match_variant.index()) {
 case 62: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::As>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_598; {
-__jakt_var_598 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_552;
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_606; {
+__jakt_var_606 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_560;
 
 }
-__jakt_label_552:; __jakt_var_598.release_value(); }));
+__jakt_label_560:; __jakt_var_606.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))));
@@ -3997,7 +3997,7 @@ return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).inde
 )));
 };/*case end*/
 case 4: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_599; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_607; {
 if ((((((*this).peek((-(static_cast<i64>(1LL)))))).index() == 4 /* Identifier */) && (!(inserted_comma)))){
 ((((*this).index)--));
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,true, formatter::ExpressionMode { typename formatter::ExpressionMode::InExpression() } ,dedents_on_open_curly) } ))));
@@ -4272,13 +4272,13 @@ return JaktInternal::ExplicitValue<void>();
 if (((open_angles == static_cast<i64>(0LL)) && ((((*this).peek(lookahead_index))).index() == 8 /* LParen */))){
 TRY((((*this).push_state( formatter::State { typename formatter::State::GenericCallTypeParams(static_cast<size_t>(0ULL)) } ))));
 }
-__jakt_var_599 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_553;
+__jakt_var_607 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_561;
 
 }
-__jakt_label_553:; __jakt_var_599.release_value(); }));
+__jakt_label_561:; __jakt_var_607.release_value(); }));
 };/*case end*/
 case 3: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Number>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_600; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Number>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_608; {
 if ((((((*this).peek((-(static_cast<i64>(1LL)))))).index() == 4 /* Identifier */) && (!(inserted_comma)))){
 ((((*this).index)--));
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,true, formatter::ExpressionMode { typename formatter::ExpressionMode::InExpression() } ,dedents_on_open_curly) } ))));
@@ -4553,14 +4553,14 @@ return JaktInternal::ExplicitValue<void>();
 if (((open_angles == static_cast<i64>(0LL)) && ((((*this).peek(lookahead_index))).index() == 8 /* LParen */))){
 TRY((((*this).push_state( formatter::State { typename formatter::State::GenericCallTypeParams(static_cast<size_t>(0ULL)) } ))));
 }
-__jakt_var_600 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_554;
+__jakt_var_608 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_562;
 
 }
-__jakt_label_554:; __jakt_var_600.release_value(); }));
+__jakt_label_562:; __jakt_var_608.release_value(); }));
 };/*case end*/
 case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Semicolon>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_601; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_609; {
 if ((open_squares == static_cast<size_t>(0ULL))){
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<formatter::FormattedToken>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
@@ -4575,27 +4575,27 @@ return JaktInternal::ExplicitValue(formatter::FormattedToken( lexer::Token { typ
 }()
 )));
 }
-__jakt_var_601 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_555;
+__jakt_var_609 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_563;
 
 }
-__jakt_label_555:; __jakt_var_601.release_value(); }));
+__jakt_label_563:; __jakt_var_609.release_value(); }));
 };/*case end*/
 case 91: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Raw>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_602; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_610; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,dedents_on_open_curly) } ))));
-__jakt_var_602 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_556;
+__jakt_var_610 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_564;
 
 }
-__jakt_label_556:; __jakt_var_602.release_value(); }));
+__jakt_label_564:; __jakt_var_610.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_603; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_611; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::StatementContext(open_parens,open_curlies,open_squares,arrow_indents,allow_eol,inserted_comma, formatter::ExpressionMode { typename formatter::ExpressionMode::InExpression() } ,dedents_on_open_curly) } ))));
-__jakt_var_603 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_557;
+__jakt_var_611 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_565;
 
 }
-__jakt_label_557:; __jakt_var_603.release_value(); }));
+__jakt_label_565:; __jakt_var_611.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -4608,16 +4608,16 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThan>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_604; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_612; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false) } ))));
-__jakt_var_604 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_558;
+__jakt_var_612 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_566;
 
 }
-__jakt_label_558:; __jakt_var_604.release_value(); }));
+__jakt_label_566:; __jakt_var_612.release_value(); }));
 };/*case end*/
 case 27: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThan>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_605; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_613; {
 if ((open_angles <= static_cast<size_t>(1ULL))){
 ((*this).pop_state());
 }
@@ -4625,19 +4625,19 @@ else {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::GenericCallTypeParams((JaktInternal::checked_sub<size_t>(open_angles,static_cast<size_t>(1ULL)))) } ))));
 }
 
-__jakt_var_605 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_559;
+__jakt_var_613 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_567;
 
 }
-__jakt_label_559:; __jakt_var_605.release_value(); }));
+__jakt_label_567:; __jakt_var_613.release_value(); }));
 };/*case end*/
 case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_606; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_614; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false) } ))));
-__jakt_var_606 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_560;
+__jakt_var_614 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_568;
 
 }
-__jakt_label_560:; __jakt_var_606.release_value(); }));
+__jakt_label_568:; __jakt_var_614.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))));
@@ -4653,44 +4653,44 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Colon>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_607; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_615; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false) } ))));
-__jakt_var_607 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_561;
+__jakt_var_615 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_569;
 
 }
-__jakt_label_561:; __jakt_var_607.release_value(); }));
+__jakt_label_569:; __jakt_var_615.release_value(); }));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_608; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_616; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::VariableDeclaration((JaktInternal::checked_add<size_t>(open_parens,static_cast<size_t>(1ULL)))) } ))));
-__jakt_var_608 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_562;
+__jakt_var_616 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_570;
 
 }
-__jakt_label_562:; __jakt_var_608.release_value(); }));
+__jakt_label_570:; __jakt_var_616.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_609; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_617; {
 if ((open_parens == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::VariableDeclaration((JaktInternal::checked_sub<size_t>(open_parens,static_cast<size_t>(1ULL)))) } ))));
-__jakt_var_609 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_563;
+__jakt_var_617 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_571;
 
 }
-__jakt_label_563:; __jakt_var_609.release_value(); }));
+__jakt_label_571:; __jakt_var_617.release_value(); }));
 };/*case end*/
 case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Equal>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_610; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_618; {
 ((*this).pop_state());
-__jakt_var_610 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_564;
+__jakt_var_618 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_572;
 
 }
-__jakt_label_564:; __jakt_var_610.release_value(); }));
+__jakt_label_572:; __jakt_var_618.release_value(); }));
 };/*case end*/
 case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
@@ -4710,21 +4710,21 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_611; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_619; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false) } ))));
-__jakt_var_611 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_565;
+__jakt_var_619 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_573;
 
 }
-__jakt_label_565:; __jakt_var_611.release_value(); }));
+__jakt_label_573:; __jakt_var_619.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_612; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_620; {
 ((*this).pop_state());
-__jakt_var_612 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_566;
+__jakt_var_620 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_574;
 
 }
-__jakt_label_566:; __jakt_var_612.release_value(); }));
+__jakt_label_574:; __jakt_var_620.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))));
@@ -4748,12 +4748,12 @@ return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).inde
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Colon>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_613; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_621; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false) } ))));
-__jakt_var_613 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_567;
+__jakt_var_621 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_575;
 
 }
-__jakt_label_567:; __jakt_var_613.release_value(); }));
+__jakt_label_575:; __jakt_var_621.release_value(); }));
 };/*case end*/
 case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
@@ -4761,35 +4761,35 @@ return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).inde
 };/*case end*/
 case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Equal>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_614; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_622; {
 TRY((((*this).push_state( formatter::State { typename formatter::State::StatementContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false, formatter::ExpressionMode { typename formatter::ExpressionMode::AtExpressionStart() } ,static_cast<size_t>(0ULL)) } ))));
-__jakt_var_614 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_568;
+__jakt_var_622 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_576;
 
 }
-__jakt_label_568:; __jakt_var_614.release_value(); }));
+__jakt_label_576:; __jakt_var_622.release_value(); }));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_615; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_623; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::ParameterList((JaktInternal::checked_add<size_t>(open_parens,static_cast<size_t>(1ULL)))) } ))));
-__jakt_var_615 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_569;
+__jakt_var_623 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_577;
 
 }
-__jakt_label_569:; __jakt_var_615.release_value(); }));
+__jakt_label_577:; __jakt_var_623.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_616; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_624; {
 if ((open_parens == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::ParameterList((JaktInternal::checked_sub<size_t>(open_parens,static_cast<size_t>(1ULL)))) } ))));
-__jakt_var_616 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_570;
+__jakt_var_624 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_578;
 
 }
-__jakt_label_570:; __jakt_var_616.release_value(); }));
+__jakt_label_578:; __jakt_var_624.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))));
@@ -4809,42 +4809,42 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThan>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_617; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_625; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext(open_parens,open_curlies,open_squares,(JaktInternal::checked_add<size_t>(open_angles,static_cast<size_t>(1ULL))),seen_start) } ))));
-__jakt_var_617 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_571;
+__jakt_var_625 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_579;
 
 }
-__jakt_label_571:; __jakt_var_617.release_value(); }));
+__jakt_label_579:; __jakt_var_625.release_value(); }));
 };/*case end*/
 case 27: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThan>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_618; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_626; {
 if ((open_angles == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext(open_parens,open_curlies,open_squares,(JaktInternal::checked_sub<size_t>(open_angles,static_cast<size_t>(1ULL))),seen_start) } ))));
-__jakt_var_618 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_572;
+__jakt_var_626 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_580;
 
 }
-__jakt_label_572:; __jakt_var_618.release_value(); }));
+__jakt_label_580:; __jakt_var_626.release_value(); }));
 };/*case end*/
 case 56: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_619; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_627; {
 if (((JaktInternal::checked_add<size_t>((JaktInternal::checked_add<size_t>((JaktInternal::checked_add<size_t>(open_parens,open_curlies)),open_squares)),open_angles)) == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
-__jakt_var_619 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_573;
+__jakt_var_627 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_581;
 
 }
-__jakt_label_573:; __jakt_var_619.release_value(); }));
+__jakt_label_581:; __jakt_var_627.release_value(); }));
 };/*case end*/
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LSquare>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_620; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_628; {
 if (seen_start){
 ((((*this).index)--));
 ((*this).pop_state());
@@ -4852,28 +4852,28 @@ return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext(open_parens,open_curlies,(JaktInternal::checked_add<size_t>(open_squares,static_cast<size_t>(1ULL))),open_angles,true) } ))));
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false) } ))));
-__jakt_var_620 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_574;
+__jakt_var_628 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_582;
 
 }
-__jakt_label_574:; __jakt_var_620.release_value(); }));
+__jakt_label_582:; __jakt_var_628.release_value(); }));
 };/*case end*/
 case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RSquare>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_621; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_629; {
 if ((open_squares == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext(open_parens,open_curlies,(JaktInternal::checked_sub<size_t>(open_squares,static_cast<size_t>(1ULL))),open_angles,seen_start) } ))));
-__jakt_var_621 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_575;
+__jakt_var_629 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_583;
 
 }
-__jakt_label_575:; __jakt_var_621.release_value(); }));
+__jakt_label_583:; __jakt_var_629.release_value(); }));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_622; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_630; {
 if (seen_start){
 ((((*this).index)--));
 ((*this).pop_state());
@@ -4881,28 +4881,28 @@ return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext((JaktInternal::checked_add<size_t>(open_parens,static_cast<size_t>(1ULL))),open_curlies,open_squares,open_angles,true) } ))));
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false) } ))));
-__jakt_var_622 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_576;
+__jakt_var_630 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_584;
 
 }
-__jakt_label_576:; __jakt_var_622.release_value(); }));
+__jakt_label_584:; __jakt_var_630.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_623; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_631; {
 if ((open_parens == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext((JaktInternal::checked_sub<size_t>(open_parens,static_cast<size_t>(1ULL))),open_curlies,open_squares,open_angles,seen_start) } ))));
-__jakt_var_623 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_577;
+__jakt_var_631 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_585;
 
 }
-__jakt_label_577:; __jakt_var_623.release_value(); }));
+__jakt_label_585:; __jakt_var_631.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_624; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_632; {
 if (seen_start){
 ((((*this).index)--));
 ((*this).pop_state());
@@ -4910,91 +4910,91 @@ return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext(open_parens,(JaktInternal::checked_add<size_t>(open_curlies,static_cast<size_t>(1ULL))),open_squares,open_angles,true) } ))));
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false) } ))));
-__jakt_var_624 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_578;
+__jakt_var_632 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_586;
 
 }
-__jakt_label_578:; __jakt_var_624.release_value(); }));
+__jakt_label_586:; __jakt_var_632.release_value(); }));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_625; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_633; {
 if ((open_curlies == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_sub<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext(open_parens,(JaktInternal::checked_sub<size_t>(open_curlies,static_cast<size_t>(1ULL))),open_squares,open_angles,seen_start) } ))));
-__jakt_var_625 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_579;
+__jakt_var_633 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_587;
 
 }
-__jakt_label_579:; __jakt_var_625.release_value(); }));
+__jakt_label_587:; __jakt_var_633.release_value(); }));
 };/*case end*/
 case 91: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Raw>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_626; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_634; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext(open_parens,open_curlies,open_squares,open_angles,true) } ))));
-__jakt_var_626 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_580;
+__jakt_var_634 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_588;
 
 }
-__jakt_label_580:; __jakt_var_626.release_value(); }));
+__jakt_label_588:; __jakt_var_634.release_value(); }));
 };/*case end*/
 case 84: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Mut>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_627; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_635; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext(open_parens,open_curlies,open_squares,open_angles,true) } ))));
-__jakt_var_627 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_581;
+__jakt_var_635 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_589;
 
 }
-__jakt_label_581:; __jakt_var_627.release_value(); }));
+__jakt_label_589:; __jakt_var_635.release_value(); }));
 };/*case end*/
 case 38: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Ampersand>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_628; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_636; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext(open_parens,open_curlies,open_squares,open_angles,true) } ))));
-__jakt_var_628 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_582;
+__jakt_var_636 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_590;
 
 }
-__jakt_label_582:; __jakt_var_628.release_value(); }));
+__jakt_label_590:; __jakt_var_636.release_value(); }));
 };/*case end*/
 case 75: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Function>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_629; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_637; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext(open_parens,open_curlies,open_squares,open_angles,true) } ))));
 TRY((((*this).push_state( formatter::State { typename formatter::State::FunctionTypeContext(false) } ))));
-__jakt_var_629 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_583;
+__jakt_var_637 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_591;
 
 }
-__jakt_label_583:; __jakt_var_629.release_value(); }));
+__jakt_label_591:; __jakt_var_637.release_value(); }));
 };/*case end*/
 case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_630; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_638; {
 if (((JaktInternal::checked_add<size_t>(open_angles,open_parens)) == static_cast<size_t>(0ULL))){
 ((((*this).index)--));
 ((*this).pop_state());
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false) } ))));
-__jakt_var_630 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_584;
+__jakt_var_638 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_592;
 
 }
-__jakt_label_584:; __jakt_var_630.release_value(); }));
+__jakt_label_592:; __jakt_var_638.release_value(); }));
 };/*case end*/
 case 4: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_631; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_639; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::TypeContext(open_parens,open_curlies,open_squares,open_angles,true) } ))));
-__jakt_var_631 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_585;
+__jakt_var_639 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_593;
 
 }
-__jakt_label_585:; __jakt_var_631.release_value(); }));
+__jakt_label_593:; __jakt_var_639.release_value(); }));
 };/*case end*/
 case 102: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Weak>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_632; {
-__jakt_var_632 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_586;
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_640; {
+__jakt_var_640 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_594;
 
 }
-__jakt_label_586:; __jakt_var_632.release_value(); }));
+__jakt_label_594:; __jakt_var_640.release_value(); }));
 };/*case end*/
 case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Equal>();
@@ -5050,7 +5050,7 @@ return (TRY((((*this).next_impl(true)))));
 };/*case end*/
 case 59: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Arrow>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_633; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_641; {
 if (seen_final_type){
 ((*this).pop_state());
 ((((*this).index)--));
@@ -5058,34 +5058,34 @@ return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::FunctionTypeContext(true) } ))));
 TRY((((*this).push_state( formatter::State { typename formatter::State::TypeContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false) } ))));
-__jakt_var_633 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_587;
+__jakt_var_641 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_595;
 
 }
-__jakt_label_587:; __jakt_var_633.release_value(); }));
+__jakt_label_595:; __jakt_var_641.release_value(); }));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_634; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_642; {
 if (seen_final_type){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).push_state( formatter::State { typename formatter::State::ParameterList(static_cast<size_t>(0ULL)) } ))));
-__jakt_var_634 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_588;
+__jakt_var_642 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_596;
 
 }
-__jakt_label_588:; __jakt_var_634.release_value(); }));
+__jakt_label_596:; __jakt_var_642.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_635; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_643; {
 if (seen_final_type){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
-__jakt_var_635 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
+__jakt_var_643 = formatter::FormattedToken(token,((*this).indent),JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<u8>, ErrorOr<JaktInternal::Optional<formatter::FormattedToken>>>{
 auto&& __jakt_match_variant = ((*this).peek(static_cast<i64>(0LL)));
 switch(__jakt_match_variant.index()) {
 case 97: {
@@ -5097,26 +5097,26 @@ return JaktInternal::ExplicitValue((TRY((Array<u8>::create_with({})))));
 };/*case end*/
 }/*switch end*/
 }()
-)),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_589;
+)),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_597;
 
 }
-__jakt_label_589:; __jakt_var_635.release_value(); }));
+__jakt_label_597:; __jakt_var_643.release_value(); }));
 };/*case end*/
 case 97: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throws>();
 return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_636; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_644; {
 if (seen_final_type){
 ((*this).pop_state());
 ((((*this).index)--));
 return (TRY((((*this).next_impl(true)))));
 }
-__jakt_var_636 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_590;
+__jakt_var_644 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_598;
 
 }
-__jakt_label_590:; __jakt_var_636.release_value(); }));
+__jakt_label_598:; __jakt_var_644.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -5130,55 +5130,55 @@ auto&& __jakt_match_variant = token;
 switch(__jakt_match_variant.index()) {
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_637; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_645; {
 TRY((((*this).replace_state( formatter::State { typename formatter::State::MatchPattern((JaktInternal::checked_add<size_t>(open_parens,static_cast<size_t>(1ULL))),allow_multiple) } ))));
 TRY((((*this).push_state( formatter::State { typename formatter::State::StatementContext(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),false, formatter::ExpressionMode { typename formatter::ExpressionMode::OutsideExpression() } ,static_cast<size_t>(0ULL)) } ))));
-__jakt_var_637 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_591;
+__jakt_var_645 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_599;
 
 }
-__jakt_label_591:; __jakt_var_637.release_value(); }));
+__jakt_label_599:; __jakt_var_645.release_value(); }));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_638; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_646; {
 if ((open_parens == static_cast<size_t>(0ULL))){
 ((*this).pop_state());
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_sub<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 return (TRY((((*this).next_impl(true)))));
 }
 TRY((((*this).replace_state( formatter::State { typename formatter::State::MatchPattern((JaktInternal::checked_sub<size_t>(open_parens,static_cast<size_t>(1ULL))),allow_multiple) } ))));
-__jakt_var_638 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_592;
+__jakt_var_646 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_600;
 
 }
-__jakt_label_592:; __jakt_var_638.release_value(); }));
+__jakt_label_600:; __jakt_var_646.release_value(); }));
 };/*case end*/
 case 56: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_639; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_647; {
 if ((!(allow_multiple))){
 ((*this).pop_state());
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_sub<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 return (TRY((((*this).next_impl(true)))));
 }
-__jakt_var_639 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_593;
+__jakt_var_647 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))); goto __jakt_label_601;
 
 }
-__jakt_label_593:; __jakt_var_639.release_value(); }));
+__jakt_label_601:; __jakt_var_647.release_value(); }));
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();return JaktInternal::ExplicitValue(formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({})))),(TRY((Array<u8>::create_with({}))))));
 };/*case end*/
 case 41: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pipe>();
-return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_640; {
+return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_648; {
 if ((!(allow_multiple))){
 ((*this).pop_state());
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_sub<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 return (TRY((((*this).next_impl(true)))));
 }
-__jakt_var_640 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_594;
+__jakt_var_648 = formatter::FormattedToken(token,((*this).indent),(TRY((Array<u8>::create_with({' '})))),(TRY((Array<u8>::create_with({' '}))))); goto __jakt_label_602;
 
 }
-__jakt_label_594:; __jakt_var_640.release_value(); }));
+__jakt_label_602:; __jakt_var_648.release_value(); }));
 };/*case end*/
 default: {
 {
@@ -5593,38 +5593,38 @@ return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktIn
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::Toplevel>();return JaktInternal::ExplicitValue(String("toplevel"));
+auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::Toplevel>();return JaktInternal::ExplicitValue(Jakt::String("toplevel"));
 };/*case end*/
 case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::Import>();return JaktInternal::ExplicitValue(String("import"));
+auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::Import>();return JaktInternal::ExplicitValue(Jakt::String("import"));
 };/*case end*/
 case 2: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::ImportList>();return JaktInternal::ExplicitValue(String("import list"));
+auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::ImportList>();return JaktInternal::ExplicitValue(Jakt::String("import list"));
 };/*case end*/
 case 3: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::EntityDeclaration>();return JaktInternal::ExplicitValue(String("entity declaration"));
+auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::EntityDeclaration>();return JaktInternal::ExplicitValue(Jakt::String("entity declaration"));
 };/*case end*/
 case 4: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::ParameterList>();return JaktInternal::ExplicitValue(String("parameter list"));
+auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::ParameterList>();return JaktInternal::ExplicitValue(Jakt::String("parameter list"));
 };/*case end*/
 case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename formatter::State::RestrictionList>();
-return JaktInternal::ExplicitValue(String("restriction list"));
+return JaktInternal::ExplicitValue(Jakt::String("restriction list"));
 };/*case end*/
 case 6: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::EntityDefinition>();return JaktInternal::ExplicitValue(String("entity definition"));
+auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::EntityDefinition>();return JaktInternal::ExplicitValue(Jakt::String("entity definition"));
 };/*case end*/
 case 7: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::StatementContext>();return JaktInternal::ExplicitValue(String("statement context"));
+auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::StatementContext>();return JaktInternal::ExplicitValue(Jakt::String("statement context"));
 };/*case end*/
 case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::MatchPattern>();return JaktInternal::ExplicitValue(String("match pattern"));
+auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::MatchPattern>();return JaktInternal::ExplicitValue(Jakt::String("match pattern"));
 };/*case end*/
 case 9: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::VariableDeclaration>();return JaktInternal::ExplicitValue(String("variable declaration"));
+auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::VariableDeclaration>();return JaktInternal::ExplicitValue(Jakt::String("variable declaration"));
 };/*case end*/
 case 10: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::GenericCallTypeParams>();return JaktInternal::ExplicitValue(String("generic call type params"));
+auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::GenericCallTypeParams>();return JaktInternal::ExplicitValue(Jakt::String("generic call type params"));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::TypeContext>();size_t const& open_parens = __jakt_match_value.open_parens;
@@ -5632,10 +5632,10 @@ size_t const& open_curlies = __jakt_match_value.open_curlies;
 size_t const& open_squares = __jakt_match_value.open_squares;
 size_t const& open_angles = __jakt_match_value.open_angles;
 bool const& seen_start = __jakt_match_value.seen_start;
-return JaktInternal::ExplicitValue(TRY((String::formatted(String("type context (p{} c{} s{} a{} s:{})"),open_parens,open_curlies,open_squares,open_angles,seen_start))));
+return JaktInternal::ExplicitValue(TRY((String::formatted(Jakt::String("type context (p{} c{} s{} a{} s:{})"),open_parens,open_curlies,open_squares,open_angles,seen_start))));
 };/*case end*/
 case 12: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::FunctionTypeContext>();return JaktInternal::ExplicitValue(String("function type context"));
+auto&& __jakt_match_value = __jakt_match_variant.template get<formatter::State::FunctionTypeContext>();return JaktInternal::ExplicitValue(Jakt::String("function type context"));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()

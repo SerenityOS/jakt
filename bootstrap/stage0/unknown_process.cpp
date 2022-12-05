@@ -3,28 +3,28 @@ namespace Jakt {
 namespace unknown_process {
 ErrorOr<unknown_process::Process> start_background_process(JaktInternal::Array<String> const args) {
 {
-warnln(String("NOT IMPLEMENTED: start_background_process {}"),args);
+warnln(Jakt::String("NOT IMPLEMENTED: start_background_process {}"),args);
 return Error::from_errno(static_cast<i32>(38));
 }
 }
 
 ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<size_t>,unknown_process::ExitPollResult>> wait_for_some_set_of_processes_that_at_least_includes(JaktInternal::Dictionary<size_t,unknown_process::Process> const& processes) {
 {
-warnln(String("NOT IMPLEMENTED: wait_for_some_set_of_processes_that_at_least_includes {}"),processes);
+warnln(Jakt::String("NOT IMPLEMENTED: wait_for_some_set_of_processes_that_at_least_includes {}"),processes);
 return Error::from_errno(static_cast<i32>(38));
 }
 }
 
 ErrorOr<unknown_process::ExitPollResult> wait_for_process(unknown_process::Process const& process) {
 {
-warnln(String("NOT IMPLEMENTED: wait_for_process {}"),process);
+warnln(Jakt::String("NOT IMPLEMENTED: wait_for_process {}"),process);
 return Error::from_errno(static_cast<i32>(38));
 }
 }
 
 ErrorOr<void> forcefully_kill_process(unknown_process::Process const& process) {
 {
-warnln(String("NOT IMPLEMENTED: forcefully_kill_process {}"),process);
+warnln(Jakt::String("NOT IMPLEMENTED: forcefully_kill_process {}"),process);
 return Error::from_errno(static_cast<i32>(38));
 }
 return {};
@@ -32,7 +32,7 @@ return {};
 
 ErrorOr<JaktInternal::Optional<unknown_process::ExitPollResult>> poll_process_exit(unknown_process::Process const& process) {
 {
-warnln(String("NOT IMPLEMENTED: poll_process_exit {}"),process);
+warnln(Jakt::String("NOT IMPLEMENTED: poll_process_exit {}"),process);
 return Error::from_errno(static_cast<i32>(38));
 }
 }

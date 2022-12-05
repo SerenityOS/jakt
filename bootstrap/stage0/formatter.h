@@ -4,32 +4,6 @@
 #include "lexer.h"
 namespace Jakt {
 namespace formatter {
-namespace Entity_Details {
-struct Struct {
-};
-struct Enum {
-};
-struct Namespace {
-};
-struct Function {
-bool arrow;
-bool indented;
-template<typename _MemberT0, typename _MemberT1>
-Function(_MemberT0&& member_0, _MemberT1&& member_1):
-arrow{ forward<_MemberT0>(member_0)},
-indented{ forward<_MemberT1>(member_1)}
-{}
-};
-}
-struct Entity : public Variant<Entity_Details::Struct, Entity_Details::Enum, Entity_Details::Namespace, Entity_Details::Function> {
-using Variant<Entity_Details::Struct, Entity_Details::Enum, Entity_Details::Namespace, Entity_Details::Function>::Variant;
-    using Struct = Entity_Details::Struct;
-    using Enum = Entity_Details::Enum;
-    using Namespace = Entity_Details::Namespace;
-    using Function = Entity_Details::Function;
-ErrorOr<String> debug_description() const;
-static formatter::Entity from_token(lexer::Token const& token);
-};
 namespace BreakablePoint_Details {
 struct Paren {
 size_t point;
@@ -78,14 +52,33 @@ ErrorOr<String> debug_description() const;
 size_t length() const;
 size_t point() const;
 };
-struct FormattedToken {
-  public:
-lexer::Token token;size_t indent;JaktInternal::Array<u8> trailing_trivia;JaktInternal::Array<u8> preceding_trivia;FormattedToken(lexer::Token a_token, size_t a_indent, JaktInternal::Array<u8> a_trailing_trivia, JaktInternal::Array<u8> a_preceding_trivia);
-
-ErrorOr<String> token_text() const;
-ErrorOr<String> debug_text() const;
+namespace Entity_Details {
+struct Struct {
+};
+struct Enum {
+};
+struct Namespace {
+};
+struct Function {
+bool arrow;
+bool indented;
+template<typename _MemberT0, typename _MemberT1>
+Function(_MemberT0&& member_0, _MemberT1&& member_1):
+arrow{ forward<_MemberT0>(member_0)},
+indented{ forward<_MemberT1>(member_1)}
+{}
+};
+}
+struct Entity : public Variant<Entity_Details::Struct, Entity_Details::Enum, Entity_Details::Namespace, Entity_Details::Function> {
+using Variant<Entity_Details::Struct, Entity_Details::Enum, Entity_Details::Namespace, Entity_Details::Function>::Variant;
+    using Struct = Entity_Details::Struct;
+    using Enum = Entity_Details::Enum;
+    using Namespace = Entity_Details::Namespace;
+    using Function = Entity_Details::Function;
 ErrorOr<String> debug_description() const;
-};namespace ExpressionMode_Details {
+static formatter::Entity from_token(lexer::Token const& token);
+};
+namespace ExpressionMode_Details {
 struct OutsideExpression {
 };
 struct BeforeExpressions {
@@ -243,12 +236,7 @@ using Variant<State_Details::Toplevel, State_Details::Import, State_Details::Imp
 ErrorOr<String> debug_description() const;
 ErrorOr<String> name() const;
 };
-struct ReflowState {
-  public:
-formatter::FormattedToken token;formatter::State state;size_t enclosures_to_ignore;ReflowState(formatter::FormattedToken a_token, formatter::State a_state, size_t a_enclosures_to_ignore);
-
-ErrorOr<String> debug_description() const;
-};struct Stage0 {
+struct Stage0 {
   public:
 JaktInternal::Array<lexer::Token> tokens;size_t index;JaktInternal::Array<formatter::State> states;size_t indent;bool already_seen_enclosure_in_current_line;JaktInternal::Array<size_t> dedents_to_skip;bool debug;ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
 ErrorOr<void> replace_state(formatter::State const state);
@@ -279,6 +267,18 @@ static ErrorOr<JaktInternal::Array<u8>> to_array(String const s);
 ErrorOr<void> fixup_tokens_to_reflow();
 ErrorOr<void> fixup_closing_enclosures(JaktInternal::Array<formatter::ReflowState>& line) const;
 size_t pick_breaking_point_index() const;
+ErrorOr<String> debug_description() const;
+};struct FormattedToken {
+  public:
+lexer::Token token;size_t indent;JaktInternal::Array<u8> trailing_trivia;JaktInternal::Array<u8> preceding_trivia;FormattedToken(lexer::Token a_token, size_t a_indent, JaktInternal::Array<u8> a_trailing_trivia, JaktInternal::Array<u8> a_preceding_trivia);
+
+ErrorOr<String> token_text() const;
+ErrorOr<String> debug_text() const;
+ErrorOr<String> debug_description() const;
+};struct ReflowState {
+  public:
+formatter::FormattedToken token;formatter::State state;size_t enclosures_to_ignore;ReflowState(formatter::FormattedToken a_token, formatter::State a_state, size_t a_enclosures_to_ignore);
+
 ErrorOr<String> debug_description() const;
 };template <typename T>
 JaktInternal::Optional<T> collapse(JaktInternal::Optional<JaktInternal::Optional<T>> const x) {
@@ -314,14 +314,11 @@ return (TRY((((((xs)[(JaktInternal::Range<size_t>{static_cast<size_t>(0LL),stati
 }
 
 }
-template<>struct Formatter<formatter::Entity> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, formatter::Entity const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<formatter::BreakablePoint> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::BreakablePoint const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<formatter::FormattedToken> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, formatter::FormattedToken const& value) {
+template<>struct Formatter<formatter::Entity> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, formatter::Entity const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<formatter::ExpressionMode> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::ExpressionMode const& value) {
@@ -329,13 +326,16 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<formatter::State> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::State const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<formatter::ReflowState> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, formatter::ReflowState const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<formatter::Stage0> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::Stage0 const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<formatter::Formatter> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::Formatter const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<formatter::FormattedToken> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, formatter::FormattedToken const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<formatter::ReflowState> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, formatter::ReflowState const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 } // namespace Jakt

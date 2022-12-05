@@ -21,7 +21,7 @@ break;
 }
 String arg = (_magic_value.value());
 {
-if ((arg == String("--"))){
+if ((arg == Jakt::String("--"))){
 (((parser).definitely_positional_args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))),static_cast<size_t>(((((parser).args)).size()))})])).to_array()))));
 (((parser).args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(i)})])).to_array()))));
 break;
@@ -59,7 +59,7 @@ String name = (_magic_value.value());
 {
 if ((((((*this).args))[i]) == name)){
 if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
-warnln(String("The option '{}' requires a value, but none was supplied"),name);
+warnln(Jakt::String("The option '{}' requires a value, but none was supplied"),name);
 return Error::from_errno(static_cast<i32>(200));
 }
 TRY((((((*this).removed_indices)).push(i))));
@@ -186,7 +186,7 @@ String name = (_magic_value.value());
 {
 if ((((((*this).args))[i]) == name)){
 if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
-warnln(String("The option '{}' requires a value, but none was supplied"),name);
+warnln(Jakt::String("The option '{}' requires a value, but none was supplied"),name);
 return Error::from_errno(static_cast<i32>(200));
 }
 TRY((((((*this).removed_indices)).push(i))));

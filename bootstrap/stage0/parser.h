@@ -6,18 +6,6 @@
 #include "compiler.h"
 namespace Jakt {
 namespace parser {
-namespace DefinitionLinkage_Details {
-struct Internal {
-};
-struct External {
-};
-}
-struct DefinitionLinkage : public Variant<DefinitionLinkage_Details::Internal, DefinitionLinkage_Details::External> {
-using Variant<DefinitionLinkage_Details::Internal, DefinitionLinkage_Details::External>::Variant;
-    using Internal = DefinitionLinkage_Details::Internal;
-    using External = DefinitionLinkage_Details::External;
-ErrorOr<String> debug_description() const;
-};
 namespace ParsedCapture_Details {
 struct ByValue {
 String name;
@@ -56,43 +44,214 @@ ErrorOr<String> debug_description() const;
 String name() const;
 utility::Span span() const;
 };
+struct ParsedBlock {
+  public:
+JaktInternal::Array<NonnullRefPtr<parser::ParsedStatement>> stmts;bool equals(parser::ParsedBlock const rhs_block) const;
+ParsedBlock(JaktInternal::Array<NonnullRefPtr<parser::ParsedStatement>> a_stmts);
+
+JaktInternal::Optional<utility::Span> find_yield_span() const;
+ErrorOr<JaktInternal::Optional<utility::Span>> span(parser::Parser const parser) const;
+JaktInternal::Optional<utility::Span> find_yield_keyword_span() const;
+ErrorOr<String> debug_description() const;
+};namespace ParsedMatchBody_Details {
+struct Expression{
+NonnullRefPtr<parser::ParsedExpression> value;
+template<typename _MemberT0>
+Expression(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Block{
+parser::ParsedBlock value;
+template<typename _MemberT0>
+Block(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct ParsedMatchBody : public Variant<ParsedMatchBody_Details::Expression, ParsedMatchBody_Details::Block> {
+using Variant<ParsedMatchBody_Details::Expression, ParsedMatchBody_Details::Block>::Variant;
+    using Expression = ParsedMatchBody_Details::Expression;
+    using Block = ParsedMatchBody_Details::Block;
+ErrorOr<String> debug_description() const;
+};
+struct ParsedMatchCase {
+  public:
+JaktInternal::Array<parser::ParsedMatchPattern> patterns;utility::Span marker_span;parser::ParsedMatchBody body;bool equals(parser::ParsedMatchCase const rhs_match_case) const;
+ParsedMatchCase(JaktInternal::Array<parser::ParsedMatchPattern> a_patterns, utility::Span a_marker_span, parser::ParsedMatchBody a_body);
+
+ErrorOr<String> debug_description() const;
+};namespace FunctionType_Details {
+struct Normal {
+};
+struct ImplicitConstructor {
+};
+struct ImplicitEnumConstructor {
+};
+struct ExternalClassConstructor {
+};
+struct Expression {
+};
+struct Closure {
+};
+}
+struct FunctionType : public Variant<FunctionType_Details::Normal, FunctionType_Details::ImplicitConstructor, FunctionType_Details::ImplicitEnumConstructor, FunctionType_Details::ExternalClassConstructor, FunctionType_Details::Expression, FunctionType_Details::Closure> {
+using Variant<FunctionType_Details::Normal, FunctionType_Details::ImplicitConstructor, FunctionType_Details::ImplicitEnumConstructor, FunctionType_Details::ExternalClassConstructor, FunctionType_Details::Expression, FunctionType_Details::Closure>::Variant;
+    using Normal = FunctionType_Details::Normal;
+    using ImplicitConstructor = FunctionType_Details::ImplicitConstructor;
+    using ImplicitEnumConstructor = FunctionType_Details::ImplicitEnumConstructor;
+    using ExternalClassConstructor = FunctionType_Details::ExternalClassConstructor;
+    using Expression = FunctionType_Details::Expression;
+    using Closure = FunctionType_Details::Closure;
+ErrorOr<String> debug_description() const;
+};
+struct ParsedVarDecl {
+  public:
+String name;NonnullRefPtr<parser::ParsedType> parsed_type;bool is_mutable;JaktInternal::Optional<utility::Span> inlay_span;utility::Span span;ParsedVarDecl(String a_name, NonnullRefPtr<parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span);
+
+bool equals(parser::ParsedVarDecl const rhs_var_decl) const;
+ErrorOr<String> debug_description() const;
+};namespace NumericConstant_Details {
+struct I8{
+i8 value;
+template<typename _MemberT0>
+I8(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct I16{
+i16 value;
+template<typename _MemberT0>
+I16(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct I32{
+i32 value;
+template<typename _MemberT0>
+I32(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct I64{
+i64 value;
+template<typename _MemberT0>
+I64(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct U8{
+u8 value;
+template<typename _MemberT0>
+U8(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct U16{
+u16 value;
+template<typename _MemberT0>
+U16(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct U32{
+u32 value;
+template<typename _MemberT0>
+U32(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct U64{
+u64 value;
+template<typename _MemberT0>
+U64(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct USize{
+u64 value;
+template<typename _MemberT0>
+USize(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct F32{
+f32 value;
+template<typename _MemberT0>
+F32(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct F64{
+f64 value;
+template<typename _MemberT0>
+F64(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct UnknownSigned{
+i64 value;
+template<typename _MemberT0>
+UnknownSigned(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct UnknownUnsigned{
+u64 value;
+template<typename _MemberT0>
+UnknownUnsigned(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct NumericConstant : public Variant<NumericConstant_Details::I8, NumericConstant_Details::I16, NumericConstant_Details::I32, NumericConstant_Details::I64, NumericConstant_Details::U8, NumericConstant_Details::U16, NumericConstant_Details::U32, NumericConstant_Details::U64, NumericConstant_Details::USize, NumericConstant_Details::F32, NumericConstant_Details::F64, NumericConstant_Details::UnknownSigned, NumericConstant_Details::UnknownUnsigned> {
+using Variant<NumericConstant_Details::I8, NumericConstant_Details::I16, NumericConstant_Details::I32, NumericConstant_Details::I64, NumericConstant_Details::U8, NumericConstant_Details::U16, NumericConstant_Details::U32, NumericConstant_Details::U64, NumericConstant_Details::USize, NumericConstant_Details::F32, NumericConstant_Details::F64, NumericConstant_Details::UnknownSigned, NumericConstant_Details::UnknownUnsigned>::Variant;
+    using I8 = NumericConstant_Details::I8;
+    using I16 = NumericConstant_Details::I16;
+    using I32 = NumericConstant_Details::I32;
+    using I64 = NumericConstant_Details::I64;
+    using U8 = NumericConstant_Details::U8;
+    using U16 = NumericConstant_Details::U16;
+    using U32 = NumericConstant_Details::U32;
+    using U64 = NumericConstant_Details::U64;
+    using USize = NumericConstant_Details::USize;
+    using F32 = NumericConstant_Details::F32;
+    using F64 = NumericConstant_Details::F64;
+    using UnknownSigned = NumericConstant_Details::UnknownSigned;
+    using UnknownUnsigned = NumericConstant_Details::UnknownUnsigned;
+ErrorOr<String> debug_description() const;
+size_t to_usize() const;
+};
 struct ParsedCall {
   public:
 JaktInternal::Array<String> namespace_;String name;JaktInternal::Array<JaktInternal::Tuple<String,utility::Span,NonnullRefPtr<parser::ParsedExpression>>> args;JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> type_args;ParsedCall(JaktInternal::Array<String> a_namespace_, String a_name, JaktInternal::Array<JaktInternal::Tuple<String,utility::Span,NonnullRefPtr<parser::ParsedExpression>>> a_args, JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> a_type_args);
 
 bool equals(parser::ParsedCall const rhs_parsed_call) const;
 ErrorOr<String> debug_description() const;
-};struct EnumVariantPatternArgument {
-  public:
-JaktInternal::Optional<String> name;String binding;utility::Span span;bool is_reference;bool is_mutable;EnumVariantPatternArgument(JaktInternal::Optional<String> a_name, String a_binding, utility::Span a_span, bool a_is_reference, bool a_is_mutable);
-
-bool equals(parser::EnumVariantPatternArgument const rhs_variant_pattern_argument) const;
+};namespace TypeCast_Details {
+struct Fallible{
+NonnullRefPtr<parser::ParsedType> value;
+template<typename _MemberT0>
+Fallible(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Infallible{
+NonnullRefPtr<parser::ParsedType> value;
+template<typename _MemberT0>
+Infallible(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct TypeCast : public Variant<TypeCast_Details::Fallible, TypeCast_Details::Infallible> {
+using Variant<TypeCast_Details::Fallible, TypeCast_Details::Infallible>::Variant;
+    using Fallible = TypeCast_Details::Fallible;
+    using Infallible = TypeCast_Details::Infallible;
 ErrorOr<String> debug_description() const;
-};struct ParsedNamespace {
-  public:
-JaktInternal::Optional<String> name;JaktInternal::Optional<utility::Span> name_span;JaktInternal::Array<parser::ParsedFunction> functions;JaktInternal::Array<parser::ParsedRecord> records;JaktInternal::Array<parser::ParsedTrait> traits;JaktInternal::Array<parser::ParsedExternalTraitImplementation> external_trait_implementations;JaktInternal::Array<parser::ParsedNamespace> namespaces;JaktInternal::Array<parser::ParsedModuleImport> module_imports;JaktInternal::Array<parser::ParsedExternImport> extern_imports;JaktInternal::Optional<String> import_path_if_extern;JaktInternal::Array<parser::IncludeAction> generating_import_extern_before_include;JaktInternal::Array<parser::IncludeAction> generating_import_extern_after_include;ErrorOr<void> add_child_namespace(parser::ParsedNamespace const namespace_);
-ParsedNamespace(JaktInternal::Optional<String> a_name, JaktInternal::Optional<utility::Span> a_name_span, JaktInternal::Array<parser::ParsedFunction> a_functions, JaktInternal::Array<parser::ParsedRecord> a_records, JaktInternal::Array<parser::ParsedTrait> a_traits, JaktInternal::Array<parser::ParsedExternalTraitImplementation> a_external_trait_implementations, JaktInternal::Array<parser::ParsedNamespace> a_namespaces, JaktInternal::Array<parser::ParsedModuleImport> a_module_imports, JaktInternal::Array<parser::ParsedExternImport> a_extern_imports, JaktInternal::Optional<String> a_import_path_if_extern, JaktInternal::Array<parser::IncludeAction> a_generating_import_extern_before_include, JaktInternal::Array<parser::IncludeAction> a_generating_import_extern_after_include);
-
-bool is_equivalent_to(parser::ParsedNamespace const other) const;
-ErrorOr<void> add_extern_import(parser::ParsedExternImport const import_);
-ErrorOr<void> merge_with(parser::ParsedNamespace const namespace_);
-ErrorOr<void> add_module_import(parser::ParsedModuleImport const import_);
-ErrorOr<String> debug_description() const;
-};struct ParsedExternImport {
-  public:
-bool is_c;parser::ParsedNamespace assigned_namespace;JaktInternal::Array<parser::IncludeAction> before_include;JaktInternal::Array<parser::IncludeAction> after_include;ErrorOr<bool> is_equivalent_to(parser::ParsedExternImport const other) const;
-ParsedExternImport(bool a_is_c, parser::ParsedNamespace a_assigned_namespace, JaktInternal::Array<parser::IncludeAction> a_before_include, JaktInternal::Array<parser::IncludeAction> a_after_include);
-
-String get_name() const;
-String get_path() const;
-ErrorOr<String> debug_description() const;
-};struct ParsedVarDecl {
-  public:
-String name;NonnullRefPtr<parser::ParsedType> parsed_type;bool is_mutable;JaktInternal::Optional<utility::Span> inlay_span;utility::Span span;ParsedVarDecl(String a_name, NonnullRefPtr<parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span);
-
-bool equals(parser::ParsedVarDecl const rhs_var_decl) const;
-ErrorOr<String> debug_description() const;
-};namespace ParsedType_Details {
+NonnullRefPtr<parser::ParsedType> parsed_type() const;
+};
+namespace ParsedType_Details {
 struct Name {
 String name;
 utility::Span span;
@@ -247,192 +406,6 @@ return adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType(V(forward<Args>(args
 ErrorOr<String> debug_description() const;
 bool equals(NonnullRefPtr<parser::ParsedType> const rhs_parsed_type) const;
 utility::Span span() const;
-};
-namespace RecordType_Details {
-struct Struct {
-JaktInternal::Array<parser::ParsedField> fields;
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedType>> super_type;
-template<typename _MemberT0, typename _MemberT1>
-Struct(_MemberT0&& member_0, _MemberT1&& member_1):
-fields{ forward<_MemberT0>(member_0)},
-super_type{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Class {
-JaktInternal::Array<parser::ParsedField> fields;
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedType>> super_type;
-template<typename _MemberT0, typename _MemberT1>
-Class(_MemberT0&& member_0, _MemberT1&& member_1):
-fields{ forward<_MemberT0>(member_0)},
-super_type{ forward<_MemberT1>(member_1)}
-{}
-};
-struct ValueEnum {
-NonnullRefPtr<parser::ParsedType> underlying_type;
-JaktInternal::Array<parser::ValueEnumVariant> variants;
-template<typename _MemberT0, typename _MemberT1>
-ValueEnum(_MemberT0&& member_0, _MemberT1&& member_1):
-underlying_type{ forward<_MemberT0>(member_0)},
-variants{ forward<_MemberT1>(member_1)}
-{}
-};
-struct SumEnum {
-bool is_boxed;
-JaktInternal::Array<parser::ParsedField> fields;
-JaktInternal::Array<parser::SumEnumVariant> variants;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-SumEnum(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-is_boxed{ forward<_MemberT0>(member_0)},
-fields{ forward<_MemberT1>(member_1)},
-variants{ forward<_MemberT2>(member_2)}
-{}
-};
-struct Garbage {
-};
-}
-struct RecordType : public Variant<RecordType_Details::Struct, RecordType_Details::Class, RecordType_Details::ValueEnum, RecordType_Details::SumEnum, RecordType_Details::Garbage> {
-using Variant<RecordType_Details::Struct, RecordType_Details::Class, RecordType_Details::ValueEnum, RecordType_Details::SumEnum, RecordType_Details::Garbage>::Variant;
-    using Struct = RecordType_Details::Struct;
-    using Class = RecordType_Details::Class;
-    using ValueEnum = RecordType_Details::ValueEnum;
-    using SumEnum = RecordType_Details::SumEnum;
-    using Garbage = RecordType_Details::Garbage;
-ErrorOr<String> debug_description() const;
-String record_type_name() const;
-};
-namespace NumericConstant_Details {
-struct I8{
-i8 value;
-template<typename _MemberT0>
-I8(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct I16{
-i16 value;
-template<typename _MemberT0>
-I16(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct I32{
-i32 value;
-template<typename _MemberT0>
-I32(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct I64{
-i64 value;
-template<typename _MemberT0>
-I64(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct U8{
-u8 value;
-template<typename _MemberT0>
-U8(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct U16{
-u16 value;
-template<typename _MemberT0>
-U16(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct U32{
-u32 value;
-template<typename _MemberT0>
-U32(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct U64{
-u64 value;
-template<typename _MemberT0>
-U64(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct USize{
-u64 value;
-template<typename _MemberT0>
-USize(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct F32{
-f32 value;
-template<typename _MemberT0>
-F32(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct F64{
-f64 value;
-template<typename _MemberT0>
-F64(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct UnknownSigned{
-i64 value;
-template<typename _MemberT0>
-UnknownSigned(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct UnknownUnsigned{
-u64 value;
-template<typename _MemberT0>
-UnknownUnsigned(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct NumericConstant : public Variant<NumericConstant_Details::I8, NumericConstant_Details::I16, NumericConstant_Details::I32, NumericConstant_Details::I64, NumericConstant_Details::U8, NumericConstant_Details::U16, NumericConstant_Details::U32, NumericConstant_Details::U64, NumericConstant_Details::USize, NumericConstant_Details::F32, NumericConstant_Details::F64, NumericConstant_Details::UnknownSigned, NumericConstant_Details::UnknownUnsigned> {
-using Variant<NumericConstant_Details::I8, NumericConstant_Details::I16, NumericConstant_Details::I32, NumericConstant_Details::I64, NumericConstant_Details::U8, NumericConstant_Details::U16, NumericConstant_Details::U32, NumericConstant_Details::U64, NumericConstant_Details::USize, NumericConstant_Details::F32, NumericConstant_Details::F64, NumericConstant_Details::UnknownSigned, NumericConstant_Details::UnknownUnsigned>::Variant;
-    using I8 = NumericConstant_Details::I8;
-    using I16 = NumericConstant_Details::I16;
-    using I32 = NumericConstant_Details::I32;
-    using I64 = NumericConstant_Details::I64;
-    using U8 = NumericConstant_Details::U8;
-    using U16 = NumericConstant_Details::U16;
-    using U32 = NumericConstant_Details::U32;
-    using U64 = NumericConstant_Details::U64;
-    using USize = NumericConstant_Details::USize;
-    using F32 = NumericConstant_Details::F32;
-    using F64 = NumericConstant_Details::F64;
-    using UnknownSigned = NumericConstant_Details::UnknownSigned;
-    using UnknownUnsigned = NumericConstant_Details::UnknownUnsigned;
-ErrorOr<String> debug_description() const;
-size_t to_usize() const;
-};
-namespace TypeCast_Details {
-struct Fallible{
-NonnullRefPtr<parser::ParsedType> value;
-template<typename _MemberT0>
-Fallible(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Infallible{
-NonnullRefPtr<parser::ParsedType> value;
-template<typename _MemberT0>
-Infallible(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct TypeCast : public Variant<TypeCast_Details::Fallible, TypeCast_Details::Infallible> {
-using Variant<TypeCast_Details::Fallible, TypeCast_Details::Infallible>::Variant;
-    using Fallible = TypeCast_Details::Fallible;
-    using Infallible = TypeCast_Details::Infallible;
-ErrorOr<String> debug_description() const;
-NonnullRefPtr<parser::ParsedType> parsed_type() const;
 };
 namespace UnaryOperator_Details {
 struct PreIncrement {
@@ -610,14 +583,11 @@ ErrorOr<String> debug_description() const;
 bool equals(parser::BinaryOperator const rhs_op) const;
 bool is_assignment() const;
 };
-struct ParsedBlock {
+struct EnumVariantPatternArgument {
   public:
-JaktInternal::Array<NonnullRefPtr<parser::ParsedStatement>> stmts;bool equals(parser::ParsedBlock const rhs_block) const;
-ParsedBlock(JaktInternal::Array<NonnullRefPtr<parser::ParsedStatement>> a_stmts);
+JaktInternal::Optional<String> name;String binding;utility::Span span;bool is_reference;bool is_mutable;EnumVariantPatternArgument(JaktInternal::Optional<String> a_name, String a_binding, utility::Span a_span, bool a_is_reference, bool a_is_mutable);
 
-JaktInternal::Optional<utility::Span> find_yield_span() const;
-ErrorOr<JaktInternal::Optional<utility::Span>> span(parser::Parser const parser) const;
-JaktInternal::Optional<utility::Span> find_yield_keyword_span() const;
+bool equals(parser::EnumVariantPatternArgument const rhs_variant_pattern_argument) const;
 ErrorOr<String> debug_description() const;
 };namespace ParsedExpression_Details {
 struct Boolean {
@@ -971,60 +941,10 @@ bool equals(NonnullRefPtr<parser::ParsedExpression> const rhs_expression) const;
 utility::Span span() const;
 i64 precedence() const;
 };
-namespace ImportName_Details {
-struct Literal {
-String name;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-Literal(_MemberT0&& member_0, _MemberT1&& member_1):
-name{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Comptime {
-NonnullRefPtr<parser::ParsedExpression> expression;
-template<typename _MemberT0>
-Comptime(_MemberT0&& member_0):
-expression{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct ImportName : public Variant<ImportName_Details::Literal, ImportName_Details::Comptime> {
-using Variant<ImportName_Details::Literal, ImportName_Details::Comptime>::Variant;
-    using Literal = ImportName_Details::Literal;
-    using Comptime = ImportName_Details::Comptime;
-ErrorOr<String> debug_description() const;
-String literal_name() const;
-bool equals(parser::ImportName const other) const;
-utility::Span span() const;
-};
-namespace ImportList_Details {
-struct List{
-JaktInternal::Array<parser::ImportName> value;
-template<typename _MemberT0>
-List(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct All {
-};
-}
-struct ImportList : public Variant<ImportList_Details::List, ImportList_Details::All> {
-using Variant<ImportList_Details::List, ImportList_Details::All>::Variant;
-    using List = ImportList_Details::List;
-    using All = ImportList_Details::All;
-ErrorOr<String> debug_description() const;
-ErrorOr<void> add(parser::ImportName const name);
-bool is_empty() const;
-};
-struct ParsedModuleImport {
+struct ParsedPatternDefault {
   public:
-parser::ImportName module_name;JaktInternal::Optional<parser::ImportName> alias_name;parser::ImportList import_list;ParsedModuleImport(parser::ImportName a_module_name, JaktInternal::Optional<parser::ImportName> a_alias_name, parser::ImportList a_import_list);
+parser::ParsedVarDecl variable;NonnullRefPtr<parser::ParsedExpression> value;ParsedPatternDefault(parser::ParsedVarDecl a_variable, NonnullRefPtr<parser::ParsedExpression> a_value);
 
-bool is_equivalent_to(parser::ParsedModuleImport const other) const;
-bool has_same_alias_than(parser::ParsedModuleImport const other) const;
-bool has_same_import_semantics(parser::ParsedModuleImport const other) const;
-ErrorOr<void> merge_import_list(parser::ImportList const list);
 ErrorOr<String> debug_description() const;
 };namespace ParsedStatement_Details {
 struct Expression {
@@ -1231,6 +1151,18 @@ ErrorOr<String> debug_description() const;
 bool equals(NonnullRefPtr<parser::ParsedStatement> const rhs_statement) const;
 utility::Span span() const;
 };
+namespace FunctionLinkage_Details {
+struct Internal {
+};
+struct External {
+};
+}
+struct FunctionLinkage : public Variant<FunctionLinkage_Details::Internal, FunctionLinkage_Details::External> {
+using Variant<FunctionLinkage_Details::Internal, FunctionLinkage_Details::External>::Variant;
+    using Internal = FunctionLinkage_Details::Internal;
+    using External = FunctionLinkage_Details::External;
+ErrorOr<String> debug_description() const;
+};
 namespace Visibility_Details {
 struct Public {
 };
@@ -1253,78 +1185,137 @@ using Variant<Visibility_Details::Public, Visibility_Details::Private, Visibilit
     using Restricted = Visibility_Details::Restricted;
 ErrorOr<String> debug_description() const;
 };
-struct ParsedField {
-  public:
-parser::ParsedVarDecl var_decl;parser::Visibility visibility;JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> default_value;ParsedField(parser::ParsedVarDecl a_var_decl, parser::Visibility a_visibility, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_default_value);
-
-ErrorOr<String> debug_description() const;
-};struct ParsedNameWithGenericParameters {
-  public:
-String name;utility::Span name_span;JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> generic_parameters;ParsedNameWithGenericParameters(String a_name, utility::Span a_name_span, JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> a_generic_parameters);
-
-ErrorOr<String> debug_description() const;
-};struct ParsedVariable {
-  public:
-String name;NonnullRefPtr<parser::ParsedType> parsed_type;bool is_mutable;utility::Span span;bool equals(parser::ParsedVariable const rhs_parsed_varible) const;
-ParsedVariable(String a_name, NonnullRefPtr<parser::ParsedType> a_parsed_type, bool a_is_mutable, utility::Span a_span);
-
-ErrorOr<String> debug_description() const;
-};struct ParsedParameter {
-  public:
-bool requires_label;parser::ParsedVariable variable;JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> default_argument;utility::Span span;bool equals(parser::ParsedParameter const rhs_param) const;
-ParsedParameter(bool a_requires_label, parser::ParsedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_default_argument, utility::Span a_span);
-
-ErrorOr<String> debug_description() const;
-};namespace FunctionType_Details {
-struct Normal {
-};
-struct ImplicitConstructor {
-};
-struct ImplicitEnumConstructor {
-};
-struct ExternalClassConstructor {
-};
-struct Expression {
-};
-struct Closure {
-};
-}
-struct FunctionType : public Variant<FunctionType_Details::Normal, FunctionType_Details::ImplicitConstructor, FunctionType_Details::ImplicitEnumConstructor, FunctionType_Details::ExternalClassConstructor, FunctionType_Details::Expression, FunctionType_Details::Closure> {
-using Variant<FunctionType_Details::Normal, FunctionType_Details::ImplicitConstructor, FunctionType_Details::ImplicitEnumConstructor, FunctionType_Details::ExternalClassConstructor, FunctionType_Details::Expression, FunctionType_Details::Closure>::Variant;
-    using Normal = FunctionType_Details::Normal;
-    using ImplicitConstructor = FunctionType_Details::ImplicitConstructor;
-    using ImplicitEnumConstructor = FunctionType_Details::ImplicitEnumConstructor;
-    using ExternalClassConstructor = FunctionType_Details::ExternalClassConstructor;
-    using Expression = FunctionType_Details::Expression;
-    using Closure = FunctionType_Details::Closure;
-ErrorOr<String> debug_description() const;
-};
-namespace FunctionLinkage_Details {
-struct Internal {
-};
-struct External {
-};
-}
-struct FunctionLinkage : public Variant<FunctionLinkage_Details::Internal, FunctionLinkage_Details::External> {
-using Variant<FunctionLinkage_Details::Internal, FunctionLinkage_Details::External>::Variant;
-    using Internal = FunctionLinkage_Details::Internal;
-    using External = FunctionLinkage_Details::External;
-ErrorOr<String> debug_description() const;
-};
 struct ParsedFunction {
   public:
 String name;utility::Span name_span;parser::Visibility visibility;JaktInternal::Array<parser::ParsedParameter> params;JaktInternal::Array<parser::ParsedGenericParameter> generic_parameters;parser::ParsedBlock block;NonnullRefPtr<parser::ParsedType> return_type;utility::Span return_type_span;bool can_throw;parser::FunctionType type;parser::FunctionLinkage linkage;bool must_instantiate;bool is_comptime;bool is_fat_arrow;ParsedFunction(String a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::Array<parser::ParsedParameter> a_params, JaktInternal::Array<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow);
 
 bool equals(parser::ParsedFunction const other) const;
 ErrorOr<String> debug_description() const;
-};struct ParsedTrait {
+};struct ParsedMethod {
   public:
-String name;utility::Span name_span;JaktInternal::Array<parser::ParsedGenericParameter> generic_parameters;JaktInternal::Array<parser::ParsedFunction> methods;ParsedTrait(String a_name, utility::Span a_name_span, JaktInternal::Array<parser::ParsedGenericParameter> a_generic_parameters, JaktInternal::Array<parser::ParsedFunction> a_methods);
+parser::ParsedFunction parsed_function;parser::Visibility visibility;bool is_virtual;bool is_override;ParsedMethod(parser::ParsedFunction a_parsed_function, parser::Visibility a_visibility, bool a_is_virtual, bool a_is_override);
 
+ErrorOr<String> debug_description() const;
+};struct ParsedExternalTraitImplementation {
+  public:
+NonnullRefPtr<parser::ParsedType> for_type;JaktInternal::Array<parser::ParsedNameWithGenericParameters> traits;JaktInternal::Array<parser::ParsedMethod> methods;ParsedExternalTraitImplementation(NonnullRefPtr<parser::ParsedType> a_for_type, JaktInternal::Array<parser::ParsedNameWithGenericParameters> a_traits, JaktInternal::Array<parser::ParsedMethod> a_methods);
+
+ErrorOr<String> debug_description() const;
+};struct ParsedNamespace {
+  public:
+JaktInternal::Optional<String> name;JaktInternal::Optional<utility::Span> name_span;JaktInternal::Array<parser::ParsedFunction> functions;JaktInternal::Array<parser::ParsedRecord> records;JaktInternal::Array<parser::ParsedTrait> traits;JaktInternal::Array<parser::ParsedExternalTraitImplementation> external_trait_implementations;JaktInternal::Array<parser::ParsedNamespace> namespaces;JaktInternal::Array<parser::ParsedModuleImport> module_imports;JaktInternal::Array<parser::ParsedExternImport> extern_imports;JaktInternal::Optional<String> import_path_if_extern;JaktInternal::Array<parser::IncludeAction> generating_import_extern_before_include;JaktInternal::Array<parser::IncludeAction> generating_import_extern_after_include;ErrorOr<void> add_child_namespace(parser::ParsedNamespace const namespace_);
+ParsedNamespace(JaktInternal::Optional<String> a_name, JaktInternal::Optional<utility::Span> a_name_span, JaktInternal::Array<parser::ParsedFunction> a_functions, JaktInternal::Array<parser::ParsedRecord> a_records, JaktInternal::Array<parser::ParsedTrait> a_traits, JaktInternal::Array<parser::ParsedExternalTraitImplementation> a_external_trait_implementations, JaktInternal::Array<parser::ParsedNamespace> a_namespaces, JaktInternal::Array<parser::ParsedModuleImport> a_module_imports, JaktInternal::Array<parser::ParsedExternImport> a_extern_imports, JaktInternal::Optional<String> a_import_path_if_extern, JaktInternal::Array<parser::IncludeAction> a_generating_import_extern_before_include, JaktInternal::Array<parser::IncludeAction> a_generating_import_extern_after_include);
+
+bool is_equivalent_to(parser::ParsedNamespace const other) const;
+ErrorOr<void> add_extern_import(parser::ParsedExternImport const import_);
+ErrorOr<void> merge_with(parser::ParsedNamespace const namespace_);
+ErrorOr<void> add_module_import(parser::ParsedModuleImport const import_);
 ErrorOr<String> debug_description() const;
 };struct ParsedName {
   public:
 String name;utility::Span span;ParsedName(String a_name, utility::Span a_span);
+
+ErrorOr<String> debug_description() const;
+};namespace ParsedMatchPattern_Details {
+struct EnumVariant {
+JaktInternal::Dictionary<String,parser::ParsedPatternDefault> defaults;
+JaktInternal::Array<JaktInternal::Tuple<String,utility::Span>> variant_names;
+JaktInternal::Array<parser::EnumVariantPatternArgument> variant_arguments;
+utility::Span arguments_span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
+EnumVariant(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+defaults{ forward<_MemberT0>(member_0)},
+variant_names{ forward<_MemberT1>(member_1)},
+variant_arguments{ forward<_MemberT2>(member_2)},
+arguments_span{ forward<_MemberT3>(member_3)}
+{}
+};
+struct Expression{
+JaktInternal::Dictionary<String,parser::ParsedPatternDefault> defaults;
+NonnullRefPtr<parser::ParsedExpression> value;
+template<typename _MemberT0, typename _MemberT1>
+Expression(_MemberT0&& member_0, _MemberT1&& member_1):
+defaults{ forward<_MemberT0>(member_0)},
+value{ forward<_MemberT1>(member_1)}
+{}
+};
+struct CatchAll {
+JaktInternal::Dictionary<String,parser::ParsedPatternDefault> defaults;
+JaktInternal::Array<parser::EnumVariantPatternArgument> variant_arguments;
+utility::Span arguments_span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+CatchAll(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+defaults{ forward<_MemberT0>(member_0)},
+variant_arguments{ forward<_MemberT1>(member_1)},
+arguments_span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct Invalid {
+JaktInternal::Dictionary<String,parser::ParsedPatternDefault> defaults;
+template<typename _MemberT0>
+Invalid(_MemberT0&& member_0):
+defaults{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct ParsedMatchPattern : public Variant<ParsedMatchPattern_Details::EnumVariant, ParsedMatchPattern_Details::Expression, ParsedMatchPattern_Details::CatchAll, ParsedMatchPattern_Details::Invalid> {
+using Variant<ParsedMatchPattern_Details::EnumVariant, ParsedMatchPattern_Details::Expression, ParsedMatchPattern_Details::CatchAll, ParsedMatchPattern_Details::Invalid>::Variant;
+    using EnumVariant = ParsedMatchPattern_Details::EnumVariant;
+    using Expression = ParsedMatchPattern_Details::Expression;
+    using CatchAll = ParsedMatchPattern_Details::CatchAll;
+    using Invalid = ParsedMatchPattern_Details::Invalid;
+ErrorOr<String> debug_description() const;
+JaktInternal::Dictionary<String,parser::ParsedPatternDefault> const& defaults() const { switch(this->index()) {case 0 /* EnumVariant */: return this->template get<ParsedMatchPattern::EnumVariant>().defaults;
+case 1 /* Expression */: return this->template get<ParsedMatchPattern::Expression>().defaults;
+case 2 /* CatchAll */: return this->template get<ParsedMatchPattern::CatchAll>().defaults;
+case 3 /* Invalid */: return this->template get<ParsedMatchPattern::Invalid>().defaults;
+default: VERIFY_NOT_REACHED();
+}
+}
+bool equals(parser::ParsedMatchPattern const rhs_parsed_match_pattern) const;
+bool defaults_equal(JaktInternal::Dictionary<String,parser::ParsedPatternDefault> const defaults) const;
+};
+struct SumEnumVariant {
+  public:
+String name;utility::Span span;JaktInternal::Optional<JaktInternal::Array<parser::ParsedVarDecl>> params;SumEnumVariant(String a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::Array<parser::ParsedVarDecl>> a_params);
+
+ErrorOr<String> debug_description() const;
+};namespace ImportName_Details {
+struct Literal {
+String name;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+Literal(_MemberT0&& member_0, _MemberT1&& member_1):
+name{ forward<_MemberT0>(member_0)},
+span{ forward<_MemberT1>(member_1)}
+{}
+};
+struct Comptime {
+NonnullRefPtr<parser::ParsedExpression> expression;
+template<typename _MemberT0>
+Comptime(_MemberT0&& member_0):
+expression{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct ImportName : public Variant<ImportName_Details::Literal, ImportName_Details::Comptime> {
+using Variant<ImportName_Details::Literal, ImportName_Details::Comptime>::Variant;
+    using Literal = ImportName_Details::Literal;
+    using Comptime = ImportName_Details::Comptime;
+ErrorOr<String> debug_description() const;
+String literal_name() const;
+bool equals(parser::ImportName const other) const;
+utility::Span span() const;
+};
+struct ParsedVariable {
+  public:
+String name;NonnullRefPtr<parser::ParsedType> parsed_type;bool is_mutable;utility::Span span;bool equals(parser::ParsedVariable const rhs_parsed_varible) const;
+ParsedVariable(String a_name, NonnullRefPtr<parser::ParsedType> a_parsed_type, bool a_is_mutable, utility::Span a_span);
+
+ErrorOr<String> debug_description() const;
+};struct ParsedGenericParameter {
+  public:
+String name;utility::Span span;JaktInternal::Optional<JaktInternal::Array<parser::ParsedNameWithGenericParameters>> requires_list;ParsedGenericParameter(String a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::Array<parser::ParsedNameWithGenericParameters>> a_requires_list);
 
 ErrorOr<String> debug_description() const;
 };struct Parser {
@@ -1402,104 +1393,41 @@ ErrorOr<parser::ParsedVarDecl> parse_variable_declaration(bool const is_mutable)
 ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_operand_postfix_operator(utility::Span const start, NonnullRefPtr<parser::ParsedExpression> const expr);
 ErrorOr<JaktInternal::Array<parser::ParsedGenericParameter>> parse_generic_parameters();
 ErrorOr<String> debug_description() const;
-};struct ParsedPatternDefault {
+};struct ParsedExternImport {
   public:
-parser::ParsedVarDecl variable;NonnullRefPtr<parser::ParsedExpression> value;ParsedPatternDefault(parser::ParsedVarDecl a_variable, NonnullRefPtr<parser::ParsedExpression> a_value);
+bool is_c;parser::ParsedNamespace assigned_namespace;JaktInternal::Array<parser::IncludeAction> before_include;JaktInternal::Array<parser::IncludeAction> after_include;ErrorOr<bool> is_equivalent_to(parser::ParsedExternImport const other) const;
+ParsedExternImport(bool a_is_c, parser::ParsedNamespace a_assigned_namespace, JaktInternal::Array<parser::IncludeAction> a_before_include, JaktInternal::Array<parser::IncludeAction> a_after_include);
 
+String get_name() const;
+String get_path() const;
 ErrorOr<String> debug_description() const;
-};struct VisibilityRestriction {
-  public:
-JaktInternal::Array<String> namespace_;String name;VisibilityRestriction(JaktInternal::Array<String> a_namespace_, String a_name);
-
-ErrorOr<String> debug_description() const;
-};struct ParsedGenericParameter {
-  public:
-String name;utility::Span span;JaktInternal::Optional<JaktInternal::Array<parser::ParsedNameWithGenericParameters>> requires_list;ParsedGenericParameter(String a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::Array<parser::ParsedNameWithGenericParameters>> a_requires_list);
-
-ErrorOr<String> debug_description() const;
-};namespace ParsedMatchPattern_Details {
-struct EnumVariant {
-JaktInternal::Dictionary<String,parser::ParsedPatternDefault> defaults;
-JaktInternal::Array<JaktInternal::Tuple<String,utility::Span>> variant_names;
-JaktInternal::Array<parser::EnumVariantPatternArgument> variant_arguments;
-utility::Span arguments_span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
-EnumVariant(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
-defaults{ forward<_MemberT0>(member_0)},
-variant_names{ forward<_MemberT1>(member_1)},
-variant_arguments{ forward<_MemberT2>(member_2)},
-arguments_span{ forward<_MemberT3>(member_3)}
-{}
-};
-struct Expression{
-JaktInternal::Dictionary<String,parser::ParsedPatternDefault> defaults;
-NonnullRefPtr<parser::ParsedExpression> value;
-template<typename _MemberT0, typename _MemberT1>
-Expression(_MemberT0&& member_0, _MemberT1&& member_1):
-defaults{ forward<_MemberT0>(member_0)},
-value{ forward<_MemberT1>(member_1)}
-{}
-};
-struct CatchAll {
-JaktInternal::Dictionary<String,parser::ParsedPatternDefault> defaults;
-JaktInternal::Array<parser::EnumVariantPatternArgument> variant_arguments;
-utility::Span arguments_span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-CatchAll(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-defaults{ forward<_MemberT0>(member_0)},
-variant_arguments{ forward<_MemberT1>(member_1)},
-arguments_span{ forward<_MemberT2>(member_2)}
-{}
-};
-struct Invalid {
-JaktInternal::Dictionary<String,parser::ParsedPatternDefault> defaults;
+};namespace ImportList_Details {
+struct List{
+JaktInternal::Array<parser::ImportName> value;
 template<typename _MemberT0>
-Invalid(_MemberT0&& member_0):
-defaults{ forward<_MemberT0>(member_0)}
+List(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
 {}
 };
-}
-struct ParsedMatchPattern : public Variant<ParsedMatchPattern_Details::EnumVariant, ParsedMatchPattern_Details::Expression, ParsedMatchPattern_Details::CatchAll, ParsedMatchPattern_Details::Invalid> {
-using Variant<ParsedMatchPattern_Details::EnumVariant, ParsedMatchPattern_Details::Expression, ParsedMatchPattern_Details::CatchAll, ParsedMatchPattern_Details::Invalid>::Variant;
-    using EnumVariant = ParsedMatchPattern_Details::EnumVariant;
-    using Expression = ParsedMatchPattern_Details::Expression;
-    using CatchAll = ParsedMatchPattern_Details::CatchAll;
-    using Invalid = ParsedMatchPattern_Details::Invalid;
-ErrorOr<String> debug_description() const;
-JaktInternal::Dictionary<String,parser::ParsedPatternDefault> const& defaults() const { switch(this->index()) {case 0 /* EnumVariant */: return this->template get<ParsedMatchPattern::EnumVariant>().defaults;
-case 1 /* Expression */: return this->template get<ParsedMatchPattern::Expression>().defaults;
-case 2 /* CatchAll */: return this->template get<ParsedMatchPattern::CatchAll>().defaults;
-case 3 /* Invalid */: return this->template get<ParsedMatchPattern::Invalid>().defaults;
-default: VERIFY_NOT_REACHED();
-}
-}
-bool equals(parser::ParsedMatchPattern const rhs_parsed_match_pattern) const;
-bool defaults_equal(JaktInternal::Dictionary<String,parser::ParsedPatternDefault> const defaults) const;
+struct All {
 };
-struct ParsedRecord {
-  public:
-String name;utility::Span name_span;JaktInternal::Array<parser::ParsedGenericParameter> generic_parameters;parser::DefinitionLinkage definition_linkage;JaktInternal::Optional<JaktInternal::Array<parser::ParsedNameWithGenericParameters>> implements_list;JaktInternal::Array<parser::ParsedMethod> methods;parser::RecordType record_type;ParsedRecord(String a_name, utility::Span a_name_span, JaktInternal::Array<parser::ParsedGenericParameter> a_generic_parameters, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Optional<JaktInternal::Array<parser::ParsedNameWithGenericParameters>> a_implements_list, JaktInternal::Array<parser::ParsedMethod> a_methods, parser::RecordType a_record_type);
-
+}
+struct ImportList : public Variant<ImportList_Details::List, ImportList_Details::All> {
+using Variant<ImportList_Details::List, ImportList_Details::All>::Variant;
+    using List = ImportList_Details::List;
+    using All = ImportList_Details::All;
 ErrorOr<String> debug_description() const;
-};struct ParsedExternalTraitImplementation {
+ErrorOr<void> add(parser::ImportName const name);
+bool is_empty() const;
+};
+struct ParsedModuleImport {
   public:
-NonnullRefPtr<parser::ParsedType> for_type;JaktInternal::Array<parser::ParsedNameWithGenericParameters> traits;JaktInternal::Array<parser::ParsedMethod> methods;ParsedExternalTraitImplementation(NonnullRefPtr<parser::ParsedType> a_for_type, JaktInternal::Array<parser::ParsedNameWithGenericParameters> a_traits, JaktInternal::Array<parser::ParsedMethod> a_methods);
+parser::ImportName module_name;JaktInternal::Optional<parser::ImportName> alias_name;parser::ImportList import_list;ParsedModuleImport(parser::ImportName a_module_name, JaktInternal::Optional<parser::ImportName> a_alias_name, parser::ImportList a_import_list);
 
-ErrorOr<String> debug_description() const;
-};struct SumEnumVariant {
-  public:
-String name;utility::Span span;JaktInternal::Optional<JaktInternal::Array<parser::ParsedVarDecl>> params;SumEnumVariant(String a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::Array<parser::ParsedVarDecl>> a_params);
-
-ErrorOr<String> debug_description() const;
-};struct ParsedMethod {
-  public:
-parser::ParsedFunction parsed_function;parser::Visibility visibility;bool is_virtual;bool is_override;ParsedMethod(parser::ParsedFunction a_parsed_function, parser::Visibility a_visibility, bool a_is_virtual, bool a_is_override);
-
-ErrorOr<String> debug_description() const;
-};struct ValueEnumVariant {
-  public:
-String name;utility::Span span;JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> value;ValueEnumVariant(String a_name, utility::Span a_span, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_value);
-
+bool is_equivalent_to(parser::ParsedModuleImport const other) const;
+bool has_same_alias_than(parser::ParsedModuleImport const other) const;
+bool has_same_import_semantics(parser::ParsedModuleImport const other) const;
+ErrorOr<void> merge_import_list(parser::ImportList const list);
 ErrorOr<String> debug_description() const;
 };namespace IncludeAction_Details {
 struct Define {
@@ -1529,32 +1457,104 @@ using Variant<IncludeAction_Details::Define, IncludeAction_Details::Undefine>::V
     using Undefine = IncludeAction_Details::Undefine;
 ErrorOr<String> debug_description() const;
 };
-namespace ParsedMatchBody_Details {
-struct Expression{
-NonnullRefPtr<parser::ParsedExpression> value;
-template<typename _MemberT0>
-Expression(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
+struct ParsedNameWithGenericParameters {
+  public:
+String name;utility::Span name_span;JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> generic_parameters;ParsedNameWithGenericParameters(String a_name, utility::Span a_name_span, JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> a_generic_parameters);
+
+ErrorOr<String> debug_description() const;
+};namespace RecordType_Details {
+struct Struct {
+JaktInternal::Array<parser::ParsedField> fields;
+JaktInternal::Optional<NonnullRefPtr<parser::ParsedType>> super_type;
+template<typename _MemberT0, typename _MemberT1>
+Struct(_MemberT0&& member_0, _MemberT1&& member_1):
+fields{ forward<_MemberT0>(member_0)},
+super_type{ forward<_MemberT1>(member_1)}
 {}
 };
-struct Block{
-parser::ParsedBlock value;
-template<typename _MemberT0>
-Block(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
+struct Class {
+JaktInternal::Array<parser::ParsedField> fields;
+JaktInternal::Optional<NonnullRefPtr<parser::ParsedType>> super_type;
+template<typename _MemberT0, typename _MemberT1>
+Class(_MemberT0&& member_0, _MemberT1&& member_1):
+fields{ forward<_MemberT0>(member_0)},
+super_type{ forward<_MemberT1>(member_1)}
 {}
+};
+struct ValueEnum {
+NonnullRefPtr<parser::ParsedType> underlying_type;
+JaktInternal::Array<parser::ValueEnumVariant> variants;
+template<typename _MemberT0, typename _MemberT1>
+ValueEnum(_MemberT0&& member_0, _MemberT1&& member_1):
+underlying_type{ forward<_MemberT0>(member_0)},
+variants{ forward<_MemberT1>(member_1)}
+{}
+};
+struct SumEnum {
+bool is_boxed;
+JaktInternal::Array<parser::ParsedField> fields;
+JaktInternal::Array<parser::SumEnumVariant> variants;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+SumEnum(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+is_boxed{ forward<_MemberT0>(member_0)},
+fields{ forward<_MemberT1>(member_1)},
+variants{ forward<_MemberT2>(member_2)}
+{}
+};
+struct Garbage {
 };
 }
-struct ParsedMatchBody : public Variant<ParsedMatchBody_Details::Expression, ParsedMatchBody_Details::Block> {
-using Variant<ParsedMatchBody_Details::Expression, ParsedMatchBody_Details::Block>::Variant;
-    using Expression = ParsedMatchBody_Details::Expression;
-    using Block = ParsedMatchBody_Details::Block;
+struct RecordType : public Variant<RecordType_Details::Struct, RecordType_Details::Class, RecordType_Details::ValueEnum, RecordType_Details::SumEnum, RecordType_Details::Garbage> {
+using Variant<RecordType_Details::Struct, RecordType_Details::Class, RecordType_Details::ValueEnum, RecordType_Details::SumEnum, RecordType_Details::Garbage>::Variant;
+    using Struct = RecordType_Details::Struct;
+    using Class = RecordType_Details::Class;
+    using ValueEnum = RecordType_Details::ValueEnum;
+    using SumEnum = RecordType_Details::SumEnum;
+    using Garbage = RecordType_Details::Garbage;
+ErrorOr<String> debug_description() const;
+String record_type_name() const;
+};
+namespace DefinitionLinkage_Details {
+struct Internal {
+};
+struct External {
+};
+}
+struct DefinitionLinkage : public Variant<DefinitionLinkage_Details::Internal, DefinitionLinkage_Details::External> {
+using Variant<DefinitionLinkage_Details::Internal, DefinitionLinkage_Details::External>::Variant;
+    using Internal = DefinitionLinkage_Details::Internal;
+    using External = DefinitionLinkage_Details::External;
 ErrorOr<String> debug_description() const;
 };
-struct ParsedMatchCase {
+struct ParsedRecord {
   public:
-JaktInternal::Array<parser::ParsedMatchPattern> patterns;utility::Span marker_span;parser::ParsedMatchBody body;bool equals(parser::ParsedMatchCase const rhs_match_case) const;
-ParsedMatchCase(JaktInternal::Array<parser::ParsedMatchPattern> a_patterns, utility::Span a_marker_span, parser::ParsedMatchBody a_body);
+String name;utility::Span name_span;JaktInternal::Array<parser::ParsedGenericParameter> generic_parameters;parser::DefinitionLinkage definition_linkage;JaktInternal::Optional<JaktInternal::Array<parser::ParsedNameWithGenericParameters>> implements_list;JaktInternal::Array<parser::ParsedMethod> methods;parser::RecordType record_type;ParsedRecord(String a_name, utility::Span a_name_span, JaktInternal::Array<parser::ParsedGenericParameter> a_generic_parameters, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Optional<JaktInternal::Array<parser::ParsedNameWithGenericParameters>> a_implements_list, JaktInternal::Array<parser::ParsedMethod> a_methods, parser::RecordType a_record_type);
+
+ErrorOr<String> debug_description() const;
+};struct ParsedField {
+  public:
+parser::ParsedVarDecl var_decl;parser::Visibility visibility;JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> default_value;ParsedField(parser::ParsedVarDecl a_var_decl, parser::Visibility a_visibility, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_default_value);
+
+ErrorOr<String> debug_description() const;
+};struct VisibilityRestriction {
+  public:
+JaktInternal::Array<String> namespace_;String name;VisibilityRestriction(JaktInternal::Array<String> a_namespace_, String a_name);
+
+ErrorOr<String> debug_description() const;
+};struct ParsedTrait {
+  public:
+String name;utility::Span name_span;JaktInternal::Array<parser::ParsedGenericParameter> generic_parameters;JaktInternal::Array<parser::ParsedFunction> methods;ParsedTrait(String a_name, utility::Span a_name_span, JaktInternal::Array<parser::ParsedGenericParameter> a_generic_parameters, JaktInternal::Array<parser::ParsedFunction> a_methods);
+
+ErrorOr<String> debug_description() const;
+};struct ParsedParameter {
+  public:
+bool requires_label;parser::ParsedVariable variable;JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> default_argument;utility::Span span;bool equals(parser::ParsedParameter const rhs_param) const;
+ParsedParameter(bool a_requires_label, parser::ParsedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_default_argument, utility::Span a_span);
+
+ErrorOr<String> debug_description() const;
+};struct ValueEnumVariant {
+  public:
+String name;utility::Span span;JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> value;ValueEnumVariant(String a_name, utility::Span a_span, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_value);
 
 ErrorOr<String> debug_description() const;
 };template <typename T>
@@ -1570,38 +1570,35 @@ return (float_value);
 }
 
 }
-template<>struct Formatter<parser::DefinitionLinkage> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::DefinitionLinkage const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ParsedCapture> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedCapture const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedCall> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedCall const& value) {
+template<>struct Formatter<parser::ParsedBlock> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedBlock const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::EnumVariantPatternArgument> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::EnumVariantPatternArgument const& value) {
+template<>struct Formatter<parser::ParsedMatchBody> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMatchBody const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedNamespace> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedNamespace const& value) {
+template<>struct Formatter<parser::ParsedMatchCase> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMatchCase const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedExternImport> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedExternImport const& value) {
+template<>struct Formatter<parser::FunctionType> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::FunctionType const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ParsedVarDecl> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedVarDecl const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedType> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedType const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::RecordType> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::RecordType const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::NumericConstant> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::NumericConstant const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedCall> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedCall const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::TypeCast> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::TypeCast const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedType> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedType const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::UnaryOperator> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::UnaryOperator const& value) {
@@ -1609,14 +1606,59 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<parser::BinaryOperator> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::BinaryOperator const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedBlock> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedBlock const& value) {
+template<>struct Formatter<parser::EnumVariantPatternArgument> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::EnumVariantPatternArgument const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ParsedExpression> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedExpression const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedPatternDefault> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedPatternDefault const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedStatement> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedStatement const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::FunctionLinkage> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::FunctionLinkage const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::Visibility> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::Visibility const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedFunction> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedFunction const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedMethod> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMethod const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedExternalTraitImplementation> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedExternalTraitImplementation const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedNamespace> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedNamespace const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedName> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedName const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedMatchPattern> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMatchPattern const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::SumEnumVariant> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::SumEnumVariant const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ImportName> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ImportName const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedVariable> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedVariable const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedGenericParameter> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedGenericParameter const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::Parser> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::Parser const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedExternImport> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedExternImport const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ImportList> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ImportList const& value) {
@@ -1624,76 +1666,34 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<parser::ParsedModuleImport> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedModuleImport const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedStatement> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedStatement const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::Visibility> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::Visibility const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedField> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedField const& value) {
+template<>struct Formatter<parser::IncludeAction> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::IncludeAction const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ParsedNameWithGenericParameters> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedNameWithGenericParameters const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedVariable> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedVariable const& value) {
+template<>struct Formatter<parser::RecordType> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::RecordType const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedParameter> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedParameter const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::FunctionType> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::FunctionType const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::FunctionLinkage> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::FunctionLinkage const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedFunction> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedFunction const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedTrait> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedTrait const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedName> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedName const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::Parser> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::Parser const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedPatternDefault> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedPatternDefault const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::VisibilityRestriction> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::VisibilityRestriction const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedGenericParameter> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedGenericParameter const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedMatchPattern> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMatchPattern const& value) {
+template<>struct Formatter<parser::DefinitionLinkage> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::DefinitionLinkage const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ParsedRecord> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedRecord const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedExternalTraitImplementation> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedExternalTraitImplementation const& value) {
+template<>struct Formatter<parser::ParsedField> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedField const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::SumEnumVariant> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::SumEnumVariant const& value) {
+template<>struct Formatter<parser::VisibilityRestriction> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::VisibilityRestriction const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedMethod> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMethod const& value) {
+template<>struct Formatter<parser::ParsedTrait> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedTrait const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedParameter> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedParameter const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ValueEnumVariant> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ValueEnumVariant const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::IncludeAction> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::IncludeAction const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedMatchBody> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMatchBody const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedMatchCase> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMatchCase const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 } // namespace Jakt
