@@ -10,7 +10,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(builder.append(")"));return builder.to_string(); }
 ErrorOr<void> build::Builder::link_into_archive(String const archiver,String const archive_filename) {
 {
-JaktInternal::Array<String> args = (TRY((Array<String>::create_with({archiver, String("cr"), archive_filename}))));
+JaktInternal::Array<String> args = (TRY((Array<String>::create_with({archiver, Jakt::String("cr"), archive_filename}))));
 {
 JaktInternal::ArrayIterator<String> _magic = ((((*this).linked_files)).iterator());
 for (;;){
@@ -29,7 +29,7 @@ TRY((((args).push(file))));
 size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
 if (((((((((*this).pool)).status(id)).value())).exit_code) != static_cast<i32>(0))){
-warnln(String("Error: Linking failed"));
+warnln(Jakt::String("Error: Linking failed"));
 return Error::from_errno(static_cast<i32>(1));
 }
 }
@@ -40,7 +40,7 @@ build::Builder::Builder(JaktInternal::Array<String> a_linked_files, JaktInternal
 
 ErrorOr<void> build::Builder::link_into_executable(String const cxx_compiler_path,String const output_filename,JaktInternal::Array<String> const extra_arguments) {
 {
-JaktInternal::Array<String> args = (TRY((Array<String>::create_with({cxx_compiler_path, String("-o"), output_filename}))));
+JaktInternal::Array<String> args = (TRY((Array<String>::create_with({cxx_compiler_path, Jakt::String("-o"), output_filename}))));
 {
 JaktInternal::ArrayIterator<String> _magic = ((((*this).linked_files)).iterator());
 for (;;){
@@ -74,7 +74,7 @@ TRY((((args).push(arg))));
 size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
 if (((((((((*this).pool)).status(id)).value())).exit_code) != static_cast<i32>(0))){
-warnln(String("Error: Linking failed"));
+warnln(Jakt::String("Error: Linking failed"));
 return Error::from_errno(static_cast<i32>(1));
 }
 }
@@ -109,11 +109,11 @@ break;
 JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> id__exit_result__ = (_magic_value.value());
 {
 JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> const jakt__id__exit_result__ = id__exit_result__;
-size_t const id = ((jakt__id__exit_result__).get<0>());
-unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).get<1>());
+size_t const id = ((jakt__id__exit_result__).template get<0>());
+unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
 
 if ((((exit_result).exit_code) != static_cast<i32>(0))){
-warnln(String("Error: Compilation failed"));
+warnln(Jakt::String("Error: Compilation failed"));
 TRY((((((*this).pool)).kill_all())));
 return Error::from_errno(static_cast<i32>(1));
 }
@@ -122,11 +122,11 @@ return Error::from_errno(static_cast<i32>(1));
 }
 }
 
-String const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((path::Path::Path::from_string(file_name)))).replace_extension(String("o")))))).to_string())))))).to_string());
+String const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((path::Path::Path::from_string(file_name)))).replace_extension(Jakt::String("o")))))).to_string())))))).to_string());
 TRY((((((*this).linked_files)).push(built_object))));
 size_t const id = TRY((((((*this).pool)).run(TRY((compiler_invocation(((TRY((((binary_dir).join(file_name))))).to_string()),built_object)))))));
 TRY((((ids).add(id))));
-warnln(String("{:c}[2LBuilding: {}/{}"),static_cast<i64>(27LL),((ids).size()),((((*this).files_to_compile)).size()));
+warnln(Jakt::String("{:c}[2LBuilding: {}/{}"),static_cast<i64>(27LL),((ids).size()),((((*this).files_to_compile)).size()));
 }
 
 }
@@ -143,11 +143,11 @@ break;
 JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> id__exit_result__ = (_magic_value.value());
 {
 JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> const jakt__id__exit_result__ = id__exit_result__;
-size_t const id = ((jakt__id__exit_result__).get<0>());
-unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).get<1>());
+size_t const id = ((jakt__id__exit_result__).template get<0>());
+unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
 
 if ((((exit_result).exit_code) != static_cast<i32>(0))){
-warnln(String("Error: Compilation failed"));
+warnln(Jakt::String("Error: Compilation failed"));
 return Error::from_errno(static_cast<i32>(1));
 }
 }
@@ -188,8 +188,8 @@ build::ParallelExecutionPool::ParallelExecutionPool(JaktInternal::Dictionary<siz
 ErrorOr<void> build::ParallelExecutionPool::wait_for_any_job_to_complete() {
 {
 JaktInternal::Tuple<JaktInternal::Optional<size_t>,unknown_process::ExitPollResult> const finished_pid_finished_status_ = TRY((unknown_process::wait_for_some_set_of_processes_that_at_least_includes(((((*this).pids))))));
-JaktInternal::Optional<size_t> const finished_pid = ((finished_pid_finished_status_).get<0>());
-unknown_process::ExitPollResult const finished_status = ((finished_pid_finished_status_).get<1>());
+JaktInternal::Optional<size_t> const finished_pid = ((finished_pid_finished_status_).template get<0>());
+unknown_process::ExitPollResult const finished_status = ((finished_pid_finished_status_).template get<1>());
 
 JaktInternal::Dictionary<size_t,unknown_process::ExitPollResult> pids_to_remove = (TRY((Dictionary<size_t, unknown_process::ExitPollResult>::create_with_entries({}))));
 if (((finished_pid).has_value())){
@@ -205,18 +205,18 @@ break;
 JaktInternal::Tuple<size_t,unknown_process::Process> index__process__ = (_magic_value.value());
 {
 JaktInternal::Tuple<size_t,unknown_process::Process> const jakt__index__process__ = index__process__;
-size_t const index = ((jakt__index__process__).get<0>());
-unknown_process::Process const process = ((jakt__index__process__).get<1>());
+size_t const index = ((jakt__index__process__).template get<0>());
+unknown_process::Process const process = ((jakt__index__process__).template get<1>());
 
-JaktInternal::Optional<unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<unknown_process::ExitPollResult>> __jakt_var_714;
-auto __jakt_var_715 = [&]() -> ErrorOr<JaktInternal::Optional<unknown_process::ExitPollResult>> { return TRY((unknown_process::poll_process_exit(((process))))); }();
-if (__jakt_var_715.is_error()) {{
+JaktInternal::Optional<unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<unknown_process::ExitPollResult>> __jakt_var_722;
+auto __jakt_var_723 = [&]() -> ErrorOr<JaktInternal::Optional<unknown_process::ExitPollResult>> { return TRY((unknown_process::poll_process_exit(((process))))); }();
+if (__jakt_var_723.is_error()) {{
 TRY((((pids_to_remove).set(index,finished_status))));
 continue;
 }
-} else {__jakt_var_714 = __jakt_var_715.release_value();
+} else {__jakt_var_722 = __jakt_var_723.release_value();
 }
-__jakt_var_714.release_value(); });
+__jakt_var_722.release_value(); });
 if (((status).has_value())){
 TRY((((pids_to_remove).set(index,(status.value())))));
 }
@@ -235,8 +235,8 @@ break;
 JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> index__status__ = (_magic_value.value());
 {
 JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> const jakt__index__status__ = index__status__;
-size_t const index = ((jakt__index__status__).get<0>());
-unknown_process::ExitPollResult const status = ((jakt__index__status__).get<1>());
+size_t const index = ((jakt__index__status__).template get<0>());
+unknown_process::ExitPollResult const status = ((jakt__index__status__).template get<1>());
 
 ((((*this).pids)).remove(index));
 TRY((((((*this).completed)).set(index,status))));
@@ -273,8 +273,8 @@ break;
 JaktInternal::Tuple<size_t,unknown_process::Process> ___process__ = (_magic_value.value());
 {
 JaktInternal::Tuple<size_t,unknown_process::Process> const jakt_____process__ = ___process__;
-size_t const _ = ((jakt_____process__).get<0>());
-unknown_process::Process const process = ((jakt_____process__).get<1>());
+size_t const _ = ((jakt_____process__).template get<0>());
+unknown_process::Process const process = ((jakt_____process__).template get<1>());
 
 TRY((unknown_process::forcefully_kill_process(((process)))));
 }

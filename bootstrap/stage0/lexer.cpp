@@ -14,7 +14,7 @@ ErrorOr<lexer::Token> lexer::Lexer::lex_quoted_string(u8 const delimiter) {
 size_t const start = ((*this).index);
 (++(((*this).index)));
 if (((*this).eof())){
-TRY((((*this).error(String("unexpected eof"),((*this).span(start,start))))));
+TRY((((*this).error(Jakt::String("unexpected eof"),((*this).span(start,start))))));
 return ( lexer::Token { typename lexer::Token::Garbage(JaktInternal::OptionalNone(),((*this).span(start,start))) } );
 }
 bool escaped = false;
@@ -214,7 +214,7 @@ if (((!(escaped)) && (((*this).peek()) == '\\'))){
 ((((*this).index)++));
 }
 if ((((*this).eof()) || (((*this).peek()) != '\''))){
-TRY((((*this).error(String("Expected single quote"),((*this).span(start,start))))));
+TRY((((*this).error(Jakt::String("Expected single quote"),((*this).span(start,start))))));
 }
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 StringBuilder builder = TRY((StringBuilder::create()));
@@ -368,7 +368,7 @@ ErrorOr<lexer::Token> lexer::Lexer::lex_number_or_name() {
 {
 size_t const start = ((*this).index);
 if (((*this).eof())){
-TRY((((*this).error(String("unexpected eof"),((*this).span(start,start))))));
+TRY((((*this).error(Jakt::String("unexpected eof"),((*this).span(start,start))))));
 return ( lexer::Token { typename lexer::Token::Garbage(JaktInternal::OptionalNone(),((*this).span(start,start))) } );
 }
 if (utility::is_ascii_digit(((*this).peek()))){
@@ -384,15 +384,15 @@ TRY((((string_builder).append(value))));
 size_t const end = ((*this).index);
 utility::Span const span = ((*this).span(start,end));
 String const string = TRY((((string_builder).to_string())));
-if ((((JaktInternal::checked_sub<size_t>(end,start)) >= static_cast<size_t>(6ULL)) && (TRY((((string).substring(static_cast<size_t>(0ULL),static_cast<size_t>(6ULL))))) == String("__jakt")))){
-TRY((((*this).error(String("reserved identifier name"),span))));
+if ((((JaktInternal::checked_sub<size_t>(end,start)) >= static_cast<size_t>(6ULL)) && (TRY((((string).substring(static_cast<size_t>(0ULL),static_cast<size_t>(6ULL))))) == Jakt::String("__jakt")))){
+TRY((((*this).error(Jakt::String("reserved identifier name"),span))));
 }
 return (lexer::Token::from_keyword_or_identifier(string,span));
 }
 u8 const unknown_char = ((((*this).input))[((*this).index)]);
 size_t const end = (++(((*this).index)));
-TRY((((*this).error(TRY((String::formatted(String("unknown character: {:c}"),unknown_char))),((*this).span(start,end))))));
-return ( lexer::Token { typename lexer::Token::Garbage(TRY((String::formatted(String("{:c}"),unknown_char))),((*this).span(start,end))) } );
+TRY((((*this).error(TRY((String::formatted(Jakt::String("unknown character: {:c}"),unknown_char))),((*this).span(start,end))))));
+return ( lexer::Token { typename lexer::Token::Garbage(TRY((String::formatted(Jakt::String("{:c}"),unknown_char))),((*this).span(start,end))) } );
 }
 }
 
@@ -951,51 +951,51 @@ auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::None>();
-return JaktInternal::ExplicitValue(String(""));
+return JaktInternal::ExplicitValue(Jakt::String(""));
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::UZ>();
-return JaktInternal::ExplicitValue(String("uz"));
+return JaktInternal::ExplicitValue(Jakt::String("uz"));
 };/*case end*/
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U8>();
-return JaktInternal::ExplicitValue(String("u8"));
+return JaktInternal::ExplicitValue(Jakt::String("u8"));
 };/*case end*/
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U16>();
-return JaktInternal::ExplicitValue(String("u16"));
+return JaktInternal::ExplicitValue(Jakt::String("u16"));
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U32>();
-return JaktInternal::ExplicitValue(String("u32"));
+return JaktInternal::ExplicitValue(Jakt::String("u32"));
 };/*case end*/
 case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U64>();
-return JaktInternal::ExplicitValue(String("u64"));
+return JaktInternal::ExplicitValue(Jakt::String("u64"));
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I8>();
-return JaktInternal::ExplicitValue(String("i8"));
+return JaktInternal::ExplicitValue(Jakt::String("i8"));
 };/*case end*/
 case 7: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I16>();
-return JaktInternal::ExplicitValue(String("i16"));
+return JaktInternal::ExplicitValue(Jakt::String("i16"));
 };/*case end*/
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I32>();
-return JaktInternal::ExplicitValue(String("i32"));
+return JaktInternal::ExplicitValue(Jakt::String("i32"));
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I64>();
-return JaktInternal::ExplicitValue(String("i64"));
+return JaktInternal::ExplicitValue(Jakt::String("i64"));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::F32>();
-return JaktInternal::ExplicitValue(String("f32"));
+return JaktInternal::ExplicitValue(Jakt::String("f32"));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::F64>();
-return JaktInternal::ExplicitValue(String("f64"));
+return JaktInternal::ExplicitValue(Jakt::String("f64"));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -1631,151 +1631,151 @@ lexer::Token lexer::Token::from_keyword_or_identifier(String const string,utilit
 {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (string);
-if (__jakt_enum_value == String("and")) {
+if (__jakt_enum_value == Jakt::String("and")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::And(span) } );
 }
-else if (__jakt_enum_value == String("anon")) {
+else if (__jakt_enum_value == Jakt::String("anon")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Anon(span) } );
 }
-else if (__jakt_enum_value == String("as")) {
+else if (__jakt_enum_value == Jakt::String("as")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::As(span) } );
 }
-else if (__jakt_enum_value == String("boxed")) {
+else if (__jakt_enum_value == Jakt::String("boxed")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Boxed(span) } );
 }
-else if (__jakt_enum_value == String("break")) {
+else if (__jakt_enum_value == Jakt::String("break")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Break(span) } );
 }
-else if (__jakt_enum_value == String("catch")) {
+else if (__jakt_enum_value == Jakt::String("catch")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Catch(span) } );
 }
-else if (__jakt_enum_value == String("class")) {
+else if (__jakt_enum_value == Jakt::String("class")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Class(span) } );
 }
-else if (__jakt_enum_value == String("continue")) {
+else if (__jakt_enum_value == Jakt::String("continue")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Continue(span) } );
 }
-else if (__jakt_enum_value == String("cpp")) {
+else if (__jakt_enum_value == Jakt::String("cpp")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Cpp(span) } );
 }
-else if (__jakt_enum_value == String("defer")) {
+else if (__jakt_enum_value == Jakt::String("defer")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Defer(span) } );
 }
-else if (__jakt_enum_value == String("else")) {
+else if (__jakt_enum_value == Jakt::String("else")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Else(span) } );
 }
-else if (__jakt_enum_value == String("enum")) {
+else if (__jakt_enum_value == Jakt::String("enum")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Enum(span) } );
 }
-else if (__jakt_enum_value == String("extern")) {
+else if (__jakt_enum_value == Jakt::String("extern")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Extern(span) } );
 }
-else if (__jakt_enum_value == String("false")) {
+else if (__jakt_enum_value == Jakt::String("false")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::False(span) } );
 }
-else if (__jakt_enum_value == String("for")) {
+else if (__jakt_enum_value == Jakt::String("for")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::For(span) } );
 }
-else if (__jakt_enum_value == String("function")) {
+else if (__jakt_enum_value == Jakt::String("function")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Function(span) } );
 }
-else if (__jakt_enum_value == String("comptime")) {
+else if (__jakt_enum_value == Jakt::String("comptime")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Comptime(span) } );
 }
-else if (__jakt_enum_value == String("if")) {
+else if (__jakt_enum_value == Jakt::String("if")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::If(span) } );
 }
-else if (__jakt_enum_value == String("import")) {
+else if (__jakt_enum_value == Jakt::String("import")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Import(span) } );
 }
-else if (__jakt_enum_value == String("in")) {
+else if (__jakt_enum_value == Jakt::String("in")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::In(span) } );
 }
-else if (__jakt_enum_value == String("is")) {
+else if (__jakt_enum_value == Jakt::String("is")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Is(span) } );
 }
-else if (__jakt_enum_value == String("let")) {
+else if (__jakt_enum_value == Jakt::String("let")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Let(span) } );
 }
-else if (__jakt_enum_value == String("loop")) {
+else if (__jakt_enum_value == Jakt::String("loop")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Loop(span) } );
 }
-else if (__jakt_enum_value == String("match")) {
+else if (__jakt_enum_value == Jakt::String("match")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Match(span) } );
 }
-else if (__jakt_enum_value == String("mut")) {
+else if (__jakt_enum_value == Jakt::String("mut")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Mut(span) } );
 }
-else if (__jakt_enum_value == String("namespace")) {
+else if (__jakt_enum_value == Jakt::String("namespace")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Namespace(span) } );
 }
-else if (__jakt_enum_value == String("not")) {
+else if (__jakt_enum_value == Jakt::String("not")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Not(span) } );
 }
-else if (__jakt_enum_value == String("or")) {
+else if (__jakt_enum_value == Jakt::String("or")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Or(span) } );
 }
-else if (__jakt_enum_value == String("override")) {
+else if (__jakt_enum_value == Jakt::String("override")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Override(span) } );
 }
-else if (__jakt_enum_value == String("private")) {
+else if (__jakt_enum_value == Jakt::String("private")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Private(span) } );
 }
-else if (__jakt_enum_value == String("public")) {
+else if (__jakt_enum_value == Jakt::String("public")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Public(span) } );
 }
-else if (__jakt_enum_value == String("raw")) {
+else if (__jakt_enum_value == Jakt::String("raw")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Raw(span) } );
 }
-else if (__jakt_enum_value == String("return")) {
+else if (__jakt_enum_value == Jakt::String("return")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Return(span) } );
 }
-else if (__jakt_enum_value == String("restricted")) {
+else if (__jakt_enum_value == Jakt::String("restricted")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Restricted(span) } );
 }
-else if (__jakt_enum_value == String("struct")) {
+else if (__jakt_enum_value == Jakt::String("struct")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Struct(span) } );
 }
-else if (__jakt_enum_value == String("this")) {
+else if (__jakt_enum_value == Jakt::String("this")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::This(span) } );
 }
-else if (__jakt_enum_value == String("throw")) {
+else if (__jakt_enum_value == Jakt::String("throw")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Throw(span) } );
 }
-else if (__jakt_enum_value == String("throws")) {
+else if (__jakt_enum_value == Jakt::String("throws")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Throws(span) } );
 }
-else if (__jakt_enum_value == String("true")) {
+else if (__jakt_enum_value == Jakt::String("true")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::True(span) } );
 }
-else if (__jakt_enum_value == String("try")) {
+else if (__jakt_enum_value == Jakt::String("try")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Try(span) } );
 }
-else if (__jakt_enum_value == String("unsafe")) {
+else if (__jakt_enum_value == Jakt::String("unsafe")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Unsafe(span) } );
 }
-else if (__jakt_enum_value == String("virtual")) {
+else if (__jakt_enum_value == Jakt::String("virtual")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Virtual(span) } );
 }
-else if (__jakt_enum_value == String("weak")) {
+else if (__jakt_enum_value == Jakt::String("weak")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Weak(span) } );
 }
-else if (__jakt_enum_value == String("while")) {
+else if (__jakt_enum_value == Jakt::String("while")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::While(span) } );
 }
-else if (__jakt_enum_value == String("yield")) {
+else if (__jakt_enum_value == Jakt::String("yield")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Yield(span) } );
 }
-else if (__jakt_enum_value == String("guard")) {
+else if (__jakt_enum_value == Jakt::String("guard")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Guard(span) } );
 }
-else if (__jakt_enum_value == String("requires")) {
+else if (__jakt_enum_value == Jakt::String("requires")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Requires(span) } );
 }
-else if (__jakt_enum_value == String("implements")) {
+else if (__jakt_enum_value == Jakt::String("implements")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Implements(span) } );
 }
-else if (__jakt_enum_value == String("trait")) {
+else if (__jakt_enum_value == Jakt::String("trait")) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Trait(span) } );
 }
 else {
@@ -2368,19 +2368,19 @@ auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralPrefix::None>();
-return JaktInternal::ExplicitValue(String(""));
+return JaktInternal::ExplicitValue(Jakt::String(""));
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralPrefix::Hexadecimal>();
-return JaktInternal::ExplicitValue(String("0x"));
+return JaktInternal::ExplicitValue(Jakt::String("0x"));
 };/*case end*/
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralPrefix::Octal>();
-return JaktInternal::ExplicitValue(String("0o"));
+return JaktInternal::ExplicitValue(Jakt::String("0o"));
 };/*case end*/
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralPrefix::Binary>();
-return JaktInternal::ExplicitValue(String("0b"));
+return JaktInternal::ExplicitValue(Jakt::String("0b"));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()

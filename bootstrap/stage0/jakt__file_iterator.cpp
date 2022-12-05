@@ -33,8 +33,8 @@ return (JaktInternal::OptionalNone());
 }
 JaktInternal::Optional<JaktInternal::Tuple<path::Path,bool>> const next = TRY(((((((*this).current_directory).value()))->next())));
 if (((next).has_value())){
-path::Path new_path = TRY((((TRY(((((((*this).current_directory).value()))->get_path())))).join((((((next.value())).get<0>())).to_string())))));
-if ((((next.value())).get<1>())){
+path::Path new_path = TRY((((TRY(((((((*this).current_directory).value()))->get_path())))).join((((((next.value())).template get<0>())).to_string())))));
+if ((((next.value())).template get<1>())){
 TRY((((((*this).directory_list)).push(new_path))));
 return (TRY((((*this).next()))));
 }

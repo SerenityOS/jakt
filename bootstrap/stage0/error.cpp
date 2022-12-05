@@ -53,7 +53,7 @@ return (output);
 
 ErrorOr<void> display_message_with_span(error::MessageSeverity const severity,String const file_name,JaktInternal::Optional<JaktInternal::Array<u8>> const contents,String const message,utility::Span const span) {
 {
-warnln(String("{}: {}"),TRY((((severity).name()))),message);
+warnln(Jakt::String("{}: {}"),TRY((((severity).name()))),message);
 if ((!(((contents).has_value())))){
 return {};
 }
@@ -62,16 +62,16 @@ JaktInternal::Array<JaktInternal::Tuple<size_t,size_t>> const line_spans = TRY((
 size_t line_index = static_cast<size_t>(1ULL);
 size_t largest_line_number = static_cast<size_t>(0ULL);
 while ((line_index < ((line_spans).size()))){
-if (((((span).start) >= ((((line_spans)[line_index])).get<0>())) && (((span).start) <= ((((line_spans)[line_index])).get<1>())))){
+if (((((span).start) >= ((((line_spans)[line_index])).template get<0>())) && (((span).start) <= ((((line_spans)[line_index])).template get<1>())))){
 (largest_line_number = (JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(2ULL))));
 }
 (++(line_index));
 }
-size_t const width = ((TRY((String::formatted(String("{}"),largest_line_number)))).length());
+size_t const width = ((TRY((String::formatted(Jakt::String("{}"),largest_line_number)))).length());
 (line_index = static_cast<size_t>(1ULL));
 while ((line_index < ((line_spans).size()))){
-if (((((span).start) >= ((((line_spans)[line_index])).get<0>())) && (((span).start) <= ((((line_spans)[line_index])).get<1>())))){
-size_t const column_index = (JaktInternal::checked_sub<size_t>(((span).start),((((line_spans)[line_index])).get<0>())));
+if (((((span).start) >= ((((line_spans)[line_index])).template get<0>())) && (((span).start) <= ((((line_spans)[line_index])).template get<1>())))){
+size_t const column_index = (JaktInternal::checked_sub<size_t>(((span).start),((((line_spans)[line_index])).template get<0>())));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_add<size_t>(width,static_cast<size_t>(2ULL))))});
 for (;;){
@@ -81,19 +81,19 @@ break;
 }
 size_t x = (_magic_value.value());
 {
-warn(String("─"));
+warn(Jakt::String("─"));
 }
 
 }
 }
 
-warnln(String("┬─ \u001b[33m{}:{}:{}\u001b[0m"),file_name,(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),(JaktInternal::checked_add<size_t>(column_index,static_cast<size_t>(1ULL))));
+warnln(Jakt::String("┬─ \u001b[33m{}:{}:{}\u001b[0m"),file_name,(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),(JaktInternal::checked_add<size_t>(column_index,static_cast<size_t>(1ULL))));
 if ((line_index > static_cast<size_t>(0ULL))){
 TRY((error::print_source_line(severity,file_contents,((line_spans)[(JaktInternal::checked_sub<size_t>(line_index,static_cast<size_t>(1ULL)))]),span,line_index,largest_line_number)));
 }
-while (((line_index < ((line_spans).size())) && (((span).end) > ((((line_spans)[line_index])).get<0>())))){
+while (((line_index < ((line_spans).size())) && (((span).end) > ((((line_spans)[line_index])).template get<0>())))){
 TRY((error::print_source_line(severity,file_contents,((line_spans)[line_index]),span,(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),largest_line_number)));
-if ((((span).end) <= ((((line_spans)[line_index])).get<1>()))){
+if ((((span).end) <= ((((line_spans)[line_index])).template get<1>()))){
 break;
 }
 (++(line_index));
@@ -107,15 +107,15 @@ break;
 }
 size_t x = (_magic_value.value());
 {
-warn(String(" "));
+warn(Jakt::String(" "));
 }
 
 }
 }
 
-warn(String("│"));
+warn(Jakt::String("│"));
 {
-JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_sub<size_t>(((span).end),((((line_spans)[line_index])).get<0>()))))});
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_sub<size_t>(((span).end),((((line_spans)[line_index])).template get<0>()))))});
 for (;;){
 JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -123,13 +123,13 @@ break;
 }
 size_t x = (_magic_value.value());
 {
-warn(String(" "));
+warn(Jakt::String(" "));
 }
 
 }
 }
 
-warnln(String("\u001b[{}m╰─ {}\u001b[0m"),TRY((((severity).ansi_color_code()))),message);
+warnln(Jakt::String("\u001b[{}m╰─ {}\u001b[0m"),TRY((((severity).ansi_color_code()))),message);
 (++(line_index));
 if ((line_index < ((line_spans).size()))){
 TRY((error::print_source_line(severity,file_contents,((line_spans)[line_index]),span,(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),largest_line_number)));
@@ -140,7 +140,7 @@ else {
 }
 
 }
-warn(String("\u001b[0m"));
+warn(Jakt::String("\u001b[0m"));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_add<size_t>(width,static_cast<size_t>(2ULL))))});
 for (;;){
@@ -150,23 +150,23 @@ break;
 }
 size_t x = (_magic_value.value());
 {
-warn(String("─"));
+warn(Jakt::String("─"));
 }
 
 }
 }
 
-warnln(String("┴─"));
+warnln(Jakt::String("┴─"));
 }
 return {};
 }
 
 ErrorOr<void> print_source_line(error::MessageSeverity const severity,JaktInternal::Array<u8> const file_contents,JaktInternal::Tuple<size_t,size_t> const file_span,utility::Span const error_span,size_t const line_number,size_t const largest_line_number) {
 {
-size_t index = ((file_span).get<0>());
-size_t const largest_width = ((TRY((String::formatted(String("{}"),largest_line_number)))).length());
-size_t const current_width = ((TRY((String::formatted(String("{}"),line_number)))).length());
-warn(String(" {}"),line_number);
+size_t index = ((file_span).template get<0>());
+size_t const largest_width = ((TRY((String::formatted(Jakt::String("{}"),largest_line_number)))).length());
+size_t const current_width = ((TRY((String::formatted(Jakt::String("{}"),line_number)))).length());
+warn(Jakt::String(" {}"),line_number);
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_sub<size_t>(largest_width,current_width)))});
 for (;;){
@@ -176,38 +176,38 @@ break;
 }
 size_t _ = (_magic_value.value());
 {
-warn(String(" "));
+warn(Jakt::String(" "));
 }
 
 }
 }
 
-warn(String(" │ "));
-while ((index <= ((file_span).get<1>()))){
+warn(Jakt::String(" │ "));
+while ((index <= ((file_span).template get<1>()))){
 u8 c = ' ';
-if ((index < ((file_span).get<1>()))){
+if ((index < ((file_span).template get<1>()))){
 (c = ((file_contents)[index]));
 }
 else if (((((error_span).start) == ((error_span).end)) && (index == ((error_span).start)))){
 (c = '_');
 }
 if ((index == ((error_span).start))){
-warn(String("\u001b[{}m"),TRY((((severity).ansi_color_code()))));
+warn(Jakt::String("\u001b[{}m"),TRY((((severity).ansi_color_code()))));
 }
 if ((index == ((error_span).end))){
-warn(String("\u001b[0m"));
+warn(Jakt::String("\u001b[0m"));
 }
-warn(String("{:c}"),c);
+warn(Jakt::String("{:c}"),c);
 (++(index));
 }
-warnln(String(""));
+warnln(Jakt::String(""));
 }
 return {};
 }
 
 ErrorOr<void> display_message_with_span_json(error::MessageSeverity const severity,String const file_name,String const message,utility::Span const span) {
 {
-outln(String("{{\"type\":\"diagnostic\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"),message,TRY((((severity).name()))),((((span).file_id)).id),((span).start),((span).end));
+outln(Jakt::String("{{\"type\":\"diagnostic\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"),message,TRY((((severity).name()))),((((span).file_id)).id),((span).start),((span).end));
 }
 return {};
 }
@@ -321,11 +321,11 @@ auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename error::MessageSeverity::Hint>();
-return JaktInternal::ExplicitValue(String("94"));
+return JaktInternal::ExplicitValue(Jakt::String("94"));
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename error::MessageSeverity::Error>();
-return JaktInternal::ExplicitValue(String("31"));
+return JaktInternal::ExplicitValue(Jakt::String("31"));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -340,11 +340,11 @@ auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename error::MessageSeverity::Hint>();
-return JaktInternal::ExplicitValue(String("Hint"));
+return JaktInternal::ExplicitValue(Jakt::String("Hint"));
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename error::MessageSeverity::Error>();
-return JaktInternal::ExplicitValue(String("Error"));
+return JaktInternal::ExplicitValue(Jakt::String("Error"));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()

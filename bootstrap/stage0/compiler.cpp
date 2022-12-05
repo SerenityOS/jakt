@@ -23,7 +23,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(builder.append(")"));return builder.to_string(); }
 ErrorOr<void> compiler::Compiler::load_prelude() {
 {
-String const module_name = String("__prelude__");
+String const module_name = Jakt::String("__prelude__");
 path::Path const file_name = TRY((path::Path::Path::from_string(module_name)));
 TRY((((*this).get_file_id_or_register(file_name))));
 }
@@ -57,20 +57,20 @@ if (__jakt_var_0.is_error()) {auto error = __jakt_var_0.release_error();{
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,bool>{
 auto __jakt_enum_value = (((error).code()));
 if (__jakt_enum_value == ErrNOENT) {
-return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: File not found"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return (warnln(Jakt::String("\u001b[31;1mError\u001b[0m Could not access {}: File not found"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrACCES) {
-return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return (warnln(Jakt::String("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrFBIG) {
-return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: File too big"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return (warnln(Jakt::String("\u001b[31;1mError\u001b[0m Could not access {}: File too big"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrNAMETOOLONG) {
-return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: Name too long"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return (warnln(Jakt::String("\u001b[31;1mError\u001b[0m Could not access {}: Name too long"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-utility::panic(String("Incurred unrecognized error while trying to open file"));
+utility::panic(Jakt::String("Incurred unrecognized error while trying to open file"));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -96,8 +96,8 @@ ErrorOr<JaktInternal::Optional<path::Path>> compiler::Compiler::search_for_path(
 StringBuilder builder = TRY((StringBuilder::create()));
 TRY((((builder).append(static_cast<u8>(47)))));
 String const separator = TRY((((builder).to_string())));
-String const module_name = TRY((((input_module_name).replace(String("::"),separator))));
-String const standard_module_name = String("jakt");
+String const module_name = TRY((((input_module_name).replace(Jakt::String("::"),separator))));
+String const standard_module_name = Jakt::String("jakt");
 {
 JaktInternal::ArrayIterator<String> _magic = ((((*this).include_paths)).iterator());
 for (;;){
@@ -107,7 +107,7 @@ break;
 }
 String include_path = (_magic_value.value());
 {
-path::Path const candidate_path = TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({include_path, (module_name + String(".jakt"))})))))));
+path::Path const candidate_path = TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({include_path, (module_name + Jakt::String(".jakt"))})))))));
 if (((candidate_path).exists())){
 return (candidate_path);
 }
@@ -118,7 +118,7 @@ return (candidate_path);
 
 if (((module_name).starts_with(standard_module_name))){
 String const std_module_name_path = TRY((((module_name).substring((JaktInternal::checked_add<size_t>(((standard_module_name).length()),static_cast<size_t>(1ULL))),(JaktInternal::checked_sub<size_t>(((module_name).length()),(JaktInternal::checked_add<size_t>(((standard_module_name).length()),static_cast<size_t>(1ULL)))))))));
-path::Path const candidate_path = TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({((((*this).std_include_path)).to_string()), (std_module_name_path + String(".jakt"))})))))));
+path::Path const candidate_path = TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({((((*this).std_include_path)).to_string()), (std_module_name_path + Jakt::String(".jakt"))})))))));
 if (((candidate_path).exists())){
 return (candidate_path);
 }
@@ -132,7 +132,7 @@ break;
 }
 String include_path = (_magic_value.value());
 {
-path::Path const candidate_path = TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({include_path, (module_name + String(".jakt"))})))))));
+path::Path const candidate_path = TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({include_path, (module_name + Jakt::String(".jakt"))})))))));
 if (((candidate_path).exists())){
 return (candidate_path);
 }
@@ -143,7 +143,7 @@ return (candidate_path);
 
 JaktInternal::Optional<path::Path> const current_file_path = ((*this).current_file_path());
 if (((current_file_path).has_value())){
-path::Path const candidate_path = TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({((TRY(((((current_file_path.value())).parent())))).to_string()), (module_name + String(".jakt"))})))))));
+path::Path const candidate_path = TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({((TRY(((((current_file_path.value())).parent())))).to_string()), (module_name + Jakt::String(".jakt"))})))))));
 if (((candidate_path).exists())){
 return (candidate_path);
 }
@@ -174,8 +174,8 @@ return (((*this).current_file));
 
 void compiler::Compiler::restore_file_state(JaktInternal::Tuple<JaktInternal::Optional<utility::FileId>,JaktInternal::Array<u8>> const state) {
 {
-(((*this).current_file) = ((state).get<0>()));
-(((*this).current_file_contents) = ((state).get<1>()));
+(((*this).current_file) = ((state).template get<0>()));
+(((*this).current_file_contents) = ((state).template get<1>()));
 }
 }
 
@@ -259,7 +259,7 @@ return {};
 void compiler::Compiler::dbg_println(String const message) const {
 {
 if (((*this).debug_print)){
-outln(String("{}"),message);
+outln(Jakt::String("{}"),message);
 }
 }
 }

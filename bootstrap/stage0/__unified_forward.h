@@ -7,6 +7,8 @@ const unsigned int CP_UTF8 = 65001;
 namespace Jakt {
 namespace jakt__prelude__iteration {
 }
+namespace jakt__prelude__string {
+}
 namespace jakt__prelude__prelude {
 }
 namespace jakt__arguments {
@@ -514,6 +516,7 @@ T u64_to_float(u64 const number);
 }
 namespace types {
 class FunctionGenerics;
+struct CheckedStringLiteral;
 struct GenericInferences;
 struct CheckedStruct;
 struct CheckedVariable;
@@ -727,6 +730,11 @@ struct Garbage;
 }
 struct CheckedExpression;
 
+namespace StringLiteral_Details {
+struct Static;
+}
+struct StringLiteral;
+
 namespace ValueImpl_Details {
 struct Void;
 struct Bool;
@@ -742,6 +750,7 @@ struct F32;
 struct F64;
 struct USize;
 struct JaktString;
+struct StringView;
 struct CChar;
 struct CInt;
 struct Struct;
@@ -843,6 +852,7 @@ ErrorOr<NonnullRefPtr<types::CheckedExpression>> value_to_checked_expression(typ
 
 }
 namespace typechecker {
+struct TraitImplementationDescriptor;
 struct AlreadyImplementedFor;
 struct Typechecker;
 struct TraitImplCheck;

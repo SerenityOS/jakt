@@ -8,7 +8,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(builder.append(")"));return builder.to_string(); }
 ErrorOr<path::Path> path::Path::from_parts(JaktInternal::Array<String> const parts) {
 {
-path::Path path = path::Path(String("."));
+path::Path path = path::Path(Jakt::String("."));
 {
 JaktInternal::ArrayIterator<String> _magic = ((parts).iterator());
 for (;;){
@@ -46,7 +46,7 @@ path::Path::Path(String a_path) :path(a_path){}
 
 bool path::Path::is_dot() const {
 {
-return (((((*this).path) == String(".")) || (((*this).path) == String(".."))));
+return (((((*this).path) == Jakt::String(".")) || (((*this).path) == Jakt::String(".."))));
 }
 }
 
@@ -79,7 +79,7 @@ return (TRY((((((*this).path)).substring((JaktInternal::checked_add<size_t>(i,st
 }
 }
 
-return (String(""));
+return (Jakt::String(""));
 }
 }
 
@@ -92,7 +92,7 @@ String const dir = TRY((((((*this).path)).substring(static_cast<size_t>(0ULL),(l
 String const base = TRY((((((*this).path)).substring((JaktInternal::checked_add<size_t>((last_slash.value()),static_cast<size_t>(1ULL))),(JaktInternal::checked_sub<size_t>((JaktInternal::checked_sub<size_t>(len,(last_slash.value()))),static_cast<size_t>(1ULL)))))));
 return ((Tuple{dir, base}));
 }
-return ((Tuple{String(""), ((*this).path)}));
+return ((Tuple{Jakt::String(""), ((*this).path)}));
 }
 }
 
@@ -130,7 +130,7 @@ return {};
 
 ErrorOr<path::Path> path::Path::join(String const path) const {
 {
-if (((((*this).path) == String(".")) || (((((*this).path)).length()) == static_cast<size_t>(0ULL)))){
+if (((((*this).path) == Jakt::String(".")) || (((((*this).path)).length()) == static_cast<size_t>(0ULL)))){
 return (path::Path(path));
 }
 if (((path).is_empty())){
@@ -158,19 +158,19 @@ size_t ext_length = ((TRY((((*this).extension())))).length());
 if ((ext_length > static_cast<size_t>(0ULL))){
 ({auto& _jakt_ref = ext_length;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 }
-return (TRY((((((parts).get<1>())).substring(static_cast<size_t>(0ULL),(JaktInternal::checked_sub<size_t>(((((parts).get<1>())).length()),ext_length)))))));
+return (TRY((((((parts).template get<1>())).substring(static_cast<size_t>(0ULL),(JaktInternal::checked_sub<size_t>(((((parts).template get<1>())).length()),ext_length)))))));
 }
-return (((parts).get<1>()));
+return (((parts).template get<1>()));
 }
 }
 
 ErrorOr<path::Path> path::Path::parent() const {
 {
 JaktInternal::Tuple<String,String> const parts = TRY((((*this).split_at_last_slash())));
-if ((((parts).get<0>()) == String(""))){
-return (path::Path(String(".")));
+if ((((parts).template get<0>()) == Jakt::String(""))){
+return (path::Path(Jakt::String(".")));
 }
-return (path::Path(((parts).get<0>())));
+return (path::Path(((parts).template get<0>())));
 }
 }
 
@@ -180,15 +180,15 @@ JaktInternal::Tuple<String,String> const parts = TRY((((*this).split_at_last_sla
 String const basename = TRY((((*this).basename(true))));
 String const extension = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<path::Path>>{
 auto __jakt_enum_value = (new_extension);
-if (__jakt_enum_value == String("")) {
-return JaktInternal::ExplicitValue(String(""));
+if (__jakt_enum_value == Jakt::String("")) {
+return JaktInternal::ExplicitValue(Jakt::String(""));
 }
 else {
-return JaktInternal::ExplicitValue((String(".") + new_extension));
+return JaktInternal::ExplicitValue((Jakt::String(".") + new_extension));
 }
 }()))
 ;
-return (TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({((parts).get<0>()), (basename + extension)}))))))));
+return (TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({((parts).template get<0>()), (basename + extension)}))))))));
 }
 }
 

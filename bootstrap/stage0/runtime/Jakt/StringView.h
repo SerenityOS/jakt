@@ -19,6 +19,11 @@ namespace Jakt {
 
 class StringView {
 public:
+    ALWAYS_INLINE constexpr static StringView from_string_literal(StringView sv)
+    {
+        return sv;
+    }
+
     ALWAYS_INLINE constexpr StringView() = default;
     ALWAYS_INLINE constexpr StringView(char const* characters, size_t length)
         : m_characters(characters)

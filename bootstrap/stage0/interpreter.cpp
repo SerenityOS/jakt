@@ -9,7 +9,7 @@ auto&& __jakt_match_variant = *type;
 switch(__jakt_match_variant.index()) {
 case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericInstance>();types::StructId const& id = __jakt_match_value.id;
-return JaktInternal::ExplicitValue(((id).equals(TRY((((((interpreter)->program))->find_struct_in_prelude(String("Optional"))))))));
+return JaktInternal::ExplicitValue(((id).equals(TRY((((((interpreter)->program))->find_struct_in_prelude(Jakt::String("Optional"))))))));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -361,10 +361,10 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<types::Value>>{
 auto&& __jakt_match_variant = *((this_value).impl);
 switch(__jakt_match_variant.index()) {
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::OptionalSome>();return JaktInternal::ExplicitValue(this_value);
 };/*case end*/
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::OptionalNone>();
 return JaktInternal::ExplicitValue(this_value);
 };/*case end*/
@@ -395,7 +395,7 @@ switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::Void>();
 {
-TRY((((interpreter)->error(String("Cannot convert void to expression"),((this_value).span)))));
+TRY((((interpreter)->error(Jakt::String("Cannot convert void to expression"),((this_value).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -462,28 +462,33 @@ return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::template creat
 case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::JaktString>();
 String const& x = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::template create<typename types::CheckedExpression::QuotedString>(TRY((utility::escape_for_quotes(x))),((this_value).span)))));
+return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::template create<typename types::CheckedExpression::QuotedString>(types::CheckedStringLiteral( types::StringLiteral { typename types::StringLiteral::Static(TRY((utility::escape_for_quotes(x)))) } ,types::builtin( types::BuiltinType { typename types::BuiltinType::JaktString() } ),true),((this_value).span)))));
 };/*case end*/
 case 14: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
-char const& x = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::template create<typename types::CheckedExpression::CharacterConstant>(TRY((String::formatted(String("{}"),x))),((this_value).span)))));
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::StringView>();
+String const& x = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::template create<typename types::CheckedExpression::QuotedString>(types::CheckedStringLiteral( types::StringLiteral { typename types::StringLiteral::Static(TRY((utility::escape_for_quotes(x)))) } ,types::builtin( types::BuiltinType { typename types::BuiltinType::JaktString() } ),true),((this_value).span)))));
 };/*case end*/
 case 15: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
+char const& x = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::template create<typename types::CheckedExpression::CharacterConstant>(TRY((String::formatted(Jakt::String("{}"),x))),((this_value).span)))));
+};/*case end*/
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::template create<typename types::CheckedExpression::NumericConstant>( types::CheckedNumericConstant { typename types::CheckedNumericConstant::I32((infallible_integer_cast<i32>((x)))) } ,((this_value).span),types::builtin( types::BuiltinType { typename types::BuiltinType::CInt() } )))));
 };/*case end*/
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::OptionalNone>();
 return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::template create<typename types::CheckedExpression::OptionalNone>(((this_value).span),types::unknown_type_id()))));
 };/*case end*/
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::OptionalSome>();types::Value const& value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<types::CheckedExpression>> __jakt_var_120; {
 NonnullRefPtr<types::CheckedExpression> const expr = TRY((interpreter::value_to_checked_expression(value,interpreter)));
 types::TypeId const inner_type_id = ((expr)->type());
-types::StructId const optional_struct_id = TRY((((((interpreter)->program))->find_struct_in_prelude(String("Optional")))));
+types::StructId const optional_struct_id = TRY((((((interpreter)->program))->find_struct_in_prelude(Jakt::String("Optional")))));
 NonnullRefPtr<types::Type> const type = TRY((types::Type::template create<typename types::Type::GenericInstance>(optional_struct_id,(TRY((Array<types::TypeId>::create_with({inner_type_id})))))));
 types::TypeId const type_id = TRY((((interpreter)->find_or_add_type_id(type))));
 __jakt_var_120 = TRY((types::CheckedExpression::template create<typename types::CheckedExpression::OptionalSome>(expr,((this_value).span),type_id))); goto __jakt_label_117;
@@ -491,7 +496,7 @@ __jakt_var_120 = TRY((types::CheckedExpression::template create<typename types::
 }
 __jakt_label_117:; __jakt_var_120.release_value(); }));
 };/*case end*/
-case 25: {
+case 26: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktTuple>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<types::CheckedExpression>> __jakt_var_121; {
@@ -516,13 +521,13 @@ __jakt_var_121 = TRY((types::CheckedExpression::template create<typename types::
 }
 __jakt_label_118:; __jakt_var_121.release_value(); }));
 };/*case end*/
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::StructId const& struct_id = __jakt_match_value.struct_id;
 JaktInternal::Optional<types::FunctionId> const& constructor = __jakt_match_value.constructor;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<types::CheckedExpression>> __jakt_var_122; {
 if ((!(((constructor).has_value())))){
-TRY((((interpreter)->error_with_hint(String("Cannot convert struct to expression without constructor"),((this_value).span),String("Given struct cannot be created from its contents in any known way"),((this_value).span)))));
+TRY((((interpreter)->error_with_hint(Jakt::String("Cannot convert struct to expression without constructor"),((this_value).span),Jakt::String("Given struct cannot be created from its contents in any known way"),((this_value).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> materialised_fields = (TRY((Array<NonnullRefPtr<types::CheckedExpression>>::create_with({}))));
@@ -593,13 +598,13 @@ __jakt_var_122 = TRY((types::CheckedExpression::template create<typename types::
 }
 __jakt_label_119:; __jakt_var_122.release_value(); }));
 };/*case end*/
-case 17: {
+case 18: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Class>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::StructId const& struct_id = __jakt_match_value.struct_id;
 JaktInternal::Optional<types::FunctionId> const& constructor = __jakt_match_value.constructor;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<types::CheckedExpression>> __jakt_var_123; {
 if ((!(((constructor).has_value())))){
-TRY((((interpreter)->error_with_hint(String("Cannot convert struct to expression without constructor"),((this_value).span),String("Given struct cannot be created from its contents in any known way"),((this_value).span)))));
+TRY((((interpreter)->error_with_hint(Jakt::String("Cannot convert struct to expression without constructor"),((this_value).span),Jakt::String("Given struct cannot be created from its contents in any known way"),((this_value).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> materialised_fields = (TRY((Array<NonnullRefPtr<types::CheckedExpression>>::create_with({}))));
@@ -670,7 +675,7 @@ __jakt_var_123 = TRY((types::CheckedExpression::template create<typename types::
 }
 __jakt_label_120:; __jakt_var_123.release_value(); }));
 };/*case end*/
-case 18: {
+case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Enum>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::EnumId const& enum_id = __jakt_match_value.enum_id;
 types::FunctionId const& constructor = __jakt_match_value.constructor;
@@ -730,7 +735,7 @@ break;
 size_t i = (_magic_value.value());
 {
 NonnullRefPtr<types::CheckedExpression> const arg = ((materialised_fields)[i]);
-TRY((((args).push((Tuple{String(""), arg})))));
+TRY((((args).push((Tuple{Jakt::String(""), arg})))));
 }
 
 }
@@ -743,7 +748,7 @@ __jakt_var_124 = TRY((types::CheckedExpression::template create<typename types::
 }
 __jakt_label_121:; __jakt_var_124.release_value(); }));
 };/*case end*/
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<types::CheckedExpression>> __jakt_var_125; {
@@ -772,7 +777,7 @@ return JaktInternal::ExplicitValue(((args)[static_cast<i64>(0LL)]));
 };/*case end*/
 default: {
 {
-utility::panic(String("Expected generic instance of Array while materialising an array"));
+utility::panic(Jakt::String("Expected generic instance of Array while materialising an array"));
 }
 };/*case end*/
 }/*switch end*/
@@ -783,7 +788,7 @@ __jakt_var_125 = TRY((types::CheckedExpression::template create<typename types::
 }
 __jakt_label_122:; __jakt_var_125.release_value(); }));
 };/*case end*/
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 types::TypeId const& type_id = __jakt_match_value.type_id;
@@ -813,21 +818,21 @@ return JaktInternal::ExplicitValue((Tuple{((args)[static_cast<i64>(0LL)]), ((arg
 };/*case end*/
 default: {
 {
-utility::panic(String("Expected generic instance of Dictionary while materialising an array"));
+utility::panic(Jakt::String("Expected generic instance of Dictionary while materialising an array"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-types::TypeId const key_type_id = ((key_type_id_value_type_id_).get<0>());
-types::TypeId const value_type_id = ((key_type_id_value_type_id_).get<1>());
+types::TypeId const key_type_id = ((key_type_id_value_type_id_).template get<0>());
+types::TypeId const value_type_id = ((key_type_id_value_type_id_).template get<1>());
 
 __jakt_var_126 = TRY((types::CheckedExpression::template create<typename types::CheckedExpression::JaktDictionary>(vals,((this_value).span),type_id,key_type_id,value_type_id))); goto __jakt_label_123;
 
 }
 __jakt_label_123:; __jakt_var_126.release_value(); }));
 };/*case end*/
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<types::CheckedExpression>> __jakt_var_127; {
@@ -856,7 +861,7 @@ return JaktInternal::ExplicitValue(((args)[static_cast<i64>(0LL)]));
 };/*case end*/
 default: {
 {
-utility::panic(String("Expected generic instance of Set while materialising an array"));
+utility::panic(Jakt::String("Expected generic instance of Set while materialising an array"));
 }
 };/*case end*/
 }/*switch end*/
@@ -867,7 +872,7 @@ __jakt_var_127 = TRY((types::CheckedExpression::template create<typename types::
 }
 __jakt_label_124:; __jakt_var_127.release_value(); }));
 };/*case end*/
-case 26: {
+case 27: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Function>();JaktInternal::Dictionary<String,types::Value> const& captures = __jakt_match_value.captures;
 bool const& can_throw = __jakt_match_value.can_throw;
 types::TypeId const& return_type_id = __jakt_match_value.return_type_id;
@@ -876,7 +881,7 @@ types::CheckedBlock const& block = __jakt_match_value.block;
 JaktInternal::Array<types::CheckedParameter> const& checked_params = __jakt_match_value.checked_params;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<types::CheckedExpression>> __jakt_var_128; {
 NonnullRefPtr<types::Scope> const parent_scope = TRY((((((interpreter)->program))->get_scope(((block).scope_id)))));
-types::ScopeId const inherited_scope_id = TRY((((((interpreter)->program))->create_scope(((block).scope_id),((parent_scope)->can_throw),TRY((String::formatted(String("synthetic({})"),((parent_scope)->debug_name)))),((type_id).module)))));
+types::ScopeId const inherited_scope_id = TRY((((((interpreter)->program))->create_scope(((block).scope_id),((parent_scope)->can_throw),TRY((String::formatted(Jakt::String("synthetic({})"),((parent_scope)->debug_name)))),((type_id).module)))));
 NonnullRefPtr<types::Scope> inherited_scope = TRY((((((interpreter)->program))->get_scope(inherited_scope_id))));
 JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> statements = (TRY((Array<NonnullRefPtr<types::CheckedStatement>>::create_with({}))));
 {
@@ -888,10 +893,10 @@ break;
 }
 JaktInternal::Tuple<String,types::Value> capture = (_magic_value.value());
 {
-NonnullRefPtr<types::CheckedExpression> const value = TRY((interpreter::value_to_checked_expression(((capture).get<1>()),interpreter)));
-types::VarId const var_id = TRY((((((((interpreter)->program))->get_module(((type_id).module))))->add_variable(types::CheckedVariable(((capture).get<0>()),((value)->type()),false,((this_value).span),JaktInternal::OptionalNone(), types::CheckedVisibility { typename types::CheckedVisibility::Public() } )))));
+NonnullRefPtr<types::CheckedExpression> const value = TRY((interpreter::value_to_checked_expression(((capture).template get<1>()),interpreter)));
+types::VarId const var_id = TRY((((((((interpreter)->program))->get_module(((type_id).module))))->add_variable(types::CheckedVariable(((capture).template get<0>()),((value)->type()),false,((this_value).span),JaktInternal::OptionalNone(), types::CheckedVisibility { typename types::CheckedVisibility::Public() } )))));
 TRY((((statements).push(TRY((types::CheckedStatement::template create<typename types::CheckedStatement::VarDecl>(var_id,value,((this_value).span))))))));
-TRY((((((inherited_scope)->comptime_bindings)).set(((capture).get<0>()),((capture).get<1>())))));
+TRY((((((inherited_scope)->comptime_bindings)).set(((capture).template get<0>()),((capture).template get<1>())))));
 }
 
 }
@@ -908,7 +913,7 @@ break;
 }
 types::CheckedParameter param = (_magic_value.value());
 {
-outln(String("Param: {}"),TRY((((((interpreter)->program))->type_name(((((param).variable)).type_id))))));
+outln(Jakt::String("Param: {}"),TRY((((((interpreter)->program))->type_name(((((param).variable)).type_id))))));
 }
 
 }
@@ -921,7 +926,7 @@ __jakt_label_125:; __jakt_var_128.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((interpreter)->error(TRY((String::formatted(String("Cannot materialise the type {}"),((this_value).impl)))),((this_value).span)))));
+TRY((((interpreter)->error(TRY((String::formatted(Jakt::String("Cannot materialise the type {}"),((this_value).impl)))),((this_value).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
@@ -962,7 +967,7 @@ ErrorOr<interpreter::StatementResult> interpreter::Interpreter::call_prelude_fun
 if ((((namespace_).size()) != static_cast<size_t>(1ULL))){
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("format")) {
+if (__jakt_enum_value == Jakt::String("format")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_129; {
 String const format_string = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -974,7 +979,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Expected string as first argument to format, got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Expected string as first argument to format, got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -1055,19 +1060,19 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 String const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((String::formatted(format_string,x))));
 };/*case end*/
-case 14: {
+case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
 char const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((String::formatted(format_string,x))));
 };/*case end*/
-case 15: {
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((String::formatted(format_string,x))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("comptime format can only format primitves, got {}"),((((arguments)[static_cast<i64>(1LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("comptime format can only format primitves, got {}"),((((arguments)[static_cast<i64>(1LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -1077,7 +1082,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("comptime format accepts at most two arguments, but got {}"),((arguments).size())))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("comptime format accepts at most two arguments, but got {}"),((arguments).size())))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 }
@@ -1087,7 +1092,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }
 __jakt_label_126:; __jakt_var_129.release_value(); }));
 }
-else if (__jakt_enum_value == String("println")) {
+else if (__jakt_enum_value == Jakt::String("println")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_130; {
 String const format_string = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -1099,7 +1104,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("println expects a string as its first argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("println expects a string as its first argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -1111,13 +1116,13 @@ auto __jakt_enum_value = (((arguments).size()));
 if (__jakt_enum_value == static_cast<size_t>(1ULL)) {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1136,13 +1141,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 bool const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1157,13 +1162,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u8 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1178,13 +1183,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u16 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1199,13 +1204,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1220,13 +1225,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1241,13 +1246,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i8 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1262,13 +1267,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i16 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1283,13 +1288,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1304,13 +1309,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1325,13 +1330,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 f32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1346,13 +1351,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 f64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1367,13 +1372,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 size_t const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1388,34 +1393,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 String const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
-return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else {
-return (warn(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-return JaktInternal::ExplicitValue<void>();
-}()))
-), JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 14: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
-char const& x = __jakt_match_value.value;
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
-auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
-return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else if (__jakt_enum_value == String("eprintln")) {
-return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1426,17 +1410,38 @@ return JaktInternal::ExplicitValue<void>();
 ), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 15: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
+char const& x = __jakt_match_value.value;
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
+auto __jakt_enum_value = (prelude_function);
+if (__jakt_enum_value == Jakt::String("println")) {
+return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
+return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else if (__jakt_enum_value == Jakt::String("print")) {
+return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else {
+return (warn(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+return JaktInternal::ExplicitValue<void>();
+}()))
+), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1448,7 +1453,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("comptime format can only format primitves, got {}"),((((arguments)[static_cast<i64>(1LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("comptime format can only format primitves, got {}"),((((arguments)[static_cast<i64>(1LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -1459,7 +1464,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("comptime format accepts at most two arguments, but got {}"),((arguments).size())))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("comptime format accepts at most two arguments, but got {}"),((arguments).size())))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -1472,7 +1477,7 @@ __jakt_var_130 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_127:; __jakt_var_130.release_value(); }));
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_131; {
 String const format_string = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -1484,7 +1489,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("println expects a string as its first argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("println expects a string as its first argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -1496,13 +1501,13 @@ auto __jakt_enum_value = (((arguments).size()));
 if (__jakt_enum_value == static_cast<size_t>(1ULL)) {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1521,13 +1526,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 bool const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1542,13 +1547,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u8 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1563,13 +1568,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u16 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1584,13 +1589,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1605,13 +1610,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1626,13 +1631,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i8 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1647,13 +1652,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i16 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1668,13 +1673,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1689,13 +1694,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1710,13 +1715,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 f32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1731,13 +1736,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 f64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1752,13 +1757,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 size_t const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1773,34 +1778,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 String const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
-return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else {
-return (warn(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-return JaktInternal::ExplicitValue<void>();
-}()))
-), JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 14: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
-char const& x = __jakt_match_value.value;
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
-auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
-return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else if (__jakt_enum_value == String("eprintln")) {
-return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1811,17 +1795,38 @@ return JaktInternal::ExplicitValue<void>();
 ), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 15: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
+char const& x = __jakt_match_value.value;
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
+auto __jakt_enum_value = (prelude_function);
+if (__jakt_enum_value == Jakt::String("println")) {
+return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
+return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else if (__jakt_enum_value == Jakt::String("print")) {
+return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else {
+return (warn(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+return JaktInternal::ExplicitValue<void>();
+}()))
+), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1833,7 +1838,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("comptime format can only format primitves, got {}"),((((arguments)[static_cast<i64>(1LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("comptime format can only format primitves, got {}"),((((arguments)[static_cast<i64>(1LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -1844,7 +1849,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("comptime format accepts at most two arguments, but got {}"),((arguments).size())))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("comptime format accepts at most two arguments, but got {}"),((arguments).size())))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -1857,7 +1862,7 @@ __jakt_var_131 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_128:; __jakt_var_131.release_value(); }));
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_132; {
 String const format_string = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -1869,7 +1874,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("println expects a string as its first argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("println expects a string as its first argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -1881,13 +1886,13 @@ auto __jakt_enum_value = (((arguments).size()));
 if (__jakt_enum_value == static_cast<size_t>(1ULL)) {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1906,13 +1911,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 bool const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1927,13 +1932,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u8 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1948,13 +1953,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u16 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1969,13 +1974,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -1990,13 +1995,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2011,13 +2016,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i8 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2032,13 +2037,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i16 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2053,13 +2058,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2074,13 +2079,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2095,13 +2100,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 f32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2116,13 +2121,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 f64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2137,13 +2142,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 size_t const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2158,34 +2163,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 String const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
-return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else {
-return (warn(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-return JaktInternal::ExplicitValue<void>();
-}()))
-), JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 14: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
-char const& x = __jakt_match_value.value;
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
-auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
-return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else if (__jakt_enum_value == String("eprintln")) {
-return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2196,17 +2180,38 @@ return JaktInternal::ExplicitValue<void>();
 ), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 15: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
+char const& x = __jakt_match_value.value;
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
+auto __jakt_enum_value = (prelude_function);
+if (__jakt_enum_value == Jakt::String("println")) {
+return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
+return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else if (__jakt_enum_value == Jakt::String("print")) {
+return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else {
+return (warn(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+return JaktInternal::ExplicitValue<void>();
+}()))
+), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2218,7 +2223,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("comptime format can only format primitves, got {}"),((((arguments)[static_cast<i64>(1LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("comptime format can only format primitves, got {}"),((((arguments)[static_cast<i64>(1LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -2229,7 +2234,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("comptime format accepts at most two arguments, but got {}"),((arguments).size())))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("comptime format accepts at most two arguments, but got {}"),((arguments).size())))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -2242,7 +2247,7 @@ __jakt_var_132 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_129:; __jakt_var_132.release_value(); }));
 }
-else if (__jakt_enum_value == String("eprint")) {
+else if (__jakt_enum_value == Jakt::String("eprint")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_133; {
 String const format_string = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -2254,7 +2259,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("println expects a string as its first argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("println expects a string as its first argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2266,13 +2271,13 @@ auto __jakt_enum_value = (((arguments).size()));
 if (__jakt_enum_value == static_cast<size_t>(1ULL)) {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2291,13 +2296,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 bool const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2312,13 +2317,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u8 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2333,13 +2338,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u16 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2354,13 +2359,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2375,13 +2380,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 u64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2396,13 +2401,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i8 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2417,13 +2422,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i16 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2438,13 +2443,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2459,13 +2464,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 i64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2480,13 +2485,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 f32 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2501,13 +2506,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 f64 const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2522,13 +2527,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 size_t const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2543,34 +2548,13 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Va
 String const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
-return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else {
-return (warn(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-return JaktInternal::ExplicitValue<void>();
-}()))
-), JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 14: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
-char const& x = __jakt_match_value.value;
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
-auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
-return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else if (__jakt_enum_value == String("eprintln")) {
-return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
-}
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2581,17 +2565,38 @@ return JaktInternal::ExplicitValue<void>();
 ), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 15: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
+char const& x = __jakt_match_value.value;
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
+auto __jakt_enum_value = (prelude_function);
+if (__jakt_enum_value == Jakt::String("println")) {
+return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
+return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else if (__jakt_enum_value == Jakt::String("print")) {
+return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+else {
+return (warn(format_string,x)), JaktInternal::ExplicitValue<void>();
+}
+return JaktInternal::ExplicitValue<void>();
+}()))
+), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("println")) {
+if (__jakt_enum_value == Jakt::String("println")) {
 return (outln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("eprintln")) {
+else if (__jakt_enum_value == Jakt::String("eprintln")) {
 return (warnln(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("print")) {
+else if (__jakt_enum_value == Jakt::String("print")) {
 return (out(format_string,x)), JaktInternal::ExplicitValue<void>();
 }
 else {
@@ -2603,7 +2608,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("comptime format can only format primitves, got {}"),((((arguments)[static_cast<i64>(1LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("comptime format can only format primitves, got {}"),((((arguments)[static_cast<i64>(1LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -2614,7 +2619,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("comptime format accepts at most two arguments, but got {}"),((arguments).size())))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("comptime format accepts at most two arguments, but got {}"),((arguments).size())))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -2627,16 +2632,16 @@ __jakt_var_133 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_130:; __jakt_var_133.release_value(); }));
 }
-else if (__jakt_enum_value == String("as_saturated")) {
+else if (__jakt_enum_value == Jakt::String("as_saturated")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_134; {
-NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function((((TRY((((((*this).program))->find_functions_with_name_in_scope(((((*this).program))->prelude_scope_id()),String("as_saturated"))))).value()))[static_cast<i64>(0LL)])));
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function((((TRY((((((*this).program))->find_functions_with_name_in_scope(((((*this).program))->prelude_scope_id()),Jakt::String("as_saturated"))))).value()))[static_cast<i64>(0LL)])));
 JaktInternal::Optional<types::TypeId> const output_type_id = ((type_bindings).get(TRY((((((((((((function_)->generics))->params))[static_cast<i64>(0LL)])).type_id())).to_string())))));
 __jakt_var_134 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(TRY((interpreter::cast_value_to_type(((arguments)[static_cast<i64>(0LL)]),(output_type_id.value()),*this,true)))) } ; goto __jakt_label_131;
 
 }
 __jakt_label_131:; __jakt_var_134.release_value(); }));
 }
-else if (__jakt_enum_value == String("unchecked_mul")) {
+else if (__jakt_enum_value == Jakt::String("unchecked_mul")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_135; {
 types::Value const lhs_value = ((arguments)[static_cast<i64>(0LL)]);
 types::Value const rhs_value = ((arguments)[static_cast<i64>(1LL)]);
@@ -2657,7 +2662,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2678,7 +2683,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2699,7 +2704,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2720,7 +2725,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2741,7 +2746,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2762,7 +2767,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2783,7 +2788,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2804,7 +2809,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2825,7 +2830,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2846,7 +2851,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2867,7 +2872,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2877,7 +2882,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2888,7 +2893,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }
 __jakt_label_132:; __jakt_var_135.release_value(); }));
 }
-else if (__jakt_enum_value == String("unchecked_add")) {
+else if (__jakt_enum_value == Jakt::String("unchecked_add")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_136; {
 types::Value const lhs_value = ((arguments)[static_cast<i64>(0LL)]);
 types::Value const rhs_value = ((arguments)[static_cast<i64>(1LL)]);
@@ -2909,7 +2914,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2930,7 +2935,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2951,7 +2956,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2972,7 +2977,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -2993,7 +2998,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3014,7 +3019,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3035,7 +3040,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3056,7 +3061,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3077,7 +3082,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3098,7 +3103,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3119,7 +3124,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3129,7 +3134,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3140,34 +3145,34 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }
 __jakt_label_133:; __jakt_var_136.release_value(); }));
 }
-else if (__jakt_enum_value == String("___jakt_get_target_triple_string")) {
+else if (__jakt_enum_value == Jakt::String("___jakt_get_target_triple_string")) {
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(((((*this).compiler))->target_triple).value_or_lazy_evaluated([&] { return ___jakt_get_target_triple_string(); })))),call_span)) } );
 }
-else if (__jakt_enum_value == String("abort")) {
+else if (__jakt_enum_value == Jakt::String("abort")) {
 {
 abort();
 }
 }
-else if (__jakt_enum_value == String("Set")) {
+else if (__jakt_enum_value == Jakt::String("Set")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_137; {
 if ((((type_bindings).size()) != static_cast<size_t>(1ULL))){
-TRY((((*this).error(String("Set constructor expects one generic argument"),call_span))));
+TRY((((*this).error(Jakt::String("Set constructor expects one generic argument"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
-types::StructId const set_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("Set")))));
+types::StructId const set_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("Set")))));
 types::TypeId const type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::template create<typename types::Type::GenericInstance>(set_struct_id,(TRY((Array<types::TypeId>::create_with({(((type_bindings).get(((TRY((((type_bindings).keys()))))[static_cast<i64>(0LL)]))).value())})))))))))));
 __jakt_var_137 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktSet>((TRY((Array<types::Value>::create_with({})))),type_id))),call_span)) } ; goto __jakt_label_134;
 
 }
 __jakt_label_134:; __jakt_var_137.release_value(); }));
 }
-else if (__jakt_enum_value == String("Dictionary")) {
+else if (__jakt_enum_value == Jakt::String("Dictionary")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_138; {
 if ((((type_bindings).size()) != static_cast<size_t>(2ULL))){
-TRY((((*this).error(String("Dictionary constructor expects two generic argumenst"),call_span))));
+TRY((((*this).error(Jakt::String("Dictionary constructor expects two generic argumenst"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
-types::StructId const dictionary_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("Dictionary")))));
+types::StructId const dictionary_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("Dictionary")))));
 types::TypeId const type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::template create<typename types::Type::GenericInstance>(dictionary_struct_id,(TRY((Array<types::TypeId>::create_with({(((type_bindings).get(((TRY((((type_bindings).keys()))))[static_cast<i64>(0LL)]))).value()), (((type_bindings).get(((TRY((((type_bindings).keys()))))[static_cast<i64>(1LL)]))).value())})))))))))));
 __jakt_var_138 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktDictionary>((TRY((Array<types::Value>::create_with({})))),(TRY((Array<types::Value>::create_with({})))),type_id))),call_span)) } ; goto __jakt_label_135;
 
@@ -3176,7 +3181,7 @@ __jakt_label_135:; __jakt_var_138.release_value(); }));
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function {}::{} is not implemented yet"),namespace_,prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function {}::{} is not implemented yet"),namespace_,prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
@@ -3185,26 +3190,26 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplem
 }
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (((((namespace_)[static_cast<i64>(0LL)])).name));
-if (__jakt_enum_value == String("Error")) {
+if (__jakt_enum_value == Jakt::String("Error")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("from_errno")) {
+if (__jakt_enum_value == Jakt::String("from_errno")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_139; {
 types::Value const err = ((arguments)[static_cast<i64>(0LL)]);
-types::StructId const error_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("Error")))));
+types::StructId const error_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("Error")))));
 types::CheckedStruct const error_struct = ((((*this).program))->get_struct(error_struct_id));
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((error_struct).scope_id)))));
-JaktInternal::Optional<JaktInternal::Array<types::FunctionId>> const constructors = ((((scope)->functions)).get(String("from_errno")));
+JaktInternal::Optional<JaktInternal::Array<types::FunctionId>> const constructors = ((((scope)->functions)).get(Jakt::String("from_errno")));
 __jakt_var_139 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Struct>((TRY((Array<types::Value>::create_with({err})))),error_struct_id,(((constructors.value()))[static_cast<i64>(0LL)])))),call_span)) } ; goto __jakt_label_136;
 
 }
 __jakt_label_136:; __jakt_var_139.release_value(); }));
 }
-else if (__jakt_enum_value == String("code")) {
+else if (__jakt_enum_value == Jakt::String("code")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
@@ -3216,7 +3221,7 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Error should have `i32` as its code, but got {}"),((((fields)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Error should have `i32` as its code, but got {}"),((((fields)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3226,7 +3231,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `Error::code` expects an Error as its this argument, but got {}"),(((this_argument.value())).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `Error::code` expects an Error as its this argument, but got {}"),(((this_argument.value())).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3236,17 +3241,17 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `Error::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `Error::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 );
 }
-else if (__jakt_enum_value == String("File")) {
+else if (__jakt_enum_value == Jakt::String("File")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("open_for_reading")) {
+if (__jakt_enum_value == Jakt::String("open_for_reading")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_140; {
 String const requested_path = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -3258,7 +3263,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::{}` expects a string as its first argument, but got {}"),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `File::{}` expects a string as its first argument, but got {}"),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3268,19 +3273,19 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 path::Path const path = TRY((((TRY(((((TRY((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))))).value())).parent())))).join(requested_path))));
 types::Value const path_value = types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(((path).to_string())))),call_span);
 if ((!(((path).exists())))){
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::{}` could not find file at path {}"),prelude_function,((path).to_string())))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `File::{}` could not find file at path {}"),prelude_function,((path).to_string())))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
-types::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("File")))));
+types::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("File")))));
 types::CheckedStruct const file_struct = ((((*this).program))->get_struct(file_struct_id));
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((file_struct).scope_id)))));
-JaktInternal::Optional<JaktInternal::Array<types::FunctionId>> const constructors = ((((scope)->functions)).get(String("open_for_reading")));
+JaktInternal::Optional<JaktInternal::Array<types::FunctionId>> const constructors = ((((scope)->functions)).get(Jakt::String("open_for_reading")));
 __jakt_var_140 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Struct>((TRY((Array<types::Value>::create_with({path_value})))),file_struct_id,(((constructors.value()))[static_cast<i64>(0LL)])))),call_span)) } ; goto __jakt_label_137;
 
 }
 __jakt_label_137:; __jakt_var_140.release_value(); }));
 }
-else if (__jakt_enum_value == String("open_for_writing")) {
+else if (__jakt_enum_value == Jakt::String("open_for_writing")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_141; {
 String const requested_path = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -3292,7 +3297,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::{}` expects a string as its first argument, but got {}"),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `File::{}` expects a string as its first argument, but got {}"),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3302,24 +3307,24 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 path::Path const path = TRY((((TRY(((((TRY((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))))).value())).parent())))).join(requested_path))));
 types::Value const path_value = types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(((path).to_string())))),call_span);
 if ((!(((path).exists())))){
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::{}` could not find file at path {}"),prelude_function,((path).to_string())))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `File::{}` could not find file at path {}"),prelude_function,((path).to_string())))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
-types::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("File")))));
+types::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("File")))));
 types::CheckedStruct const file_struct = ((((*this).program))->get_struct(file_struct_id));
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((file_struct).scope_id)))));
-JaktInternal::Optional<JaktInternal::Array<types::FunctionId>> const constructor = ((((scope)->functions)).get(String("open_for_writing")));
+JaktInternal::Optional<JaktInternal::Array<types::FunctionId>> const constructor = ((((scope)->functions)).get(Jakt::String("open_for_writing")));
 __jakt_var_141 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Struct>((TRY((Array<types::Value>::create_with({path_value})))),file_struct_id,(((constructor.value()))[static_cast<i64>(0LL)])))),call_span)) } ; goto __jakt_label_138;
 
 }
 __jakt_label_138:; __jakt_var_141.release_value(); }));
 }
-else if (__jakt_enum_value == String("read_all")) {
+else if (__jakt_enum_value == Jakt::String("read_all")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_142; {
 String const path = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
@@ -3331,7 +3336,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-utility::panic(String("invalid type for File::read_all"));
+utility::panic(Jakt::String("invalid type for File::read_all"));
 }
 };/*case end*/
 }/*switch end*/
@@ -3340,25 +3345,25 @@ utility::panic(String("invalid type for File::read_all"));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::read_all` expects a `File` as its this argument, but got {}"),(((this_argument.value())).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `File::read_all` expects a `File` as its this argument, but got {}"),(((this_argument.value())).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-types::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("File")))));
+types::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("File")))));
 types::CheckedStruct const file_struct = ((((*this).program))->get_struct(file_struct_id));
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((file_struct).scope_id)))));
-types::FunctionId const open_for_reading = (((((((scope)->functions)).get(String("open_for_reading"))).value()))[static_cast<i64>(0LL)]);
+types::FunctionId const open_for_reading = (((((((scope)->functions)).get(Jakt::String("open_for_reading"))).value()))[static_cast<i64>(0LL)]);
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Optional<types::FunctionId> const& constructor = __jakt_match_value.constructor;
 {
 if (((!(((constructor).has_value()))) || (!((((constructor.value())).equals(open_for_reading)))))){
-TRY((((*this).error(String("Cannot read from a file not opened for reading"),call_span))));
+TRY((((*this).error(Jakt::String("Cannot read from a file not opened for reading"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 }
@@ -3366,7 +3371,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-utility::panic(String("expected struct as this argument"));
+utility::panic(Jakt::String("expected struct as this argument"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -3390,18 +3395,18 @@ TRY((((result_values).push(types::Value(TRY((types::ValueImpl::template create<t
 }
 }
 
-types::StructId const array_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("Array")))));
+types::StructId const array_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("Array")))));
 __jakt_var_142 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktArray>(result_values,TRY((((*this).find_or_add_type_id(TRY((types::Type::template create<typename types::Type::GenericInstance>(array_struct_id,(TRY((Array<types::TypeId>::create_with({types::builtin( types::BuiltinType { typename types::BuiltinType::U8() } )})))))))))))))),call_span)) } ; goto __jakt_label_139;
 
 }
 __jakt_label_139:; __jakt_var_142.release_value(); }));
 }
-else if (__jakt_enum_value == String("read")) {
+else if (__jakt_enum_value == Jakt::String("read")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_143; {
 String const path = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
@@ -3413,7 +3418,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-utility::panic(String("invalid type for File::read"));
+utility::panic(Jakt::String("invalid type for File::read"));
 }
 };/*case end*/
 }/*switch end*/
@@ -3422,25 +3427,25 @@ utility::panic(String("invalid type for File::read"));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::read` expects a `File` as its this argument, but got {}"),(((this_argument.value())).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `File::read` expects a `File` as its this argument, but got {}"),(((this_argument.value())).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-types::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("File")))));
+types::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("File")))));
 types::CheckedStruct const file_struct = ((((*this).program))->get_struct(file_struct_id));
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((file_struct).scope_id)))));
-types::FunctionId const open_for_reading = (((((((scope)->functions)).get(String("open_for_reading"))).value()))[static_cast<i64>(0LL)]);
+types::FunctionId const open_for_reading = (((((((scope)->functions)).get(Jakt::String("open_for_reading"))).value()))[static_cast<i64>(0LL)]);
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Optional<types::FunctionId> const& constructor = __jakt_match_value.constructor;
 {
 if (((!(((constructor).has_value()))) || (!((((constructor.value())).equals(open_for_reading)))))){
-TRY((((*this).error(String("Cannot read from a file not opened for reading"),call_span))));
+TRY((((*this).error(Jakt::String("Cannot read from a file not opened for reading"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 }
@@ -3448,7 +3453,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-utility::panic(String("expected struct as this argument"));
+utility::panic(Jakt::String("expected struct as this argument"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -3459,13 +3464,13 @@ NonnullRefPtr<File> file = TRY((File::open_for_reading(path)));
 JaktInternal::Array<types::Value> values_buffer = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<types::Value>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(values);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::read` expects a `[u8]` as its argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `File::read` expects a `[u8]` as its argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3494,7 +3499,7 @@ __jakt_var_143 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_140:; __jakt_var_143.release_value(); }));
 }
-else if (__jakt_enum_value == String("exists")) {
+else if (__jakt_enum_value == Jakt::String("exists")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_144; {
 String const requested_path = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -3506,7 +3511,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::{}` expects a string as its first argument, but got {}"),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `File::{}` expects a string as its first argument, but got {}"),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3519,12 +3524,12 @@ __jakt_var_144 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_141:; __jakt_var_144.release_value(); }));
 }
-else if (__jakt_enum_value == String("write")) {
+else if (__jakt_enum_value == Jakt::String("write")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_145; {
 String const path = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
@@ -3536,7 +3541,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-utility::panic(String("invalid type for File::write"));
+utility::panic(Jakt::String("invalid type for File::write"));
 }
 };/*case end*/
 }/*switch end*/
@@ -3545,25 +3550,25 @@ utility::panic(String("invalid type for File::write"));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::write` expects a `File` as its this argument, but got {}"),(((this_argument.value())).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `File::write` expects a `File` as its this argument, but got {}"),(((this_argument.value())).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-types::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("File")))));
+types::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("File")))));
 types::CheckedStruct const file_struct = ((((*this).program))->get_struct(file_struct_id));
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((file_struct).scope_id)))));
-types::FunctionId const open_for_writing = (((((((scope)->functions)).get(String("open_for_writing"))).value()))[static_cast<i64>(0LL)]);
+types::FunctionId const open_for_writing = (((((((scope)->functions)).get(Jakt::String("open_for_writing"))).value()))[static_cast<i64>(0LL)]);
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Optional<types::FunctionId> const& constructor = __jakt_match_value.constructor;
 {
 if (((!(((constructor).has_value()))) || (!((((constructor.value())).equals(open_for_writing)))))){
-TRY((((*this).error(String("Cannot write to a file not opened for writing"),call_span))));
+TRY((((*this).error(Jakt::String("Cannot write to a file not opened for writing"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 }
@@ -3571,7 +3576,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-utility::panic(String("expected struct as this argument"));
+utility::panic(Jakt::String("expected struct as this argument"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -3582,13 +3587,13 @@ NonnullRefPtr<File> file = TRY((File::open_for_writing(path)));
 JaktInternal::Array<types::Value> data_values = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<types::Value>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(values);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::write` expects a `[u8]` as its argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `File::write` expects a `[u8]` as its argument, but got {}"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3615,7 +3620,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-utility::panic(String("expected byte"));
+utility::panic(Jakt::String("expected byte"));
 }
 };/*case end*/
 }/*switch end*/
@@ -3634,30 +3639,30 @@ __jakt_label_142:; __jakt_var_145.release_value(); }));
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `File::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 );
 }
-else if (__jakt_enum_value == String("StringBuilder")) {
+else if (__jakt_enum_value == Jakt::String("StringBuilder")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("create")) {
+if (__jakt_enum_value == Jakt::String("create")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_146; {
-types::StructId const string_builder_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("StringBuilder")))));
-__jakt_var_146 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Struct>((TRY((Array<types::Value>::create_with({types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(String("")))),call_span)})))),string_builder_struct_id,JaktInternal::OptionalNone()))),call_span)) } ; goto __jakt_label_143;
+types::StructId const string_builder_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("StringBuilder")))));
+__jakt_var_146 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Struct>((TRY((Array<types::Value>::create_with({types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(Jakt::String("")))),call_span)})))),string_builder_struct_id,JaktInternal::OptionalNone()))),call_span)) } ; goto __jakt_label_143;
 
 }
 __jakt_label_143:; __jakt_var_146.release_value(); }));
 }
-else if (__jakt_enum_value == String("append")) {
+else if (__jakt_enum_value == Jakt::String("append")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_147; {
 JaktInternal::Tuple<JaktInternal::Array<types::Value>,String> fields_current_string_ = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<JaktInternal::Array<types::Value>,String>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<JaktInternal::Array<types::Value>,String>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
@@ -3669,7 +3674,7 @@ return JaktInternal::ExplicitValue((Tuple{fields, value}));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of prelude StringBuilder"));
+utility::panic(Jakt::String("Invalid use of prelude StringBuilder"));
 }
 };/*case end*/
 }/*switch end*/
@@ -3678,21 +3683,21 @@ utility::panic(String("Invalid use of prelude StringBuilder"));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-JaktInternal::Array<types::Value> fields = ((fields_current_string_).get<0>());
-String current_string = ((fields_current_string_).get<1>());
+JaktInternal::Array<types::Value> fields = ((fields_current_string_).template get<0>());
+String current_string = ((fields_current_string_).template get<1>());
 
 StringBuilder builder = TRY((StringBuilder::create()));
 TRY((((builder).append_string(current_string))));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("append")) {
+if (__jakt_enum_value == Jakt::String("append")) {
 return (TRY((((builder).append(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u8, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -3703,7 +3708,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid use of StringBuilder::append({})"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid use of StringBuilder::append({})"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3711,7 +3716,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_string")) {
+else if (__jakt_enum_value == Jakt::String("append_string")) {
 return (TRY((((builder).append_string(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -3722,7 +3727,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_string()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_string()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3730,7 +3735,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_escaped_for_json")) {
+else if (__jakt_enum_value == Jakt::String("append_escaped_for_json")) {
 return (TRY((((builder).append_escaped_for_json(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -3741,7 +3746,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_escaped_for_json()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_escaped_for_json()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3749,7 +3754,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_code_point")) {
+else if (__jakt_enum_value == Jakt::String("append_code_point")) {
 return (TRY((((builder).append_code_point(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u32, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -3760,7 +3765,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_code_point()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_code_point()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3783,12 +3788,12 @@ __jakt_var_147 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_144:; __jakt_var_147.release_value(); }));
 }
-else if (__jakt_enum_value == String("append_string")) {
+else if (__jakt_enum_value == Jakt::String("append_string")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_148; {
 JaktInternal::Tuple<JaktInternal::Array<types::Value>,String> fields_current_string_ = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<JaktInternal::Array<types::Value>,String>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<JaktInternal::Array<types::Value>,String>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
@@ -3800,7 +3805,7 @@ return JaktInternal::ExplicitValue((Tuple{fields, value}));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of prelude StringBuilder"));
+utility::panic(Jakt::String("Invalid use of prelude StringBuilder"));
 }
 };/*case end*/
 }/*switch end*/
@@ -3809,21 +3814,21 @@ utility::panic(String("Invalid use of prelude StringBuilder"));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-JaktInternal::Array<types::Value> fields = ((fields_current_string_).get<0>());
-String current_string = ((fields_current_string_).get<1>());
+JaktInternal::Array<types::Value> fields = ((fields_current_string_).template get<0>());
+String current_string = ((fields_current_string_).template get<1>());
 
 StringBuilder builder = TRY((StringBuilder::create()));
 TRY((((builder).append_string(current_string))));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("append")) {
+if (__jakt_enum_value == Jakt::String("append")) {
 return (TRY((((builder).append(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u8, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -3834,7 +3839,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid use of StringBuilder::append({})"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid use of StringBuilder::append({})"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3842,7 +3847,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_string")) {
+else if (__jakt_enum_value == Jakt::String("append_string")) {
 return (TRY((((builder).append_string(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -3853,7 +3858,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_string()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_string()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3861,7 +3866,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_escaped_for_json")) {
+else if (__jakt_enum_value == Jakt::String("append_escaped_for_json")) {
 return (TRY((((builder).append_escaped_for_json(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -3872,7 +3877,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_escaped_for_json()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_escaped_for_json()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3880,7 +3885,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_code_point")) {
+else if (__jakt_enum_value == Jakt::String("append_code_point")) {
 return (TRY((((builder).append_code_point(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u32, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -3891,7 +3896,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_code_point()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_code_point()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3914,12 +3919,12 @@ __jakt_var_148 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_145:; __jakt_var_148.release_value(); }));
 }
-else if (__jakt_enum_value == String("append_code_point")) {
+else if (__jakt_enum_value == Jakt::String("append_code_point")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_149; {
 JaktInternal::Tuple<JaktInternal::Array<types::Value>,String> fields_current_string_ = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<JaktInternal::Array<types::Value>,String>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<JaktInternal::Array<types::Value>,String>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
@@ -3931,7 +3936,7 @@ return JaktInternal::ExplicitValue((Tuple{fields, value}));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of prelude StringBuilder"));
+utility::panic(Jakt::String("Invalid use of prelude StringBuilder"));
 }
 };/*case end*/
 }/*switch end*/
@@ -3940,21 +3945,21 @@ utility::panic(String("Invalid use of prelude StringBuilder"));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-JaktInternal::Array<types::Value> fields = ((fields_current_string_).get<0>());
-String current_string = ((fields_current_string_).get<1>());
+JaktInternal::Array<types::Value> fields = ((fields_current_string_).template get<0>());
+String current_string = ((fields_current_string_).template get<1>());
 
 StringBuilder builder = TRY((StringBuilder::create()));
 TRY((((builder).append_string(current_string))));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("append")) {
+if (__jakt_enum_value == Jakt::String("append")) {
 return (TRY((((builder).append(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u8, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -3965,7 +3970,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid use of StringBuilder::append({})"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid use of StringBuilder::append({})"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3973,7 +3978,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_string")) {
+else if (__jakt_enum_value == Jakt::String("append_string")) {
 return (TRY((((builder).append_string(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -3984,7 +3989,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_string()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_string()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -3992,7 +3997,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_escaped_for_json")) {
+else if (__jakt_enum_value == Jakt::String("append_escaped_for_json")) {
 return (TRY((((builder).append_escaped_for_json(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -4003,7 +4008,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_escaped_for_json()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_escaped_for_json()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -4011,7 +4016,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_code_point")) {
+else if (__jakt_enum_value == Jakt::String("append_code_point")) {
 return (TRY((((builder).append_code_point(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u32, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -4022,7 +4027,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_code_point()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_code_point()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -4045,12 +4050,12 @@ __jakt_var_149 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_146:; __jakt_var_149.release_value(); }));
 }
-else if (__jakt_enum_value == String("append_escaped_for_json")) {
+else if (__jakt_enum_value == Jakt::String("append_escaped_for_json")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_150; {
 JaktInternal::Tuple<JaktInternal::Array<types::Value>,String> fields_current_string_ = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<JaktInternal::Array<types::Value>,String>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<JaktInternal::Array<types::Value>,String>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
@@ -4062,7 +4067,7 @@ return JaktInternal::ExplicitValue((Tuple{fields, value}));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of prelude StringBuilder"));
+utility::panic(Jakt::String("Invalid use of prelude StringBuilder"));
 }
 };/*case end*/
 }/*switch end*/
@@ -4071,21 +4076,21 @@ utility::panic(String("Invalid use of prelude StringBuilder"));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-JaktInternal::Array<types::Value> fields = ((fields_current_string_).get<0>());
-String current_string = ((fields_current_string_).get<1>());
+JaktInternal::Array<types::Value> fields = ((fields_current_string_).template get<0>());
+String current_string = ((fields_current_string_).template get<1>());
 
 StringBuilder builder = TRY((StringBuilder::create()));
 TRY((((builder).append_string(current_string))));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("append")) {
+if (__jakt_enum_value == Jakt::String("append")) {
 return (TRY((((builder).append(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u8, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -4096,7 +4101,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid use of StringBuilder::append({})"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid use of StringBuilder::append({})"),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -4104,7 +4109,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_string")) {
+else if (__jakt_enum_value == Jakt::String("append_string")) {
 return (TRY((((builder).append_string(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -4115,7 +4120,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_string()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_string()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -4123,7 +4128,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_escaped_for_json")) {
+else if (__jakt_enum_value == Jakt::String("append_escaped_for_json")) {
 return (TRY((((builder).append_escaped_for_json(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -4134,7 +4139,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_escaped_for_json()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_escaped_for_json()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -4142,7 +4147,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 ))))))), JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == String("append_code_point")) {
+else if (__jakt_enum_value == Jakt::String("append_code_point")) {
 return (TRY((((builder).append_code_point(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u32, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -4153,7 +4158,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid use of StringBuilder::append_code_point()"),call_span))));
+TRY((((*this).error(Jakt::String("Invalid use of StringBuilder::append_code_point()"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -4176,17 +4181,17 @@ __jakt_var_150 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_147:; __jakt_var_150.release_value(); }));
 }
-else if (__jakt_enum_value == String("to_string")) {
+else if (__jakt_enum_value == Jakt::String("to_string")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(((fields)[static_cast<i64>(0LL)])) } );
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
@@ -4194,11 +4199,11 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplem
 }()
 )));
 }
-else if (__jakt_enum_value == String("is_empty")) {
+else if (__jakt_enum_value == Jakt::String("is_empty")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
@@ -4210,7 +4215,7 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of prelude StringBuilder"));
+utility::panic(Jakt::String("Invalid use of prelude StringBuilder"));
 }
 };/*case end*/
 }/*switch end*/
@@ -4219,7 +4224,7 @@ utility::panic(String("Invalid use of prelude StringBuilder"));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
@@ -4227,11 +4232,11 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplem
 }()
 )));
 }
-else if (__jakt_enum_value == String("length")) {
+else if (__jakt_enum_value == Jakt::String("length")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
@@ -4243,7 +4248,7 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of prelude StringBuilder"));
+utility::panic(Jakt::String("Invalid use of prelude StringBuilder"));
 }
 };/*case end*/
 }/*switch end*/
@@ -4252,7 +4257,7 @@ utility::panic(String("Invalid use of prelude StringBuilder"));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
@@ -4260,15 +4265,15 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplem
 }()
 )));
 }
-else if (__jakt_enum_value == String("clear")) {
+else if (__jakt_enum_value == Jakt::String("clear")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_151; {
 JaktInternal::Array<types::Value> mutable_fields = fields;
-(((((mutable_fields)[static_cast<i64>(0LL)])).impl) = TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(String("")))));
+(((((mutable_fields)[static_cast<i64>(0LL)])).impl) = TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(Jakt::String("")))));
 __jakt_var_151 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Void>())),call_span)) } ; goto __jakt_label_148;
 
 }
@@ -4276,7 +4281,7 @@ __jakt_label_148:; __jakt_var_151.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
@@ -4286,21 +4291,21 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplem
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `StringBuilder::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `StringBuilder::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 );
 }
-else if (__jakt_enum_value == String("Dictionary")) {
+else if (__jakt_enum_value == Jakt::String("Dictionary")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("get")) {
+if (__jakt_enum_value == Jakt::String("get")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_152; {
@@ -4339,18 +4344,18 @@ __jakt_label_149:; __jakt_var_152.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Dictionary::get()"));
+utility::panic(Jakt::String("Invalid use of Dictionary::get()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("set")) {
+else if (__jakt_enum_value == Jakt::String("set")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_153; {
@@ -4390,36 +4395,36 @@ __jakt_label_150:; __jakt_var_153.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Dictionary::set()"));
+utility::panic(Jakt::String("Invalid use of Dictionary::set()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("is_empty")) {
+else if (__jakt_enum_value == Jakt::String("is_empty")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Bool>((((keys).is_empty()) && ((values).is_empty()))))),call_span)) } );
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Dictionary::is_empty()"));
+utility::panic(Jakt::String("Invalid use of Dictionary::is_empty()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("contains")) {
+else if (__jakt_enum_value == Jakt::String("contains")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_154; {
 bool found = false;
@@ -4448,18 +4453,18 @@ __jakt_label_151:; __jakt_var_154.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Dictionary::contains()"));
+utility::panic(Jakt::String("Invalid use of Dictionary::contains()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("remove")) {
+else if (__jakt_enum_value == Jakt::String("remove")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_155; {
@@ -4532,18 +4537,18 @@ __jakt_label_152:; __jakt_var_155.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Dictionary::remove()"));
+utility::panic(Jakt::String("Invalid use of Dictionary::remove()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("ensure_capacity")) {
+else if (__jakt_enum_value == Jakt::String("ensure_capacity")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
@@ -4564,7 +4569,7 @@ __jakt_label_153:; __jakt_var_156.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Dictionary::ensure_capacity must be called with a usize"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("Dictionary::ensure_capacity must be called with a usize"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -4574,35 +4579,35 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Dictionary::ensure_capacity()"));
+utility::panic(Jakt::String("Invalid use of Dictionary::ensure_capacity()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("capacity")) {
+else if (__jakt_enum_value == Jakt::String("capacity")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::USize>(((keys).capacity())))),call_span)) } );
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Dictionary::capacity()"));
+utility::panic(Jakt::String("Invalid use of Dictionary::capacity()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("clear")) {
+else if (__jakt_enum_value == Jakt::String("clear")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_157; {
@@ -4617,35 +4622,35 @@ __jakt_label_154:; __jakt_var_157.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Dictionary::clear()"));
+utility::panic(Jakt::String("Invalid use of Dictionary::clear()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("size")) {
+else if (__jakt_enum_value == Jakt::String("size")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::USize>(((keys).size())))),call_span)) } );
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Dictionary::size()"));
+utility::panic(Jakt::String("Invalid use of Dictionary::size()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("keys")) {
+else if (__jakt_enum_value == Jakt::String("keys")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_158; {
@@ -4658,7 +4663,7 @@ return JaktInternal::ExplicitValue(args);
 };/*case end*/
 default: {
 {
-utility::panic(String("expected generic instance"));
+utility::panic(Jakt::String("expected generic instance"));
 }
 };/*case end*/
 }/*switch end*/
@@ -4668,7 +4673,7 @@ __jakt_var_158 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() 
 auto __jakt_enum_value = ((((generics).size()) == static_cast<size_t>(2ULL)));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_159; {
-types::StructId const array_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("Array")))));
+types::StructId const array_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("Array")))));
 types::TypeId const type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::template create<typename types::Type::GenericInstance>(array_struct_id,(TRY((Array<types::TypeId>::create_with({((generics)[static_cast<i64>(0LL)])})))))))))));
 __jakt_var_159 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktArray>(keys,type_id))),call_span)) } ; goto __jakt_label_156;
 
@@ -4677,7 +4682,7 @@ __jakt_label_156:; __jakt_var_159.release_value(); }));
 }
 else {
 {
-utility::panic(String("dictionary should have 2 generic args. one for keys, one for values"));
+utility::panic(Jakt::String("dictionary should have 2 generic args. one for keys, one for values"));
 }
 }
 }()))
@@ -4688,20 +4693,20 @@ __jakt_label_155:; __jakt_var_158.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Dictionary::keys()"));
+utility::panic(Jakt::String("Invalid use of Dictionary::keys()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("iterator")) {
+else if (__jakt_enum_value == Jakt::String("iterator")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_160; {
-types::StructId const struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("DictionaryIterator")))));
+types::StructId const struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("DictionaryIterator")))));
 __jakt_var_160 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Struct>((TRY((Array<types::Value>::create_with({(this_argument.value()), types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::USize>(static_cast<size_t>(0ULL)))),call_span)})))),struct_id,JaktInternal::OptionalNone()))),call_span)) } ; goto __jakt_label_157;
 
 }
@@ -4709,7 +4714,7 @@ __jakt_label_157:; __jakt_var_160.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Dictionary::iterator()"));
+utility::panic(Jakt::String("Invalid use of Dictionary::iterator()"));
 }
 };/*case end*/
 }/*switch end*/
@@ -4718,23 +4723,23 @@ utility::panic(String("Invalid use of Dictionary::iterator()"));
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `Dictionary::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `Dictionary::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 );
 }
-else if (__jakt_enum_value == String("Array")) {
+else if (__jakt_enum_value == Jakt::String("Array")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("iterator")) {
+if (__jakt_enum_value == Jakt::String("iterator")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_161; {
-types::StructId const struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("ArrayIterator")))));
+types::StructId const struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("ArrayIterator")))));
 __jakt_var_161 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Struct>((TRY((Array<types::Value>::create_with({(this_argument.value()), types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::USize>(static_cast<size_t>(0ULL)))),call_span)})))),struct_id,JaktInternal::OptionalNone()))),call_span)) } ; goto __jakt_label_158;
 
 }
@@ -4742,18 +4747,18 @@ __jakt_label_158:; __jakt_var_161.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::iterator()"));
+utility::panic(Jakt::String("Invalid use of Array::iterator()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("size")) {
+else if (__jakt_enum_value == Jakt::String("size")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_162; {
 __jakt_var_162 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::USize>(((values).size())))),call_span)) } ; goto __jakt_label_159;
@@ -4763,18 +4768,18 @@ __jakt_label_159:; __jakt_var_162.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::size()"));
+utility::panic(Jakt::String("Invalid use of Array::size()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("push")) {
+else if (__jakt_enum_value == Jakt::String("push")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_163; {
 JaktInternal::Array<types::Value> mutable_values = values;
@@ -4786,25 +4791,25 @@ __jakt_label_160:; __jakt_var_163.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::push()"));
+utility::panic(Jakt::String("Invalid use of Array::push()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("push_values")) {
+else if (__jakt_enum_value == Jakt::String("push_values")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_164; {
 JaktInternal::Array<types::Value> mutable_values = values;
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 {
 {
@@ -4826,7 +4831,7 @@ TRY((((mutable_values).push(value))));
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
-return (TRY((((*this).error(String("Only argument to push_values needs to be another Array"),call_span))))), JaktInternal::ExplicitValue<void>();
+return (TRY((((*this).error(Jakt::String("Only argument to push_values needs to be another Array"),call_span))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 }/*switch end*/
 }()
@@ -4838,18 +4843,18 @@ __jakt_label_161:; __jakt_var_164.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::push_values()"));
+utility::panic(Jakt::String("Invalid use of Array::push_values()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("pop")) {
+else if (__jakt_enum_value == Jakt::String("pop")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_165; {
 JaktInternal::Array<types::Value> mutable_values = values;
@@ -4870,18 +4875,18 @@ __jakt_label_162:; __jakt_var_165.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::push()"));
+utility::panic(Jakt::String("Invalid use of Array::push()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("first")) {
+else if (__jakt_enum_value == Jakt::String("first")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_166; {
 JaktInternal::Array<types::Value> mutable_values = values;
@@ -4902,18 +4907,18 @@ __jakt_label_163:; __jakt_var_166.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::push()"));
+utility::panic(Jakt::String("Invalid use of Array::push()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("last")) {
+else if (__jakt_enum_value == Jakt::String("last")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_167; {
 JaktInternal::Array<types::Value> mutable_values = values;
@@ -4934,18 +4939,18 @@ __jakt_label_164:; __jakt_var_167.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::push()"));
+utility::panic(Jakt::String("Invalid use of Array::push()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("contains")) {
+else if (__jakt_enum_value == Jakt::String("contains")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_168; {
 bool found = false;
@@ -4974,35 +4979,35 @@ __jakt_label_165:; __jakt_var_168.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::contains()"));
+utility::panic(Jakt::String("Invalid use of Array::contains()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("is_empty")) {
+else if (__jakt_enum_value == Jakt::String("is_empty")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Bool>(((values).is_empty())))),call_span)) } );
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::is_empty()"));
+utility::panic(Jakt::String("Invalid use of Array::is_empty()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("capacity")) {
+else if (__jakt_enum_value == Jakt::String("capacity")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_169; {
 __jakt_var_169 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::USize>(((values).capacity())))),call_span)) } ; goto __jakt_label_166;
@@ -5012,18 +5017,18 @@ __jakt_label_166:; __jakt_var_169.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::capacity()"));
+utility::panic(Jakt::String("Invalid use of Array::capacity()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("ensure_capacity")) {
+else if (__jakt_enum_value == Jakt::String("ensure_capacity")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -5041,7 +5046,7 @@ __jakt_label_167:; __jakt_var_170.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Array::ensure_capacity must be called with a usize"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("Array::ensure_capacity must be called with a usize"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -5051,18 +5056,18 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::ensure_capacity()"));
+utility::panic(Jakt::String("Invalid use of Array::ensure_capacity()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("add_capacity")) {
+else if (__jakt_enum_value == Jakt::String("add_capacity")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -5080,7 +5085,7 @@ __jakt_label_168:; __jakt_var_171.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Array::add_capacity must be called with a usize"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("Array::add_capacity must be called with a usize"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -5090,18 +5095,18 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::add_capacity()"));
+utility::panic(Jakt::String("Invalid use of Array::add_capacity()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("shrink")) {
+else if (__jakt_enum_value == Jakt::String("shrink")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -5119,7 +5124,7 @@ __jakt_label_169:; __jakt_var_172.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Array::shrink must be called with a usize"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("Array::shrink must be called with a usize"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -5129,7 +5134,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Array::shrink()"));
+utility::panic(Jakt::String("Invalid use of Array::shrink()"));
 }
 };/*case end*/
 }/*switch end*/
@@ -5138,21 +5143,21 @@ utility::panic(String("Invalid use of Array::shrink()"));
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `Array::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `Array::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 );
 }
-else if (__jakt_enum_value == String("ArrayIterator")) {
+else if (__jakt_enum_value == Jakt::String("ArrayIterator")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("next")) {
+if (__jakt_enum_value == Jakt::String("next")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_173; {
 size_t const index = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<interpreter::StatementResult>>{
@@ -5165,7 +5170,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid ArrayIterator index configuration"));
+utility::panic(Jakt::String("Invalid ArrayIterator index configuration"));
 }
 };/*case end*/
 }/*switch end*/
@@ -5175,7 +5180,7 @@ JaktInternal::Array<types::Value> mutable_fields = fields;
 __jakt_var_173 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = ((((values).size()) > index));
@@ -5195,7 +5200,7 @@ return JaktInternal::ExplicitValue(types::Value(TRY((types::ValueImpl::template 
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid ArrayIterator configuration"));
+utility::panic(Jakt::String("Invalid ArrayIterator configuration"));
 }
 };/*case end*/
 }/*switch end*/
@@ -5207,7 +5212,7 @@ __jakt_label_170:; __jakt_var_173.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid ArrayIterator configuration"));
+utility::panic(Jakt::String("Invalid ArrayIterator configuration"));
 }
 };/*case end*/
 }/*switch end*/
@@ -5216,28 +5221,28 @@ utility::panic(String("Invalid ArrayIterator configuration"));
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `ArrayIterator::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `ArrayIterator::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 );
 }
-else if (__jakt_enum_value == String("Range")) {
+else if (__jakt_enum_value == Jakt::String("Range")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("next")) {
+if (__jakt_enum_value == Jakt::String("next")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_175; {
 JaktInternal::Array<types::Value> fields = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<types::Value>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(fields);
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Range::next()"));
+utility::panic(Jakt::String("Invalid use of Range::next()"));
 }
 };/*case end*/
 }/*switch end*/
@@ -5293,7 +5298,7 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid type for comptime range"));
+utility::panic(Jakt::String("Invalid type for comptime range"));
 }
 };/*case end*/
 }/*switch end*/
@@ -5349,7 +5354,7 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid type for comptime range"));
+utility::panic(Jakt::String("Invalid type for comptime range"));
 }
 };/*case end*/
 }/*switch end*/
@@ -5370,11 +5375,11 @@ __jakt_var_175 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_172:; __jakt_var_175.release_value(); }));
 }
-else if (__jakt_enum_value == String("inclusive")) {
+else if (__jakt_enum_value == Jakt::String("inclusive")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::StructId const& struct_id = __jakt_match_value.struct_id;
 JaktInternal::Optional<types::FunctionId> const& constructor = __jakt_match_value.constructor;
@@ -5430,7 +5435,7 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid type for comptime range"));
+utility::panic(Jakt::String("Invalid type for comptime range"));
 }
 };/*case end*/
 }/*switch end*/
@@ -5444,23 +5449,23 @@ __jakt_label_173:; __jakt_var_176.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Range::inclusive()"));
+utility::panic(Jakt::String("Invalid use of Range::inclusive()"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("exclusive")) {
+else if (__jakt_enum_value == Jakt::String("exclusive")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue((this_argument.value())) } );
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Range::exclusive()"));
+utility::panic(Jakt::String("Invalid use of Range::exclusive()"));
 }
 };/*case end*/
 }/*switch end*/
@@ -5469,17 +5474,17 @@ utility::panic(String("Invalid use of Range::exclusive()"));
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `Range::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `Range::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 );
 }
-else if (__jakt_enum_value == String("String")) {
+else if (__jakt_enum_value == Jakt::String("String")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("is_empty")) {
+if (__jakt_enum_value == Jakt::String("is_empty")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -5490,14 +5495,14 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("length")) {
+else if (__jakt_enum_value == Jakt::String("length")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -5508,14 +5513,14 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("hash")) {
+else if (__jakt_enum_value == Jakt::String("hash")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -5526,14 +5531,14 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("substring")) {
+else if (__jakt_enum_value == Jakt::String("substring")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -5601,7 +5606,7 @@ __jakt_label_178:; __jakt_var_181.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(1LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(1LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -5667,7 +5672,7 @@ __jakt_label_183:; __jakt_var_186.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(1LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(1LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -5733,7 +5738,7 @@ __jakt_label_188:; __jakt_var_191.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(1LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(1LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -5799,7 +5804,7 @@ __jakt_label_193:; __jakt_var_196.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(1LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(1LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -5865,7 +5870,7 @@ __jakt_label_198:; __jakt_var_201.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(1LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(1LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -5875,7 +5880,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::substring must be called with unsigned arguments"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -5885,14 +5890,14 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("number")) {
+else if (__jakt_enum_value == Jakt::String("number")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
@@ -5934,20 +5939,20 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::USize>();
 {
-TRY((((*this).error(String("String::number must not be called with a usize or u64"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::number must not be called with a usize or u64"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
 case 5: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::U64>();
 {
-TRY((((*this).error(String("String::number must not be called with a usize or u64"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::number must not be called with a usize or u64"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::number must be called with an integer"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::number must be called with an integer"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -5955,7 +5960,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 )));
 }
-else if (__jakt_enum_value == String("to_uint")) {
+else if (__jakt_enum_value == Jakt::String("to_uint")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -5980,14 +5985,14 @@ __jakt_label_199:; __jakt_var_202.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("to_int")) {
+else if (__jakt_enum_value == Jakt::String("to_int")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -6012,14 +6017,14 @@ __jakt_label_200:; __jakt_var_203.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("is_whitespace")) {
+else if (__jakt_enum_value == Jakt::String("is_whitespace")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -6030,14 +6035,14 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("contains")) {
+else if (__jakt_enum_value == Jakt::String("contains")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -6054,7 +6059,7 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::contains must be called with a string"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::contains must be called with a string"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -6064,14 +6069,14 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("replace")) {
+else if (__jakt_enum_value == Jakt::String("replace")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -6094,7 +6099,7 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::replace must be called with strings"),((((arguments)[static_cast<i64>(1LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::replace must be called with strings"),((((arguments)[static_cast<i64>(1LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -6104,7 +6109,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::replace must be called with strings"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::replace must be called with strings"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -6114,14 +6119,14 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("byte_at")) {
+else if (__jakt_enum_value == Jakt::String("byte_at")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -6158,7 +6163,7 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::byte_at must be called with an unsigned integer"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::byte_at must be called with an unsigned integer"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -6168,14 +6173,14 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("split")) {
+else if (__jakt_enum_value == Jakt::String("split")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -6185,7 +6190,7 @@ String const& value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
-case 14: {
+case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
 char const& c = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_204; {
@@ -6206,7 +6211,7 @@ TRY((((result).push(types::Value(TRY((types::ValueImpl::template create<typename
 }
 }
 
-types::StructId const array_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("Array")))));
+types::StructId const array_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("Array")))));
 __jakt_var_204 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktArray>(result,TRY((((*this).find_or_add_type_id(TRY((types::Type::template create<typename types::Type::GenericInstance>(array_struct_id,(TRY((Array<types::TypeId>::create_with({types::builtin( types::BuiltinType { typename types::BuiltinType::JaktString() } )})))))))))))))),call_span)) } ; goto __jakt_label_201;
 
 }
@@ -6214,7 +6219,7 @@ __jakt_label_201:; __jakt_var_204.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::split must be called with a c_char"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::split must be called with a c_char"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -6224,14 +6229,14 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("starts_with")) {
+else if (__jakt_enum_value == Jakt::String("starts_with")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -6248,7 +6253,7 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::starts_with must be called with a string"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::starts_with must be called with a string"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -6258,14 +6263,14 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("ends_with")) {
+else if (__jakt_enum_value == Jakt::String("ends_with")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
@@ -6282,7 +6287,7 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::ends_with must be called with a string"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::ends_with must be called with a string"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -6292,23 +6297,23 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid String"));
+utility::panic(Jakt::String("Invalid String"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("repeated")) {
+else if (__jakt_enum_value == Jakt::String("repeated")) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_205; {
 if ((((arguments).size()) != static_cast<size_t>(2ULL))){
-TRY((((*this).error(String("String::repeated must be called with a c_char and a usize"),call_span))));
+TRY((((*this).error(Jakt::String("String::repeated must be called with a c_char and a usize"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 JaktInternal::Tuple<char,size_t> const character_count_ = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<char,size_t>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
-case 14: {
+case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
 char const& arg = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<char,size_t>, ErrorOr<interpreter::StatementResult>>{
@@ -6321,7 +6326,7 @@ return JaktInternal::ExplicitValue((Tuple{arg, c}));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::repeated must be called with a usize"),((((arguments)[static_cast<i64>(1LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::repeated must be called with a usize"),((((arguments)[static_cast<i64>(1LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -6331,15 +6336,15 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("String::repeated must be called with a c_char"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("String::repeated must be called with a c_char"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-char const character = ((character_count_).get<0>());
-size_t const count = ((character_count_).get<1>());
+char const character = ((character_count_).template get<0>());
+size_t const count = ((character_count_).template get<1>());
 
 __jakt_var_205 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(TRY((String::repeated(character,count)))))),call_span)) } ; goto __jakt_label_202;
 
@@ -6348,38 +6353,38 @@ __jakt_label_202:; __jakt_var_205.release_value(); }));
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `String::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `String::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 );
 }
-else if (__jakt_enum_value == String("Set")) {
+else if (__jakt_enum_value == Jakt::String("Set")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("is_empty")) {
+if (__jakt_enum_value == Jakt::String("is_empty")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Bool>(((values).is_empty())))),call_span)) } );
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid Set"));
+utility::panic(Jakt::String("Invalid Set"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("contains")) {
+else if (__jakt_enum_value == Jakt::String("contains")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_206; {
 bool found = false;
@@ -6408,18 +6413,18 @@ __jakt_label_203:; __jakt_var_206.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid Set"));
+utility::panic(Jakt::String("Invalid Set"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("add")) {
+else if (__jakt_enum_value == Jakt::String("add")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_207; {
 JaktInternal::Array<types::Value> mutable_values = values;
@@ -6431,18 +6436,18 @@ __jakt_label_204:; __jakt_var_207.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid Set"));
+utility::panic(Jakt::String("Invalid Set"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("remove")) {
+else if (__jakt_enum_value == Jakt::String("remove")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_208; {
 bool found = false;
@@ -6490,18 +6495,18 @@ __jakt_label_205:; __jakt_var_208.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid Set"));
+utility::panic(Jakt::String("Invalid Set"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("clear")) {
+else if (__jakt_enum_value == Jakt::String("clear")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_209; {
 JaktInternal::Array<types::Value> mutable_values = values;
@@ -6513,52 +6518,52 @@ __jakt_label_206:; __jakt_var_209.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid Set"));
+utility::panic(Jakt::String("Invalid Set"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("size")) {
+else if (__jakt_enum_value == Jakt::String("size")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::USize>(((values).size())))),call_span)) } );
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid Set"));
+utility::panic(Jakt::String("Invalid Set"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("capacity")) {
+else if (__jakt_enum_value == Jakt::String("capacity")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::USize>(((values).capacity())))),call_span)) } );
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid Set"));
+utility::panic(Jakt::String("Invalid Set"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("ensure_capacity")) {
+else if (__jakt_enum_value == Jakt::String("ensure_capacity")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
@@ -6576,7 +6581,7 @@ __jakt_label_207:; __jakt_var_210.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Set::ensure_capacity must be called with a usize"),((((arguments)[static_cast<i64>(0LL)])).span)))));
+TRY((((*this).error(Jakt::String("Set::ensure_capacity must be called with a usize"),((((arguments)[static_cast<i64>(0LL)])).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -6586,20 +6591,20 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid Set"));
+utility::panic(Jakt::String("Invalid Set"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("iterator")) {
+else if (__jakt_enum_value == Jakt::String("iterator")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_211; {
-types::StructId const struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("SetIterator")))));
+types::StructId const struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("SetIterator")))));
 __jakt_var_211 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Struct>((TRY((Array<types::Value>::create_with({(this_argument.value()), types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::USize>(static_cast<size_t>(0ULL)))),call_span)})))),struct_id,JaktInternal::OptionalNone()))),call_span)) } ; goto __jakt_label_208;
 
 }
@@ -6607,7 +6612,7 @@ __jakt_label_208:; __jakt_var_211.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid use of Set::iterator()"));
+utility::panic(Jakt::String("Invalid use of Set::iterator()"));
 }
 };/*case end*/
 }/*switch end*/
@@ -6616,21 +6621,21 @@ utility::panic(String("Invalid use of Set::iterator()"));
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `Set::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `Set::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 );
 }
-else if (__jakt_enum_value == String("SetIterator")) {
+else if (__jakt_enum_value == Jakt::String("SetIterator")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("next")) {
+if (__jakt_enum_value == Jakt::String("next")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_212; {
 size_t const index = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<interpreter::StatementResult>>{
@@ -6643,7 +6648,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid SetIterator index configuration"));
+utility::panic(Jakt::String("Invalid SetIterator index configuration"));
 }
 };/*case end*/
 }/*switch end*/
@@ -6653,7 +6658,7 @@ JaktInternal::Array<types::Value> mutable_fields = fields;
 __jakt_var_212 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = ((((values).size()) > index));
@@ -6673,7 +6678,7 @@ return JaktInternal::ExplicitValue(types::Value(TRY((types::ValueImpl::template 
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid SetIterator configuration"));
+utility::panic(Jakt::String("Invalid SetIterator configuration"));
 }
 };/*case end*/
 }/*switch end*/
@@ -6685,7 +6690,7 @@ __jakt_label_209:; __jakt_var_212.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid SetIterator configuration"));
+utility::panic(Jakt::String("Invalid SetIterator configuration"));
 }
 };/*case end*/
 }/*switch end*/
@@ -6694,21 +6699,21 @@ utility::panic(String("Invalid SetIterator configuration"));
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `ArrayIterator::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `ArrayIterator::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 );
 }
-else if (__jakt_enum_value == String("DictionaryIterator")) {
+else if (__jakt_enum_value == Jakt::String("DictionaryIterator")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("next")) {
+if (__jakt_enum_value == Jakt::String("next")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_214; {
 size_t const index = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<interpreter::StatementResult>>{
@@ -6721,7 +6726,7 @@ return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid DictionaryIterator index configuration"));
+utility::panic(Jakt::String("Invalid DictionaryIterator index configuration"));
 }
 };/*case end*/
 }/*switch end*/
@@ -6731,7 +6736,7 @@ JaktInternal::Array<types::Value> mutable_fields = fields;
 __jakt_var_214 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((fields)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::Array<types::Value> const& keys = __jakt_match_value.keys;
 JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 types::TypeId const& type_id = __jakt_match_value.type_id;
@@ -6749,13 +6754,13 @@ return JaktInternal::ExplicitValue(args);
 };/*case end*/
 default: {
 {
-utility::panic(String("expected generic instance"));
+utility::panic(Jakt::String("expected generic instance"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-types::StructId const tuple_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("Tuple")))));
+types::StructId const tuple_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("Tuple")))));
 types::TypeId const tuple_type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::template create<typename types::Type::GenericInstance>(tuple_struct_id,generics)))))));
 __jakt_var_215 = types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::OptionalSome>(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktTuple>((TRY((Array<types::Value>::create_with({((keys)[index]), ((values)[index])})))),tuple_type_id))),call_span)))),call_span); goto __jakt_label_212;
 
@@ -6770,7 +6775,7 @@ return JaktInternal::ExplicitValue(types::Value(TRY((types::ValueImpl::template 
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid DictionaryIterator configuration"));
+utility::panic(Jakt::String("Invalid DictionaryIterator configuration"));
 }
 };/*case end*/
 }/*switch end*/
@@ -6782,7 +6787,7 @@ __jakt_label_211:; __jakt_var_214.release_value(); }));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid DictionaryIterator configuration"));
+utility::panic(Jakt::String("Invalid DictionaryIterator configuration"));
 }
 };/*case end*/
 }/*switch end*/
@@ -6791,75 +6796,75 @@ utility::panic(String("Invalid DictionaryIterator configuration"));
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `DictionaryIterator::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `DictionaryIterator::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 );
 }
-else if (__jakt_enum_value == String("Optional")) {
+else if (__jakt_enum_value == Jakt::String("Optional")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
-if (__jakt_enum_value == String("has_value")) {
+if (__jakt_enum_value == Jakt::String("has_value")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::OptionalSome>();return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Bool>(true))),call_span)) } );
 };/*case end*/
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::OptionalNone>();
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Bool>(false))),call_span)) } );
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid Optional configuration"));
+utility::panic(Jakt::String("Invalid Optional configuration"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("value")) {
+else if (__jakt_enum_value == Jakt::String("value")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::OptionalSome>();types::Value const& value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(value) } );
 };/*case end*/
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::OptionalNone>();
 {
-TRY((((*this).error(TRY((String::formatted(String("Cannot unwrap optional none"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Cannot unwrap optional none"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::UnwrapOptionalNone))));
 }
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid Optional configuration"));
+utility::panic(Jakt::String("Invalid Optional configuration"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 )));
 }
-else if (__jakt_enum_value == String("value_or")) {
+else if (__jakt_enum_value == Jakt::String("value_or")) {
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *(((this_argument.value())).impl);
 switch(__jakt_match_variant.index()) {
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::OptionalSome>();types::Value const& value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(value) } );
 };/*case end*/
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::OptionalNone>();
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(((arguments)[static_cast<i64>(0LL)])) } );
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid Optional configuration"));
+utility::panic(Jakt::String("Invalid Optional configuration"));
 }
 };/*case end*/
 }/*switch end*/
@@ -6868,7 +6873,7 @@ utility::panic(String("Invalid Optional configuration"));
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `Optional::{}` is not implemented"),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `Optional::{}` is not implemented"),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
@@ -6877,7 +6882,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplem
 }
 else {
 {
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `{}::{}` is not implemented"),((((namespace_)[static_cast<i64>(0LL)])).name),prelude_function))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Prelude function `{}::{}` is not implemented"),((((namespace_)[static_cast<i64>(0LL)])).name),prelude_function))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
@@ -6911,19 +6916,19 @@ types::Value const& value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<JaktInternal::Array<types::Value>,types::StructId>, ErrorOr<void>>{
 auto&& __jakt_match_variant = *((value).impl);
 switch(__jakt_match_variant.index()) {
-case 17: {
+case 18: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Class>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::StructId const& struct_id = __jakt_match_value.struct_id;
 return JaktInternal::ExplicitValue((Tuple{fields, struct_id}));
 };/*case end*/
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::StructId const& struct_id = __jakt_match_value.struct_id;
 return JaktInternal::ExplicitValue((Tuple{fields, struct_id}));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid left-hand side in assignment"));
+utility::panic(Jakt::String("Invalid left-hand side in assignment"));
 }
 };/*case end*/
 }/*switch end*/
@@ -6932,14 +6937,14 @@ utility::panic(String("Invalid left-hand side in assignment"));
 };/*case end*/
 default: {
 {
-utility::panic(String("Should not be happening here"));
+utility::panic(Jakt::String("Should not be happening here"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-JaktInternal::Array<types::Value> fields = ((fields_struct_id_).get<0>());
-types::StructId struct_id = ((fields_struct_id_).get<1>());
+JaktInternal::Array<types::Value> fields = ((fields_struct_id_).template get<0>());
+types::StructId struct_id = ((fields_struct_id_).template get<1>());
 
 JaktInternal::Array<types::CheckedField> const field_decls = ((((((*this).program))->get_struct(struct_id))).fields);
 size_t field_index = static_cast<size_t>(0ULL);
@@ -6978,14 +6983,14 @@ types::Value const& value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<JaktInternal::Array<types::Value>,types::EnumId>, ErrorOr<void>>{
 auto&& __jakt_match_variant = *((value).impl);
 switch(__jakt_match_variant.index()) {
-case 18: {
+case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Enum>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::EnumId const& enum_id = __jakt_match_value.enum_id;
 return JaktInternal::ExplicitValue((Tuple{fields, enum_id}));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid left-hand side in assignment"));
+utility::panic(Jakt::String("Invalid left-hand side in assignment"));
 }
 };/*case end*/
 }/*switch end*/
@@ -6994,14 +6999,14 @@ utility::panic(String("Invalid left-hand side in assignment"));
 };/*case end*/
 default: {
 {
-utility::panic(String("Should not be happening here"));
+utility::panic(Jakt::String("Should not be happening here"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-JaktInternal::Array<types::Value> fields = ((fields_enum_id_).get<0>());
-types::EnumId enum_id = ((fields_enum_id_).get<1>());
+JaktInternal::Array<types::Value> fields = ((fields_enum_id_).template get<0>());
+types::EnumId enum_id = ((fields_enum_id_).template get<1>());
 
 JaktInternal::Array<types::CheckedField> const field_decls = ((((((*this).program))->get_enum(enum_id))).fields);
 size_t field_index = static_cast<size_t>(0ULL);
@@ -7029,7 +7034,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid left-hand side of assignment {}"),binding))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid left-hand side of assignment {}"),binding))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7064,7 +7069,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7085,7 +7090,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7106,7 +7111,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7127,7 +7132,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7148,7 +7153,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7169,7 +7174,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7190,7 +7195,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7211,7 +7216,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7232,7 +7237,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7253,7 +7258,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7274,7 +7279,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7295,7 +7300,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7305,7 +7310,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7331,7 +7336,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7352,7 +7357,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7373,7 +7378,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7394,7 +7399,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7415,7 +7420,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7436,7 +7441,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7457,7 +7462,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7478,7 +7483,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7499,7 +7504,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7520,7 +7525,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7541,7 +7546,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7551,7 +7556,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7577,7 +7582,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7598,7 +7603,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7619,7 +7624,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7640,7 +7645,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7661,7 +7666,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7682,7 +7687,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7703,7 +7708,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7724,7 +7729,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7745,7 +7750,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7766,7 +7771,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7787,7 +7792,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7797,7 +7802,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7823,7 +7828,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7844,7 +7849,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7865,7 +7870,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7886,7 +7891,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7907,7 +7912,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7928,7 +7933,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7949,7 +7954,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7970,7 +7975,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -7991,7 +7996,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8012,7 +8017,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8033,7 +8038,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8043,7 +8048,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8069,7 +8074,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8090,7 +8095,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8111,7 +8116,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8132,7 +8137,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8153,7 +8158,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8174,7 +8179,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8195,7 +8200,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8216,7 +8221,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8237,7 +8242,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8258,7 +8263,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8279,7 +8284,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8287,20 +8292,20 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 )));
 };/*case end*/
-case 15: {
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<types::ValueImpl>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.index()) {
-case 15: {
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& y = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typename types::ValueImpl::Bool>((x == y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8308,20 +8313,20 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 )));
 };/*case end*/
-case 14: {
+case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
 char const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<types::ValueImpl>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.index()) {
-case 14: {
+case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
 char const& y = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typename types::ValueImpl::Bool>((x == y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8342,7 +8347,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8352,7 +8357,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8378,7 +8383,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8399,7 +8404,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8420,7 +8425,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8441,7 +8446,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8462,7 +8467,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8483,7 +8488,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8504,7 +8509,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8525,7 +8530,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8546,7 +8551,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8567,7 +8572,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8588,7 +8593,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8596,20 +8601,20 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 )));
 };/*case end*/
-case 15: {
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<types::ValueImpl>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.index()) {
-case 15: {
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& y = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typename types::ValueImpl::Bool>((x != y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8617,20 +8622,20 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }()
 )));
 };/*case end*/
-case 14: {
+case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
 char const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<types::ValueImpl>, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.index()) {
-case 14: {
+case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
 char const& y = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typename types::ValueImpl::Bool>((x != y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8651,7 +8656,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8661,7 +8666,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8687,7 +8692,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8708,7 +8713,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8729,7 +8734,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8750,7 +8755,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8771,7 +8776,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8792,7 +8797,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8813,7 +8818,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8834,7 +8839,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8855,7 +8860,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8876,7 +8881,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8897,7 +8902,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8918,7 +8923,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8928,7 +8933,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8954,7 +8959,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8975,7 +8980,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -8996,7 +9001,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9017,7 +9022,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9038,7 +9043,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9059,7 +9064,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9080,7 +9085,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9101,7 +9106,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9122,7 +9127,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9143,7 +9148,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9164,7 +9169,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9185,7 +9190,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9195,7 +9200,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9221,7 +9226,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9242,7 +9247,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9263,7 +9268,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9284,7 +9289,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9305,7 +9310,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9326,7 +9331,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9347,7 +9352,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9368,7 +9373,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9389,7 +9394,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9410,7 +9415,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9431,7 +9436,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9452,7 +9457,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9462,7 +9467,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9488,7 +9493,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9509,7 +9514,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9530,7 +9535,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9551,7 +9556,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9572,7 +9577,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9593,7 +9598,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9614,7 +9619,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9635,7 +9640,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9656,7 +9661,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9677,7 +9682,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9698,7 +9703,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9719,7 +9724,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9729,7 +9734,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9755,7 +9760,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9776,7 +9781,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9797,7 +9802,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9818,7 +9823,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9839,7 +9844,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9860,7 +9865,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9881,7 +9886,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9902,7 +9907,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9923,7 +9928,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9933,7 +9938,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9959,7 +9964,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -9980,7 +9985,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10001,7 +10006,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10022,7 +10027,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10043,7 +10048,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10064,7 +10069,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10085,7 +10090,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10106,7 +10111,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10127,7 +10132,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10137,7 +10142,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10163,7 +10168,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10184,7 +10189,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10205,7 +10210,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10226,7 +10231,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10247,7 +10252,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10268,7 +10273,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10289,7 +10294,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10310,7 +10315,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10331,7 +10336,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10341,7 +10346,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10367,7 +10372,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10388,7 +10393,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10409,7 +10414,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10430,7 +10435,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10451,7 +10456,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10472,7 +10477,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10493,7 +10498,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10514,7 +10519,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10535,7 +10540,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10545,7 +10550,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10571,7 +10576,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10592,7 +10597,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10613,7 +10618,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10634,7 +10639,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10655,7 +10660,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10676,7 +10681,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10697,7 +10702,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10718,7 +10723,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10739,7 +10744,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10749,7 +10754,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10775,7 +10780,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10796,7 +10801,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10817,7 +10822,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10838,7 +10843,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10859,7 +10864,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10880,7 +10885,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10901,7 +10906,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10922,7 +10927,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10943,7 +10948,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10953,7 +10958,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -10979,7 +10984,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11000,7 +11005,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11021,7 +11026,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11042,7 +11047,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11063,7 +11068,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11084,7 +11089,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11105,7 +11110,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11126,7 +11131,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11147,7 +11152,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11157,7 +11162,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11183,7 +11188,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11193,7 +11198,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11219,7 +11224,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template create<typena
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11229,7 +11234,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operands '{}' and '{}' to binary operation"),((lhs_value).type_name()),((rhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11283,7 +11288,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).execute_binary_operator(lhs_val
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Unimplemented binary operator '{}'"),op))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Unimplemented binary operator '{}'"),op))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
@@ -11412,7 +11417,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -11426,7 +11431,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::B
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((lhs_value).impl);
 switch(__jakt_match_variant.index()) {
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::OptionalNone>();
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = TRY((((*this).execute_expression(rhs,scope))));
@@ -11466,20 +11471,20 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 )));
 };/*case end*/
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::OptionalSome>();types::Value const& value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid left-hand side of NoneCoalescing"));
+utility::panic(Jakt::String("Invalid left-hand side of NoneCoalescing"));
 }
 };/*case end*/
 }/*switch end*/
@@ -11491,7 +11496,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::B
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((lhs_value).impl);
 switch(__jakt_match_variant.index()) {
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::OptionalNone>();
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = TRY((((*this).execute_expression(rhs,scope))));
@@ -11531,20 +11536,20 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 )));
 };/*case end*/
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::OptionalSome>();types::Value const& value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(value);
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid left-hand side of NoneCoalescing"));
+utility::panic(Jakt::String("Invalid left-hand side of NoneCoalescing"));
 }
 };/*case end*/
 }/*switch end*/
@@ -11600,7 +11605,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -11615,7 +11620,7 @@ return JaktInternal::ExplicitValue(lhs_value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operand '{}' to binary operation"),((lhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operand '{}' to binary operation"),((lhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11672,7 +11677,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -11687,7 +11692,7 @@ return JaktInternal::ExplicitValue(lhs_value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid operand '{}' to binary operation"),((lhs_value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid operand '{}' to binary operation"),((lhs_value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -11735,7 +11740,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -11907,7 +11912,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -11928,7 +11933,7 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid type for unary operator")))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid type for unary operator")))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -12021,7 +12026,7 @@ __jakt_var_226 = value; goto __jakt_label_223;
 }
 __jakt_label_223:; __jakt_var_226.release_value(); }));
 };/*case end*/
-case 14: {
+case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
 char const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<types::Value> __jakt_var_227; {
@@ -12031,7 +12036,7 @@ __jakt_var_227 = value; goto __jakt_label_224;
 }
 __jakt_label_224:; __jakt_var_227.release_value(); }));
 };/*case end*/
-case 15: {
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<types::Value> __jakt_var_228; {
@@ -12053,7 +12058,7 @@ __jakt_label_226:; __jakt_var_229.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid type for unary operator")))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid type for unary operator")))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -12154,7 +12159,7 @@ __jakt_var_237 = value; goto __jakt_label_234;
 }
 __jakt_label_234:; __jakt_var_237.release_value(); }));
 };/*case end*/
-case 14: {
+case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
 char const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<types::Value> __jakt_var_238; {
@@ -12165,7 +12170,7 @@ __jakt_var_238 = value; goto __jakt_label_235;
 }
 __jakt_label_235:; __jakt_var_238.release_value(); }));
 };/*case end*/
-case 15: {
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<types::Value> __jakt_var_239; {
@@ -12189,7 +12194,7 @@ __jakt_label_237:; __jakt_var_240.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid type for unary operator")))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid type for unary operator")))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -12282,7 +12287,7 @@ __jakt_var_248 = value; goto __jakt_label_245;
 }
 __jakt_label_245:; __jakt_var_248.release_value(); }));
 };/*case end*/
-case 14: {
+case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
 char const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<types::Value> __jakt_var_249; {
@@ -12292,7 +12297,7 @@ __jakt_var_249 = value; goto __jakt_label_246;
 }
 __jakt_label_246:; __jakt_var_249.release_value(); }));
 };/*case end*/
-case 15: {
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<types::Value> __jakt_var_250; {
@@ -12314,7 +12319,7 @@ __jakt_label_248:; __jakt_var_251.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid type for unary operator")))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid type for unary operator")))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -12415,7 +12420,7 @@ __jakt_var_259 = value; goto __jakt_label_256;
 }
 __jakt_label_256:; __jakt_var_259.release_value(); }));
 };/*case end*/
-case 14: {
+case 15: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CChar>();
 char const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<types::Value> __jakt_var_260; {
@@ -12426,7 +12431,7 @@ __jakt_var_260 = value; goto __jakt_label_257;
 }
 __jakt_label_257:; __jakt_var_260.release_value(); }));
 };/*case end*/
-case 15: {
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::CInt>();
 int const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<types::Value> __jakt_var_261; {
@@ -12450,7 +12455,7 @@ __jakt_label_259:; __jakt_var_262.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid type for unary operator")))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid type for unary operator")))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -12488,7 +12493,7 @@ JaktInternal::Array<types::CheckedEnumVariantBinding> const& bindings = __jakt_m
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((value).impl);
 switch(__jakt_match_variant.index()) {
-case 18: {
+case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Enum>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::FunctionId const& constructor = __jakt_match_value.constructor;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_264; {
@@ -12503,7 +12508,7 @@ __jakt_label_261:; __jakt_var_264.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Invalid value for unary operator '{}'"),op))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid value for unary operator '{}'"),op))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -12513,7 +12518,7 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Unimplemented unary operator '{}'"),op))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Unimplemented unary operator '{}'"),op))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
@@ -12570,7 +12575,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -12579,7 +12584,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 else {
 {
-TRY((((*this).error(String("Partial ranges are not implemented"),span))));
+TRY((((*this).error(Jakt::String("Partial ranges are not implemented"),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
@@ -12626,7 +12631,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -12635,14 +12640,14 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 else {
 {
-TRY((((*this).error(String("Partial ranges are not implemented"),span))));
+TRY((((*this).error(Jakt::String("Partial ranges are not implemented"),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
 }()))
 ;
-types::StructId const range_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("Range")))));
-JaktInternal::Array<types::FunctionId> const range_constructors = (TRY((((((*this).program))->find_functions_with_name_in_scope(((((((*this).program))->get_struct(range_struct_id))).scope_id),String("Range"))))).value());
+types::StructId const range_struct_id = TRY((((((*this).program))->find_struct_in_prelude(Jakt::String("Range")))));
+JaktInternal::Array<types::FunctionId> const range_constructors = (TRY((((((*this).program))->find_functions_with_name_in_scope(((((((*this).program))->get_struct(range_struct_id))).scope_id),Jakt::String("Range"))))).value());
 __jakt_var_265 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Struct>((TRY((Array<types::Value>::create_with({start, end})))),range_struct_id,((range_constructors)[static_cast<i64>(0LL)])))),span)) } ; goto __jakt_label_262;
 
 }
@@ -12664,7 +12669,7 @@ break;
 JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> arg = (_magic_value.value());
 {
 TRY((((arguments).push(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
-auto&& __jakt_match_variant = TRY((((*this).execute_expression(((arg).get<1>()),scope))));
+auto&& __jakt_match_variant = TRY((((*this).execute_expression(((arg).template get<1>()),scope))));
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Return>();
@@ -12701,7 +12706,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -12716,7 +12721,7 @@ return (TRY((((*this).call_prelude_function(((call).name),(TRY((Array<types::Res
 }
 NonnullRefPtr<types::CheckedFunction> const function_to_run = ((((*this).program))->get_function((((call).function_id).value())));
 if (((((function_to_run)->type)).index() == 5 /* Closure */)){
-TRY((((*this).error(TRY((String::formatted(String("Cannot call a closure (nyi)")))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Cannot call a closure (nyi)")))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 JaktInternal::Optional<types::Value> this_argument = JaktInternal::OptionalNone();
@@ -12731,7 +12736,7 @@ break;
 JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> arg = (_magic_value.value());
 {
 TRY((((arguments).push(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
-auto&& __jakt_match_variant = TRY((((*this).execute_expression(((arg).get<1>()),scope))));
+auto&& __jakt_match_variant = TRY((((*this).execute_expression(((arg).template get<1>()),scope))));
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Return>();
@@ -12768,7 +12773,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -12860,7 +12865,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -12874,11 +12879,11 @@ case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::JaktString>();
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("String"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("String"),generic_parameters)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();types::TypeId const& type_id = __jakt_match_value.type_id;
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<types::TypeId>, ErrorOr<interpreter::StatementResult>>{
@@ -12890,18 +12895,18 @@ return JaktInternal::ExplicitValue(args);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Attempted to call a prelude function on a non-generic array"),((this_argument).span)))));
+TRY((((*this).error(Jakt::String("Attempted to call a prelude function on a non-generic array"),((this_argument).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("Array"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("Array"),generic_parameters)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();types::TypeId const& type_id = __jakt_match_value.type_id;
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<types::TypeId>, ErrorOr<interpreter::StatementResult>>{
@@ -12913,33 +12918,33 @@ return JaktInternal::ExplicitValue(args);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Attempted to call a prelude function on a non-generic dictionary"),((this_argument).span)))));
+TRY((((*this).error(Jakt::String("Attempted to call a prelude function on a non-generic dictionary"),((this_argument).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("Dictionary"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("Dictionary"),generic_parameters)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();types::TypeId const& type_id = __jakt_match_value.type_id;
 {
 if (((((((*this).program))->get_type(type_id)))->index() == 19 /* GenericInstance */)){
 JaktInternal::Array<types::TypeId> const generic_parameters = ((((((*this).program))->get_type(type_id)))->get<types::Type::GenericInstance>()).args;
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("Set"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("Set"),generic_parameters)))));
 }
 else {
-TRY((((*this).error(String("Attempted to call a prelude function on a non-generic set"),((this_argument).span)))));
+TRY((((*this).error(Jakt::String("Attempted to call a prelude function on a non-generic set"),((this_argument).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();types::StructId const& struct_id = __jakt_match_value.struct_id;
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
@@ -12947,7 +12952,7 @@ TRY((((effective_namespace).push(types::ResolvedNamespace(((((((*this).program))
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 17: {
+case 18: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Class>();types::StructId const& struct_id = __jakt_match_value.struct_id;
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
@@ -12955,7 +12960,7 @@ TRY((((effective_namespace).push(types::ResolvedNamespace(((((((*this).program))
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 18: {
+case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Enum>();types::EnumId const& enum_id = __jakt_match_value.enum_id;
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
@@ -12963,24 +12968,24 @@ TRY((((effective_namespace).push(types::ResolvedNamespace(((((((*this).program))
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::OptionalNone>();
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("Optional"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("Optional"),generic_parameters)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::OptionalSome>();{
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("Optional"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("Optional"),generic_parameters)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Attempted to call an instance method on a non-struct/enum type"),((this_argument).span)))));
+TRY((((*this).error(Jakt::String("Attempted to call an instance method on a non-struct/enum type"),((this_argument).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -13000,7 +13005,7 @@ break;
 JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> arg = (_magic_value.value());
 {
 TRY((((arguments).push(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
-auto&& __jakt_match_variant = TRY((((*this).execute_expression(((arg).get<1>()),scope))));
+auto&& __jakt_match_variant = TRY((((*this).execute_expression(((arg).template get<1>()),scope))));
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Return>();
@@ -13037,7 +13042,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -13062,7 +13067,7 @@ break;
 JaktInternal::Tuple<String,NonnullRefPtr<types::CheckedExpression>> arg = (_magic_value.value());
 {
 TRY((((arguments).push(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
-auto&& __jakt_match_variant = TRY((((*this).execute_expression(((arg).get<1>()),scope))));
+auto&& __jakt_match_variant = TRY((((*this).execute_expression(((arg).template get<1>()),scope))));
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Return>();
@@ -13099,7 +13104,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -13187,26 +13192,26 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 ));
-if (((((value).impl))->index() == 24 /* OptionalNone */)){
-TRY((((*this).error(String("Attempted to unwrap an optional value that was None"),((value).span)))));
+if (((((value).impl))->index() == 25 /* OptionalNone */)){
+TRY((((*this).error(Jakt::String("Attempted to unwrap an optional value that was None"),((value).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 __jakt_var_268 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((value).impl);
 switch(__jakt_match_variant.index()) {
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::OptionalSome>();types::Value const& value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(value) } );
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid type for unwrap"),((value).span)))));
+TRY((((*this).error(Jakt::String("Invalid type for unwrap"),((value).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -13274,7 +13279,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -13318,7 +13323,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -13327,7 +13332,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 __jakt_var_269 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((value).impl);
 switch(__jakt_match_variant.index()) {
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::Array<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_270; {
 u64 const numeric_index = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u64, ErrorOr<interpreter::StatementResult>>{
@@ -13380,14 +13385,14 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid type for repeat"));
+utility::panic(Jakt::String("Invalid type for repeat"));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
 if ((numeric_index >= (infallible_integer_cast<u64>((((values).size())))))){
-TRY((((*this).error(TRY((String::formatted(String("Index {} out of bounds (max={})"),numeric_index,((values).size())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Index {} out of bounds (max={})"),numeric_index,((values).size())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 __jakt_var_270 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(((values)[numeric_index])) } ; goto __jakt_label_267;
@@ -13397,7 +13402,7 @@ __jakt_label_267:; __jakt_var_270.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Invalid or unsupported indexed expression"),span))));
+TRY((((*this).error(Jakt::String("Invalid or unsupported indexed expression"),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -13455,7 +13460,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -13464,7 +13469,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 __jakt_var_271 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((value).impl);
 switch(__jakt_match_variant.index()) {
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::StructId const& struct_id = __jakt_match_value.struct_id;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_272; {
@@ -13491,7 +13496,7 @@ break;
 }
 
 if ((!(((found_index).has_value())))){
-TRY((((*this).error(String("Attempted to access a field that does not exist"),((value).span)))));
+TRY((((*this).error(Jakt::String("Attempted to access a field that does not exist"),((value).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 __jakt_var_272 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(((fields)[(found_index.value())])) } ; goto __jakt_label_269;
@@ -13499,7 +13504,7 @@ __jakt_var_272 =  interpreter::StatementResult { typename interpreter::Statement
 }
 __jakt_label_269:; __jakt_var_272.release_value(); }));
 };/*case end*/
-case 17: {
+case 18: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Class>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::StructId const& struct_id = __jakt_match_value.struct_id;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_273; {
@@ -13526,7 +13531,7 @@ break;
 }
 
 if ((!(((found_index).has_value())))){
-TRY((((*this).error(String("Attempted to access a field that does not exist"),((value).span)))));
+TRY((((*this).error(Jakt::String("Attempted to access a field that does not exist"),((value).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 __jakt_var_273 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(((fields)[(found_index.value())])) } ; goto __jakt_label_270;
@@ -13536,7 +13541,7 @@ __jakt_label_270:; __jakt_var_273.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Attempted to access a field on a non-struct/enum type"),((value).span)))));
+TRY((((*this).error(Jakt::String("Attempted to access a field on a non-struct/enum type"),((value).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -13589,7 +13594,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -13598,7 +13603,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 __jakt_var_274 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((value).impl);
 switch(__jakt_match_variant.index()) {
-case 18: {
+case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Enum>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::EnumId const& enum_id = __jakt_match_value.enum_id;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_275; {
@@ -13625,7 +13630,7 @@ break;
 }
 
 if ((!(((found_index).has_value())))){
-TRY((((*this).error(String("Attempted to access a field that does not exist"),((value).span)))));
+TRY((((*this).error(Jakt::String("Attempted to access a field that does not exist"),((value).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 __jakt_var_275 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(((fields)[(found_index.value())])) } ; goto __jakt_label_272;
@@ -13635,7 +13640,7 @@ __jakt_label_272:; __jakt_var_275.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Attempted to access a field on a non-struct/enum type"),((value).span)))));
+TRY((((*this).error(Jakt::String("Attempted to access a field on a non-struct/enum type"),((value).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -13663,8 +13668,8 @@ break;
 JaktInternal::Tuple<NonnullRefPtr<types::CheckedExpression>,NonnullRefPtr<types::CheckedExpression>> k__v__ = (_magic_value.value());
 {
 JaktInternal::Tuple<NonnullRefPtr<types::CheckedExpression>,NonnullRefPtr<types::CheckedExpression>> const jakt__k__v__ = k__v__;
-NonnullRefPtr<types::CheckedExpression> const k = ((jakt__k__v__).get<0>());
-NonnullRefPtr<types::CheckedExpression> const v = ((jakt__k__v__).get<1>());
+NonnullRefPtr<types::CheckedExpression> const k = ((jakt__k__v__).template get<0>());
+NonnullRefPtr<types::CheckedExpression> const v = ((jakt__k__v__).template get<1>());
 
 types::Value const key = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = TRY((((*this).execute_expression(k,scope))));
@@ -13704,7 +13709,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -13748,7 +13753,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -13832,9 +13837,104 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 ))) } );
 };/*case end*/
 case 2: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::QuotedString>();String const& val = __jakt_match_value.val;
+auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::QuotedString>();types::CheckedStringLiteral const& val = __jakt_match_value.val;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(TRY((utility::interpret_escapes(val)))))),span)) } );
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+auto __jakt_enum_value = (((((val).type_id)).equals(types::builtin( types::BuiltinType { typename types::BuiltinType::JaktString() } ))));
+if (__jakt_enum_value == true) {
+return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(TRY((utility::interpret_escapes(((val).to_string()))))))),span)) } );
+}
+else {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_277; {
+types::FunctionId const function_id = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::FunctionId, ErrorOr<interpreter::StatementResult>>{
+auto&& __jakt_match_variant = *((((*this).program))->get_type(((val).type_id)));
+switch(__jakt_match_variant.index()) {
+case 23: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Struct>();
+types::StructId const& struct_id = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(({ Optional<types::FunctionId> __jakt_var_278; {
+NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((((((*this).program))->get_struct(struct_id))).scope_id)))));
+JaktInternal::Optional<JaktInternal::Array<types::FunctionId>> const overloads = ((((scope)->functions)).get(Jakt::String("from_string_literal")));
+if ((!(((overloads).has_value())))){
+utility::panic(TRY((String::formatted(Jakt::String("Failed to find a from_string_literal overload in {}"),TRY((((((*this).program))->type_name(((val).type_id)))))))));
+}
+__jakt_var_278 = ((((overloads.value())).first()).value()); goto __jakt_label_275;
+
+}
+__jakt_label_275:; __jakt_var_278.release_value(); }));
+};/*case end*/
+case 19: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericInstance>();types::StructId const& struct_id = __jakt_match_value.id;
+return JaktInternal::ExplicitValue(({ Optional<types::FunctionId> __jakt_var_279; {
+NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((((((*this).program))->get_struct(struct_id))).scope_id)))));
+JaktInternal::Optional<JaktInternal::Array<types::FunctionId>> const overloads = ((((scope)->functions)).get(Jakt::String("from_string_literal")));
+if ((!(((overloads).has_value())))){
+utility::panic(TRY((String::formatted(Jakt::String("Failed to find a from_string_literal overload in {}"),TRY((((((*this).program))->type_name(((val).type_id)))))))));
+}
+__jakt_var_279 = ((((overloads.value())).first()).value()); goto __jakt_label_276;
+
+}
+__jakt_label_276:; __jakt_var_279.release_value(); }));
+};/*case end*/
+case 24: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
+types::EnumId const& enum_id = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(({ Optional<types::FunctionId> __jakt_var_280; {
+NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((((((*this).program))->get_enum(enum_id))).scope_id)))));
+JaktInternal::Optional<JaktInternal::Array<types::FunctionId>> const overloads = ((((scope)->functions)).get(Jakt::String("from_string_literal")));
+if ((!(((overloads).has_value())))){
+utility::panic(Jakt::String("Failed to find a from_string_literal overload"));
+}
+__jakt_var_280 = ((((overloads.value())).first()).value()); goto __jakt_label_277;
+
+}
+__jakt_label_277:; __jakt_var_280.release_value(); }));
+};/*case end*/
+case 20: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericEnumInstance>();types::EnumId const& enum_id = __jakt_match_value.id;
+return JaktInternal::ExplicitValue(({ Optional<types::FunctionId> __jakt_var_281; {
+NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((((((*this).program))->get_enum(enum_id))).scope_id)))));
+JaktInternal::Optional<JaktInternal::Array<types::FunctionId>> const overloads = ((((scope)->functions)).get(Jakt::String("from_string_literal")));
+if ((!(((overloads).has_value())))){
+utility::panic(Jakt::String("Failed to find a from_string_literal overload"));
+}
+__jakt_var_281 = ((((overloads.value())).first()).value()); goto __jakt_label_278;
+
+}
+__jakt_label_278:; __jakt_var_281.release_value(); }));
+};/*case end*/
+default: {
+{
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Invalid type {} for string literal"),((((*this).program))->get_type(((val).type_id)))))),span))));
+return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
+}
+};/*case end*/
+}/*switch end*/
+}()
+));
+JaktInternal::Array<types::ResolvedNamespace> const ns = (TRY((Array<types::ResolvedNamespace>::create_with({}))));
+__jakt_var_277 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
+auto&& __jakt_match_variant = TRY((((*this).execute(function_id,static_cast<JaktInternal::Optional<JaktInternal::Array<types::ResolvedNamespace>>>(ns),JaktInternal::OptionalNone(),(TRY((Array<types::Value>::create_with({types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(TRY((utility::interpret_escapes(((val).to_string()))))))),span)})))),span,scope))));
+switch(__jakt_match_variant.index()) {
+case 0: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::ExecutionResult::Return>();
+types::Value const& value = __jakt_match_value.value;
+return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(value) } );
+};/*case end*/
+case 1: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::ExecutionResult::Throw>();
+types::Value const& value = __jakt_match_value.value;
+return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::Throw(value) } );
+};/*case end*/
+default: VERIFY_NOT_REACHED();}/*switch end*/
+}()
+)); goto __jakt_label_274;
+
+}
+__jakt_label_274:; __jakt_var_277.release_value(); }));
+}
+}()))
+);
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::CharacterConstant>();String const& val = __jakt_match_value.val;
@@ -13849,7 +13949,7 @@ types::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (((repeat).has_value()));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_277; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_282; {
 size_t const count = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = TRY((((*this).execute_expression((repeat.value()),scope))));
 switch(__jakt_match_variant.index()) {
@@ -13920,7 +14020,7 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((x))));
 };/*case end*/
 default: {
 {
-utility::panic(String("Invalid type for repeat"));
+utility::panic(Jakt::String("Invalid type for repeat"));
 }
 };/*case end*/
 }/*switch end*/
@@ -13943,7 +14043,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -13987,19 +14087,19 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 ));
-__jakt_var_277 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktArray>((TRY((Array<types::Value>::filled(count, value_to_repeat)))),TRY((((((*this).program))->substitute_typevars_in_type(type_id,TRY((((scope)->type_map_for_substitution()))),((type_id).module)))))))),span)) } ; goto __jakt_label_274;
+__jakt_var_282 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktArray>((TRY((Array<types::Value>::filled(count, value_to_repeat)))),TRY((((((*this).program))->substitute_typevars_in_type(type_id,TRY((((scope)->type_map_for_substitution()))),((type_id).module)))))))),span)) } ; goto __jakt_label_279;
 
 }
-__jakt_label_274:; __jakt_var_277.release_value(); }));
+__jakt_label_279:; __jakt_var_282.release_value(); }));
 }
 else {
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_278; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_283; {
 JaktInternal::Array<types::Value> values = (TRY((Array<types::Value>::create_with({}))));
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<types::CheckedExpression>> _magic = ((vals).iterator());
@@ -14048,7 +14148,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -14060,10 +14160,10 @@ TRY((((values).push(val))));
 }
 }
 
-__jakt_var_278 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktArray>(values,TRY((((((*this).program))->substitute_typevars_in_type(type_id,TRY((((scope)->type_map_for_substitution()))),((type_id).module)))))))),span)) } ; goto __jakt_label_275;
+__jakt_var_283 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktArray>(values,TRY((((((*this).program))->substitute_typevars_in_type(type_id,TRY((((scope)->type_map_for_substitution()))),((type_id).module)))))))),span)) } ; goto __jakt_label_280;
 
 }
-__jakt_label_275:; __jakt_var_278.release_value(); }));
+__jakt_label_280:; __jakt_var_283.release_value(); }));
 }
 }()))
 );
@@ -14071,7 +14171,7 @@ __jakt_label_275:; __jakt_var_278.release_value(); }));
 case 14: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::IndexedTuple>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 size_t const& index = __jakt_match_value.index;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_279; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_284; {
 types::Value const value = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = TRY((((*this).execute_expression(expr,scope))));
 switch(__jakt_match_variant.index()) {
@@ -14109,39 +14209,39 @@ return ( interpreter::StatementResult { typename interpreter::StatementResult::B
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 ));
-__jakt_var_279 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
-auto __jakt_enum_value = (((((value).impl))->index() == 25 /* JaktTuple */));
+__jakt_var_284 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+auto __jakt_enum_value = (((((value).impl))->index() == 26 /* JaktTuple */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_280; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_285; {
 JaktInternal::Array<types::Value> const fields = ((((value).impl))->get<types::ValueImpl::JaktTuple>()).fields;
-__jakt_var_280 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(((fields)[index])) } ; goto __jakt_label_277;
+__jakt_var_285 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(((fields)[index])) } ; goto __jakt_label_282;
 
 }
-__jakt_label_277:; __jakt_var_280.release_value(); }));
+__jakt_label_282:; __jakt_var_285.release_value(); }));
 }
 else {
 {
-utility::panic(String("expected tuple"));
+utility::panic(Jakt::String("expected tuple"));
 }
 }
 }()))
-; goto __jakt_label_276;
+; goto __jakt_label_281;
 
 }
-__jakt_label_276:; __jakt_var_279.release_value(); }));
+__jakt_label_281:; __jakt_var_284.release_value(); }));
 };/*case end*/
 case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Match>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 JaktInternal::Array<types::CheckedMatchCase> const& match_cases = __jakt_match_value.match_cases;
 bool const& all_variants_constant = __jakt_match_value.all_variants_constant;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_281; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_286; {
 types::Value const value = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = TRY((((*this).execute_expression(expr,scope))));
 switch(__jakt_match_variant.index()) {
@@ -14179,20 +14279,20 @@ return ( interpreter::StatementResult { typename interpreter::StatementResult::B
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 ));
-__jakt_var_281 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
+__jakt_var_286 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((value).impl);
 switch(__jakt_match_variant.index()) {
-case 18: {
+case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Enum>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::EnumId const& enum_id = __jakt_match_value.enum_id;
 types::FunctionId const& constructor = __jakt_match_value.constructor;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_282; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_287; {
 String const constructor_name = ((((((*this).program))->get_function(constructor)))->name);
 JaktInternal::Optional<types::CheckedMatchBody> catch_all_case = JaktInternal::OptionalNone();
 JaktInternal::Optional<types::CheckedMatchBody> found_body = JaktInternal::OptionalNone();
@@ -14232,7 +14332,7 @@ return JaktInternal::ExplicitValue<void>();
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedMatchCase::Expression>();utility::Span const& marker_span = __jakt_match_value.marker_span;
 {
-TRY((((*this).error(String("Value matches are not allowed on enums"),marker_span))));
+TRY((((*this).error(Jakt::String("Value matches are not allowed on enums"),marker_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -14259,7 +14359,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 JaktInternal::Array<parser::EnumVariantPatternArgument> const empty_args = (TRY((Array<parser::EnumVariantPatternArgument>::create_with({}))));
 (found_args = found_args.value_or_lazy_evaluated([&] { return empty_args; }));
 NonnullRefPtr<interpreter::InterpreterScope> new_scope = TRY((interpreter::InterpreterScope::InterpreterScope::create((TRY((Dictionary<String, types::Value>::create_with_entries({})))),scope,(TRY((Dictionary<String, types::TypeId>::create_with_entries({})))))));
-ScopeGuard __jakt_var_283([&] {
+ScopeGuard __jakt_var_288([&] {
 MUST((((new_scope)->perform_defers(*this,(span.value())))));
 });
 if ((((found_variant_index).has_value()) && (!((((found_args.value())).is_empty()))))){
@@ -14329,15 +14429,15 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 ));
 }
-__jakt_var_282 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
+__jakt_var_287 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = (found_body.value());
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedMatchBody::Expression>();
 NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_284; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_289; {
 interpreter::StatementResult const result = TRY((((*this).execute_expression(expr,new_scope))));
-__jakt_var_284 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
+__jakt_var_289 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = result;
 switch(__jakt_match_variant.index()) {
 case 2: {
@@ -14367,17 +14467,17 @@ return JaktInternal::ExplicitValue(result);
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
-)); goto __jakt_label_280;
+)); goto __jakt_label_285;
 
 }
-__jakt_label_280:; __jakt_var_284.release_value(); }));
+__jakt_label_285:; __jakt_var_289.release_value(); }));
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedMatchBody::Block>();
 types::CheckedBlock const& block = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_285; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_290; {
 interpreter::StatementResult const result = TRY((((*this).execute_block(block,new_scope,(span.value())))));
-__jakt_var_285 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
+__jakt_var_290 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = result;
 switch(__jakt_match_variant.index()) {
 case 2: {
@@ -14407,20 +14507,20 @@ return JaktInternal::ExplicitValue(result);
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
-)); goto __jakt_label_281;
+)); goto __jakt_label_286;
 
 }
-__jakt_label_281:; __jakt_var_285.release_value(); }));
+__jakt_label_286:; __jakt_var_290.release_value(); }));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
-)); goto __jakt_label_279;
+)); goto __jakt_label_284;
 
 }
-__jakt_label_279:; __jakt_var_282.release_value(); }));
+__jakt_label_284:; __jakt_var_287.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_286; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_291; {
 JaktInternal::Optional<types::CheckedMatchBody> catch_all_case = JaktInternal::OptionalNone();
 JaktInternal::Optional<types::CheckedMatchBody> found_body = JaktInternal::OptionalNone();
 JaktInternal::Optional<utility::Span> span = JaktInternal::OptionalNone();
@@ -14478,7 +14578,7 @@ return ( interpreter::StatementResult { typename interpreter::StatementResult::B
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -14505,7 +14605,7 @@ return JaktInternal::ExplicitValue<void>();
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedMatchCase::EnumVariant>();utility::Span const& marker_span = __jakt_match_value.marker_span;
 {
-TRY((((*this).error(TRY((String::formatted(String("Value matches cannot have enum variant arms (matching on {})"),((value).type_name())))),marker_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Value matches cannot have enum variant arms (matching on {})"),((value).type_name())))),marker_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -14520,18 +14620,18 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 
 (found_body = found_body.value_or_lazy_evaluated([&] { return (catch_all_case.value()); }));
 NonnullRefPtr<interpreter::InterpreterScope> new_scope = TRY((interpreter::InterpreterScope::InterpreterScope::create((TRY((Dictionary<String, types::Value>::create_with_entries({})))),scope,(TRY((Dictionary<String, types::TypeId>::create_with_entries({})))))));
-ScopeGuard __jakt_var_287([&] {
+ScopeGuard __jakt_var_292([&] {
 MUST((((new_scope)->perform_defers(*this,(span.value())))));
 });
-__jakt_var_286 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
+__jakt_var_291 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = (found_body.value());
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedMatchBody::Expression>();
 NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_288; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_293; {
 interpreter::StatementResult const result = TRY((((*this).execute_expression(expr,new_scope))));
-__jakt_var_288 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
+__jakt_var_293 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = result;
 switch(__jakt_match_variant.index()) {
 case 2: {
@@ -14561,17 +14661,17 @@ return JaktInternal::ExplicitValue(result);
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
-)); goto __jakt_label_283;
+)); goto __jakt_label_288;
 
 }
-__jakt_label_283:; __jakt_var_288.release_value(); }));
+__jakt_label_288:; __jakt_var_293.release_value(); }));
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedMatchBody::Block>();
 types::CheckedBlock const& block = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_289; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_294; {
 interpreter::StatementResult const result = TRY((((*this).execute_block(block,new_scope,(span.value())))));
-__jakt_var_289 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
+__jakt_var_294 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = result;
 switch(__jakt_match_variant.index()) {
 case 2: {
@@ -14601,31 +14701,31 @@ return JaktInternal::ExplicitValue(result);
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
-)); goto __jakt_label_284;
+)); goto __jakt_label_289;
 
 }
-__jakt_label_284:; __jakt_var_289.release_value(); }));
+__jakt_label_289:; __jakt_var_294.release_value(); }));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
-)); goto __jakt_label_282;
+)); goto __jakt_label_287;
 
 }
-__jakt_label_282:; __jakt_var_286.release_value(); }));
+__jakt_label_287:; __jakt_var_291.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
-)); goto __jakt_label_278;
+)); goto __jakt_label_283;
 
 }
-__jakt_label_278:; __jakt_var_281.release_value(); }));
+__jakt_label_283:; __jakt_var_286.release_value(); }));
 };/*case end*/
 case 18: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::EnumVariantArg>();NonnullRefPtr<types::CheckedExpression> const& expr = __jakt_match_value.expr;
 types::CheckedEnumVariantBinding const& arg = __jakt_match_value.arg;
 types::CheckedEnumVariant const& enum_variant = __jakt_match_value.enum_variant;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_290; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_295; {
 types::Value const value = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = TRY((((*this).execute_expression(expr,scope))));
 switch(__jakt_match_variant.index()) {
@@ -14663,20 +14763,20 @@ return ( interpreter::StatementResult { typename interpreter::StatementResult::B
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 ));
-__jakt_var_290 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
+__jakt_var_295 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((value).impl);
 switch(__jakt_match_variant.index()) {
-case 18: {
+case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Enum>();JaktInternal::Array<types::Value> const& fields = __jakt_match_value.fields;
 types::EnumId const& enum_id = __jakt_match_value.enum_id;
 types::FunctionId const& constructor = __jakt_match_value.constructor;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_291; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_296; {
 JaktInternal::Optional<types::CheckedEnumVariant> found_variant = JaktInternal::OptionalNone();
 {
 JaktInternal::ArrayIterator<types::CheckedEnumVariant> _magic = ((((((((*this).program))->get_enum(enum_id))).variants)).iterator());
@@ -14696,7 +14796,7 @@ break;
 }
 }
 
-__jakt_var_291 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
+__jakt_var_296 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = (found_variant.value());
 switch(__jakt_match_variant.index()) {
 case 1: {
@@ -14704,7 +14804,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedEnum
 };/*case end*/
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedEnumVariant::StructLike>();JaktInternal::Array<types::VarId> const& variant_fields = __jakt_match_value.fields;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_292; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_297; {
 i64 i = static_cast<i64>(0LL);
 {
 JaktInternal::ArrayIterator<types::VarId> _magic = ((variant_fields).iterator());
@@ -14726,39 +14826,39 @@ break;
 }
 }
 
-__jakt_var_292 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(((fields)[i])) } ; goto __jakt_label_287;
+__jakt_var_297 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(((fields)[i])) } ; goto __jakt_label_292;
 
 }
-__jakt_label_287:; __jakt_var_292.release_value(); }));
+__jakt_label_292:; __jakt_var_297.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue( interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Void>())),span)) } );
 };/*case end*/
 }/*switch end*/
 }()
-)); goto __jakt_label_286;
+)); goto __jakt_label_291;
 
 }
-__jakt_label_286:; __jakt_var_291.release_value(); }));
+__jakt_label_291:; __jakt_var_296.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Value matches cannot have enum variant arms (matching on {})"),((value).type_name())))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Value matches cannot have enum variant arms (matching on {})"),((value).type_name())))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
 }/*switch end*/
 }()
-)); goto __jakt_label_285;
+)); goto __jakt_label_290;
 
 }
-__jakt_label_285:; __jakt_var_290.release_value(); }));
+__jakt_label_290:; __jakt_var_295.release_value(); }));
 };/*case end*/
 case 7: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktTuple>();JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> const& vals = __jakt_match_value.vals;
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_293; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_298; {
 JaktInternal::Array<types::Value> fields = (TRY((Array<types::Value>::create_with({}))));
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<types::CheckedExpression>> _magic = ((vals).iterator());
@@ -14806,7 +14906,7 @@ return ( interpreter::StatementResult { typename interpreter::StatementResult::B
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -14818,16 +14918,16 @@ TRY((((fields).push(value))));
 }
 }
 
-__jakt_var_293 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktTuple>(fields,type_id))),span)) } ; goto __jakt_label_288;
+__jakt_var_298 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktTuple>(fields,type_id))),span)) } ; goto __jakt_label_293;
 
 }
-__jakt_label_288:; __jakt_var_293.release_value(); }));
+__jakt_label_293:; __jakt_var_298.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktSet>();JaktInternal::Array<NonnullRefPtr<types::CheckedExpression>> const& vals = __jakt_match_value.vals;
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_294; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_299; {
 JaktInternal::Array<types::Value> values = (TRY((Array<types::Value>::create_with({}))));
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<types::CheckedExpression>> _magic = ((vals).iterator());
@@ -14876,7 +14976,7 @@ case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 types::Value const& expr = __jakt_match_value.value;
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -14888,10 +14988,10 @@ TRY((((values).push(val))));
 }
 }
 
-__jakt_var_294 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktSet>(values,type_id))),span)) } ; goto __jakt_label_289;
+__jakt_var_299 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktSet>(values,type_id))),span)) } ; goto __jakt_label_294;
 
 }
-__jakt_label_289:; __jakt_var_294.release_value(); }));
+__jakt_label_294:; __jakt_var_299.release_value(); }));
 };/*case end*/
 case 27: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Function>();JaktInternal::Array<types::CheckedCapture> const& captures = __jakt_match_value.captures;
@@ -14901,7 +15001,7 @@ types::TypeId const& type_id = __jakt_match_value.type_id;
 types::CheckedBlock const& block = __jakt_match_value.block;
 utility::Span const& span = __jakt_match_value.span;
 bool const& can_throw = __jakt_match_value.can_throw;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_295; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_300; {
 JaktInternal::Dictionary<String,types::Value> resolved_captures = (TRY((Dictionary<String, types::Value>::create_with_entries({}))));
 {
 JaktInternal::ArrayIterator<types::CheckedCapture> _magic = ((captures).iterator());
@@ -14917,7 +15017,7 @@ if (((capture).index() == 0 /* ByValue */)){
 TRY((((resolved_captures).set(name,TRY((((scope)->must_get(name))))))));
 }
 else {
-TRY((((*this).error(TRY((String::formatted(String("Cannot capture by reference in a comptime function (nyi)")))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Cannot capture by reference in a comptime function (nyi)")))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 
@@ -14946,17 +15046,17 @@ TRY((((checked_params).push(types::CheckedParameter(((param).requires_label),typ
 }
 }
 
-__jakt_var_295 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Function>(resolved_captures,resolved_params,TRY((((((*this).program))->substitute_typevars_in_type(return_type_id,type_map,((return_type_id).module))))),TRY((((((*this).program))->substitute_typevars_in_type(type_id,type_map,((type_id).module))))),block,can_throw,checked_params))),span)) } ; goto __jakt_label_290;
+__jakt_var_300 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Function>(resolved_captures,resolved_params,TRY((((((*this).program))->substitute_typevars_in_type(return_type_id,type_map,((return_type_id).module))))),TRY((((((*this).program))->substitute_typevars_in_type(type_id,type_map,((type_id).module))))),block,can_throw,checked_params))),span)) } ; goto __jakt_label_295;
 
 }
-__jakt_label_290:; __jakt_var_295.release_value(); }));
+__jakt_label_295:; __jakt_var_300.release_value(); }));
 };/*case end*/
 case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::TryBlock>();NonnullRefPtr<types::CheckedStatement> const& stmt = __jakt_match_value.stmt;
 types::CheckedBlock const& catch_block = __jakt_match_value.catch_block;
 String const& error_name = __jakt_match_value.error_name;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_296; {
+return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_301; {
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = TRY((((*this).execute_statement(stmt,scope,span))));
 switch(__jakt_match_variant.index()) {
@@ -14971,7 +15071,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpret
 types::Value const& value = __jakt_match_value.value;
 {
 NonnullRefPtr<interpreter::InterpreterScope> catch_scope = TRY((interpreter::InterpreterScope::InterpreterScope::create((TRY((Dictionary<String, types::Value>::create_with_entries({})))),scope,(TRY((Dictionary<String, types::TypeId>::create_with_entries({})))))));
-ScopeGuard __jakt_var_297([&] {
+ScopeGuard __jakt_var_302([&] {
 MUST((((catch_scope)->perform_defers(*this,span))));
 });
 TRY((((((catch_scope)->bindings)).set(error_name,value))));
@@ -15043,21 +15143,21 @@ return JaktInternal::ExplicitValue<void>();
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 ));
-__jakt_var_296 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Void>())),span)) } ; goto __jakt_label_291;
+__jakt_var_301 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Void>())),span)) } ; goto __jakt_label_296;
 
 }
-__jakt_label_291:; __jakt_var_296.release_value(); }));
+__jakt_label_296:; __jakt_var_301.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("expression not implemented: {}"),expr))),((expr)->span())))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("expression not implemented: {}"),expr))),((expr)->span())))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 };/*case end*/
@@ -15137,7 +15237,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -15200,7 +15300,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -15209,7 +15309,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 ));
 }
 else {
-utility::panic(String("expected vardecl"));
+utility::panic(Jakt::String("expected vardecl"));
 }
 
 }
@@ -15219,7 +15319,7 @@ utility::panic(String("expected vardecl"));
 
 }
 else {
-utility::panic(String("expected vardecl"));
+utility::panic(Jakt::String("expected vardecl"));
 }
 
 }
@@ -15274,7 +15374,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -15306,7 +15406,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("if condition must be a boolean, but got {}"),((value).impl)))),span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("if condition must be a boolean, but got {}"),((value).impl)))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -15343,7 +15443,7 @@ return ( interpreter::StatementResult { typename interpreter::StatementResult::B
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -15397,7 +15497,7 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -15412,7 +15512,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStat
 utility::Span const& span = __jakt_match_value.span;
 {
 NonnullRefPtr<interpreter::InterpreterScope> new_scope = TRY((interpreter::InterpreterScope::InterpreterScope::create((TRY((Dictionary<String, types::Value>::create_with_entries({})))),scope,(TRY((Dictionary<String, types::TypeId>::create_with_entries({})))))));
-ScopeGuard __jakt_var_298([&] {
+ScopeGuard __jakt_var_303([&] {
 MUST((((new_scope)->perform_defers(*this,span))));
 });
 return (TRY((((*this).execute_block(block,new_scope,span)))));
@@ -15466,7 +15566,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -15532,7 +15632,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -15581,7 +15681,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -15625,7 +15725,7 @@ return JaktInternal::ExplicitValue( interpreter::StatementResult { typename inte
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -15696,7 +15796,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -15750,7 +15850,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -15760,12 +15860,12 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 };/*case end*/
 case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedStatement::InlineCpp>();utility::Span const& span = __jakt_match_value.span;
-return (TRY((((*this).error(String("Cannot run inline cpp at compile time"),span))))), JaktInternal::ExplicitValue<void>();
+return (TRY((((*this).error(Jakt::String("Cannot run inline cpp at compile time"),span))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 14: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedStatement::Garbage>();
 utility::Span const& span = __jakt_match_value.value;
-return (TRY((((*this).error(String("Cannot run invalid statements at compile time"),span))))), JaktInternal::ExplicitValue<void>();
+return (TRY((((*this).error(Jakt::String("Cannot run invalid statements at compile time"),span))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -15788,7 +15888,7 @@ NonnullRefPtr<types::CheckedFunction> const function_to_run = ((((*this).program
 TRY((((*this).enter_span(call_span))));
 JaktInternal::Optional<types::FunctionId> const old_function_id = ((*this).current_function_id);
 (((*this).current_function_id) = function_to_run_id);
-ScopeGuard __jakt_var_299([&] {
+ScopeGuard __jakt_var_304([&] {
 {
 (((*this).current_function_id) = old_function_id);
 ((*this).leave_span());
@@ -15799,21 +15899,21 @@ bool is_prelude_function = false;
 if (((((function_to_run)->linkage)).index() == 1 /* External */)){
 NonnullRefPtr<types::Scope> const function_scope = TRY((((((*this).program))->get_scope(((function_to_run)->function_scope_id)))));
 if ((!(TRY((((*this).get_prelude_function(((function_to_run)->function_scope_id)))))))){
-TRY((((*this).error(TRY((String::formatted(String("Cannot call external function '{}'"),((function_to_run)->name)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Cannot call external function '{}'"),((function_to_run)->name)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::CallToExternalFunction))));
 }
 (is_prelude_function = true);
 }
 if ((((function_to_run)->is_static()) == ((this_argument).has_value()))){
-String expected = String("did not expect");
+String expected = Jakt::String("did not expect");
 if ((!(((function_to_run)->is_static())))){
-(expected = String("expected"));
+(expected = Jakt::String("expected"));
 }
-String not_provided = String(" not");
+String not_provided = Jakt::String(" not");
 if (((this_argument).has_value())){
-(not_provided = String(""));
+(not_provided = Jakt::String(""));
 }
-TRY((((((((*this).compiler))->errors)).push( error::JaktError { typename error::JaktError::Message(TRY((String::formatted(String("function call {} a this argument, yet one was{} provided"),expected,not_provided))),((function_to_run)->name_span)) } ))));
+TRY((((((((*this).compiler))->errors)).push( error::JaktError { typename error::JaktError::Message(TRY((String::formatted(Jakt::String("function call {} a this argument, yet one was{} provided"),expected,not_provided))),((function_to_run)->name_span)) } ))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidThisArgument))));
 }
 size_t this_offset = static_cast<size_t>(0ULL);
@@ -15821,7 +15921,7 @@ if (((this_argument).has_value())){
 (this_offset = static_cast<size_t>(1ULL));
 }
 if (((JaktInternal::checked_sub<size_t>(((((function_to_run)->params)).size()),this_offset)) != ((arguments).size()))){
-TRY((((((((*this).compiler))->errors)).push( error::JaktError { typename error::JaktError::Message(TRY((String::formatted(String("Function called with wrong number of arguments, expected {} but got {}"),((((function_to_run)->params)).size()),((arguments).size())))),call_span) } ))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Function called with wrong number of arguments, expected {} but got {}"),((((function_to_run)->params)).size()),((arguments).size())))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::MismatchingArguments))));
 }
 if (is_prelude_function){
@@ -15834,11 +15934,11 @@ case 13: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::JaktString>();
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("String"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("String"),generic_parameters)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 19: {
+case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();types::TypeId const& type_id = __jakt_match_value.type_id;
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<types::TypeId>, ErrorOr<interpreter::ExecutionResult>>{
@@ -15850,18 +15950,18 @@ return JaktInternal::ExplicitValue(args);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Attempted to call a prelude function on a non-generic array"),call_span))));
+TRY((((*this).error(Jakt::String("Attempted to call a prelude function on a non-generic array"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("Array"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("Array"),generic_parameters)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 20: {
+case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();types::TypeId const& type_id = __jakt_match_value.type_id;
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Array<types::TypeId>, ErrorOr<interpreter::ExecutionResult>>{
@@ -15873,33 +15973,33 @@ return JaktInternal::ExplicitValue(args);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Attempted to call a prelude function on a non-generic dictionary"),call_span))));
+TRY((((*this).error(Jakt::String("Attempted to call a prelude function on a non-generic dictionary"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
 }/*switch end*/
 }()
 ));
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("Dictionary"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("Dictionary"),generic_parameters)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 21: {
+case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();types::TypeId const& type_id = __jakt_match_value.type_id;
 {
 if (((((((*this).program))->get_type(type_id)))->index() == 19 /* GenericInstance */)){
 JaktInternal::Array<types::TypeId> const generic_parameters = ((((((*this).program))->get_type(type_id)))->get<types::Type::GenericInstance>()).args;
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("Set"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("Set"),generic_parameters)))));
 }
 else {
-TRY((((*this).error(String("Attempted to call a prelude function on a non-generic set"),call_span))));
+TRY((((*this).error(Jakt::String("Attempted to call a prelude function on a non-generic set"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 16: {
+case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();types::StructId const& struct_id = __jakt_match_value.struct_id;
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
@@ -15907,7 +16007,7 @@ TRY((((effective_namespace).push(types::ResolvedNamespace(((((((*this).program))
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 17: {
+case 18: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Class>();types::StructId const& struct_id = __jakt_match_value.struct_id;
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
@@ -15915,7 +16015,7 @@ TRY((((effective_namespace).push(types::ResolvedNamespace(((((((*this).program))
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 18: {
+case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Enum>();types::EnumId const& enum_id = __jakt_match_value.enum_id;
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
@@ -15923,24 +16023,24 @@ TRY((((effective_namespace).push(types::ResolvedNamespace(((((((*this).program))
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 24: {
+case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::OptionalNone>();
 {
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("Optional"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("Optional"),generic_parameters)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 23: {
+case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::OptionalSome>();{
 JaktInternal::Array<types::TypeId> const generic_parameters = (TRY((Array<types::TypeId>::create_with({}))));
-TRY((((effective_namespace).push(types::ResolvedNamespace(String("Optional"),generic_parameters)))));
+TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::String("Optional"),generic_parameters)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Attempted to call an instance method on a non-struct/enum type"),call_span))));
+TRY((((*this).error(Jakt::String("Attempted to call an instance method on a non-struct/enum type"),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -15975,19 +16075,19 @@ return JaktInternal::ExplicitValue( interpreter::ExecutionResult { typename inte
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Continue>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Break>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -16001,7 +16101,7 @@ case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::FunctionType::Normal>();
 {
 NonnullRefPtr<interpreter::InterpreterScope> scope = TRY((interpreter::InterpreterScope::InterpreterScope::create((TRY((Dictionary<String, types::Value>::create_with_entries({})))),invocation_scope,(TRY((Dictionary<String, types::TypeId>::create_with_entries({})))))));
-ScopeGuard __jakt_var_300([&] {
+ScopeGuard __jakt_var_305([&] {
 {
 MUST((((scope)->perform_defers(*this,call_span))));
 }
@@ -16028,7 +16128,7 @@ TRY(((scope)->bindings).set(param_name, param_value));
 }
 
 if (((this_argument).has_value())){
-TRY((((((scope)->bindings)).set(String("this"),(this_argument.value())))));
+TRY((((((scope)->bindings)).set(Jakt::String("this"),(this_argument.value())))));
 }
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::ExecutionResult, ErrorOr<interpreter::ExecutionResult>>{
 auto&& __jakt_match_variant = TRY((((*this).execute_block(((function_to_run)->block),scope,call_span))));
@@ -16051,19 +16151,19 @@ return JaktInternal::ExplicitValue( interpreter::ExecutionResult { typename inte
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Continue>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Break>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Yield>();
 {
-utility::panic(String("Invalid control flow"));
+utility::panic(Jakt::String("Invalid control flow"));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -16096,7 +16196,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<parser::RecordType
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Cannot create instance of non-struct type {}"),((struct_).name)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Cannot create instance of non-struct type {}"),((struct_).name)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -16123,7 +16223,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<parser::RecordType
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Cannot create instance of non-struct type {}"),((struct_).name)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Cannot create instance of non-struct type {}"),((struct_).name)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -16136,7 +16236,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Implicit constructor can only return a struct or a generic instance")))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Implicit constructor can only return a struct or a generic instance")))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -16177,7 +16277,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((String::formatted(String("Implicit enum constructor can only return an enum or a generic instance of one")))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Implicit enum constructor can only return an enum or a generic instance of one")))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -16196,7 +16296,7 @@ return JaktInternal::ExplicitValue<void>();
 }/*switch end*/
 }()
 ));
-TRY((((*this).error(TRY((String::formatted(String("Function type {} is not implemented"),((function_to_run)->type)))),call_span))));
+TRY((((*this).error(TRY((String::formatted(Jakt::String("Function type {} is not implemented"),((function_to_run)->type)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::Unimplemented))));
 }
 }
@@ -16220,7 +16320,7 @@ break;
 NonnullRefPtr<types::CheckedStatement> statement = (_magic_value.value());
 {
 TRY((((*this).enter_span(((statement)->span()).value_or_lazy_evaluated([&] { return call_span; })))));
-ScopeGuard __jakt_var_301([&] {
+ScopeGuard __jakt_var_306([&] {
 ((*this).leave_span());
 });
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<interpreter::StatementResult>>{
@@ -16375,10 +16475,10 @@ break;
 }
 JaktInternal::Tuple<String,types::Value> pair = (_magic_value.value());
 {
-if (((bindings).contains(((pair).get<0>())))){
+if (((bindings).contains(((pair).template get<0>())))){
 continue;
 }
-TRY((((bindings).set(((pair).get<0>()),((pair).get<1>())))));
+TRY((((bindings).set(((pair).template get<0>()),((pair).template get<1>())))));
 }
 
 }
@@ -16431,7 +16531,7 @@ return {};
 }
 (scope = (((scope.value()))->parent));
 }
-utility::panic(TRY((String::formatted(String("Could not find binding for {}"),name))));
+utility::panic(TRY((String::formatted(Jakt::String("Could not find binding for {}"),name))));
 }
 return {};
 }
@@ -16456,7 +16556,7 @@ break;
 }
 JaktInternal::Tuple<String,types::TypeId> pair = (_magic_value.value());
 {
-TRY((((((map))).set(((pair).get<0>()),TRY((((((pair).get<1>())).to_string())))))));
+TRY((((((map))).set(((pair).template get<0>()),TRY((((((pair).template get<1>())).to_string())))))));
 }
 
 }
@@ -16478,7 +16578,7 @@ return ((((((scope.value()))->bindings))[name]));
 }
 (scope = (((scope.value()))->parent));
 }
-utility::panic(TRY((String::formatted(String("Could not find binding for {}"),name))));
+utility::panic(TRY((String::formatted(Jakt::String("Could not find binding for {}"),name))));
 }
 }
 
