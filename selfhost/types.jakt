@@ -1192,6 +1192,7 @@ enum StringLiteral {
 struct CheckedStringLiteral {
     value: StringLiteral
     type_id: TypeId
+    may_throw: bool
 
     function to_string(this) -> String => .value.to_string()
 }

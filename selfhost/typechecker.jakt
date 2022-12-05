@@ -38,6 +38,7 @@ enum FunctionMatchResult {
 
 struct TraitImplementationDescriptor {
     trait_id: TraitId
+    trait_name: String
     implemented_type_args: [TypeId]
 }
 
@@ -454,6 +455,7 @@ struct Typechecker {
 
         return TraitImplementationDescriptor(
             trait_id: trait_id!
+            trait_name
             implemented_type_args: trait_impls[0]
         )
     }
@@ -5646,6 +5648,7 @@ struct Typechecker {
             yield match type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
                 true => {
                     mut type_id = .strip_optional_from_type(.generic_inferences.map(type_hint!))
+                    mut may_throw = true
                     if not type_id.equals(builtin(BuiltinType::JaktString)) and .get_type(type_id).is_concrete() {
                         let trait_implementation = .find_any_singular_trait_implementation(type_id, trait_names: ["FromStringLiteral", "ThrowingFromStringLiteral"], scope_id, span)
                         if not trait_implementation.has_value() {
@@ -5656,6 +5659,8 @@ struct Typechecker {
                                 span
                             )
                             type_id = builtin(BuiltinType::JaktString)
+                        } else {
+                            may_throw = trait_implementation!.trait_name == "ThrowingFromStringLiteral"
                         }
                     } else if not .get_type(type_id).is_concrete() {
                         type_id = builtin(BuiltinType::JaktString)
@@ -5672,6 +5677,7 @@ struct Typechecker {
                         val: CheckedStringLiteral(
                             value: StringLiteral::Static(val)
                             type_id
+                            may_throw
                         )
                         span
                     )
@@ -5680,6 +5686,7 @@ struct Typechecker {
                     val: CheckedStringLiteral(
                         value: StringLiteral::Static(val)
                         type_id: builtin(BuiltinType::JaktString)
+                        may_throw: true
                     )
                     span
                 )

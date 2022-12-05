@@ -141,6 +141,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
         val: CheckedStringLiteral(
             value: StringLiteral::Static(escape_for_quotes(x))
             type_id: builtin(BuiltinType::JaktString)
+            may_throw: true
         )
         span: this_value.span
     )
@@ -149,6 +150,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
         val: CheckedStringLiteral(
             value: StringLiteral::Static(escape_for_quotes(x))
             type_id: builtin(BuiltinType::JaktString)
+            may_throw: true
         )
         span: this_value.span
     )
