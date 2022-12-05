@@ -1111,7 +1111,7 @@ JaktInternal::Optional<types::NumberConstant> number_constant() const;
 };
 struct CheckedField {
   public:
-types::VarId variable_id;JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> default_value;CheckedField(types::VarId a_variable_id, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> a_default_value);
+types::VarId variable_id;JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> default_value;JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> default_value_expression;CheckedField(types::VarId a_variable_id, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> a_default_value, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_default_value_expression);
 
 ErrorOr<String> debug_description() const;
 };struct CheckedStruct {
@@ -1731,9 +1731,11 @@ return_type_id{ forward<_MemberT2>(member_2)},
 pseudo_function_id{ forward<_MemberT3>(member_3)}
 {}
 };
+struct Self {
+};
 }
-struct Type : public Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericTraitInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Trait, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function>, public RefCounted<Type> {
-using Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericTraitInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Trait, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function>::Variant;
+struct Type : public Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericTraitInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Trait, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function, Type_Details::Self>, public RefCounted<Type> {
+using Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericTraitInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Trait, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function, Type_Details::Self>::Variant;
     using Void = Type_Details::Void;
     using Bool = Type_Details::Bool;
     using U8 = Type_Details::U8;
@@ -1764,6 +1766,7 @@ using Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Det
     using Reference = Type_Details::Reference;
     using MutableReference = Type_Details::MutableReference;
     using Function = Type_Details::Function;
+    using Self = Type_Details::Self;
 template<typename V, typename... Args> static auto create(Args&&... args) {
 return adopt_nonnull_ref_or_enomem(new (nothrow) Type(V(forward<Args>(args)...)));
 }
@@ -1893,11 +1896,13 @@ FunctionGenericParameter(types::FunctionGenericParameterKind a_kind, types::Chec
 ErrorOr<String> debug_description() const;
 };struct GenericInferences {
   public:
-JaktInternal::Dictionary<String,String> values;GenericInferences(JaktInternal::Dictionary<String,String> a_values);
+JaktInternal::Dictionary<String,String> values;ErrorOr<void> set_all(JaktInternal::Array<types::CheckedGenericParameter> const keys, JaktInternal::Array<types::TypeId> const values);
+String map_name(String const type) const;
+GenericInferences(JaktInternal::Dictionary<String,String> a_values);
 
 JaktInternal::Dictionary<String,String> iterator() const;
 void restore(JaktInternal::Dictionary<String,String> const checkpoint);
-String map(String const type) const;
+ErrorOr<types::TypeId> map(types::TypeId const type_id) const;
 JaktInternal::Optional<String> get(String const key) const;
 ErrorOr<JaktInternal::Dictionary<String,String>> perform_checkpoint(bool const reset);
 ErrorOr<void> set(String const key, String const value);

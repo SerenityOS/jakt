@@ -23,7 +23,7 @@ static ErrorOr<typechecker::TraitImplCheck> make();
 TraitImplCheck(JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,types::FunctionId>> a_missing_methods, JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> a_unmatched_signatures, JaktInternal::Dictionary<String,JaktInternal::Dictionary<String,utility::Span>> a_private_matching_methods, JaktInternal::Dictionary<String,typechecker::AlreadyImplementedFor> a_already_implemented_for);
 
 ErrorOr<void> register_trait(types::TraitId const trait_id, String const trait_name, JaktInternal::Dictionary<String,types::FunctionId> const trait_methods);
-ErrorOr<void> register_method(String const method_name, types::FunctionId const method_id, typechecker::Typechecker& typechecker);
+ErrorOr<void> register_method(types::TypeId const self_type_id, String const method_name, types::FunctionId const method_id, typechecker::Typechecker& typechecker);
 ErrorOr<void> throw_errors(utility::Span const record_decl_span, typechecker::Typechecker& typechecker);
 ErrorOr<String> debug_description() const;
 };namespace FunctionMatchResult_Details {
@@ -67,7 +67,7 @@ ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_call(parser::ParsedCa
 ErrorOr<NonnullRefPtr<types::CheckedStatement>> typecheck_guard(NonnullRefPtr<parser::ParsedExpression> const expr, parser::ParsedBlock const else_block, parser::ParsedBlock const remaining_code, types::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
 ErrorOr<bool> add_comptime_binding_to_scope(types::ScopeId const scope_id, String const name, types::Value const value, utility::Span const span);
 ErrorOr<bool> add_trait_to_scope(types::ScopeId const scope_id, String const trait_name, types::TraitId const trait_id, utility::Span const span);
-ErrorOr<bool> signatures_match(NonnullRefPtr<types::CheckedFunction> const first, NonnullRefPtr<types::CheckedFunction> const second);
+ErrorOr<bool> signatures_match(types::TypeId const self_type_id, NonnullRefPtr<types::CheckedFunction> const first, NonnullRefPtr<types::CheckedFunction> const second);
 ErrorOr<String> type_name(types::TypeId const type_id) const;
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_namespaced_var_or_simple_enum_constructor_call(String const name, JaktInternal::Array<String> const namespace_, types::ScopeId const scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<types::TypeId> const type_hint, utility::Span const span);
 NonnullRefPtr<types::Module> current_module() const;
@@ -94,7 +94,8 @@ ErrorOr<types::StructId> find_struct_in_prelude(String const name) const;
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> cast_to_underlying(NonnullRefPtr<parser::ParsedExpression> const expr, types::ScopeId const scope_id, NonnullRefPtr<parser::ParsedType> const parsed_type);
 ErrorOr<void> typecheck_module_import(parser::ParsedModuleImport const import_, types::ScopeId const scope_id);
 ErrorOr<types::TypeId> typecheck_binary_operation(NonnullRefPtr<types::CheckedExpression> const checked_lhs, parser::BinaryOperator const op, NonnullRefPtr<types::CheckedExpression> const checked_rhs, types::ScopeId const scope_id, utility::Span const span);
-ErrorOr<JaktInternal::Optional<types::StructId>> find_struct_in_scope(types::ScopeId const scope_id, String const name) const;
+ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_dictionary(JaktInternal::Array<JaktInternal::Tuple<NonnullRefPtr<parser::ParsedExpression>,NonnullRefPtr<parser::ParsedExpression>>> const values, utility::Span const span, types::ScopeId const scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<types::TypeId> const type_hint);
+ErrorOr<void> typecheck_struct_default_fields(parser::ParsedRecord const parsed_record, types::StructId const struct_id, types::ScopeId const scope_id);
 ErrorOr<bool> implements_trait(types::TypeId const type_id, types::TraitId const trait_id, JaktInternal::Optional<JaktInternal::Array<types::TypeId>> const generic_arguments);
 ErrorOr<void> check_method_access(types::ScopeId const accessor, types::ScopeId const accessee, NonnullRefPtr<types::CheckedFunction> const method, utility::Span const span);
 ErrorOr<types::CheckedBlock> typecheck_block(parser::ParsedBlock const parsed_block, types::ScopeId const parent_scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<types::TypeId> const yield_type_hint);
@@ -102,6 +103,7 @@ ErrorOr<JaktInternal::Optional<types::TypeId>> find_type_in_scope(types::ScopeId
 ErrorOr<void> typecheck_function(parser::ParsedFunction const parsed_function, types::ScopeId const parent_scope_id);
 ErrorOr<void> check_type_argument_requirements(types::TypeId const generic_argument, JaktInternal::Array<types::TraitId> const constraints, utility::Span const arg_span);
 ErrorOr<NonnullRefPtr<types::CheckedStatement>> typecheck_inline_cpp(parser::ParsedBlock const block, utility::Span const span, types::SafetyMode const safety_mode);
+ErrorOr<void> typecheck_struct_fields(parser::ParsedRecord const record, types::StructId const struct_id);
 ErrorOr<bool> check_restricted_access(types::ScopeId const accessor, String const accessee_kind, types::ScopeId const accessee, String const name, JaktInternal::Array<NonnullRefPtr<types::MaybeResolvedScope>> const whitelist, utility::Span const span);
 ErrorOr<NonnullRefPtr<types::CheckedStatement>> typecheck_throw(NonnullRefPtr<parser::ParsedExpression> const expr, types::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
 ErrorOr<JaktInternal::Array<types::StructId>> struct_inheritance_chain(types::StructId const struct_id) const;
@@ -110,13 +112,13 @@ ErrorOr<NonnullRefPtr<types::CheckedStatement>> typecheck_while(NonnullRefPtr<pa
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_expression_and_dereference_if_needed(NonnullRefPtr<parser::ParsedExpression> const expr, types::ScopeId const scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<types::TypeId> const type_hint, utility::Span const span);
 ErrorOr<path::Path> get_root_path() const;
 ErrorOr<bool> scope_can_access(types::ScopeId const accessor, types::ScopeId const accessee) const;
-ErrorOr<void> typecheck_struct_fields(parser::ParsedRecord const record, types::StructId const struct_id);
+ErrorOr<void> typecheck_enum(parser::ParsedRecord const record, types::EnumId const enum_id, types::ScopeId const parent_scope_id);
 ErrorOr<typechecker::FunctionMatchResult> match_function_and_resolve_args(parser::ParsedCall const call, types::ScopeId const caller_scope_id, types::FunctionId const candidate, types::SafetyMode const safety_mode, utility::Span const span, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const this_expr);
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_expression(NonnullRefPtr<parser::ParsedExpression> const expr, types::ScopeId const scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<types::TypeId> const type_hint);
 ErrorOr<void> dump_type_hint(types::TypeId const type_id, utility::Span const span) const;
 Typechecker(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, types::ModuleId a_current_module_id, JaktInternal::Optional<types::TypeId> a_current_struct_type_id, JaktInternal::Optional<types::FunctionId> a_current_function_id, bool a_inside_defer, size_t a_checkidx, bool a_ignore_errors, bool a_dump_type_hints, bool a_dump_try_hints, u64 a_lambda_count, types::GenericInferences a_generic_inferences);
 
-ErrorOr<types::TypeId> resolve_type_var(types::TypeId const type_var_type_id, types::ScopeId const scope_id) const;
+ErrorOr<void> typecheck_namespace_default_fields(parser::ParsedNamespace const parsed_namespace, types::ScopeId const scope_id);
 bool is_subclass_of(types::TypeId const ancestor_type_id, types::TypeId const child_type_id) const;
 ErrorOr<types::ModuleId> create_module(String const name, bool const is_root, JaktInternal::Optional<String> const path);
 ErrorOr<NonnullRefPtr<types::CheckedStatement>> typecheck_defer(NonnullRefPtr<parser::ParsedStatement> const statement, types::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
@@ -145,6 +147,7 @@ NonnullRefPtr<types::CheckedFunction> get_function(types::FunctionId const id) c
 ErrorOr<void> typecheck_struct_predecl(parser::ParsedRecord const parsed_record, types::StructId const struct_id, types::ScopeId const scope_id);
 ErrorOr<void> typecheck_enum_predecl_initial(parser::ParsedRecord const parsed_record, size_t const enum_index, size_t const module_enum_len, types::ScopeId const scope_id);
 NonnullRefPtr<types::Type> get_type(types::TypeId const id) const;
+ErrorOr<types::TypeId> resolve_type_var(types::TypeId const type_var_type_id, types::ScopeId const scope_id) const;
 ErrorOr<JaktInternal::Optional<types::TraitId>> find_trait_in_scope(types::ScopeId const scope_id, String const name) const;
 ErrorOr<void> typecheck_extern_import(parser::ParsedExternImport const import_, types::ScopeId const scope_id);
 ErrorOr<void> check_member_access(types::ScopeId const accessor, types::ScopeId const accessee, types::CheckedVariable const member, utility::Span const span);
@@ -155,7 +158,7 @@ ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_unary_negate(NonnullR
 ErrorOr<JaktInternal::Array<types::FunctionId>> resolve_call(parser::ParsedCall const call, JaktInternal::Array<types::ResolvedNamespace> namespaces, utility::Span const span, types::ScopeId const scope_id, bool const must_be_enum_constructor);
 static ErrorOr<NonnullRefPtr<types::CheckedProgram>> typecheck(NonnullRefPtr<compiler::Compiler> compiler, parser::ParsedNamespace const parsed_namespace);
 ErrorOr<bool> add_enum_to_scope(types::ScopeId const scope_id, String const name, types::EnumId const enum_id, utility::Span const span);
-ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_dictionary(JaktInternal::Array<JaktInternal::Tuple<NonnullRefPtr<parser::ParsedExpression>,NonnullRefPtr<parser::ParsedExpression>>> const values, utility::Span const span, types::ScopeId const scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<types::TypeId> const type_hint);
+ErrorOr<JaktInternal::Optional<types::StructId>> find_struct_in_scope(types::ScopeId const scope_id, String const name) const;
 ErrorOr<void> check_implicit_constructor_argument_access(types::ScopeId const caller_scope_id, parser::ParsedCall const call, types::CheckedStruct const struct_);
 ErrorOr<NonnullRefPtr<types::CheckedStatement>> typecheck_block_statement(parser::ParsedBlock const parsed_block, types::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
 ErrorOr<NonnullRefPtr<types::CheckedStatement>> typecheck_if(NonnullRefPtr<parser::ParsedExpression> const condition, parser::ParsedBlock const then_block, JaktInternal::Optional<NonnullRefPtr<parser::ParsedStatement>> const else_statement, types::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
@@ -166,6 +169,7 @@ ErrorOr<NonnullRefPtr<types::CheckedStatement>> typecheck_destructuring_assignme
 types::ScopeId prelude_scope_id() const;
 ErrorOr<bool> add_type_to_scope(types::ScopeId const scope_id, String const type_name, types::TypeId const type_id, utility::Span const span);
 ErrorOr<JaktInternal::Optional<types::FunctionId>> find_function_matching_signature_in_scope(types::ScopeId const parent_scope_id, parser::ParsedFunction const prototype) const;
+ErrorOr<void> map_generic_arguments(types::TypeId const type_id, JaktInternal::Array<types::TypeId> const args);
 ErrorOr<bool> validate_argument_label(types::CheckedParameter const param, String const label, utility::Span const span, NonnullRefPtr<parser::ParsedExpression> const expr, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> const default_value);
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> infer_signed_int(i64 const val, utility::Span const span, JaktInternal::Optional<types::TypeId> const type_hint);
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_indexed_struct(NonnullRefPtr<parser::ParsedExpression> const expr, String const field_name, types::ScopeId const scope_id, bool const is_optional, types::SafetyMode const safety_mode, utility::Span const span);
@@ -187,7 +191,6 @@ ErrorOr<void> typecheck_struct_constructor(parser::ParsedRecord const parsed_rec
 ErrorOr<types::CheckedParameter> typecheck_parameter(parser::ParsedParameter const parameter, types::ScopeId const scope_id, bool const first, JaktInternal::Optional<types::TypeId> const this_arg_type_id, JaktInternal::Optional<types::ScopeId> const check_scope);
 ErrorOr<JaktInternal::Optional<JaktInternal::Array<types::CheckedEnumVariantBinding>>> typecheck_enum_variant_bindings(types::CheckedEnumVariant const variant, JaktInternal::Array<parser::EnumVariantPatternArgument> const bindings, utility::Span const span);
 ErrorOr<void> typecheck_namespace_imports(parser::ParsedNamespace const parsed_namespace, types::ScopeId const scope_id);
-ErrorOr<void> typecheck_enum(parser::ParsedRecord const record, types::EnumId const enum_id, types::ScopeId const parent_scope_id);
 ErrorOr<JaktInternal::Optional<JaktInternal::Array<types::FunctionId>>> find_functions_with_name_in_scope(types::ScopeId const parent_scope_id, String const function_name) const;
 ErrorOr<JaktInternal::Optional<types::CheckedVariable>> find_var_in_scope(types::ScopeId const scope_id, String const var) const;
 ErrorOr<void> typecheck_struct(parser::ParsedRecord const record, types::StructId const struct_id, types::ScopeId const parent_scope_id);

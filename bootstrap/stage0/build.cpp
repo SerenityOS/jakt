@@ -208,15 +208,15 @@ JaktInternal::Tuple<size_t,unknown_process::Process> const jakt__index__process_
 size_t const index = ((jakt__index__process__).get<0>());
 unknown_process::Process const process = ((jakt__index__process__).get<1>());
 
-JaktInternal::Optional<unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<unknown_process::ExitPollResult>> __jakt_var_708;
-auto __jakt_var_709 = [&]() -> ErrorOr<JaktInternal::Optional<unknown_process::ExitPollResult>> { return TRY((unknown_process::poll_process_exit(((process))))); }();
-if (__jakt_var_709.is_error()) {{
+JaktInternal::Optional<unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<unknown_process::ExitPollResult>> __jakt_var_714;
+auto __jakt_var_715 = [&]() -> ErrorOr<JaktInternal::Optional<unknown_process::ExitPollResult>> { return TRY((unknown_process::poll_process_exit(((process))))); }();
+if (__jakt_var_715.is_error()) {{
 TRY((((pids_to_remove).set(index,finished_status))));
 continue;
 }
-} else {__jakt_var_708 = __jakt_var_709.release_value();
+} else {__jakt_var_714 = __jakt_var_715.release_value();
 }
-__jakt_var_708.release_value(); });
+__jakt_var_714.release_value(); });
 if (((status).has_value())){
 TRY((((pids_to_remove).set(index,(status.value())))));
 }

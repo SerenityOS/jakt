@@ -1,5 +1,0 @@
-trait FromStringLiteral {
-    function from_string_literal(data: raw c_char, length: usize) -> Self
-}
-
-type StringView implements(FromStringLiteral) { }

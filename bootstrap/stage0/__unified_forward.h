@@ -587,6 +587,7 @@ struct Trait;
 struct Reference;
 struct MutableReference;
 struct Function;
+struct Self;
 }
 struct Type;
 
