@@ -22,7 +22,7 @@ function run_compiler(
         extra_flags.push("-Wno-implicit-fallthrough")
         extra_flags.push("-Wno-unused-command-line-argument")
     }
-    extra_flags.push_values(extra_compiler_flags)
+    extra_flags.push_values(&extra_compiler_flags)
 
     mut compile_args = [
         cxx_compiler_path
@@ -42,7 +42,7 @@ function run_compiler(
     }
 
     if not extra_flags.is_empty() {
-        compile_args.push_values(extra_flags)
+        compile_args.push_values(&extra_flags)
     }
 
     compile_args.push("-I")

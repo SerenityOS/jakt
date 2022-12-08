@@ -253,8 +253,8 @@ struct ParsedNamespace {
         for extern_import in .extern_imports {
             if extern_import.is_equivalent_to(import_) {
                 extern_import.assigned_namespace.merge_with(import_.assigned_namespace)
-                extern_import.before_include.push_values(import_.before_include)
-                extern_import.after_include.push_values(import_.after_include)
+                extern_import.before_include.push_values(&import_.before_include)
+                extern_import.after_include.push_values(&import_.after_include)
                 return
             }
         }
@@ -272,8 +272,8 @@ struct ParsedNamespace {
     }
 
     function merge_with(mut this, anon namespace_: ParsedNamespace) throws {
-        .functions.push_values(namespace_.functions)
-        .records.push_values(namespace_.records)
+        .functions.push_values(&namespace_.functions)
+        .records.push_values(&namespace_.records)
 
         .module_imports.add_capacity(namespace_.module_imports.size())
         for import_ in namespace_.module_imports {
@@ -1857,14 +1857,14 @@ struct Parser {
                         .index++
                         let actions = .parse_include_action()
                         if actions.has_value() {
-                            parsed_import.before_include.push_values(actions!)
+                            parsed_import.before_include.push_values(&actions!)
                         }
                     }
                     "after_include" => {
                         .index++
                         let actions = .parse_include_action()
                         if actions.has_value() {
-                            parsed_import.after_include.push_values(actions!)
+                            parsed_import.after_include.push_values(&actions!)
                         }
                     }
                     else => {
@@ -3501,7 +3501,7 @@ struct Parser {
             let destructured_vars_stmt = ParsedStatement::DestructuringAssignment(vars: destructured_var_decls, var_decl, span: merge_spans(start_span, .previous().span()))
             mut block_stmts: [ParsedStatement] = []
             block_stmts.push(destructured_vars_stmt)
-            block_stmts.push_values(block.stmts)
+            block_stmts.push_values(&block.stmts)
             block.stmts = block_stmts
         }
 

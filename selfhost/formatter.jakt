@@ -3,7 +3,7 @@ import lexer { Lexer, Token }
 
 function concat<T>(anon xs: [T], anon y: T) throws -> [T] {
     mut ys: [T] = []
-    ys.push_values(xs)
+    ys.push_values(&xs)
     ys.push(y)
     return ys
 }
