@@ -14,15 +14,21 @@
 namespace JaktInternal {
 using namespace Jakt;
 
+template<typename T>
+struct DirectlyPeekableTraits : public Traits<T> {
+    using PeekType = T&;
+    using ConstPeekType = T const&;
+};
+
 template<typename K, typename V>
 struct DictionaryStorage : public RefCounted<DictionaryStorage<K, V>> {
-    HashMap<K, V> map;
+    HashMap<K, V, Traits<K>, DirectlyPeekableTraits<V>> map;
 };
 
 template<typename K, typename V>
 class DictionaryIterator {
     using Storage = DictionaryStorage<K, V>;
-    using Iterator = typename HashMap<K, V>::IteratorType;
+    using Iterator = typename decltype(declval<Storage&>().map)::IteratorType;
 
 public:
     DictionaryIterator(NonnullRefPtr<Storage> storage)
@@ -63,7 +69,9 @@ public:
     bool remove(K const& key) { return m_storage->map.remove(key); }
     bool contains(K const& key) const { return m_storage->map.contains(key); }
 
-    Optional<V> get(K const& key) const { return m_storage->map.get(key).map([](auto& x) -> V { return x; }); }
+    Optional<V> get(K const& key) const {
+        return m_storage->map.get(key).map([](auto& x) -> V { return x; });
+    }
     V& operator[](K const& key) { return m_storage->map.get(key).value(); }
     V const& operator[](K const& key) const { return m_storage->map.get(key).value(); }
 

@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "foo\nfoo\n"
+
+class Foo {
+    public x: String
+}
+
+function main() {
+    let foo = Foo(x: "foo")
+    let dict = ["a": foo]
+    println("{}", dict["a"].x)
+    println("{}", dict.get("a")!.x)
+}
+
