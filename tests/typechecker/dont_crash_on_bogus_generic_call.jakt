@@ -1,0 +1,18 @@
+/// Expect:
+/// - error: "Unknown type ‘T’"
+
+struct Foo<T> {
+    value: T
+}
+
+function inner<T>(value: T) -> Foo<T> {
+    return Foo(value)
+}
+
+function outer(value: T) -> Foo<T> {
+    return inner(value)
+}
+
+function main() {
+    let foo = outer(value: 3)
+}
