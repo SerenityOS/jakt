@@ -22,7 +22,7 @@ import types {
     CheckedStatement, CheckedStringLiteral, CheckedStruct, CheckedTrait, CheckedTypeCast, CheckedUnaryOperator
     CheckedVariable, CheckedVisibility, EnumId, FieldRecord, FunctionGenericParameter, FunctionGenerics, FunctionId
     GenericInferences, LoadedModule, MaybeResolvedScope, Module, ModuleId, NumberConstant, ResolvedNamespace
-    SafetyMode, Scope, ScopeId, StringLiteral, StructId, StructOrEnumId, TraitId, Type, TypeId, Value, VarId
+    SafetyMode, Scope, ScopeId, StringLiteral, StructId, StructLikeId, TraitId, Type, TypeId, Value, VarId
     builtin, never_type_id, unknown_type_id, void_type_id
 }
 import types
@@ -55,8 +55,15 @@ struct Typechecker {
     dump_try_hints: bool
     lambda_count: u64
     generic_inferences: GenericInferences
+    self_type_id: TypeId? = None
 
-    function type_name(this, anon type_id: TypeId) throws => .program.type_name(type_id)
+    function type_name(this, anon type_id: TypeId) throws -> String {
+        mut id = type_id
+        if .program.get_type(id) is Self and .self_type_id.has_value() {
+            id = .self_type_id!
+        }
+        return .program.type_name(id)
+    }
 
     function dump_type_hint(this, type_id: TypeId, span: Span) throws {
         println("{{\"type\":\"hint\",\"file_id\":{},\"position\":{},\"typename\":\"{}\"}}"
@@ -707,6 +714,10 @@ struct Typechecker {
         let struct_type_id = .find_or_add_type_id(Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
 
+        let old_self_type_id = .self_type_id
+        .self_type_id = struct_type_id
+        defer .self_type_id = old_self_type_id
+
         let parsed_fields = match record.record_type {
             Struct(fields) => fields
             Class(fields) => fields
@@ -766,6 +777,10 @@ struct Typechecker {
         defer {
             .current_struct_type_id = previous_struct_type_id
         }
+
+        let old_self_type_id = .self_type_id
+        .self_type_id = struct_type_id
+        defer .self_type_id = old_self_type_id
 
         let parsed_fields = match parsed_record.record_type {
             Struct(fields) => fields
@@ -1349,6 +1364,15 @@ struct Typechecker {
         // 6. Resolve external trait implementations
         for implementation in parsed_namespace.external_trait_implementations {
             let for_type = .typecheck_typename(parsed_type: implementation.for_type, scope_id, name: None)
+
+            let old_self_type_id = .self_type_id
+
+            .self_type_id = for_type
+
+            defer {
+                .self_type_id = old_self_type_id
+            }
+
             match .get_type(for_type) {
                 Struct(struct_id) | GenericInstance(id: struct_id) => {
                     mut struct_ = .get_struct(struct_id)
@@ -1387,10 +1411,19 @@ struct Typechecker {
                                 continue
                             }
 
+                            mut replaced_function = function_.copy()
+                            let inferences = .generic_inferences
+                            replaced_function.map_types(&function[inferences](anon type_id: TypeId) throws -> TypeId {
+                                return inferences.map(type_id)
+                            })
+
+                            mut module = .current_module()
+                            let new_function_id = module.add_function(checked_function: replaced_function)
+
                             .add_function_to_scope(
                                 parent_scope_id: struct_.scope_id
                                 name: name
-                                overload_set: [function_id]
+                                overload_set: [new_function_id]
                                 span: trait_name.name_span
                             )
                         }
@@ -1433,10 +1466,19 @@ struct Typechecker {
                                 continue
                             }
 
+                            mut replaced_function = function_.copy()
+                            let inferences = .generic_inferences
+                            replaced_function.map_types(&function[inferences](anon type_id: TypeId) throws -> TypeId {
+                                return inferences.map(type_id)
+                            })
+
+                            mut module = .current_module()
+                            let new_function_id = module.add_function(checked_function: replaced_function)
+
                             .add_function_to_scope(
                                 parent_scope_id: enum_.scope_id
                                 name: name
-                                overload_set: [function_id]
+                                overload_set: [new_function_id]
                                 span: trait_name.name_span
                             )
                         }
@@ -1476,6 +1518,11 @@ struct Typechecker {
         let trait_type_id = .find_or_add_type_id(Type::Trait(trait_id))
 
         .program.modules[.current_module_id.id].traits.push(checked_trait)
+
+
+        let old_self_type_id = .self_type_id
+        .self_type_id = trait_type_id
+        defer .self_type_id = old_self_type_id
 
         // register the trait
         mut scope = .get_scope(scope_id)
@@ -1568,6 +1615,10 @@ struct Typechecker {
     function typecheck_trait(mut this, parsed_trait: ParsedTrait, trait_id: TraitId, scope_id: ScopeId) throws {
         let checked_trait = .program.modules[trait_id.module.id].traits[trait_id.id]
 
+        let old_self_type_id = .self_type_id
+        .self_type_id = .find_or_add_type_id(Type::Trait(trait_id))
+        defer .self_type_id = old_self_type_id
+
         for parsed_function in parsed_trait.methods {
             if parsed_function.block.stmts.is_empty() {
                 continue
@@ -1590,6 +1641,10 @@ struct Typechecker {
 
         let enum_type_id = TypeId(module: module_id, id: .current_module().types.size() - 1)
         .add_type_to_scope(scope_id, type_name: parsed_record.name, type_id: enum_type_id, span: parsed_record.name_span)
+
+        let old_self_type_id = .self_type_id
+        .self_type_id = enum_type_id
+        defer .self_type_id = old_self_type_id
 
         let is_boxed = match parsed_record.record_type {
             SumEnum(is_boxed) => is_boxed
@@ -1614,6 +1669,10 @@ struct Typechecker {
 
     function typecheck_enum_predecl(mut this, parsed_record: ParsedRecord, enum_id: EnumId, scope_id: ScopeId) throws {
         let enum_type_id = .find_or_add_type_id(type: Type::Enum(enum_id))
+
+        let old_self_type_id = .self_type_id
+        .self_type_id = enum_type_id
+        defer .self_type_id = old_self_type_id
 
         let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("enum({})", parsed_record.name))
 
@@ -1877,6 +1936,10 @@ struct Typechecker {
         let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
 
+        let old_self_type_id = .self_type_id
+        .self_type_id = struct_type_id
+        defer .self_type_id = old_self_type_id
+
         let struct_ = .get_struct(struct_id)
 
         let constructor_ids = .find_functions_with_name_in_scope(parent_scope_id: struct_.scope_id, function_name: parsed_record.name)
@@ -2021,6 +2084,11 @@ struct Typechecker {
             return
         }
 
+        let old_self_type_id = .self_type_id
+        .self_type_id = .find_or_add_type_id(Type::GenericTraitInstance(id: trait_id, args: generic_parameters))
+        defer .self_type_id = old_self_type_id
+
+
         for i in 0..trait_.generic_parameters.size() {
             let parameter = trait_.generic_parameters[i]
             let type = generic_parameters[i]
@@ -2041,6 +2109,10 @@ struct Typechecker {
 
         let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
+
+        let old_self_type_id = .self_type_id
+        .self_type_id = struct_type_id
+        defer .self_type_id = old_self_type_id
 
         let struct_scope_id = .current_module().structures[struct_id.id].scope_id
 
@@ -2366,7 +2438,7 @@ struct Typechecker {
                         if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
                             .typecheck_method(
                                 func: method.parsed_function
-                                parent_id: StructOrEnumId::Struct(struct_id)
+                                parent_id: StructLikeId::Struct(struct_id)
                             )
                         } else {
                             .typecheck_function(
@@ -2382,7 +2454,7 @@ struct Typechecker {
                         if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
                             .typecheck_method(
                                 func: method.parsed_function
-                                parent_id: StructOrEnumId::Enum(enum_id)
+                                parent_id: StructLikeId::Enum(enum_id)
                             )
                         } else {
                             .typecheck_function(
@@ -2402,6 +2474,10 @@ struct Typechecker {
         mut seen_names: {String} = {}
 
         mut enum_ = .get_enum(enum_id)
+
+        let old_self_type_id = .self_type_id
+        .self_type_id = enum_.type_id
+        defer .self_type_id = old_self_type_id
 
         mut common_seen_fields: {String} = {}
         mut common_fields: [VarId] = []
@@ -2688,10 +2764,14 @@ struct Typechecker {
     }
 
     function typecheck_enum(mut this, record: ParsedRecord, enum_id: EnumId, parent_scope_id: ScopeId) throws {
+        let old_self_type_id = .self_type_id
+        .self_type_id = .get_enum(enum_id).type_id
+        defer .self_type_id = old_self_type_id
+
         for method in record.methods {
             .typecheck_method(
                 func: method.parsed_function
-                parent_id: StructOrEnumId::Enum(enum_id)
+                parent_id: StructLikeId::Enum(enum_id)
             )
         }
     }
@@ -2705,6 +2785,10 @@ struct Typechecker {
         let struct_type_id = .find_or_add_type_id(Type::Struct(struct_id))
 
         .current_struct_type_id = struct_type_id
+
+        let old_self_type_id = .self_type_id
+        .self_type_id = struct_type_id
+        defer .self_type_id = old_self_type_id
 
         mut all_virtuals: [String: [CheckedFunction]] = [:]
         mut super_struct_id = .get_struct(struct_id).super_struct_id
@@ -2749,7 +2833,7 @@ struct Typechecker {
             } else if all_virtuals.contains(method.parsed_function.name) {
                 .error("Missing override keyword on function that is virtual", method.parsed_function.name_span)
             }
-            .typecheck_method(func: method.parsed_function, parent_id: StructOrEnumId::Struct(struct_id))
+            .typecheck_method(func: method.parsed_function, parent_id: StructLikeId::Struct(struct_id))
         }
 
 
@@ -2798,7 +2882,7 @@ struct Typechecker {
         .current_struct_type_id = None
     }
 
-    function typecheck_method(mut this, func: ParsedFunction, parent_id: StructOrEnumId) throws -> FunctionId? {
+    function typecheck_method(mut this, func: ParsedFunction, parent_id: StructLikeId) throws -> FunctionId? {
         mut parent_generic_parameters: [CheckedGenericParameter] = []
         mut scope_id = .prelude_scope_id()
         mut definition_linkage = DefinitionLinkage::Internal
@@ -2815,6 +2899,12 @@ struct Typechecker {
                 definition_linkage = enum_.definition_linkage
                 scope_id = enum_.scope_id
                 parent_generic_parameters = enum_.generic_parameters
+            }
+            Trait(trait_id) => {
+                let trait_ = .get_trait(trait_id)
+                definition_linkage = DefinitionLinkage::Internal
+                scope_id = trait_.scope_id
+                parent_generic_parameters = trait_.generic_parameters
             }
         }
 
@@ -3175,7 +3265,16 @@ struct Typechecker {
         }
     }
 
-    function typecheck_and_specialize_generic_function(mut this, function_id: FunctionId, generic_arguments: [TypeId], parent_scope_id: ScopeId, this_type_id: TypeId?, generic_substitutions: GenericInferences, type_args: [ParsedType], call_span: Span) throws {
+    function typecheck_and_specialize_generic_function(
+        mut this
+        function_id: FunctionId
+        generic_arguments: [TypeId]
+        parent_scope_id: ScopeId
+        this_type_id: TypeId?
+        generic_substitutions: GenericInferences
+        type_args: [ParsedType]
+        call_span: Span
+    ) throws {
         mut checked_function = .get_function(function_id)
         checked_function.generics.specializations.push(generic_arguments)
 
@@ -3186,7 +3285,11 @@ struct Typechecker {
             return
         }
         mut parsed_function = checked_function.to_parsed_function()
-        let scope_id = .create_scope(parent_scope_id: checked_function.generics.base_scope_id, can_throw: parsed_function.can_throw, debug_name: format("function-specialization({})", parsed_function.name))
+        let scope_id = .create_scope(
+            parent_scope_id: checked_function.generics.base_scope_id
+            can_throw: parsed_function.can_throw
+            debug_name: format("function-specialization({})", parsed_function.name)
+        )
 
         if parsed_function.generic_parameters.size() != generic_arguments.size() {
             .error(
@@ -3469,6 +3572,36 @@ struct Typechecker {
 
         let lhs_type = .get_type(lhs_type_id)
         let rhs_type = .get_type(rhs_type_id)
+
+        if lhs_type is Self {
+            guard not .self_type_id.has_value() else {
+                return .check_types_for_compat(
+                    lhs_type_id: .self_type_id!
+                    rhs_type_id
+                    generic_inferences
+                    span
+                )
+            }
+            .error(
+                "Invalid use of the 'Self' type"
+                span
+            )
+        }
+
+        if rhs_type is Self {
+            guard not .self_type_id.has_value() else {
+                return .check_types_for_compat(
+                    lhs_type_id
+                    rhs_type_id: .self_type_id!
+                    generic_inferences
+                    span
+                )
+            }
+            .error(
+                "Invalid use of the 'Self' type"
+                span
+            )
+        }
 
         let lhs_type_id_string = lhs_type_id.to_string()
         let rhs_type_id_string = rhs_type_id.to_string()
@@ -5636,6 +5769,15 @@ struct Typechecker {
         else => type_id
     }
 
+    function final_type_resolution_form(this, anon type_id: TypeId, anon scope_id: ScopeId) throws -> TypeId {
+        let mapped_type_id = .resolve_type_var(type_var_type_id: type_id, scope_id)
+        if .get_type(mapped_type_id) is Self and .self_type_id.has_value() {
+            return .self_type_id!
+        }
+
+        return mapped_type_id
+    }
+
     function typecheck_expression(
         mut this
         anon expr: ParsedExpression
@@ -5735,39 +5877,47 @@ struct Typechecker {
             let checked_expr_type_id = checked_expr.type()
             mut found_optional = false
 
-            let parent_id = match .get_type(checked_expr_type_id) {
-                Struct(id) => Some(StructOrEnumId::Struct(id))
-                Enum(id) => Some(StructOrEnumId::Enum(id))
-                JaktString => Some(StructOrEnumId::Struct(.find_struct_in_prelude("String")))
+            let parent_id = match .get_type(.final_type_resolution_form(checked_expr_type_id, scope_id)) {
+                Struct(id) => Some(StructLikeId::Struct(id))
+                Enum(id) => Some(StructLikeId::Enum(id))
+                JaktString => Some(StructLikeId::Struct(.find_struct_in_prelude("String")))
                 GenericInstance(id, args) => {
                     yield match is_optional {
                         true => {
                             let optional_struct_id = .find_struct_in_prelude("Optional")
-                            mut struct_id: StructOrEnumId? = None
+                            mut struct_id: StructLikeId? = None
                             if not id.equals(optional_struct_id) {
                                 .error(format("Can't use ‘{}’ as an optional type in optional chained call", .get_struct(id).name), span)
                             } else {
                                 found_optional = true
                                 struct_id = match .get_type(args[0]) {
-                                    Struct(struct_id) | GenericInstance(id: struct_id) => StructOrEnumId::Struct(struct_id)
-                                    Enum(id) | GenericEnumInstance(id) => StructOrEnumId::Enum(id)
+                                    Struct(struct_id) | GenericInstance(id: struct_id) => StructLikeId::Struct(struct_id)
+                                    Enum(id) | GenericEnumInstance(id) => StructLikeId::Enum(id)
                                     else => {
                                         .error("Can't use non-struct type as an optional type in optional chained call", span)
                                         found_optional = false
-                                        yield StructOrEnumId::Struct(optional_struct_id)
+                                        yield StructLikeId::Struct(optional_struct_id)
                                     }
                                 }
                             }
 
-                            yield Some(struct_id ?? StructOrEnumId::Struct(optional_struct_id))
+                            yield Some(struct_id ?? StructLikeId::Struct(optional_struct_id))
                         }
-                        else => Some(StructOrEnumId::Struct(id))
+                        else => Some(StructLikeId::Struct(id))
                     }
                 }
-                GenericEnumInstance(id) => Some(StructOrEnumId::Enum(id))
+                GenericEnumInstance(id) => Some(StructLikeId::Enum(id))
+                Trait(id) | GenericTraitInstance(id) => Some(StructLikeId::Trait(id))
                 else => {
-                    .error(message: format("no methods available on value (type: {})", .type_name(type_id: checked_expr_type_id)), span: checked_expr.span())
-                    let none: StructOrEnumId? = None
+                    .error(
+                        message: format(
+                            "no methods available on value (type: {} {})"
+                            .get_type(checked_expr_type_id).constructor_name()
+                            .type_name(type_id: checked_expr_type_id)
+                        )
+                        span: checked_expr.span()
+                    )
+                    let none: StructLikeId? = None
 
                     yield none
                 }
@@ -6219,7 +6369,18 @@ struct Typechecker {
         return None
     }
 
-    function typecheck_lambda(mut this, captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, is_fat_arrow: bool, return_type: ParsedType, block: ParsedBlock, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
+    function typecheck_lambda(
+        mut this
+        captures: [ParsedCapture]
+        params: [ParsedParameter]
+        can_throw: bool
+        is_fat_arrow: bool
+        return_type: ParsedType
+        block: ParsedBlock
+        span: Span
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+    ) throws -> CheckedExpression {
         let synthetic_type = ParsedType::Function(
             params
             can_throw
@@ -7344,7 +7505,15 @@ struct Typechecker {
         return []
     }
 
-    function match_function_and_resolve_args(mut this, call: ParsedCall, caller_scope_id: ScopeId, candidate: FunctionId, safety_mode: SafetyMode, span: Span, this_expr: CheckedExpression?) throws -> FunctionMatchResult {
+    function match_function_and_resolve_args(
+        mut this
+        call: ParsedCall
+        caller_scope_id: ScopeId
+        candidate: FunctionId
+        safety_mode: SafetyMode
+        span: Span
+        this_expr: CheckedExpression?
+    ) throws -> FunctionMatchResult {
         mut args: [CheckedExpression] = []
         mut maybe_this_type_id: TypeId? = None
         mut argument_errors: [JaktError] = []
@@ -7430,7 +7599,14 @@ struct Typechecker {
         }
 
         mut total_function_specificity = 0
-        let resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(params: callee_candidate.generics.base_params, args: call.args, scope_id: caller_scope_id, safety_mode, arg_offset, span)
+        let resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(
+            params: callee_candidate.generics.base_params
+            args: call.args
+            scope_id: caller_scope_id
+            safety_mode
+            arg_offset
+            span
+        )
         if callee_candidate.generics.base_params.size() == resolved_args.size() + arg_offset {
             for i in 0..(callee_candidate.generics.base_params.size() - arg_offset) {
                 let (name, span, checked_arg) = resolved_args[i]
@@ -7456,7 +7632,7 @@ struct Typechecker {
         return FunctionMatchResult::MatchSuccess(args, maybe_this_type_id, used_generic_inferences: used_inferences, specificity: total_function_specificity)
     }
 
-    function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructOrEnumId?, safety_mode: SafetyMode, mut type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
+    function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructLikeId?, safety_mode: SafetyMode, mut type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
         mut args: [(String, CheckedExpression)] = []
         mut return_type = builtin(BuiltinType::Void)
         mut generic_arguments: [TypeId] = []
@@ -7503,6 +7679,11 @@ struct Typechecker {
                 }
                 Enum(id) => {
                     let scope_id = .get_enum(id).scope_id
+                    resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
+                    yield scope_id
+                }
+                Trait(id) => {
+                    let scope_id = .get_trait(id).scope_id
                     resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
                     yield scope_id
                 }
@@ -7560,7 +7741,7 @@ struct Typechecker {
                     }
                 }
 
-                if not resolved_function_id.has_value(){
+                if not resolved_function_id.has_value() {
                     if not resolved_function_id_candidates.is_empty() {
                         .error("No function with matching signature found.", span)
                         for match_error in errors_while_trying_to_find_matching_function.iterator() {
@@ -7823,7 +8004,15 @@ struct Typechecker {
         }
     }
 
-    function resolve_default_params(mut this, params: [CheckedParameter], args: [(String, Span, ParsedExpression)], scope_id: ScopeId, safety_mode: SafetyMode, arg_offset: usize, span: Span) throws -> [(String, Span, CheckedExpression)] {
+    function resolve_default_params(
+        mut this
+        params: [CheckedParameter]
+        args: [(String, Span, ParsedExpression)]
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        arg_offset: usize
+        span: Span
+    ) throws -> [(String, Span, CheckedExpression)] {
         mut params_with_default_value = 0uz
 
         for param in params {

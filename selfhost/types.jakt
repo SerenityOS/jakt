@@ -115,9 +115,10 @@ struct EnumId {
     }
 }
 
-enum StructOrEnumId {
+enum StructLikeId {
     Struct(StructId)
     Enum(EnumId)
+    Trait(TraitId)
 }
 
 struct TypeId {
@@ -696,6 +697,36 @@ class CheckedFunction {
     public is_virtual: bool
     public is_override: bool
 
+    public function map_types(mut this, anon map: &function(anon type_id: TypeId) throws -> TypeId) throws {
+        .return_type_id = map(.return_type_id)
+        mut changed_params: [CheckedParameter] = []
+        for param in .params {
+            changed_params.push(param.map_types(map))
+        }
+        .params = changed_params
+    }
+
+    public function copy(this) throws -> CheckedFunction => CheckedFunction(
+        name: .name
+        name_span: .name_span
+        visibility: .visibility
+        return_type_id: .return_type_id
+        return_type_span: .return_type_span
+        params: .params
+        generics: .generics
+        block: .block
+        can_throw: .can_throw
+        type: .type
+        linkage: .linkage
+        function_scope_id: .function_scope_id
+        struct_id: .struct_id
+        is_instantiated: .is_instantiated
+        parsed_function: .parsed_function
+        is_comptime: .is_comptime
+        is_virtual: .is_virtual
+        is_override: .is_override
+    )
+
     public function signature_matches(this, anon other: CheckedFunction) throws -> bool {
         if this.name != other.name or
         this.can_throw != other.can_throw or
@@ -816,6 +847,14 @@ struct CheckedParameter {
     requires_label: bool
     variable: CheckedVariable
     default_value: CheckedExpression?
+
+    public function map_types(this, anon map: &function(anon type_id: TypeId) throws -> TypeId) throws -> CheckedParameter {
+        return CheckedParameter(
+            requires_label: .requires_label
+            variable: .variable.map_types(map)
+            default_value: .default_value
+        )
+    }
 }
 
 enum CheckedCapture {
@@ -864,6 +903,17 @@ struct CheckedVariable {
     definition_span: Span
     type_span: Span?
     visibility: CheckedVisibility
+
+    public function map_types(this, anon map: &function(anon type_id: TypeId) throws -> TypeId) throws -> CheckedVariable {
+        return CheckedVariable(
+            name: .name
+            type_id: map(.type_id)
+            is_mutable: .is_mutable
+            definition_span: .definition_span
+            type_span: .type_span
+            visibility: .visibility
+        )
+    }
 }
 
 struct CheckedVarDecl {
