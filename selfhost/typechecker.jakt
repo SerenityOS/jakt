@@ -3197,6 +3197,14 @@ struct Typechecker {
             )
         }
 
+        // NOTE: In the case where the calling function has type errors, we may not have sufficient information to
+        //       check this generic call. If that's the case, we bail out here and let the previous errors bubble
+        //       out to the user.
+        guard parsed_function.generic_parameters.size() <= generic_arguments.size()
+            and parsed_function.generic_parameters.size() <= checked_function.generics.params.size() else {
+            return
+        }
+
         for i in 0..parsed_function.generic_parameters.size() {
             mut arg_span = call_span
             if type_args.size() > i {
