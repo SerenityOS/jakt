@@ -87,7 +87,7 @@ function find_symbols_in_namespace(anon namespace_: ParsedNamespace) throws -> [
     }
 
     for sub_namespace in namespace_.namespaces {
-        symbols.push_values(find_symbols_in_namespace(sub_namespace))
+        symbols.push_values(&find_symbols_in_namespace(sub_namespace))
     }
 
     if not namespace_.name_span.has_value() {
@@ -320,7 +320,7 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
         Enum(enum_id) => {
             let enum_ = program.get_enum(enum_id)
             let scope = program.get_scope(enum_.scope_id)
-            output.push_values(find_function_completions_in_scope(scope, program))
+            output.push_values(&find_function_completions_in_scope(scope, program))
         }
         Struct(struct_id) => {
             let structure = program.get_struct(struct_id)
@@ -331,7 +331,7 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
             }
 
             let scope = program.get_scope(structure.scope_id)
-            output.push_values(find_function_completions_in_scope(scope, program))
+            output.push_values(&find_function_completions_in_scope(scope, program))
         }
         GenericInstance(id: struct_id) => {
             let structure = program.get_struct(struct_id)
@@ -342,7 +342,7 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
             }
 
             let scope = program.get_scope(structure.scope_id)
-            output.push_values(find_function_completions_in_scope(scope, program))
+            output.push_values(&find_function_completions_in_scope(scope, program))
         }
         else => {}
     }

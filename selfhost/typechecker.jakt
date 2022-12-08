@@ -3210,10 +3210,12 @@ struct Typechecker {
             if type_args.size() > i {
                 arg_span = type_args[i].span()
             }
-            .check_type_argument_requirements(
-                generic_argument: generic_arguments[i],
-                constraints: checked_function.generics.params[i].checked_parameter.constraints,
-                arg_span)
+            if generic_arguments.size() > i {
+                .check_type_argument_requirements(
+                    generic_argument: generic_arguments[i],
+                    constraints: checked_function.generics.params[i].checked_parameter.constraints,
+                    arg_span)
+            }
         }
 
         let span = parsed_function.name_span
@@ -3834,6 +3836,31 @@ struct Typechecker {
                         // FIXME: maybe emit secondary error?
                         return false
                     }
+                } else {
+                    .error(
+                        format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                        span
+                    )
+                    return false
+                }
+            }
+            MutableReference(lhs_inner_type_id) => {
+                if rhs_type is MutableReference(rhs_inner_type_id) {
+                    if not .check_types_for_compat(
+                        lhs_type_id: lhs_inner_type_id
+                        rhs_type_id: rhs_inner_type_id
+                        generic_inferences
+                        span
+                    ) {
+                        // FIXME: maybe emit secondary error?
+                        return false
+                    }
+                } else {
+                    .error(
+                        format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                        span
+                    )
+                    return false
                 }
             }
             else => {
@@ -4762,7 +4789,7 @@ struct Typechecker {
                                 inner_condition = acc!
                                 outer_if_stmts.push(ParsedStatement::If(condition: inner_condition, then_block: then_block!, else_statement, span))
                             } else {
-                                outer_if_stmts.push_values(then_block!.stmts)
+                                outer_if_stmts.push_values(&then_block!.stmts)
                             }
                         }
 
