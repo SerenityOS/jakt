@@ -1,0 +1,13 @@
+/// Expect:
+/// - error: "Call to deprecated function: Use println() instead"
+
+struct Bar {
+    [[deprecated("Use println() instead")]] function foo(this) {
+        println("Well hello friends!")
+    }
+}
+
+function main() {
+    let bar = Bar()
+    bar.foo()
+}

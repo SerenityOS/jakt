@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "Well hello friends!\n"
+
+[[name=Foo]] struct Bar {
+    [[name=bar]] function foo(this) {
+        println("Well hello friends!")
+    }
+}
+
+function main() {
+    let bar = Bar()
+    unsafe { cpp { "bar.bar();" } }
+}

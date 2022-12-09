@@ -537,6 +537,8 @@ boxed enum Type {
 
 class Scope {
     public namespace_name: String?
+    public external_name: String?
+
     public vars: [String: VarId]
     public comptime_bindings: [String: Value]
     public structs: [String: StructId]
@@ -696,6 +698,11 @@ class CheckedFunction {
     public is_comptime: bool
     public is_virtual: bool
     public is_override: bool
+
+    public external_name: String? = None
+    public deprecated_message: String? = None
+
+    public function name_for_codegen(this) -> String => .external_name ?? .name
 
     public function map_types(mut this, anon map: &function(anon type_id: TypeId) throws -> TypeId) throws {
         .return_type_id = map(.return_type_id)
@@ -1067,6 +1074,10 @@ struct CheckedStruct {
     record_type: RecordType
     type_id: TypeId
     super_struct_id: StructId?
+
+    external_name: String? = None
+
+    function name_for_codegen(this) -> String => .external_name ?? .name
 }
 
 struct CheckedEnum {
@@ -1410,6 +1421,7 @@ boxed enum CheckedExpression {
 
 struct ResolvedNamespace {
     name: String
+    external_name: String? = None
     generic_parameters: [TypeId]?
 }
 
@@ -1421,6 +1433,10 @@ struct CheckedCall {
     function_id: FunctionId?
     return_type: TypeId
     callee_throws: bool
+
+    external_name: String?
+
+    function name_for_codegen(this) -> String => .external_name ?? .name
 }
 
 function unknown_type_id() -> TypeId => builtin(BuiltinType::Unknown)
@@ -1455,6 +1471,7 @@ class CheckedProgram {
 
         let scope = Scope(
             namespace_name: none_string
+            external_name: none_string
             vars: [:]
             comptime_bindings: [:]
             structs: [:]

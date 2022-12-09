@@ -1991,6 +1991,7 @@ struct Typechecker {
                 is_comptime: false
                 is_virtual: false
                 is_override: false
+                external_name: parsed_record.external_name
             )
 
             // Internal constructor
@@ -2164,6 +2165,7 @@ struct Typechecker {
             record_type: parsed_record.record_type
             type_id: struct_type_id
             super_struct_id
+            external_name: parsed_record.external_name
         )
 
         mut generic_parameters: [CheckedGenericParameter] = module.structures[struct_id.id].generic_parameters
@@ -2229,6 +2231,8 @@ struct Typechecker {
                 is_comptime: method.parsed_function.is_comptime
                 is_virtual: method.is_virtual
                 is_override: method.is_override
+                external_name: func.external_name
+                deprecated_message: func.deprecated_message
             )
 
             let function_id = module.add_function(checked_function)
@@ -2381,6 +2385,7 @@ struct Typechecker {
         .add_type_to_scope(scope_id, type_name: parsed_record.name, type_id: struct_type_id, span: parsed_record.name_span)
 
         let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("struct({})", parsed_record.name))
+        .get_scope(struct_scope_id).external_name = parsed_record.external_name
 
         // Add a placeholder entry, this will be replaced later.
         module.structures.push(CheckedStruct(
@@ -2394,6 +2399,7 @@ struct Typechecker {
             record_type: parsed_record.record_type
             type_id: struct_type_id
             super_struct_id: None
+            external_name: parsed_record.external_name
         ))
     }
 
@@ -3094,6 +3100,8 @@ struct Typechecker {
             is_comptime: parsed_function.is_comptime
             is_virtual: false
             is_override: false
+            external_name: parsed_function.external_name
+            deprecated_message: parsed_function.deprecated_message
         )
 
         // FIXME: We can't return a `mut Foo` from a function right now, but assigning anything to a `mut` variable makes it mutable.
@@ -6717,6 +6725,7 @@ struct Typechecker {
                 function_id: None
                 return_type: unknown_type_id()
                 callee_throws: false
+                external_name: None
             )
             span
             is_optional
@@ -7445,12 +7454,15 @@ struct Typechecker {
                 if is_import {
                     namespaces[namespace_index].name = .program.modules[scope_id.module_id.id].name
                 }
+                namespaces[namespace_index].external_name = .get_scope(scope_id).external_name
+
                 current_scope_id = scope_id
                 continue
             }
             let maybe_struct_scope = .find_struct_in_scope(scope_id: current_scope_id, name: scope_name)
             if maybe_struct_scope.has_value() {
                 let structure = .get_struct(maybe_struct_scope!)
+                namespaces[namespace_index].external_name = structure.external_name
                 current_scope_id = structure.scope_id
                 continue
             }
@@ -7649,7 +7661,7 @@ struct Typechecker {
         }
 
         for name in call.namespace_ {
-            resolved_namespaces.push(ResolvedNamespace(name, generic_parameters: None))
+            resolved_namespaces.push(ResolvedNamespace(name, external_name: None, generic_parameters: None))
         }
 
         let callee_scope_id = match parent_id.has_value() {
@@ -7768,6 +7780,7 @@ struct Typechecker {
                             function_id: None,
                             return_type,
                             callee_throws
+                            external_name: None
                         ),
                         span,
                         type_id: return_type
@@ -7869,6 +7882,20 @@ struct Typechecker {
             .dump_try_hint(span)
         }
 
+        let external_name = match resolved_function_id.has_value() {
+            true => {
+                let function_ = .get_function(resolved_function_id!)
+                if function_.deprecated_message.has_value() {
+                    .error(
+                        format("Call to deprecated function: {}", function_.deprecated_message!)
+                        span
+                    )
+                }
+                yield function_.external_name
+            }
+            else => None
+        }
+
         let function_call = CheckedCall(
             namespace_: resolved_namespaces
             name: call.name
@@ -7877,6 +7904,7 @@ struct Typechecker {
             function_id: resolved_function_id
             return_type
             callee_throws
+            external_name
         )
         let checked_call = CheckedExpression::Call(
             call: function_call
