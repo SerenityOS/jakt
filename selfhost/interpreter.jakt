@@ -219,6 +219,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
             function_id: constructor
             return_type: struct_.type_id
             callee_throws: callee.can_throw
+            external_name: None
         )
 
         yield CheckedExpression::Call(
@@ -270,6 +271,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
             function_id: constructor
             return_type: enum_.type_id
             callee_throws: callee.can_throw
+            external_name: None
         )
 
         yield CheckedExpression::Call(

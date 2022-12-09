@@ -325,6 +325,8 @@ struct ParsedRecord {
     implements_list: [ParsedNameWithGenericParameters]?
     methods: [ParsedMethod]
     record_type: RecordType
+
+    external_name: String? = None
 }
 
 enum FunctionType {
@@ -353,6 +355,9 @@ struct ParsedFunction {
     must_instantiate: bool
     is_comptime: bool
     is_fat_arrow: bool
+
+    external_name: String? = None
+    deprecated_message: String? = None // if not None, the function is deprecated
 
     function equals(this, anon other: ParsedFunction) -> bool {
         if this.name != other.name or
@@ -1478,6 +1483,19 @@ enum Visibility {
     Restricted(whitelist: [VisibilityRestriction], span: Span)
 }
 
+struct ParsedAttributeArgument {
+    name: String
+    span: Span
+    assigned_value: String?
+}
+
+struct ParsedAttribute {
+    name: String
+    span: Span
+    assigned_value: String?
+    arguments: [ParsedAttributeArgument]
+}
+
 struct Parser {
     index: usize
     tokens: [Token]
@@ -1544,35 +1562,67 @@ struct Parser {
             generating_import_extern_after_include: []
         )
 
+        mut active_attributes: [ParsedAttribute] = []
+
         while not .eof() {
             match .current() {
                 Trait => {
+                    if not active_attributes.is_empty() {
+                        .error("Cannot apply attributes to trait declarations", active_attributes[0].span)
+                        active_attributes = []
+                    }
                     .index++
                     parsed_namespace.traits.push(.parse_trait())
                 }
                 Identifier(name) => match name {
                     "type" => {
+                        if not active_attributes.is_empty() {
+                            .error("Cannot apply attributes to external trait declarations", active_attributes[0].span)
+                            active_attributes = []
+                        }
                         .index++
                         parsed_namespace.external_trait_implementations.push(.parse_external_trait_implementation())
                     }
                     else => {
+                        active_attributes = []
                         .error("Unexpected token (expected keyword)", .current().span())
                         break
                     }
                 }
                 Import => {
+                    if not active_attributes.is_empty() {
+                        .error("Cannot apply attributes to imports", active_attributes[0].span)
+                        active_attributes = []
+                    }
                     .index++
                     .parse_import(parent: &mut parsed_namespace)
                 }
+                LSquare => {
+                    if .peek(1) is LSquare {
+                        .index += 2
+                        .parse_attribute_list(&mut active_attributes)
+                    } else {
+                        .error("Unexpected token (expected ‘[[’)", .current().span())
+                        .index += 1
+                    }
+                }
                 Function | Comptime => {
-                    let parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public, is_comptime: .current() is Comptime)
+                    mut parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public, is_comptime: .current() is Comptime)
+                    .apply_attributes(&mut parsed_function, &active_attributes)
+                    active_attributes = []
                     parsed_namespace.functions.push(parsed_function)
                 }
                 Struct | Class | Enum | Boxed => {
-                    let parsed_record = .parse_record(DefinitionLinkage::Internal)
+                    mut parsed_record = .parse_record(DefinitionLinkage::Internal)
+                    .apply_attributes(&mut parsed_record, &active_attributes)
+                    active_attributes = []
                     parsed_namespace.records.push(parsed_record)
                 }
                 Namespace => {
+                    if not active_attributes.is_empty() {
+                        .error("Cannot apply attributes to namespaces", active_attributes[0].span)
+                        active_attributes = []
+                    }
                     .index++
                     let name: (String, Span)? = match .current() {
                         Identifier(name, span) => {
@@ -1602,18 +1652,25 @@ struct Parser {
                     .index++
                     match .current() {
                         Function => {
-                            let parsed_function = .parse_function(FunctionLinkage::External, Visibility::Public, is_comptime: false)
+                            mut parsed_function = .parse_function(FunctionLinkage::External, Visibility::Public, is_comptime: false)
+                            .apply_attributes(&mut parsed_function, &active_attributes)
+                            active_attributes = []
                             parsed_namespace.functions.push(parsed_function)
                         }
                         Struct => {
-                            let parsed_struct = .parse_struct(DefinitionLinkage::External)
+                            mut parsed_struct = .parse_struct(DefinitionLinkage::External)
+                            .apply_attributes(&mut parsed_struct, &active_attributes)
+                            active_attributes = []
                             parsed_namespace.records.push(parsed_struct)
                         }
                         Class => {
-                            let parsed_class = .parse_class(DefinitionLinkage::External)
+                            mut parsed_class = .parse_class(DefinitionLinkage::External)
+                            .apply_attributes(&mut parsed_class, &active_attributes)
+                            active_attributes = []
                             parsed_namespace.records.push(parsed_class)
                         }
                         else => {
+                            active_attributes = []
                             .error("Unexpected keyword", .current().span())
                         }
                     }
@@ -1633,6 +1690,202 @@ struct Parser {
         }
 
         return parsed_namespace
+    }
+
+    function apply_attributes(mut this, anon parsed_function: &mut ParsedFunction, active_attributes: &[ParsedAttribute]) throws {
+        for attribute in *active_attributes {
+            match attribute.name {
+                "name" => {
+                    guard attribute.assigned_value.has_value() else {
+                        .error(
+                            format("The attribute '{}' requires a value", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    if parsed_function.external_name.has_value() {
+                        .error(
+                            format("The attribute '{}' cannot be applied more than once", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    parsed_function.external_name = attribute.assigned_value
+                }
+                "deprecated" => {
+                    if parsed_function.deprecated_message.has_value() {
+                        .error(
+                            format("The attribute '{}' cannot be applied more than once", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    let message = attribute.arguments.first()?.name ?? format("The function '{}' is marked as deprecated", parsed_function.name)
+                    parsed_function.deprecated_message = message
+                }
+                else => {
+                    .error(
+                        format("The attribute '{}' does not apply to functions", attribute.name)
+                        attribute.span
+                    )
+                }
+            }
+        }
+    }
+
+    function apply_attributes(mut this, anon parsed_method: &mut ParsedMethod, active_attributes: &[ParsedAttribute]) throws {
+        .apply_attributes(parsed_function: &mut parsed_method.parsed_function, active_attributes)
+    }
+
+    function apply_attributes(mut this, anon parsed_record: &mut ParsedRecord, active_attributes: &[ParsedAttribute]) throws {
+        for attribute in *active_attributes {
+            match attribute.name {
+                "name" => {
+                    guard attribute.assigned_value.has_value() else {
+                        .error(
+                            format("The attribute '{}' requires a value", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    if parsed_record.external_name.has_value() {
+                        .error(
+                            format("The attribute '{}' cannot be applied more than once", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    parsed_record.external_name = attribute.assigned_value
+                }
+                else => {
+                    .error(
+                        format("The attribute '{}' does not apply to records", attribute.name)
+                        attribute.span
+                    )
+                }
+            }
+        }
+    }
+
+    function parse_attribute_list(mut this, active_attributes: &mut [ParsedAttribute]) throws {
+        while not .eof() and not .current() is RSquare and not .peek(1) is RSquare {
+            let attribute = .parse_attribute()
+            if attribute.has_value() {
+                active_attributes.push(attribute!)
+            }
+        }
+        if .current() is RSquare and .peek(1) is RSquare {
+            .index += 2
+        } else {
+            .error("Expected ‘]]’", .current().span())
+        }
+    }
+
+    function parse_attribute(mut this) throws -> ParsedAttribute? {
+        // Ident ('(' ((Ident|String) (':' (Ident|String))? ','?)* ')')? ('=' (Ident|String))?
+        let span = .current().span()
+        let name = match .current() {
+            Identifier(name) => {
+                .index++
+                yield name
+            }
+            else => {
+                .error("Expected identifier", .current().span())
+                return None
+            }
+        }
+
+        mut arguments: [ParsedAttributeArgument] = []
+        if .current() is LParen {
+            .index++
+            while not .eof() and not .current() is RParen {
+                let span = .current().span()
+
+                let argument_name = match .current() {
+                    Identifier(name) => {
+                        .index++
+                        yield name
+                    }
+                    QuotedString(quote) => {
+                        .index++
+                        yield quote
+                    }
+                    else => {
+                        .error("Expected identifier or string literal", .current().span())
+                        return None
+                    }
+                }
+
+                mut argument_value: String? = None
+                if .current() is Colon {
+                    .index++
+                    argument_value = match .current() {
+                        Identifier(name) => {
+                            .index++
+                            yield name
+                        }
+                        QuotedString(quote) => {
+                            .index++
+                            yield quote
+                        }
+                        else => {
+                            .error("Expected identifier or string literal", .current().span())
+                            return None
+                        }
+                    }
+                }
+
+                arguments.push(ParsedAttributeArgument(
+                    name: argument_name
+                    span
+                    assigned_value: argument_value
+                ))
+
+                if .current() is Comma {
+                    .index++
+                } else if not .current() is RParen {
+                    .error("Expected ‘,’ or ‘)’", .current().span())
+                    break
+                }
+            }
+
+            if .current() is RParen {
+                .index++
+            } else {
+                .error("Expected ‘)’", .current().span())
+            }
+        }
+
+        mut assigned_value: String? = None
+        if .current() is Equal {
+            .index++
+            assigned_value = match .current() {
+                Identifier(name) => {
+                    .index++
+                    yield Some(name)
+                }
+                QuotedString(quote) => {
+                    .index++
+                    yield Some(quote)
+                }
+                else => {
+                    .error("Expected identifier or string literal", .current().span())
+                    yield None
+                }
+            }
+        }
+
+        return ParsedAttribute(
+            name
+            span
+            assigned_value
+            arguments
+        )
     }
 
     function parse_external_trait_implementation(mut this) throws -> ParsedExternalTraitImplementation {
@@ -2469,12 +2722,18 @@ struct Parser {
         // Have we already found an error?
         mut error = false;
 
+        // Attributes being parsed for the next entity
+        mut active_attributes: [ParsedAttribute] = []
+
         while not .eof() {
             let token = .current()
             match token {
                 RCurly => {
                     if last_visibility.has_value() {
                         .error("Expected function or parameter after visibility modifier", token.span())
+                    }
+                    if not active_attributes.is_empty() {
+                        .error("Expected function after attribute", token.span())
                     }
                     .index++
                     return (fields, methods)
@@ -2506,7 +2765,20 @@ struct Parser {
                     last_visibility = .parse_restricted_visibility_modifier()
                     last_visibility_span = span
                 }
+                LSquare => {
+                    if .peek(1) is LSquare {
+                        .index += 2
+                        .parse_attribute_list(&mut active_attributes)
+                    } else {
+                        .error("Unexpected token (expected ‘[[’)", .current().span())
+                        .index += 1
+                    }
+                }
                 Identifier => {
+                    if not active_attributes.is_empty() {
+                        .error("Attributes cannot be applied to fields", .current().span())
+                        active_attributes = []
+                    }
                     // Parse a field
                     let visibility = last_visibility ?? default_visibility
                     last_visibility = None
@@ -2544,7 +2816,9 @@ struct Parser {
                     last_virtual = false
                     last_override = false
 
-                    let parsed_method = .parse_method(function_linkage, visibility, is_virtual, is_override, is_comptime: .current() is Comptime)
+                    mut parsed_method = .parse_method(function_linkage, visibility, is_virtual, is_override, is_comptime: .current() is Comptime)
+                    .apply_attributes(&mut parsed_method, &active_attributes)
+                    active_attributes = []
 
                     methods.push(parsed_method)
                 }
@@ -2557,6 +2831,8 @@ struct Parser {
                     .index++
                 }
                 else => {
+                    active_attributes = []
+
                     // TODO: Find a better way of only reporting the first error.
                     //       Also, should we report every error when running as the "language server"?
                     if not error {

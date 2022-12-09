@@ -812,7 +812,7 @@ struct CodeGenerator {
                 .current_function = Some(function_)
                 defer .current_function = previous_function_id
 
-                if not function_.type is ImplicitConstructor and function_.name != "main" {
+                if not function_.type is ImplicitConstructor and function_.name_for_codegen() != "main" {
                     output += .codegen_function_predecl(function_)
                     output += "\n"
                 }
@@ -872,7 +872,7 @@ struct CodeGenerator {
             output += "[[noreturn]] "
         }
 
-        if function_.name == "main" {
+        if function_.name_for_codegen() == "main" {
             output += "ErrorOr<int>"
         } else {
             if as_method and function_.is_static() {
@@ -892,7 +892,7 @@ struct CodeGenerator {
         }
 
         output += " "
-        output += function_.name
+        output += function_.name_for_codegen()
         output += "("
 
         mut first = true
@@ -958,7 +958,7 @@ struct CodeGenerator {
             else => ""
         }
 
-        output += struct_.name
+        output += struct_.name_for_codegen()
         output += ";"
 
         return output
@@ -983,7 +983,7 @@ struct CodeGenerator {
         match struct_.record_type {
             Class => {
                 mut class_name_with_generics = ""
-                class_name_with_generics += struct_.name
+                class_name_with_generics += struct_.name_for_codegen()
                 mut first = true
                 for generic_parameter in struct_.generic_parameters {
                     if not first {
@@ -1000,15 +1000,15 @@ struct CodeGenerator {
 
                 if struct_.super_struct_id.has_value() {
                     let super_struct = .program.get_struct(struct_.super_struct_id!)
-                    output += format("class {}: public {} {{\n", struct_.name, super_struct.name)
+                    output += format("class {}: public {} {{\n", struct_.name_for_codegen(), super_struct.name_for_codegen())
                 } else {
-                    output += format("class {} : public RefCounted<{}>, public Weakable<{}> {{\n", struct_.name, class_name_with_generics, class_name_with_generics)
+                    output += format("class {} : public RefCounted<{}>, public Weakable<{}> {{\n", struct_.name_for_codegen(), class_name_with_generics, class_name_with_generics)
                 }
                 output += "  public:\n"
-                output += format("virtual ~{}() = default;\n", struct_.name)
+                output += format("virtual ~{}() = default;\n", struct_.name_for_codegen())
             }
             Struct => {
-                output += format("struct {}", struct_.name)
+                output += format("struct {}", struct_.name_for_codegen())
                 output += " {\n"
                 output += "  public:\n"
             }
@@ -1063,7 +1063,7 @@ struct CodeGenerator {
 
         output += "};"
 
-        .deferred_output += .codegen_ak_formatter(name: struct_.name, generic_parameter_names)
+        .deferred_output += .codegen_ak_formatter(name: struct_.name_for_codegen(), generic_parameter_names)
 
         return output
     }
@@ -1327,7 +1327,7 @@ struct CodeGenerator {
         }
         output += "debug_description() const { "
         output += "auto builder = MUST(StringBuilder::create());"
-        output += format("TRY(builder.append(\"{}(\"));", struct_.name)
+        output += format("TRY(builder.append(\"{}(\"));", struct_.name_for_codegen())
         output += "{\n"
         output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
 
@@ -1639,7 +1639,7 @@ struct CodeGenerator {
                     let is_type = match .program.get_type(type_id) {
                         Struct(id) => {
                             let type_module = .program.get_module(id.module)
-                            yield .program.get_struct(id).name
+                            yield .program.get_struct(id).name_for_codegen()
                         }
                         else => .codegen_type(type_id)
                     }
@@ -2331,7 +2331,7 @@ struct CodeGenerator {
     }
 
     function codegen_function_return_type(mut this, anon function_: CheckedFunction) throws -> String {
-        if function_.is_static() and function_.name == "main" {
+        if function_.is_static() and function_.name_for_codegen() == "main" {
             return "ErrorOr<int>"
         }
         let type_name = .codegen_type(function_.return_type_id)
@@ -2355,7 +2355,7 @@ struct CodeGenerator {
             }
 
             output += .codegen_expression(lhs)
-            if rhs_type is GenericInstance(id) and .program.get_struct(id).name == "Optional" {
+            if rhs_type is GenericInstance(id) and .program.get_struct(id).name_for_codegen() == "Optional" {
                 if rhs_can_throw {
                     output += ".try_value_or_lazy_evaluated_optional";
                 } else {
@@ -2640,7 +2640,7 @@ struct CodeGenerator {
             output += "template "
         }
 
-        output += call.name
+        output += call.name_for_codegen()
 
         if not generic_parameters.is_empty() {
             mut types: [String] = []
@@ -2731,18 +2731,18 @@ struct CodeGenerator {
                             Struct(struct_id) => {
                                 let struct_ = .program.get_struct(struct_id)
                                 if struct_.record_type is Class {
-                                    output += call.name
+                                    output += call.name_for_codegen()
                                     output += "::"
                                     output += "create"
                                 } else {
-                                    output += call.name
+                                    output += call.name_for_codegen()
                                 }
                             }
                             GenericInstance(id, args) => {
                                 let struct_ = .program.get_struct(id)
                                 if struct_.record_type is Class {
                                     output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
-                                    output += struct_.name
+                                    output += struct_.name_for_codegen()
                                     output += "<"
                                     mut first = true
                                     for arg in args {
@@ -2755,7 +2755,7 @@ struct CodeGenerator {
                                     }
                                     output += ">::create"
                                 } else {
-                                    output += call.name
+                                    output += call.name_for_codegen()
                                     output += "<"
                                     mut first = true
                                     for arg in args {
@@ -2793,14 +2793,14 @@ struct CodeGenerator {
                                     output += .codegen_namespace_path(call)
                                     output += "template create<typename "
                                     output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
-                                    output += "::" + call.name + ">"
+                                    output += "::" + call.name_for_codegen() + ">"
                                 } else {
                                     output += " " + .codegen_type(call.return_type)
                                     output += " { "
                                     output += "typename "
                                     output += .codegen_type(call.return_type)
                                     output += "::"
-                                    output += call.name
+                                    output += call.name_for_codegen()
 
                                     close_enum_type_wrapper = true
                                 }
@@ -2834,15 +2834,15 @@ struct CodeGenerator {
                            function_.linkage is Internal {
 
                             let struct_ = .program.get_struct(function_.struct_id!)
-                            output += struct_.name
+                            output += struct_.name_for_codegen()
                             output += "::"
                         }
 
-                        output += call.name
+                        output += call.name_for_codegen()
                     }
                 } else {
                     output += .codegen_namespace_path(call)
-                    output += call.name
+                    output += call.name_for_codegen()
                 }
 
                 let generic_parameters = call.type_args
@@ -2887,7 +2887,7 @@ struct CodeGenerator {
                 break
             }
 
-            output += namespace_.name
+            output += namespace_.external_name ?? namespace_.name
             if namespace_.generic_parameters.has_value() {
                 output += "<"
                 mut i: usize = 0
@@ -3198,7 +3198,7 @@ struct CodeGenerator {
             let inner_struct_id = inner_weak_ptr_struct_id.value()
             let struct_ = .program.get_struct(inner_struct_id)
             output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
-            output += struct_.name
+            output += struct_.name_for_codegen()
 
             output += ">"
         } else {
@@ -3210,7 +3210,7 @@ struct CodeGenerator {
             }
             output += namespace_
             output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
-            output += struct_.name
+            output += struct_.name_for_codegen()
             output += "<"
             mut first = true
             for type_id in args {
@@ -3306,7 +3306,7 @@ struct CodeGenerator {
                 output += "::"
             }
             output += .codegen_namespace_qualifier(scope_id: checked_struct.scope_id)
-            output += checked_struct.name
+            output += checked_struct.name_for_codegen()
             output += ">"
         } else {
             if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))  or checked_struct.definition_linkage is External) {
@@ -3314,7 +3314,7 @@ struct CodeGenerator {
                 output += "::"
             }
             output += .codegen_namespace_qualifier(scope_id: checked_struct.scope_id)
-            output += checked_struct.name
+            output += checked_struct.name_for_codegen()
         }
 
         return output
@@ -3368,7 +3368,7 @@ struct CodeGenerator {
 
             output += "protected:\n"
 
-            output += format("explicit {}(", function_.name)
+            output += format("explicit {}(", function_.name_for_codegen())
             mut first = true
             for param in function_.params {
                 if not first {
@@ -3385,7 +3385,7 @@ struct CodeGenerator {
             output += ");\n"
 
             mut class_name_with_generics = ""
-            class_name_with_generics += structure.name
+            class_name_with_generics += structure.name_for_codegen()
 
             first = true
             for generic_parameter in structure.generic_parameters {
@@ -3424,7 +3424,7 @@ struct CodeGenerator {
         }
 
         mut output = ""
-        output += function_.name
+        output += function_.name_for_codegen()
         output += "("
 
         mut first = true
@@ -3473,10 +3473,10 @@ struct CodeGenerator {
 
         if structure.record_type is Class {
             if is_inline {
-                output += function_.name
+                output += function_.name_for_codegen()
                 output += "("
             } else {
-                output += format("{}::{}(", qualified_name, function_.name)
+                output += format("{}::{}(", qualified_name, function_.name_for_codegen())
             }
 
             mut first = true
@@ -3502,7 +3502,7 @@ struct CodeGenerator {
                 let parent_constructor_parameter_count = function_.params.size() - structure.fields.size()
                 if parent_constructor_parameter_count > 0 {
                     mut parent_initializer = ""
-                    parent_initializer += .program.get_struct(structure.super_struct_id!).name
+                    parent_initializer += .program.get_struct(structure.super_struct_id!).name_for_codegen()
                     parent_initializer += "("
 
                     mut strings: [String] = []
@@ -3525,7 +3525,7 @@ struct CodeGenerator {
             output += "{}\n"
 
             mut class_name_with_generics = ""
-            class_name_with_generics += structure.name
+            class_name_with_generics += structure.name_for_codegen()
 
             first = true
             for generic_parameter in structure.generic_parameters {
@@ -3590,7 +3590,7 @@ struct CodeGenerator {
             output += qualified_name
             output += "::"
         }
-        output += function_.name
+        output += function_.name_for_codegen()
         output += "("
 
         mut first = true
@@ -3642,7 +3642,7 @@ struct CodeGenerator {
 
         output += .codegen_function_generic_parameters(function_)
 
-        let is_main = function_.name == "main" and not containing_struct.has_value()
+        let is_main = function_.name_for_codegen() == "main" and not containing_struct.has_value()
 
         if function_.return_type_id.equals(never_type_id()) {
             output += "[[noreturn]] "
@@ -3672,7 +3672,7 @@ struct CodeGenerator {
                 output += qualifier
                 output += "::"
             }
-            output += function_.name
+            output += function_.name_for_codegen()
         }
 
         output += "("
