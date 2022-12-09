@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "1\n"
+
+struct Foo<T> {
+    value: [T]
+
+    function get(this) -> T {
+        let temp: T = .value[0]
+
+        return temp
+    }
+}
+
+function main() {
+    mut foo = Foo(value: [1])
+
+    println("{}", foo.get())
+}

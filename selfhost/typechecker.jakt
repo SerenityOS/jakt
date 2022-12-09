@@ -2717,7 +2717,7 @@ struct Typechecker {
                     if function_.is_virtual {
                         if not all_virtuals.contains(function_.name) {
                             all_virtuals[function_.name] = [function_]
-                        }else {
+                        } else {
                             all_virtuals[function_.name].push(function_)
                         }
                     }
@@ -4870,44 +4870,16 @@ struct Typechecker {
             }
         }
 
-        if lhs_type is GenericInstance(id, args) {
-            if id.equals(weak_ptr_struct_id) {
-                if not var.is_mutable {
-                    .error("Weak reference must be mutable", var.span)
-                }
-                if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
-                }
-            } else if id.equals(optional_struct_id) {
-                if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
-                }
-            } else {
-                if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
-                }
-            }
-        } else if lhs_type.is_builtin() {
-            let number_constant = checked_expr.to_number_constant(program: .program)
-
-            mut is_rhs_zero = false
-            if number_constant.has_value() {
-                is_rhs_zero = match number_constant! {
-                    Signed(value) => value == 0
-                    Unsigned(value) => value == 0
-                    Floating(value) => value == 0.0
-                }
-            }
-
-            if not (.is_numeric(lhs_type_id) and is_rhs_zero) and (.is_integer(lhs_type_id) ^ .is_integer(rhs_type_id)) {
-                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
-                return CheckedStatement::Garbage(span)
-            }
-        } else {
-            if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
-            }
+        if lhs_type is GenericInstance(id, args) and id.equals(weak_ptr_struct_id) and not var.is_mutable {
+            .error("Weak reference must be mutable", var.span)
         }
+
+        .check_types_for_compat(
+            lhs_type_id
+            rhs_type_id
+            generic_inferences: &mut .generic_inferences
+            span:  checked_expr.span()
+        )
 
         let checked_var = CheckedVariable(
             name: var.name
