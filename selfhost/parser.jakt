@@ -4370,10 +4370,11 @@ struct Parser {
                         .error("Expected ']'", .current().span())
                     }
 
+                    let end = .index - 1
                     yield ParsedExpression::IndexedExpression(
                         base: result,
                         index: index_expr,
-                        span: merge_spans(start, .current().span()))
+                        span: merge_spans(start, .tokens[end].span()))
                 }
                 else => {
                     break
