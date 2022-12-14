@@ -5,7 +5,9 @@
  */
 
 #include <IO/File.h>
-#include <Jakt/RefPtr.h>
+
+#include <AK/RefPtr.h>
+
 #include <errno.h>
 
 #if defined(AK_OS_MACOS)
@@ -37,9 +39,10 @@ File::~File()
     fclose(m_stdio_file);
 }
 
-ErrorOr<NonnullRefPtr<File>> File::open_for_reading(String path)
+ErrorOr<NonnullRefPtr<File>> File::open_for_reading(StringView path_)
 {
-    auto* stdio_file = fopen(path.c_string(), "rb");
+    auto path = DeprecatedString(path_);
+    auto* stdio_file = fopen(path.characters(), "rb");
     if (!stdio_file) {
         return Error::from_errno(errno);
     }
@@ -48,9 +51,10 @@ ErrorOr<NonnullRefPtr<File>> File::open_for_reading(String path)
     return file;
 }
 
-ErrorOr<NonnullRefPtr<File>> File::open_for_writing(String path)
+ErrorOr<NonnullRefPtr<File>> File::open_for_writing(StringView path_)
 {
-    auto* stdio_file = fopen(path.c_string(), "wb");
+    auto path = DeprecatedString(path_);
+    auto* stdio_file = fopen(path.characters(), "wb");
     if (!stdio_file) {
         return Error::from_errno(errno);
     }
@@ -59,9 +63,9 @@ ErrorOr<NonnullRefPtr<File>> File::open_for_writing(String path)
     return file;
 }
 
-ErrorOr<Array<u8>> File::read_all()
+ErrorOr<DynamicArray<u8>> File::read_all()
 {
-    auto entire_file = TRY(Array<u8>::create_empty());
+    auto entire_file = TRY(DynamicArray<u8>::create_empty());
 
     while (true) {
         u8 buffer[4096];
@@ -79,7 +83,7 @@ ErrorOr<Array<u8>> File::read_all()
     }
 }
 
-ErrorOr<size_t> File::read(Array<u8> buffer)
+ErrorOr<size_t> File::read(DynamicArray<u8> buffer)
 {
     auto nread = fread(buffer.unsafe_data(), 1, buffer.size(), m_stdio_file);
     if (nread == 0) {
@@ -91,7 +95,7 @@ ErrorOr<size_t> File::read(Array<u8> buffer)
     return nread;
 }
 
-ErrorOr<size_t> File::write(Array<u8> data)
+ErrorOr<size_t> File::write(DynamicArray<u8> data)
 {
     if (data.is_empty()) {
         return 0;
@@ -104,17 +108,18 @@ ErrorOr<size_t> File::write(Array<u8> data)
     return nwritten;
 }
 
-bool File::exists(String path)
+bool File::exists(StringView path_)
 {
+    auto path = DeprecatedString(path_);
 #ifdef _WIN32
-    auto res = GetFileAttributesA(path.c_string());
+    auto res = GetFileAttributesA(path.characters());
     return res != INVALID_FILE_ATTRIBUTES;
 #else
-    return access(path.c_string(), F_OK) == 0;
+    return access(path.characters(), F_OK) == 0;
 #endif
 }
 
-ErrorOr<String> File::current_executable_path()
+ErrorOr<DeprecatedString> File::current_executable_path()
 {
     char path[4096] {};
 #ifdef _WIN32
@@ -143,7 +148,7 @@ ErrorOr<String> File::current_executable_path()
 #endif
     path[sizeof(path) - 1] = '\0';
 
-    return String(path);
+    return DeprecatedString(StringView { path, strlen(path) });
 }
 
 }

@@ -853,7 +853,10 @@ function main(args: [String]) {
                 }
             }
 
-            for line in output.split('\n') {
+            // FIXME: Can't `for line in output.split()` because `String::split()` returns a Vector<String>
+            //        that can't be iterated in Jakt.
+            let lines = output.split('\n')
+            for line in lines {
                 eprintln("\x1b[m\x1b[1m|\x1b[m\t{}", line)
             }
         }

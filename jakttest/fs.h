@@ -3,9 +3,11 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 #pragma once
-#include <Jakt/Forward.h>
-#include <Jakt/String.h>
-#include <Jakt/RefPtr.h>
+#include <Jakt/AKIntegration.h>
+
+#include <AK/Forward.h>
+#include <AK/DeprecatedString.h>
+#include <AK/RefPtr.h>
 #ifndef _WIN32
 #include <dirent.h>
 #include <sys/stat.h>
@@ -28,7 +30,7 @@ public:
     {
         other.m_dirfd = NULL;
     }
-    ErrorOr<Optional<String>> next();
+    ErrorOr<Optional<DeprecatedString>> next();
 };
 
 class StatResults {
@@ -55,7 +57,7 @@ public:
     static ErrorOr<NonnullRefPtr<DirectoryIterator>> create(RefPtr<Impl>);
     ~DirectoryIterator();
     DirectoryIterator(DirectoryIterator&& other);
-    ErrorOr<Optional<String>> next();
+    ErrorOr<Optional<DeprecatedString>> next();
 
 private:
     DirectoryIterator(RefPtr<Impl> impl);
@@ -85,10 +87,10 @@ public:
 };
 #endif
 
-ErrorOr<void> mkdir(String path);
-ErrorOr<void> rmdir(String path);
-ErrorOr<void> unlink(String path);
+ErrorOr<void> mkdir(DeprecatedString path);
+ErrorOr<void> rmdir(DeprecatedString path);
+ErrorOr<void> unlink(DeprecatedString path);
 
-ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(String path);
-ErrorOr<Optional<StatResults>> stat_silencing_enoent(String path);
+ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(DeprecatedString path);
+ErrorOr<Optional<StatResults>> stat_silencing_enoent(DeprecatedString path);
 }

@@ -6,27 +6,30 @@
 
 #pragma once
 
-#include <Builtins/Array.h>
-#include <Jakt/Error.h>
-#include <Jakt/RefCounted.h>
-#include <Jakt/String.h>
+#include <Jakt/AKIntegration.h>
+
+#include <AK/Error.h>
+#include <AK/RefCounted.h>
+#include <AK/DeprecatedString.h>
+
+#include <Builtins/DynamicArray.h>
 #include <stdio.h>
 
 namespace JaktInternal {
 class File final : public RefCounted<File> {
 public:
-    static ErrorOr<NonnullRefPtr<File>> open_for_reading(String path);
-    static ErrorOr<NonnullRefPtr<File>> open_for_writing(String path);
+    static ErrorOr<NonnullRefPtr<File>> open_for_reading(StringView path);
+    static ErrorOr<NonnullRefPtr<File>> open_for_writing(StringView path);
 
-    ErrorOr<size_t> read(Array<u8>);
-    ErrorOr<size_t> write(Array<u8>);
+    ErrorOr<size_t> read(DynamicArray<u8>);
+    ErrorOr<size_t> write(DynamicArray<u8>);
 
-    ErrorOr<Array<u8>> read_all();
+    ErrorOr<DynamicArray<u8>> read_all();
 
     ~File();
 
-    static bool exists(String path);
-    static ErrorOr<String> current_executable_path();
+    static bool exists(StringView path);
+    static ErrorOr<DeprecatedString> current_executable_path();
 
 private:
     File();

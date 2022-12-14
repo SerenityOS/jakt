@@ -1,7 +1,9 @@
 #pragma once
 
-#include <Jakt/Error.h>
-#include <Jakt/Noncopyable.h>
+#include <Jakt/AKIntegration.h>
+
+#include <AK/Error.h>
+#include <AK/Noncopyable.h>
 
 namespace JaktInternal::PrettyPrint {
 

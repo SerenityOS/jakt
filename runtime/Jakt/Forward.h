@@ -8,7 +8,15 @@
 
 #include <Jakt/Types.h>
 
+
+namespace JaktInternal {
+template<typename T>
+class DynamicArray;
+}
+
 namespace Jakt {
+
+using JaktInternal::DynamicArray;
 
 class Bitmap;
 class Error;
@@ -25,7 +33,7 @@ template<typename T>
 class Span;
 
 template<typename T, size_t Size>
-struct LinearArray;
+struct Array;
 
 template<typename Container, typename ValueType>
 class SimpleIterator;
@@ -84,10 +92,3 @@ template<typename T, typename = void>
 struct Formatter;
 
 }
-
-namespace JaktInternal {
-template<typename T>
-class Array;
-}
-
-using JaktInternal::Array;

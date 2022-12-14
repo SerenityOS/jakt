@@ -6,9 +6,11 @@ enum BetterOptional<T> {
     None
 }
 
-enum BetterResult<T, E> {
+// FIXME: (Err -> E) is a workaround for a clang bug where the specialised template scope is somehow
+//        placed before the namespace whose member is being specialised.
+enum BetterResult<T, Err> {
     ImFineHowAreYou(T)
-    TheWorldIsBurning(E)
+    TheWorldIsBurning(Err)
 }
 
 enum ObjectivelyBetterOptional<T> {

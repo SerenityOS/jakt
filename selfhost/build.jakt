@@ -122,7 +122,7 @@ struct Builder {
             ))
             ids.add(id)
 
-            eprintln("{:c}[2LBuilding: {}/{}", 0x1b, ids.size(), .files_to_compile.size())
+            eprintln("{:c}[2LBuilding: {}/{} ({})", 0x1b, ids.size(), .files_to_compile.size(), file_name)
         }
 
         .pool.wait_for_all_jobs_to_complete()

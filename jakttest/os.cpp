@@ -3,11 +3,12 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 #include "os.h"
-#include <Jakt/String.h>
+
+#include <AK/DeprecatedString.h>
 // FIXME:  StringBuilder fails to compile because
 // adopt_nonnull_ref_or_enomem isn't included.
-#include <Jakt/RefPtr.h>
-#include <Jakt/StringBuilder.h>
+#include <AK/RefPtr.h>
+#include <Jakt/DeprecatedStringBuilder.h>
 #include <stdlib.h>
 #ifndef _WIN32
 #include <unistd.h>
@@ -29,9 +30,9 @@ ErrorOr<size_t> get_num_cpus()
     return static_cast<size_t>(result);
 }
 
-ErrorOr<String> get_system_temporary_directory()
+ErrorOr<DeprecatedString> get_system_temporary_directory()
 {
-    auto builder = TRY(StringBuilder::create());
+    auto builder = TRY(DeprecatedStringBuilder::create());
     auto const result = getenv("TMP_DIR");
     TRY(builder.append_c_string(result ?: "/tmp"));
     return TRY(builder.to_string());
@@ -48,9 +49,9 @@ ErrorOr<void> ignore_sigchild()
     return {};
 }
 
-ErrorOr<String> get_script_execution_string()
+ErrorOr<DeprecatedString> get_script_execution_string()
 {
-    return String("python3");
+    return DeprecatedString("python3"sv);
 }
 #else
 ErrorOr<size_t> get_num_cpus()
@@ -60,9 +61,9 @@ ErrorOr<size_t> get_num_cpus()
     return sys_info.dwNumberOfProcessors;
 }
 
-ErrorOr<String> get_system_temporary_directory()
+ErrorOr<DeprecatedString> get_system_temporary_directory()
 {
-    auto builder = TRY(StringBuilder::create());
+    auto builder = TRY(DeprecatedStringBuilder::create());
     TRY(builder.append_c_string(getenv("TEMP")));
     return TRY(builder.to_string());
 }
@@ -72,9 +73,9 @@ ErrorOr<void> ignore_sigchild()
     return {};
 }
 
-ErrorOr<String> get_script_execution_string()
+ErrorOr<DeprecatedString> get_script_execution_string()
 {
-    return String("python3.exe");
+    return DeprecatedString("python3.exe"sv);
 }
 #endif
 }

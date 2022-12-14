@@ -1,9 +1,13 @@
 #pragma once
 
-#include <Jakt/Checked.h>
-#include <Jakt/Error.h>
-#include <Jakt/RefCounted.h>
-#include <Jakt/RefPtr.h>
+#include <Jakt/AKIntegration.h>
+
+#include <AK/Checked.h>
+#include <AK/Error.h>
+#include <AK/RefCounted.h>
+#include <AK/RefPtr.h>
+#include <AK/Vector.h>
+
 #include <Builtins/Range.h>
 #include <initializer_list>
 #include <stdlib.h>
@@ -15,11 +19,11 @@ template<typename T>
 class ArraySlice;
 
 template<typename T>
-class ArrayStorage : public RefCounted<ArrayStorage<T>> {
+class DynamicArrayStorage : public RefCounted<DynamicArrayStorage<T>> {
 public:
-    ArrayStorage() { }
+    DynamicArrayStorage() { }
 
-    ~ArrayStorage()
+    ~DynamicArrayStorage()
     {
         shrink(0);
         free(m_elements);
@@ -165,7 +169,7 @@ private:
 
 template<typename T>
 class ArrayIterator {
-    using Storage = ArrayStorage<T>;
+    using Storage = DynamicArrayStorage<T>;
 
 public:
     ArrayIterator(NonnullRefPtr<Storage> storage, size_t offset, size_t size)
@@ -194,28 +198,36 @@ private:
 };
 
 template<typename T>
-class Array {
-    using Storage = ArrayStorage<T>;
+class DynamicArray {
+    using Storage = DynamicArrayStorage<T>;
 
 public:
-    Array(Array const&) = default;
-    Array(Array&&) = default;
-    Array& operator=(Array const&) = default;
-    Array& operator=(Array&&) = default;
-    ~Array() = default;
+    DynamicArray(DynamicArray const&) = default;
+    DynamicArray(DynamicArray&&) = default;
+    DynamicArray& operator=(DynamicArray const&) = default;
+    DynamicArray& operator=(DynamicArray&&) = default;
+    ~DynamicArray() = default;
+
+    DynamicArray(Vector<T>&& vector)
+        : m_storage(MUST(adopt_nonnull_ref_or_enomem(new (nothrow) Storage)))
+    {
+        MUST(ensure_capacity(vector.size()));
+        for (auto& item : vector)
+            MUST(push(move(item)));
+    }
 
     ArrayIterator<T> iterator() const
     {
         return ArrayIterator<T> { *m_storage, 0, m_storage->size() };
     }
 
-    static ErrorOr<Array> create_empty()
+    static ErrorOr<DynamicArray> create_empty()
     {
         auto storage = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
-        return Array { move(storage) };
+        return DynamicArray { move(storage) };
     }
 
-    static ErrorOr<Array> create_with(std::initializer_list<T> list) requires(!IsLvalueReference<T>)
+    static ErrorOr<DynamicArray> create_with(std::initializer_list<T> list) requires(!IsLvalueReference<T>)
     {
         auto array = TRY(create_empty());
         TRY(array.ensure_capacity(list.size()));
@@ -240,7 +252,7 @@ public:
         return {};
     }
 
-    ErrorOr<void> push_values(Array<T> const& values)
+    ErrorOr<void> push_values(DynamicArray<T> const& values)
     {
         TRY(m_storage->ensure_capacity(capacity() + values.size()));
         for (size_t i = 0; i < values.size(); ++i) {
@@ -323,7 +335,7 @@ public:
         return m_storage->insert(before_index, move(value));
     }
 
-    static ErrorOr<Array> filled(size_t size, T value)
+    static ErrorOr<DynamicArray> filled(size_t size, T value)
     {
         auto array = TRY(create_empty());
         TRY(array.ensure_capacity(size));
@@ -353,7 +365,7 @@ public:
     }
 
 private:
-    explicit Array(NonnullRefPtr<Storage> storage)
+    explicit DynamicArray(NonnullRefPtr<Storage> storage)
         : m_storage(storage)
     {
     }
@@ -371,7 +383,7 @@ public:
     ArraySlice& operator=(ArraySlice&&) = default;
     ~ArraySlice() = default;
 
-    ArraySlice(NonnullRefPtr<ArrayStorage<T>> storage, size_t offset, size_t size)
+    ArraySlice(NonnullRefPtr<DynamicArrayStorage<T>> storage, size_t offset, size_t size)
         : m_storage(move(storage))
         , m_offset(offset)
         , m_size(size)
@@ -386,9 +398,9 @@ public:
         }
     }
 
-    ErrorOr<Array<T>> to_array() const
+    ErrorOr<DynamicArray<T>> to_array() const
     {
-        auto array = TRY(Array<T>::create_empty());
+        auto array = TRY(DynamicArray<T>::create_empty());
         TRY(array.ensure_capacity(size()));
         for (size_t i = 0; i < size(); ++i) {
             TRY(array.push(at(i)));
@@ -453,19 +465,19 @@ public:
     }
 
 private:
-    RefPtr<ArrayStorage<T>> m_storage;
+    RefPtr<DynamicArrayStorage<T>> m_storage;
     size_t m_offset { 0 };
     size_t m_size { 0 };
 };
 
 template<typename T>
-ArraySlice<T> Array<T>::slice(size_t offset, size_t size) const
+ArraySlice<T> DynamicArray<T>::slice(size_t offset, size_t size) const
 {
     return { *m_storage, offset, size };
 }
 
 template<typename T>
-ArraySlice<T> Array<T>::slice(size_t offset, size_t size)
+ArraySlice<T> DynamicArray<T>::slice(size_t offset, size_t size)
 {
     return { *m_storage, offset, size };
 }
@@ -478,7 +490,7 @@ ArraySlice<T> ArraySlice<T>::slice(size_t offset, size_t size) const
 }
 
 namespace Jakt {
-using JaktInternal::Array;
+using JaktInternal::DynamicArray;
 using JaktInternal::ArrayIterator;
 using JaktInternal::ArraySlice;
 }

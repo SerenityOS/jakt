@@ -1056,7 +1056,7 @@ struct CodeGenerator {
         }
 
         if struct_.generic_parameters.is_empty() {
-            output += "ErrorOr<String> debug_description() const;\n"
+            output += "ErrorOr<DeprecatedString> debug_description() const;\n"
         } else {
             output += .codegen_debug_description_getter(struct_, is_inline: true)
         }
@@ -1259,7 +1259,7 @@ struct CodeGenerator {
         }
 
         if enum_.generic_parameters.is_empty() {
-            output += "ErrorOr<String> debug_description() const;\n"
+            output += "ErrorOr<DeprecatedString> debug_description() const;\n"
         } else {
             output += .codegen_enum_debug_description_getter(enum_, is_inline: true)
         }
@@ -1320,14 +1320,14 @@ struct CodeGenerator {
             output += ">\n"
         }
 
-        output += "ErrorOr<String> "
+        output += "ErrorOr<DeprecatedString> "
         if not is_inline {
             output += .codegen_type_possibly_as_namespace(type_id: struct_.type_id, as_namespace: true)
             output += "::"
         }
         output += "debug_description() const { "
-        output += "auto builder = MUST(StringBuilder::create());"
-        output += format("TRY(builder.append(\"{}(\"));", struct_.name_for_codegen())
+        output += "auto builder = MUST(DeprecatedStringBuilder::create());"
+        output += format("TRY(builder.append(\"{}(\"sv));", struct_.name_for_codegen())
         output += "{\n"
         output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
 
@@ -1335,7 +1335,7 @@ struct CodeGenerator {
         for field in struct_.fields {
             let field_var = .program.get_variable(field.variable_id)
             output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));"
-            output += format("TRY(builder.append(\"{}: \"));", field_var.name)
+            output += format("TRY(builder.append(\"{}: \"sv));", field_var.name)
             output += "TRY(builder.appendff(\""
             if .program.is_string(field_var.type_id) {
                 output += "\\\"{}\\\""
@@ -1359,7 +1359,7 @@ struct CodeGenerator {
         }
 
         output += "}\n"
-        output += "TRY(builder.append(\")\"));"
+        output += "TRY(builder.append(\")\"sv));"
         output += "return builder.to_string();"
         output += " }\n"
         return output
@@ -1383,13 +1383,13 @@ struct CodeGenerator {
             output += ">\n"
         }
 
-        output += "ErrorOr<String> "
+        output += "ErrorOr<DeprecatedString> "
         if not is_inline {
             output += .codegen_type_possibly_as_namespace(type_id: enum_.type_id, as_namespace: true)
             output += "::"
         }
         output += "debug_description() const {\n"
-        output += "auto builder = TRY(StringBuilder::create());\n"
+        output += "auto builder = TRY(DeprecatedStringBuilder::create());\n"
         output += "switch (this->index()) {"
 
         for i in 0..enum_.variants.size() {
@@ -1397,10 +1397,10 @@ struct CodeGenerator {
             let name = variant.name()
             output += format("case {} /* {} */: {{\n", i, name)
             output += format("[[maybe_unused]] auto const& that = this->template get<{}::{}>();\n", enum_.name, name)
-            output += format("TRY(builder.append(\"{}::{}\"));\n", enum_.name, name)
+            output += format("TRY(builder.append(\"{}::{}\"sv));\n", enum_.name, name)
             match variant {
                 StructLike(fields) => {
-                    output += "TRY(builder.append(\"(\"));\n"
+                    output += "TRY(builder.append(\"(\"sv));\n"
                     output += "{\n";
                     output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
                     mut i = 0uz
@@ -1413,12 +1413,12 @@ struct CodeGenerator {
                             output += format("TRY(builder.appendff(\"{}: {{}}\", that.{}));\n", var.name, var.name)
                         }
                         if i != fields.size() - 1 {
-                            output += "TRY(builder.append(\", \"));\n"
+                            output += "TRY(builder.append(\", \"sv));\n"
                         }
                         i++
                     }
                     output += "}\n"
-                    output += "TRY(builder.append(\")\"));\n"
+                    output += "TRY(builder.append(\")\"sv));\n"
                 }
                 Typed(type_id) => {
                     if .program.is_string(type_id){
@@ -1455,15 +1455,18 @@ struct CodeGenerator {
             qualified_name += format("<{}>\n", generic_type_args)
         }
 
-        output += format("template<{}>", template_args)
-        output += format("struct Formatter<{}> : Formatter<StringView>", qualified_name)
-        output += "{\n"
-        output += format("ErrorOr<void> format(FormatBuilder& builder, {} const& value) {{\n", qualified_name)
-        output += "JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };"
-        output += "ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));"
-        output += "return format_error; }"
+        output += "} // namespace Jakt\n"
 
-        return output + "};\n"
+        output += format("template<{}>", template_args)
+        output += format("struct Jakt::Formatter<Jakt::{}> : Jakt::Formatter<Jakt::StringView>", qualified_name)
+        output += "{\n"
+        output += format("Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::{} const& value) {{\n", qualified_name)
+        output += "JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };"
+        output += "Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));"
+        output += "return format_error; }"
+        output += "};\n"
+
+        return output + "namespace Jakt {\n"
     }
 
     function codegen_expression_and_deref_if_generic_and_needed(
@@ -1516,7 +1519,7 @@ struct CodeGenerator {
             let original_string = val.to_string()
             let escaped_value = original_string.replace(replace: "\n", with: "\\n")
             yield match val.type_id.equals(builtin(BuiltinType::JaktString)) {
-                true => "Jakt::String(\"" + escaped_value + "\")"
+                true => "Jakt::DeprecatedString(\"" + escaped_value + "\"sv)"
                 else => {
                     let error_handler = match val.may_throw { true => "TRY", else => "" }
                     yield format("{}({}::from_string_literal(\"{}\"sv))", error_handler, .codegen_type(val.type_id), escaped_value)
@@ -1772,7 +1775,7 @@ struct CodeGenerator {
                 let repeat_val = repeat.value()
                 output += "("
                 output += .current_error_handler()
-                output += "((Array<"
+                output += "((DynamicArray<"
                 output += .codegen_type(inner_type_id)
                 output += ">::filled("
                 output += .codegen_expression(repeat_val)
@@ -1782,7 +1785,7 @@ struct CodeGenerator {
             } else {
                 output += "("
                 output += .current_error_handler()
-                output += "((Array<"
+                output += "((DynamicArray<"
                 output += .codegen_type(inner_type_id)
                 output += ">::create_with({"
                 mut first = true
@@ -2689,7 +2692,7 @@ struct CodeGenerator {
                     "println" => "outln"
                     "eprint" => "warn"
                     "eprintln" => "warnln"
-                    "format" => "String::formatted"
+                    "format" => "__jakt_format"
                     else => ""
                 }
                 output += helper
@@ -2841,6 +2844,7 @@ struct CodeGenerator {
                         output += call.name_for_codegen()
                     }
                 } else {
+                    eprintln("call {} in {}", call.name, call.namespace_)
                     output += .codegen_namespace_path(call)
                     output += call.name_for_codegen()
                 }
@@ -3132,7 +3136,7 @@ struct CodeGenerator {
         F32 => "f32"
         F64 => "f64"
         Usize => "size_t"
-        JaktString => "String"
+        JaktString => "DeprecatedString"
         CChar => "char"
         CInt => "int"
         Never => "void"
@@ -3678,7 +3682,7 @@ struct CodeGenerator {
         output += "("
 
         if is_main and function_.params.is_empty() {
-            output += "Array<String>"
+            output += "DynamicArray<DeprecatedString>"
         }
 
         mut first = true

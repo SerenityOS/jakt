@@ -3,9 +3,11 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 #include "fs.h"
-#include <Jakt/RefPtr.h>
-#include <Jakt/String.h>
-#include <Jakt/StringBuilder.h>
+#include <Jakt/DeprecatedString.h>
+
+#include <AK/RefPtr.h>
+#include <AK/DeprecatedString.h>
+#include <Jakt/DeprecatedStringBuilder.h>
 #include <fcntl.h>
 #if defined(__APPLE__)
 #    define st_atim st_atimespec
@@ -27,27 +29,27 @@ static_assert(_MSVC_EXECUTION_CHARACTER_SET == 65001, "Must be compiled with /ut
 
 namespace Jakt::fs {
 #ifndef _WIN32
-ErrorOr<void> mkdir(String path)
+ErrorOr<void> mkdir(DeprecatedString path)
 {
-    if (::mkdir(path.c_string(), S_IRWXU) == -1)
+    if (::mkdir(path.characters(), S_IRWXU) == -1)
         return Error::from_errno(errno);
     return ErrorOr<void> {};
 }
 
-ErrorOr<Optional<String>> DirectoryIterator::next()
+ErrorOr<Optional<DeprecatedString>> DirectoryIterator::next()
 {
     if (m_dirfd == NULL) {
-        return JaktInternal::NullOptional {};
+        return JaktInternal::OptionalNone {};
     }
     auto const next_dir = readdir(m_dirfd);
     if (next_dir == NULL) {
         closedir(m_dirfd);
         m_dirfd = NULL;
-        return JaktInternal::NullOptional {};
+        return JaktInternal::OptionalNone {};
     }
-    auto builder = TRY(StringBuilder::create());
+    auto builder = TRY(DeprecatedStringBuilder::create());
     TRY(builder.append_c_string(next_dir->d_name));
-    return Optional<String>(TRY(builder.to_string()));
+    return Optional<DeprecatedString>(TRY(builder.to_string()));
 }
 DirectoryIterator::~DirectoryIterator()
 {
@@ -62,42 +64,42 @@ ErrorOr<NonnullRefPtr<DirectoryIterator>> DirectoryIterator::from_raw_dirfd(DIR*
     return adopt_nonnull_ref_or_enomem(new (nothrow) DirectoryIterator(dirfd));
 }
 
-ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(String path)
+ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(DeprecatedString path)
 {
-    auto const dirfd = opendir(path.c_string());
+    auto const dirfd = opendir(path.characters());
     if (dirfd == NULL) {
         return Error::from_errno(errno);
     }
     return DirectoryIterator::from_raw_dirfd(dirfd);
 }
 
-ErrorOr<bool> is_directory(String path)
+ErrorOr<bool> is_directory(DeprecatedString path)
 {
     struct stat st;
-    if (stat(path.c_string(), &st) < 0) {
+    if (stat(path.characters(), &st) < 0) {
         return Error::from_errno(errno);
     }
     return S_ISDIR(st.st_mode);
 }
 
-ErrorOr<void> rmdir(String path)
+ErrorOr<void> rmdir(DeprecatedString path)
 {
-    if (::rmdir(path.c_string()) == -1)
+    if (::rmdir(path.characters()) == -1)
         return Error::from_errno(errno);
     return ErrorOr<void> {};
 }
-ErrorOr<void> unlink(String path)
+ErrorOr<void> unlink(DeprecatedString path)
 {
-    if (::unlink(path.c_string()) == -1)
+    if (::unlink(path.characters()) == -1)
         return Error::from_errno(errno);
     return ErrorOr<void> {};
 }
-ErrorOr<Optional<StatResults>> stat_silencing_enoent(String path)
+ErrorOr<Optional<StatResults>> stat_silencing_enoent(DeprecatedString path)
 {
     struct stat st;
-    if (stat(path.c_string(), &st) < 0) {
+    if (stat(path.characters(), &st) < 0) {
         if (errno == ENOENT) {
-            return JaktInternal::NullOptional {};
+            return JaktInternal::OptionalNone {};
         }
         return Error::from_errno(errno);
     }
@@ -111,9 +113,9 @@ static int last_error_to_errno(DWORD error)
     return ::std::system_category().default_error_condition(error).value();
 }
 
-ErrorOr<void> mkdir(String path)
+ErrorOr<void> mkdir(DeprecatedString path)
 {
-    auto ret = ::mkdir(path.c_string());
+    auto ret = ::mkdir(path.characters());
     if (ret == -1) {
         // Note: CRT methods *do* set errno
         return Error::from_errno(errno);
@@ -147,10 +149,10 @@ public:
     }
 };
 
-ErrorOr<Optional<String>> DirectoryIterator::next()
+ErrorOr<Optional<DeprecatedString>> DirectoryIterator::next()
 {
     if (m_impl->m_dirhandle == INVALID_HANDLE_VALUE)
-        return JaktInternal::NullOptional {};
+        return JaktInternal::OptionalNone {};
 
     WIN32_FIND_DATA file_data = {};
     LPWIN32_FIND_DATA pfile_data = m_impl->m_first ? &m_impl->m_first_file_data : &file_data;
@@ -162,12 +164,12 @@ ErrorOr<Optional<String>> DirectoryIterator::next()
             if (err != ERROR_NO_MORE_FILES) {
                 return Error::from_errno(last_error_to_errno(err));
             }
-            return JaktInternal::NullOptional {};
+            return JaktInternal::OptionalNone {};
         }
     }
     m_impl->m_first = false;
-    auto filepath = TRY(String::formatted("{}", StringView { pfile_data->cFileName, strnlen(pfile_data->cFileName, sizeof(pfile_data->cFileName)) }));
-    return Optional<String>(move(filepath));
+    auto filepath = TRY(__jakt_format("{}", StringView { pfile_data->cFileName, strnlen(pfile_data->cFileName, sizeof(pfile_data->cFileName)) }));
+    return Optional<DeprecatedString>(move(filepath));
 }
 
 DirectoryIterator::~DirectoryIterator() = default;
@@ -186,11 +188,11 @@ ErrorOr<NonnullRefPtr<DirectoryIterator>> DirectoryIterator::create(RefPtr<Impl>
     return adopt_nonnull_ref_or_enomem(new (nothrow) DirectoryIterator(move(impl)));
 }
 
-ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(String path)
+ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(DeprecatedString path)
 {
-    path = TRY(String::formatted("{}\\*", path));
+    path = TRY(__jakt_format("{}\\*", path));
     WIN32_FIND_DATA first_file_data = {};
-    HANDLE dirhandle = FindFirstFile(path.c_string(), &first_file_data);
+    HANDLE dirhandle = FindFirstFile(path.characters(), &first_file_data);
     if (dirhandle == INVALID_HANDLE_VALUE) {
         return Error::from_errno(last_error_to_errno(GetLastError()));
     }
@@ -198,40 +200,40 @@ ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(String path)
     return DirectoryIterator::create(move(impl));
 }
 
-ErrorOr<bool> is_directory(String path)
+ErrorOr<bool> is_directory(DeprecatedString path)
 {
-    DWORD file_attributes = GetFileAttributes(path.c_string());
+    DWORD file_attributes = GetFileAttributes(path.characters());
     if (file_attributes == INVALID_FILE_ATTRIBUTES) {
         return Error::from_errno(last_error_to_errno(GetLastError()));
     }
     return file_attributes & FILE_ATTRIBUTE_DIRECTORY;
 }
 
-ErrorOr<void> rmdir(String path)
+ErrorOr<void> rmdir(DeprecatedString path)
 {
-    if (::rmdir(path.c_string()) == -1)
+    if (::rmdir(path.characters()) == -1)
         return Error::from_errno(errno);
     return ErrorOr<void> {};
 }
-ErrorOr<void> unlink(String path)
+ErrorOr<void> unlink(DeprecatedString path)
 {
-    if (::unlink(path.c_string()) == -1)
+    if (::unlink(path.characters()) == -1)
         return Error::from_errno(errno);
     return ErrorOr<void> {};
 }
-ErrorOr<Optional<StatResults>> stat_silencing_enoent(String path)
+ErrorOr<Optional<StatResults>> stat_silencing_enoent(DeprecatedString path)
 {
     WIN32_FILE_ATTRIBUTE_DATA attribute_data {};
-    if (!GetFileAttributesEx(path.c_string(), GetFileExInfoStandard, &attribute_data)) {
+    if (!GetFileAttributesEx(path.characters(), GetFileExInfoStandard, &attribute_data)) {
         DWORD err = GetLastError();
         if (err == ERROR_FILE_NOT_FOUND) {
-            return JaktInternal::NullOptional {};
+            return JaktInternal::OptionalNone {};
         }
         return Error::from_errno(last_error_to_errno(err));
     }
 
     u64 modified_time = (u64)attribute_data.ftLastWriteTime.dwLowDateTime | (u64)attribute_data.ftLastWriteTime.dwHighDateTime << 32;
-    bool is_executable = path.ends_with(".exe");
+    bool is_executable = path.ends_with(".exe"sv);
     bool is_regular_file = attribute_data.dwFileAttributes & FILE_ATTRIBUTE_NORMAL;
     bool is_directory = attribute_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
 

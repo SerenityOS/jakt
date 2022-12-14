@@ -25,6 +25,9 @@ function(add_jakt_compiler_flags target)
     -Wno-unknown-warning-option
     -Wno-unused-command-line-argument
     -fdiagnostics-color=always
+    # Silence warning about `no_unique_address`;
+    # It does not apply on windows, and clang-cl just warns about it.
+    -Wno-unknown-attributes
   )
   if (MSVC)
     # For clang-cl, which shows up to CMake as MSVC and accepts both kinds of arguments

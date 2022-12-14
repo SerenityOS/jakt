@@ -4,9 +4,11 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 #include "process.h"
-#include <Jakt/Assertions.h>
-#include <Jakt/HashMap.h>
-#include <Jakt/RefPtr.h>
+
+#include <Jakt/DeprecatedString.h>
+#include <AK/Assertions.h>
+#include <AK/HashMap.h>
+#include <AK/RefPtr.h>
 #include <time.h>
 #ifndef _WIN32
 #include <signal.h>
@@ -24,7 +26,7 @@ namespace Jakt::process {
 // Allocates & fills one array, which contains:
 // - the argv array with all the pointers into later offsets of the array, at the front
 // - the string arguments that follow the last argv NULL pointer, terminated by zeroes.
-static ErrorOr<char**> dup_argv(Array<String> args)
+static ErrorOr<char**> dup_argv(DynamicArray<DeprecatedString> args)
 {
 
     // 1. Calculate the total size  of all the pointers + all the strings, accounting
@@ -63,7 +65,7 @@ static ErrorOr<char**> dup_argv(Array<String> args)
         char* arg = reinterpret_cast<char*>(full_array) + argv_malloc_size.value_unchecked();
         for (u64 i = 0; i != args.size(); ++i) {
             // copy the string
-            memcpy(arg, args[i].c_string(), args[i].length());
+            memcpy(arg, args[i].characters(), args[i].length());
             arg[args[i].length()] = 0;
             // set the argument pointer
             argv[i] = arg;
@@ -76,7 +78,7 @@ static ErrorOr<char**> dup_argv(Array<String> args)
     return argv;
 }
 
-ErrorOr<i32> start_background_process(Array<String> args)
+ErrorOr<i32> start_background_process(DynamicArray<DeprecatedString> args)
 {
     // We have to fully duplicate argv because execvp wants
     // *modifiable* arguments (char* const*)
@@ -104,13 +106,13 @@ ErrorOr<Optional<ExitPollResult>> poll_process_exit(i32 pid)
     if (result == -1) {
         // no children
         if (errno == ECHILD) {
-            return JaktInternal::NullOptional {};
+            return JaktInternal::OptionalNone {};
         }
         return Error::from_errno(errno);
     }
     // not exited.
     if (result == 0) {
-        return JaktInternal::NullOptional {};
+        return JaktInternal::OptionalNone {};
     }
     // NOTE: compiler seems to struggle to find a constructor when
     // nesting error & optional
@@ -126,13 +128,13 @@ ErrorOr<void> forcefully_kill_process(i32 pid)
 }
 #else
 
-static ErrorOr<String> join(Array<String> const strings, const String separator)
+static ErrorOr<DeprecatedString> join(DynamicArray<DeprecatedString> const strings, const DeprecatedString separator)
 {
-    String output = String("");
+    DeprecatedString output = DeprecatedString(""sv);
     size_t i = 0;
-    ArrayIterator<String> it = strings.iterator();
+    ArrayIterator<DeprecatedString> it = strings.iterator();
     for (;;) {
-        Optional<String> maybe_next = it.next();
+        Optional<DeprecatedString> maybe_next = it.next();
         if (!maybe_next.has_value())
             break;
         output += maybe_next.release_value();
@@ -154,22 +156,22 @@ static int last_error_to_errno(DWORD error)
 static HashMap<i32, PROCESS_INFORMATION> s_process_handles;
 static i32 s_next_process_handle = 0;
 
-ErrorOr<i32> start_background_process(Array<String> args)
+ErrorOr<i32> start_background_process(DynamicArray<DeprecatedString> args)
 {
     STARTUPINFO si = {};
     si.cb = sizeof(si);
     PROCESS_INFORMATION pi = {};
 
-    String command_line_str = TRY(join(args, String(" ")));
+    DeprecatedString command_line_str = TRY(join(args, DeprecatedString(" "sv)));
 
     char command_line[4096] = {};
-    strncpy(command_line, command_line_str.c_string(), min(sizeof(command_line) - 1, command_line_str.length()));
+    strncpy(command_line, command_line_str.characters(), min(sizeof(command_line) - 1, command_line_str.length()));
 
     if (!CreateProcess(nullptr, command_line, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &pi))
         return Error::from_errno(last_error_to_errno(GetLastError()));
 
     i32 pid = ++s_next_process_handle;
-    (void)TRY(s_process_handles.set(pid, move(pi)));
+    (void)TRY(s_process_handles.try_set(pid, move(pi)));
 
     return pid;
 }
@@ -195,7 +197,7 @@ static ErrorOr<Optional<ExitPollResult>> poll_any_process(DWORD timeout = 0)
 
     // FIXME: Can we use RegisterWaitForSingleObject here?
     // Barring that, can probably bookeep this array along with the other static lists
-    auto handles = TRY(Array<HANDLE>::create_empty());
+    auto handles = TRY(DynamicArray<HANDLE>::create_empty());
     TRY(handles.ensure_capacity(s_process_handles.size()));
 
     for (auto const& element : s_process_handles)
