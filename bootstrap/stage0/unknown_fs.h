@@ -14,9 +14,11 @@ explicit DirectoryIterator();
 public:
 static ErrorOr<NonnullRefPtr<DirectoryIterator>> create();
 
-ErrorOr<String> debug_description() const;
+ErrorOr<DeprecatedString> debug_description() const;
 };}
-template<>struct Formatter<unknown_fs::DirectoryIterator> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, unknown_fs::DirectoryIterator const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::unknown_fs::DirectoryIterator> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::unknown_fs::DirectoryIterator const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
 } // namespace Jakt

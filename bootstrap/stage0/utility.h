@@ -7,18 +7,18 @@ struct FileId {
 size_t id;bool equals(utility::FileId const rhs) const;
 FileId(size_t a_id);
 
-ErrorOr<String> debug_description() const;
+ErrorOr<DeprecatedString> debug_description() const;
 };struct Span {
   public:
 utility::FileId file_id;size_t start;size_t end;bool contains(utility::Span const span) const;
 bool is_in_offset_range(size_t const start, size_t const end) const;
 Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
 
-ErrorOr<String> debug_description() const;
+ErrorOr<DeprecatedString> debug_description() const;
 };template <typename T>
-ErrorOr<JaktInternal::Array<T>> add_arrays(JaktInternal::Array<T> const a,JaktInternal::Array<T> const b) {
+ErrorOr<JaktInternal::DynamicArray<T>> add_arrays(JaktInternal::DynamicArray<T> const a,JaktInternal::DynamicArray<T> const b) {
 {
-JaktInternal::Array<T> result = (TRY((Array<T>::create_with({}))));
+JaktInternal::DynamicArray<T> result = (TRY((DynamicArray<T>::create_with({}))));
 {
 JaktInternal::ArrayIterator<T> _magic = ((a).iterator());
 for (;;){
@@ -76,10 +76,14 @@ abort();
 }
 
 }
-template<>struct Formatter<utility::FileId> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, utility::FileId const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<utility::Span> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, utility::Span const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::utility::FileId> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::utility::FileId const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::utility::Span> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::utility::Span const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
 } // namespace Jakt

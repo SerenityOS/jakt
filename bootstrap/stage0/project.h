@@ -7,15 +7,17 @@ namespace Jakt {
 namespace project {
 struct Project {
   public:
-String name;ErrorOr<void> populate() const;
-ErrorOr<void> create_readme(String const project_directory) const;
-Project(String a_name);
+DeprecatedString name;ErrorOr<void> populate() const;
+ErrorOr<void> create_readme(DeprecatedString const project_directory) const;
+Project(DeprecatedString a_name);
 
-ErrorOr<void> create_template_cmake_lists(String const project_directory) const;
-ErrorOr<void> create_sample_jakt_files(String const project_directory) const;
-ErrorOr<String> debug_description() const;
+ErrorOr<void> create_template_cmake_lists(DeprecatedString const project_directory) const;
+ErrorOr<void> create_sample_jakt_files(DeprecatedString const project_directory) const;
+ErrorOr<DeprecatedString> debug_description() const;
 };}
-template<>struct Formatter<project::Project> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, project::Project const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::project::Project> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::project::Project const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
 } // namespace Jakt

@@ -8,7 +8,15 @@
 
 #include <Jakt/Types.h>
 
+
+namespace JaktInternal {
+template<typename T>
+class DynamicArray;
+}
+
 namespace Jakt {
+
+using JaktInternal::DynamicArray;
 
 class Bitmap;
 class Error;
@@ -25,7 +33,7 @@ template<typename T>
 class Span;
 
 template<typename T, size_t Size>
-struct LinearArray;
+struct Array;
 
 template<typename Container, typename ValueType>
 class SimpleIterator;
@@ -45,11 +53,11 @@ class HashTable;
 template<typename T, typename TraitsForT = Traits<T>>
 using OrderedHashTable = HashTable<T, TraitsForT, true>;
 
-template<typename K, typename V, typename KeyTraits = Traits<K>, bool IsOrdered = false>
+template<typename K, typename V, typename KeyTraits = Traits<K>, typename ValueTraits = Traits<V>, bool IsOrdered = false>
 class HashMap;
 
-template<typename K, typename V, typename KeyTraits = Traits<K>>
-using OrderedHashMap = HashMap<K, V, KeyTraits, true>;
+template<typename K, typename V, typename KeyTraits = Traits<K>, typename ValueTraits = Traits<V>>
+using OrderedHashMap = HashMap<K, V, KeyTraits, ValueTraits, true>;
 
 template<typename>
 class Function;
@@ -84,10 +92,3 @@ template<typename T, typename = void>
 struct Formatter;
 
 }
-
-namespace JaktInternal {
-template<typename T>
-class Array;
-}
-
-using JaktInternal::Array;

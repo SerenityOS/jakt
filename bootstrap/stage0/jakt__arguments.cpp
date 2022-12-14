@@ -1,27 +1,27 @@
 #include "jakt__arguments.h"
 namespace Jakt {
 namespace jakt__arguments {
-ErrorOr<String> jakt__arguments::ArgsParser::debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ArgsParser("));{
+ErrorOr<DeprecatedString> jakt__arguments::ArgsParser::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ArgsParser("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("args: "));TRY(builder.appendff("{}, ", args));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("removed_indices: "));TRY(builder.appendff("{}, ", removed_indices));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("definitely_positional_args: "));TRY(builder.appendff("{}", definitely_positional_args));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("args: "sv));TRY(builder.appendff("{}, ", args));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("removed_indices: "sv));TRY(builder.appendff("{}, ", removed_indices));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("definitely_positional_args: "sv));TRY(builder.appendff("{}", definitely_positional_args));
 }
-TRY(builder.append(")"));return builder.to_string(); }
-ErrorOr<jakt__arguments::ArgsParser> jakt__arguments::ArgsParser::from_args(JaktInternal::Array<String> const args) {
+TRY(builder.append(")"sv));return builder.to_string(); }
+ErrorOr<jakt__arguments::ArgsParser> jakt__arguments::ArgsParser::from_args(JaktInternal::DynamicArray<DeprecatedString> const args) {
 {
-jakt__arguments::ArgsParser parser = jakt__arguments::ArgsParser(args,(TRY((Array<size_t>::create_with({})))),(TRY((Array<String>::create_with({})))));
+jakt__arguments::ArgsParser parser = jakt__arguments::ArgsParser(args,(TRY((DynamicArray<size_t>::create_with({})))),(TRY((DynamicArray<DeprecatedString>::create_with({})))));
 size_t i = static_cast<size_t>(0ULL);
 {
-JaktInternal::ArrayIterator<String> _magic = ((((parser).args)).iterator());
+JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((parser).args)).iterator());
 for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-String arg = (_magic_value.value());
+DeprecatedString arg = (_magic_value.value());
 {
-if ((arg == Jakt::String("--"))){
+if ((arg == Jakt::DeprecatedString("--"sv))){
 (((parser).definitely_positional_args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))),static_cast<size_t>(((((parser).args)).size()))})])).to_array()))));
 (((parser).args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(i)})])).to_array()))));
 break;
@@ -36,9 +36,9 @@ return (parser);
 }
 }
 
-ErrorOr<JaktInternal::Array<String>> jakt__arguments::ArgsParser::option_multiple(JaktInternal::Array<String> const names) {
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> jakt__arguments::ArgsParser::option_multiple(JaktInternal::DynamicArray<DeprecatedString> const names) {
 {
-JaktInternal::Array<String> result = (TRY((Array<String>::create_with({}))));
+JaktInternal::DynamicArray<DeprecatedString> result = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(1ULL)),static_cast<size_t>(((((*this).args)).size()))});
 for (;;){
@@ -49,17 +49,17 @@ break;
 size_t i = (_magic_value.value());
 {
 {
-JaktInternal::ArrayIterator<String> _magic = ((names).iterator());
+JaktInternal::ArrayIterator<DeprecatedString> _magic = ((names).iterator());
 for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-String name = (_magic_value.value());
+DeprecatedString name = (_magic_value.value());
 {
 if ((((((*this).args))[i]) == name)){
 if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
-warnln(Jakt::String("The option '{}' requires a value, but none was supplied"),name);
+warnln(Jakt::DeprecatedString("The option '{}' requires a value, but none was supplied"sv),name);
 return Error::from_errno(static_cast<i32>(200));
 }
 TRY((((((*this).removed_indices)).push(i))));
@@ -69,7 +69,7 @@ continue;
 }
 if (((((((*this).args))[i])).starts_with(name))){
 TRY((((((*this).removed_indices)).push(i))));
-TRY((((result).push(TRY((((((((*this).args))[i])).substring(((name).length()),(JaktInternal::checked_sub<size_t>(((((((*this).args))[i])).length()),((name).length())))))))))));
+TRY((((result).push(((((((*this).args))[i])).substring(((name).length()),(JaktInternal::checked_sub<size_t>(((((((*this).args))[i])).length()),((name).length())))))))));
 }
 }
 
@@ -85,7 +85,7 @@ return (result);
 }
 }
 
-ErrorOr<bool> jakt__arguments::ArgsParser::flag(JaktInternal::Array<String> const names) {
+ErrorOr<bool> jakt__arguments::ArgsParser::flag(JaktInternal::DynamicArray<DeprecatedString> const names) {
 {
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).args)).size()))});
@@ -97,13 +97,13 @@ break;
 size_t i = (_magic_value.value());
 {
 {
-JaktInternal::ArrayIterator<String> _magic = ((names).iterator());
+JaktInternal::ArrayIterator<DeprecatedString> _magic = ((names).iterator());
 for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-String name = (_magic_value.value());
+DeprecatedString name = (_magic_value.value());
 {
 if ((((((*this).args))[i]) == name)){
 TRY((((((*this).removed_indices)).push(i))));
@@ -123,11 +123,11 @@ return (false);
 }
 }
 
-jakt__arguments::ArgsParser::ArgsParser(JaktInternal::Array<String> a_args, JaktInternal::Array<size_t> a_removed_indices, JaktInternal::Array<String> a_definitely_positional_args) :args(a_args), removed_indices(a_removed_indices), definitely_positional_args(a_definitely_positional_args){}
+jakt__arguments::ArgsParser::ArgsParser(JaktInternal::DynamicArray<DeprecatedString> a_args, JaktInternal::DynamicArray<size_t> a_removed_indices, JaktInternal::DynamicArray<DeprecatedString> a_definitely_positional_args) :args(a_args), removed_indices(a_removed_indices), definitely_positional_args(a_definitely_positional_args){}
 
-ErrorOr<JaktInternal::Array<String>> jakt__arguments::ArgsParser::remaining_arguments() const {
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> jakt__arguments::ArgsParser::remaining_arguments() const {
 {
-JaktInternal::Array<String> remaining = (TRY((Array<String>::create_with({}))));
+JaktInternal::DynamicArray<DeprecatedString> remaining = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).args)).size()))});
 for (;;){
@@ -146,13 +146,13 @@ TRY((((remaining).push(((((*this).args))[i])))));
 }
 
 {
-JaktInternal::ArrayIterator<String> _magic = ((((*this).definitely_positional_args)).iterator());
+JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).definitely_positional_args)).iterator());
 for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-String arg = (_magic_value.value());
+DeprecatedString arg = (_magic_value.value());
 {
 TRY((((remaining).push(arg))));
 }
@@ -164,7 +164,7 @@ return (remaining);
 }
 }
 
-ErrorOr<JaktInternal::Optional<String>> jakt__arguments::ArgsParser::option(JaktInternal::Array<String> const names) {
+ErrorOr<JaktInternal::Optional<DeprecatedString>> jakt__arguments::ArgsParser::option(JaktInternal::DynamicArray<DeprecatedString> const names) {
 {
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(1ULL)),static_cast<size_t>(((((*this).args)).size()))});
@@ -176,17 +176,17 @@ break;
 size_t i = (_magic_value.value());
 {
 {
-JaktInternal::ArrayIterator<String> _magic = ((names).iterator());
+JaktInternal::ArrayIterator<DeprecatedString> _magic = ((names).iterator());
 for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-String name = (_magic_value.value());
+DeprecatedString name = (_magic_value.value());
 {
 if ((((((*this).args))[i]) == name)){
 if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
-warnln(Jakt::String("The option '{}' requires a value, but none was supplied"),name);
+warnln(Jakt::DeprecatedString("The option '{}' requires a value, but none was supplied"sv),name);
 return Error::from_errno(static_cast<i32>(200));
 }
 TRY((((((*this).removed_indices)).push(i))));
@@ -195,7 +195,7 @@ return (((((*this).args))[(JaktInternal::checked_add<size_t>(i,static_cast<size_
 }
 if (((((((*this).args))[i])).starts_with(name))){
 TRY((((((*this).removed_indices)).push(i))));
-return (TRY((((((((*this).args))[i])).substring(((name).length()),(JaktInternal::checked_sub<size_t>(((((((*this).args))[i])).length()),((name).length()))))))));
+return (((((((*this).args))[i])).substring(((name).length()),(JaktInternal::checked_sub<size_t>(((((((*this).args))[i])).length()),((name).length()))))));
 }
 }
 

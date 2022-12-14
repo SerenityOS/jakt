@@ -19,17 +19,17 @@ return ((((byte == ' ') || (byte == '\t')) || (byte == '\r')));
 }
 }
 
-ErrorOr<JaktInternal::Array<String>> prepend_to_each(JaktInternal::Array<String> const strings,String const prefix) {
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> prepend_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings,DeprecatedString const prefix) {
 {
-JaktInternal::Array<String> output = (TRY((Array<String>::create_with({}))));
+JaktInternal::DynamicArray<DeprecatedString> output = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
 {
-JaktInternal::ArrayIterator<String> _magic = ((strings).iterator());
+JaktInternal::ArrayIterator<DeprecatedString> _magic = ((strings).iterator());
 for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-String str = (_magic_value.value());
+DeprecatedString str = (_magic_value.value());
 {
 TRY((((output).push((prefix + str)))));
 }
@@ -47,9 +47,9 @@ return (((c >= '0') && (c <= '9')));
 }
 }
 
-void todo(String const message) {
+void todo(DeprecatedString const message) {
 {
-warnln(Jakt::String("TODO: {}"),message);
+warnln(Jakt::DeprecatedString("TODO: {}"sv),message);
 abort();
 }
 }
@@ -60,9 +60,9 @@ return ((utility::is_ascii_alpha(c) || utility::is_ascii_digit(c)));
 }
 }
 
-ErrorOr<String> interpret_escapes(String const s) {
+ErrorOr<DeprecatedString> interpret_escapes(DeprecatedString const s) {
 {
-StringBuilder builder = TRY((StringBuilder::create()));
+DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
 bool in_escape = false;
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((s).length()))});
@@ -74,7 +74,7 @@ break;
 size_t i = (_magic_value.value());
 {
 u8 const c = ((s).byte_at(i));
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<String>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<DeprecatedString>>{
 auto __jakt_enum_value = (c);
 if (__jakt_enum_value == '\\') {
 {
@@ -139,17 +139,17 @@ return (TRY((((builder).to_string()))));
 }
 }
 
-ErrorOr<JaktInternal::Array<String>> append_to_each(JaktInternal::Array<String> const strings,String const suffix) {
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> append_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings,DeprecatedString const suffix) {
 {
-JaktInternal::Array<String> output = (TRY((Array<String>::create_with({}))));
+JaktInternal::DynamicArray<DeprecatedString> output = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
 {
-JaktInternal::ArrayIterator<String> _magic = ((strings).iterator());
+JaktInternal::ArrayIterator<DeprecatedString> _magic = ((strings).iterator());
 for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-String str = (_magic_value.value());
+DeprecatedString str = (_magic_value.value());
 {
 TRY((((output).push((str + suffix)))));
 }
@@ -161,10 +161,10 @@ return (output);
 }
 }
 
-ErrorOr<void> write_to_file(String const data,String const output_filename) {
+ErrorOr<void> write_to_file(DeprecatedString const data,DeprecatedString const output_filename) {
 {
 NonnullRefPtr<File> outfile = TRY((File::open_for_writing(output_filename)));
-JaktInternal::Array<u8> bytes = (TRY((Array<u8>::create_with({}))));
+JaktInternal::DynamicArray<u8> bytes = (TRY((DynamicArray<u8>::create_with({}))));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((data).length()))});
 for (;;){
@@ -185,18 +185,18 @@ TRY((((outfile)->write(bytes))));
 return {};
 }
 
-String join(JaktInternal::Array<String> const strings,String const separator) {
+DeprecatedString join(JaktInternal::DynamicArray<DeprecatedString> const strings,DeprecatedString const separator) {
 {
-String output = Jakt::String("");
+DeprecatedString output = Jakt::DeprecatedString(""sv);
 size_t i = static_cast<size_t>(0ULL);
 {
-JaktInternal::ArrayIterator<String> _magic = ((strings).iterator());
+JaktInternal::ArrayIterator<DeprecatedString> _magic = ((strings).iterator());
 for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-String s = (_magic_value.value());
+DeprecatedString s = (_magic_value.value());
 {
 (output += s);
 if ((i < (JaktInternal::checked_sub<size_t>(((strings).size()),static_cast<size_t>(1ULL))))){
@@ -224,16 +224,16 @@ return (((((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f'))) || ((c >= 'A
 }
 }
 
-[[noreturn]] void panic(String const message) {
+[[noreturn]] void panic(DeprecatedString const message) {
 {
-warnln(Jakt::String("internal error: {}"),message);
+warnln(Jakt::DeprecatedString("internal error: {}"sv),message);
 abort();
 }
 }
 
-ErrorOr<String> escape_for_quotes(String const s) {
+ErrorOr<DeprecatedString> escape_for_quotes(DeprecatedString const s) {
 {
-StringBuilder builder = TRY((StringBuilder::create()));
+DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((s).length()))});
 for (;;){
@@ -244,23 +244,23 @@ break;
 size_t i = (_magic_value.value());
 {
 u8 const c = ((s).byte_at(i));
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<String>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<DeprecatedString>>{
 auto __jakt_enum_value = (c);
 if (__jakt_enum_value == '"') {
 {
-TRY((((builder).append_string(Jakt::String("\\\"")))));
+TRY((((builder).append_string(Jakt::DeprecatedString("\\\""sv)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == '\\') {
 {
-TRY((((builder).append_string(Jakt::String("\\\\")))));
+TRY((((builder).append_string(Jakt::DeprecatedString("\\\\"sv)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == '\n') {
 {
-TRY((((builder).append_string(Jakt::String("\\n")))));
+TRY((((builder).append_string(Jakt::DeprecatedString("\\n"sv)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -282,13 +282,13 @@ return (TRY((((builder).to_string()))));
 }
 }
 
-ErrorOr<String> utility::Span::debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Span("));{
+ErrorOr<DeprecatedString> utility::Span::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Span("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("file_id: "));TRY(builder.appendff("{}, ", file_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("start: "));TRY(builder.appendff("{}, ", start));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("end: "));TRY(builder.appendff("{}", end));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("file_id: "sv));TRY(builder.appendff("{}, ", file_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("start: "sv));TRY(builder.appendff("{}, ", start));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("end: "sv));TRY(builder.appendff("{}", end));
 }
-TRY(builder.append(")"));return builder.to_string(); }
+TRY(builder.append(")"sv));return builder.to_string(); }
 bool utility::Span::contains(utility::Span const span) const {
 {
 return ((((((*this).file_id)).equals(((span).file_id))) && ((((span).start) >= ((*this).start)) && (((span).end) <= ((*this).end)))));
@@ -303,11 +303,11 @@ return (((start <= ((*this).start)) && (end >= ((*this).end))));
 
 utility::Span::Span(utility::FileId a_file_id, size_t a_start, size_t a_end) :file_id(a_file_id), start(a_start), end(a_end){}
 
-ErrorOr<String> utility::FileId::debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("FileId("));{
+ErrorOr<DeprecatedString> utility::FileId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("FileId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "sv));TRY(builder.appendff("{}", id));
 }
-TRY(builder.append(")"));return builder.to_string(); }
+TRY(builder.append(")"sv));return builder.to_string(); }
 bool utility::FileId::equals(utility::FileId const rhs) const {
 {
 return ((((*this).id) == ((rhs).id)));
