@@ -53,7 +53,7 @@ jobs:
           cmake --build build
 
       - name: Test Jakt Stage 1
-        run: ./build/bin/jakttest
+        run: ./build/bin/jakttest -C ${{ matrix.cxx_compiler }}
 
       - name: Build Jakt Stage 2
         run: |
@@ -62,7 +62,7 @@ jobs:
           cmake --build build
 
       - name: Test Jakt Stage 2
-        run: ./build/bin/jakttest
+        run: ./build/bin/jakttest -C ${{ matrix.cxx_compiler }}
 
       - name: Install jakt
         run: cmake --install build
@@ -72,7 +72,7 @@ jobs:
         run: |
           ./jakt-install/bin/jakt --create TestProjectJakt
           cd TestProjectJakt
-          ../jakt-install/bin/jakt -O src/main.jakt -o TestProjectJakt
+          ../jakt-install/bin/jakt -C ${{ matrix.cxx_compiler }} -O src/main.jakt -o TestProjectJakt
           if ! ./build/TestProjectJakt | grep -q "Hello, World!";
           then
             echo "::error :^( failed, failing job"
