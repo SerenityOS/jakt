@@ -6,24 +6,26 @@ namespace Jakt {
 namespace path {
 struct Path {
   public:
-String path;static ErrorOr<path::Path> from_parts(JaktInternal::Array<String> const parts);
-static JaktInternal::Optional<size_t> last_slash(String const path);
-Path(String a_path);
+DeprecatedString path;static ErrorOr<path::Path> from_parts(JaktInternal::DynamicArray<DeprecatedString> const parts);
+static JaktInternal::Optional<size_t> last_slash(DeprecatedString const path);
+Path(DeprecatedString a_path);
 
 bool is_dot() const;
-String to_string() const;
-ErrorOr<String> extension() const;
-ErrorOr<JaktInternal::Tuple<String,String>> split_at_last_slash() const;
+DeprecatedString to_string() const;
+ErrorOr<DeprecatedString> extension() const;
+ErrorOr<JaktInternal::Tuple<DeprecatedString,DeprecatedString>> split_at_last_slash() const;
 ErrorOr<void> normalize_separators();
-ErrorOr<path::Path> join(String const path) const;
-ErrorOr<String> basename(bool const strip_extension) const;
+ErrorOr<path::Path> join(DeprecatedString const path) const;
+ErrorOr<DeprecatedString> basename(bool const strip_extension) const;
 ErrorOr<path::Path> parent() const;
-ErrorOr<path::Path> replace_extension(String const new_extension) const;
+ErrorOr<path::Path> replace_extension(DeprecatedString const new_extension) const;
 bool exists() const;
-static ErrorOr<path::Path> from_string(String const string);
-ErrorOr<String> debug_description() const;
+static ErrorOr<path::Path> from_string(DeprecatedString const string);
+ErrorOr<DeprecatedString> debug_description() const;
 };}
-template<>struct Formatter<path::Path> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, path::Path const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::path::Path> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::path::Path const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
 } // namespace Jakt

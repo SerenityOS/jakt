@@ -5,12 +5,14 @@ namespace Jakt {
 namespace os {
 struct Target {
   public:
-String arch;String platform;String os;String abi;static ErrorOr<os::Target> active();
-Target(String a_arch, String a_platform, String a_os, String a_abi);
+DeprecatedString arch;DeprecatedString platform;DeprecatedString os;DeprecatedString abi;static ErrorOr<os::Target> active();
+Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi);
 
-ErrorOr<String> debug_description() const;
+ErrorOr<DeprecatedString> debug_description() const;
 };}
-template<>struct Formatter<os::Target> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, os::Target const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::os::Target> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::os::Target const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
 } // namespace Jakt

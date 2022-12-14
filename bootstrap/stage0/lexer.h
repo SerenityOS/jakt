@@ -7,9 +7,9 @@ namespace Jakt {
 namespace lexer {
 struct Lexer {
   public:
-size_t index;JaktInternal::Array<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::Array<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(u8 const delimiter);
+size_t index;JaktInternal::DynamicArray<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::DynamicArray<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(u8 const delimiter);
 ErrorOr<JaktInternal::Optional<lexer::Token>> next();
-ErrorOr<JaktInternal::Optional<String>> consume_comment_contents();
+ErrorOr<JaktInternal::Optional<DeprecatedString>> consume_comment_contents();
 ErrorOr<lexer::Token> lex_character_constant_or_name();
 lexer::Token lex_dot();
 ErrorOr<lexer::Token> lex_forward_slash();
@@ -28,19 +28,19 @@ lexer::Token lex_plus();
 lexer::Token lex_exclamation_point();
 ErrorOr<lexer::LiteralSuffix> consume_numeric_literal_suffix();
 lexer::Token lex_colon();
-Lexer(size_t a_index, JaktInternal::Array<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::Array<u8>> a_comment_contents);
+Lexer(size_t a_index, JaktInternal::DynamicArray<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> a_comment_contents);
 
 bool valid_digit(lexer::LiteralPrefix const prefix, u8 const digit, bool const decimal_allowed);
-ErrorOr<void> error(String const message, utility::Span const span);
-ErrorOr<String> substring(size_t const start, size_t const length) const;
+ErrorOr<void> error(DeprecatedString const message, utility::Span const span);
+ErrorOr<DeprecatedString> substring(size_t const start, size_t const length) const;
 lexer::Token lex_greater_than();
 lexer::Token lex_pipe();
 lexer::Token lex_caret();
 ErrorOr<lexer::Token> lex_number();
 lexer::Token lex_less_than();
 lexer::Token lex_equals();
-static ErrorOr<JaktInternal::Array<lexer::Token>> lex(NonnullRefPtr<compiler::Compiler> const compiler);
-ErrorOr<String> debug_description() const;
+static ErrorOr<JaktInternal::DynamicArray<lexer::Token>> lex(NonnullRefPtr<compiler::Compiler> const compiler);
+ErrorOr<DeprecatedString> debug_description() const;
 };namespace LiteralPrefix_Details {
 struct None {
 };
@@ -57,8 +57,8 @@ using Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, L
     using Hexadecimal = LiteralPrefix_Details::Hexadecimal;
     using Octal = LiteralPrefix_Details::Octal;
     using Binary = LiteralPrefix_Details::Binary;
-ErrorOr<String> debug_description() const;
-String to_string() const;
+ErrorOr<DeprecatedString> debug_description() const;
+DeprecatedString to_string() const;
 };
 namespace LiteralSuffix_Details {
 struct None {
@@ -100,12 +100,12 @@ using Variant<LiteralSuffix_Details::None, LiteralSuffix_Details::UZ, LiteralSuf
     using I64 = LiteralSuffix_Details::I64;
     using F32 = LiteralSuffix_Details::F32;
     using F64 = LiteralSuffix_Details::F64;
-ErrorOr<String> debug_description() const;
-String to_string() const;
+ErrorOr<DeprecatedString> debug_description() const;
+DeprecatedString to_string() const;
 };
 namespace Token_Details {
 struct SingleQuotedString {
-String quote;
+DeprecatedString quote;
 utility::Span span;
 template<typename _MemberT0, typename _MemberT1>
 SingleQuotedString(_MemberT0&& member_0, _MemberT1&& member_1):
@@ -114,7 +114,7 @@ span{ forward<_MemberT1>(member_1)}
 {}
 };
 struct SingleQuotedByteString {
-String quote;
+DeprecatedString quote;
 utility::Span span;
 template<typename _MemberT0, typename _MemberT1>
 SingleQuotedByteString(_MemberT0&& member_0, _MemberT1&& member_1):
@@ -123,7 +123,7 @@ span{ forward<_MemberT1>(member_1)}
 {}
 };
 struct QuotedString {
-String quote;
+DeprecatedString quote;
 utility::Span span;
 template<typename _MemberT0, typename _MemberT1>
 QuotedString(_MemberT0&& member_0, _MemberT1&& member_1):
@@ -133,7 +133,7 @@ span{ forward<_MemberT1>(member_1)}
 };
 struct Number {
 lexer::LiteralPrefix prefix;
-String number;
+DeprecatedString number;
 lexer::LiteralSuffix suffix;
 utility::Span span;
 template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
@@ -145,7 +145,7 @@ span{ forward<_MemberT3>(member_3)}
 {}
 };
 struct Identifier {
-String name;
+DeprecatedString name;
 utility::Span span;
 template<typename _MemberT0, typename _MemberT1>
 Identifier(_MemberT0&& member_0, _MemberT1&& member_1):
@@ -511,7 +511,7 @@ value{ forward<_MemberT0>(member_0)}
 {}
 };
 struct Eol {
-JaktInternal::Optional<String> comment;
+JaktInternal::Optional<DeprecatedString> comment;
 utility::Span span;
 template<typename _MemberT0, typename _MemberT1>
 Eol(_MemberT0&& member_0, _MemberT1&& member_1):
@@ -884,7 +884,7 @@ value{ forward<_MemberT0>(member_0)}
 {}
 };
 struct Garbage {
-JaktInternal::Optional<String> consumed;
+JaktInternal::Optional<DeprecatedString> consumed;
 utility::Span span;
 template<typename _MemberT0, typename _MemberT1>
 Garbage(_MemberT0&& member_0, _MemberT1&& member_1):
@@ -1005,21 +1005,29 @@ using Variant<Token_Details::SingleQuotedString, Token_Details::SingleQuotedByte
     using Requires = Token_Details::Requires;
     using Trait = Token_Details::Trait;
     using Garbage = Token_Details::Garbage;
-ErrorOr<String> debug_description() const;
-static lexer::Token from_keyword_or_identifier(String const string, utility::Span const span);
+ErrorOr<DeprecatedString> debug_description() const;
+static lexer::Token from_keyword_or_identifier(DeprecatedString const string, utility::Span const span);
 utility::Span span() const;
 };
 }
-template<>struct Formatter<lexer::Lexer> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, lexer::Lexer const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<lexer::LiteralPrefix> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralPrefix const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<lexer::LiteralSuffix> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralSuffix const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<lexer::Token> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, lexer::Token const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::lexer::Lexer> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::Lexer const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::lexer::LiteralPrefix> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralPrefix const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::lexer::LiteralSuffix> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralSuffix const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::lexer::Token> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::Token const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
 } // namespace Jakt

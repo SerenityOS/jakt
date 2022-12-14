@@ -1,5 +1,6 @@
+#include <Jakt/AKIntegration.h>
 #include <Jakt/PrettyPrint.h>
-#include <Jakt/StringBuilder.h>
+#include <Jakt/DeprecatedStringBuilder.h>
 
 namespace JaktInternal::PrettyPrint {
 
@@ -33,12 +34,12 @@ Jakt::ErrorOr<void> output_indentation(auto& builder) {
     constexpr auto spaces_per_level = 2;
     if (s_pretty_print_state.enabled) {
         if(s_pretty_print_state.level > 0)
-            TRY(builder.appendff("\n{:{}}", "", s_pretty_print_state.level * spaces_per_level));
+            TRY(builder.appendff("\n{:{}}", ""sv, s_pretty_print_state.level * spaces_per_level));
         else
             TRY(builder.append('\n'));
     }
     return {};
 }
 
-template Jakt::ErrorOr<void> output_indentation<Jakt::StringBuilder>(Jakt::StringBuilder& builder);
+template Jakt::ErrorOr<void> output_indentation<Jakt::DeprecatedStringBuilder>(Jakt::DeprecatedStringBuilder& builder);
 }

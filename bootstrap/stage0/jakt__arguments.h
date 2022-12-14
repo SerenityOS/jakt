@@ -4,16 +4,18 @@ namespace Jakt {
 namespace jakt__arguments {
 struct ArgsParser {
   public:
-JaktInternal::Array<String> args;JaktInternal::Array<size_t> removed_indices;JaktInternal::Array<String> definitely_positional_args;static ErrorOr<jakt__arguments::ArgsParser> from_args(JaktInternal::Array<String> const args);
-ErrorOr<JaktInternal::Array<String>> option_multiple(JaktInternal::Array<String> const names);
-ErrorOr<bool> flag(JaktInternal::Array<String> const names);
-ArgsParser(JaktInternal::Array<String> a_args, JaktInternal::Array<size_t> a_removed_indices, JaktInternal::Array<String> a_definitely_positional_args);
+JaktInternal::DynamicArray<DeprecatedString> args;JaktInternal::DynamicArray<size_t> removed_indices;JaktInternal::DynamicArray<DeprecatedString> definitely_positional_args;static ErrorOr<jakt__arguments::ArgsParser> from_args(JaktInternal::DynamicArray<DeprecatedString> const args);
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> option_multiple(JaktInternal::DynamicArray<DeprecatedString> const names);
+ErrorOr<bool> flag(JaktInternal::DynamicArray<DeprecatedString> const names);
+ArgsParser(JaktInternal::DynamicArray<DeprecatedString> a_args, JaktInternal::DynamicArray<size_t> a_removed_indices, JaktInternal::DynamicArray<DeprecatedString> a_definitely_positional_args);
 
-ErrorOr<JaktInternal::Array<String>> remaining_arguments() const;
-ErrorOr<JaktInternal::Optional<String>> option(JaktInternal::Array<String> const names);
-ErrorOr<String> debug_description() const;
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> remaining_arguments() const;
+ErrorOr<JaktInternal::Optional<DeprecatedString>> option(JaktInternal::DynamicArray<DeprecatedString> const names);
+ErrorOr<DeprecatedString> debug_description() const;
 };}
-template<>struct Formatter<jakt__arguments::ArgsParser> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, jakt__arguments::ArgsParser const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::jakt__arguments::ArgsParser> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::jakt__arguments::ArgsParser const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
 } // namespace Jakt

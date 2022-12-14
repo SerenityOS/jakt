@@ -6,17 +6,21 @@ struct Process {
   public:
 Process();
 
-ErrorOr<String> debug_description() const;
+ErrorOr<DeprecatedString> debug_description() const;
 };struct ExitPollResult {
   public:
 i32 exit_code;unknown_process::Process process;ExitPollResult(i32 a_exit_code, unknown_process::Process a_process);
 
-ErrorOr<String> debug_description() const;
+ErrorOr<DeprecatedString> debug_description() const;
 };}
-template<>struct Formatter<unknown_process::Process> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, unknown_process::Process const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<unknown_process::ExitPollResult> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, unknown_process::ExitPollResult const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::unknown_process::Process> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::unknown_process::Process const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::unknown_process::ExitPollResult> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::unknown_process::ExitPollResult const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+namespace Jakt {
 } // namespace Jakt
