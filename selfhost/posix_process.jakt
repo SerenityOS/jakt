@@ -48,7 +48,7 @@ function start_background_process(anon args: [String]) throws -> Process {
     for arg in args {
         unsafe {
             cpp {
-                "call_args[i++] = const_cast<char*>(arg.c_string());"
+                "call_args[i++] = const_cast<char*>(arg.characters());"
             }
         }
     }

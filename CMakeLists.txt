@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.16..3.21)
 cmake_policy(SET CMP0091 NEW)
 
@@ -23,6 +22,7 @@ endif()
 
 set(FINAL_STAGE "1" CACHE STRING "Compiler stage to stop at, either 1 (default) or 2)")
 option(NO_SYMLINKS "Use hard links instead of symlinks. Useful for unprivileged Windows users" "${NO_SYMLINKS_DEFAULT}")
+option(SERENITY_SOURCE_DIR PATH "Path of an existing SerenityOS checkout to pull AK files from")
 
 if (NO_SYMLINKS)
   set(LINK_COMMAND create_hardlink)
@@ -49,7 +49,18 @@ include(cmake/jakt-executable.cmake)
 add_subdirectory(runtime)
 
 file(GLOB JAKT_STAGE0_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/*.cpp")
-add_executable(jakt_stage0 "${JAKT_STAGE0_SOURCES}")
+file(GLOB JAKT_STAGE0_RUNTIME_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/runtime/*.cpp")
+file(GLOB JAKT_STAGE0_RUNTIME_LIB_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/runtime/*/*.cpp")
+list(APPEND JAKT_STAGE0_ALL_SOURCES
+    ${JAKT_STAGE0_SOURCES}
+    ${JAKT_STAGE0_RUNTIME_SOURCES}
+    ${JAKT_STAGE0_RUNTIME_LIB_SOURCES}
+)
+
+# Note: This currently does not build under windows, but it is not needed by the runtime.
+list(FILTER JAKT_STAGE0_ALL_SOURCES EXCLUDE REGEX ".*AK/Time\.cpp$")
+
+add_executable(jakt_stage0 "${JAKT_STAGE0_ALL_SOURCES}")
 add_executable(Jakt::jakt_stage0 ALIAS jakt_stage0)
 add_jakt_compiler_flags(jakt_stage0)
 target_include_directories(jakt_stage0
@@ -60,7 +71,6 @@ target_include_directories(jakt_stage0
   PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
 )
-target_link_libraries(jakt_stage0 PRIVATE Jakt::jakt_runtime Jakt::jakt_main)
 apply_output_rules(jakt_stage0)
 
 set(SELFHOST_SOURCES

@@ -2,12 +2,15 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 #pragma once
-#include <Jakt/Types.h>
-#include <Jakt/Error.h>
+
+#include <Jakt/AKIntegration.h>
+
+#include <AK/Types.h>
+#include <AK/Error.h>
 
 namespace Jakt::os {
     ErrorOr<size_t> get_num_cpus();
-    ErrorOr<String> get_system_temporary_directory();
+    ErrorOr<DeprecatedString> get_system_temporary_directory();
     ErrorOr<void> ignore_sigchild();
-    ErrorOr<String> get_script_execution_string();
+    ErrorOr<DeprecatedString> get_script_execution_string();
 }

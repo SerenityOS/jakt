@@ -10,3 +10,6 @@ jakttest/.ninja_log
 cmake_install.cmake
 CMakeFiles/
 
+# Populated by CMake, don't commit.
+runtime/AK
+

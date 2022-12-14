@@ -6,10 +6,13 @@
 
 #pragma once
 
-#include <Jakt/HashMap.h>
-#include <Jakt/NonnullRefPtr.h>
-#include <Jakt/RefCounted.h>
-#include <Jakt/Tuple.h>
+#include <Jakt/AKIntegration.h>
+
+#include <AK/HashMap.h>
+#include <AK/NonnullRefPtr.h>
+#include <AK/RefCounted.h>
+#include <AK/Tuple.h>
+#include <Builtins/DynamicArray.h>
 
 namespace JaktInternal {
 using namespace Jakt;
@@ -62,7 +65,7 @@ public:
 
     ErrorOr<void> set(K const& key, V value)
     {
-        TRY(m_storage->map.set(key, move(value)));
+        TRY(m_storage->map.try_set(key, move(value)));
         return {};
     }
 
@@ -75,9 +78,9 @@ public:
     V& operator[](K const& key) { return m_storage->map.get(key).value(); }
     V const& operator[](K const& key) const { return m_storage->map.get(key).value(); }
 
-    ErrorOr<Array<K>> keys() const
+    ErrorOr<DynamicArray<K>> keys() const
     {
-        Array<K> keys = TRY(Array<K>::create_empty());
+        DynamicArray<K> keys = TRY(DynamicArray<K>::create_empty());
         TRY(keys.ensure_capacity(m_storage->map.size()));
         for (auto& it : m_storage->map) {
             MUST(keys.push(it.key));
@@ -87,7 +90,7 @@ public:
 
     ErrorOr<void> ensure_capacity(size_t capacity)
     {
-        TRY(m_storage->map.ensure_capacity(capacity));
+        TRY(m_storage->map.try_ensure_capacity(capacity));
         return {};
     }
 

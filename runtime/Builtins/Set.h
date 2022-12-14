@@ -6,7 +6,11 @@
 
 #pragma once
 
-#include <Jakt/HashTable.h>
+#include <Jakt/AKIntegration.h>
+
+#include <AK/HashTable.h>
+#include <Builtins/DynamicArray.h>
+
 #include <initializer_list>
 
 namespace JaktInternal {

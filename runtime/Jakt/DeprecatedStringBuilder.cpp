@@ -4,27 +4,28 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <Builtins/Array.h>
-#include <Jakt/Checked.h>
-#include <Jakt/StdLibExtras.h>
-#include <Jakt/StringBuilder.h>
-#include <Jakt/StringView.h>
-#include <Jakt/UnicodeUtils.h>
+#include <Builtins/DynamicArray.h>
+
+#include <AK/Checked.h>
+#include <AK/StdLibExtras.h>
+#include <AK/StringView.h>
+#include <AK/UnicodeUtils.h>
+#include <Jakt/DeprecatedStringBuilder.h>
 
 namespace Jakt {
 
-inline ErrorOr<void> StringBuilder::will_append(size_t size)
+inline ErrorOr<void> DeprecatedStringBuilder::will_append(size_t size)
 {
     TRY(m_buffer.add_capacity(size));
     return {};
 }
 
-StringBuilder::StringBuilder(Array<u8> buffer)
+DeprecatedStringBuilder::DeprecatedStringBuilder(DynamicArray<u8> buffer)
     : m_buffer(buffer)
 {
 }
 
-ErrorOr<void> StringBuilder::append(StringView string)
+ErrorOr<void> DeprecatedStringBuilder::append(StringView string)
 {
     if (string.is_empty())
         return {};
@@ -33,35 +34,35 @@ ErrorOr<void> StringBuilder::append(StringView string)
     return {};
 }
 
-ErrorOr<void> StringBuilder::append(char ch)
+ErrorOr<void> DeprecatedStringBuilder::append(char ch)
 {
     TRY(will_append(1));
     TRY(m_buffer.push(ch));
     return {};
 }
 
-ErrorOr<void> StringBuilder::append(char const* characters, size_t length)
+ErrorOr<void> DeprecatedStringBuilder::append(char const* characters, size_t length)
 {
     return append(StringView { characters, length });
 }
-ErrorOr<String> StringBuilder::to_string() const
+ErrorOr<DeprecatedString> DeprecatedStringBuilder::to_string() const
 {
     if (is_empty())
-        return String::empty();
-    return String::copy(string_view());
+        return DeprecatedString::empty();
+    return DeprecatedString(string_view());
 }
 
-StringView StringBuilder::string_view() const
+StringView DeprecatedStringBuilder::string_view() const
 {
     return StringView { data(), m_buffer.size() };
 }
 
-void StringBuilder::clear()
+void DeprecatedStringBuilder::clear()
 {
     static_cast<void>(m_buffer.resize(0));
 }
 
-ErrorOr<void> StringBuilder::append_code_point(u32 code_point)
+ErrorOr<void> DeprecatedStringBuilder::append_code_point(u32 code_point)
 {
     ErrorOr<void> error_from_code_point = {};
     auto nwritten = Jakt::UnicodeUtils::code_point_to_utf8(code_point, [this, &error_from_code_point](char c) {
@@ -79,24 +80,24 @@ ErrorOr<void> StringBuilder::append_code_point(u32 code_point)
     return {};
 }
 
-ErrorOr<void> StringBuilder::append_escaped_for_json(StringView string)
+ErrorOr<void> DeprecatedStringBuilder::append_escaped_for_json(StringView string)
 {
     for (auto ch : string) {
         switch (ch) {
         case '\b':
-            TRY(append("\\b"));
+            TRY(append("\\b"sv));
             break;
         case '\n':
-            TRY(append("\\n"));
+            TRY(append("\\n"sv));
             break;
         case '\t':
-            TRY(append("\\t"));
+            TRY(append("\\t"sv));
             break;
         case '\"':
-            TRY(append("\\\""));
+            TRY(append("\\\""sv));
             break;
         case '\\':
-            TRY(append("\\\\"));
+            TRY(append("\\\\"sv));
             break;
         default:
             if (ch >= 0 && ch <= 0x1f)

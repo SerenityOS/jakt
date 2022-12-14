@@ -139,7 +139,7 @@ function start_background_process(args: [String]) throws -> Process {
  
     unsafe {
         cpp {
-            "buffer = const_cast<char*>(command_line_string.c_string());"
+            "buffer = const_cast<char*>(command_line_string.characters());"
         }
     }
 

@@ -1,64 +1,68 @@
 #pragma once
 
-#include <Jakt/AllOf.h>
-#include <Jakt/Assertions.h>
-#include <Jakt/Atomic.h>
-#include <Jakt/BitCast.h>
-#include <Jakt/CharacterTypes.h>
-#include <Jakt/Checked.h>
-#include <Jakt/Concepts.h>
-#include <Jakt/Debug.h>
-#include <Jakt/Error.h>
-#include <Jakt/Find.h>
-#include <Jakt/Format.h>
-#include <Jakt/Forward.h>
-#include <Jakt/Function.h>
-#include <Jakt/GenericLexer.h>
-#include <Jakt/HashFunctions.h>
-#include <Jakt/HashTable.h>
-#include <Jakt/Iterator.h>
-#include <Jakt/LinearArray.h>
-#include <Jakt/Memory.h>
-#include <Jakt/Noncopyable.h>
-#include <Jakt/NonnullRefPtr.h>
-#include <Jakt/NumericLimits.h>
+#include <Jakt/AKIntegration.h>
+
+#include <AK/AllOf.h>
+#include <AK/Assertions.h>
+#include <AK/Atomic.h>
+#include <AK/BitCast.h>
+#include <AK/CharacterTypes.h>
+#include <AK/Checked.h>
+#include <AK/Concepts.h>
+#include <AK/Debug.h>
+#include <AK/Error.h>
+#include <AK/Find.h>
+#include <AK/Format.h>
+#include <AK/Forward.h>
+#include <AK/Function.h>
+#include <AK/GenericLexer.h>
+#include <AK/HashFunctions.h>
+#include <AK/HashTable.h>
+#include <AK/Iterator.h>
+#include <AK/Array.h>
+#include <AK/Memory.h>
+#include <AK/Noncopyable.h>
+#include <AK/NonnullRefPtr.h>
+#include <AK/NumericLimits.h>
 #include <Jakt/ControlFlow.h>
-#include <Jakt/Optional.h>
-#include <Jakt/Platform.h>
+#include <AK/Optional.h>
+#include <AK/Platform.h>
 #include <Jakt/PrettyPrint.h>
-#include <Jakt/RefCounted.h>
-#include <Jakt/RefPtr.h>
-#include <Jakt/ScopeGuard.h>
-#include <Jakt/Span.h>
-#include <Jakt/StdLibExtraDetails.h>
-#include <Jakt/StdLibExtras.h>
-#include <Jakt/String.h>
-#include <Jakt/StringBuilder.h>
-#include <Jakt/StringHash.h>
-#include <Jakt/StringUtils.h>
-#include <Jakt/StringView.h>
-#include <Jakt/Traits.h>
-#include <Jakt/Try.h>
-#include <Jakt/Tuple.h>
-#include <Jakt/TypeCasts.h>
-#include <Jakt/TypeList.h>
-#include <Jakt/TypedTransfer.h>
-#include <Jakt/Types.h>
-#include <Jakt/UnicodeUtils.h>
-#include <Jakt/Variant.h>
-#include <Jakt/WeakPtr.h>
-#include <Jakt/Weakable.h>
-#include <Jakt/kmalloc.h>
-#include <Jakt/kstdio.h>
+#include <AK/RefCounted.h>
+#include <AK/RefPtr.h>
+#include <AK/ScopeGuard.h>
+#include <AK/Span.h>
+#include <AK/StdLibExtraDetails.h>
+#include <AK/StdLibExtras.h>
+#include <AK/String.h>
+#include <AK/StringBuilder.h>
+#include <AK/StringHash.h>
+#include <AK/StringUtils.h>
+#include <AK/StringView.h>
+#include <AK/Traits.h>
+#include <AK/Try.h>
+#include <AK/Tuple.h>
+#include <AK/TypeCasts.h>
+#include <AK/TypeList.h>
+#include <AK/TypedTransfer.h>
+#include <AK/Types.h>
+#include <AK/UnicodeUtils.h>
+#include <AK/Variant.h>
+#include <AK/WeakPtr.h>
+#include <AK/Weakable.h>
+#include <AK/kmalloc.h>
+#include <AK/kstdio.h>
 
 namespace JaktInternal {
 template<typename T>
 class Set;
 }
 
-#include <Builtins/Array.h>
+#include <Builtins/DynamicArray.h>
 #include <Builtins/Dictionary.h>
 #include <Builtins/Set.h>
+#include <Jakt/DeprecatedStringBuilder.h>
+#include <Jakt/DeprecatedString.h>
 
 #include <IO/File.h>
 
@@ -70,7 +74,7 @@ constexpr auto continue_on_panic = true;
 constexpr auto continue_on_panic = false;
 #endif
 
-using OptionalNone = Jakt::NullOptional;
+using OptionalNone = Jakt::OptionalNone;
 
 inline void panic(StringView message)
 {
@@ -243,32 +247,32 @@ ALWAYS_INLINE constexpr OutputType as_truncated(InputType input)
     }
 }
 
-inline String ___jakt_get_target_triple_string()
+inline ErrorOr<DeprecatedString> ___jakt_get_target_triple_string()
 {
 #ifdef __JAKT_BUILD_TARGET
-    return String(__JAKT_BUILD_TARGET);
+    return DeprecatedString(__JAKT_BUILD_TARGET sv);
 #else
 // Pure guesswork.
 #   if defined(_WIN64)
-    return String("x86_64-pc-windows-msvc");
+    return DeprecatedString("x86_64-pc-windows-msvc"sv);
 #   elif defined(_WIN32)
-    return String("i686-pc-windows-msvc");
+    return DeprecatedString("i686-pc-windows-msvc"sv);
 #   elif defined(__linux__)
-    return String("x86_64-pc-linux-gnu");
+    return DeprecatedString("x86_64-pc-linux-gnu"sv);
 #   elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
-    return String("x86_64-pc-bsd-unknown");
+    return DeprecatedString("x86_64-pc-bsd-unknown"sv);
 #   elif defined(__APPLE__)
 #       if defined (__arm64__)
-            return String("arm64-apple-darwin-unknown");
+            return DeprecatedString("arm64-apple-darwin-unknown"sv);
 #       else
-            return String("x86_64-apple-darwin-unknown");
+            return DeprecatedString("x86_64-apple-darwin-unknown"sv);
 #       endif
 #   elif defined(__unix__)
-    return String("x86_64-pc-unix-unknown");
+    return DeprecatedString("x86_64-pc-unix-unknown"sv);
 #   elif defined(__serenity__)
-    return String("unknown-pc-serenity-serenity");
+    return DeprecatedString("unknown-pc-serenity-serenity"sv);
 #   else
-    return String("unknown-unknown-unknown-unknown");
+    return DeprecatedString("unknown-unknown-unknown-unknown"sv);
 #   endif
 #endif
 }
@@ -311,5 +315,5 @@ using JaktInternal::___jakt_get_target_triple_string;
 
 // We place main in a separate namespace to ensure it has access to the same identifiers as other functions
 namespace Jakt {
-ErrorOr<int> main(Array<String>);
+ErrorOr<int> main(DynamicArray<DeprecatedString>);
 }
