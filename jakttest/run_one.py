@@ -43,6 +43,11 @@ def main():
         "--cpp-include",
         help="Additional include path",
     )
+    parser.add_argument(
+        "--cpp-compiler",
+        help="Path to the C++ compiler to use (defaults to clang++ on $PATH)",
+        default="clang++"
+    )
     args = parser.parse_args()
 
     # Since we're running the output binary from a different
@@ -53,6 +58,7 @@ def main():
     jakt_lib_dir = Path(args.jakt_lib_dir).resolve()
     target_triple = args.target_triple
     cpp_include = ""
+    cpp_compiler = args.cpp_compiler
     if args.cpp_include and not args.cpp_include == "none":
         cpp_include = f"-I{Path(test_file.parent, args.cpp_include)}"
 
@@ -79,7 +85,7 @@ def main():
         try:
             subprocess.run(
                 [
-                    "clang++",
+                    cpp_compiler,
                     f"--target={target_triple}",
                     "-fdiagnostics-color=always",
                     "-std=c++20",

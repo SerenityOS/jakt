@@ -146,6 +146,7 @@ function print_usage()  {
     eprintln("\t-b,--build-dir <BUILD_DIR>\t\tUse BUILD_DIR as the prefix for the jakt binary. Defaults to 'build'.")
     eprintln("\t--temp-dir <DIR>\t\tUse DIR as the temporary directory.")
     eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
+    eprintln("\t-C,--cpp-compiler <PATH>\t\tUse the C++ compiler at PATH to compile objects. Defaults to clang++.")
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -243,6 +244,7 @@ struct Options {
     job_count: usize
     help_wanted: bool
     build_dir: String
+    cpp_compiler_path: String?
 
     function from_args(args: [String]) throws -> Options {
         let files: [String] = []
@@ -255,6 +257,7 @@ struct Options {
             job_count: 0
             help_wanted: false
             build_dir: "build"
+            cpp_compiler_path: None
         )
 
         mut index = 1uz
@@ -272,6 +275,17 @@ struct Options {
                 }
                 options.build_dir = args[index + 1]
                 index += 2
+                continue
+            }
+
+            if args[index] == "-C" or args[index] == "--cpp-compiler" {
+                index++
+                if index == args.size() {
+                    options.errors.push("Used --cpp-compiler/-C without an argument")
+                    break
+                }
+                options.cpp_compiler_path = args[index]
+                index++
                 continue
             }
 
@@ -618,6 +632,7 @@ struct TestScheduler {
         starting_failed_tests: usize
         total_test_count: usize
         build_dir: String
+        cpp_compiler_path: String? = None
     ) throws -> TestsRunResult {
         // create an empty handler so SIGCHLD is not ignored
         os::ignore_sigchild()
@@ -634,6 +649,8 @@ struct TestScheduler {
             String::format("{}/lib", build_dir)
             "--target-triple"
             ___jakt_get_target_triple_string()
+            "--cpp-compiler"
+            cpp_compiler_path ?? "clang++"
             "--cpp-include"
             "None" // A sentinel value is passed here because Windows shell does not allow empty arguments
             ""
@@ -745,6 +762,7 @@ function main(args: [String]) {
         starting_failed_tests: bad_formatted_tests.size()
         total_test_count: skipped_count + bad_formatted_tests.size() + tests.size()
         build_dir: parsed_options.build_dir
+        cpp_compiler_path: parsed_options.cpp_compiler_path
     )
 
     // delete directories
