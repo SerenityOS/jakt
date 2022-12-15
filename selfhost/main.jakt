@@ -81,6 +81,7 @@ function help() -> String {
     output += "  -e,--hover INDEX\t\t\tReturn the type of element at index.\n"
     output += "  -m,--completions INDEX\t\tReturn dot completions at index.\n"
     output += "  --create NAME\t\tCreate sample project in $PWD/NAME\n"
+    output += "  --ak-is-my-only-stdlib\t\tForget about interop, AK is the one and only STL.\n"
     return output
 }
 
@@ -211,6 +212,8 @@ function main(args: [String]) {
     let format_inplace = args_parser.flag(["-fi", "--format-inplace"])
     let format_debug = args_parser.flag(["-fd", "--format-debug"])
     let input_format_range = args_parser.option(["-fr", "--format-range"]) ?? ""
+
+    let ak_stdlib = args_parser.flag(["--ak-is-my-only-stdlib"])
 
     let max_concurrent = try value_or_throw(compiler_job_count.to_uint()) catch {
         eprintln("error: invalid value for --jobs: {}", compiler_job_count)
@@ -575,6 +578,11 @@ function main(args: [String]) {
             max_concurrent
         )
 
+        mut extra_compiler_flags = ["-c"]
+        if ak_stdlib {
+            extra_compiler_flags.push("-DJAKT_USING_AK_AS_STANDARD_LIBRARY=1")
+        }
+
         try builder.build_all(
             binary_dir
             compiler_invocation: &function[
@@ -582,6 +590,7 @@ function main(args: [String]) {
                 runtime_path
                 extra_include_paths
                 optimize
+                extra_compiler_flags
             ](input_filename: String, output_filename: String) throws -> [String] {
                 return run_compiler(
                     cxx_compiler_path
@@ -592,7 +601,7 @@ function main(args: [String]) {
                     extra_lib_paths: []
                     extra_link_libs: []
                     optimize
-                    extra_compiler_flags: ["-c"]
+                    extra_compiler_flags
                 )
             }
         ) catch {
