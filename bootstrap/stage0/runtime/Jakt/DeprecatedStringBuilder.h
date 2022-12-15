@@ -99,7 +99,7 @@ ErrorOr<void> append_value(DeprecatedStringBuilder& string_builder, T const& val
 
 template<typename T>
 struct Jakt::Formatter<T> : Jakt::Formatter<Jakt::StringView> {
-    ErrorOr<void> format(Jakt::FormatBuilder& builder, T const&)
+    Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, T const&)
     {
         return Jakt::Formatter<Jakt::StringView>::format(builder, "<Unformattable Object>"sv);
     }
@@ -297,7 +297,7 @@ struct Jakt::Formatter<Jakt::Tuple<Ts...>> : Jakt::Formatter<Jakt::StringView> {
 
 template<typename T>
 struct Jakt::Formatter<Jakt::Optional<T>> : Jakt::Formatter<Jakt::StringView> {
-    ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::Optional<T> const& value)
+    Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::Optional<T> const& value)
     {
         if (!value.has_value())
             return Jakt::Formatter<Jakt::StringView>::format(builder, "None"sv);
