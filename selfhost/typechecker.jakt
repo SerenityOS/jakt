@@ -2937,7 +2937,6 @@ struct Typechecker {
         // method return type is checked against its implementation
         .current_function_id = method_id!
 
-        let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
         mut function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id, name: None)
 
         let VOID_TYPE_ID = void_type_id()
@@ -2946,6 +2945,14 @@ struct Typechecker {
         if not func.is_fat_arrow and func.return_type is Empty {
             function_return_type_id = VOID_TYPE_ID
         }
+
+        if function_return_type_id.equals(never_type_id()) {
+            // Allow noreturn functions to call throwing functions, they'll just be forced to crash.
+            mut scope = .get_scope(function_scope_id)
+            scope.can_throw = true
+        }
+
+        let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
 
         // Infer return type if necessary
         // If the return type is unknown we infer the return type from its expression.
