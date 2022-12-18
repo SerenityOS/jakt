@@ -2954,6 +2954,11 @@ struct Typechecker {
 
         let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
 
+        if block.yielded_type.has_value() {
+            .error_with_hint("Functions are not allowed to yield values", func.block.find_yield_span()!,
+                            "You might want to return instead", func.block.find_yield_keyword_span()!)
+        }
+
         // Infer return type if necessary
         // If the return type is unknown we infer the return type from its expression.
         let return_type_id = match function_return_type_id.equals(unknown_type_id()) {

@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Functions are not allowed to yield values"
+
+class Foo {
+    public function test() -> String {
+        yield "Foo"
+    }
+}
+
+function main() {
+
+}
