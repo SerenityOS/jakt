@@ -8,9 +8,7 @@ class Foo {
         this.x = value
     }
 
-    public function get(this) {
-        return this.x
-    }
+    public function get(this) => this.x
 }
 
 function main() {

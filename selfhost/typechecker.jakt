@@ -2937,10 +2937,15 @@ struct Typechecker {
         // method return type is checked against its implementation
         .current_function_id = method_id!
 
-        let VOID_TYPE_ID = builtin(BuiltinType::Void)
-
         let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
-        let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id, name: None)
+        mut function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id, name: None)
+
+        let VOID_TYPE_ID = void_type_id()
+
+        // If return type is not specified, default return type of non fat arrow functions is void
+        if not func.is_fat_arrow and func.return_type is Empty {
+            function_return_type_id = VOID_TYPE_ID
+        }
 
         mut return_type_id = function_return_type_id
         if function_return_type_id.equals(unknown_type_id()) and not block.statements.is_empty() {
@@ -3431,6 +3436,7 @@ struct Typechecker {
             name: None
         )
 
+        // If return type is not specified, default return type of non fat arrow functions is void
         if not parsed_function.is_fat_arrow and parsed_function.return_type is Empty and parsed_function.name != "main" {
             function_return_type_id = void_type_id()
         }

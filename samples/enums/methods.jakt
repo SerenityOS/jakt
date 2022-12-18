@@ -16,9 +16,7 @@ enum Foo {
         }
     }
 
-    function name(this) throws {
-        return this.name_impl()
-    }
+    function name(this) throws => this.name_impl()
 }
 
 function main() {
