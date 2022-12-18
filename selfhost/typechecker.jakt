@@ -3412,7 +3412,6 @@ struct Typechecker {
             return
         }
 
-        let func_ids = .find_functions_with_name_in_scope(parent_scope_id, function_name: parsed_function.name)
         let function_id = .find_function_matching_signature_in_scope(parent_scope_id, prototype: parsed_function)
 
         guard function_id.has_value() else {
@@ -3447,8 +3446,6 @@ struct Typechecker {
             function_return_type_id = void_type_id()
         }
 
-        checked_function.return_type_id = function_return_type_id
-
         if function_return_type_id.equals(never_type_id()) {
             // Allow noreturn functions to call throwing functions, they'll just be forced to crash.
             mut scope = .get_scope(function_scope_id)
@@ -3473,9 +3470,7 @@ struct Typechecker {
             else => .resolve_type_var(type_var_type_id: function_return_type_id, scope_id: function_scope_id)
         }
 
-        let external_linkage = function_linkage is External
-
-        if not external_linkage and not return_type_id.equals(void_type_id()) and not block.control_flow.always_transfers_control() {
+        if not function_linkage is External and not return_type_id.equals(void_type_id()) and not block.control_flow.always_transfers_control() {
             // FIXME: Use better span
             if return_type_id.equals(never_type_id()) and not block.control_flow.never_returns() {
                 .error("Control reaches end of never-returning function", parsed_function.name_span)
