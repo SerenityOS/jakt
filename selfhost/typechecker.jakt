@@ -2890,26 +2890,26 @@ struct Typechecker {
 
     function typecheck_method(mut this, func: ParsedFunction, parent_id: StructLikeId) throws -> FunctionId? {
         mut parent_generic_parameters: [CheckedGenericParameter] = []
-        mut scope_id = .prelude_scope_id()
-        mut definition_linkage = DefinitionLinkage::Internal
+        mut parent_scope_id = .prelude_scope_id()
+        mut parent_definition_linkage = DefinitionLinkage::Internal
 
         match parent_id {
             Struct(struct_id) => {
                 mut structure = .get_struct(struct_id)
+                parent_scope_id = structure.scope_id
+                parent_definition_linkage = structure.definition_linkage
                 parent_generic_parameters = structure.generic_parameters
-                scope_id = structure.scope_id
-                definition_linkage = structure.definition_linkage
             }
             Enum(enum_id) => {
                 let enum_ = .get_enum(enum_id)
-                definition_linkage = enum_.definition_linkage
-                scope_id = enum_.scope_id
+                parent_scope_id = enum_.scope_id
+                parent_definition_linkage = enum_.definition_linkage
                 parent_generic_parameters = enum_.generic_parameters
             }
             Trait(trait_id) => {
                 let trait_ = .get_trait(trait_id)
-                definition_linkage = DefinitionLinkage::Internal
-                scope_id = trait_.scope_id
+                parent_scope_id = trait_.scope_id
+                parent_definition_linkage = DefinitionLinkage::Internal
                 parent_generic_parameters = trait_.generic_parameters
             }
         }
@@ -2918,10 +2918,7 @@ struct Typechecker {
             return None
         }
 
-        let structure_scope_id = scope_id
-        let structure_linkage = definition_linkage
-
-        let method_id = .find_function_matching_signature_in_scope(parent_scope_id: structure_scope_id, prototype: func)
+        let method_id = .find_function_matching_signature_in_scope(parent_scope_id, prototype: func)
         if not method_id.has_value() {
             .compiler.panic("we just pushed the checked function, but it's not present")
         }
@@ -2957,7 +2954,7 @@ struct Typechecker {
             return_type_id = VOID_TYPE_ID
         }
 
-        if not structure_linkage is External and not return_type_id.equals(VOID_TYPE_ID) and not block.control_flow.always_transfers_control() {
+        if not parent_definition_linkage is External and not return_type_id.equals(VOID_TYPE_ID) and not block.control_flow.always_transfers_control() {
             // FIXME: Use better span
             if return_type_id.equals(never_type_id()) and not block.control_flow.never_returns() {
                 .error("Control reaches end of never-returning function", func.name_span)
