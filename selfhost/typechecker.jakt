@@ -2919,9 +2919,10 @@ struct Typechecker {
         }
 
         let method_id = .find_function_matching_signature_in_scope(parent_scope_id, prototype: func)
-        if not method_id.has_value() {
-            .compiler.panic("we just pushed the checked function, but it's not present")
+        guard method_id.has_value() else {
+            .compiler.panic(format("Previously defined function {} not found in scope {}", func.name, parent_scope_id))
         }
+
         mut checked_function = .get_function(method_id!)
         let function_scope_id = checked_function.function_scope_id
 
