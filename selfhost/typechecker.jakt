@@ -2947,17 +2947,11 @@ struct Typechecker {
             function_return_type_id = VOID_TYPE_ID
         }
 
-        mut return_type_id = function_return_type_id
-        if function_return_type_id.equals(unknown_type_id()) and not block.statements.is_empty() {
-            // If the return type is unknown, and the function starts with a return statement,
-            // we infer the return type from its expression.
-            if block.statements[0] is Return(val) and val.has_value() {
-                return_type_id = val!.type()
-            } else {
-                return_type_id = VOID_TYPE_ID
-            }
-        } else if function_return_type_id.equals(unknown_type_id()) {
-            return_type_id = VOID_TYPE_ID
+        // Infer return type if necessary
+        // If the return type is unknown we infer the return type from its expression.
+        let return_type_id = match function_return_type_id.equals(unknown_type_id()) {
+            true => .infer_function_return_type(block)
+            else => .resolve_type_var(type_var_type_id: function_return_type_id, scope_id: function_scope_id)
         }
 
         if not parent_definition_linkage is External and not return_type_id.equals(VOID_TYPE_ID) and not block.control_flow.always_transfers_control() {
