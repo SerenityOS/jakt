@@ -3455,23 +3455,15 @@ struct Typechecker {
         }
 
         // Infer return type if necessary
-        // If the return type is unknown, and the function starts with a return statement,
-        // we infer the return type from its expression.
-        let UNKNOWN_TYPE_ID = unknown_type_id()
-        let VOID_TYPE_ID = void_type_id()
-        mut return_type_id = VOID_TYPE_ID
-        if function_return_type_id.equals(UNKNOWN_TYPE_ID) {
-            return_type_id = .infer_function_return_type(block)
-        } else {
-            return_type_id = .resolve_type_var(
-                type_var_type_id: function_return_type_id,
-                scope_id: function_scope_id
-            )
+        // If the return type is unknown we infer the return type from its expression.
+        let return_type_id = match function_return_type_id.equals(unknown_type_id()) {
+            true => .infer_function_return_type(block)
+            else => .resolve_type_var(type_var_type_id: function_return_type_id, scope_id: function_scope_id)
         }
 
         let external_linkage = function_linkage is External
 
-        if not external_linkage and not return_type_id.equals(VOID_TYPE_ID) and not block.control_flow.always_transfers_control() {
+        if not external_linkage and not return_type_id.equals(void_type_id()) and not block.control_flow.always_transfers_control() {
             // FIXME: Use better span
             if return_type_id.equals(never_type_id()) and not block.control_flow.never_returns() {
                 .error("Control reaches end of never-returning function", parsed_function.name_span)
