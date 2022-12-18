@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "21\n"
 
-function slices(anon s: ArraySlice<i64>, mut total: i64) {
+function slices(anon s: ArraySlice<i64>, mut total: i64) -> i64 {
     total += s[0]
 
     if s.size() > 1 {

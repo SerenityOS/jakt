@@ -3425,7 +3425,6 @@ struct Typechecker {
             .add_var_to_scope(scope_id: function_scope_id, name: variable.name, var_id, span: variable.definition_span)
         }
 
-        // Resolve concrete types
         mut function_return_type_id = .typecheck_typename(
             parsed_type: parsed_function.return_type
             scope_id: function_scope_id
@@ -3454,13 +3453,6 @@ struct Typechecker {
             .error_with_hint("Functions are not allowed to yield values", parsed_function.block.find_yield_span()!,
                             "You might want to return instead", parsed_function.block.find_yield_keyword_span()!)
         }
-
-        // Typecheck return type a second time to resolve generics
-        function_return_type_id = .typecheck_typename(
-            parsed_type: parsed_function.return_type
-            scope_id: function_scope_id
-            name: None
-        )
 
         // Infer return type if necessary
         // If the return type is unknown, and the function starts with a return statement,
