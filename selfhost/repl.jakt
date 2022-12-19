@@ -243,6 +243,7 @@ struct REPL {
         let file_id = compiler.get_file_id_or_register(file: Path::from_string("<repl>"))
 
         let placeholder_module_id = ModuleId(id: 0)
+        let root_module_name = "repl"
 
         mut typechecker = Typechecker(
             compiler
@@ -257,12 +258,12 @@ struct REPL {
             dump_try_hints: compiler.dump_try_hints
             lambda_count: 0
             generic_inferences: GenericInferences(values: [:])
+            root_module_name
         )
 
         compiler.current_file = file_id
         typechecker.include_prelude()
 
-        let root_module_name = "<repl>"
         let root_module_id = typechecker.create_module(name: root_module_name, is_root: true)
         typechecker.current_module_id = root_module_id
         typechecker.program.set_loaded_module(
