@@ -1434,6 +1434,22 @@ class Interpreter {
                 }
             }
             "Dictionary" => match prelude_function {
+                "Dictionary" => {
+                    if type_bindings.size() != 2 {
+                        .error("Dictionary constructor expects two generic argumenst", call_span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                    let dictionary_struct_id = .program.find_struct_in_prelude("Dictionary")
+                    let type_id = .find_or_add_type_id(Type::GenericInstance(id: dictionary_struct_id, args: [
+                        type_bindings.get(type_bindings.keys()[0])!,
+                        type_bindings.get(type_bindings.keys()[1])!,
+                    ]))
+
+                    yield StatementResult::JustValue(Value(
+                        impl: ValueImpl::JaktDictionary(keys: [], values: [], type_id)
+                        span: call_span
+                    ))
+                }
                 "get" => match this_argument!.impl {
                     JaktDictionary(keys, values) => {
                         mut found_index: usize? = None
@@ -2242,6 +2258,19 @@ class Interpreter {
                 }
             }
             "Set" => match prelude_function {
+                "Set" => {
+                    if type_bindings.size() != 1 {
+                        .error("Set constructor expects one generic argument", call_span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                    let set_struct_id = .program.find_struct_in_prelude("Set")
+                    let type_id = .find_or_add_type_id(Type::GenericInstance(id: set_struct_id, args: [type_bindings.get(type_bindings.keys()[0])!]))
+
+                    yield StatementResult::JustValue(Value(
+                        impl: ValueImpl::JaktSet(values: [], type_id)
+                        span: call_span
+                    ))
+                }
                 "is_empty" => match this_argument!.impl {
                     JaktSet(values) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(values.is_empty()), span: call_span))
                     else => {

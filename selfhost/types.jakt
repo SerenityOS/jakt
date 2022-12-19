@@ -169,6 +169,8 @@ struct ScopeId {
     function equals(this, anon other: ScopeId) -> bool {
         return this.module_id.id == other.module_id.id and this.id == other.id
     }
+
+    function to_string(this) throws -> String => format("{}:{}", .module_id.id, .id)
 }
 
 enum BuiltinType {
@@ -547,10 +549,13 @@ class Scope {
     public types: [String: TypeId]
     public traits: [String: TraitId]
     public imports: [String: ModuleId] // FIXME: Span
+    public aliases: [String: ScopeId]
     public parent: ScopeId?
+    public alias_scope: ScopeId? = None
     public children: [ScopeId]
     public can_throw: bool
     public import_path_if_extern: String?
+    public alias_path: [ResolvedNamespace]? = None
     public after_extern_include: [IncludeAction]
     public before_extern_include: [IncludeAction]
 
@@ -698,6 +703,8 @@ class CheckedFunction {
     public is_comptime: bool
     public is_virtual: bool
     public is_override: bool
+
+    public owner_scope: ScopeId? = None
 
     public external_name: String? = None
     public deprecated_message: String? = None
@@ -903,13 +910,14 @@ struct FunctionGenericParameter {
     )
 }
 
-struct CheckedVariable {
-    name: String
-    type_id: TypeId
-    is_mutable: bool
-    definition_span: Span
-    type_span: Span?
-    visibility: CheckedVisibility
+class CheckedVariable {
+    public name: String
+    public type_id: TypeId
+    public is_mutable: bool
+    public definition_span: Span
+    public type_span: Span?
+    public visibility: CheckedVisibility
+    public owner_scope: ScopeId? = None
 
     public function map_types(this, anon map: &function(anon type_id: TypeId) throws -> TypeId) throws -> CheckedVariable {
         return CheckedVariable(
@@ -919,6 +927,7 @@ struct CheckedVariable {
             definition_span: .definition_span
             type_span: .type_span
             visibility: .visibility
+            owner_scope: .owner_scope
         )
     }
 }
@@ -1480,6 +1489,7 @@ class CheckedProgram {
             types: [:]
             traits: [:]
             imports: [:]
+            aliases: [:]
             parent: parent_scope_id
             children: []
             can_throw
@@ -1674,39 +1684,87 @@ class CheckedProgram {
         .compiler.panic(format("internal error: {} builtin definition not found", name))
     }
 
-    public function find_namespace_in_scope(this, scope_id: ScopeId, anon name: String) throws -> (ScopeId, bool)? {
-        mut current = scope_id;
+    public function is_scope_directly_accessible_from(this, check_scope_id: ScopeId, scope_id: ScopeId) throws -> bool {
+        mut scopes_to_check = [scope_id]
+        mut seen: {String} = {}
 
-        loop {
-            let scope = .get_scope(current)
+        for child in .get_scope(scope_id).children {
+            scopes_to_check.insert(before_index: 0, value: child)
+        }
 
-            for child in scope.children {
-                let child_scope = .get_scope(child)
-                if child_scope.namespace_name.has_value() {
-                    if name == child_scope.namespace_name.value() {
-                        return (child, false)
-                    }
-                }
+        while not scopes_to_check.is_empty() {
+            let scope_id = scopes_to_check.pop()!
+            seen.add(scope_id.to_string())
+
+            if scope_id.equals(check_scope_id) {
+                return true
             }
 
-            for child_id in scope.children {
-                let child_scope = .get_scope(id: child_id)
-                if not child_scope.namespace_name.has_value() {
-                    for scope in .get_scope(child_id).children {
-                        let descendant_scope = .get_scope(scope)
-                        if descendant_scope.namespace_name.has_value() {
-                            if name == descendant_scope.namespace_name.value() {
-                                return (scope, false)
-                            }
-                        }
-                    }
+            let scope = .get_scope(scope_id)
+
+            for (_, alias) in scope.aliases {
+                if alias.equals(check_scope_id) {
+                    return true
                 }
             }
 
             if scope.parent.has_value() {
-                current = scope.parent.value()
-            } else {
-                break
+                scopes_to_check.insert(before_index: 0, value: scope.parent!)
+            }
+
+            if scope.namespace_name.has_value() {
+                continue
+            }
+
+            for child in scope.children {
+                if not seen.contains(child.to_string()) {
+                    scopes_to_check.insert(before_index: 0, value: child)
+                }
+            }
+        }
+
+        return ScopeId(module_id: scope_id.module_id, id: 0).equals(check_scope_id)
+    }
+
+    public function find_namespace_in_scope(this, scope_id: ScopeId, anon name: String, treat_aliases_as_imports: bool = false) throws -> (ScopeId, bool)? {
+        mut scopes_to_check = [scope_id]
+        mut seen: {String} = {}
+
+        for child in .get_scope(scope_id).children {
+            scopes_to_check.insert(before_index: 0, value: child)
+        }
+
+        while not scopes_to_check.is_empty() {
+            let scope_id = scopes_to_check.pop()!
+            seen.add(scope_id.to_string())
+
+            let scope = .get_scope(scope_id)
+
+            if scope.namespace_name.has_value() and scope.namespace_name! == name {
+                return (scope_id, false)
+            }
+
+            if scope.aliases.contains(name) {
+                return (scope.aliases[name], treat_aliases_as_imports)
+            }
+
+            if scope.parent.has_value() {
+                scopes_to_check.insert(before_index: 0, value: scope.parent!)
+                for child in .get_scope(scope.parent!).children {
+                    if not seen.contains(child.to_string()) {
+                        scopes_to_check.insert(before_index: 0, value: child)
+                    }
+                }
+            }
+
+            if scope.namespace_name.has_value() {
+                continue
+            }
+
+            for child in scope.children {
+                if not seen.contains(child.to_string()) {
+                    scopes_to_check.insert(before_index: 0, value: child)
+                }
             }
         }
 
@@ -1727,6 +1785,10 @@ class CheckedProgram {
     }
 
     public function find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
+        return .find_scoped_functions_with_name_in_scope(parent_scope_id, function_name)?.0
+    }
+
+    public function find_scoped_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> ([FunctionId], ScopeId)? {
         mut visited: [ScopeId] = []
         mut queue: [ScopeId] = [parent_scope_id]
         mut scope_id = Some(parent_scope_id)
@@ -1748,7 +1810,7 @@ class CheckedProgram {
             let scope = .get_scope(id: scope_id)
             let maybe_function = scope.functions.get(function_name)
             if maybe_function.has_value() {
-                return maybe_function
+                return (maybe_function!, scope_id)
             }
             // search inside inline namespaces
             for child_scope_id in scope.children {

@@ -10,8 +10,8 @@ import error { JaktError, print_error }
 import lexer { Lexer }
 import parser {
     BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, FunctionLinkage, FunctionType, ImportList, ImportName
-    NumericConstant, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport, ParsedField
-    ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedMethod, ParsedModuleImport, ParsedName
+    NumericConstant, ParsedAlias, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport
+    ParsedField, ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedMethod, ParsedModuleImport, ParsedName
     ParsedNameWithGenericParameters, ParsedNamespace, ParsedParameter, ParsedPatternDefault, ParsedRecord
     ParsedStatement, ParsedTrait, ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator, Visibility
 }
@@ -40,6 +40,24 @@ struct TraitImplementationDescriptor {
     trait_id: TraitId
     trait_name: String
     implemented_type_args: [TypeId]
+}
+
+struct ImportRestrictions {
+    functions: bool = false
+    structs: bool = false
+    enums: bool = false
+    types: bool = false
+    traits: bool = false
+    namespaces: bool = false
+
+    function all() -> ImportRestrictions => ImportRestrictions(
+        functions: true
+        structs: true
+        enums: true
+        types: true
+        traits: true
+        namespaces: true
+    )
 }
 
 struct Typechecker {
@@ -513,8 +531,8 @@ struct Typechecker {
 
     // Find the namespace in the current scope, or one of its parents,
     // and whether the found scope was an import.
-    function find_namespace_in_scope(this, scope_id: ScopeId, name: String) throws -> (ScopeId, bool)? {
-        return .program.find_namespace_in_scope(scope_id, name)
+    function find_namespace_in_scope(this, scope_id: ScopeId, name: String, treat_aliases_as_imports: bool = false) throws -> (ScopeId, bool)? {
+        return .program.find_namespace_in_scope(scope_id, name, treat_aliases_as_imports)
     }
 
     function add_struct_to_scope(mut this, scope_id: ScopeId, name: String, struct_id: StructId, span: Span) throws -> bool {
@@ -594,20 +612,39 @@ struct Typechecker {
                 for existing_function_id in existing_function_binding {
                     let existing_function = .get_function(existing_function_id)
                     if function_to_add.signature_matches(existing_function) {
-                    .error_with_hint(
-                        format("Redefinition of function ‘{}’.", function_to_add.name)
-                        function_to_add.parsed_function!.name_span
-                        "Previous definition is here"
-                        existing_function.parsed_function!.name_span
-                    )
+                        .error_with_hint(
+                            format("Redefinition of function ‘{}’.", function_to_add.name)
+                            function_to_add.parsed_function!.name_span
+                            "Previous definition is here"
+                            existing_function.parsed_function!.name_span
+                        )
                     }
                 }
+
                 scope.functions[name].push(function_id)
             }
-        }else {
+        } else {
             scope.functions.set(key: name, value: overload_set)
         }
+
+        .set_owner_scope_if_needed(parent_scope_id, overload_set)
         return true
+    }
+
+    function set_owner_scope_if_needed(mut this, parent_scope_id: ScopeId, overload_set: [FunctionId]) throws {
+        for overload in overload_set {
+            mut function_ = .get_function(overload)
+            if not function_.owner_scope.has_value() {
+                function_.owner_scope = parent_scope_id
+            }
+        }
+    }
+
+    function set_owner_scope_if_needed(mut this, parent_scope_id: ScopeId, var_id: VarId) throws {
+        mut variable = .get_variable(var_id)
+        if not variable.owner_scope.has_value() {
+            variable.owner_scope = parent_scope_id
+        }
     }
 
     function add_var_to_scope(mut this, scope_id: ScopeId, name: String, var_id: VarId, span: Span) throws -> bool {
@@ -618,6 +655,7 @@ struct Typechecker {
             .error_with_hint(message: format("Redefinition of variable ‘{}’", name), span, hint: "previous definition here", hint_span: variable_.definition_span)
         }
         scope.vars.set(key: name, value: var_id)
+        .set_owner_scope_if_needed(parent_scope_id: scope_id, var_id)
         return true
     }
 
@@ -637,6 +675,10 @@ struct Typechecker {
 
     function find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
         return .program.find_functions_with_name_in_scope(parent_scope_id, function_name)
+    }
+
+    function find_scoped_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> ([FunctionId], ScopeId)? {
+        return .program.find_scoped_functions_with_name_in_scope(parent_scope_id, function_name)
     }
 
     function find_function_matching_signature_in_scope(this, parent_scope_id: ScopeId, prototype: ParsedFunction) throws -> FunctionId? {
@@ -659,9 +701,11 @@ struct Typechecker {
     function typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         .typecheck_namespace_imports(parsed_namespace, scope_id)
         .typecheck_namespace_predecl(parsed_namespace, scope_id)
+        .typecheck_namespace_aliases(parsed_namespace, scope_id, allow: ImportRestrictions(structs: true, enums: true, types: true, traits: true, namespaces: true))
         .typecheck_namespace_fields(parsed_namespace, scope_id)
         .typecheck_namespace_constructors(parsed_namespace, scope_id)
         .typecheck_namespace_function_predecl(parsed_namespace, scope_id)
+        .typecheck_namespace_aliases(parsed_namespace, scope_id, allow: ImportRestrictions(functions: true))
         .typecheck_namespace_default_fields(parsed_namespace, scope_id)
         .typecheck_namespace_declarations(parsed_namespace, scope_id)
     }
@@ -1040,86 +1084,14 @@ struct Typechecker {
         } else if import_.import_list is List(names) {
             let import_scope_id = ScopeId(module_id: imported_module_id, id: 0)
             for imported_name in names {
-                mut found = false
-                // if it is a function, add function to scope
-                let maybe_overload_set = .find_functions_with_name_in_scope(
-                    parent_scope_id: import_scope_id
-                    function_name: imported_name.literal_name()
+                let found = .find_and_import_name_from_scope(
+                    from_name: imported_name.literal_name()
+                    from_span: imported_name.span()
+                    to_name: imported_name.literal_name()
+                    to_span: imported_name.span()
+                    from_scope_id: import_scope_id
+                    into_scope_id: scope_id
                 )
-                if maybe_overload_set.has_value() {
-                    found = true
-                    // NOTE: what should we do if this returns false? error is already created in the function itself and rust compiler goes on
-                    .add_function_to_scope(
-                        parent_scope_id: scope_id
-                        name: imported_name.literal_name()
-                        overload_set: maybe_overload_set!
-                        span: imported_name.span()
-                    )
-                }
-
-                // if it is an enum, add enum to scope
-                let maybe_enum_id = .program.find_enum_in_scope(
-                    scope_id: import_scope_id
-                    name: imported_name.literal_name()
-                )
-                if maybe_enum_id.has_value() {
-                    found = true
-                    // NOTE: what should we do if this returns false? error is already created in the enum itself and rust compiler goes on
-                    .add_enum_to_scope(
-                        parent_scope_id: scope_id
-                        name: imported_name.literal_name()
-                        enum_id: maybe_enum_id!
-                        span: imported_name.span()
-                    )
-                }
-
-                // if it is a type, add type to scope
-                let maybe_type_id = .find_type_in_scope(
-                    scope_id: import_scope_id
-                    name: imported_name.literal_name()
-                )
-                if maybe_type_id.has_value() {
-                    found = true
-                    // NOTE: what should we do if this returns false? error is already created in the type itself and rust compiler goes on
-                    .add_type_to_scope(
-                        parent_scope_id: scope_id
-                        type_name: imported_name.literal_name()
-                        type_id: maybe_type_id!
-                        span: imported_name.span()
-                    )
-                }
-
-                // if it is a struct, add struct to scope
-                let maybe_struct_id = .find_struct_in_scope(
-                    scope_id: import_scope_id
-                    name: imported_name.literal_name()
-                )
-                if maybe_struct_id.has_value() {
-                    found = true
-                    // NOTE: what should we do if this returns false? error is already created in the struct itself and rust compiler goes on
-                    .add_struct_to_scope(
-                        parent_scope_id: scope_id
-                        name: imported_name.literal_name()
-                        struct_id: maybe_struct_id!
-                        span: imported_name.span()
-                    )
-                }
-
-                // if it is a trait, add it to the scope
-                let maybe_trait_id = .find_trait_in_scope(
-                    scope_id: import_scope_id
-                    name: imported_name.literal_name()
-                )
-                if maybe_trait_id.has_value() {
-                    found = true
-                    .add_trait_to_scope(
-                        parent_scope_id: scope_id
-                        trait_name: imported_name.literal_name()
-                        trait_id: maybe_trait_id!
-                        span: imported_name.span()
-                    )
-                }
-
                 if not found {
                     .error(
                         format("Imported name '{}' not found in module '{}'", imported_name.literal_name(), module_name)
@@ -1130,6 +1102,115 @@ struct Typechecker {
         }
     }
 
+    function find_and_import_name_from_scope(
+        mut this
+        from_name: String
+        from_span: Span
+        to_name: String
+        to_span: Span
+        from_scope_id: ScopeId
+        into_scope_id: ScopeId
+        allow: ImportRestrictions = ImportRestrictions::all()
+    ) throws -> bool {
+        mut found = false
+
+        // if it is a function, add function to scope
+        if allow.functions {
+            let maybe_overload_set = .find_functions_with_name_in_scope(
+                parent_scope_id: from_scope_id
+                function_name: from_name
+            )
+            if maybe_overload_set.has_value() {
+                found = true
+                .add_function_to_scope(
+                    parent_scope_id: into_scope_id
+                    name: to_name
+                    overload_set: maybe_overload_set!
+                    span: to_span
+                )
+            }
+        }
+
+        // if it is an enum, add enum to scope
+        if allow.enums {
+            let maybe_enum_id = .program.find_enum_in_scope(
+                scope_id: from_scope_id
+                name: from_name
+            )
+            if maybe_enum_id.has_value() {
+                found = true
+                .add_enum_to_scope(
+                    scope_id: into_scope_id
+                    name: to_name
+                    enum_id: maybe_enum_id!
+                    span: to_span
+                )
+            }
+        }
+
+        if allow.types {
+            // if it is a type, add type to scope
+            let maybe_type_id = .find_type_in_scope(
+                scope_id: from_scope_id
+                name: from_name
+            )
+            if maybe_type_id.has_value() {
+                found = true
+                .add_type_to_scope(
+                    scope_id: into_scope_id
+                    type_name: to_name
+                    type_id: maybe_type_id!
+                    span: to_span
+                )
+            }
+        }
+
+        if allow.structs {
+            // if it is a struct, add struct to scope
+            let maybe_struct_id = .find_struct_in_scope(
+                scope_id: from_scope_id
+                name: from_name
+            )
+            if maybe_struct_id.has_value() {
+                found = true
+                .add_struct_to_scope(
+                    scope_id: into_scope_id
+                    name: to_name
+                    struct_id: maybe_struct_id!
+                    span: to_span
+                )
+            }
+        }
+
+        if allow.traits {
+            // if it is a trait, add it to the scope
+            let maybe_trait_id = .find_trait_in_scope(
+                scope_id: from_scope_id
+                name: from_name
+            )
+            if maybe_trait_id.has_value() {
+                found = true
+                .add_trait_to_scope(
+                    scope_id: into_scope_id
+                    trait_name: to_name
+                    trait_id: maybe_trait_id!
+                    span: to_span
+                )
+            }
+        }
+
+        if allow.namespaces {
+            let maybe_scope_id = .find_namespace_in_scope(scope_id: from_scope_id, name: from_name)
+            if maybe_scope_id.has_value() {
+                found = true
+                mut scope = .get_scope(into_scope_id)
+                scope.aliases.set(to_name, maybe_scope_id!.0)
+            }
+        }
+
+        return found
+    }
+
     function typecheck_extern_import(mut this, anon import_: ParsedExternImport, scope_id: ScopeId) throws {
         for f in import_.assigned_namespace.functions {
             if not f.linkage is External {
@@ -1138,7 +1219,7 @@ struct Typechecker {
 
             if import_.is_c and not f.generic_parameters.is_empty() {
                 .error_with_hint(
-                    format("imported function '{}' is declared to have C linkage, but is generic",f.name)
+                    format("imported function '{}' is declared to have C linkage, but is generic", f.name)
                     f.name_span
                     "this function may not be generic"
                     f.name_span)
@@ -1203,6 +1284,79 @@ struct Typechecker {
                 else => {}
             }
         }
+    }
+
+    function typecheck_namespace_aliases(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId, allow: ImportRestrictions) throws {
+        let children = .get_scope(id: scope_id).children
+        for i in 0..parsed_namespace.namespaces.size() {
+            let child_namespace = parsed_namespace.namespaces[i]
+            let child_namespace_scope_id = children[i]
+            .typecheck_namespace_aliases(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id, allow)
+        }
+        for alias in parsed_namespace.aliases {
+            .typecheck_alias(alias, scope_id, allow)
+        }
+    }
+
+    function typecheck_alias(mut this, alias: ParsedAlias, scope_id: ScopeId, allow: ImportRestrictions) throws {
+        let aliased_name = match alias.alias_name.has_value() {
+            true => alias.alias_name!
+            else => {
+                let name = alias.target.last()!
+                if not name.generic_parameters.is_empty() {
+                    .error_with_hint(
+                        format("Cannot alias a generic instance of a type to the type itself")
+                        name.name_span
+                        format("Add an alias name here: 'as <name>'")
+                        name.name_span // FIXME: Point to the end of the name
+                    )
+                }
+                yield ParsedName(name: name.name, span: name.name_span)
+            }
+        }
+
+        // Resolve the aliased type up to the last entry
+        mut resolved_scope_id = scope_id
+        mut alias_path: [ResolvedNamespace] = []
+        for i in 0..(alias.target.size() - 1) {
+            let namespace_ = .find_namespace_in_scope(scope_id: resolved_scope_id, name: alias.target[i].name)
+            if not namespace_.has_value() {
+                .error(
+                    format("Unknown namespace '{}'", alias.target[i].name)
+                    alias.target[i].name_span
+                )
+                return
+            }
+            resolved_scope_id = namespace_!.0
+            alias_path.push(ResolvedNamespace(name: alias.target[i].name, generic_parameters: None))
+        }
+
+        mut scope = .get_scope(scope_id)
+        let alias_scope_id = match scope.alias_scope.has_value() {
+            true => scope.alias_scope!
+            else => {
+                let new_scope_id = .create_scope(
+                    parent_scope_id: scope_id
+                    can_throw: false
+                    debug_name: format("alias-scope({})", scope.debug_name)
+                )
+                mut new_scope = .get_scope(new_scope_id)
+                new_scope.alias_path = alias_path
+                .get_scope(scope_id).children.push(new_scope_id)
+                yield new_scope_id
+            }
+        }
+
+        // FIXME: Error if one or both of the typecheck_alias() calls for a given alias fail
+        .find_and_import_name_from_scope(
+            from_name: alias.target.last()!.name
+            from_span: alias.target.last()!.name_span
+            to_name: aliased_name.name
+            to_span: aliased_name.span
+            from_scope_id: resolved_scope_id
+            into_scope_id: alias_scope_id
+            allow
+        )
     }
 
     function typecheck_namespace_function_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
@@ -1678,6 +1832,8 @@ struct Typechecker {
         defer .self_type_id = old_self_type_id
 
         let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("enum({})", parsed_record.name))
+        mut scope = .get_scope(enum_scope_id)
+        scope.namespace_name = parsed_record.name
 
         .add_enum_to_scope(scope_id, name: parsed_record.name, enum_id, span: parsed_record.name_span)
 
@@ -2388,7 +2544,10 @@ struct Typechecker {
         .add_type_to_scope(scope_id, type_name: parsed_record.name, type_id: struct_type_id, span: parsed_record.name_span)
 
         let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("struct({})", parsed_record.name))
-        .get_scope(struct_scope_id).external_name = parsed_record.external_name
+        mut scope = .get_scope(struct_scope_id)
+
+        scope.namespace_name = parsed_record.name
+        scope.external_name = parsed_record.external_name
 
         // Add a placeholder entry, this will be replaced later.
         module.structures.push(CheckedStruct(
@@ -6472,7 +6631,15 @@ struct Typechecker {
         )
     }
 
-    function typecheck_namespaced_var_or_simple_enum_constructor_call(mut this, name: String, namespace_: [String], scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?, span: Span) throws -> CheckedExpression {
+    function typecheck_namespaced_var_or_simple_enum_constructor_call(
+        mut this
+        name: String
+        namespace_: [String]
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        type_hint: TypeId?
+        span: Span
+    ) throws -> CheckedExpression {
         mut scopes = [scope_id]
         for ns in namespace_ {
             let scope = scopes[scopes.size() - 1]
@@ -7432,8 +7599,20 @@ struct Typechecker {
         )
     }
 
-    function resolve_call(mut this, call: ParsedCall, mut namespaces: [ResolvedNamespace], span: Span, scope_id: ScopeId, must_be_enum_constructor: bool) throws -> [FunctionId] {
+    function is_scope_directly_accessible_from(this, scope_id: ScopeId, from_scope_id: ScopeId) throws -> bool {
+        return .program.is_scope_directly_accessible_from(check_scope_id: scope_id, scope_id: from_scope_id)
+    }
+
+    function resolve_call(
+        mut this
+        call: ParsedCall
+        mut namespaces: [ResolvedNamespace]
+        span: Span
+        scope_id: ScopeId
+        must_be_enum_constructor: bool
+    ) throws -> [FunctionId] {
         mut current_scope_id = scope_id
+        mut is_base_ns_alias_or_import: [bool] = [false; namespaces.size()]
 
         for namespace_index in 0..call.namespace_.size() {
             let scope_name = call.namespace_[namespace_index]
@@ -7444,6 +7623,8 @@ struct Typechecker {
                     namespaces[namespace_index].name = .program.modules[scope_id.module_id.id].name
                 }
                 namespaces[namespace_index].external_name = .get_scope(scope_id).external_name
+
+                is_base_ns_alias_or_import[namespace_index] = .find_namespace_in_scope(scope_id: current_scope_id, name: scope_name, treat_aliases_as_imports: true)!.1
 
                 current_scope_id = scope_id
                 continue
@@ -7465,6 +7646,55 @@ struct Typechecker {
             .error(format("Not a namespace, enum, class, or struct: ‘{}’", join(call.namespace_, separator: "::")), span)
         }
 
+        mut initial_scope_id = current_scope_id
+        mut owning_scope: ScopeId? = None
+
+        defer {
+            mut resolved_namespaces: [ResolvedNamespace] = []
+            {
+                mut ns_index = 0
+                for ns in namespaces {
+                    defer ns_index += 1
+                    if not is_base_ns_alias_or_import[ns_index] {
+                        resolved_namespaces.push(ns)
+                    }
+                }
+            }
+
+            if not owning_scope.has_value() {
+                mut aliased_namespaces: [ResolvedNamespace] = []
+                loop {
+                    let scope = .get_scope(current_scope_id)
+                    if scope.alias_path.has_value() {
+                        for i in scope.alias_path!.size()..0 {
+                            aliased_namespaces.push(scope.alias_path![i - 1])
+                        }
+                    } else if scope.namespace_name.has_value() {
+                        aliased_namespaces.push(
+                            ResolvedNamespace(name: scope.namespace_name!, external_name: scope.external_name, generic_parameters: None)
+                        )
+                    }
+
+                    if .is_scope_directly_accessible_from(scope_id: current_scope_id, from_scope_id: initial_scope_id) {
+                        break
+                    }
+
+                    let parent = scope.parent
+                    if not parent.has_value() {
+                        break
+                    }
+                    current_scope_id = parent!
+                }
+
+                for i in aliased_namespaces.size()..0 {
+                    resolved_namespaces.push(aliased_namespaces[i - 1])
+                }
+            }
+
+            namespaces.shrink(size: 0)
+            namespaces.push_values(&resolved_namespaces)
+        }
+
         // 1. Look for a variable in the current scope with this name.
         let maybe_var = .find_var_in_scope(scope_id: current_scope_id, var: call.name)
         if maybe_var.has_value()  {
@@ -7479,10 +7709,13 @@ struct Typechecker {
         }
 
         // 2. Look for a function with this name.
-        let maybe_overload_set = .find_functions_with_name_in_scope(parent_scope_id: current_scope_id, function_name: call.name)
+        let maybe_overload_set = .find_scoped_functions_with_name_in_scope(parent_scope_id: current_scope_id, function_name: call.name)
         if maybe_overload_set.has_value() {
-            if not must_be_enum_constructor or .get_function(maybe_overload_set![0]).type is ImplicitEnumConstructor {
-                return maybe_overload_set!
+            let function_ = .get_function(maybe_overload_set!.0[0])
+            if not must_be_enum_constructor or function_.type is ImplicitEnumConstructor {
+                owning_scope = function_.owner_scope
+                current_scope_id = maybe_overload_set!.1
+                return maybe_overload_set!.0
             }
         }
 
@@ -7496,9 +7729,10 @@ struct Typechecker {
         if maybe_struct_id.has_value() {
             let struct_id = maybe_struct_id!
             let structure = .get_struct(struct_id)
-            let maybe_function_id = .find_functions_with_name_in_scope(parent_scope_id: structure.scope_id, function_name: call.name)
+            let maybe_function_id = .find_scoped_functions_with_name_in_scope(parent_scope_id: structure.scope_id, function_name: structure.name)
             if maybe_function_id.has_value() {
-                return maybe_function_id!
+                current_scope_id = maybe_function_id!.1
+                return maybe_function_id!.0
             }
         }
 
@@ -7633,7 +7867,17 @@ struct Typechecker {
         return FunctionMatchResult::MatchSuccess(args, maybe_this_type_id, used_generic_inferences: used_inferences, specificity: total_function_specificity)
     }
 
-    function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructLikeId?, safety_mode: SafetyMode, mut type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
+    function typecheck_call(
+        mut this
+        call: ParsedCall
+        caller_scope_id: ScopeId
+        span: Span
+        this_expr: CheckedExpression?
+        parent_id: StructLikeId?
+        safety_mode: SafetyMode
+        mut type_hint: TypeId?
+        must_be_enum_constructor: bool
+    ) throws -> CheckedExpression {
         mut args: [(String, CheckedExpression)] = []
         mut return_type = builtin(BuiltinType::Void)
         mut generic_arguments: [TypeId] = []
@@ -7780,8 +8024,6 @@ struct Typechecker {
                 let callee = .get_function(resolved_function_id!)
                 callee_throws = callee.can_throw
                 return_type = callee.return_type_id
-
-                let scope_containing_callee = .get_scope(callee.function_scope_id).parent!
 
                 // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
                 // type variable. For the moment, we'll just checked to see if it's a type variable.

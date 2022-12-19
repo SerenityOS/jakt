@@ -222,6 +222,11 @@ struct ParsedExternImport {
     }
 }
 
+struct ParsedAlias {
+    alias_name: ParsedName?
+    target: [ParsedNameWithGenericParameters]
+}
+
 struct ParsedNamespace {
     name: String?
     name_span: Span?
@@ -230,6 +235,7 @@ struct ParsedNamespace {
     traits: [ParsedTrait]
     external_trait_implementations: [ParsedExternalTraitImplementation]
     namespaces: [ParsedNamespace]
+    aliases: [ParsedAlias]
     module_imports: [ParsedModuleImport]
     extern_imports: [ParsedExternImport]
     import_path_if_extern: String?
@@ -271,6 +277,10 @@ struct ParsedNamespace {
         .namespaces.push(namespace_)
     }
 
+    function add_alias(mut this, anon alias: ParsedAlias) throws {
+        .aliases.push(alias)
+    }
+
     function merge_with(mut this, anon namespace_: ParsedNamespace) throws {
         .functions.push_values(&namespace_.functions)
         .records.push_values(&namespace_.records)
@@ -287,6 +297,10 @@ struct ParsedNamespace {
 
         for child_namespace in namespace_.namespaces {
             .add_child_namespace(child_namespace)
+        }
+
+        for alias in namespace_.aliases {
+            .add_alias(alias)
         }
     }
 }
@@ -1555,6 +1569,7 @@ struct Parser {
             traits: []
             external_trait_implementations: []
             namespaces: []
+            aliases: []
             module_imports: []
             extern_imports: []
             import_path_if_extern: None
@@ -1582,6 +1597,14 @@ struct Parser {
                         }
                         .index++
                         parsed_namespace.external_trait_implementations.push(.parse_external_trait_implementation())
+                    }
+                    "use" => {
+                        if not active_attributes.is_empty() {
+                            .error("Cannot apply attributes to use declarations", active_attributes[0].span)
+                            active_attributes = []
+                        }
+                        .index++
+                        parsed_namespace.aliases.push(.parse_using())
                     }
                     else => {
                         active_attributes = []
@@ -1888,6 +1911,87 @@ struct Parser {
         )
     }
 
+    function parse_using(mut this) throws -> ParsedAlias {
+        // (using) qualified_name [as Ident]
+        mut alias = ParsedAlias(
+            alias_name: None
+            target: []
+        )
+
+        loop {
+            match .current() {
+                Eol | As | Eof => {
+                    break
+                }
+                ColonColon => {
+                    .index++
+                    continue
+                }
+                Identifier(name, span) => {
+                    mut parsed_name = ParsedNameWithGenericParameters(
+                        name
+                        name_span: span
+                        generic_parameters: []
+                    )
+                    .index++
+                    if .current() is LessThan {
+                        // Generic type
+                        .index++
+
+                        while not .eof() {
+                            match .current() {
+                                GreaterThan => {
+                                    .index++
+                                    break
+                                }
+                                Comma | Eol => {
+                                    .index++
+                                }
+                                else => {
+                                    let index_before = .index
+                                    let inner_type = .parse_typename()
+                                    if index_before == .index {
+                                        .error("Expected type name", .current().span())
+                                        break
+                                    }
+                                    parsed_name.generic_parameters.push(inner_type)
+                                }
+                            }
+                        }
+                    }
+                    alias.target.push(parsed_name)
+                }
+                else(span) => {
+                    .error("Expected alias target name", span)
+                    break
+                }
+            }
+        }
+
+        if .previous() is ColonColon(span) {
+            .error("Expected alias target name", span)
+        }
+
+        if .current() is As {
+            .index++
+
+            match .current() {
+                Identifier(name, span) => {
+                    alias.alias_name = ParsedName(
+                        name
+                        name_span: span
+                    )
+                    .index++
+                }
+                else(span) => {
+                    .error("Expected alias name", span)
+                }
+            }
+        }
+
+        return alias
+    }
+
     function parse_external_trait_implementation(mut this) throws -> ParsedExternalTraitImplementation {
         // (type) TypeName implements(TraitName...) { <method list> }
         let type_name = .parse_typename()
@@ -2041,6 +2145,7 @@ struct Parser {
                 traits: []
                 external_trait_implementations: []
                 namespaces: []
+                aliases: []
                 module_imports: []
                 extern_imports: []
                 import_path_if_extern: None
@@ -4612,6 +4717,29 @@ struct Parser {
                             // Struct field access or method call
                             .index++
                             yield match .current() {
+                                LessThan => {
+                                    // NOTE: We step backwards since parse_call() expects to start at the callee identifier.
+                                    let original_index = .index
+                                    let existing_errors = .compiler.errors[..].to_array()
+                                    .index--
+                                    let call = .parse_call()
+                                    yield match call.has_value() {
+                                        true => ParsedExpression::MethodCall(
+                                            expr: result
+                                            call: call!
+                                            is_optional
+                                            span: merge_spans(start, end: .previous().span()))
+                                        else => {
+                                            .index = original_index
+                                            .compiler.errors = existing_errors
+                                            yield ParsedExpression::IndexedStruct(
+                                                expr: result
+                                                field_name: name
+                                                is_optional
+                                                span: merge_spans(start, end: .current().span()))
+                                        }
+                                    }
+                                }
                                 LParen => {
                                     // NOTE: We step backwards since parse_call() expects to start at the callee identifier.
                                     .index--
