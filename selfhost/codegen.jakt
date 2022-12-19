@@ -543,7 +543,7 @@ struct CodeGenerator {
     }
 
     function codegen_namespace(mut this, scope: Scope, current_module: Module, as_forward: bool) throws -> String {
-        if scope.import_path_if_extern.has_value() {
+        if scope.alias_path.has_value() or scope.import_path_if_extern.has_value() {
             return ""
         }
         mut seen_types: {String} = {}
@@ -767,7 +767,7 @@ struct CodeGenerator {
     }
 
     function codegen_namespace_predecl(mut this, scope: Scope, current_module: Module) throws -> String {
-        if scope.import_path_if_extern.has_value() {
+        if scope.alias_path.has_value() or scope.import_path_if_extern.has_value() {
             return ""
         }
         mut output = ""
@@ -1705,7 +1705,7 @@ struct CodeGenerator {
                     // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
                     mut variant_index = 0;
                     for variant in enum_.variants {
-                        if variant.name() == name{
+                        if variant.name() == name {
                             break
                         }
                         variant_index++
@@ -1749,8 +1749,15 @@ struct CodeGenerator {
         }
         NamespacedVar(namespaces, var) => {
             mut output = ""
-            for ns in namespaces {
-                output += ns.name + "::"
+            if var.owner_scope.has_value() {
+                output = .codegen_namespace_qualifier(
+                    scope_id: var.owner_scope!
+                    skip_current: false
+                )
+            } else {
+                for ns in namespaces {
+                    output += ns.name + "::"
+                }
             }
             yield output + var.name
         }
@@ -2082,7 +2089,7 @@ struct CodeGenerator {
                     // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
                     mut variant_index = 0;
                     for variant in enum_.variants {
-                        if variant.name() == name{
+                        if variant.name() == name {
                             break
                         }
                         variant_index++
@@ -2828,23 +2835,9 @@ struct CodeGenerator {
                             output += "::"
                         }
                         output += .codegen_namespace_path(call)
-
-                        // Ensure we fully qualify the names of static functions
-                        // in case we're inside a namespace (issue #1226).
-                        if function_.is_static() and
-                           function_.struct_id.has_value() and
-                           function_.type is Normal and
-                           function_.linkage is Internal {
-
-                            let struct_ = .program.get_struct(function_.struct_id!)
-                            output += struct_.name_for_codegen()
-                            output += "::"
-                        }
-
                         output += call.name_for_codegen()
                     }
                 } else {
-                    eprintln("call {} in {}", call.name, call.namespace_)
                     output += .codegen_namespace_path(call)
                     output += call.name_for_codegen()
                 }
@@ -2880,8 +2873,14 @@ struct CodeGenerator {
     }
 
     function codegen_namespace_path(this, call: CheckedCall) throws -> String {
-        mut output = ""
+        if call.function_id.has_value() {
+            let scope = .program.get_function(call.function_id!).owner_scope
+            if scope.has_value() {
+                return .codegen_namespace_qualifier(scope_id: scope!, skip_current: false, possible_constructor_name: call.name_for_codegen())
+            }
+        }
 
+        mut output = ""
         mut index: usize = 0
 
         for namespace_ in call.namespace_ {
@@ -3275,17 +3274,30 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_namespace_qualifier(this, scope_id: ScopeId) throws -> String {
+    function codegen_namespace_qualifier(this, scope_id: ScopeId, skip_current: bool = true, possible_constructor_name: String? = None) throws -> String {
         mut output = ""
-        mut current_scope_id = .program.get_scope(scope_id).parent
+        mut current_scope_id = match skip_current {
+            true => .program.get_scope(scope_id).parent
+            else => scope_id
+        }
 
+        mut first = true
         while current_scope_id.has_value() {
             let scope = .program.get_scope(current_scope_id!)
-            if scope.namespace_name.has_value() {
-                let namespace_name = scope.namespace_name!
-                output = format("{}::{}", namespace_name, output)
+            defer {
+                first = false
+                current_scope_id = scope.parent
             }
-            current_scope_id = scope.parent
+
+            let name = scope.external_name ?? scope.namespace_name
+            if name.has_value() {
+                if first and possible_constructor_name == name {
+                    // Don't include the constructor name in the namespace qualifier
+                    continue
+                }
+
+                output = format("{}::{}", name!, output)
+            }
         }
         return output
     }
@@ -3305,7 +3317,7 @@ struct CodeGenerator {
 
         if not as_namespace and checked_struct.record_type is Class {
             output += "NonnullRefPtr<"
-            if not type_module.is_root and not type_module.id.equals(ModuleId(id: 0)) {
+            if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0)) or checked_struct.definition_linkage is External) {
                 output += type_module.name
                 output += "::"
             }
@@ -3313,7 +3325,7 @@ struct CodeGenerator {
             output += checked_struct.name_for_codegen()
             output += ">"
         } else {
-            if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))  or checked_struct.definition_linkage is External) {
+            if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0)) or checked_struct.definition_linkage is External) {
                 output += type_module.name
                 output += "::"
             }
