@@ -509,8 +509,8 @@ async function runCompiler(
         stdout = output.stdout;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-        if (!allowErrors){
-            stdout = e.stdout;
+        stdout = e.stdout;
+        if (!allowErrors) {
             if (e.signal != null) {
                 connection.console.log("compile failed: ");
                 connection.console.log(e);
