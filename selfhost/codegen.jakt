@@ -999,8 +999,7 @@ struct CodeGenerator {
                 }
 
                 if struct_.super_struct_id.has_value() {
-                    let super_struct = .program.get_struct(struct_.super_struct_id!)
-                    output += format("class {}: public {} {{\n", struct_.name_for_codegen(), super_struct.name_for_codegen())
+                    output += format("class {}: public {} {{\n", struct_.name_for_codegen(), .codegen_struct_type(id: struct_.super_struct_id!, as_namespace: true))
                 } else {
                     output += format("class {} : public RefCounted<{}>, public Weakable<{}> {{\n", struct_.name_for_codegen(), class_name_with_generics, class_name_with_generics)
                 }
