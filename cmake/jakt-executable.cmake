@@ -56,7 +56,7 @@ function(add_jakt_executable executable)
   get_filename_component(main_directory "${main_source}" DIRECTORY)
 
   set(cpp_files
-    "Root Module.cpp"
+    "${main_base}.cpp"
     ${JAKT_EXECUTABLE_STDLIB_SOURCES}
   )
 

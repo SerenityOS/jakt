@@ -56,6 +56,7 @@ struct Typechecker {
     lambda_count: u64
     generic_inferences: GenericInferences
     self_type_id: TypeId? = None
+    root_module_name: String
 
     function type_name(this, anon type_id: TypeId) throws -> String {
         mut id = type_id
@@ -84,6 +85,7 @@ struct Typechecker {
         }
 
         let placeholder_module_id = ModuleId(id: 0)
+        let root_module_name = compiler.current_file_path()!.basename(strip_extension: true)
 
         mut typechecker = Typechecker(
             compiler
@@ -98,11 +100,12 @@ struct Typechecker {
             dump_try_hints: compiler.dump_try_hints
             lambda_count: 0
             generic_inferences: GenericInferences(values: [:])
+            root_module_name
         )
 
         typechecker.include_prelude()
 
-        let root_module_name = "Root Module"
+
         let root_module_id = typechecker.create_module(name: root_module_name, is_root: true)
         typechecker.current_module_id = root_module_id
         compiler.set_current_file(input_file!)
@@ -172,7 +175,7 @@ struct Typechecker {
     function find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? => .program.find_comptime_binding_in_scope(scope_id, name)
 
     function get_root_path(this) throws -> Path {
-        let root_module = .program.get_loaded_module("Root Module")
+        let root_module = .program.get_loaded_module(.root_module_name)
         if root_module.has_value() {
             let file_id = root_module!.file_id
             return .compiler.get_file_path(file_id)!
