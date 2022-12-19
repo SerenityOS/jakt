@@ -324,6 +324,7 @@ connection.onHover(async (request: HoverParams) => {
 interface ExampleSettings {
     maxNumberOfProblems: number;
     maxCompilerInvocationTime: number;
+    extraCompilerImportPaths: Array<string>;
     compiler: {
         executablePath: string;
     };
@@ -339,6 +340,7 @@ interface ExampleSettings {
 const defaultSettings: ExampleSettings = {
     maxNumberOfProblems: 1000,
     maxCompilerInvocationTime: 5000,
+    extraCompilerImportPaths: [],
     compiler: { executablePath: "jakt" },
     hints: { showImplicitTry: true, showInferredTypes: true },
 };
@@ -501,10 +503,14 @@ async function runCompiler(
     let stdout = "";
     try {
         const output = await exec(
-            `${settings.compiler.executablePath} ${flags} ${tmpFile.name}`,
-            {
-                timeout: settings.maxCompilerInvocationTime,
-            }
+          `${
+            settings.compiler.executablePath
+          } ${flags} ${settings.extraCompilerImportPaths
+            .map((x) => "-I " + x)
+            .join(" ")} ${tmpFile.name}`,
+          {
+            timeout: settings.maxCompilerInvocationTime,
+          }
         );
         stdout = output.stdout;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
