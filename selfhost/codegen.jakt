@@ -257,8 +257,10 @@ struct CodeGenerator {
         output += "extern \"C\" __cdecl int SetConsoleOutputCP(unsigned int code_page);\n"
         output += "const unsigned int CP_UTF8 = 65001;\n"
         output += "#endif\n"
+
         let sorted_modules = generator.topologically_sort_modules()
         output += "namespace Jakt {\n"
+
         for idx in sorted_modules.size()..0 {
             let i = sorted_modules[idx - 1].id
             if i == 0 {
@@ -267,17 +269,9 @@ struct CodeGenerator {
             }
             let module = generator.program.modules[i]
             generator.compiler.dbg_println(format("generate: module idx: {}, module.name {}", i, module.name))
-            if not module.is_root {
-                output += "namespace "
-                output += module.name
-                output += " {\n"
-            }
             let scope_id = ScopeId(module_id: module.id, id: 0)
             let scope = generator.program.get_scope(scope_id)
             output += generator.codegen_namespace_predecl(scope, current_module: module)
-            if not module.is_root {
-                output += "}\n"
-            }
         }
 
         output += "} // namespace Jakt\n"
@@ -367,9 +361,6 @@ struct CodeGenerator {
                 output += "namespace Jakt {\n"
 
                 if not module.is_root {
-                    output += "namespace "
-                    output += module.name
-                    output += " {\n"
                     generator.namespace_stack.push(module.name)
                 }
 
@@ -378,10 +369,6 @@ struct CodeGenerator {
                 if not module.is_root {
                     // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                     let dummy = generator.namespace_stack.pop()
-                }
-
-                if not module.is_root {
-                    output += "}\n"
                 }
 
                 output += generator.deferred_output
@@ -550,10 +537,19 @@ struct CodeGenerator {
 
         if as_forward {
             mut output = ""
+            if scope.namespace_name.has_value() {
+                output += "namespace " + scope.namespace_name! + " {\n"
+            }
+
             let encoded_dependency_graph = .produce_codegen_dependency_graph(scope)
             for entry in encoded_dependency_graph {
                 let traversal: [TypeId] = []
-                .postorder_traversal(encoded_type_id: entry.0, visited: seen_types, dependency_graph: encoded_dependency_graph, output: traversal)
+                .postorder_traversal(
+                    encoded_type_id: entry.0
+                    visited: seen_types
+                    dependency_graph: encoded_dependency_graph
+                    output: traversal
+                )
                 for type_id in traversal {
                     let type_ = .program.get_type(type_id)
                     match type_ {
@@ -642,20 +638,23 @@ struct CodeGenerator {
                 if child_scope.namespace_name.has_value() {
                     let name = child_scope.namespace_name!
                     .namespace_stack.push(name)
-                    output += "namespace "
-                    output += name
-                    output += " {\n"
                     output += .codegen_namespace(scope: child_scope, current_module, as_forward)
-                    output += "}\n"
                     // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                     let dummy = .namespace_stack.pop()
                 }
             }
 
+            if scope.namespace_name.has_value() {
+                output += "}\n"
+            }
             return output
         }
 
         mut output = ""
+        if scope.namespace_name.has_value() {
+            output += "namespace " + scope.namespace_name! + " {\n"
+        }
+
         for (_, overload_set) in scope.functions {
             for function_id in overload_set {
                 if not function_id.module.equals(current_module.id) {
@@ -753,16 +752,15 @@ struct CodeGenerator {
             if child_scope.namespace_name.has_value() {
                 let name = child_scope.namespace_name!
                 .namespace_stack.push(name)
-                output += "namespace "
-                output += name
-                output += " {\n"
                 output += .codegen_namespace(scope: child_scope, current_module, as_forward)
-                output += "}\n"
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                 let dummy = .namespace_stack.pop()
             }
         }
 
+        if scope.namespace_name.has_value() {
+            output += "}\n"
+        }
         return output
     }
 
@@ -1462,7 +1460,8 @@ struct CodeGenerator {
         output += format("Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::{} const& value) {{\n", qualified_name)
         output += "JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };"
         output += "Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));"
-        output += "return format_error; }"
+        output += "return format_error;"
+        output += "}\n"
         output += "};\n"
 
         return output + "namespace Jakt {\n"
@@ -2722,18 +2721,6 @@ struct CodeGenerator {
                     if function_.type is ImplicitConstructor or function_.type is ExternalClassConstructor {
                         let type_id = call.return_type
                         let type = .program.get_type(type_id)
-
-                        if not (
-                            type_module.is_root or
-                            type_module.is_prelude() or
-                            function_.linkage is External or
-                            function_.type is Expression or
-                            function_.type is Closure or
-                            (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
-                        ) {
-                            output += type_module.name
-                            output += "::"
-                        }
                         output += .codegen_namespace_path(call)
 
                         match type {
@@ -2788,17 +2775,6 @@ struct CodeGenerator {
                                 let enum_ = .program.get_enum(enum_id)
                                 let enum_type_module = .program.get_module(enum_id.module)
                                 if enum_.is_boxed {
-                                    if not (
-                                        type_module.is_root or
-                                        type_module.is_prelude() or
-                                        function_.linkage is External or
-                                        function_.type is Expression or
-                                        function_.type is Closure or
-                                        (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
-                                    ) {
-                                        output += type_module.name
-                                        output += "::"
-                                    }
                                     output += .codegen_namespace_path(call)
                                     output += "template create<typename "
                                     output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
@@ -2822,17 +2798,6 @@ struct CodeGenerator {
                             }
                         }
                     } else {
-                        if not (
-                            type_module.is_root or
-                            type_module.is_prelude() or
-                            function_.linkage is External or
-                            function_.type is Expression or
-                            function_.type is Closure or
-                            (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
-                        ) {
-                            output += type_module.name
-                            output += "::"
-                        }
                         output += .codegen_namespace_path(call)
                         output += call.name_for_codegen()
                     }
@@ -2875,7 +2840,11 @@ struct CodeGenerator {
         if call.function_id.has_value() {
             let scope = .program.get_function(call.function_id!).owner_scope
             if scope.has_value() {
-                return .codegen_namespace_qualifier(scope_id: scope!, skip_current: false, possible_constructor_name: call.name_for_codegen())
+                return .codegen_namespace_qualifier(
+                    scope_id: scope!
+                    skip_current: false
+                    possible_constructor_name: call.name_for_codegen()
+                )
             }
         }
 
@@ -3186,9 +3155,6 @@ struct CodeGenerator {
         // For prelude generic instances prefix with "JaktInternal::" so that there aren't naming clashes
         if type_module.is_prelude() {
             namespace_ += "JaktInternal::"
-        } else if not type_module.is_root {
-            namespace_ += type_module.name
-            namespace_ += "::"
         }
 
         let inner_weak_ptr_struct_id = .program.check_and_extract_weak_ptr(struct_id: id, args)
@@ -3273,7 +3239,12 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_namespace_qualifier(this, scope_id: ScopeId, skip_current: bool = true, possible_constructor_name: String? = None) throws -> String {
+    function codegen_namespace_qualifier(
+        this
+        scope_id: ScopeId
+        skip_current: bool = true
+        possible_constructor_name: String? = None
+    ) throws -> String {
         mut output = ""
         mut current_scope_id = match skip_current {
             true => .program.get_scope(scope_id).parent
@@ -3316,18 +3287,10 @@ struct CodeGenerator {
 
         if not as_namespace and checked_struct.record_type is Class {
             output += "NonnullRefPtr<"
-            if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0)) or checked_struct.definition_linkage is External) {
-                output += type_module.name
-                output += "::"
-            }
             output += .codegen_namespace_qualifier(scope_id: checked_struct.scope_id)
             output += checked_struct.name_for_codegen()
             output += ">"
         } else {
-            if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0)) or checked_struct.definition_linkage is External) {
-                output += type_module.name
-                output += "::"
-            }
             output += .codegen_namespace_qualifier(scope_id: checked_struct.scope_id)
             output += checked_struct.name_for_codegen()
         }
@@ -3342,10 +3305,6 @@ struct CodeGenerator {
 
         if not as_namespace and checked_enum.is_boxed {
             output += "NonnullRefPtr<"
-            if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
-                output += type_module.name
-                output += "::"
-            }
             let qualifier = .codegen_namespace_qualifier(scope_id: checked_enum.scope_id)
             if not qualifier.is_empty() {
                 output += "typename "
@@ -3354,10 +3313,6 @@ struct CodeGenerator {
             output += checked_enum.name
             output += ">"
         } else {
-            if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
-                output += type_module.name
-                output += "::"
-            }
             let qualifier = .codegen_namespace_qualifier(scope_id: checked_enum.scope_id)
             if not qualifier.is_empty() {
                 output += qualifier

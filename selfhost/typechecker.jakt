@@ -1002,7 +1002,15 @@ struct Typechecker {
 
             .current_module_id = imported_module_id
 
-            let imported_scope_id = .create_scope(parent_scope_id: .root_scope_id(), can_throw: false, debug_name: format("module({})", sanitized_module_name))
+            let imported_scope_id = .create_scope(
+                parent_scope_id: .root_scope_id()
+                can_throw: false
+                debug_name: format("module({})", sanitized_module_name)
+            )
+
+            mut imported_scope = .get_scope(imported_scope_id)
+            imported_scope.namespace_name = sanitized_module_name
+
             .typecheck_module(parsed_namespace: parsed_namespace!, scope_id: imported_scope_id)
 
             .current_module_id = original_current_module_id
@@ -1468,10 +1476,21 @@ struct Typechecker {
                 debug_name += "unnamed-namespace"
             }
             debug_name += ")"
+
+            // Note: The back link formed by parent_scope_id and the forward link formed by scope.children
+            //       do not necessarily link exactly two distinct scopes together, while that is the case for
+            //       regular scope relationships, scopes created by extern imports all have the same global back link
+            //       while they're children of their respective modules at the same time.
+            let parent_scope_id = match namespace_.import_path_if_extern.has_value() {
+                true => ScopeId(module_id: ModuleId(id: 1), id: 0)
+                else => scope_id
+            }
+
             let namespace_scope_id = .create_scope(
-                parent_scope_id: scope_id
+                parent_scope_id
                 can_throw: false
-                debug_name)
+                debug_name
+            )
             mut child_scope = .get_scope(namespace_scope_id)
             child_scope.namespace_name = namespace_.name
             child_scope.import_path_if_extern = namespace_.import_path_if_extern
