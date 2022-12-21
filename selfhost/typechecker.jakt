@@ -21,9 +21,9 @@ import types {
     CheckedMatchBody, CheckedMatchCase, CheckedNamespace, CheckedNumericConstant, CheckedParameter, CheckedProgram
     CheckedStatement, CheckedStringLiteral, CheckedStruct, CheckedTrait, CheckedTypeCast, CheckedUnaryOperator
     CheckedVariable, CheckedVisibility, EnumId, FieldRecord, FunctionGenericParameter, FunctionGenerics, FunctionId
-    GenericInferences, LoadedModule, MaybeResolvedScope, Module, ModuleId, NumberConstant, ResolvedNamespace
-    SafetyMode, Scope, ScopeId, StringLiteral, StructId, StructLikeId, TraitId, Type, TypeId, Value, VarId
-    builtin, never_type_id, unknown_type_id, void_type_id
+    GenericInferences, IterationDecision, LoadedModule, MaybeResolvedScope, Module, ModuleId, NumberConstant
+    ResolvedNamespace, SafetyMode, Scope, ScopeId, StringLiteral, StructId, StructLikeId, TraitId, Type, TypeId
+    Value, VarId, builtin, never_type_id, unknown_type_id, void_type_id
 }
 import types
 import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo }
@@ -406,61 +406,11 @@ struct Typechecker {
     function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId => .program.find_or_add_type_id(type, module_id: .current_module_id)
 
     function find_type_in_scope(this, scope_id: ScopeId, name: String) throws -> TypeId? {
-        mut current = scope_id
-
-        loop {
-            let scope = .get_scope(current)
-            let maybe_type = scope.types.get(name)
-            if maybe_type.has_value() {
-                return maybe_type
-            }
-            for child_id in scope.children {
-                let child_scope = .get_scope(id: child_id)
-                if not child_scope.namespace_name.has_value() {
-                    let maybe_type = child_scope.types.get(name)
-                    if maybe_type.has_value() {
-                        return maybe_type
-                    }
-                }
-            }
-
-            if scope.parent.has_value() {
-                current = scope.parent.value()
-            } else {
-                break
-            }
-        }
-
-        return None
+        return .find_type_scope(scope_id, name)?.0
     }
 
     function find_trait_in_scope(this, scope_id: ScopeId, name: String) throws -> TraitId? {
-        mut current = scope_id
-
-        loop {
-            let scope = .get_scope(current)
-            let maybe_trait = scope.traits.get(name)
-            if maybe_trait.has_value() {
-                return maybe_trait
-            }
-            for child_id in scope.children {
-                let child_scope = .get_scope(id: child_id)
-                if not child_scope.namespace_name.has_value() {
-                    let maybe_trait = child_scope.traits.get(name)
-                    if maybe_trait.has_value() {
-                        return maybe_trait
-                    }
-                }
-            }
-
-            if scope.parent.has_value() {
-                current = scope.parent.value()
-            } else {
-                break
-            }
-        }
-
-        return None
+        return .program.find_trait_in_scope(scope_id, name)
     }
 
     function find_singular_trait_implementation(mut this, type_id: TypeId, trait_name: String, scope_id: ScopeId, span: Span) throws -> TraitImplementationDescriptor? {
@@ -500,32 +450,16 @@ struct Typechecker {
     }
 
     function find_type_scope(this, scope_id: ScopeId, name: String) throws -> (TypeId, ScopeId)? {
-        mut current = scope_id
-
-        loop {
-            let scope = .get_scope(current)
-            let maybe_type = scope.types.get(name)
-            if maybe_type.has_value() {
-                return (maybe_type!, current)
-            }
-            for child_id in scope.children {
-                let child_scope = .get_scope(id: child_id)
-                if not child_scope.namespace_name.has_value() {
-                    let maybe_type = child_scope.types.get(name)
-                    if maybe_type.has_value() {
-                        return (maybe_type!, child_id)
-                    }
+        return .program.for_each_scope_accessible_unqualified_from_scope(
+            scope_id
+            &function[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<(TypeId, ScopeId)> {
+                let maybe_type = .get_scope(scope_id).types.get(name)
+                if maybe_type.has_value() {
+                    return IterationDecision::Break(value: (maybe_type!, scope_id))
                 }
+                return IterationDecision::Continue
             }
-
-            if scope.parent.has_value() {
-                current = scope.parent.value()
-            } else {
-                break
-            }
-        }
-
-        return None
+        )
     }
 
 
@@ -1496,6 +1430,11 @@ struct Typechecker {
             child_scope.import_path_if_extern = namespace_.import_path_if_extern
             child_scope.before_extern_include = namespace_.generating_import_extern_before_include
             child_scope.after_extern_include = namespace_.generating_import_extern_after_include
+
+            // Make sure the imported ns can see the "logical" parent ns.
+            if namespace_.import_path_if_extern.has_value() {
+                child_scope.resolution_mixins.push(scope_id)
+            }
 
             mut parent_scope = .get_scope(scope_id)
             parent_scope.children.push(namespace_scope_id)

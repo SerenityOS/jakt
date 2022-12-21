@@ -168,3 +168,8 @@ function is_ascii_binary(anon c: u8) => (c == b'0' or c == b'1')
 function is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
 
 function is_whitespace(anon byte: u8) => byte == b' ' or byte == b'\t' or byte == b'\r'
+
+enum IterationDecision<T> {
+    Break(value: T)
+    Continue
+}
