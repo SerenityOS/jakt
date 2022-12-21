@@ -1,0 +1,34 @@
+function null<T>() -> raw T {
+    unsafe {
+        cpp {
+            "return nullptr;"
+        }
+    }
+
+    abort()
+}
+
+function allocate<T>(count: usize) -> raw T {
+    unsafe {
+        cpp {
+            "return static_cast<T*>(malloc(count * sizeof(T)));"
+        }
+    }
+
+    abort()
+}
+
+function join(anon strings: [String], separator: String) -> String {
+    mut output = ""
+
+    mut i = 0uz
+    for s in strings {
+        output += s
+        if i < strings.size() - 1 {
+            output += separator
+        }
+        i++
+    }
+
+    return output
+}

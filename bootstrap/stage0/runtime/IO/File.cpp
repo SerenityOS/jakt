@@ -7,6 +7,7 @@
 #include <IO/File.h>
 
 #include <AK/RefPtr.h>
+#include <AK/ScopeGuard.h>
 
 #include <errno.h>
 
@@ -43,10 +44,14 @@ ErrorOr<NonnullRefPtr<File>> File::open_for_reading(StringView path_)
 {
     auto path = DeprecatedString(path_);
     auto* stdio_file = fopen(path.characters(), "rb");
-    if (!stdio_file) {
+    if (!stdio_file)
         return Error::from_errno(errno);
-    }
+
+    ArmedScopeGuard close_file = [&] {
+        fclose(stdio_file);
+    };
     auto file = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) File));
+    close_file.disarm();
     file->m_stdio_file = stdio_file;
     return file;
 }
@@ -55,10 +60,14 @@ ErrorOr<NonnullRefPtr<File>> File::open_for_writing(StringView path_)
 {
     auto path = DeprecatedString(path_);
     auto* stdio_file = fopen(path.characters(), "wb");
-    if (!stdio_file) {
+    if (!stdio_file)
         return Error::from_errno(errno);
-    }
+
+    ArmedScopeGuard close_file = [&] {
+        fclose(stdio_file);
+    };
     auto file = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) File));
+    close_file.disarm();
     file->m_stdio_file = stdio_file;
     return file;
 }

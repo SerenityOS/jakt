@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import path { Path, get_path_separator }
-import os { platform_fs, platform_module, Target }
+import jakt::path { Path, get_path_separator }
+import jakt::platform { platform_fs, platform_module, Target }
 
 import platform_fs() {
     DirectoryIterator

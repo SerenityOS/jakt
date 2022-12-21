@@ -1,14 +1,14 @@
-#include "path.h"
+#include "jakt__path.h"
 namespace Jakt {
-namespace path {
-ErrorOr<DeprecatedString> path::Path::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Path("sv));{
+namespace jakt__path {
+ErrorOr<DeprecatedString> jakt__path::Path::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Path("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("path: "sv));TRY(builder.appendff("\"{}\"", path));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-ErrorOr<path::Path> path::Path::from_parts(JaktInternal::DynamicArray<DeprecatedString> const parts) {
+ErrorOr<jakt__path::Path> jakt__path::Path::from_parts(JaktInternal::DynamicArray<DeprecatedString> const parts) {
 {
-path::Path path = path::Path(Jakt::DeprecatedString("."sv));
+jakt__path::Path path = jakt__path::Path(Jakt::DeprecatedString("."sv));
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((parts).iterator());
 for (;;){
@@ -28,7 +28,7 @@ return (path);
 }
 }
 
-JaktInternal::Optional<size_t> path::Path::last_slash(DeprecatedString const path) {
+JaktInternal::Optional<size_t> jakt__path::Path::last_slash(DeprecatedString const path) {
 {
 size_t i = (JaktInternal::checked_sub<size_t>(((path).length()),static_cast<size_t>(1ULL)));
 u8 const separator = static_cast<u8>(47);
@@ -42,21 +42,21 @@ return (i);
 }
 }
 
-path::Path::Path(DeprecatedString a_path) :path(a_path){}
+jakt__path::Path::Path(DeprecatedString a_path) :path(a_path){}
 
-bool path::Path::is_dot() const {
+bool jakt__path::Path::is_dot() const {
 {
 return (((((*this).path) == Jakt::DeprecatedString("."sv)) || (((*this).path) == Jakt::DeprecatedString(".."sv))));
 }
 }
 
-DeprecatedString path::Path::to_string() const {
+DeprecatedString jakt__path::Path::to_string() const {
 {
 return (((*this).path));
 }
 }
 
-ErrorOr<DeprecatedString> path::Path::extension() const {
+ErrorOr<DeprecatedString> jakt__path::Path::extension() const {
 {
 {
 JaktInternal::Range<size_t> _magic = (((JaktInternal::Range<size_t>{static_cast<size_t>((JaktInternal::checked_sub<size_t>(((((*this).path)).length()),static_cast<size_t>(1ULL)))),static_cast<size_t>(static_cast<size_t>(0ULL))})).inclusive());
@@ -83,10 +83,10 @@ return (Jakt::DeprecatedString(""sv));
 }
 }
 
-ErrorOr<JaktInternal::Tuple<DeprecatedString,DeprecatedString>> path::Path::split_at_last_slash() const {
+ErrorOr<JaktInternal::Tuple<DeprecatedString,DeprecatedString>> jakt__path::Path::split_at_last_slash() const {
 {
 size_t const len = ((((*this).path)).length());
-JaktInternal::Optional<size_t> const last_slash = path::Path::Path::last_slash(((*this).path));
+JaktInternal::Optional<size_t> const last_slash = jakt__path::Path::last_slash(((*this).path));
 if (((last_slash).has_value())){
 DeprecatedString const dir = ((((*this).path)).substring(static_cast<size_t>(0ULL),(last_slash.value())));
 DeprecatedString const base = ((((*this).path)).substring((JaktInternal::checked_add<size_t>((last_slash.value()),static_cast<size_t>(1ULL))),(JaktInternal::checked_sub<size_t>((JaktInternal::checked_sub<size_t>(len,(last_slash.value()))),static_cast<size_t>(1ULL)))));
@@ -96,7 +96,7 @@ return ((Tuple{Jakt::DeprecatedString(""sv), ((*this).path)}));
 }
 }
 
-ErrorOr<void> path::Path::normalize_separators() {
+ErrorOr<void> jakt__path::Path::normalize_separators() {
 {
 JaktInternal::DynamicArray<u8> separators = (TRY((DynamicArray<u8>::create_with({static_cast<u8>(47)}))));
 u8 separator = static_cast<u8>(47);
@@ -128,17 +128,17 @@ TRY((((normalized_builder).append(ch))));
 return {};
 }
 
-ErrorOr<path::Path> path::Path::join(DeprecatedString const path) const {
+ErrorOr<jakt__path::Path> jakt__path::Path::join(DeprecatedString const path) const {
 {
 if (((((*this).path) == Jakt::DeprecatedString("."sv)) || (((((*this).path)).length()) == static_cast<size_t>(0ULL)))){
-return (path::Path(path));
+return (jakt__path::Path(path));
 }
 if (((path).is_empty())){
 return (*this);
 }
 u8 const separator = static_cast<u8>(47);
 if ((((path).byte_at(static_cast<size_t>(0ULL))) == separator)){
-return (TRY((path::Path::Path::from_string(path))));
+return (TRY((jakt__path::Path::from_string(path))));
 }
 DeprecatedStringBuilder join_builder = TRY((DeprecatedStringBuilder::create()));
 TRY((((join_builder).append_string(((*this).path)))));
@@ -146,11 +146,11 @@ if ((((((*this).path)).byte_at((JaktInternal::checked_sub<size_t>(((((*this).pat
 TRY((((join_builder).append(separator))));
 }
 TRY((((join_builder).append_string(path))));
-return (TRY((path::Path::Path::from_string(TRY((((join_builder).to_string())))))));
+return (TRY((jakt__path::Path::from_string(TRY((((join_builder).to_string())))))));
 }
 }
 
-ErrorOr<DeprecatedString> path::Path::basename(bool const strip_extension) const {
+ErrorOr<DeprecatedString> jakt__path::Path::basename(bool const strip_extension) const {
 {
 JaktInternal::Tuple<DeprecatedString,DeprecatedString> const parts = TRY((((*this).split_at_last_slash())));
 if (strip_extension){
@@ -164,21 +164,21 @@ return (((parts).template get<1>()));
 }
 }
 
-ErrorOr<path::Path> path::Path::parent() const {
+ErrorOr<jakt__path::Path> jakt__path::Path::parent() const {
 {
 JaktInternal::Tuple<DeprecatedString,DeprecatedString> const parts = TRY((((*this).split_at_last_slash())));
 if ((((parts).template get<0>()) == Jakt::DeprecatedString(""sv))){
-return (path::Path(Jakt::DeprecatedString("."sv)));
+return (jakt__path::Path(Jakt::DeprecatedString("."sv)));
 }
-return (path::Path(((parts).template get<0>())));
+return (jakt__path::Path(((parts).template get<0>())));
 }
 }
 
-ErrorOr<path::Path> path::Path::replace_extension(DeprecatedString const new_extension) const {
+ErrorOr<jakt__path::Path> jakt__path::Path::replace_extension(DeprecatedString const new_extension) const {
 {
 JaktInternal::Tuple<DeprecatedString,DeprecatedString> const parts = TRY((((*this).split_at_last_slash())));
 DeprecatedString const basename = TRY((((*this).basename(true))));
-DeprecatedString const extension = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<path::Path>>{
+DeprecatedString const extension = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<jakt__path::Path>>{
 auto __jakt_enum_value = (new_extension);
 if (__jakt_enum_value == Jakt::DeprecatedString(""sv)) {
 return JaktInternal::ExplicitValue(Jakt::DeprecatedString(""sv));
@@ -188,19 +188,19 @@ return JaktInternal::ExplicitValue((Jakt::DeprecatedString("."sv) + new_extensio
 }
 }()))
 ;
-return (TRY((path::Path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((parts).template get<0>()), (basename + extension)}))))))));
+return (TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((parts).template get<0>()), (basename + extension)}))))))));
 }
 }
 
-bool path::Path::exists() const {
+bool jakt__path::Path::exists() const {
 {
 return (File::exists(((*this).path)));
 }
 }
 
-ErrorOr<path::Path> path::Path::from_string(DeprecatedString const string) {
+ErrorOr<jakt__path::Path> jakt__path::Path::from_string(DeprecatedString const string) {
 {
-path::Path path = path::Path(string);
+jakt__path::Path path = jakt__path::Path(string);
 TRY((((path).normalize_separators())));
 return (path);
 }

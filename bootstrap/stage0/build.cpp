@@ -83,11 +83,11 @@ return {};
 
 ErrorOr<build::Builder> build::Builder::for_building(JaktInternal::DynamicArray<DeprecatedString> const files,size_t const max_concurrent) {
 {
-return (build::Builder((TRY((DynamicArray<DeprecatedString>::create_with({})))),files,TRY((build::ParallelExecutionPool::ParallelExecutionPool::create(max_concurrent)))));
+return (build::Builder((TRY((DynamicArray<DeprecatedString>::create_with({})))),files,TRY((build::ParallelExecutionPool::create(max_concurrent)))));
 }
 }
 
-ErrorOr<void> build::Builder::build_all(path::Path const binary_dir,Function<ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>(DeprecatedString, DeprecatedString)> const& compiler_invocation) {
+ErrorOr<void> build::Builder::build_all(jakt__path::Path const binary_dir,Function<ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>(DeprecatedString, DeprecatedString)> const& compiler_invocation) {
 {
 JaktInternal::Set<size_t> ids = (TRY((Set<size_t>::create_with_values({}))));
 {
@@ -100,17 +100,17 @@ break;
 DeprecatedString file_name = (_magic_value.value());
 {
 {
-JaktInternal::DictionaryIterator<size_t,unknown_process::ExitPollResult> _magic = ((((((*this).pool)).completed)).iterator());
+JaktInternal::DictionaryIterator<size_t,jakt__platform__unknown_process::ExitPollResult> _magic = ((((((*this).pool)).completed)).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,unknown_process::ExitPollResult>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<size_t,jakt__platform__unknown_process::ExitPollResult>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> id__exit_result__ = (_magic_value.value());
+JaktInternal::Tuple<size_t,jakt__platform__unknown_process::ExitPollResult> id__exit_result__ = (_magic_value.value());
 {
-JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> const jakt__id__exit_result__ = id__exit_result__;
+JaktInternal::Tuple<size_t,jakt__platform__unknown_process::ExitPollResult> const jakt__id__exit_result__ = id__exit_result__;
 size_t const id = ((jakt__id__exit_result__).template get<0>());
-unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
+jakt__platform__unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
 
 if ((((exit_result).exit_code) != static_cast<i32>(0))){
 warnln(Jakt::DeprecatedString("Error: Compilation failed"sv));
@@ -122,7 +122,7 @@ return Error::from_errno(static_cast<i32>(1));
 }
 }
 
-DeprecatedString const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((path::Path::Path::from_string(file_name)))).replace_extension(Jakt::DeprecatedString("o"sv)))))).to_string())))))).to_string());
+DeprecatedString const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((jakt__path::Path::from_string(file_name)))).replace_extension(Jakt::DeprecatedString("o"sv)))))).to_string())))))).to_string());
 TRY((((((*this).linked_files)).push(built_object))));
 size_t const id = TRY((((((*this).pool)).run(TRY((compiler_invocation(((TRY((((binary_dir).join(file_name))))).to_string()),built_object)))))));
 TRY((((ids).add(id))));
@@ -134,17 +134,17 @@ warnln(Jakt::DeprecatedString("{:c}[2LBuilding: {}/{} ({})"sv),static_cast<i64>(
 
 TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
 {
-JaktInternal::DictionaryIterator<size_t,unknown_process::ExitPollResult> _magic = ((((((*this).pool)).completed)).iterator());
+JaktInternal::DictionaryIterator<size_t,jakt__platform__unknown_process::ExitPollResult> _magic = ((((((*this).pool)).completed)).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,unknown_process::ExitPollResult>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<size_t,jakt__platform__unknown_process::ExitPollResult>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> id__exit_result__ = (_magic_value.value());
+JaktInternal::Tuple<size_t,jakt__platform__unknown_process::ExitPollResult> id__exit_result__ = (_magic_value.value());
 {
-JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> const jakt__id__exit_result__ = id__exit_result__;
+JaktInternal::Tuple<size_t,jakt__platform__unknown_process::ExitPollResult> const jakt__id__exit_result__ = id__exit_result__;
 size_t const id = ((jakt__id__exit_result__).template get<0>());
-unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
+jakt__platform__unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
 
 if ((((exit_result).exit_code) != static_cast<i32>(0))){
 warnln(Jakt::DeprecatedString("Error: Compilation failed"sv));
@@ -170,11 +170,11 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<build::ParallelExecutionPool> build::ParallelExecutionPool::create(size_t const max_concurrent) {
 {
-return (build::ParallelExecutionPool((TRY((Dictionary<size_t, unknown_process::Process>::create_with_entries({})))),(TRY((Dictionary<size_t, unknown_process::ExitPollResult>::create_with_entries({})))),static_cast<size_t>(0ULL),max_concurrent));
+return (build::ParallelExecutionPool((TRY((Dictionary<size_t, jakt__platform__unknown_process::Process>::create_with_entries({})))),(TRY((Dictionary<size_t, jakt__platform__unknown_process::ExitPollResult>::create_with_entries({})))),static_cast<size_t>(0ULL),max_concurrent));
 }
 }
 
-JaktInternal::Optional<unknown_process::ExitPollResult> build::ParallelExecutionPool::status(size_t const id) const {
+JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult> build::ParallelExecutionPool::status(size_t const id) const {
 {
 if (((((*this).completed)).contains(id))){
 return (((((*this).completed))[id]));
@@ -183,40 +183,40 @@ return (JaktInternal::OptionalNone());
 }
 }
 
-build::ParallelExecutionPool::ParallelExecutionPool(JaktInternal::Dictionary<size_t,unknown_process::Process> a_pids, JaktInternal::Dictionary<size_t,unknown_process::ExitPollResult> a_completed, size_t a_pid_index, size_t a_max_concurrent) :pids(a_pids), completed(a_completed), pid_index(a_pid_index), max_concurrent(a_max_concurrent){}
+build::ParallelExecutionPool::ParallelExecutionPool(JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::Process> a_pids, JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::ExitPollResult> a_completed, size_t a_pid_index, size_t a_max_concurrent) :pids(a_pids), completed(a_completed), pid_index(a_pid_index), max_concurrent(a_max_concurrent){}
 
 ErrorOr<void> build::ParallelExecutionPool::wait_for_any_job_to_complete() {
 {
-JaktInternal::Tuple<JaktInternal::Optional<size_t>,unknown_process::ExitPollResult> const finished_pid_finished_status_ = TRY((unknown_process::wait_for_some_set_of_processes_that_at_least_includes(((((*this).pids))))));
+JaktInternal::Tuple<JaktInternal::Optional<size_t>,jakt__platform__unknown_process::ExitPollResult> const finished_pid_finished_status_ = TRY((jakt__platform__unknown_process::wait_for_some_set_of_processes_that_at_least_includes(((((*this).pids))))));
 JaktInternal::Optional<size_t> const finished_pid = ((finished_pid_finished_status_).template get<0>());
-unknown_process::ExitPollResult const finished_status = ((finished_pid_finished_status_).template get<1>());
+jakt__platform__unknown_process::ExitPollResult const finished_status = ((finished_pid_finished_status_).template get<1>());
 
-JaktInternal::Dictionary<size_t,unknown_process::ExitPollResult> pids_to_remove = (TRY((Dictionary<size_t, unknown_process::ExitPollResult>::create_with_entries({}))));
+JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::ExitPollResult> pids_to_remove = (TRY((Dictionary<size_t, jakt__platform__unknown_process::ExitPollResult>::create_with_entries({}))));
 if (((finished_pid).has_value())){
 TRY((((pids_to_remove).set((finished_pid.value()),finished_status))));
 }
 {
-JaktInternal::DictionaryIterator<size_t,unknown_process::Process> _magic = ((((*this).pids)).iterator());
+JaktInternal::DictionaryIterator<size_t,jakt__platform__unknown_process::Process> _magic = ((((*this).pids)).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,unknown_process::Process>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<size_t,jakt__platform__unknown_process::Process>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<size_t,unknown_process::Process> index__process__ = (_magic_value.value());
+JaktInternal::Tuple<size_t,jakt__platform__unknown_process::Process> index__process__ = (_magic_value.value());
 {
-JaktInternal::Tuple<size_t,unknown_process::Process> const jakt__index__process__ = index__process__;
+JaktInternal::Tuple<size_t,jakt__platform__unknown_process::Process> const jakt__index__process__ = index__process__;
 size_t const index = ((jakt__index__process__).template get<0>());
-unknown_process::Process const process = ((jakt__index__process__).template get<1>());
+jakt__platform__unknown_process::Process const process = ((jakt__index__process__).template get<1>());
 
-JaktInternal::Optional<unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<unknown_process::ExitPollResult>> __jakt_var_745;
-auto __jakt_var_746 = [&]() -> ErrorOr<JaktInternal::Optional<unknown_process::ExitPollResult>> { return TRY((unknown_process::poll_process_exit(((process))))); }();
-if (__jakt_var_746.is_error()) {{
+JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> __jakt_var_756;
+auto __jakt_var_757 = [&]() -> ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> { return TRY((jakt__platform__unknown_process::poll_process_exit(((process))))); }();
+if (__jakt_var_757.is_error()) {{
 TRY((((pids_to_remove).set(index,finished_status))));
 continue;
 }
-} else {__jakt_var_745 = __jakt_var_746.release_value();
+} else {__jakt_var_756 = __jakt_var_757.release_value();
 }
-__jakt_var_745.release_value(); });
+__jakt_var_756.release_value(); });
 if (((status).has_value())){
 TRY((((pids_to_remove).set(index,(status.value())))));
 }
@@ -226,17 +226,17 @@ TRY((((pids_to_remove).set(index,(status.value())))));
 }
 
 {
-JaktInternal::DictionaryIterator<size_t,unknown_process::ExitPollResult> _magic = ((pids_to_remove).iterator());
+JaktInternal::DictionaryIterator<size_t,jakt__platform__unknown_process::ExitPollResult> _magic = ((pids_to_remove).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,unknown_process::ExitPollResult>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<size_t,jakt__platform__unknown_process::ExitPollResult>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> index__status__ = (_magic_value.value());
+JaktInternal::Tuple<size_t,jakt__platform__unknown_process::ExitPollResult> index__status__ = (_magic_value.value());
 {
-JaktInternal::Tuple<size_t,unknown_process::ExitPollResult> const jakt__index__status__ = index__status__;
+JaktInternal::Tuple<size_t,jakt__platform__unknown_process::ExitPollResult> const jakt__index__status__ = index__status__;
 size_t const index = ((jakt__index__status__).template get<0>());
-unknown_process::ExitPollResult const status = ((jakt__index__status__).template get<1>());
+jakt__platform__unknown_process::ExitPollResult const status = ((jakt__index__status__).template get<1>());
 
 ((((*this).pids)).remove(index));
 TRY((((((*this).completed)).set(index,status))));
@@ -254,7 +254,7 @@ ErrorOr<size_t> build::ParallelExecutionPool::run(JaktInternal::DynamicArray<Dep
 if ((((((*this).pids)).size()) >= ((*this).max_concurrent))){
 TRY((((*this).wait_for_any_job_to_complete())));
 }
-unknown_process::Process const process = TRY((unknown_process::start_background_process(args)));
+jakt__platform__unknown_process::Process const process = TRY((jakt__platform__unknown_process::start_background_process(args)));
 size_t const id = ((((*this).pid_index)++));
 TRY((((((*this).pids)).set(id,process))));
 return (id);
@@ -264,19 +264,19 @@ return (id);
 ErrorOr<void> build::ParallelExecutionPool::kill_all() {
 {
 {
-JaktInternal::DictionaryIterator<size_t,unknown_process::Process> _magic = ((((*this).pids)).iterator());
+JaktInternal::DictionaryIterator<size_t,jakt__platform__unknown_process::Process> _magic = ((((*this).pids)).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,unknown_process::Process>> _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<size_t,jakt__platform__unknown_process::Process>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<size_t,unknown_process::Process> ___process__ = (_magic_value.value());
+JaktInternal::Tuple<size_t,jakt__platform__unknown_process::Process> ___process__ = (_magic_value.value());
 {
-JaktInternal::Tuple<size_t,unknown_process::Process> const jakt_____process__ = ___process__;
+JaktInternal::Tuple<size_t,jakt__platform__unknown_process::Process> const jakt_____process__ = ___process__;
 size_t const _ = ((jakt_____process__).template get<0>());
-unknown_process::Process const process = ((jakt_____process__).template get<1>());
+jakt__platform__unknown_process::Process const process = ((jakt_____process__).template get<1>());
 
-TRY((unknown_process::forcefully_kill_process(((process)))));
+TRY((jakt__platform__unknown_process::forcefully_kill_process(((process)))));
 }
 
 }

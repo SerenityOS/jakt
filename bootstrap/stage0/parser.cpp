@@ -40,7 +40,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("default_value: "sv));TRY(builder.appendff("{}", default_value));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-parser::ParsedField::ParsedField(parser::ParsedVarDecl a_var_decl, parser::Visibility a_visibility, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_default_value) :var_decl(a_var_decl), visibility(a_visibility), default_value(a_default_value){}
+parser::ParsedField::ParsedField(parser::ParsedVarDecl a_var_decl, parser::Visibility a_visibility, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_value) :var_decl(a_var_decl), visibility(a_visibility), default_value(a_default_value){}
 
 ErrorOr<DeprecatedString> parser::EnumVariantPatternArgument::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("EnumVariantPatternArgument("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -77,7 +77,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("value: "sv));TRY(builder.appendff("{}", value));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-parser::ParsedPatternDefault::ParsedPatternDefault(parser::ParsedVarDecl a_variable, NonnullRefPtr<parser::ParsedExpression> a_value) :variable(a_variable), value(a_value){}
+parser::ParsedPatternDefault::ParsedPatternDefault(parser::ParsedVarDecl a_variable, NonnullRefPtr<typename parser::ParsedExpression> a_value) :variable(a_variable), value(a_value){}
 
 ErrorOr<DeprecatedString> parser::ParsedRecord::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedRecord("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -100,7 +100,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("methods: "sv));TRY(builder.appendff("{}", methods));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-parser::ParsedExternalTraitImplementation::ParsedExternalTraitImplementation(NonnullRefPtr<parser::ParsedType> a_for_type, JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> a_traits, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods) :for_type(a_for_type), traits(a_traits), methods(a_methods){}
+parser::ParsedExternalTraitImplementation::ParsedExternalTraitImplementation(NonnullRefPtr<typename parser::ParsedType> a_for_type, JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> a_traits, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods) :for_type(a_for_type), traits(a_traits), methods(a_methods){}
 
 ErrorOr<DeprecatedString> parser::ParsedFunction::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedFunction("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -122,7 +122,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("deprecated_message: "sv));TRY(builder.appendff("{}", deprecated_message));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-parser::ParsedFunction::ParsedFunction(DeprecatedString a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::DynamicArray<parser::ParsedParameter> a_params, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow, JaktInternal::Optional<DeprecatedString> a_external_name, JaktInternal::Optional<DeprecatedString> a_deprecated_message) :name(a_name), name_span(a_name_span), visibility(a_visibility), params(a_params), generic_parameters(a_generic_parameters), block(a_block), return_type(a_return_type), return_type_span(a_return_type_span), can_throw(a_can_throw), type(a_type), linkage(a_linkage), must_instantiate(a_must_instantiate), is_comptime(a_is_comptime), is_fat_arrow(a_is_fat_arrow), external_name(a_external_name), deprecated_message(a_deprecated_message){}
+parser::ParsedFunction::ParsedFunction(DeprecatedString a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::DynamicArray<parser::ParsedParameter> a_params, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<typename parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow, JaktInternal::Optional<DeprecatedString> a_external_name, JaktInternal::Optional<DeprecatedString> a_deprecated_message) :name(a_name), name_span(a_name_span), visibility(a_visibility), params(a_params), generic_parameters(a_generic_parameters), block(a_block), return_type(a_return_type), return_type_span(a_return_type_span), can_throw(a_can_throw), type(a_type), linkage(a_linkage), must_instantiate(a_must_instantiate), is_comptime(a_is_comptime), is_fat_arrow(a_is_fat_arrow), external_name(a_external_name), deprecated_message(a_deprecated_message){}
 
 bool parser::ParsedFunction::equals(parser::ParsedFunction const other) const {
 {
@@ -319,7 +319,7 @@ return (((((*this).name) == ((rhs_parsed_varible).name)) && (((((*this).parsed_t
 }
 }
 
-parser::ParsedVariable::ParsedVariable(DeprecatedString a_name, NonnullRefPtr<parser::ParsedType> a_parsed_type, bool a_is_mutable, utility::Span a_span) :name(a_name), parsed_type(a_parsed_type), is_mutable(a_is_mutable), span(a_span){}
+parser::ParsedVariable::ParsedVariable(DeprecatedString a_name, NonnullRefPtr<typename parser::ParsedType> a_parsed_type, bool a_is_mutable, utility::Span a_span) :name(a_name), parsed_type(a_parsed_type), is_mutable(a_is_mutable), span(a_span){}
 
 ErrorOr<DeprecatedString> parser::ParsedNameWithGenericParameters::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedNameWithGenericParameters("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -328,7 +328,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("generic_parameters: "sv));TRY(builder.appendff("{}", generic_parameters));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-parser::ParsedNameWithGenericParameters::ParsedNameWithGenericParameters(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> a_generic_parameters) :name(a_name), name_span(a_name_span), generic_parameters(a_generic_parameters){}
+parser::ParsedNameWithGenericParameters::ParsedNameWithGenericParameters(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> a_generic_parameters) :name(a_name), name_span(a_name_span), generic_parameters(a_generic_parameters){}
 
 ErrorOr<DeprecatedString> parser::SumEnumVariant::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("SumEnumVariant("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -370,21 +370,21 @@ return (true);
 }
 }
 
-parser::ParsedBlock::ParsedBlock(JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedStatement>> a_stmts) :stmts(a_stmts){}
+parser::ParsedBlock::ParsedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>> a_stmts) :stmts(a_stmts){}
 
 JaktInternal::Optional<utility::Span> parser::ParsedBlock::find_yield_span() const {
 {
 {
-JaktInternal::ArrayIterator<NonnullRefPtr<parser::ParsedStatement>> _magic = ((((*this).stmts)).iterator());
+JaktInternal::ArrayIterator<NonnullRefPtr<typename parser::ParsedStatement>> _magic = ((((*this).stmts)).iterator());
 for (;;){
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedStatement>> _magic_value = ((_magic).next());
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-NonnullRefPtr<parser::ParsedStatement> stmt = (_magic_value.value());
+NonnullRefPtr<typename parser::ParsedStatement> stmt = (_magic_value.value());
 {
 if (((stmt)->index() == 14 /* Yield */)){
-NonnullRefPtr<parser::ParsedExpression> const expr = ((stmt)->get<parser::ParsedStatement::Yield>()).expr;
+NonnullRefPtr<typename parser::ParsedExpression> const expr = ((stmt)->get<parser::ParsedStatement::Yield>()).expr;
 return (((expr)->span()));
 }
 }
@@ -401,13 +401,13 @@ ErrorOr<JaktInternal::Optional<utility::Span>> parser::ParsedBlock::span(parser:
 JaktInternal::Optional<size_t> start = JaktInternal::OptionalNone();
 size_t end = static_cast<size_t>(0ULL);
 {
-JaktInternal::ArrayIterator<NonnullRefPtr<parser::ParsedStatement>> _magic = ((((*this).stmts)).iterator());
+JaktInternal::ArrayIterator<NonnullRefPtr<typename parser::ParsedStatement>> _magic = ((((*this).stmts)).iterator());
 for (;;){
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedStatement>> _magic_value = ((_magic).next());
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-NonnullRefPtr<parser::ParsedStatement> stmt = (_magic_value.value());
+NonnullRefPtr<typename parser::ParsedStatement> stmt = (_magic_value.value());
 {
 utility::Span const stmt_span = ((stmt)->span());
 if ((!(((start).has_value())))){
@@ -429,16 +429,16 @@ return (JaktInternal::OptionalNone());
 JaktInternal::Optional<utility::Span> parser::ParsedBlock::find_yield_keyword_span() const {
 {
 {
-JaktInternal::ArrayIterator<NonnullRefPtr<parser::ParsedStatement>> _magic = ((((*this).stmts)).iterator());
+JaktInternal::ArrayIterator<NonnullRefPtr<typename parser::ParsedStatement>> _magic = ((((*this).stmts)).iterator());
 for (;;){
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedStatement>> _magic_value = ((_magic).next());
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-NonnullRefPtr<parser::ParsedStatement> stmt = (_magic_value.value());
+NonnullRefPtr<typename parser::ParsedStatement> stmt = (_magic_value.value());
 {
 if (((stmt)->index() == 14 /* Yield */)){
-NonnullRefPtr<parser::ParsedExpression> const expr = ((stmt)->get<parser::ParsedStatement::Yield>()).expr;
+NonnullRefPtr<typename parser::ParsedExpression> const expr = ((stmt)->get<parser::ParsedStatement::Yield>()).expr;
 return (((stmt)->span()));
 }
 }
@@ -514,7 +514,7 @@ utility::Span const& span = __jakt_match_value.span;
 {
 if (((((*this).peek(static_cast<size_t>(1ULL)))).index() == 17 /* Equal */)){
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(2ULL));});
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
 TRY((((variants).push(parser::ValueEnumVariant(name,span,expr)))));
 }
 else {
@@ -664,7 +664,7 @@ return (parser::ParsedMethod(parsed_function,visibility,is_virtual,is_override))
 
 ErrorOr<parser::ParsedExternalTraitImplementation> parser::Parser::parse_external_trait_implementation() {
 {
-NonnullRefPtr<parser::ParsedType> const type_name = TRY((((*this).parse_typename())));
+NonnullRefPtr<typename parser::ParsedType> const type_name = TRY((((*this).parse_typename())));
 ((*this).skip_newlines());
 if (((((*this).current())).index() == 106 /* Implements */)){
 ((((*this).index)++));
@@ -697,15 +697,15 @@ return (parser::ParsedExternalTraitImplementation(type_name,(trait_list.value())
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parser::Parser::parse_statement(bool const inside_block) {
+ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parser::Parser::parse_statement(bool const inside_block) {
 {
 utility::Span const start = ((((*this).current())).span());
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedStatement>, ErrorOr<NonnullRefPtr<parser::ParsedStatement>>>{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedStatement>, ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 68: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Cpp>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_5; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_5; {
 ((((*this).index)++));
 __jakt_var_5 = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::InlineCpp>(TRY((((*this).parse_block()))),TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_3;
 
@@ -714,9 +714,9 @@ __jakt_label_3:; __jakt_var_5.release_value(); }));
 };/*case end*/
 case 69: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Defer>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_6; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_6; {
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedStatement> const statement = TRY((((*this).parse_statement(false))));
+NonnullRefPtr<typename parser::ParsedStatement> const statement = TRY((((*this).parse_statement(false))));
 __jakt_var_6 = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Defer>(statement,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_4;
 
 }
@@ -724,7 +724,7 @@ __jakt_label_4:; __jakt_var_6.release_value(); }));
 };/*case end*/
 case 100: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Unsafe>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_7; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_7; {
 ((((*this).index)++));
 parser::ParsedBlock const block = TRY((((*this).parse_block())));
 __jakt_var_7 = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::UnsafeBlock>(block,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_5;
@@ -734,7 +734,7 @@ __jakt_label_5:; __jakt_var_7.release_value(); }));
 };/*case end*/
 case 64: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Break>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_8; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_8; {
 ((((*this).index)++));
 __jakt_var_8 = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Break>(start))); goto __jakt_label_6;
 
@@ -743,7 +743,7 @@ __jakt_label_6:; __jakt_var_8.release_value(); }));
 };/*case end*/
 case 67: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Continue>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_9; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_9; {
 ((((*this).index)++));
 __jakt_var_9 = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Continue>(start))); goto __jakt_label_7;
 
@@ -752,7 +752,7 @@ __jakt_label_7:; __jakt_var_9.release_value(); }));
 };/*case end*/
 case 82: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Loop>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_10; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_10; {
 ((((*this).index)++));
 parser::ParsedBlock const block = TRY((((*this).parse_block())));
 __jakt_var_10 = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Loop>(block,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_8;
@@ -762,9 +762,9 @@ __jakt_label_8:; __jakt_var_10.release_value(); }));
 };/*case end*/
 case 96: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throw>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_11; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_11; {
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
 __jakt_var_11 = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Throw>(expr,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_9;
 
 }
@@ -772,9 +772,9 @@ __jakt_label_9:; __jakt_var_11.release_value(); }));
 };/*case end*/
 case 103: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_12; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_12; {
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const condition = TRY((((*this).parse_expression(false,true))));
+NonnullRefPtr<typename parser::ParsedExpression> const condition = TRY((((*this).parse_expression(false,true))));
 parser::ParsedBlock const block = TRY((((*this).parse_block())));
 __jakt_var_12 = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::While>(condition,block,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_10;
 
@@ -783,9 +783,9 @@ __jakt_label_10:; __jakt_var_12.release_value(); }));
 };/*case end*/
 case 104: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Yield>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_13; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_13; {
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
 if ((!(inside_block))){
 TRY((((*this).error(Jakt::DeprecatedString("‘yield’ can only be used inside a block"sv),TRY((parser::merge_spans(start,((expr)->span()))))))));
 }
@@ -796,9 +796,9 @@ __jakt_label_11:; __jakt_var_13.release_value(); }));
 };/*case end*/
 case 92: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Return>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_14; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_14; {
 ((((*this).index)++));
-__jakt_var_14 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedStatement>, ErrorOr<NonnullRefPtr<parser::ParsedStatement>>>{
+__jakt_var_14 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedStatement>, ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -824,7 +824,7 @@ __jakt_label_12:; __jakt_var_14.release_value(); }));
 };/*case end*/
 case 81: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Let>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_15; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_15; {
 bool const is_mutable = ((((*this).current())).index() == 84 /* Mut */);
 ((((*this).index)++));
 JaktInternal::DynamicArray<parser::ParsedVarDecl> vars = (TRY((DynamicArray<parser::ParsedVarDecl>::create_with({}))));
@@ -856,12 +856,12 @@ else {
 (tuple_var_decl = TRY((((*this).parse_variable_declaration(is_mutable)))));
 }
 
-NonnullRefPtr<parser::ParsedExpression> const init = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>, ErrorOr<NonnullRefPtr<parser::ParsedStatement>>>{
+NonnullRefPtr<typename parser::ParsedExpression> const init = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Equal>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_16; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_16; {
 ((((*this).index)++));
 __jakt_var_16 = TRY((((*this).parse_expression(false,false)))); goto __jakt_label_14;
 
@@ -869,7 +869,7 @@ __jakt_var_16 = TRY((((*this).parse_expression(false,false)))); goto __jakt_labe
 __jakt_label_14:; __jakt_var_16.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_17; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_17; {
 TRY((((*this).error(Jakt::DeprecatedString("Expected initializer"sv),((((*this).current())).span())))));
 __jakt_var_17 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Garbage>(((((*this).current())).span())))); goto __jakt_label_15;
 
@@ -879,9 +879,9 @@ __jakt_label_15:; __jakt_var_17.release_value(); }));
 }/*switch end*/
 }()
 ));
-NonnullRefPtr<parser::ParsedStatement> return_statement = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::VarDecl>(tuple_var_decl,init,TRY((parser::merge_spans(start,((((*this).previous())).span())))))));
+NonnullRefPtr<typename parser::ParsedStatement> return_statement = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::VarDecl>(tuple_var_decl,init,TRY((parser::merge_spans(start,((((*this).previous())).span())))))));
 if (is_destructuring_assingment){
-NonnullRefPtr<parser::ParsedStatement> const old_return_statement = return_statement;
+NonnullRefPtr<typename parser::ParsedStatement> const old_return_statement = return_statement;
 (return_statement = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::DestructuringAssignment>(vars,old_return_statement,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))));
 }
 __jakt_var_15 = return_statement; goto __jakt_label_13;
@@ -891,7 +891,7 @@ __jakt_label_13:; __jakt_var_15.release_value(); }));
 };/*case end*/
 case 84: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Mut>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_18; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_18; {
 bool const is_mutable = ((((*this).current())).index() == 84 /* Mut */);
 ((((*this).index)++));
 JaktInternal::DynamicArray<parser::ParsedVarDecl> vars = (TRY((DynamicArray<parser::ParsedVarDecl>::create_with({}))));
@@ -923,12 +923,12 @@ else {
 (tuple_var_decl = TRY((((*this).parse_variable_declaration(is_mutable)))));
 }
 
-NonnullRefPtr<parser::ParsedExpression> const init = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>, ErrorOr<NonnullRefPtr<parser::ParsedStatement>>>{
+NonnullRefPtr<typename parser::ParsedExpression> const init = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Equal>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_19; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_19; {
 ((((*this).index)++));
 __jakt_var_19 = TRY((((*this).parse_expression(false,false)))); goto __jakt_label_17;
 
@@ -936,7 +936,7 @@ __jakt_var_19 = TRY((((*this).parse_expression(false,false)))); goto __jakt_labe
 __jakt_label_17:; __jakt_var_19.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_20; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_20; {
 TRY((((*this).error(Jakt::DeprecatedString("Expected initializer"sv),((((*this).current())).span())))));
 __jakt_var_20 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Garbage>(((((*this).current())).span())))); goto __jakt_label_18;
 
@@ -946,9 +946,9 @@ __jakt_label_18:; __jakt_var_20.release_value(); }));
 }/*switch end*/
 }()
 ));
-NonnullRefPtr<parser::ParsedStatement> return_statement = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::VarDecl>(tuple_var_decl,init,TRY((parser::merge_spans(start,((((*this).previous())).span())))))));
+NonnullRefPtr<typename parser::ParsedStatement> return_statement = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::VarDecl>(tuple_var_decl,init,TRY((parser::merge_spans(start,((((*this).previous())).span())))))));
 if (is_destructuring_assingment){
-NonnullRefPtr<parser::ParsedStatement> const old_return_statement = return_statement;
+NonnullRefPtr<typename parser::ParsedStatement> const old_return_statement = return_statement;
 (return_statement = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::DestructuringAssignment>(vars,old_return_statement,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))));
 }
 __jakt_var_18 = return_statement; goto __jakt_label_16;
@@ -966,7 +966,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).parse_for_statement()))));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_21; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_21; {
 parser::ParsedBlock const block = TRY((((*this).parse_block())));
 __jakt_var_21 = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Block>(block,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_19;
 
@@ -978,8 +978,8 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::To
 return JaktInternal::ExplicitValue(TRY((((*this).parse_guard_statement()))));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedStatement>> __jakt_var_22; {
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(true,false))));
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_22; {
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(true,false))));
 __jakt_var_22 = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Expression>(expr,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_20;
 
 }
@@ -2022,18 +2022,18 @@ return (parsed_trait);
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parser::Parser::parse_type_shorthand_array_or_dictionary() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parser::Parser::parse_type_shorthand_array_or_dictionary() {
 {
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedType> const inner = TRY((((*this).parse_typename())));
+NonnullRefPtr<typename parser::ParsedType> const inner = TRY((((*this).parse_typename())));
 if (((((*this).current())).index() == 13 /* RSquare */)){
 ((((*this).index)++));
 return (TRY((parser::ParsedType::template create<typename parser::ParsedType::JaktArray>(inner,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))));
 }
 if (((((*this).current())).index() == 6 /* Colon */)){
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedType> const value = TRY((((*this).parse_typename())));
+NonnullRefPtr<typename parser::ParsedType> const value = TRY((((*this).parse_typename())));
 if (((((*this).current())).index() == 13 /* RSquare */)){
 ((((*this).index)++));
 }
@@ -2052,9 +2052,9 @@ ErrorOr<parser::ParsedBlock> parser::Parser::parse_fat_arrow() {
 {
 ((((*this).index)++));
 utility::Span const start = ((((*this).current())).span());
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
-NonnullRefPtr<parser::ParsedStatement> const return_statement = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Return>(expr,TRY((parser::merge_spans(start,((((*this).current())).span())))))));
-return (parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<parser::ParsedStatement>>::create_with({return_statement}))))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedStatement> const return_statement = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Return>(expr,TRY((parser::merge_spans(start,((((*this).current())).span())))))));
+return (parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({return_statement}))))));
 }
 }
 
@@ -2154,7 +2154,7 @@ return ( parser::Visibility { typename parser::Visibility::Restricted(whitelist,
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parser::Parser::parse_typename() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parser::Parser::parse_typename() {
 {
 utility::Span const start = ((((*this).current())).span());
 bool is_reference = false;
@@ -2167,7 +2167,7 @@ if (((((*this).current())).index() == 84 /* Mut */)){
 ((((*this).index)++));
 }
 }
-NonnullRefPtr<parser::ParsedType> parsed_type = TRY((((*this).parse_type_shorthand())));
+NonnullRefPtr<typename parser::ParsedType> parsed_type = TRY((((*this).parse_type_shorthand())));
 if (((parsed_type)->index() == 13 /* Empty */)){
 (parsed_type = TRY((((*this).parse_type_longhand()))));
 }
@@ -2190,12 +2190,12 @@ return (parsed_type);
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_range() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_range() {
 {
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> to = JaktInternal::OptionalNone();
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> to = JaktInternal::OptionalNone();
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 13: {
@@ -2234,11 +2234,11 @@ return (TRY((parser::ParsedExpression::template create<typename parser::ParsedEx
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_match_expression() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_match_expression() {
 {
 utility::Span start = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,true))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,true))));
 JaktInternal::DynamicArray<parser::ParsedMatchCase> const cases = TRY((((*this).parse_match_cases())));
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Match>(expr,cases,TRY((parser::merge_spans(start,((((*this).previous())).span())))),start))));
 }
@@ -2256,7 +2256,7 @@ return {};
 ErrorOr<parser::ParsedRecord> parser::Parser::parse_class(parser::DefinitionLinkage const definition_linkage) {
 {
 parser::ParsedRecord parsed_class = parser::ParsedRecord(Jakt::DeprecatedString(""sv),((*this).empty_span()),(TRY((DynamicArray<parser::ParsedGenericParameter>::create_with({})))),definition_linkage,JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::ParsedMethod>::create_with({})))), parser::RecordType { typename parser::RecordType::Garbage() } ,JaktInternal::OptionalNone());
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedType>> super_type = JaktInternal::OptionalNone();
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedType>> super_type = JaktInternal::OptionalNone();
 if (((((*this).current())).index() == 66 /* Class */)){
 ((((*this).index)++));
 }
@@ -2482,15 +2482,15 @@ return ((TRY((DynamicArray<parser::ParsedVarDecl>::create_with({})))));
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_operand_base() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_operand_base() {
 {
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 54: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dot>();
 utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_23; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_23; {
 __jakt_var_23 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Var>(Jakt::DeprecatedString("this"sv),span))); goto __jakt_label_21;
 
 }
@@ -2499,9 +2499,9 @@ __jakt_label_21:; __jakt_var_23.release_value(); }));
 case 99: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Try>();
 utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_24; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_24; {
 ((((*this).index)++));
-__jakt_var_24 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+__jakt_var_24 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 10: {
@@ -2509,8 +2509,8 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::To
 return JaktInternal::ExplicitValue(TRY((((*this).parse_try_block()))));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_25; {
-NonnullRefPtr<parser::ParsedExpression> const expression = TRY((((*this).parse_expression(true,true))));
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_25; {
+NonnullRefPtr<typename parser::ParsedExpression> const expression = TRY((((*this).parse_expression(true,true))));
 JaktInternal::Optional<parser::ParsedBlock> catch_block = JaktInternal::OptionalNone();
 JaktInternal::Optional<DeprecatedString> catch_name = JaktInternal::OptionalNone();
 if (((((*this).current())).index() == 65 /* Catch */)){
@@ -2537,7 +2537,7 @@ __jakt_label_22:; __jakt_var_24.release_value(); }));
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::QuotedString>();DeprecatedString const& quote = __jakt_match_value.quote;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_26; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_26; {
 ((((*this).index)++));
 __jakt_var_26 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::QuotedString>(quote,span))); goto __jakt_label_24;
 
@@ -2547,7 +2547,7 @@ __jakt_label_24:; __jakt_var_26.release_value(); }));
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::SingleQuotedString>();DeprecatedString const& quote = __jakt_match_value.quote;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_27; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_27; {
 ((((*this).index)++));
 __jakt_var_27 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::SingleQuotedString>(quote,span))); goto __jakt_label_25;
 
@@ -2557,7 +2557,7 @@ __jakt_label_25:; __jakt_var_27.release_value(); }));
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::SingleQuotedByteString>();DeprecatedString const& quote = __jakt_match_value.quote;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_28; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_28; {
 ((((*this).index)++));
 __jakt_var_28 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::SingleQuotedByteString>(quote,span))); goto __jakt_label_26;
 
@@ -2574,7 +2574,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).parse_number(prefix,number,suff
 case 98: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::True>();
 utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_29; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_29; {
 ((((*this).index)++));
 __jakt_var_29 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Boolean>(true,span))); goto __jakt_label_27;
 
@@ -2584,7 +2584,7 @@ __jakt_label_27:; __jakt_var_29.release_value(); }));
 case 73: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::False>();
 utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_30; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_30; {
 ((((*this).index)++));
 __jakt_var_30 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Boolean>(false,span))); goto __jakt_label_28;
 
@@ -2594,7 +2594,7 @@ __jakt_label_28:; __jakt_var_30.release_value(); }));
 case 95: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::This>();
 utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_31; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_31; {
 ((((*this).index)++));
 __jakt_var_31 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Var>(Jakt::DeprecatedString("this"sv),span))); goto __jakt_label_29;
 
@@ -2604,10 +2604,10 @@ __jakt_label_29:; __jakt_var_31.release_value(); }));
 case 86: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Not>();
 utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_32; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_32; {
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
 utility::Span const span = TRY((parser::merge_spans(start,((expr)->span()))));
 __jakt_var_32 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(expr, parser::UnaryOperator { typename parser::UnaryOperator::LogicalNot() } ,span))); goto __jakt_label_30;
 
@@ -2617,10 +2617,10 @@ __jakt_label_30:; __jakt_var_32.release_value(); }));
 case 47: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Tilde>();
 utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_33; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_33; {
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
 utility::Span const span = TRY((parser::merge_spans(start,((expr)->span()))));
 __jakt_var_33 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(expr, parser::UnaryOperator { typename parser::UnaryOperator::BitwiseNot() } ,span))); goto __jakt_label_31;
 
@@ -2630,11 +2630,11 @@ __jakt_label_31:; __jakt_var_33.release_value(); }));
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();DeprecatedString const& name = __jakt_match_value.name;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_34; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_34; {
 if (((((*this).peek(static_cast<size_t>(1ULL)))).index() == 8 /* LParen */)){
 if ((name == Jakt::DeprecatedString("Some"sv))){
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::OptionalSome>(expr,span))));
 }
 JaktInternal::Optional<parser::ParsedCall> const call = TRY((((*this).parse_call())));
@@ -2645,7 +2645,7 @@ if (((((*this).peek(static_cast<size_t>(1ULL)))).index() == 29 /* LessThan */)){
 JaktInternal::Optional<parser::ParsedCall> const call = TRY((((*this).parse_call())));
 (((((*this).compiler))->ignore_parser_errors) = false);
 if ((!(((call).has_value())))){
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>,ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto __jakt_enum_value = (name);
 if (__jakt_enum_value == Jakt::DeprecatedString("None"sv)) {
 return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::OptionalNone>(span))));
@@ -2670,12 +2670,12 @@ __jakt_label_32:; __jakt_var_34.release_value(); }));
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
 utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_35; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_35; {
 utility::Span const start_span = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> expr = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> expr = TRY((((*this).parse_expression(false,false))));
 ((*this).skip_newlines());
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 9: {
@@ -2689,10 +2689,10 @@ case 53: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
 {
 ((((*this).index)++));
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedExpression>> tuple_exprs = (TRY((DynamicArray<NonnullRefPtr<parser::ParsedExpression>>::create_with({expr}))));
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> tuple_exprs = (TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>>::create_with({expr}))));
 utility::Span end_span = start_span;
 while ((!(((*this).eof())))){
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 56: {
@@ -2718,7 +2718,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
 (end_span = ((expr)->span()));
 TRY((((tuple_exprs).push(expr))));
 }
@@ -2752,8 +2752,8 @@ __jakt_label_33:; __jakt_var_35.release_value(); }));
 case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PlusPlus>();
 utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_36; {
-parser::UnaryOperator const op = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::UnaryOperator, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_36; {
+parser::UnaryOperator const op = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::UnaryOperator, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 19: {
@@ -2778,7 +2778,7 @@ TRY((((((*this).compiler))->panic(Jakt::DeprecatedString("unreachable"sv)))));
 ));
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
 utility::Span const span = TRY((parser::merge_spans(start,((expr)->span()))));
 __jakt_var_36 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(expr,op,span))); goto __jakt_label_34;
 
@@ -2788,8 +2788,8 @@ __jakt_label_34:; __jakt_var_36.release_value(); }));
 case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::MinusMinus>();
 utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_37; {
-parser::UnaryOperator const op = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::UnaryOperator, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_37; {
+parser::UnaryOperator const op = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::UnaryOperator, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 19: {
@@ -2814,7 +2814,7 @@ TRY((((((*this).compiler))->panic(Jakt::DeprecatedString("unreachable"sv)))));
 ));
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
 utility::Span const span = TRY((parser::merge_spans(start,((expr)->span()))));
 __jakt_var_37 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(expr,op,span))); goto __jakt_label_35;
 
@@ -2824,8 +2824,8 @@ __jakt_label_35:; __jakt_var_37.release_value(); }));
 case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Minus>();
 utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_38; {
-parser::UnaryOperator const op = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::UnaryOperator, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_38; {
+parser::UnaryOperator const op = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::UnaryOperator, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 19: {
@@ -2850,7 +2850,7 @@ TRY((((((*this).compiler))->panic(Jakt::DeprecatedString("unreachable"sv)))));
 ));
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
 utility::Span const span = TRY((parser::merge_spans(start,((expr)->span()))));
 __jakt_var_38 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(expr,op,span))); goto __jakt_label_36;
 
@@ -2859,7 +2859,7 @@ __jakt_label_36:; __jakt_var_38.release_value(); }));
 };/*case end*/
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LSquare>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_39; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_39; {
 __jakt_var_39 = TRY((((*this).parse_array_or_dictionary_literal()))); goto __jakt_label_37;
 
 }
@@ -2867,7 +2867,7 @@ __jakt_label_37:; __jakt_var_39.release_value(); }));
 };/*case end*/
 case 83: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_40; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_40; {
 __jakt_var_40 = TRY((((*this).parse_match_expression()))); goto __jakt_label_38;
 
 }
@@ -2875,7 +2875,7 @@ __jakt_label_38:; __jakt_var_40.release_value(); }));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_41; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_41; {
 __jakt_var_41 = TRY((((*this).parse_set_literal()))); goto __jakt_label_39;
 
 }
@@ -2898,7 +2898,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::To
 return JaktInternal::ExplicitValue(TRY((((*this).parse_range()))));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_42; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_42; {
 utility::Span const span = ((((*this).current())).span());
 ((((*this).index)++));
 TRY((((*this).error(Jakt::DeprecatedString("Unsupported expression"sv),span))));
@@ -2915,7 +2915,7 @@ __jakt_label_40:; __jakt_var_42.release_value(); }));
 
 ErrorOr<parser::ParsedFunction> parser::Parser::parse_function(parser::FunctionLinkage const linkage,parser::Visibility const visibility,bool const is_comptime,bool const allow_missing_body) {
 {
-parser::ParsedFunction parsed_function = parser::ParsedFunction(Jakt::DeprecatedString(""sv),((*this).empty_span()),visibility,(TRY((DynamicArray<parser::ParsedParameter>::create_with({})))),(TRY((DynamicArray<parser::ParsedGenericParameter>::create_with({})))),parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<parser::ParsedStatement>>::create_with({}))))),TRY((parser::ParsedType::template create<typename parser::ParsedType::Empty>())),((*this).span(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL))),false, parser::FunctionType { typename parser::FunctionType::Normal() } ,linkage,false,is_comptime,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
+parser::ParsedFunction parsed_function = parser::ParsedFunction(Jakt::DeprecatedString(""sv),((*this).empty_span()),visibility,(TRY((DynamicArray<parser::ParsedParameter>::create_with({})))),(TRY((DynamicArray<parser::ParsedGenericParameter>::create_with({})))),parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({}))))),TRY((parser::ParsedType::template create<typename parser::ParsedType::Empty>())),((*this).span(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL))),false, parser::FunctionType { typename parser::FunctionType::Normal() } ,linkage,false,is_comptime,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
 ((((*this).index)++));
 if (((*this).eof())){
 TRY((((*this).error(Jakt::DeprecatedString("Incomplete function definition"sv),((((*this).current())).span())))));
@@ -3130,7 +3130,7 @@ switch(__jakt_match_variant.index()) {
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
 return JaktInternal::ExplicitValue(({ Optional<parser::ImportName> __jakt_var_45; {
-NonnullRefPtr<parser::ParsedExpression> const expression = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Call>((TRY((((*this).parse_call()))).value()),span)));
+NonnullRefPtr<typename parser::ParsedExpression> const expression = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Call>((TRY((((*this).parse_call()))).value()),span)));
 ((((*this).index)--));
 __jakt_var_45 =  parser::ImportName { typename parser::ImportName::Comptime(expression) } ; goto __jakt_label_43;
 
@@ -3323,23 +3323,23 @@ return (((((*this).tokens))[(JaktInternal::checked_sub<size_t>(((*this).index),s
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parser::Parser::parse_type_longhand() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parser::Parser::parse_type_longhand() {
 {
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedType>, ErrorOr<NonnullRefPtr<parser::ParsedType>>>{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedType>, ErrorOr<NonnullRefPtr<typename parser::ParsedType>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 91: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Raw>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedType>> __jakt_var_46; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_46; {
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedType> const inner = TRY((((*this).parse_typename())));
+NonnullRefPtr<typename parser::ParsedType> const inner = TRY((((*this).parse_typename())));
 utility::Span const span = TRY((parser::merge_spans(start,((((*this).current())).span()))));
-__jakt_var_46 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedType>, ErrorOr<NonnullRefPtr<parser::ParsedType>>>{
+__jakt_var_46 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedType>, ErrorOr<NonnullRefPtr<typename parser::ParsedType>>>{
 auto&& __jakt_match_variant = *inner;
 switch(__jakt_match_variant.index()) {
 case 7: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Optional>();NonnullRefPtr<parser::ParsedType> const& inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Optional>();NonnullRefPtr<typename parser::ParsedType> const& inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(TRY((parser::ParsedType::template create<typename parser::ParsedType::Optional>(TRY((parser::ParsedType::template create<typename parser::ParsedType::RawPtr>(inner,span))),span))));
 };/*case end*/
 default: {
@@ -3354,20 +3354,20 @@ __jakt_label_44:; __jakt_var_46.release_value(); }));
 };/*case end*/
 case 102: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Weak>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedType>> __jakt_var_47; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_47; {
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedType> const inner = TRY((((*this).parse_typename())));
+NonnullRefPtr<typename parser::ParsedType> const inner = TRY((((*this).parse_typename())));
 utility::Span const span = TRY((parser::merge_spans(start,((((*this).current())).span()))));
-__jakt_var_47 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedType>, ErrorOr<NonnullRefPtr<parser::ParsedType>>>{
+__jakt_var_47 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedType>, ErrorOr<NonnullRefPtr<typename parser::ParsedType>>>{
 auto&& __jakt_match_variant = *inner;
 switch(__jakt_match_variant.index()) {
 case 7: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Optional>();NonnullRefPtr<parser::ParsedType> const& inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Optional>();NonnullRefPtr<typename parser::ParsedType> const& inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(TRY((parser::ParsedType::template create<typename parser::ParsedType::WeakPtr>(inner,span))));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedType>> __jakt_var_48; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_48; {
 TRY((((*this).error(Jakt::DeprecatedString("missing `?` after weak pointer type name"sv),span))));
 __jakt_var_48 = TRY((parser::ParsedType::template create<typename parser::ParsedType::WeakPtr>(inner,span))); goto __jakt_label_46;
 
@@ -3383,12 +3383,12 @@ __jakt_label_45:; __jakt_var_47.release_value(); }));
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();DeprecatedString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedType>> __jakt_var_49; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_49; {
 utility::Span const span = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedType> parsed_type = TRY((parser::ParsedType::template create<typename parser::ParsedType::Name>(name,span)));
+NonnullRefPtr<typename parser::ParsedType> parsed_type = TRY((parser::ParsedType::template create<typename parser::ParsedType::Name>(name,span)));
 if (((((*this).current())).index() == 29 /* LessThan */)){
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> params = (TRY((DynamicArray<NonnullRefPtr<parser::ParsedType>>::create_with({}))));
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> params = (TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({}))));
 if (((((*this).current())).index() == 29 /* LessThan */)){
 ((((*this).index)++));
 while (((!(((((*this).current())).index() == 27 /* GreaterThan */))) && (!(((*this).eof()))))){
@@ -3411,7 +3411,7 @@ if (((((*this).current())).index() == 7 /* ColonColon */)){
 ((((*this).index)++));
 JaktInternal::DynamicArray<DeprecatedString> namespaces = (TRY((DynamicArray<DeprecatedString>::create_with({name}))));
 while ((!(((*this).eof())))){
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedType>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedType>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 4: {
@@ -3448,7 +3448,7 @@ return JaktInternal::ExplicitValue<void>();
 ));
 }
 DeprecatedString const type_name = (((namespaces).pop()).value());
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> params = (TRY((DynamicArray<NonnullRefPtr<parser::ParsedType>>::create_with({}))));
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> params = (TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({}))));
 if (((((*this).current())).index() == 29 /* LessThan */)){
 ((((*this).index)++));
 while (((!(((((*this).current())).index() == 27 /* GreaterThan */))) && (!(((*this).eof()))))){
@@ -3474,7 +3474,7 @@ __jakt_label_47:; __jakt_var_49.release_value(); }));
 };/*case end*/
 case 75: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Function>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedType>> __jakt_var_50; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_50; {
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 JaktInternal::DynamicArray<parser::ParsedParameter> const params = TRY((((*this).parse_function_parameters())));
@@ -3482,7 +3482,7 @@ bool const can_throw = ((((*this).current())).index() == 97 /* Throws */);
 if (can_throw){
 ((((*this).index)++));
 }
-NonnullRefPtr<parser::ParsedType> return_type = TRY((parser::ParsedType::template create<typename parser::ParsedType::Empty>()));
+NonnullRefPtr<typename parser::ParsedType> return_type = TRY((parser::ParsedType::template create<typename parser::ParsedType::Empty>()));
 if (((((*this).current())).index() == 59 /* Arrow */)){
 ((((*this).index)++));
 (return_type = TRY((((*this).parse_typename()))));
@@ -3497,7 +3497,7 @@ __jakt_var_50 = TRY((parser::ParsedType::template create<typename parser::Parsed
 __jakt_label_48:; __jakt_var_50.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedType>> __jakt_var_51; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_51; {
 TRY((((*this).error(Jakt::DeprecatedString("Expected type name"sv),((((*this).current())).span())))));
 __jakt_var_51 = TRY((parser::ParsedType::template create<typename parser::ParsedType::Empty>())); goto __jakt_label_49;
 
@@ -3510,7 +3510,7 @@ __jakt_label_49:; __jakt_var_51.release_value(); }));
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parser::Parser::parse_if_statement() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parser::Parser::parse_if_statement() {
 {
 if ((!(((((*this).current())).index() == 77 /* If */)))){
 TRY((((*this).error(Jakt::DeprecatedString("Expected ‘if’ statement"sv),((((*this).current())).span())))));
@@ -3518,14 +3518,14 @@ return (TRY((parser::ParsedStatement::template create<typename parser::ParsedSta
 }
 utility::Span const start_span = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const condition = TRY((((*this).parse_expression(false,true))));
+NonnullRefPtr<typename parser::ParsedExpression> const condition = TRY((((*this).parse_expression(false,true))));
 parser::ParsedBlock const then_block = TRY((((*this).parse_block())));
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedStatement>> else_statement = JaktInternal::OptionalNone();
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> else_statement = JaktInternal::OptionalNone();
 ((*this).skip_newlines());
 if (((((*this).current())).index() == 70 /* Else */)){
 ((((*this).index)++));
 ((*this).skip_newlines());
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedStatement>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 77: {
@@ -3968,10 +3968,10 @@ return ((Tuple{variants, fields, methods}));
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_operator(bool const allow_assignments) {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_operator(bool const allow_assignments) {
 {
 utility::Span const span = ((((*this).current())).span());
-parser::BinaryOperator const op = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::BinaryOperator, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+parser::BinaryOperator const op = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::BinaryOperator, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 51: {
@@ -4141,13 +4141,13 @@ return (TRY((parser::ParsedExpression::template create<typename parser::ParsedEx
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parser::Parser::parse_for_statement() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parser::Parser::parse_for_statement() {
 {
 utility::Span const start_span = ((((*this).current())).span());
 ((((*this).index)++));
 DeprecatedString iterator_name = Jakt::DeprecatedString(""sv);
 JaktInternal::DynamicArray<parser::ParsedVarDecl> destructured_var_decls = (TRY((DynamicArray<parser::ParsedVarDecl>::create_with({}))));
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedStatement>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 4: {
@@ -4202,16 +4202,16 @@ TRY((((*this).error(Jakt::DeprecatedString("Expected ‘in’"sv),((((*this).cur
 return (TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Garbage>(TRY((parser::merge_spans(start_span,((((*this).current())).span()))))))));
 }
 
-NonnullRefPtr<parser::ParsedExpression> const range = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const range = TRY((((*this).parse_expression(false,false))));
 parser::ParsedBlock block = TRY((((*this).parse_block())));
 if ((((destructured_var_decls).size()) > static_cast<size_t>(0ULL))){
 DeprecatedString tuple_var_name = Jakt::DeprecatedString("jakt__"sv);
 (tuple_var_name += iterator_name);
 parser::ParsedVarDecl tuple_var_decl = parser::ParsedVarDecl(tuple_var_name,TRY((parser::ParsedType::template create<typename parser::ParsedType::Empty>())),false,JaktInternal::OptionalNone(),((((*this).current())).span()));
-NonnullRefPtr<parser::ParsedExpression> const init = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Var>(iterator_name,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
-NonnullRefPtr<parser::ParsedStatement> const var_decl = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::VarDecl>(tuple_var_decl,init,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
-NonnullRefPtr<parser::ParsedStatement> const destructured_vars_stmt = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::DestructuringAssignment>(destructured_var_decls,var_decl,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedStatement>> block_stmts = (TRY((DynamicArray<NonnullRefPtr<parser::ParsedStatement>>::create_with({}))));
+NonnullRefPtr<typename parser::ParsedExpression> const init = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Var>(iterator_name,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
+NonnullRefPtr<typename parser::ParsedStatement> const var_decl = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::VarDecl>(tuple_var_decl,init,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
+NonnullRefPtr<typename parser::ParsedStatement> const destructured_vars_stmt = TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::DestructuringAssignment>(destructured_var_decls,var_decl,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>> block_stmts = (TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({}))));
 TRY((((block_stmts).push(destructured_vars_stmt))));
 TRY((((block_stmts).push_values(((((block).stmts)))))));
 (((block).stmts) = block_stmts);
@@ -4343,7 +4343,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Iden
 utility::Span const& span = __jakt_match_value.span;
 {
 parser::ParsedVarDecl const var_decl = TRY((((*this).parse_variable_declaration(current_param_is_mutable))));
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> default_argument = JaktInternal::OptionalNone();
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> default_argument = JaktInternal::OptionalNone();
 if (((((*this).current())).index() == 17 /* Equal */)){
 ((((*this).index)++));
 (default_argument = TRY((((*this).parse_expression(false,true)))));
@@ -4373,7 +4373,7 @@ return (params);
 
 ErrorOr<JaktInternal::Optional<parser::ParsedCall>> parser::Parser::parse_call() {
 {
-parser::ParsedCall call = parser::ParsedCall((TRY((DynamicArray<DeprecatedString>::create_with({})))),Jakt::DeprecatedString(""sv),(TRY((DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<parser::ParsedExpression>>>::create_with({})))),(TRY((DynamicArray<NonnullRefPtr<parser::ParsedType>>::create_with({})))));
+parser::ParsedCall call = parser::ParsedCall((TRY((DynamicArray<DeprecatedString>::create_with({})))),Jakt::DeprecatedString(""sv),(TRY((DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>>::create_with({})))),(TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({})))));
 if (((((*this).current())).index() == 4 /* Identifier */)){
 DeprecatedString const name = ((((*this).current())).get<lexer::Token::Identifier>()).name;
 (((call).name) = name);
@@ -4381,7 +4381,7 @@ DeprecatedString const name = ((((*this).current())).get<lexer::Token::Identifie
 size_t const index_reset = ((*this).index);
 if (((((*this).current())).index() == 29 /* LessThan */)){
 ((((*this).index)++));
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> inner_types = (TRY((DynamicArray<NonnullRefPtr<parser::ParsedType>>::create_with({}))));
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> inner_types = (TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({}))));
 while ((!(((*this).eof())))){
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Optional<parser::ParsedCall>>>{
 auto&& __jakt_match_variant = ((*this).current());
@@ -4410,7 +4410,7 @@ return JaktInternal::ExplicitValue<void>();
 default: {
 {
 size_t const index_before = ((*this).index);
-NonnullRefPtr<parser::ParsedType> const inner_type = TRY((((*this).parse_typename())));
+NonnullRefPtr<typename parser::ParsedType> const inner_type = TRY((((*this).parse_typename())));
 if ((index_before == ((*this).index))){
 (((*this).index) = index_reset);
 return JaktInternal::LoopBreak{};
@@ -4463,7 +4463,7 @@ default: {
 {
 utility::Span const label_span = ((((*this).current())).span());
 DeprecatedString const label = TRY((((*this).parse_argument_label())));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
 TRY((((((call).args)).push((Tuple{label, label_span, expr})))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -4536,13 +4536,13 @@ JaktInternal::DynamicArray<parser::ParsedField> const fields = ((fields_methods_
 JaktInternal::DynamicArray<parser::ParsedMethod> const methods = ((fields_methods_).template get<1>());
 
 (((parsed_struct).methods) = methods);
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedType>> const super_type = JaktInternal::OptionalNone();
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedType>> const super_type = JaktInternal::OptionalNone();
 (((parsed_struct).record_type) =  parser::RecordType { typename parser::RecordType::Struct(fields,super_type) } );
 return (parsed_struct);
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_array_or_dictionary_literal() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_array_or_dictionary_literal() {
 {
 bool is_dictionary = false;
 utility::Span const start = ((((*this).current())).span());
@@ -4551,11 +4551,11 @@ TRY((((*this).error(Jakt::DeprecatedString("Expected ‘[’"sv),((((*this).curr
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Garbage>(((((*this).current())).span())))));
 }
 ((((*this).index)++));
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> fill_size_expr = JaktInternal::OptionalNone();
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedExpression>> output = (TRY((DynamicArray<NonnullRefPtr<parser::ParsedExpression>>::create_with({}))));
-JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<parser::ParsedExpression>,NonnullRefPtr<parser::ParsedExpression>>> dict_output = (TRY((DynamicArray<JaktInternal::Tuple<NonnullRefPtr<parser::ParsedExpression>,NonnullRefPtr<parser::ParsedExpression>>>::create_with({}))));
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> fill_size_expr = JaktInternal::OptionalNone();
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> output = (TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>>::create_with({}))));
+JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,NonnullRefPtr<typename parser::ParsedExpression>>> dict_output = (TRY((DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,NonnullRefPtr<typename parser::ParsedExpression>>>::create_with({}))));
 while ((!(((*this).eof())))){
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 13: {
@@ -4618,7 +4618,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
 if (((expr)->index() == 28 /* Garbage */)){
 return JaktInternal::LoopBreak{};
 }
@@ -4632,7 +4632,7 @@ if (((*this).eof())){
 TRY((((*this).error(Jakt::DeprecatedString("Key missing value in dictionary"sv),((((*this).current())).span())))));
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Garbage>(((((*this).current())).span())))));
 }
-NonnullRefPtr<parser::ParsedExpression> const value = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const value = TRY((((*this).parse_expression(false,false))));
 TRY((((dict_output).push((Tuple{expr, value})))));
 }
 else if ((!(is_dictionary))){
@@ -4659,12 +4659,12 @@ return (TRY((parser::ParsedExpression::template create<typename parser::ParsedEx
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_operand() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_operand() {
 {
 ((*this).skip_newlines());
 utility::Span const start = ((((*this).current())).span());
 ((*this).skip_newlines());
-NonnullRefPtr<parser::ParsedExpression> expr = TRY((((*this).parse_operand_base())));
+NonnullRefPtr<typename parser::ParsedExpression> expr = TRY((((*this).parse_operand_base())));
 return (TRY((((*this).parse_operand_postfix_operator(start,expr)))));
 }
 }
@@ -4787,7 +4787,7 @@ __jakt_label_62:; __jakt_var_64.release_value(); }));
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_lambda() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_lambda() {
 {
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
@@ -4797,12 +4797,12 @@ bool const can_throw = ((((*this).current())).index() == 97 /* Throws */);
 if (can_throw){
 ((((*this).index)++));
 }
-NonnullRefPtr<parser::ParsedType> return_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedType>, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+NonnullRefPtr<typename parser::ParsedType> return_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedType>, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 59: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Arrow>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedType>> __jakt_var_65; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_65; {
 ((((*this).index)++));
 __jakt_var_65 = TRY((((*this).parse_typename()))); goto __jakt_label_63;
 
@@ -4816,7 +4816,7 @@ return JaktInternal::ExplicitValue(TRY((parser::ParsedType::template create<type
 }()
 ));
 bool is_fat_arrow = false;
-parser::ParsedBlock const block = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::ParsedBlock, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+parser::ParsedBlock const block = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::ParsedBlock, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 58: {
@@ -4824,9 +4824,9 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::To
 return JaktInternal::ExplicitValue(({ Optional<parser::ParsedBlock> __jakt_var_66; {
 (is_fat_arrow = true);
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(true,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(true,false))));
 utility::Span const span = ((expr)->span());
-__jakt_var_66 = parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<parser::ParsedStatement>>::create_with({TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Return>(expr,span)))}))))); goto __jakt_label_64;
+__jakt_var_66 = parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({TRY((parser::ParsedStatement::template create<typename parser::ParsedStatement::Return>(expr,span)))}))))); goto __jakt_label_64;
 
 }
 __jakt_label_64:; __jakt_var_66.release_value(); }));
@@ -4886,7 +4886,7 @@ case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();DeprecatedString const& name = __jakt_match_value.name;
 utility::Span const& span = __jakt_match_value.span;
 {
-parser::ParsedNameWithGenericParameters parsed_name = parser::ParsedNameWithGenericParameters(name,span,(TRY((DynamicArray<NonnullRefPtr<parser::ParsedType>>::create_with({})))));
+parser::ParsedNameWithGenericParameters parsed_name = parser::ParsedNameWithGenericParameters(name,span,(TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({})))));
 ((((*this).index)++));
 if (((((*this).current())).index() == 29 /* LessThan */)){
 ((((*this).index)++));
@@ -4918,7 +4918,7 @@ return JaktInternal::ExplicitValue<void>();
 default: {
 {
 size_t const index_before = ((*this).index);
-NonnullRefPtr<parser::ParsedType> const inner_type = TRY((((*this).parse_typename())));
+NonnullRefPtr<typename parser::ParsedType> const inner_type = TRY((((*this).parse_typename())));
 if ((index_before == ((*this).index))){
 TRY((((*this).error(Jakt::DeprecatedString("Expected type name"sv),((((*this).current())).span())))));
 return JaktInternal::LoopBreak{};
@@ -6132,7 +6132,7 @@ return ((Tuple{fields, methods}));
 
 ErrorOr<parser::ParsedExternImport> parser::Parser::parse_extern_import(parser::ParsedNamespace& parent) {
 {
-parser::ParsedExternImport parsed_import = parser::ParsedExternImport(false,parser::ParsedNamespace(JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::ParsedFunction>::create_with({})))),(TRY((DynamicArray<parser::ParsedRecord>::create_with({})))),(TRY((DynamicArray<parser::ParsedTrait>::create_with({})))),(TRY((DynamicArray<parser::ParsedExternalTraitImplementation>::create_with({})))),(TRY((DynamicArray<parser::ParsedNamespace>::create_with({})))),(TRY((DynamicArray<parser::ParsedModuleImport>::create_with({})))),(TRY((DynamicArray<parser::ParsedExternImport>::create_with({})))),JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))),(TRY((DynamicArray<parser::IncludeAction>::create_with({}))))),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))));
+parser::ParsedExternImport parsed_import = parser::ParsedExternImport(false,parser::ParsedNamespace(JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::ParsedFunction>::create_with({})))),(TRY((DynamicArray<parser::ParsedRecord>::create_with({})))),(TRY((DynamicArray<parser::ParsedTrait>::create_with({})))),(TRY((DynamicArray<parser::ParsedExternalTraitImplementation>::create_with({})))),(TRY((DynamicArray<parser::ParsedNamespace>::create_with({})))),(TRY((DynamicArray<parser::ParsedAlias>::create_with({})))),(TRY((DynamicArray<parser::ParsedModuleImport>::create_with({})))),(TRY((DynamicArray<parser::ParsedExternImport>::create_with({})))),JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))),(TRY((DynamicArray<parser::IncludeAction>::create_with({}))))),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))));
 if (((((*this).current())).index() == 4 /* Identifier */)){
 DeprecatedString const name = ((((*this).current())).get<lexer::Token::Identifier>()).name;
 utility::Span const span = ((((*this).current())).get<lexer::Token::Identifier>()).span;
@@ -6329,37 +6329,37 @@ return (variant_arguments);
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_ampersand() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_ampersand() {
 {
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 if (((((*this).current())).index() == 91 /* Raw */)){
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(expr, parser::UnaryOperator { typename parser::UnaryOperator::RawAddress() } ,TRY((parser::merge_spans(start,((expr)->span()))))))));
 }
 if (((((*this).current())).index() == 84 /* Mut */)){
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(expr, parser::UnaryOperator { typename parser::UnaryOperator::MutableReference() } ,TRY((parser::merge_spans(start,((expr)->span()))))))));
 }
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(expr, parser::UnaryOperator { typename parser::UnaryOperator::Reference() } ,TRY((parser::merge_spans(start,((expr)->span()))))))));
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_asterisk() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_asterisk() {
 {
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(expr, parser::UnaryOperator { typename parser::UnaryOperator::Dereference() } ,TRY((parser::merge_spans(start,((((*this).current())).span()))))))));
 }
 }
 
 ErrorOr<parser::ParsedNamespace> parser::Parser::parse_namespace() {
 {
-parser::ParsedNamespace parsed_namespace = parser::ParsedNamespace(JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::ParsedFunction>::create_with({})))),(TRY((DynamicArray<parser::ParsedRecord>::create_with({})))),(TRY((DynamicArray<parser::ParsedTrait>::create_with({})))),(TRY((DynamicArray<parser::ParsedExternalTraitImplementation>::create_with({})))),(TRY((DynamicArray<parser::ParsedNamespace>::create_with({})))),(TRY((DynamicArray<parser::ParsedModuleImport>::create_with({})))),(TRY((DynamicArray<parser::ParsedExternImport>::create_with({})))),JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))));
+parser::ParsedNamespace parsed_namespace = parser::ParsedNamespace(JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::ParsedFunction>::create_with({})))),(TRY((DynamicArray<parser::ParsedRecord>::create_with({})))),(TRY((DynamicArray<parser::ParsedTrait>::create_with({})))),(TRY((DynamicArray<parser::ParsedExternalTraitImplementation>::create_with({})))),(TRY((DynamicArray<parser::ParsedNamespace>::create_with({})))),(TRY((DynamicArray<parser::ParsedAlias>::create_with({})))),(TRY((DynamicArray<parser::ParsedModuleImport>::create_with({})))),(TRY((DynamicArray<parser::ParsedExternImport>::create_with({})))),JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))));
 JaktInternal::DynamicArray<parser::ParsedAttribute> active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({}))));
 while ((!(((*this).eof())))){
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<parser::ParsedNamespace>>{
@@ -6389,6 +6389,17 @@ TRY((((*this).error(Jakt::DeprecatedString("Cannot apply attributes to external 
 }
 ((((*this).index)++));
 TRY((((((parsed_namespace).external_trait_implementations)).push(TRY((((*this).parse_external_trait_implementation())))))));
+}
+return JaktInternal::ExplicitValue<void>();
+}
+else if (__jakt_enum_value == Jakt::DeprecatedString("use"sv)) {
+{
+if ((!(((active_attributes).is_empty())))){
+TRY((((*this).error(Jakt::DeprecatedString("Cannot apply attributes to use declarations"sv),((((active_attributes)[static_cast<i64>(0LL)])).span)))));
+(active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
+}
+((((*this).index)++));
+TRY((((((parsed_namespace).aliases)).push(TRY((((*this).parse_using())))))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -6622,7 +6633,7 @@ return (parsed_namespace);
 ErrorOr<parser::ParsedBlock> parser::Parser::parse_block() {
 {
 utility::Span const start = ((((*this).current())).span());
-parser::ParsedBlock block = parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<parser::ParsedStatement>>::create_with({})))));
+parser::ParsedBlock block = parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({})))));
 if (((*this).eof())){
 TRY((((*this).error(Jakt::DeprecatedString("Incomplete block"sv),start))));
 return (block);
@@ -6682,11 +6693,11 @@ return (TRY((((parser).parse_namespace()))));
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parser::Parser::parse_guard_statement() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parser::Parser::parse_guard_statement() {
 {
 utility::Span const span = ((((*this).current())).span());
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,true))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,true))));
 if (((((*this).current())).index() == 70 /* Else */)){
 ((((*this).index)++));
 }
@@ -6695,9 +6706,9 @@ TRY((((*this).error(Jakt::DeprecatedString("Expected `else` keyword"sv),((((*thi
 }
 
 parser::ParsedBlock const else_block = TRY((((*this).parse_block())));
-parser::ParsedBlock remaining_code = parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<parser::ParsedStatement>>::create_with({})))));
+parser::ParsedBlock remaining_code = parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({})))));
 while ((!(((*this).eof())))){
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedStatement>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 11: {
@@ -6734,16 +6745,1932 @@ return (TRY((parser::ParsedStatement::template create<typename parser::ParsedSta
 }
 }
 
-lexer::Token parser::Parser::peek(size_t const steps) const {
+ErrorOr<parser::ParsedAlias> parser::Parser::parse_using() {
 {
-if ((((*this).eof()) || ((JaktInternal::checked_add<size_t>(steps,((*this).index))) >= ((((*this).tokens)).size())))){
-return ((((((*this).tokens)).last()).value()));
+parser::ParsedAlias alias = parser::ParsedAlias(JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::ParsedNameWithGenericParameters>::create_with({})))));
+for (;;){
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<parser::ParsedAlias>>{
+auto&& __jakt_match_variant = ((*this).current());
+switch(__jakt_match_variant.index()) {
+case 56: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();{
+return JaktInternal::LoopBreak{};
 }
-return (((((*this).tokens))[(JaktInternal::checked_add<size_t>(((*this).index),steps))]));
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 62: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::As>();
+{
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 57: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Eof>();
+{
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 7: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ColonColon>();
+{
+((((*this).index)++));
+return JaktInternal::LoopContinue{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 4: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();DeprecatedString const& name = __jakt_match_value.name;
+utility::Span const& span = __jakt_match_value.span;
+{
+parser::ParsedNameWithGenericParameters parsed_name = parser::ParsedNameWithGenericParameters(name,span,(TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({})))));
+((((*this).index)++));
+if (((((*this).current())).index() == 29 /* LessThan */)){
+((((*this).index)++));
+while ((!(((*this).eof())))){
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<parser::ParsedAlias>>{
+auto&& __jakt_match_variant = ((*this).current());
+switch(__jakt_match_variant.index()) {
+case 27: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThan>();
+{
+((((*this).index)++));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 53: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
+{
+((((*this).index)++));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 56: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();{
+((((*this).index)++));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+default: {
+{
+size_t const index_before = ((*this).index);
+NonnullRefPtr<typename parser::ParsedType> const inner_type = TRY((((*this).parse_typename())));
+if ((index_before == ((*this).index))){
+TRY((((*this).error(Jakt::DeprecatedString("Expected type name"sv),((((*this).current())).span())))));
+return JaktInternal::LoopBreak{};
+}
+TRY((((((parsed_name).generic_parameters)).push(inner_type))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+}/*switch end*/
+}()
+));
+}
+}
+TRY((((((alias).target)).push(parsed_name))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 0: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::SingleQuotedString>();utility::Span const& span = __jakt_match_value.span;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 1: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::SingleQuotedByteString>();utility::Span const& span = __jakt_match_value.span;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 2: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::QuotedString>();utility::Span const& span = __jakt_match_value.span;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 3: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Number>();utility::Span const& span = __jakt_match_value.span;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 5: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Semicolon>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 6: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Colon>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 8: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 9: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 10: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 11: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 12: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LSquare>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 13: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RSquare>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 14: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PercentSign>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 15: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Plus>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 16: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Minus>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 17: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Equal>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 18: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PlusEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 19: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PlusPlus>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 20: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::MinusEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 21: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::MinusMinus>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 22: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AsteriskEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 23: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlashEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 24: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PercentSignEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 25: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::NotEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 26: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::DoubleEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 27: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThan>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 28: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThanOrEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 29: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThan>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 30: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThanOrEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 31: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftArithmeticShift>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 32: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftShift>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 33: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftShiftEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 34: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightShift>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 35: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightArithmeticShift>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 36: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightShiftEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 37: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Asterisk>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 38: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Ampersand>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 39: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AmpersandEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 40: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AmpersandAmpersand>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 41: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pipe>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 42: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PipeEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 43: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PipePipe>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 44: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Caret>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 45: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::CaretEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 46: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dollar>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 47: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Tilde>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 48: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlash>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 49: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ExclamationPoint>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 50: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMark>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 51: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMark>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 52: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMarkEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 53: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 54: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dot>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 55: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::DotDot>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 58: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::FatArrow>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 59: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Arrow>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 60: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::And>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 61: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Anon>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 63: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Boxed>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 64: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Break>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 65: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Catch>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 66: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Class>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 67: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Continue>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 68: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Cpp>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 69: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Defer>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 70: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Else>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 71: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Enum>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 72: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Extern>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 73: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::False>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 74: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 75: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Function>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 76: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comptime>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 77: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 78: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Import>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 79: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::In>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 80: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Is>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 81: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Let>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 82: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Loop>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 83: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 84: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Mut>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 85: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Namespace>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 86: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Not>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 87: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Or>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 88: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Override>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 89: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Private>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 90: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 91: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Raw>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 92: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Return>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 93: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Restricted>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 94: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Struct>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 95: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::This>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 96: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throw>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 97: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throws>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 98: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::True>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 99: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Try>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 100: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Unsafe>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 101: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Virtual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 102: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Weak>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 103: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 104: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Yield>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 105: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 106: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Implements>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 107: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Requires>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 108: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Trait>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 109: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Garbage>();utility::Span const& span = __jakt_match_value.span;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+default: VERIFY_NOT_REACHED();}/*switch end*/
+}()
+));
+}
+if (((((*this).previous())).index() == 7 /* ColonColon */)){
+utility::Span const span = ((((*this).previous())).get<lexer::Token::ColonColon>()).value;
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
+}
+if (((((*this).current())).index() == 62 /* As */)){
+((((*this).index)++));
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<parser::ParsedAlias>>{
+auto&& __jakt_match_variant = ((*this).current());
+switch(__jakt_match_variant.index()) {
+case 4: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();DeprecatedString const& name = __jakt_match_value.name;
+utility::Span const& span = __jakt_match_value.span;
+{
+(((alias).alias_name) = parser::ParsedName(name,span));
+((((*this).index)++));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 0: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::SingleQuotedString>();utility::Span const& span = __jakt_match_value.span;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 1: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::SingleQuotedByteString>();utility::Span const& span = __jakt_match_value.span;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 2: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::QuotedString>();utility::Span const& span = __jakt_match_value.span;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 3: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Number>();utility::Span const& span = __jakt_match_value.span;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 5: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Semicolon>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 6: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Colon>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 7: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ColonColon>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 8: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 9: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 10: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 11: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RCurly>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 12: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LSquare>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 13: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RSquare>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 14: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PercentSign>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 15: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Plus>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 16: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Minus>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 17: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Equal>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 18: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PlusEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 19: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PlusPlus>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 20: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::MinusEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 21: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::MinusMinus>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 22: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AsteriskEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 23: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlashEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 24: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PercentSignEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 25: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::NotEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 26: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::DoubleEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 27: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThan>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 28: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::GreaterThanOrEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 29: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThan>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 30: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThanOrEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 31: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftArithmeticShift>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 32: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftShift>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 33: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LeftShiftEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 34: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightShift>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 35: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightArithmeticShift>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 36: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RightShiftEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 37: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Asterisk>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 38: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Ampersand>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 39: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AmpersandEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 40: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AmpersandAmpersand>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 41: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pipe>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 42: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PipeEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 43: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PipePipe>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 44: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Caret>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 45: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::CaretEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 46: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dollar>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 47: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Tilde>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 48: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlash>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 49: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ExclamationPoint>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 50: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMark>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 51: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMark>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 52: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMarkEqual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 53: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 54: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dot>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 55: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::DotDot>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 56: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();utility::Span const& span = __jakt_match_value.span;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 57: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Eof>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 58: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::FatArrow>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 59: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Arrow>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 60: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::And>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 61: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Anon>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 62: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::As>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 63: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Boxed>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 64: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Break>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 65: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Catch>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 66: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Class>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 67: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Continue>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 68: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Cpp>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 69: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Defer>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 70: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Else>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 71: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Enum>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 72: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Extern>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 73: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::False>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 74: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 75: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Function>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 76: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comptime>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 77: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 78: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Import>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 79: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::In>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 80: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Is>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 81: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Let>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 82: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Loop>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 83: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 84: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Mut>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 85: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Namespace>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 86: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Not>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 87: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Or>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 88: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Override>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 89: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Private>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 90: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 91: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Raw>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 92: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Return>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 93: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Restricted>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 94: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Struct>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 95: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::This>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 96: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throw>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 97: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throws>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 98: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::True>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 99: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Try>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 100: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Unsafe>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 101: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Virtual>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 102: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Weak>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 103: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 104: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Yield>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 105: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 106: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Implements>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 107: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Requires>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 108: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Trait>();
+utility::Span const& span = __jakt_match_value.value;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 109: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Garbage>();utility::Span const& span = __jakt_match_value.span;
+{
+TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+default: VERIFY_NOT_REACHED();}/*switch end*/
+}()
+));
+}
+return (alias);
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_set_literal() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_set_literal() {
 {
 utility::Span const start = ((((*this).current())).span());
 if ((!(((((*this).current())).index() == 10 /* LCurly */)))){
@@ -6751,9 +8678,9 @@ TRY((((*this).error(Jakt::DeprecatedString("Expected ‘{’"sv),((((*this).curr
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Garbage>(((((*this).current())).span())))));
 }
 ((((*this).index)++));
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedExpression>> output = (TRY((DynamicArray<NonnullRefPtr<parser::ParsedExpression>>::create_with({}))));
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> output = (TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>>::create_with({}))));
 while ((!(((*this).eof())))){
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 11: {
@@ -6779,7 +8706,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-NonnullRefPtr<parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
 if (((expr)->index() == 28 /* Garbage */)){
 return JaktInternal::LoopBreak{};
 }
@@ -6799,11 +8726,11 @@ return (TRY((parser::ParsedExpression::template create<typename parser::ParsedEx
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parser::Parser::parse_type_shorthand_tuple() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parser::Parser::parse_type_shorthand_tuple() {
 {
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> types = (TRY((DynamicArray<NonnullRefPtr<parser::ParsedType>>::create_with({}))));
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> types = (TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({}))));
 while ((!(((*this).eof())))){
 if (((((*this).current())).index() == 9 /* RParen */)){
 ((((*this).index)++));
@@ -6813,7 +8740,7 @@ if (((((*this).current())).index() == 53 /* Comma */)){
 ((((*this).index)++));
 }
 size_t const index_before = ((*this).index);
-NonnullRefPtr<parser::ParsedType> const type = TRY((((*this).parse_typename())));
+NonnullRefPtr<typename parser::ParsedType> const type = TRY((((*this).parse_typename())));
 size_t const index_after = ((*this).index);
 if ((index_before == index_after)){
 break;
@@ -7094,7 +9021,7 @@ return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_postfix_colon_colon(utility::Span const start,NonnullRefPtr<parser::ParsedExpression> const expr) {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_postfix_colon_colon(utility::Span const start,NonnullRefPtr<typename parser::ParsedExpression> const expr) {
 {
 ((((*this).index)++));
 JaktInternal::DynamicArray<DeprecatedString> namespace_ = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
@@ -7237,13 +9164,13 @@ return (cases);
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parser::Parser::parse_type_shorthand_set() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parser::Parser::parse_type_shorthand_set() {
 {
 utility::Span const start = ((((*this).current())).span());
 if (((((*this).current())).index() == 10 /* LCurly */)){
 ((((*this).index)++));
 }
-NonnullRefPtr<parser::ParsedType> const inner = TRY((((*this).parse_typename())));
+NonnullRefPtr<typename parser::ParsedType> const inner = TRY((((*this).parse_typename())));
 if (((((*this).current())).index() == 11 /* RCurly */)){
 ((((*this).index)++));
 return (TRY((parser::ParsedType::template create<typename parser::ParsedType::Set>(inner,TRY((parser::merge_spans(start,((((*this).current())).span()))))))));
@@ -7259,7 +9186,7 @@ parser::ParsedVarDecl const parsed_variable_declaration = TRY((((*this).parse_va
 if (((((parsed_variable_declaration).parsed_type))->index() == 13 /* Empty */)){
 TRY((((*this).error(Jakt::DeprecatedString("Field missing type"sv),((parsed_variable_declaration).span)))));
 }
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> default_value = JaktInternal::OptionalNone();
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> default_value = JaktInternal::OptionalNone();
 if (((((*this).peek(static_cast<size_t>(0ULL)))).index() == 17 /* Equal */)){
 ((((*this).index)++));
 (default_value = TRY((((*this).parse_expression(false,false)))));
@@ -7271,7 +9198,7 @@ return (parser::ParsedField(parsed_variable_declaration,visibility,default_value
 ErrorOr<parser::ParsedRecord> parser::Parser::parse_enum(parser::DefinitionLinkage const definition_linkage,bool const is_boxed) {
 {
 parser::ParsedRecord parsed_enum = parser::ParsedRecord(Jakt::DeprecatedString(""sv),((*this).empty_span()),(TRY((DynamicArray<parser::ParsedGenericParameter>::create_with({})))),definition_linkage,JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::ParsedMethod>::create_with({})))), parser::RecordType { typename parser::RecordType::Garbage() } ,JaktInternal::OptionalNone());
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedType>> underlying_type = JaktInternal::OptionalNone();
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedType>> underlying_type = JaktInternal::OptionalNone();
 if (((((*this).current())).index() == 71 /* Enum */)){
 ((((*this).index)++));
 }
@@ -7350,11 +9277,11 @@ return (((*this).peek(static_cast<size_t>(0ULL))));
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_expression(bool const allow_assignments,bool const allow_newlines) {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_expression(bool const allow_assignments,bool const allow_newlines) {
 {
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedExpression>> expr_stack = (TRY((DynamicArray<NonnullRefPtr<parser::ParsedExpression>>::create_with({}))));
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> expr_stack = (TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>>::create_with({}))));
 i64 last_precedence = static_cast<i64>(1000000LL);
-NonnullRefPtr<parser::ParsedExpression> const lhs = TRY((((*this).parse_operand())));
+NonnullRefPtr<typename parser::ParsedExpression> const lhs = TRY((((*this).parse_operand())));
 TRY((((expr_stack).push(lhs))));
 for (;;){
 if (allow_newlines){
@@ -7369,24 +9296,24 @@ break;
 }
 }
 
-NonnullRefPtr<parser::ParsedExpression> const parsed_operator = TRY((((*this).parse_operator(allow_assignments))));
+NonnullRefPtr<typename parser::ParsedExpression> const parsed_operator = TRY((((*this).parse_operator(allow_assignments))));
 if (((parsed_operator)->index() == 28 /* Garbage */)){
 break;
 }
 i64 const precedence = ((parsed_operator)->precedence());
 ((*this).skip_newlines());
-NonnullRefPtr<parser::ParsedExpression> const rhs = TRY((((*this).parse_operand())));
+NonnullRefPtr<typename parser::ParsedExpression> const rhs = TRY((((*this).parse_operand())));
 while (((precedence <= last_precedence) && (((expr_stack).size()) > static_cast<size_t>(1ULL)))){
-NonnullRefPtr<parser::ParsedExpression> const rhs = (((expr_stack).pop()).value());
-NonnullRefPtr<parser::ParsedExpression> const op = (((expr_stack).pop()).value());
+NonnullRefPtr<typename parser::ParsedExpression> const rhs = (((expr_stack).pop()).value());
+NonnullRefPtr<typename parser::ParsedExpression> const op = (((expr_stack).pop()).value());
 (last_precedence = ((op)->precedence()));
 if ((last_precedence < precedence)){
 TRY((((expr_stack).push(op))));
 TRY((((expr_stack).push(rhs))));
 break;
 }
-NonnullRefPtr<parser::ParsedExpression> const lhs = (((expr_stack).pop()).value());
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+NonnullRefPtr<typename parser::ParsedExpression> const lhs = (((expr_stack).pop()).value());
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = *op;
 switch(__jakt_match_variant.index()) {
 case 13: {
@@ -7413,10 +9340,10 @@ TRY((((expr_stack).push(rhs))));
 (last_precedence = precedence);
 }
 while ((((expr_stack).size()) > static_cast<size_t>(1ULL))){
-NonnullRefPtr<parser::ParsedExpression> const rhs = (((expr_stack).pop()).value());
-NonnullRefPtr<parser::ParsedExpression> const parsed_operator = (((expr_stack).pop()).value());
-NonnullRefPtr<parser::ParsedExpression> const lhs = (((expr_stack).pop()).value());
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+NonnullRefPtr<typename parser::ParsedExpression> const rhs = (((expr_stack).pop()).value());
+NonnullRefPtr<typename parser::ParsedExpression> const parsed_operator = (((expr_stack).pop()).value());
+NonnullRefPtr<typename parser::ParsedExpression> const lhs = (((expr_stack).pop()).value());
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = *parsed_operator;
 switch(__jakt_match_variant.index()) {
 case 13: {
@@ -7442,10 +9369,10 @@ return (((expr_stack)[static_cast<i64>(0LL)]));
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_try_block() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_try_block() {
 {
 utility::Span const start_span = ((((*this).current())).span());
-NonnullRefPtr<parser::ParsedStatement> const stmt = TRY((((*this).parse_statement(false))));
+NonnullRefPtr<typename parser::ParsedStatement> const stmt = TRY((((*this).parse_statement(false))));
 DeprecatedString error_name = Jakt::DeprecatedString(""sv);
 utility::Span error_span = ((((*this).current())).span());
 if (((((*this).current())).index() == 65 /* Catch */)){
@@ -7466,12 +9393,12 @@ return (TRY((parser::ParsedExpression::template create<typename parser::ParsedEx
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_number(lexer::LiteralPrefix const prefix,DeprecatedString const number,lexer::LiteralSuffix suffix,utility::Span const span) {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_number(lexer::LiteralPrefix const prefix,DeprecatedString const number,lexer::LiteralSuffix suffix,utility::Span const span) {
 {
 ((((*this).index)++));
 u64 total = static_cast<u64>(0ULL);
 if ((!(((prefix).index() == 0 /* None */)))){
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = prefix;
 switch(__jakt_match_variant.index()) {
 case 1: {
@@ -7633,7 +9560,7 @@ return (TRY((parser::ParsedExpression::template create<typename parser::ParsedEx
 if ((floating && ((suffix).index() == 0 /* None */))){
 (suffix =  lexer::LiteralSuffix { typename lexer::LiteralSuffix::F64() } );
 }
-bool const is_float_suffix = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+bool const is_float_suffix = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = suffix;
 switch(__jakt_match_variant.index()) {
 case 10: {
@@ -7653,7 +9580,7 @@ return JaktInternal::ExplicitValue(false);
 if ((floating && (!(is_float_suffix)))){
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Garbage>(span))));
 }
-JaktInternal::Optional<parser::NumericConstant> const constant_value = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<parser::NumericConstant>, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+JaktInternal::Optional<parser::NumericConstant> const constant_value = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<parser::NumericConstant>, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = suffix;
 switch(__jakt_match_variant.index()) {
 case 10: {
@@ -7684,6 +9611,15 @@ if (((constant_value).has_value())){
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::NumericConstant>((constant_value.value()),span))));
 }
 return (TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Garbage>(span))));
+}
+}
+
+lexer::Token parser::Parser::peek(size_t const steps) const {
+{
+if ((((*this).eof()) || ((JaktInternal::checked_add<size_t>(steps,((*this).index))) >= ((((*this).tokens)).size())))){
+return ((((((*this).tokens)).last()).value()));
+}
+return (((((*this).tokens))[(JaktInternal::checked_add<size_t>(((*this).index),steps))]));
 }
 }
 
@@ -7727,9 +9663,9 @@ __jakt_label_71:; __jakt_var_73.release_value(); }));
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parser::Parser::parse_type_shorthand() {
+ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parser::Parser::parse_type_shorthand() {
 {
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedType>, ErrorOr<NonnullRefPtr<parser::ParsedType>>>{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedType>, ErrorOr<NonnullRefPtr<typename parser::ParsedType>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 12: {
@@ -7786,12 +9722,12 @@ if (is_mutable){
 ((((*this).index)++));
 }
 parser::ParsedVarDecl const declaration = TRY((((*this).parse_variable_declaration(is_mutable))));
-NonnullRefPtr<parser::ParsedExpression> const value = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>, ErrorOr<JaktInternal::DynamicArray<parser::ParsedMatchPattern>>>{
+NonnullRefPtr<typename parser::ParsedExpression> const value = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, ErrorOr<JaktInternal::DynamicArray<parser::ParsedMatchPattern>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Equal>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_75; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_75; {
 ((((*this).index)++));
 __jakt_var_75 = TRY((((*this).parse_expression(false,false)))); goto __jakt_label_72;
 
@@ -7799,7 +9735,7 @@ __jakt_var_75 = TRY((((*this).parse_expression(false,false)))); goto __jakt_labe
 __jakt_label_72:; __jakt_var_75.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_76; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_76; {
 TRY((((*this).error(Jakt::DeprecatedString("Expected initializer"sv),((((*this).current())).span())))));
 __jakt_var_76 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::Garbage>(((((*this).current())).span())))); goto __jakt_label_73;
 
@@ -7844,7 +9780,7 @@ else {
 return (parser::ParsedVarDecl(name,TRY((parser::ParsedType::template create<typename parser::ParsedType::Empty>())),is_mutable,span,span));
 }
 
-NonnullRefPtr<parser::ParsedType> const parsed_type = TRY((((*this).parse_typename())));
+NonnullRefPtr<typename parser::ParsedType> const parsed_type = TRY((((*this).parse_typename())));
 if ((is_mutable && (((parsed_type)->index() == 8 /* Reference */) || ((parsed_type)->index() == 9 /* MutableReference */)))){
 TRY((((*this).error(Jakt::DeprecatedString("Reference parameter can not be mutable"sv),span))));
 }
@@ -7857,20 +9793,20 @@ return (parser::ParsedVarDecl(Jakt::DeprecatedString(""sv),TRY((parser::ParsedTy
 }
 }
 
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parser::Parser::parse_operand_postfix_operator(utility::Span const start,NonnullRefPtr<parser::ParsedExpression> const expr) {
+ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_operand_postfix_operator(utility::Span const start,NonnullRefPtr<typename parser::ParsedExpression> const expr) {
 {
-NonnullRefPtr<parser::ParsedExpression> result = expr;
+NonnullRefPtr<typename parser::ParsedExpression> result = expr;
 for (;;){
-(result = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+(result = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 55: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::DotDot>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_77; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_77; {
 ((((*this).index)++));
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> to = JaktInternal::OptionalNone();
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> to = JaktInternal::OptionalNone();
 utility::Span span_end = ((((*this).current())).span());
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 13: {
@@ -7913,7 +9849,7 @@ __jakt_label_74:; __jakt_var_77.release_value(); }));
 };/*case end*/
 case 49: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ExclamationPoint>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_78; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_78; {
 ((((*this).index)++));
 __jakt_var_78 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::ForcedUnwrap>(result,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_75;
 
@@ -7922,7 +9858,7 @@ __jakt_label_75:; __jakt_var_78.release_value(); }));
 };/*case end*/
 case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PlusPlus>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_79; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_79; {
 ((((*this).index)++));
 __jakt_var_79 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(result, parser::UnaryOperator { typename parser::UnaryOperator::PostIncrement() } ,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_76;
 
@@ -7931,7 +9867,7 @@ __jakt_label_76:; __jakt_var_79.release_value(); }));
 };/*case end*/
 case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::MinusMinus>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_80; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_80; {
 ((((*this).index)++));
 __jakt_var_80 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(result, parser::UnaryOperator { typename parser::UnaryOperator::PostDecrement() } ,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_77;
 
@@ -7940,10 +9876,10 @@ __jakt_label_77:; __jakt_var_80.release_value(); }));
 };/*case end*/
 case 62: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::As>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_81; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_81; {
 ((((*this).index)++));
 utility::Span const cast_span = TRY((parser::merge_spans(((((*this).previous())).span()),((((*this).current())).span()))));
-parser::TypeCast const cast = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::TypeCast, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+parser::TypeCast const cast = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::TypeCast, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 49: {
@@ -7983,12 +9919,12 @@ __jakt_label_78:; __jakt_var_81.release_value(); }));
 };/*case end*/
 case 80: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Is>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_85; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_85; {
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedType> const parsed_type = TRY((((*this).parse_typename())));
+NonnullRefPtr<typename parser::ParsedType> const parsed_type = TRY((((*this).parse_typename())));
 utility::Span const span = TRY((parser::merge_spans(start,((((*this).current())).span()))));
 JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> bindings = (TRY((DynamicArray<parser::EnumVariantPatternArgument>::create_with({}))));
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> unary_operator_is = JaktInternal::OptionalNone();
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> unary_operator_is = JaktInternal::OptionalNone();
 if ((((((*this).current())).index() == 8 /* LParen */) && (((parsed_type)->index() == 1 /* NamespacedName */) || ((parsed_type)->index() == 0 /* Name */)))){
 (bindings = TRY((((*this).parse_variant_arguments()))));
 (unary_operator_is = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::UnaryOp>(result, parser::UnaryOperator { typename parser::UnaryOperator::IsEnumVariant(parsed_type,bindings) } ,span))));
@@ -8008,7 +9944,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).parse_postfix_colon_colon(start
 };/*case end*/
 case 50: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMark>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_86; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_86; {
 bool const is_optional = ((((*this).current())).index() == 50 /* QuestionMark */);
 if (is_optional){
 ((((*this).index)++));
@@ -8017,7 +9953,7 @@ TRY((((*this).error(Jakt::DeprecatedString("Expected ‘.’ after ‘?’ for o
 }
 }
 ((((*this).index)++));
-__jakt_var_86 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+__jakt_var_86 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 3: {
@@ -8025,12 +9961,12 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Numb
 DeprecatedString const& number = __jakt_match_value.number;
 lexer::LiteralSuffix const& suffix = __jakt_match_value.suffix;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_87; {
-NonnullRefPtr<parser::ParsedExpression> const numeric_constant = TRY((((*this).parse_number(prefix,number,suffix,span))));
-__jakt_var_87 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>,ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_87; {
+NonnullRefPtr<typename parser::ParsedExpression> const numeric_constant = TRY((((*this).parse_number(prefix,number,suffix,span))));
+__jakt_var_87 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto __jakt_enum_value = (((numeric_constant)->index() == 1 /* NumericConstant */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_88; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_88; {
 parser::NumericConstant const val = ((numeric_constant)->get<parser::ParsedExpression::NumericConstant>()).val;
 size_t const num = ((val).to_usize());
 __jakt_var_88 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::IndexedTuple>(result,num,is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_85;
@@ -8052,20 +9988,47 @@ __jakt_label_84:; __jakt_var_87.release_value(); }));
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();DeprecatedString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_89; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_89; {
 ((((*this).index)++));
-__jakt_var_89 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+__jakt_var_89 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
-case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_90; {
+case 29: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThan>();
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_90; {
+size_t const original_index = ((*this).index);
+JaktInternal::DynamicArray<error::JaktError> const existing_errors = TRY((((((((((*this).compiler))->errors))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})])).to_array())));
 ((((*this).index)--));
 JaktInternal::Optional<parser::ParsedCall> const call = TRY((((*this).parse_call())));
-__jakt_var_90 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::MethodCall>(result,(call.value()),is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_87;
+__jakt_var_90 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
+auto __jakt_enum_value = (((call).has_value()));
+if (__jakt_enum_value == true) {
+return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::MethodCall>(result,(call.value()),is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))));
+}
+else {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_91; {
+(((*this).index) = original_index);
+(((((*this).compiler))->errors) = existing_errors);
+__jakt_var_91 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::IndexedStruct>(result,name,is_optional,TRY((parser::merge_spans(start,((((*this).current())).span()))))))); goto __jakt_label_88;
+
+}
+__jakt_label_88:; __jakt_var_91.release_value(); }));
+}
+}()))
+; goto __jakt_label_87;
 
 }
 __jakt_label_87:; __jakt_var_90.release_value(); }));
+};/*case end*/
+case 8: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_92; {
+((((*this).index)--));
+JaktInternal::Optional<parser::ParsedCall> const call = TRY((((*this).parse_call())));
+__jakt_var_92 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::MethodCall>(result,(call.value()),is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_89;
+
+}
+__jakt_label_89:; __jakt_var_92.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::IndexedStruct>(result,name,is_optional,TRY((parser::merge_spans(start,((((*this).current())).span()))))))));
@@ -8078,13 +10041,13 @@ return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::template creat
 __jakt_label_86:; __jakt_var_89.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_91; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_93; {
 TRY((((*this).error(Jakt::DeprecatedString("Unsupported dot operation"sv),((((*this).current())).span())))));
 ((((*this).index)++));
-__jakt_var_91 = result; goto __jakt_label_88;
+__jakt_var_93 = result; goto __jakt_label_90;
 
 }
-__jakt_label_88:; __jakt_var_91.release_value(); }));
+__jakt_label_90:; __jakt_var_93.release_value(); }));
 };/*case end*/
 }/*switch end*/
 }()
@@ -8095,7 +10058,7 @@ __jakt_label_83:; __jakt_var_86.release_value(); }));
 };/*case end*/
 case 54: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dot>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_92; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_94; {
 bool const is_optional = ((((*this).current())).index() == 50 /* QuestionMark */);
 if (is_optional){
 ((((*this).index)++));
@@ -8104,7 +10067,7 @@ TRY((((*this).error(Jakt::DeprecatedString("Expected ‘.’ after ‘?’ for o
 }
 }
 ((((*this).index)++));
-__jakt_var_92 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+__jakt_var_94 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 3: {
@@ -8112,18 +10075,18 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Numb
 DeprecatedString const& number = __jakt_match_value.number;
 lexer::LiteralSuffix const& suffix = __jakt_match_value.suffix;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_93; {
-NonnullRefPtr<parser::ParsedExpression> const numeric_constant = TRY((((*this).parse_number(prefix,number,suffix,span))));
-__jakt_var_93 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>,ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_95; {
+NonnullRefPtr<typename parser::ParsedExpression> const numeric_constant = TRY((((*this).parse_number(prefix,number,suffix,span))));
+__jakt_var_95 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto __jakt_enum_value = (((numeric_constant)->index() == 1 /* NumericConstant */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_94; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_96; {
 parser::NumericConstant const val = ((numeric_constant)->get<parser::ParsedExpression::NumericConstant>()).val;
 size_t const num = ((val).to_usize());
-__jakt_var_94 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::IndexedTuple>(result,num,is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_91;
+__jakt_var_96 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::IndexedTuple>(result,num,is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_93;
 
 }
-__jakt_label_91:; __jakt_var_94.release_value(); }));
+__jakt_label_93:; __jakt_var_96.release_value(); }));
 }
 else {
 {
@@ -8132,59 +10095,86 @@ return (expr);
 }
 }
 }()))
-; goto __jakt_label_90;
+; goto __jakt_label_92;
 
 }
-__jakt_label_90:; __jakt_var_93.release_value(); }));
+__jakt_label_92:; __jakt_var_95.release_value(); }));
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();DeprecatedString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_95; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_97; {
 ((((*this).index)++));
-__jakt_var_95 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedExpression>, ErrorOr<NonnullRefPtr<parser::ParsedExpression>>>{
+__jakt_var_97 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
-case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_96; {
+case 29: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LessThan>();
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_98; {
+size_t const original_index = ((*this).index);
+JaktInternal::DynamicArray<error::JaktError> const existing_errors = TRY((((((((((*this).compiler))->errors))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})])).to_array())));
 ((((*this).index)--));
 JaktInternal::Optional<parser::ParsedCall> const call = TRY((((*this).parse_call())));
-__jakt_var_96 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::MethodCall>(result,(call.value()),is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_93;
+__jakt_var_98 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
+auto __jakt_enum_value = (((call).has_value()));
+if (__jakt_enum_value == true) {
+return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::MethodCall>(result,(call.value()),is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))));
+}
+else {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_99; {
+(((*this).index) = original_index);
+(((((*this).compiler))->errors) = existing_errors);
+__jakt_var_99 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::IndexedStruct>(result,name,is_optional,TRY((parser::merge_spans(start,((((*this).current())).span()))))))); goto __jakt_label_96;
 
 }
-__jakt_label_93:; __jakt_var_96.release_value(); }));
+__jakt_label_96:; __jakt_var_99.release_value(); }));
+}
+}()))
+; goto __jakt_label_95;
+
+}
+__jakt_label_95:; __jakt_var_98.release_value(); }));
+};/*case end*/
+case 8: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_100; {
+((((*this).index)--));
+JaktInternal::Optional<parser::ParsedCall> const call = TRY((((*this).parse_call())));
+__jakt_var_100 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::MethodCall>(result,(call.value()),is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_97;
+
+}
+__jakt_label_97:; __jakt_var_100.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::IndexedStruct>(result,name,is_optional,TRY((parser::merge_spans(start,((((*this).current())).span()))))))));
 };/*case end*/
 }/*switch end*/
 }()
-)); goto __jakt_label_92;
-
-}
-__jakt_label_92:; __jakt_var_95.release_value(); }));
-};/*case end*/
-default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_97; {
-TRY((((*this).error(Jakt::DeprecatedString("Unsupported dot operation"sv),((((*this).current())).span())))));
-((((*this).index)++));
-__jakt_var_97 = result; goto __jakt_label_94;
+)); goto __jakt_label_94;
 
 }
 __jakt_label_94:; __jakt_var_97.release_value(); }));
 };/*case end*/
-}/*switch end*/
-}()
-)); goto __jakt_label_89;
+default: {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_101; {
+TRY((((*this).error(Jakt::DeprecatedString("Unsupported dot operation"sv),((((*this).current())).span())))));
+((((*this).index)++));
+__jakt_var_101 = result; goto __jakt_label_98;
 
 }
-__jakt_label_89:; __jakt_var_92.release_value(); }));
+__jakt_label_98:; __jakt_var_101.release_value(); }));
+};/*case end*/
+}/*switch end*/
+}()
+)); goto __jakt_label_91;
+
+}
+__jakt_label_91:; __jakt_var_94.release_value(); }));
 };/*case end*/
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LSquare>();
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedExpression>> __jakt_var_98; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_102; {
 ((((*this).index)++));
-NonnullRefPtr<parser::ParsedExpression> const index_expr = TRY((((*this).parse_expression(false,false))));
+NonnullRefPtr<typename parser::ParsedExpression> const index_expr = TRY((((*this).parse_expression(false,false))));
 if (((((*this).current())).index() == 13 /* RSquare */)){
 ((((*this).index)++));
 }
@@ -8192,10 +10182,11 @@ else {
 TRY((((*this).error(Jakt::DeprecatedString("Expected ']'"sv),((((*this).current())).span())))));
 }
 
-__jakt_var_98 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::IndexedExpression>(result,index_expr,TRY((parser::merge_spans(start,((((*this).current())).span()))))))); goto __jakt_label_95;
+size_t const end = (JaktInternal::checked_sub<size_t>(((*this).index),static_cast<size_t>(1ULL)));
+__jakt_var_102 = TRY((parser::ParsedExpression::template create<typename parser::ParsedExpression::IndexedExpression>(result,index_expr,TRY((parser::merge_spans(start,((((((*this).tokens))[end])).span()))))))); goto __jakt_label_99;
 
 }
-__jakt_label_95:; __jakt_var_98.release_value(); }));
+__jakt_label_99:; __jakt_var_102.release_value(); }));
 };/*case end*/
 default: {
 {
@@ -8259,7 +10250,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_args: "sv));TRY(builder.appendff("{}", type_args));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-parser::ParsedCall::ParsedCall(JaktInternal::DynamicArray<DeprecatedString> a_namespace_, DeprecatedString a_name, JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<parser::ParsedExpression>>> a_args, JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> a_type_args) :namespace_(a_namespace_), name(a_name), args(a_args), type_args(a_type_args){}
+parser::ParsedCall::ParsedCall(JaktInternal::DynamicArray<DeprecatedString> a_namespace_, DeprecatedString a_name, JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>> a_args, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> a_type_args) :namespace_(a_namespace_), name(a_name), args(a_args), type_args(a_type_args){}
 
 bool parser::ParsedCall::equals(parser::ParsedCall const rhs_parsed_call) const {
 {
@@ -8278,15 +10269,15 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<parser::ParsedExpression>> const lhs_str___lhs_expr_ = ((((*this).args))[i]);
+JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>> const lhs_str___lhs_expr_ = ((((*this).args))[i]);
 DeprecatedString const lhs_str = ((lhs_str___lhs_expr_).template get<0>());
 utility::Span const _ = ((lhs_str___lhs_expr_).template get<1>());
-NonnullRefPtr<parser::ParsedExpression> const lhs_expr = ((lhs_str___lhs_expr_).template get<2>());
+NonnullRefPtr<typename parser::ParsedExpression> const lhs_expr = ((lhs_str___lhs_expr_).template get<2>());
 
-JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<parser::ParsedExpression>> const rhs_str____rhs_expr_ = ((((rhs_parsed_call).args))[i]);
+JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>> const rhs_str____rhs_expr_ = ((((rhs_parsed_call).args))[i]);
 DeprecatedString const rhs_str = ((rhs_str____rhs_expr_).template get<0>());
 utility::Span const __ = ((rhs_str____rhs_expr_).template get<1>());
-NonnullRefPtr<parser::ParsedExpression> const rhs_expr = ((rhs_str____rhs_expr_).template get<2>());
+NonnullRefPtr<typename parser::ParsedExpression> const rhs_expr = ((rhs_str____rhs_expr_).template get<2>());
 
 if (((lhs_str != rhs_str) || (!(((lhs_expr)->equals(rhs_expr)))))){
 return (false);
@@ -8309,6 +10300,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("traits: "sv));TRY(builder.appendff("{}, ", traits));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("external_trait_implementations: "sv));TRY(builder.appendff("{}, ", external_trait_implementations));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("namespaces: "sv));TRY(builder.appendff("{}, ", namespaces));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("aliases: "sv));TRY(builder.appendff("{}, ", aliases));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module_imports: "sv));TRY(builder.appendff("{}, ", module_imports));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("extern_imports: "sv));TRY(builder.appendff("{}, ", extern_imports));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("import_path_if_extern: "sv));TRY(builder.appendff("{}, ", import_path_if_extern));
@@ -8341,7 +10333,7 @@ TRY((((((*this).namespaces)).push(namespace_))));
 return {};
 }
 
-parser::ParsedNamespace::ParsedNamespace(JaktInternal::Optional<DeprecatedString> a_name, JaktInternal::Optional<utility::Span> a_name_span, JaktInternal::DynamicArray<parser::ParsedFunction> a_functions, JaktInternal::DynamicArray<parser::ParsedRecord> a_records, JaktInternal::DynamicArray<parser::ParsedTrait> a_traits, JaktInternal::DynamicArray<parser::ParsedExternalTraitImplementation> a_external_trait_implementations, JaktInternal::DynamicArray<parser::ParsedNamespace> a_namespaces, JaktInternal::DynamicArray<parser::ParsedModuleImport> a_module_imports, JaktInternal::DynamicArray<parser::ParsedExternImport> a_extern_imports, JaktInternal::Optional<DeprecatedString> a_import_path_if_extern, JaktInternal::DynamicArray<parser::IncludeAction> a_generating_import_extern_before_include, JaktInternal::DynamicArray<parser::IncludeAction> a_generating_import_extern_after_include) :name(a_name), name_span(a_name_span), functions(a_functions), records(a_records), traits(a_traits), external_trait_implementations(a_external_trait_implementations), namespaces(a_namespaces), module_imports(a_module_imports), extern_imports(a_extern_imports), import_path_if_extern(a_import_path_if_extern), generating_import_extern_before_include(a_generating_import_extern_before_include), generating_import_extern_after_include(a_generating_import_extern_after_include){}
+parser::ParsedNamespace::ParsedNamespace(JaktInternal::Optional<DeprecatedString> a_name, JaktInternal::Optional<utility::Span> a_name_span, JaktInternal::DynamicArray<parser::ParsedFunction> a_functions, JaktInternal::DynamicArray<parser::ParsedRecord> a_records, JaktInternal::DynamicArray<parser::ParsedTrait> a_traits, JaktInternal::DynamicArray<parser::ParsedExternalTraitImplementation> a_external_trait_implementations, JaktInternal::DynamicArray<parser::ParsedNamespace> a_namespaces, JaktInternal::DynamicArray<parser::ParsedAlias> a_aliases, JaktInternal::DynamicArray<parser::ParsedModuleImport> a_module_imports, JaktInternal::DynamicArray<parser::ParsedExternImport> a_extern_imports, JaktInternal::Optional<DeprecatedString> a_import_path_if_extern, JaktInternal::DynamicArray<parser::IncludeAction> a_generating_import_extern_before_include, JaktInternal::DynamicArray<parser::IncludeAction> a_generating_import_extern_after_include) :name(a_name), name_span(a_name_span), functions(a_functions), records(a_records), traits(a_traits), external_trait_implementations(a_external_trait_implementations), namespaces(a_namespaces), aliases(a_aliases), module_imports(a_module_imports), extern_imports(a_extern_imports), import_path_if_extern(a_import_path_if_extern), generating_import_extern_before_include(a_generating_import_extern_before_include), generating_import_extern_after_include(a_generating_import_extern_after_include){}
 
 bool parser::ParsedNamespace::is_equivalent_to(parser::ParsedNamespace const other) const {
 {
@@ -8372,6 +10364,13 @@ return {};
 }
 
 TRY((((((*this).extern_imports)).push(import_))));
+}
+return {};
+}
+
+ErrorOr<void> parser::ParsedNamespace::add_alias(parser::ParsedAlias const alias) {
+{
+TRY((((((*this).aliases)).push(alias))));
 }
 return {};
 }
@@ -8427,6 +10426,21 @@ TRY((((*this).add_child_namespace(child_namespace))));
 }
 }
 
+{
+JaktInternal::ArrayIterator<parser::ParsedAlias> _magic = ((((namespace_).aliases)).iterator());
+for (;;){
+JaktInternal::Optional<parser::ParsedAlias> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+parser::ParsedAlias alias = (_magic_value.value());
+{
+TRY((((*this).add_alias(alias))));
+}
+
+}
+}
+
 }
 return {};
 }
@@ -8464,6 +10478,14 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedName::ParsedName(DeprecatedString a_name, utility::Span a_span) :name(a_name), span(a_span){}
 
+ErrorOr<DeprecatedString> parser::ParsedAlias::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedAlias("sv));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("alias_name: "sv));TRY(builder.appendff("{}, ", alias_name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("target: "sv));TRY(builder.appendff("{}", target));
+}
+TRY(builder.append(")"sv));return builder.to_string(); }
+parser::ParsedAlias::ParsedAlias(JaktInternal::Optional<parser::ParsedName> a_alias_name, JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> a_target) :alias_name(a_alias_name), target(a_target){}
+
 ErrorOr<DeprecatedString> parser::ParsedVarDecl::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedVarDecl("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "sv));TRY(builder.appendff("\"{}\", ", name));
@@ -8473,7 +10495,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "sv));TRY(builder.appendff("{}", span));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-parser::ParsedVarDecl::ParsedVarDecl(DeprecatedString a_name, NonnullRefPtr<parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span) :name(a_name), parsed_type(a_parsed_type), is_mutable(a_is_mutable), inlay_span(a_inlay_span), span(a_span){}
+parser::ParsedVarDecl::ParsedVarDecl(DeprecatedString a_name, NonnullRefPtr<typename parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span) :name(a_name), parsed_type(a_parsed_type), is_mutable(a_is_mutable), inlay_span(a_inlay_span), span(a_span){}
 
 bool parser::ParsedVarDecl::equals(parser::ParsedVarDecl const rhs_var_decl) const {
 {
@@ -8552,7 +10574,7 @@ return (false);
 }
 }
 
-parser::ParsedParameter::ParsedParameter(bool a_requires_label, parser::ParsedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_default_argument, utility::Span a_span) :requires_label(a_requires_label), variable(a_variable), default_argument(a_default_argument), span(a_span){}
+parser::ParsedParameter::ParsedParameter(bool a_requires_label, parser::ParsedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_argument, utility::Span a_span) :requires_label(a_requires_label), variable(a_variable), default_argument(a_default_argument), span(a_span){}
 
 ErrorOr<DeprecatedString> parser::ValueEnumVariant::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ValueEnumVariant("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -8561,7 +10583,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("value: "sv));TRY(builder.appendff("{}", value));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-parser::ValueEnumVariant::ValueEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_value) :name(a_name), span(a_span), value(a_value){}
+parser::ValueEnumVariant::ValueEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_value) :name(a_name), span(a_span), value(a_value){}
 
 ErrorOr<DeprecatedString> parser::VisibilityRestriction::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("VisibilityRestriction("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -9081,7 +11103,7 @@ break;}
 }
 return builder.to_string();
 }
-bool parser::ParsedExpression::equals(NonnullRefPtr<parser::ParsedExpression> const rhs_expression) const {
+bool parser::ParsedExpression::equals(NonnullRefPtr<typename parser::ParsedExpression> const rhs_expression) const {
 {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *this;
@@ -9183,14 +11205,14 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 6: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::MethodCall>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::MethodCall>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 parser::ParsedCall const& lhs_call = __jakt_match_value.call;
 bool const& lhs_optional = __jakt_match_value.is_optional;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 6: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::MethodCall>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::MethodCall>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 parser::ParsedCall const& rhs_call = __jakt_match_value.call;
 bool const& rhs_optional = __jakt_match_value.is_optional;
 return JaktInternal::ExplicitValue((((lhs_optional == rhs_optional) && ((lhs_expr)->equals(rhs_expr))) && ((lhs_call).equals(rhs_call))));
@@ -9203,14 +11225,14 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 7: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedTuple>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedTuple>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 size_t const& lhs_index = __jakt_match_value.index;
 bool const& lhs_optional = __jakt_match_value.is_optional;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 7: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedTuple>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedTuple>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 size_t const& rhs_index = __jakt_match_value.index;
 bool const& rhs_optional = __jakt_match_value.is_optional;
 return JaktInternal::ExplicitValue((((lhs_optional == rhs_optional) && ((lhs_expr)->equals(rhs_expr))) && (lhs_index == rhs_index)));
@@ -9223,14 +11245,14 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedStruct>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedStruct>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 DeprecatedString const& lhs_field = __jakt_match_value.field_name;
 bool const& lhs_optional = __jakt_match_value.is_optional;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedStruct>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedStruct>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 DeprecatedString const& rhs_field = __jakt_match_value.field_name;
 bool const& rhs_optional = __jakt_match_value.is_optional;
 return JaktInternal::ExplicitValue((((lhs_optional == rhs_optional) && ((lhs_expr)->equals(rhs_expr))) && (lhs_field == rhs_field)));
@@ -9259,14 +11281,14 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 10: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedExpression>();NonnullRefPtr<parser::ParsedExpression> const& lhs_base = __jakt_match_value.base;
-NonnullRefPtr<parser::ParsedExpression> const& lhs_index = __jakt_match_value.index;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedExpression>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_base = __jakt_match_value.base;
+NonnullRefPtr<typename parser::ParsedExpression> const& lhs_index = __jakt_match_value.index;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 10: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedExpression>();NonnullRefPtr<parser::ParsedExpression> const& rhs_base = __jakt_match_value.base;
-NonnullRefPtr<parser::ParsedExpression> const& rhs_index = __jakt_match_value.index;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::IndexedExpression>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_base = __jakt_match_value.base;
+NonnullRefPtr<typename parser::ParsedExpression> const& rhs_index = __jakt_match_value.index;
 return JaktInternal::ExplicitValue((((lhs_base)->equals(rhs_base)) && ((lhs_index)->equals(rhs_index))));
 };/*case end*/
 default: {
@@ -9277,13 +11299,13 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 11: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::UnaryOp>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::UnaryOp>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 parser::UnaryOperator const& lhs_op = __jakt_match_value.op;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 11: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::UnaryOp>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::UnaryOp>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 parser::UnaryOperator const& rhs_op = __jakt_match_value.op;
 return JaktInternal::ExplicitValue((((lhs_expr)->equals(rhs_expr)) && ((lhs_op).equals(rhs_op))));
 };/*case end*/
@@ -9295,16 +11317,16 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 12: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::BinaryOp>();NonnullRefPtr<parser::ParsedExpression> const& lhs_lhs = __jakt_match_value.lhs;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::BinaryOp>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_lhs = __jakt_match_value.lhs;
 parser::BinaryOperator const& lhs_op = __jakt_match_value.op;
-NonnullRefPtr<parser::ParsedExpression> const& lhs_rhs = __jakt_match_value.rhs;
+NonnullRefPtr<typename parser::ParsedExpression> const& lhs_rhs = __jakt_match_value.rhs;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 12: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::BinaryOp>();NonnullRefPtr<parser::ParsedExpression> const& rhs_lhs = __jakt_match_value.lhs;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::BinaryOp>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_lhs = __jakt_match_value.lhs;
 parser::BinaryOperator const& rhs_op = __jakt_match_value.op;
-NonnullRefPtr<parser::ParsedExpression> const& rhs_rhs = __jakt_match_value.rhs;
+NonnullRefPtr<typename parser::ParsedExpression> const& rhs_rhs = __jakt_match_value.rhs;
 return JaktInternal::ExplicitValue(((((lhs_lhs)->equals(rhs_lhs)) && ((lhs_op).equals(rhs_op))) && ((lhs_rhs)->equals(rhs_rhs))));
 };/*case end*/
 default: {
@@ -9331,12 +11353,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 14: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::OptionalSome>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::OptionalSome>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 14: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::OptionalSome>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::OptionalSome>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(((lhs_expr)->equals(rhs_expr)));
 };/*case end*/
 default: {
@@ -9351,15 +11373,15 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::P
 return JaktInternal::ExplicitValue(((rhs_expression)->index() == 15 /* OptionalNone */));
 };/*case end*/
 case 16: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktArray>();JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedExpression>> const& lhs_values = __jakt_match_value.values;
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> const& lhs_fill_size = __jakt_match_value.fill_size;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktArray>();JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> const& lhs_values = __jakt_match_value.values;
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const& lhs_fill_size = __jakt_match_value.fill_size;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 16: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktArray>();JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedExpression>> const& rhs_values = __jakt_match_value.values;
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> const& rhs_fill_size = __jakt_match_value.fill_size;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_99; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktArray>();JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_values = __jakt_match_value.values;
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_fill_size = __jakt_match_value.fill_size;
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_103; {
 if ((!(((lhs_fill_size).has_value())))){
 if (((rhs_fill_size).has_value())){
 return (false);
@@ -9394,10 +11416,10 @@ return (false);
 }
 }
 
-__jakt_var_99 = true; goto __jakt_label_96;
+__jakt_var_103 = true; goto __jakt_label_100;
 
 }
-__jakt_label_96:; __jakt_var_99.release_value(); }));
+__jakt_label_100:; __jakt_var_103.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -9407,13 +11429,13 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 17: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktDictionary>();JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<parser::ParsedExpression>,NonnullRefPtr<parser::ParsedExpression>>> const& lhs_values = __jakt_match_value.values;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktDictionary>();JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,NonnullRefPtr<typename parser::ParsedExpression>>> const& lhs_values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 17: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktDictionary>();JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<parser::ParsedExpression>,NonnullRefPtr<parser::ParsedExpression>>> const& rhs_values = __jakt_match_value.values;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_100; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktDictionary>();JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,NonnullRefPtr<typename parser::ParsedExpression>>> const& rhs_values = __jakt_match_value.values;
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_104; {
 if (((!(((lhs_values).size()))) == ((rhs_values).size()))){
 return (false);
 }
@@ -9434,10 +11456,10 @@ return (false);
 }
 }
 
-__jakt_var_100 = true; goto __jakt_label_97;
+__jakt_var_104 = true; goto __jakt_label_101;
 
 }
-__jakt_label_97:; __jakt_var_100.release_value(); }));
+__jakt_label_101:; __jakt_var_104.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -9447,13 +11469,13 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 18: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Set>();JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedExpression>> const& lhs_values = __jakt_match_value.values;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Set>();JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> const& lhs_values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 18: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Set>();JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedExpression>> const& rhs_values = __jakt_match_value.values;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_101; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Set>();JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_values = __jakt_match_value.values;
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_105; {
 if (((!(((lhs_values).size()))) == ((rhs_values).size()))){
 return (false);
 }
@@ -9474,10 +11496,10 @@ return (false);
 }
 }
 
-__jakt_var_101 = true; goto __jakt_label_98;
+__jakt_var_105 = true; goto __jakt_label_102;
 
 }
-__jakt_label_98:; __jakt_var_101.release_value(); }));
+__jakt_label_102:; __jakt_var_105.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -9487,13 +11509,13 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 19: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktTuple>();JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedExpression>> const& lhs_values = __jakt_match_value.values;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktTuple>();JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> const& lhs_values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 19: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktTuple>();JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedExpression>> const& rhs_values = __jakt_match_value.values;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_102; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::JaktTuple>();JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_values = __jakt_match_value.values;
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_106; {
 if (((!(((lhs_values).size()))) == ((rhs_values).size()))){
 return (false);
 }
@@ -9514,10 +11536,10 @@ return (false);
 }
 }
 
-__jakt_var_102 = true; goto __jakt_label_99;
+__jakt_var_106 = true; goto __jakt_label_103;
 
 }
-__jakt_label_99:; __jakt_var_102.release_value(); }));
+__jakt_label_103:; __jakt_var_106.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -9527,15 +11549,15 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 20: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Range>();JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> const& lhs_from = __jakt_match_value.from;
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> const& lhs_to = __jakt_match_value.to;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Range>();JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const& lhs_from = __jakt_match_value.from;
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const& lhs_to = __jakt_match_value.to;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 20: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Range>();JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> const& rhs_from = __jakt_match_value.from;
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> const& rhs_to = __jakt_match_value.to;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_103; {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Range>();JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_from = __jakt_match_value.from;
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_to = __jakt_match_value.to;
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_107; {
 bool equal = false;
 if (((((lhs_from).has_value()) == ((rhs_from).has_value())) && (((lhs_to).has_value()) == ((rhs_to).has_value())))){
 if ((((lhs_from).has_value()) && ((lhs_to).has_value()))){
@@ -9546,10 +11568,10 @@ else {
 }
 
 }
-__jakt_var_103 = equal; goto __jakt_label_100;
+__jakt_var_107 = equal; goto __jakt_label_104;
 
 }
-__jakt_label_100:; __jakt_var_103.release_value(); }));
+__jakt_label_104:; __jakt_var_107.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -9559,12 +11581,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 21: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::ForcedUnwrap>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::ForcedUnwrap>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 21: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::ForcedUnwrap>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::ForcedUnwrap>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(((lhs_expr)->equals(rhs_expr)));
 };/*case end*/
 default: {
@@ -9575,13 +11597,13 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 22: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Match>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Match>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 JaktInternal::DynamicArray<parser::ParsedMatchCase> const& lhs_cases = __jakt_match_value.cases;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 22: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Match>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Match>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 JaktInternal::DynamicArray<parser::ParsedMatchCase> const& rhs_cases = __jakt_match_value.cases;
 {
 if ((((lhs_expr)->equals(rhs_expr)) && (((lhs_cases).size()) == ((rhs_cases).size())))){
@@ -9618,12 +11640,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 23: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::EnumVariantArg>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::EnumVariantArg>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 23: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::EnumVariantArg>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::EnumVariantArg>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(((lhs_expr)->equals(rhs_expr)));
 };/*case end*/
 default: {
@@ -9642,7 +11664,7 @@ switch(__jakt_match_variant.index()) {
 case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::NamespacedVar>();DeprecatedString const& rhs_name = __jakt_match_value.name;
 JaktInternal::DynamicArray<DeprecatedString> const& rhs_namespace = __jakt_match_value.namespace_;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_104; {
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_108; {
 if ((((lhs_namespace).size()) != ((rhs_namespace).size()))){
 return (false);
 }
@@ -9663,10 +11685,10 @@ return (false);
 }
 }
 
-__jakt_var_104 = (lhs_name == rhs_name); goto __jakt_label_101;
+__jakt_var_108 = (lhs_name == rhs_name); goto __jakt_label_105;
 
 }
-__jakt_label_101:; __jakt_var_104.release_value(); }));
+__jakt_label_105:; __jakt_var_108.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -9676,15 +11698,15 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 26: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Try>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Try>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 JaktInternal::Optional<parser::ParsedBlock> const& lhs_catch_block = __jakt_match_value.catch_block;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 26: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Try>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Try>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 JaktInternal::Optional<parser::ParsedBlock> const& rhs_catch_block = __jakt_match_value.catch_block;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_105; {
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_109; {
 bool equals = ((lhs_expr)->equals(rhs_expr));
 if (equals){
 if (((lhs_catch_block).has_value())){
@@ -9701,10 +11723,10 @@ else {
 }
 
 }
-__jakt_var_105 = equals; goto __jakt_label_102;
+__jakt_var_109 = equals; goto __jakt_label_106;
 
 }
-__jakt_label_102:; __jakt_var_105.release_value(); }));
+__jakt_label_106:; __jakt_var_109.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -9714,14 +11736,14 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 27: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::TryBlock>();NonnullRefPtr<parser::ParsedStatement> const& lhs_stmt = __jakt_match_value.stmt;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::TryBlock>();NonnullRefPtr<typename parser::ParsedStatement> const& lhs_stmt = __jakt_match_value.stmt;
 DeprecatedString const& lhs_error_name = __jakt_match_value.error_name;
 parser::ParsedBlock const& lhs_catch_block = __jakt_match_value.catch_block;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
 case 27: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::TryBlock>();NonnullRefPtr<parser::ParsedStatement> const& rhs_stmt = __jakt_match_value.stmt;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::TryBlock>();NonnullRefPtr<typename parser::ParsedStatement> const& rhs_stmt = __jakt_match_value.stmt;
 DeprecatedString const& rhs_error_name = __jakt_match_value.error_name;
 parser::ParsedBlock const& rhs_catch_block = __jakt_match_value.catch_block;
 return JaktInternal::ExplicitValue(((((lhs_stmt)->equals(rhs_stmt)) && (lhs_error_name == rhs_error_name)) && ((lhs_catch_block).equals(rhs_catch_block))));
@@ -9737,7 +11759,7 @@ case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Function>();JaktInternal::DynamicArray<parser::ParsedCapture> const& lhs_captures = __jakt_match_value.captures;
 JaktInternal::DynamicArray<parser::ParsedParameter> const& lhs_params = __jakt_match_value.params;
 bool const& lhs_can_throw = __jakt_match_value.can_throw;
-NonnullRefPtr<parser::ParsedType> const& lhs_return_type = __jakt_match_value.return_type;
+NonnullRefPtr<typename parser::ParsedType> const& lhs_return_type = __jakt_match_value.return_type;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.index()) {
@@ -9745,7 +11767,7 @@ case 25: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::Function>();JaktInternal::DynamicArray<parser::ParsedCapture> const& rhs_captures = __jakt_match_value.captures;
 JaktInternal::DynamicArray<parser::ParsedParameter> const& rhs_params = __jakt_match_value.params;
 bool const& rhs_can_throw = __jakt_match_value.can_throw;
-NonnullRefPtr<parser::ParsedType> const& rhs_return_type = __jakt_match_value.return_type;
+NonnullRefPtr<typename parser::ParsedType> const& rhs_return_type = __jakt_match_value.return_type;
 {
 if ((((lhs_return_type)->equals(rhs_return_type)) && ((lhs_can_throw == rhs_can_throw) && ((((lhs_captures).size()) == ((rhs_captures).size())) && (((lhs_params).size()) == ((rhs_params).size())))))){
 {
@@ -10888,18 +12910,18 @@ break;}
 }
 return builder.to_string();
 }
-bool parser::ParsedStatement::equals(NonnullRefPtr<parser::ParsedStatement> const rhs_statement) const {
+bool parser::ParsedStatement::equals(NonnullRefPtr<typename parser::ParsedStatement> const rhs_statement) const {
 {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Expression>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Expression>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_statement;
 switch(__jakt_match_variant.index()) {
 case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Expression>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Expression>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(((lhs_expr)->equals(rhs_expr)));
 };/*case end*/
 default: {
@@ -10910,12 +12932,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Defer>();NonnullRefPtr<parser::ParsedStatement> const& lhs_statement = __jakt_match_value.statement;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Defer>();NonnullRefPtr<typename parser::ParsedStatement> const& lhs_statement = __jakt_match_value.statement;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_statement;
 switch(__jakt_match_variant.index()) {
 case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Defer>();NonnullRefPtr<parser::ParsedStatement> const& rhs_statement = __jakt_match_value.statement;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Defer>();NonnullRefPtr<typename parser::ParsedStatement> const& rhs_statement = __jakt_match_value.statement;
 return JaktInternal::ExplicitValue(((lhs_statement)->equals(rhs_statement)));
 };/*case end*/
 default: {
@@ -10943,13 +12965,13 @@ return JaktInternal::ExplicitValue(false);
 };/*case end*/
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::VarDecl>();parser::ParsedVarDecl const& lhs_var = __jakt_match_value.var;
-NonnullRefPtr<parser::ParsedExpression> const& lhs_init = __jakt_match_value.init;
+NonnullRefPtr<typename parser::ParsedExpression> const& lhs_init = __jakt_match_value.init;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_statement;
 switch(__jakt_match_variant.index()) {
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::VarDecl>();parser::ParsedVarDecl const& rhs_var = __jakt_match_value.var;
-NonnullRefPtr<parser::ParsedExpression> const& rhs_init = __jakt_match_value.init;
+NonnullRefPtr<typename parser::ParsedExpression> const& rhs_init = __jakt_match_value.init;
 return JaktInternal::ExplicitValue((((lhs_var).equals(rhs_var)) && ((lhs_init)->equals(rhs_init))));
 };/*case end*/
 default: {
@@ -10961,13 +12983,13 @@ return JaktInternal::ExplicitValue(false);
 };/*case end*/
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::DestructuringAssignment>();JaktInternal::DynamicArray<parser::ParsedVarDecl> const& lhs_vars = __jakt_match_value.vars;
-NonnullRefPtr<parser::ParsedStatement> const& lhs_var_decl = __jakt_match_value.var_decl;
+NonnullRefPtr<typename parser::ParsedStatement> const& lhs_var_decl = __jakt_match_value.var_decl;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_statement;
 switch(__jakt_match_variant.index()) {
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::DestructuringAssignment>();JaktInternal::DynamicArray<parser::ParsedVarDecl> const& rhs_vars = __jakt_match_value.vars;
-NonnullRefPtr<parser::ParsedStatement> const& rhs_var_decl = __jakt_match_value.var_decl;
+NonnullRefPtr<typename parser::ParsedStatement> const& rhs_var_decl = __jakt_match_value.var_decl;
 {
 if ((((lhs_vars).size()) != ((rhs_vars).size()))){
 return (false);
@@ -11003,16 +13025,16 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 5: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::If>();NonnullRefPtr<parser::ParsedExpression> const& lhs_condition = __jakt_match_value.condition;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::If>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_condition = __jakt_match_value.condition;
 parser::ParsedBlock const& lhs_then_block = __jakt_match_value.then_block;
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedStatement>> const& lhs_else_statement = __jakt_match_value.else_statement;
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const& lhs_else_statement = __jakt_match_value.else_statement;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_statement;
 switch(__jakt_match_variant.index()) {
 case 5: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::If>();NonnullRefPtr<parser::ParsedExpression> const& rhs_condition = __jakt_match_value.condition;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::If>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_condition = __jakt_match_value.condition;
 parser::ParsedBlock const& rhs_then_block = __jakt_match_value.then_block;
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedStatement>> const& rhs_else_statement = __jakt_match_value.else_statement;
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const& rhs_else_statement = __jakt_match_value.else_statement;
 {
 if ((!((((lhs_condition)->equals(rhs_condition)) && ((lhs_then_block).equals(rhs_then_block)))))){
 return (false);
@@ -11072,13 +13094,13 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::While>();NonnullRefPtr<parser::ParsedExpression> const& lhs_condition = __jakt_match_value.condition;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::While>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_condition = __jakt_match_value.condition;
 parser::ParsedBlock const& lhs_block = __jakt_match_value.block;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_statement;
 switch(__jakt_match_variant.index()) {
 case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::While>();NonnullRefPtr<parser::ParsedExpression> const& rhs_condition = __jakt_match_value.condition;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::While>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_condition = __jakt_match_value.condition;
 parser::ParsedBlock const& rhs_block = __jakt_match_value.block;
 return JaktInternal::ExplicitValue((((lhs_condition)->equals(rhs_condition)) && ((lhs_block).equals(rhs_block))));
 };/*case end*/
@@ -11091,20 +13113,20 @@ return JaktInternal::ExplicitValue(false);
 };/*case end*/
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::For>();DeprecatedString const& lhs_iterator_name = __jakt_match_value.iterator_name;
-NonnullRefPtr<parser::ParsedExpression> const& lhs_range = __jakt_match_value.range;
+NonnullRefPtr<typename parser::ParsedExpression> const& lhs_range = __jakt_match_value.range;
 parser::ParsedBlock const& lhs_block = __jakt_match_value.block;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_statement;
 switch(__jakt_match_variant.index()) {
 case 9: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::For>();DeprecatedString const& rhs_iterator_name = __jakt_match_value.iterator_name;
-NonnullRefPtr<parser::ParsedExpression> const& rhs_range = __jakt_match_value.range;
+NonnullRefPtr<typename parser::ParsedExpression> const& rhs_range = __jakt_match_value.range;
 parser::ParsedBlock const& rhs_block = __jakt_match_value.block;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_106; {
-__jakt_var_106 = (((lhs_iterator_name == rhs_iterator_name) && ((lhs_range)->equals(rhs_range))) && ((lhs_block).equals(rhs_block))); goto __jakt_label_103;
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_110; {
+__jakt_var_110 = (((lhs_iterator_name == rhs_iterator_name) && ((lhs_range)->equals(rhs_range))) && ((lhs_block).equals(rhs_block))); goto __jakt_label_107;
 
 }
-__jakt_label_103:; __jakt_var_106.release_value(); }));
+__jakt_label_107:; __jakt_var_110.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -11122,12 +13144,12 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::P
 return JaktInternal::ExplicitValue(((rhs_statement)->index() == 11 /* Continue */));
 };/*case end*/
 case 12: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Return>();JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Return>();JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const& lhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_statement;
 switch(__jakt_match_variant.index()) {
 case 12: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Return>();JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Return>();JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_expr = __jakt_match_value.expr;
 {
 if ((!(((lhs_expr).has_value())))){
 return ((!(((rhs_expr).has_value()))));
@@ -11152,12 +13174,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 13: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Throw>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Throw>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_statement;
 switch(__jakt_match_variant.index()) {
 case 13: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Throw>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Throw>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(((lhs_expr)->equals(rhs_expr)));
 };/*case end*/
 default: {
@@ -11168,12 +13190,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 14: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Yield>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Yield>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_statement;
 switch(__jakt_match_variant.index()) {
 case 14: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Yield>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Yield>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 return JaktInternal::ExplicitValue(((lhs_expr)->equals(rhs_expr)));
 };/*case end*/
 default: {
@@ -11200,13 +13222,13 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 16: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Guard>();NonnullRefPtr<parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Guard>();NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.expr;
 parser::ParsedBlock const& lhs_else_block = __jakt_match_value.else_block;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_statement;
 switch(__jakt_match_variant.index()) {
 case 16: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Guard>();NonnullRefPtr<parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedStatement::Guard>();NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 parser::ParsedBlock const& rhs_else_block = __jakt_match_value.else_block;
 return JaktInternal::ExplicitValue((((lhs_expr)->equals(rhs_expr)) && ((lhs_else_block).equals(rhs_else_block))));
 };/*case end*/
@@ -11431,13 +13453,13 @@ return JaktInternal::ExplicitValue(false);
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::ParsedMatchPattern::Expression>();
-NonnullRefPtr<parser::ParsedExpression> const& lhs_parsed_expression = __jakt_match_value.value;
+NonnullRefPtr<typename parser::ParsedExpression> const& lhs_parsed_expression = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = rhs_parsed_match_pattern;
 switch(__jakt_match_variant.index()) {
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::ParsedMatchPattern::Expression>();
-NonnullRefPtr<parser::ParsedExpression> const& rhs_parsed_expression = __jakt_match_value.value;
+NonnullRefPtr<typename parser::ParsedExpression> const& rhs_parsed_expression = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(((lhs_parsed_expression)->equals(rhs_parsed_expression)));
 };/*case end*/
 default: {
@@ -11576,12 +13598,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ImportName::Comptime>();NonnullRefPtr<parser::ParsedExpression> const& expression = __jakt_match_value.expression;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ImportName::Comptime>();NonnullRefPtr<typename parser::ParsedExpression> const& expression = __jakt_match_value.expression;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = other;
 switch(__jakt_match_variant.index()) {
 case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ImportName::Comptime>();NonnullRefPtr<parser::ParsedExpression> const& other_expression = __jakt_match_value.expression;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ImportName::Comptime>();NonnullRefPtr<typename parser::ParsedExpression> const& other_expression = __jakt_match_value.expression;
 return JaktInternal::ExplicitValue(((expression)->equals(other_expression)));
 };/*case end*/
 default: {
@@ -11607,7 +13629,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ImportName
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ImportName::Comptime>();NonnullRefPtr<parser::ParsedExpression> const& expression = __jakt_match_value.expression;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ImportName::Comptime>();NonnullRefPtr<typename parser::ParsedExpression> const& expression = __jakt_match_value.expression;
 {
 return (((expression)->span()));
 }
@@ -11977,7 +13999,7 @@ break;}
 }
 return builder.to_string();
 }
-bool parser::ParsedType::equals(NonnullRefPtr<parser::ParsedType> const rhs_parsed_type) const {
+bool parser::ParsedType::equals(NonnullRefPtr<typename parser::ParsedType> const rhs_parsed_type) const {
 {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *this;
@@ -12001,14 +14023,14 @@ return JaktInternal::ExplicitValue(false);
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::NamespacedName>();DeprecatedString const& lhs_name = __jakt_match_value.name;
 JaktInternal::DynamicArray<DeprecatedString> const& lhs_namespaces = __jakt_match_value.namespaces;
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> const& lhs_params = __jakt_match_value.params;
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> const& lhs_params = __jakt_match_value.params;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::NamespacedName>();DeprecatedString const& rhs_name = __jakt_match_value.name;
 JaktInternal::DynamicArray<DeprecatedString> const& rhs_namespaces = __jakt_match_value.namespaces;
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> const& rhs_params = __jakt_match_value.params;
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> const& rhs_params = __jakt_match_value.params;
 {
 if ((lhs_name != rhs_name)){
 return (false);
@@ -12065,13 +14087,13 @@ return JaktInternal::ExplicitValue(false);
 };/*case end*/
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::GenericType>();DeprecatedString const& lhs_name = __jakt_match_value.name;
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> const& lhs_generic_parameters = __jakt_match_value.generic_parameters;
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> const& lhs_generic_parameters = __jakt_match_value.generic_parameters;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::GenericType>();DeprecatedString const& rhs_name = __jakt_match_value.name;
-JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> const& rhs_generic_parameters = __jakt_match_value.generic_parameters;
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> const& rhs_generic_parameters = __jakt_match_value.generic_parameters;
 {
 if ((lhs_name != rhs_name)){
 return (false);
@@ -12107,12 +14129,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 3: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktArray>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktArray>();NonnullRefPtr<typename parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 3: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktArray>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktArray>();NonnullRefPtr<typename parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
 };/*case end*/
 default: {
@@ -12123,14 +14145,14 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 4: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Dictionary>();NonnullRefPtr<parser::ParsedType> const& lhs_key = __jakt_match_value.key;
-NonnullRefPtr<parser::ParsedType> const& lhs_value = __jakt_match_value.value;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Dictionary>();NonnullRefPtr<typename parser::ParsedType> const& lhs_key = __jakt_match_value.key;
+NonnullRefPtr<typename parser::ParsedType> const& lhs_value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 4: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Dictionary>();NonnullRefPtr<parser::ParsedType> const& rhs_key = __jakt_match_value.key;
-NonnullRefPtr<parser::ParsedType> const& rhs_value = __jakt_match_value.value;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Dictionary>();NonnullRefPtr<typename parser::ParsedType> const& rhs_key = __jakt_match_value.key;
+NonnullRefPtr<typename parser::ParsedType> const& rhs_value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue((((lhs_key)->equals(rhs_key)) && ((lhs_value)->equals(rhs_value))));
 };/*case end*/
 default: {
@@ -12141,12 +14163,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 5: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktTuple>();JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> const& lhs_types = __jakt_match_value.types;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktTuple>();JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> const& lhs_types = __jakt_match_value.types;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 5: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktTuple>();JaktInternal::DynamicArray<NonnullRefPtr<parser::ParsedType>> const& rhs_types = __jakt_match_value.types;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::JaktTuple>();JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> const& rhs_types = __jakt_match_value.types;
 {
 if ((((lhs_types).size()) != ((rhs_types).size()))){
 return (false);
@@ -12179,12 +14201,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 6: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Set>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Set>();NonnullRefPtr<typename parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 6: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Set>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Set>();NonnullRefPtr<typename parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
 };/*case end*/
 default: {
@@ -12195,12 +14217,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 7: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Optional>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Optional>();NonnullRefPtr<typename parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 7: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Optional>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Optional>();NonnullRefPtr<typename parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
 };/*case end*/
 default: {
@@ -12211,12 +14233,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Reference>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Reference>();NonnullRefPtr<typename parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Reference>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Reference>();NonnullRefPtr<typename parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
 };/*case end*/
 default: {
@@ -12227,12 +14249,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 9: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::MutableReference>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::MutableReference>();NonnullRefPtr<typename parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 9: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::MutableReference>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::MutableReference>();NonnullRefPtr<typename parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
 };/*case end*/
 default: {
@@ -12243,12 +14265,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 10: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::RawPtr>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::RawPtr>();NonnullRefPtr<typename parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 10: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::RawPtr>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::RawPtr>();NonnullRefPtr<typename parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
 };/*case end*/
 default: {
@@ -12259,12 +14281,12 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 11: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::WeakPtr>();NonnullRefPtr<parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::WeakPtr>();NonnullRefPtr<typename parser::ParsedType> const& lhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 11: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::WeakPtr>();NonnullRefPtr<parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::WeakPtr>();NonnullRefPtr<typename parser::ParsedType> const& rhs_inner = __jakt_match_value.inner;
 return JaktInternal::ExplicitValue(((lhs_inner)->equals(rhs_inner)));
 };/*case end*/
 default: {
@@ -12277,14 +14299,14 @@ return JaktInternal::ExplicitValue(false);
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Function>();JaktInternal::DynamicArray<parser::ParsedParameter> const& lhs_params = __jakt_match_value.params;
 bool const& lhs_can_throw = __jakt_match_value.can_throw;
-NonnullRefPtr<parser::ParsedType> const& lhs_return_type = __jakt_match_value.return_type;
+NonnullRefPtr<typename parser::ParsedType> const& lhs_return_type = __jakt_match_value.return_type;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
 switch(__jakt_match_variant.index()) {
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Function>();JaktInternal::DynamicArray<parser::ParsedParameter> const& rhs_params = __jakt_match_value.params;
 bool const& rhs_can_throw = __jakt_match_value.can_throw;
-NonnullRefPtr<parser::ParsedType> const& rhs_return_type = __jakt_match_value.return_type;
+NonnullRefPtr<typename parser::ParsedType> const& rhs_return_type = __jakt_match_value.return_type;
 {
 if ((lhs_can_throw != rhs_can_throw)){
 return (false);
@@ -12414,19 +14436,19 @@ break;}
 }
 return builder.to_string();
 }
-NonnullRefPtr<parser::ParsedType> parser::TypeCast::parsed_type() const {
+NonnullRefPtr<typename parser::ParsedType> parser::TypeCast::parsed_type() const {
 {
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<parser::ParsedType>, NonnullRefPtr<parser::ParsedType>>{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedType>, NonnullRefPtr<typename parser::ParsedType>>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::TypeCast::Fallible>();
-NonnullRefPtr<parser::ParsedType> const& parsed_type = __jakt_match_value.value;
+NonnullRefPtr<typename parser::ParsedType> const& parsed_type = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(parsed_type);
 };/*case end*/
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::TypeCast::Infallible>();
-NonnullRefPtr<parser::ParsedType> const& parsed_type = __jakt_match_value.value;
+NonnullRefPtr<typename parser::ParsedType> const& parsed_type = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(parsed_type);
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -12716,13 +14738,13 @@ return JaktInternal::ExplicitValue(false);
 };/*case end*/
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::UnaryOperator::Is>();
-NonnullRefPtr<parser::ParsedType> const& lhs_type = __jakt_match_value.value;
+NonnullRefPtr<typename parser::ParsedType> const& lhs_type = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = rhs_op;
 switch(__jakt_match_variant.index()) {
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::UnaryOperator::Is>();
-NonnullRefPtr<parser::ParsedType> const& rhs_type = __jakt_match_value.value;
+NonnullRefPtr<typename parser::ParsedType> const& rhs_type = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(((lhs_type)->equals(rhs_type)));
 };/*case end*/
 default: {
@@ -12733,15 +14755,15 @@ return JaktInternal::ExplicitValue(false);
 )));
 };/*case end*/
 case 13: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::UnaryOperator::IsEnumVariant>();NonnullRefPtr<parser::ParsedType> const& lhs_inner_type = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::UnaryOperator::IsEnumVariant>();NonnullRefPtr<typename parser::ParsedType> const& lhs_inner_type = __jakt_match_value.inner;
 JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> const& lhs_bindings = __jakt_match_value.bindings;
 return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = rhs_op;
 switch(__jakt_match_variant.index()) {
 case 13: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::UnaryOperator::IsEnumVariant>();NonnullRefPtr<parser::ParsedType> const& rhs_inner_type = __jakt_match_value.inner;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::UnaryOperator::IsEnumVariant>();NonnullRefPtr<typename parser::ParsedType> const& rhs_inner_type = __jakt_match_value.inner;
 JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> const& rhs_bindings = __jakt_match_value.bindings;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_107; {
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_111; {
 bool equal = false;
 if ((((lhs_inner_type)->equals(rhs_inner_type)) && (((lhs_bindings).size()) == ((rhs_bindings).size())))){
 bool bindings_equal = true;
@@ -12767,10 +14789,10 @@ if (bindings_equal){
 (equal = true);
 }
 }
-__jakt_var_107 = equal; goto __jakt_label_104;
+__jakt_var_111 = equal; goto __jakt_label_108;
 
 }
-__jakt_label_104:; __jakt_var_107.release_value(); }));
+__jakt_label_108:; __jakt_var_111.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);

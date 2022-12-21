@@ -1,0 +1,9 @@
+import extern c "errno.h" {
+    extern function __error() -> raw c_int
+}
+
+function errno_value() -> i32 {
+    unsafe {
+        return (*__error()) as! i32
+    }
+}
