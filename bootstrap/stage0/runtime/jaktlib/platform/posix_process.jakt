@@ -1,0 +1,127 @@
+import jakt::platform { platform_module, platform_errno }
+import utility { null }
+import platform_errno() { errno_value }
+
+import extern c "signal.h" {}
+import extern c "sys/wait.h" {
+    extern function WEXITSTATUS(anon status: i32) -> i32
+    extern function WIFEXITED(anon status: i32) -> bool
+    extern function WIFSIGNALED(anon status: i32) -> bool
+    extern function waitpid(pid: i32, status: raw i32, options: i32) -> i32
+    extern function kill(pid: i32, signal: i32) -> i32
+}
+import extern c "unistd.h" {
+    extern function fork() -> i32
+    extern function execvp(file: raw c_char, argv: raw raw c_char) -> i32
+}
+
+
+struct Process {
+    restricted(poll_process_exit, forcefully_kill_process, wait_for_process) pid: i32
+
+    function create(pid: i32) -> Process {
+        return Process(pid)
+    }
+}
+
+struct ExitPollResult {
+    exit_code: i32
+    process: Process
+}
+
+function allocate<T>(count: usize) -> raw T {
+    unsafe {
+        cpp {
+            "return static_cast<T*>(calloc(count, sizeof(T)));"
+        }
+    }
+
+    abort()
+}
+
+function start_background_process(anon args: [String]) throws -> Process {
+    mut call_args = allocate<raw c_char>(count: args.size() + 1)
+    defer {
+        unsafe { cpp { "free(call_args);" } }
+    }
+
+    mut i = 0
+    for arg in args {
+        unsafe {
+            cpp {
+                "call_args[i++] = const_cast<char*>(arg.characters());"
+            }
+        }
+    }
+
+    let pid = fork()
+    if pid == -1i32 {
+        throw Error::from_errno(errno_value())
+    }
+
+    if pid == 0i32 {
+        let rc = execvp(file: args[0].c_string(), argv: call_args)
+        eprintln("execvp returned rc = {}", rc)
+        throw Error::from_errno(errno_value())
+    }
+
+    return Process::create(pid)
+}
+
+function poll_process_exit(process: &Process) throws -> ExitPollResult? {
+    mut status = 0i32
+    let result = waitpid(pid: process.pid, status: &raw status, options: 1)
+    if result == -1i32 {
+        throw Error::from_errno(errno_value())
+    }
+
+    if result != process.pid {
+        return None
+    }
+
+    if not (WIFEXITED(status) or WIFSIGNALED(status)) {
+        return None
+    }
+
+    return ExitPollResult(
+        exit_code: WEXITSTATUS(status)
+        *process
+    )
+}
+
+function wait_for_process(process: &Process) throws -> ExitPollResult {
+    mut status = 0i32
+    let result = waitpid(pid: process.pid, status: &raw status, options: 0)
+    if result == -1i32 {
+        throw Error::from_errno(errno_value())
+    }
+
+    return ExitPollResult(
+        exit_code: WEXITSTATUS(status)
+        *process
+    )
+}
+
+function forcefully_kill_process(process: &Process) throws {
+    kill(pid: process.pid, signal: 9)
+}
+
+function wait_for_some_set_of_processes_that_at_least_includes(processes: &[usize:Process]) throws -> (usize?, ExitPollResult) {
+    if processes.is_empty() {
+        throw Error::from_errno(38)
+    }
+
+    mut status = 0i32
+    let result = waitpid(pid: -1i32, status: &raw status, options: 0)
+    if result == -1i32 {
+        throw Error::from_errno(errno_value())
+    }
+
+    let key: usize? = None
+    return (key, ExitPollResult(
+        exit_code: WEXITSTATUS(status)
+        process: Process(
+            pid: result
+        )
+    ))
+}

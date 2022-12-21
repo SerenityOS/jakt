@@ -1,6 +1,6 @@
 #pragma once
 #include "__unified_forward.h"
 namespace Jakt {
-namespace unknown_path {
+namespace jakt__platform__unknown_compiler {
 }
 } // namespace Jakt

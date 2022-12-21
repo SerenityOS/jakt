@@ -8,11 +8,11 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<void> project::Project::populate() const {
 {
-DeprecatedString const current_directory = TRY((unknown_fs::current_directory()));
+DeprecatedString const current_directory = TRY((jakt__platform__unknown_fs::current_directory()));
 DeprecatedString const project_directory = ((current_directory + Jakt::DeprecatedString("/"sv)) + ((*this).name));
 outln(Jakt::DeprecatedString("Creating jakt project in {}.."sv),project_directory);
-TRY((unknown_fs::make_directory(project_directory)));
-TRY((unknown_fs::make_directory((project_directory + Jakt::DeprecatedString("/src"sv)))));
+TRY((jakt__platform__unknown_fs::make_directory(project_directory)));
+TRY((jakt__platform__unknown_fs::make_directory((project_directory + Jakt::DeprecatedString("/src"sv)))));
 out(Jakt::DeprecatedString("\tGenerating CMakeLists.txt..."sv));
 TRY((((*this).create_template_cmake_lists(project_directory))));
 outln(Jakt::DeprecatedString(" done"sv));

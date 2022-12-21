@@ -1,0 +1,153 @@
+import jakt::platform { platform_module }
+
+import platform_module("jakt::platform::path") {
+    get_path_separator, get_valid_path_separators
+}
+
+struct Path {
+    private path: String
+
+    function from_string(anon string: String) throws -> Path {
+        mut path = Path(path: string)
+        path.normalize_separators()
+        return path
+    }
+
+    function from_parts(anon parts: [String]) throws -> Path {
+        mut path = Path(path: ".")
+        for part in parts {
+            path = path.join(part)
+        }
+        return path
+    }
+
+    private function normalize_separators(mut this) throws {
+        mut separators = get_valid_path_separators()
+        mut separator = get_path_separator()
+        mut normalized_builder = StringBuilder::create()
+        for i in 0...path.length() {
+            let ch = .path.byte_at(i)
+            if separators.contains(ch) {
+                normalized_builder.append(separator)
+            } else {
+                normalized_builder.append(ch)
+            }
+        }
+        .path = normalized_builder.to_string()
+    }
+
+    function to_string(this) -> String {
+        return .path
+    }
+
+    function join(this, anon path: String) throws -> Path {
+        if .path == "." or .path.length() == 0 {
+            return Path(path)
+        }
+
+        if path.is_empty() {
+            return this
+        }
+
+        let separator = get_path_separator()
+        if path.byte_at(0) == separator {
+            return Path::from_string(path)
+        }
+
+        mut join_builder = StringBuilder::create()
+        join_builder.append_string(.path)
+
+        if .path.byte_at(.path.length() - 1) != separator {
+            join_builder.append(separator)
+        }
+
+        join_builder.append_string(path)
+
+        return Path::from_string(join_builder.to_string())
+    }
+
+    function is_dot(this) -> bool {
+        return .path == "." or .path == ".."
+    }
+
+    function extension(this) throws -> String {
+        for i in ((.path.length() - 1)..0).inclusive() {
+            let c = .path.byte_at(i)
+            if c == get_path_separator() {
+                break
+            }
+
+            if c == b'.' {
+                return .path.substring(start: i + 1, length: (.path.length() - 1 - i))
+            }
+        }
+
+        return ""
+    }
+
+    function basename(this, strip_extension: bool = false) throws -> String {
+        let parts = .split_at_last_slash()
+        if strip_extension {
+            mut ext_length = .extension().length()
+            // Drop the dot, assuming there _is_ an extension.
+            if ext_length > 0 {
+                ext_length += 1
+            }
+
+            return parts.1.substring(start: 0, length: parts.1.length() - ext_length)
+        }
+        return parts.1
+    }
+
+    function replace_extension(this, anon new_extension: String) throws -> Path {
+        let parts = .split_at_last_slash()
+        let basename = .basename(strip_extension: true)
+        let extension = match new_extension {
+            "" => ""
+            else => "." + new_extension
+        }
+
+        return Path::from_parts([
+            parts.0
+            basename + extension
+        ])
+    }
+
+    function parent(this) throws -> Path {
+        let parts = .split_at_last_slash()
+        if parts.0 == "" {
+            return Path(path: ".")
+        }
+
+        return Path(path: parts.0)
+    }
+
+    function exists(this) -> bool => File::exists(.path)
+
+    private function split_at_last_slash(this) throws -> (String, String) {
+        let len = .path.length()
+        let last_slash = Path::last_slash(.path)
+
+        if last_slash.has_value() {
+            let dir = .path.substring(start: 0, length: (last_slash!))
+            let base = .path.substring(start: (last_slash! + 1), length: (len - last_slash! - 1))
+            return (dir, base)
+        }
+
+        return ("", .path)
+    }
+
+    private function last_slash(anon path: String) -> usize? {
+        mut i = path.length() - 1
+        let separator = get_path_separator()
+        while i >= 1 and path.byte_at(i) != separator {
+            i -= 1
+        }
+
+        if i == 0 and path.byte_at(i) != separator {
+            return None
+        }
+
+        return i
+    }
+}

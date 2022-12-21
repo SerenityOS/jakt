@@ -17,11 +17,11 @@
 #include "repl.h"
 #include "project.h"
 #include "ide.h"
-#include "path.h"
-#include "os.h"
+#include "jakt__path.h"
+#include "jakt__platform.h"
 #include "build.h"
-#include "unknown_fs.h"
-#include "unknown_compiler.h"
+#include "jakt__platform__unknown_fs.h"
+#include "jakt__platform__unknown_compiler.h"
 namespace Jakt {
 struct FormatRange {
   public:
@@ -41,6 +41,7 @@ return Error::from_errno(static_cast<i32>(1));
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::FormatRange> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::FormatRange const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
 namespace Jakt {
 } // namespace Jakt

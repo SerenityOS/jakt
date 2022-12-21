@@ -1,0 +1,9 @@
+import extern c "errno.h" {
+    extern function __errno_location() -> raw i32
+}
+
+function errno_value() -> i32 {
+    unsafe {
+        return *__errno_location()
+    }
+}
