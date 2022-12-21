@@ -2783,7 +2783,7 @@ struct CodeGenerator {
                                     output += " " + .codegen_type(call.return_type)
                                     output += " { "
                                     output += "typename "
-                                    output += .codegen_type(call.return_type)
+                                    output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
                                     output += "::"
                                     output += call.name_for_codegen()
 
@@ -3216,7 +3216,9 @@ struct CodeGenerator {
             let qualifier = .codegen_namespace_qualifier(scope_id: enum_.scope_id)
 
             if not qualifier.is_empty() {
-                output += "typename "
+                if not as_namespace {
+                    output += "typename "
+                }
                 output += qualifier
             }
             output += enum_.name
