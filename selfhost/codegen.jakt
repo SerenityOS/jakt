@@ -3472,7 +3472,7 @@ struct CodeGenerator {
             }
 
             output += .codegen_type(param.variable.type_id)
-            output += " a_"
+            output += "&& a_"
             output += param.variable.name
         }
         output += ");\n"
