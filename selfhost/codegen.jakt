@@ -1898,13 +1898,16 @@ struct CodeGenerator {
 
             yield output
         }
+        DependentFunction => {
+            .compiler.panic("Dependent functions should have been resolved by now")
+        }
         Function(captures, params, can_throw, block, return_type_id, pseudo_function_id) => {
             mut generated_captures: [String] = []
             for capture in captures {
                 generated_captures.push(match capture {
-                    ByValue => capture.name()
-                    ByReference | ByMutableReference => format("&{}", capture.name())
+                    ByValue => capture.name
                     AllByReference => "&"
+                    else => format("&{}", capture.name)
                 })
             }
             mut generated_params: [String] = []
@@ -3478,7 +3481,7 @@ struct CodeGenerator {
             }
 
             output += .codegen_type(param.variable.type_id)
-            output += "&& a_"
+            output += " a_"
             output += param.variable.name
         }
         output += ");\n"
@@ -3769,17 +3772,31 @@ struct CodeGenerator {
         }
         // FIXME: Panic if function type is unknown, and this isn't `main()`
 
-        let last_control_flow = .control_flow_state
-        .control_flow_state = last_control_flow.enter_function()
-        let block = .codegen_block(block: function.block)
-        .control_flow_state = last_control_flow
-        output += block
-
-        if is_main {
-            output += "return 0;\n"
+        if function.is_skippable_generic_base {
+            output += "static_assert(DependentFalse<"
+            mut first = true
+            for param in function.generics.params {
+                if first {
+                    first = false
+                } else {
+                    output += ", "
+                }
+                output += .codegen_type(param.checked_parameter.type_id)
+            }
+            output += ">, \"This function should never be called\");\n"
         } else {
-            if function.can_throw and function.return_type_id.equals(builtin(BuiltinType::Void)) {
-                output += "return {};\n"
+            let last_control_flow = .control_flow_state
+            .control_flow_state = last_control_flow.enter_function()
+            let block = .codegen_block(block: function.block)
+            .control_flow_state = last_control_flow
+            output += block
+
+            if is_main {
+                output += "return 0;\n"
+            } else {
+                if function.can_throw and function.return_type_id.equals(builtin(BuiltinType::Void)) {
+                    output += "return {};\n"
+                }
             }
         }
 

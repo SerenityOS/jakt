@@ -7,6 +7,11 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, UnaryOperator,
 import utility { panic, todo, join, FileId, Span, IterationDecision }
 import compiler { Compiler }
 
+enum StructOrEnumId {
+    Struct(StructId)
+    Enum(EnumId)
+}
+
 struct GenericInferences {
     values: [String:String]
 
@@ -732,6 +737,7 @@ class CheckedFunction {
     public is_comptime: bool
     public is_virtual: bool
     public is_override: bool
+    public is_skippable_generic_base: bool = false
 
     public owner_scope: ScopeId? = None
 
@@ -901,24 +907,14 @@ struct CheckedParameter {
 }
 
 enum CheckedCapture {
-    ByValue(name: String, span: Span)
-    ByReference(name: String, span: Span)
-    ByMutableReference(name: String, span: Span)
-    AllByReference(span: Span)
+    name: String
+    span: Span
 
-    fn name(this) => match this {
-        ByValue(name) => name
-        ByReference(name) => name
-        ByMutableReference(name) => name
-        AllByReference() => ""
-    }
-
-    fn span(this) => match this {
-        ByValue(span) => span
-        ByReference(span) => span
-        ByMutableReference(span) => span
-        AllByReference(span) => span
-    }
+    ByValue
+    ByReference
+    ByMutableReference
+    ByComptimeDependency
+    AllByReference
 }
 
 enum FunctionGenericParameterKind {
@@ -1421,7 +1417,28 @@ boxed enum CheckedExpression {
     OptionalSome(expr: CheckedExpression, span: Span, type_id: TypeId)
     ForcedUnwrap(expr: CheckedExpression, span: Span, type_id: TypeId)
     Block(block: CheckedBlock, span: Span, type_id: TypeId)
-    Function(captures: [CheckedCapture], params: [CheckedParameter], can_throw: bool, return_type_id: TypeId, block: CheckedBlock, span: Span, type_id: TypeId, pseudo_function_id: FunctionId?)
+    Function(
+        captures: [CheckedCapture]
+        params: [CheckedParameter]
+        can_throw: bool
+        return_type_id: TypeId
+        block: CheckedBlock
+        span: Span
+        type_id: TypeId
+        pseudo_function_id: FunctionId?
+        scope_id: ScopeId
+    )
+    DependentFunction(
+        captures: [CheckedCapture]
+        params: [CheckedParameter]
+        can_throw: bool
+        return_type_id: TypeId
+        block: ParsedBlock
+        span: Span
+        type_id: TypeId
+        pseudo_function_id: FunctionId?
+        scope_id: ScopeId
+    )
     Try(expr: CheckedExpression, catch_block: CheckedBlock?, catch_name: String?, span: Span, type_id: TypeId, inner_type_id: TypeId)
     TryBlock(stmt: CheckedStatement, catch_block: CheckedBlock, error_name: String, error_span: Span, span: Span, type_id: TypeId)
     Reflect(type: TypeId, span: Span, type_id: TypeId)
@@ -1488,7 +1505,7 @@ boxed enum CheckedExpression {
         NamespacedVar(var) => var.type_id
         Var(var) => var.type_id
         Garbage => builtin(BuiltinType::Void)
-        ComptimeIndex => builtin(BuiltinType::Void) // FIXME
+        ComptimeIndex => builtin(BuiltinType::Unknown) // FIXME
         else(type_id) => type_id
     }
 
@@ -2325,7 +2342,16 @@ boxed enum ValueImpl {
     OptionalSome(value: Value)
     OptionalNone
     JaktTuple(fields: [Value], type_id: TypeId)
-    Function(captures: [String:Value], params: [String:(TypeId, CheckedExpression?)], return_type_id: TypeId, type_id: TypeId, block: CheckedBlock, can_throw: bool, checked_params: [CheckedParameter])
+    Function(
+        captures: [String: Value]
+        params: [String: (TypeId, CheckedExpression?)]
+        return_type_id: TypeId
+        type_id: TypeId
+        block: CheckedBlock
+        can_throw: bool
+        checked_params: [CheckedParameter]
+        scope_id: ScopeId
+    )
 
     fn copy(this) throws => match this {
         Void => ValueImpl::Void
@@ -2395,7 +2421,25 @@ boxed enum ValueImpl {
             }
             yield ValueImpl::JaktTuple(fields: values_copy, type_id)
         }
-        Function(captures, params, can_throw, return_type_id, type_id, block, checked_params) => ValueImpl::Function(captures, params, return_type_id, type_id, block, can_throw, checked_params)
+        Function(
+            captures
+            params
+            can_throw
+            return_type_id
+            type_id
+            block
+            checked_params
+            scope_id
+        ) => ValueImpl::Function(
+            captures
+            params
+            return_type_id
+            type_id
+            block
+            can_throw
+            checked_params
+            scope_id
+        )
     }
 
     fn equals(this, anon other: ValueImpl) => match this {
@@ -2516,4 +2560,13 @@ enum NumericOrStringValue {
     StringValue(String)
     SignedNumericValue(i64)
     UnsignedNumericValue(u64)
+}
+
+class TypecheckFunctions {
+    public block: function(
+        parsed_block: ParsedBlock
+        parent_scope_id: ScopeId
+        safety_mode: SafetyMode
+        yield_type_hint: TypeId? = None
+    ) throws -> CheckedBlock
 }

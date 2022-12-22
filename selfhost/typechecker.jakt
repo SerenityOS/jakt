@@ -81,6 +81,7 @@ struct Typechecker {
     generic_inferences: GenericInferences
     self_type_id: TypeId? = None
     root_module_name: String
+    in_comptime_function_call: bool = false
 
     fn type_name(this, anon type_id: TypeId, debug_mode: bool = false) throws -> String {
         mut id = type_id
@@ -100,7 +101,7 @@ struct Typechecker {
                 span.file_id.id, span.start)
     }
 
-    fn typecheck(mut compiler: Compiler, parsed_namespace: ParsedNamespace) throws -> CheckedProgram {
+    fn typecheck(mut compiler: Compiler, parsed_namespace: ParsedNamespace) throws -> Typechecker {
 
         let input_file = compiler.current_file
 
@@ -161,7 +162,7 @@ struct Typechecker {
 
         typechecker.typecheck_module(parsed_namespace, scope_id: root_scope_id)
 
-        return typechecker.program
+        return typechecker
     }
 
     fn get_function(this, anon id: FunctionId) => .program.get_function(id)
@@ -825,7 +826,7 @@ struct Typechecker {
         let module_names_and_spans = match import_.module_name {
             Literal(name, span) => Some([(name, span)])
             Comptime(expression) => {
-                mut interpreter = Interpreter::create(compiler: .compiler, program: .program, spans: [])
+                mut interpreter = .interpreter()
                 mut eval_scope = InterpreterScope::from_runtime_scope(scope_id, program: .program)
                 let exec_scope = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "comptime-import")
 
@@ -3475,6 +3476,7 @@ struct Typechecker {
         generic_substitutions: GenericInferences
         type_args: [ParsedType]
         call_span: Span
+        args: [(String, CheckedExpression)]?
     ) throws -> FunctionId {
         mut checked_function = .get_function(function_id)
         checked_function.generics.specializations.push(generic_arguments)
@@ -3507,7 +3509,7 @@ struct Typechecker {
         //       out to the user.
         guard parsed_function.generic_parameters.size() <= generic_arguments.size()
             and parsed_function.generic_parameters.size() <= checked_function.generics.params.size() else {
-            return
+            return function_id
         }
 
         for i in 0..parsed_function.generic_parameters.size() {
@@ -3532,6 +3534,7 @@ struct Typechecker {
 
         parsed_function.must_instantiate = true
         checked_function.is_instantiated = true
+        checked_function.is_skippable_generic_base = true
 
         .current_function_id = Some(new_function_id)
         .typecheck_function_predecl(parsed_function, parent_scope_id: scope_id, this_arg_type_id: this_type_id, generics: checked_function.generics)
@@ -3595,6 +3598,10 @@ struct Typechecker {
     }
 
     fn typecheck_function(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
+        let in_comptime_function_call = .in_comptime_function_call
+        defer .in_comptime_function_call = in_comptime_function_call
+        .in_comptime_function_call = parsed_function.is_comptime
+
         if not parsed_function.generic_parameters.is_empty() and not parsed_function.must_instantiate {
             return
         }
@@ -5194,6 +5201,22 @@ struct Typechecker {
         return CheckedStatement::DestructuringAssignment(vars: var_decls, var_decl: checked_tuple_var_decl, span)
     }
 
+    fn interpreter(mut this) throws -> Interpreter => Interpreter::create(
+        compiler: .compiler
+        program: .program
+        typecheck_functions: TypecheckFunctions(
+            block: function[this](
+                parsed_block: ParsedBlock
+                parent_scope_id: ScopeId
+                safety_mode: SafetyMode
+                yield_type_hint: TypeId?
+            ) throws -> CheckedBlock {
+                return .typecheck_block(parsed_block, parent_scope_id, safety_mode, yield_type_hint)
+            }
+        )
+        spans: []
+    )
+
     fn typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id, name: var.name)
         mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode, type_hint: lhs_type_id)
@@ -5710,10 +5733,11 @@ struct Typechecker {
 
     fn typecheck_comptime_index(mut this, expr: ParsedExpression, index: ParsedExpression, scope_id: ScopeId, is_optional: bool, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
         let checked_index = .typecheck_expression(index, scope_id, safety_mode, type_hint: None)
-        mut interpreter = Interpreter::create(compiler: .compiler, program: .program, spans: [])
+        mut interpreter = .interpreter()
         mut scope = InterpreterScope::from_runtime_scope(scope_id, program: .program)
 
         let index_result = try interpreter.execute_expression(expr: checked_index, scope) catch error {
+            eprintln("Error while evaluating comptime index: {}", error)
             // We can't run this yet, do it later.
             return CheckedExpression::ComptimeIndex(
                 expr: .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
@@ -6664,20 +6688,33 @@ struct Typechecker {
 
         let lambda_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "lambda")
         mut checked_captures: [CheckedCapture] = []
+        mut has_dependent_capture = false
         for capture in captures {
-            if capture is AllByReference(span) {
-                checked_captures.push(CheckedCapture::AllByReference(span))
-            } else if .find_var_in_scope(scope_id, var: capture.name()).has_value() {
+            if capture is AllByReference {
+                checked_captures.push(CheckedCapture::AllByReference(name: "", span: capture.span))
+            } else if .find_var_in_scope(scope_id, var: capture.name).has_value() {
+                let name = capture.name
+                let span = capture.span
                 checked_captures.push(match capture {
-                    ByValue(name, span) => CheckedCapture::ByValue(name, span)
-                    ByReference(name, span) => CheckedCapture::ByReference(name, span)
-                    ByMutableReference(name, span) => CheckedCapture::ByMutableReference(name, span)
-                    AllByReference(span) => {
+                    ByValue => CheckedCapture::ByValue(name, span)
+                    ByReference => CheckedCapture::ByReference(name, span)
+                    ByMutableReference => CheckedCapture::ByMutableReference(name, span)
+                    ByComptimeDependency => {
+                        has_dependent_capture = true
+                        if not .in_comptime_function_call {
+                            .error(
+                                format("Comptime dependency capture ‘{}’ is only allowed in comptime function calls", name),
+                                span
+                            )
+                        }
+                        yield CheckedCapture::ByComptimeDependency(name, span)
+                    }
+                    AllByReference => {
                         .compiler.panic("AllByReference capture should not be looked up by name")
                     }
                 })
             } else {
-                .error(format("Variable '{}' not found", capture.name()), span)
+                .error(format("Variable '{}' not found", capture.name), span)
             }
         }
 
@@ -6697,6 +6734,20 @@ struct Typechecker {
         .current_function_id = pseudo_function_id
         defer {
             .current_function_id = previous_function_id
+        }
+
+        if has_dependent_capture {
+            return CheckedExpression::DependentFunction(
+                captures: checked_captures
+                params: checked_params
+                can_throw
+                return_type_id
+                block: block
+                span
+                type_id
+                pseudo_function_id
+                scope_id: lambda_scope_id
+            )
         }
 
         let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: lambda_scope_id, safety_mode)
@@ -6738,6 +6789,7 @@ struct Typechecker {
             span
             type_id
             pseudo_function_id
+            scope_id: lambda_scope_id
         )
     }
 
@@ -8187,8 +8239,10 @@ struct Typechecker {
                         let substitution = .generic_inferences.get(generic_typevar.type_id().to_string())
                         if substitution.has_value() {
                             generic_arguments.push(TypeId::from_string(substitution!))
-                        } else {
+                        } else if not .in_comptime_function_call {
                             .error("Not all generic parameters have known types", span)
+                        } else {
+                            generic_arguments.push(generic_typevar.type_id())
                         }
                     }
                 }
@@ -8231,6 +8285,7 @@ struct Typechecker {
                 generic_substitutions: .generic_inferences
                 type_args: call.type_args,
                 call_span: span
+                args
             )
         }
 
@@ -8272,7 +8327,7 @@ struct Typechecker {
 
         if not in_comptime_function and resolved_function_id.has_value() and .get_function(resolved_function_id!).is_comptime {
             let resolved_function = .get_function(resolved_function_id!)
-            mut interpreter = Interpreter::create(compiler: .compiler, program: .program, spans: [])
+            mut interpreter = .interpreter()
             let function_ = .program.get_function(generic_checked_function_to_instantiate ?? resolved_function_id!)
             mut call_args: [Value] = []
             mut this_argument: Value? = None

@@ -1,9 +1,12 @@
 import types {
-    BinaryOperator, BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedEnum, CheckedEnumVariant, CheckedExpression,
-    CheckedField, CheckedMatchBody, CheckedNumericConstant, CheckedParameter, CheckedProgram, CheckedStatement, CheckedStringLiteral,
-    CheckedVariable, CheckedVisibility, EnumId, EnumVariantPatternArgument, FunctionId, GenericInferences, ModuleId, NumericOrStringValue,
-    ResolvedNamespace, Scope, ScopeId, Span, StringLiteral, StructId, Type, TypeId, Value, ValueImpl, VarId, builtin, unknown_type_id
+    BinaryOperator, BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedEnum, CheckedEnumVariant
+    CheckedExpression, CheckedField, CheckedMatchBody, CheckedNumericConstant, CheckedParameter, CheckedProgram
+    CheckedStatement, CheckedStringLiteral, CheckedVariable, CheckedVisibility, EnumId, EnumVariantPatternArgument
+    FunctionId, GenericInferences, ModuleId, NumericOrStringValue, ParsedStatement, ResolvedNamespace, SafetyMode
+    Scope, ScopeId, Span, StringLiteral, StructId, Type, TypeId, TypecheckFunctions, Value, ValueImpl, VarId
+    builtin, unknown_type_id
 }
+import parser { ParsedBlock }
 import utility { escape_for_quotes, interpret_escapes, panic }
 import error { JaktError }
 import compiler { Compiler }
@@ -567,7 +570,7 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
             inner_type_id: value_type_id
         )
     }
-    Function(captures, can_throw, return_type_id, type_id, block, checked_params) => {
+    Function(captures, can_throw, return_type_id, type_id, block, checked_params, scope_id) => {
         // As all the captures are compiletime objects, we can simply inline them as assignments inside the block :P
         let parent_scope = interpreter.program.get_scope(block.scope_id)
         let inherited_scope_id = interpreter.program.create_scope(
@@ -617,6 +620,7 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
             span: this_value.span
             type_id
             pseudo_function_id: None
+            scope_id
         )
     }
     else => {
@@ -706,6 +710,23 @@ class InterpreterScope {
         throw Error::from_errno(InterpretError::UnknownVariable as! i32);
     }
 
+    public fn all_bindings(this) throws -> [String:Value] {
+        mut bindings: [String:Value] = [:]
+        mut scope = Some(this)
+        while scope.has_value() {
+            for pair in scope!.bindings {
+                if bindings.contains(pair.0) {
+                    continue
+                }
+
+                bindings.set(pair.0, pair.1)
+            }
+            scope = scope!.parent
+        }
+
+        return bindings
+    }
+
     public fn map_type(this, anon id: TypeId) throws -> TypeId {
         let name = id.to_string()
         if .type_bindings.contains(name) {
@@ -779,8 +800,14 @@ class Interpreter {
     public reflected_type_cache: [String:Value]
     public seen_reflected_types: {String}
     public current_function_id: FunctionId?
+    public typecheck_functions: TypecheckFunctions
 
-    public fn create(compiler: Compiler, program: CheckedProgram, spans: [Span]) throws -> Interpreter {
+    public fn create(
+        compiler: Compiler
+        program: CheckedProgram
+        typecheck_functions: TypecheckFunctions
+        spans:[Span]
+    ) throws -> Interpreter {
         return Interpreter(
             compiler
             program
@@ -788,6 +815,7 @@ class Interpreter {
             reflected_type_cache: [:]
             seen_reflected_types: {}
             current_function_id: None
+            typecheck_functions
         )
     }
 
@@ -795,13 +823,67 @@ class Interpreter {
         .spans.push(span)
     }
 
-
     public fn leave_span(mut this) {
         // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
         let dummy = .spans.pop()
     }
 
-    public fn perform_final_interpretation_pass(mut this, statement: CheckedStatement, scope: InterpreterScope) throws -> CheckedStatement => match statement {
+    public fn perform_final_interpretation_pass(
+        mut this
+        block: CheckedBlock
+        runtime_scope: ScopeId? = None
+        scope: InterpreterScope
+    ) throws -> CheckedBlock {
+        mut statements: [CheckedStatement] = []
+        for statement in block.statements {
+            let new_statement = .perform_final_interpretation_pass(statement, scope)
+            statements.push(new_statement)
+        }
+        return CheckedBlock(
+            statements
+            scope_id: block.scope_id
+            control_flow: block.control_flow
+            yielded_type: block.yielded_type
+            yielded_none: block.yielded_none
+        )
+    }
+
+    private fn typecheck_block(mut this, block: ParsedBlock, scope: ScopeId) throws -> CheckedBlock {
+        return invoke_typecheck_block(&.typecheck_functions.block, block, scope)
+    }
+
+    private fn invoke_typecheck_block(
+        anon fn: &function(parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode, yield_type_hint: TypeId?) throws -> CheckedBlock
+        anon block: ParsedBlock
+        anon parent_scope_id: ScopeId
+    ) throws -> CheckedBlock {
+        return fn(parsed_block: block, parent_scope_id, safety_mode: SafetyMode::Safe, yield_type_hint: None)
+    }
+
+
+    public fn perform_final_interpretation_pass(
+        mut this
+        block: ParsedBlock
+        runtime_scope: ScopeId
+        scope: InterpreterScope
+    ) throws -> CheckedBlock {
+        mut rscope = .program.get_scope(runtime_scope)
+        for (name, value) in scope.all_bindings() {
+            rscope.comptime_bindings.set(name, value)
+        }
+
+        return .perform_final_interpretation_pass(
+            block: .typecheck_block(block, scope: runtime_scope)
+            runtime_scope
+            scope
+        )
+    }
+
+    public fn perform_final_interpretation_pass(
+        mut this
+        statement: CheckedStatement
+        scope: InterpreterScope
+    ) throws -> CheckedStatement => match statement {
         Expression(expr, span) => CheckedStatement::Expression(expr: .perform_final_interpretation_expr_pass(expr, scope), span)
         Defer(statement, span) => CheckedStatement::Defer(statement: .perform_final_interpretation_pass(statement, scope), span)
         DestructuringAssignment(vars, var_decl, span) => CheckedStatement::DestructuringAssignment(vars: vars, var_decl: .perform_final_interpretation_pass(statement: var_decl, scope), span)
@@ -1019,6 +1101,7 @@ class Interpreter {
                     function_id: call.function_id
                     return_type: call.return_type
                     callee_throws: call.callee_throws
+                    external_name: None
                 )
                 span
                 type_id
@@ -1042,6 +1125,7 @@ class Interpreter {
                     function_id: call.function_id
                     return_type: call.return_type
                     callee_throws: call.callee_throws
+                    external_name: None
                 )
                 span
                 is_optional
@@ -1381,6 +1465,25 @@ class Interpreter {
                     let error_struct = .program.get_struct(error_struct_id)
                     let scope = .program.get_scope(error_struct.scope_id)
                     let constructors = scope.functions.get("from_errno")
+                    yield StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::Struct(
+                                fields: [
+                                    err
+                                ],
+                                struct_id: error_struct_id
+                                constructor: constructors![0]
+                            )
+                            span: call_span
+                        )
+                    )
+                }
+                "from_string_literal" => {
+                    let err = arguments[0]
+                    let error_struct_id = .program.find_struct_in_prelude("Error")
+                    let error_struct = .program.get_struct(error_struct_id)
+                    let scope = .program.get_scope(error_struct.scope_id)
+                    let constructors = scope.functions.get("from_string_literal")
                     yield StatementResult::JustValue(
                         Value(
                             impl: ValueImpl::Struct(
@@ -6626,12 +6729,13 @@ class Interpreter {
                 span: span
             ))
         }
-        Function(captures, params, return_type_id, type_id, block, span, can_throw) => {
+        DependentFunction(captures, params, return_type_id, type_id, block, span, can_throw, scope_id)
+        | Function(captures, params, return_type_id, type_id, block, span, can_throw, scope_id) => {
             // First, resolve the captures
             mut resolved_captures: [String:Value] = [:]
             for capture in captures {
-                let name = capture.name()
-                guard capture is ByValue else {
+                let name = capture.name
+                guard capture is ByValue or capture is ByComptimeDependency else {
                     .error(
                         format("Cannot capture by reference in a comptime function (nyi)"),
                         span)
@@ -6673,12 +6777,11 @@ class Interpreter {
                 ))
             }
 
-            mut statements: [CheckedStatement] = []
-            for statement in block.statements.iterator() {
-                statements.push(.perform_final_interpretation_pass(
-                    statement
-                    scope: InterpreterScope::create(parent: scope, bindings: resolved_captures)))
-            }
+            let fixed_block = .perform_final_interpretation_pass(
+                block
+                runtime_scope: scope_id
+                scope: InterpreterScope::create(parent: scope, bindings: resolved_captures)
+            )
 
             yield StatementResult::JustValue(Value(
                 impl: ValueImpl::Function(
@@ -6692,15 +6795,10 @@ class Interpreter {
                         type_id
                         generic_inferences: type_map
                         module_id: type_id.module)
-                    block: CheckedBlock(
-                        statements
-                        scope_id: block.scope_id
-                        control_flow: block.control_flow
-                        yielded_type: block.yielded_type
-                        yielded_none: block.yielded_none
-                    )
+                    block: fixed_block
                     can_throw
                     checked_params
+                    scope_id
                 )
                 span
             ))
@@ -6811,8 +6909,9 @@ class Interpreter {
 
         let method_struct_constructor = .program.find_function_in_scope(
             parent_scope_id: .program.get_struct(method_struct_id).scope_id
-            function_name: "Method")!
-        
+            function_name: "Method"
+        )!
+
         // FIXME: Fill this in.
         mut method_values: [Value] = []
         return Value(

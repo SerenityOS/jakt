@@ -993,24 +993,14 @@ enum ParsedMatchBody {
 }
 
 enum ParsedCapture {
-    ByValue(name: String, span: Span)
-    ByReference(name: String, span: Span)
-    ByMutableReference(name: String, span: Span)
-    AllByReference(span: Span)
+    name: String
+    span: Span
 
-    fn name(this) => match this {
-        ByValue(name) => name
-        ByReference(name) => name
-        ByMutableReference(name) => name
-        AllByReference() => ""
-    }
-
-    fn span(this) => match this {
-        ByValue(span) => span
-        ByReference(span) => span
-        ByMutableReference(span) => span
-        AllByReference(span) => span
-    }
+    ByValue
+    ByReference
+    ByMutableReference
+    ByComptimeDependency
+    AllByReference
 }
 
 boxed enum ParsedExpression {
@@ -1325,7 +1315,7 @@ boxed enum ParsedExpression {
                 }
 
                 for i in ..lhs_captures.size() {
-                    if not (lhs_captures[i].name() == rhs_captures[i].name()) {
+                    if not (lhs_captures[i].name == rhs_captures[i].name) {
                         return false
                     }
                 }
@@ -4628,6 +4618,17 @@ struct Parser {
                         }
                     }
                 }
+                Comptime => {
+                    .index++
+
+                    if .current() is Identifier(name) {
+                        captures.push(ParsedCapture::ByComptimeDependency(name, span: .current().span()))
+                        .index++
+                    } else {
+                        .error(format("Expected identifier, got '{}'", .current()), .current().span())
+                        .index++
+                    }
+                }
                 Identifier(name) => {
                     captures.push(ParsedCapture::ByValue(name, span: .current().span()))
                     .index++
@@ -4680,7 +4681,15 @@ struct Parser {
             else => .parse_block()
         }
 
-        return ParsedExpression::Function(captures, params, can_throw, is_fat_arrow, return_type, block, span: merge_spans(start, .current().span()))
+        return ParsedExpression::Function(
+            captures
+            params
+            can_throw
+            is_fat_arrow
+            return_type
+            block
+            span: merge_spans(start, .current().span())
+        )
     }
 
     fn parse_asterisk(mut this) throws -> ParsedExpression {
@@ -5461,7 +5470,7 @@ struct Parser {
             let start = .current().span()
             let block = .parse_block()
             let span = merge_spans(start, .current().span())
-            let captures = [ParsedCapture::AllByReference(span: .empty_span())]
+            let captures = [ParsedCapture::AllByReference(name: "", span: .empty_span())]
             let trailing_closure = ParsedExpression::Function(captures, params: [], can_throw: false, is_fat_arrow: false, return_type: ParsedType::Empty, block, span)
             let reference_to_closure = ParsedExpression::UnaryOp(expr: trailing_closure, op: UnaryOperator::Reference, span)
             call.args.push(("", .empty_span(), reference_to_closure))
