@@ -3415,7 +3415,7 @@ struct CodeGenerator {
 
                 let param_type_id = param.variable.type_id
                 output += .codegen_type(param_type_id)
-                output += "&& a_"
+                output += " a_"
                 output += param.variable.name
             }
             output += ");\n"
@@ -3525,7 +3525,7 @@ struct CodeGenerator {
 
                 let param_type_id = param.variable.type_id
                 output += .codegen_type(param_type_id)
-                output += "&& a_"
+                output += " a_"
                 output += param.variable.name
             }
             output += ")"
@@ -3656,9 +3656,9 @@ struct CodeGenerator {
             }
 
             output += param.variable.name
-            output += "(a_"
+            output += "(move(a_"
             output += param.variable.name
-            output += ")"
+            output += "))"
         }
 
         output += "{}\n"
