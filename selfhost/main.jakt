@@ -363,17 +363,14 @@ fn main(args: [String]) {
         return 0
     }
 
-    let checked_program = Typechecker::typecheck(
+    mut typechecker = Typechecker::typecheck(
         compiler
         parsed_namespace
     )
+    let checked_program = typechecker.program
 
     if interpret_run {
-        mut interpreter = Interpreter::create(
-            compiler
-            program: checked_program
-            spans: []
-        )
+        mut interpreter = typechecker.interpreter()
 
         // Find the main function
         let prelude_scope_id = ScopeId(module_id: ModuleId(id: 0), id: 0)

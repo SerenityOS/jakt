@@ -389,11 +389,7 @@ struct REPL {
                 continue
             }
 
-            mut interpreter = Interpreter::create(
-                compiler: .compiler,
-                program: .typechecker.program,
-                spans: []
-            )
+            mut interpreter = .typechecker.interpreter()
 
             let result = try interpreter.execute_statement(
                 statement: checked_statement
