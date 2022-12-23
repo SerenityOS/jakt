@@ -1,0 +1,24 @@
+/// Expect:
+/// - output: "Foo(a: 1, b: \"hello friends\", c: true)\n"
+
+import json { to_json, JsonParser }
+
+struct Foo {
+    a: i64
+    b: String
+    c: bool
+}
+
+struct Bar {
+    a: i64
+    c: bool
+    b: String
+}
+
+function main() {
+    let json = to_json(&Bar(a: 1, c: true, b: "hello friends"))
+    mut foo = Foo(a: 0, b: "", c: false)
+    mut parser = JsonParser::create(json)
+    parser.to_object(&mut foo)
+    println("{}", foo)
+}
