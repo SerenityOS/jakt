@@ -1,0 +1,399 @@
+/// Expect: Skip
+
+fn error(anon s: StringView) -> Error => Error::from_string_literal(s)
+
+enum JsonToken {
+    position: usize
+
+    OpenBrace
+    CloseBrace
+    OpenBracket
+    CloseBracket
+    Colon
+    Comma
+    JsonString(String)
+    Number(String)
+    True
+    False
+    Null
+}
+
+struct JsonParser {
+    data: String
+    index: usize
+
+    fn create(anon data: String) -> JsonParser => JsonParser(data: data, index: 0)
+
+    fn to_object<U>(mut this, anon x: &mut U) throws {
+        from_json(&mut this, x)
+    }
+
+    fn peek(mut this) throws -> JsonToken? {
+        let start = .index + 0
+        let value = .next()
+        .index = start
+        return value
+    }
+
+    fn next(mut this) throws -> JsonToken? {
+        loop {
+            if .index >= .data.length() { break }
+            let c = .data.byte_at(.index)
+            defer .index += 1
+
+            return match c {
+                b' ' | b'\n' | b'\r' | b'\t' => { continue }
+                b'{' => JsonToken::OpenBrace(position: .index)
+                b'}' => JsonToken::CloseBrace(position: .index)
+                b'[' => JsonToken::OpenBracket(position: .index)
+                b']' => JsonToken::CloseBracket(position: .index)
+                b':' => JsonToken::Colon(position: .index)
+                b',' => JsonToken::Comma(position: .index)
+                b'"' => {
+                    let position = .index
+                    mut builder = StringBuilder::create()
+                    mut escaped = false
+                    .index += 1
+
+                    while .index < .data.length() {
+                        let c = .data.byte_at(.index)
+                        .index += 1
+
+                        match c {
+                            b'"' => {
+                                if escaped {
+                                    builder.append(c)
+                                    escaped = false
+                                } else {
+                                    .index -= 1
+                                    break
+                                }
+                            }
+                            b'\\' => {
+                                if escaped {
+                                    builder.append(c)
+                                    escaped = false
+                                } else {
+                                    escaped = true
+                                }
+                            }
+                            else => {
+                                builder.append(c)
+                                escaped = false
+                            }
+                        }
+                    }
+
+                    yield JsonToken::JsonString(position, builder.to_string())
+                }
+                b'0'..b'9' => {
+                    let position = .index
+                    mut builder = StringBuilder::create()
+                    mut seen_dot = false
+                    while .index < .data.length() {
+                        let c = .data.byte_at(.index)
+                        if c >= b'0' and c <= b'9' {
+                            builder.append(c)
+                            .index += 1
+                        } else if not seen_dot and c == b'.' {
+                            builder.append(c)
+                            seen_dot = true
+                        } else {
+                            break
+                        }
+                    }
+
+                    yield JsonToken::Number(position, builder.to_string())
+                }
+                b't' => {
+                    guard .index + 3 < .data.length() and
+                        .data.byte_at(.index + 1) == b'r' and
+                        .data.byte_at(.index + 2) == b'u' and
+                        .data.byte_at(.index + 3) == b'e' else {
+                        throw error("Invalid JSON: expected 'true'")
+                    }
+
+                    defer .index += 3
+                    yield JsonToken::True(position: .index)
+                }
+
+                b'f' => {
+                    guard .index + 4 < .data.length() and
+                        .data.byte_at(.index + 1) == b'a' and
+                        .data.byte_at(.index + 2) == b'l' and
+                        .data.byte_at(.index + 3) == b's' and
+                        .data.byte_at(.index + 4) == b'e' else {
+                        throw error("Invalid JSON: expected 'false'")
+                    }
+
+                    defer .index += 4
+                    yield JsonToken::False(position: .index)
+                }
+
+                b'n' => {
+                    guard .index + 3 < .data.length() and
+                        .data.byte_at(.index + 1) == b'u' and
+                        .data.byte_at(.index + 2) == b'l' and
+                        .data.byte_at(.index + 3) == b'l' else {
+                        throw error("Invalid JSON: expected 'null'")
+                    }
+
+                    defer .index += 3
+                    yield JsonToken::Null(position: .index)
+                }
+
+                else => {
+                    throw error("Invalid JSON: Unexpected character")
+                }
+            }
+        }
+
+        return None
+    }
+}
+
+fn force_to<T, U>(anon v: U) -> T {
+    return v as! T
+}
+
+comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+    let dep = true
+
+    return match reflect T {
+        Unknown | Never | Void => {
+            throw error("No can do")
+        }
+        Bool => fn[comptime dep](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+            let token = parser.next()
+            if token.has_value() {
+                match token! {
+                    True => { x = true }
+                    False => { x = false }
+                    else => {
+                        throw error("Invalid bool")
+                    }
+                }
+            } else {
+                throw error("Invalid bool")
+            }
+
+            return
+        }
+        Usize | U8 | U16 | U32 | U64 => fn[comptime dep](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+            let token = parser.next()
+            if token.has_value() {
+                if token! is Number(json) {
+                    let parsed = json.to_uint()
+                    if parsed.has_value() {
+                        x = force_to<T>(parsed!)
+                        return
+                    }
+                }
+            }
+
+            throw error("Invalid uint")
+        }
+        CChar | CInt | I8 | I16 | I32 | I64 => fn[comptime dep](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+            let token = parser.next()
+            if token.has_value() {
+                if token! is Number(json) {
+                    let parsed = json.to_int()
+                    if parsed.has_value() {
+                        x = force_to<T>(parsed!)
+                        return
+                    }
+                }
+            }
+
+            throw error("Invalid int")
+        }
+        F32 | F64 => fn[comptime dep](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+            let token = parser.next()
+            if token.has_value() {
+                match token! {
+                    Number(json) => {
+                        throw error("Not implemented")
+                    }
+                    else => {}
+                }
+            }
+
+            throw error("Invalid float")
+        }
+        JaktString => fn[comptime dep](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+            let token = parser.next()
+            if token.has_value() {
+                if token! is JsonString(json) {
+                    x = json
+                    return
+                }
+            }
+
+            throw error("Invalid string")
+        }
+        StructureOrEnum(record) => match record.record_type {
+            Struct(fields) | Class(fields) => {
+                mut field_decoders: [fn(anon x: &mut T, anon parser: &mut JsonParser) throws -> void] = []
+                mut field_indices: [String:usize] = [:]
+
+                for field in fields {
+                    let name = field.variable.name
+                    field_indices.set(name, field_decoders.size())
+                    field_decoders.push(fn[comptime name](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+                        from_json(parser, &mut x.[name])
+                        return
+                    })
+                }
+
+                yield fn[comptime field_decoders, comptime field_indices](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+                    let token = parser.next()
+                    guard token.has_value() and token! is OpenBrace else {
+                        throw error("Invalid JSON: Expected '{'")
+                    }
+
+                    mut seen_fields: {String} = {}
+                    mut first = true
+                    mut seen_comma = false
+
+                    loop {
+                        let token = parser.next()
+                        guard token.has_value() else {
+                            throw error("Invalid JSON: Expected a token")
+                        }
+
+                        let done = match token! {
+                            CloseBrace => true
+                            Comma => {
+                                if first or seen_comma {
+                                    throw error("Invalid JSON: Unexpected comma")
+                                }
+                                first = false
+                                seen_comma = true
+                                yield false
+                            }
+                            JsonString(field_name) => {
+                                seen_comma = false
+                                let token = parser.next()
+                                guard token.has_value() and token! is Colon else {
+                                    throw error("Invalid JSON: Expected ':'")
+                                }
+
+                                if not field_indices.contains(field_name) {
+                                    throw error("Unexpected unknown field in object")
+                                }
+
+                                if seen_fields.contains(field_name) {
+                                    throw error("Duplicate field in object")
+                                }
+
+                                seen_fields.add(field_name)
+
+                                let decoder = &field_decoders[field_indices[field_name]]
+                                decoder(x, parser)
+
+                                first = false
+
+                                yield false
+                            }
+                            else => {
+                                throw error("Invalid JSON: Expected a field name")
+                            }
+                        }
+
+                        guard not done else {
+                            break
+                        }
+                    }
+
+                    for field in field_indices.keys() {
+                        if not seen_fields.contains(field) {
+                            throw error("Missing field in object")
+                        }
+                    }
+
+                    return
+                }
+            }
+            else => {
+                throw error("NYI")
+            }
+        }
+        else => {
+            throw error("NYI")
+        }
+    }
+}
+
+fn from_json<U>(anon parser: &mut JsonParser, anon x: &mut U) throws -> void {
+    let function = make_json_decoder<U>()
+    function(x, parser)
+}
+
+fn from_json<U>(anon json: String, anon x: &mut U) throws -> void {
+    let function = make_json_decoder<U>()
+    mut parser = JsonParser::create(json)
+    function(x, &mut parser)
+}
+
+fn convert(x: &bool) throws -> String => format("{}", x)
+fn convert(x: &i8) throws -> String => format("{}", x)
+fn convert(x: &i16) throws -> String => format("{}", x)
+fn convert(x: &i32) throws -> String => format("{}", x)
+fn convert(x: &i64) throws -> String => format("{}", x)
+fn convert(x: &u8) throws -> String => format("{}", x)
+fn convert(x: &u16) throws -> String => format("{}", x)
+fn convert(x: &u32) throws -> String => format("{}", x)
+fn convert(x: &u64) throws -> String => format("{}", x)
+fn convert(x: &String) throws -> String => format("\"{}\"", x)
+fn convert(x: &c_char) throws -> String => format("'{:c}'", x)
+fn convert<T>(x: &T) throws -> String => format(":shrug:")
+
+fn quote_for_json(anon s: String) throws -> String {
+    mut builder = StringBuilder::create()
+    builder.append(b'"')
+    builder.append_escaped_for_json(s)
+    builder.append(b'"')
+    return builder.to_string()
+}
+
+comptime make_json_encoder<T>() throws -> fn(anon x: &T) throws -> String => match reflect T {
+    StructureOrEnum(record) => match record.record_type {
+        Struct(fields) | Class(fields) => {
+            mut field_converters: [fn(anon x: &T) throws -> String] = []
+
+            for field in fields {
+                let name = field.variable.name
+                field_converters.push(fn[comptime name](anon x: &T) throws -> String {
+                    let value = x.[name]
+                    return quote_for_json(name) + ":" + to_json(&value)
+                })
+            }
+
+            yield fn[comptime field_converters](anon x: &T) throws -> String {
+                mut builder = StringBuilder::create()
+                builder.append(b'{')
+                mut first = true
+                for i in 0..field_converters.size() {
+                    let converter = &field_converters[i]
+                    if not first {
+                        builder.append(b',')
+                    }
+                    first = false
+                    let value = converter(x)
+                    builder.append(value)
+                }
+                builder.append(b'}')
+                return builder.to_string()
+            }
+        }
+        else => {
+            throw error("NYI")
+        }
+    }
+    else => fn(anon x: &T) throws -> String => convert(x)
+}
+
+fn to_json<U>(anon x: &U) throws -> String {
+    let converter = make_json_encoder<U>()
+    return converter(x)
+}
