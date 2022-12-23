@@ -3398,7 +3398,13 @@ struct Parser {
                 if .current() is LessThan {
                     .index++
                     while not .current() is GreaterThan and not .eof() {
-                        params.push(.parse_typename())
+                        let parsed_type_parameter = .parse_typename() 
+                        if parsed_type_parameter is Empty {
+                            .error("Expected type inside generic", .current().span())
+                            break
+                        }
+                        params.push(parsed_type_parameter)
+                        
                         if .current() is Comma {
                             .index++
                         }
@@ -3470,7 +3476,6 @@ struct Parser {
             if can_throw {
                 .index++
             }
-
             mut return_type = ParsedType::Empty
             if .current() is Arrow {
                 .index++
