@@ -71,67 +71,70 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
     let line_spans = gather_line_spans(file_contents)
 
     mut line_index = 0uz
+    mut error_start_index = 0uz
     mut largest_line_number = 0uz
+    // Determine largest (human readable) line number and the index of the first error line
     while line_index < line_spans.size() {
+        if span.start >= line_spans[line_index].0 and span.start <= line_spans[line_index].1 {
+            error_start_index = line_index
+        }
+
         if span.end >= line_spans[line_index].0 and span.end <= line_spans[line_index].1 {
             largest_line_number = line_index + 2 // 1 (row number) + 1 (extra source line)
         }
+
         ++line_index
     }
     
     let width = format("{}", largest_line_number).length()
 
-    line_index = 0uz
-    while line_index < line_spans.size() {
-        if span.start >= line_spans[line_index].0 and span.start <= line_spans[line_index].1 {
-            let column_index = span.start - line_spans[line_index].0
+    // Start printing the error and additional info, including source line numbers surrounded with a nice border
 
-            for x in 0..(width + 2) {
-                eprint("─")
-            }
+    line_index = error_start_index
+    let column_index = span.start - line_spans[line_index].0
 
-            eprintln("┬─ \u001b[33m{}:{}:{}\u001b[0m", file_name, line_index + 1, column_index + 1)
-
-            if line_index > 0 {
-                print_source_line(severity, file_contents, file_span: line_spans[line_index - 1], error_span: span, line_number: line_index, largest_line_number)
-            }
-
-            // Print the lines that include the error
-
-            while line_index < line_spans.size() and span.end > line_spans[line_index].0 {
-                print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
-                if span.end <= line_spans[line_index].1 {
-                    break
-                }
-                ++line_index
-            }
-
-            // Print the error label
-            for x in 0..(width + 2) {
-                eprint(" ")
-            }
-            eprint("│")
-            for x in 0..(span.end - line_spans[line_index].0) {
-                eprint(" ")
-            }
-            eprintln("\u001b[{}m╰─ {}\u001b[0m", severity.ansi_color_code(), message)
-
-            ++line_index
-
-            // Print one last line for context
-            if line_index < line_spans.size() {
-                print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
-            }
-        } else {
-            ++line_index
-        }
-
+    // Print top of the border, file name, line number and column of the error
+    for x in 0..(width + 2) {
+        eprint("─")
     }
+    eprintln("┬─ \u001b[33m{}:{}:{}\u001b[0m", file_name, line_index + 1, column_index + 1)
+
+    // Print one line before the error for the context
+    if line_index > 0 {
+        print_source_line(severity, file_contents, file_span: line_spans[line_index - 1], error_span: span, line_number: line_index, largest_line_number)
+    }
+
+    // Print the lines that include the error
+    while line_index < line_spans.size() and span.end > line_spans[line_index].0 {
+        print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
+        if span.end <= line_spans[line_index].1 {
+            break
+        }
+        ++line_index
+    }
+
+    // Print the error label
+    for x in 0..(width + 2) {
+        eprint(" ")
+    }
+    eprint("│")
+    for x in 0..(span.end - line_spans[line_index].0) {
+        eprint(" ")
+    }
+    eprintln("\u001b[{}m╰─ {}\u001b[0m", severity.ansi_color_code(), message)
+
+    ++line_index
+
+    // Print one line after the error for context
+    if line_index < line_spans.size() {
+        print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
+    }
+
+    // Print bottom of the border
     eprint("\u001b[0m")
     for x in 0..(width + 2) {
         eprint("─")
     }
-
     eprintln("┴─")
 }
 
