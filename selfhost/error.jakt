@@ -70,8 +70,7 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
     let file_contents = contents!
     let line_spans = gather_line_spans(file_contents)
 
-    mut line_index = 1uz
-
+    mut line_index = 0uz
     mut largest_line_number = 0uz
     while line_index < line_spans.size() {
         if span.start >= line_spans[line_index].0 and span.start <= line_spans[line_index].1 {
@@ -82,7 +81,7 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
     
     let width = format("{}", largest_line_number).length()
 
-    line_index = 1uz
+    line_index = 0uz
     while line_index < line_spans.size() {
         if span.start >= line_spans[line_index].0 and span.start <= line_spans[line_index].1 {
             let column_index = span.start - line_spans[line_index].0
