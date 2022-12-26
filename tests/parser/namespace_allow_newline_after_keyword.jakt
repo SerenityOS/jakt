@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "PASS\n"
+namespace Test
+{
+    function foo() => "PASS" 
+}
+
+function main() {
+    println("{}", Test::foo())
+}
