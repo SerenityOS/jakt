@@ -107,10 +107,8 @@ enum ImportName {
     }
 
     function literal_name(this) -> String {
-        // FIXME: this has to be reassigned here to be used as an enum is binding
-        let that = this
-        guard that is Literal(name) else {
-            panic("cannot get literal name of non-literal import name")
+        guard this is Literal(name) else {
+            panic("Cannot get literal name of non-literal import name")
         }
 
         return name
