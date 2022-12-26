@@ -73,7 +73,7 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
     mut line_index = 0uz
     mut largest_line_number = 0uz
     while line_index < line_spans.size() {
-        if span.start >= line_spans[line_index].0 and span.start <= line_spans[line_index].1 {
+        if span.end >= line_spans[line_index].0 and span.end <= line_spans[line_index].1 {
             largest_line_number = line_index + 2 // 1 (row number) + 1 (extra source line)
         }
         ++line_index
