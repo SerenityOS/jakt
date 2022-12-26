@@ -3713,7 +3713,7 @@ struct Parser {
             Return => {
                 .index++
                 yield match .current() {
-                    Eol | Eof | RCurly => ParsedStatement::Return(expr: None, span: .current().span())
+                    Eol | Eof | RCurly => ParsedStatement::Return(expr: None, span: start)
                     else => ParsedStatement::Return(expr: .parse_expression(allow_assignments: false, allow_newlines: false), span: merge_spans(start, .previous().span()))
                 }
             }
