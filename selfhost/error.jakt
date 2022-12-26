@@ -181,7 +181,7 @@ function gather_line_spans(file_contents: [u8]) throws -> [(usize, usize)] {
         }
         idx += 1
     }
-    if start < idx {
+    if start <= idx {
         output.push((start, idx))
     }
 
