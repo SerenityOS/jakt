@@ -1652,6 +1652,7 @@ struct Parser {
                         }
                         else => None
                     }
+                    .skip_newlines()
                     if .current() is LCurly {
                         .index++
                     } else {
