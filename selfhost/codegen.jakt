@@ -1890,9 +1890,9 @@ struct CodeGenerator {
                 .current_function = function_
                 defer .current_function = previous_function
 
-                block_output = .codegen_block(block)
+                block_output = .codegen_lambda_block(can_throw, block, return_type_id)
             } else {
-                block_output = .codegen_block(block)
+                block_output = .codegen_lambda_block(can_throw, block, return_type_id)
             }
 
             yield format("[{}]({}) -> {} {}", join(generated_captures, separator: ", "), join(generated_params, separator: ", "), return_type, block_output)
@@ -3706,6 +3706,19 @@ struct CodeGenerator {
 
         output += "}\n"
 
+        return output
+    }
+
+    function codegen_lambda_block(mut this, can_throw: bool, block: CheckedBlock, return_type_id: TypeId) throws -> String {
+        mut output = "{\n"
+
+        output += .codegen_block(block)
+
+        if can_throw and return_type_id.equals(builtin(BuiltinType::Void)) {
+            output += "return {};\n"
+        }
+
+        output += "}\n"
         return output
     }
 }
