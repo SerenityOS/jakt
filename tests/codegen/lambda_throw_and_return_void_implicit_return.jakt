@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function main() {
+    let lambda = function[]() throws -> void {
+        //  Implicit return
+    }
+
+    lambda()
+    println("PASS")
+}
