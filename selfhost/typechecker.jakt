@@ -7289,8 +7289,13 @@ struct Typechecker {
                                     seen_catch_all = true
                                 }
 
-                                // FIXME: bindings shouldn't be allowed for generic else but we can't just put an error here as the generic version
-                                // is typechecked with ignore errors
+                                if variant_arguments.size() != 0 {
+                                    let old_ignore_errors = .ignore_errors
+                                    .ignore_errors = false
+                                    .error("Bindings aren't allowed in a generic else", case_.marker_span)
+                                    .ignore_errors = old_ignore_errors
+                                }
+
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
                                 mut defaults: [CheckedStatement] = []
                                 for (_, default_) in pattern.defaults {
