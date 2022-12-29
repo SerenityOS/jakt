@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Bindings aren't allowed in generic else"
+/// - error: "Bindings aren't allowed in a generic else"
 
 enum Foo {
     A(x: i64)
