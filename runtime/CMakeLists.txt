@@ -81,6 +81,7 @@ target_include_directories(jakt_runtime
 
 add_library(Jakt::jakt_runtime ALIAS jakt_runtime)
 apply_output_rules(jakt_runtime)
+target_link_libraries(jakt_runtime PRIVATE Threads::Threads)
 
 add_library(jakt_main STATIC Main.cpp)
 add_jakt_compiler_flags(jakt_main)
