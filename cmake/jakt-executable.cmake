@@ -20,6 +20,7 @@ function(add_jakt_compiler_flags target)
     -Wno-parentheses-equality
     -Wno-unqualified-std-cast-call
     -Wno-user-defined-literals
+    -Wno-literal-suffix
     -Wno-return-type
     -Wno-deprecated-declarations
     -Wno-unknown-warning-option
