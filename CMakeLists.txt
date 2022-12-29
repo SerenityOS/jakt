@@ -13,6 +13,8 @@ if(CCACHE_PROGRAM)
     set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE FILEPATH "Path to a compiler launcher program, e.g. ccache")
 endif()
 
+find_package(Threads REQUIRED)
+
 include(GNUInstallDirs)
 
 set(NO_SYMLINKS_DEFAULT OFF)
@@ -63,6 +65,7 @@ list(FILTER JAKT_STAGE0_ALL_SOURCES EXCLUDE REGEX ".*AK/Time\.cpp$")
 add_executable(jakt_stage0 "${JAKT_STAGE0_ALL_SOURCES}")
 add_executable(Jakt::jakt_stage0 ALIAS jakt_stage0)
 add_jakt_compiler_flags(jakt_stage0)
+target_link_libraries(jakt_stage0 PRIVATE Threads::Threads)
 target_include_directories(jakt_stage0
   PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime>
