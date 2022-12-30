@@ -94,3 +94,5 @@ target_include_directories(jakt_main
 
 add_library(Jakt::jakt_main ALIAS jakt_main)
 apply_output_rules(jakt_main)
+
+set_target_properties(jakt_runtime jakt_main PROPERTIES POSITION_INDEPENDENT_CODE ON)
