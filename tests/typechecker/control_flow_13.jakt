@@ -1,0 +1,24 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function test() -> i64 {
+    let x = 2
+
+    loop {
+        if x == 2 {
+            // Always transfer control (can break)
+            break
+        } else {
+            // Always return
+            return 1
+        }
+    }
+
+    // This should be reachable
+    println("PASS")
+    return 1
+}
+
+function main() {
+    test()
+}

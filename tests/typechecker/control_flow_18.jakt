@@ -1,0 +1,26 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function test() -> i64 {
+    let x = 2
+
+    loop {
+        if x == 2 {
+            // Always transfer control (can break)
+            break
+        } else {
+            // Partially transfer control (can't break)
+            if x == 3 {
+                continue
+            }
+        }
+    }
+
+    // This should be reachable
+    println("PASS")
+    return 1
+}
+
+function main() {
+    test()
+}
