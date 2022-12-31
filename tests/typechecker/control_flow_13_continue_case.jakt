@@ -1,0 +1,24 @@
+/// Expect:
+/// - error: "Unreachable code"
+
+function test() -> i64 {
+    let x = 1
+
+    loop {
+        if x == 2 {
+            // Always transfer control (can't break)
+            continue
+        } else {
+            // Always return
+            return 1
+        }
+    }
+
+    // This should not be reachable
+    println("NOT PASSED")
+    return 1
+}
+
+function main() {
+    test()
+}
