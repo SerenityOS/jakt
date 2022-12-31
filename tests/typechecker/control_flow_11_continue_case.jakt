@@ -1,0 +1,28 @@
+/// Expect:
+/// - error: "Unreachable code"
+
+function test() -> i64 {
+    let x = 2
+
+    loop {
+        if x == 2 {
+            // Partially transfer control (can't break)
+            if x == 2 {
+                continue
+            }
+        } else {
+            // Partially always return (can't break)
+            if x == 3 {
+                return 1
+            }
+        }
+    }
+
+    // This should not be reachable
+    println("NOT PASSED")
+    return 1
+}
+
+function main() {
+    test()
+}
