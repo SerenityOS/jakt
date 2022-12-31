@@ -3638,7 +3638,15 @@ struct Typechecker {
                     PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or then_might_break)
                     PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
                 }
-                PartialAlwaysReturns | PartialAlwaysTransfersControl | AlwaysTransfersControl => .maybe_statement_control_flow(else_statement, then_block.control_flow)
+                PartialAlwaysReturns(might_break: then_might_break) => match .maybe_statement_control_flow(else_statement, then_block.control_flow) {
+                    NeverReturns | AlwaysReturns => BlockControlFlow::PartialAlwaysReturns(might_break: then_might_break)
+                    MayReturn => BlockControlFlow::MayReturn
+                    AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
+                    PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or then_might_break)
+                    PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or then_might_break)
+                    PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
+                }
+                PartialAlwaysTransfersControl | AlwaysTransfersControl => .maybe_statement_control_flow(else_statement, then_block.control_flow)
             }
         }
         Block(block) => block.control_flow
