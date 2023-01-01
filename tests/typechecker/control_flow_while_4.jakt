@@ -1,0 +1,14 @@
+/// Expect:
+/// - error: "Unreachable code"
+
+function test(anon mut argument: i64) -> String {
+    while true {
+        return "NOT PASSED"
+    }
+
+    return "NOT PASSED" // This should not be reachable
+}
+
+function main() {
+    println("{}", test(-1))
+}
