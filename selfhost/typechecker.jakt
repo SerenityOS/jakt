@@ -3666,12 +3666,10 @@ struct Typechecker {
         }
         Block(block) => block.control_flow
         // FIXME: While could use more information here.
-        While(block) => match block.control_flow {
-            AlwaysTransfersControl => BlockControlFlow::MayReturn
-            NeverReturns => BlockControlFlow::NeverReturns
-            AlwaysReturns => BlockControlFlow::AlwaysReturns
-            else => BlockControlFlow::MayReturn
-        }
+        // Note that 'while' blocks, similarly to 'if's with a missing 'else' branch, produce a partial result.
+        // But also: every 'break' and 'continue' inside of it, does not apply to the outer blocks,
+        // and without a need for that info, Partials can just get degraded to the MayReturn.
+        While(block) => BlockControlFlow::MayReturn
         Loop(block) => match block.control_flow {
             AlwaysTransfersControl(might_break) => match might_break {
                 false => BlockControlFlow::AlwaysTransfersControl(might_break)
