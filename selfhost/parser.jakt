@@ -1108,7 +1108,8 @@ boxed enum ParsedExpression {
                         return false
                     }
                 }
-                if not lhs_values.size() == rhs_values.size() {
+
+                guard lhs_values.size() == rhs_values.size() else {
                     return false
                 }
 
@@ -1123,9 +1124,10 @@ boxed enum ParsedExpression {
         }
         JaktDictionary(values: lhs_values) => match rhs_expression {
             JaktDictionary(values: rhs_values) => {
-                if not lhs_values.size() == rhs_values.size() {
+                guard lhs_values.size() == rhs_values.size() else {
                     return false
                 }
+
                 for i in 0..lhs_values.size() {
                     if not (lhs_values[i].0.equals(rhs_values[i].0) and lhs_values[i].1.equals(rhs_values[i].1)) {
                         return false
@@ -1137,9 +1139,10 @@ boxed enum ParsedExpression {
         }
         Set(values: lhs_values) => match rhs_expression {
             Set(values: rhs_values) => {
-                if not lhs_values.size() == rhs_values.size() {
+                guard lhs_values.size() == rhs_values.size() else {
                     return false
                 }
+
                 for i in 0..lhs_values.size() {
                     if not lhs_values[i].equals(rhs_values[i]) {
                         return false
@@ -1151,9 +1154,10 @@ boxed enum ParsedExpression {
         }
         JaktTuple(values: lhs_values) => match rhs_expression {
             JaktTuple(values: rhs_values) => {
-                if not lhs_values.size() == rhs_values.size() {
+                guard lhs_values.size() == rhs_values.size() else {
                     return false
                 }
+
                 for i in 0..lhs_values.size() {
                     if not lhs_values[i].equals(rhs_values[i]) {
                         return false

@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "success\n"
+
+function main() throws {
+    if true {
+        let x = ["a": 1, "b": 2]
+    } else {
+        let x = ["a": 1]
+    }
+
+    // should parse without crashing the compiler
+    println("success")
+}
