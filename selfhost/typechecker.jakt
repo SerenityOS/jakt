@@ -4500,7 +4500,18 @@ struct Typechecker {
                     .error("Increment/decrement of non-numeric value", span)
                 }
             }
-            LogicalNot | BitwiseNot => {
+            LogicalNot => {
+                if not .check_types_for_compat(
+                    lhs_type_id: builtin(BuiltinType::Bool)
+                    rhs_type_id: checked_expr.type()
+                    generic_inferences: &mut .generic_inferences
+                    span) {
+                    .error("Cannot use a logical Not on a value of non-boolean type", span)
+                }
+
+                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: expr_type_id)
+            }
+            BitwiseNot => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: expr_type_id)
             }
             TypeCast(cast) => {

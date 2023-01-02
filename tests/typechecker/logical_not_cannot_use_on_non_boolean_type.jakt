@@ -1,0 +1,21 @@
+/// Expect:
+/// - error: "Cannot use a logical Not on a value of non-boolean type"
+
+class Foo {
+    public my_size: usize
+
+    public function size(this) -> usize {
+        return .my_size
+    }
+}
+
+function main() {
+    let a = Foo(my_size: 2uz)
+    let b = Foo(my_size: 3uz)
+
+    if not a.size() == b.size() {
+        println("NOT PASSED")
+    }
+
+    println("NOT PASSED")
+}
