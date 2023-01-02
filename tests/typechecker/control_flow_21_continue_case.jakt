@@ -1,0 +1,20 @@
+/// Expect:
+/// - error: "Unreachable code"
+
+function test(first: i64) -> String {
+    loop {
+        if first == 1 {
+            // Doing other stuff
+        } else {
+            continue // Always transfer control (can't break)
+        }
+
+        return "NOT PASSED" // This should be reachable (in case first == 1)
+    }
+
+    return "NOT PASSED" // This should not be reachable
+}
+
+function main() {
+    println("{}", test(first: 1))
+}
