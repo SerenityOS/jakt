@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "Duplicated match pattern\n"
+
+function main() {
+    match 1 {
+        1 => println("1")
+        1 => println("2")
+        else => println("...")
+    }
+}
