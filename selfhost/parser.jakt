@@ -965,13 +965,30 @@ struct ParsedMatchCase {
             }
         }
 
-        return true
+        return .body.equals(rhs_match_case.body)
     }
 }
 
 enum ParsedMatchBody {
     Expression(ParsedExpression)
     Block(ParsedBlock)
+
+    function equals(this, anon rhs_match_body: ParsedMatchBody) -> bool => match this {
+        Expression(lhs_expr) => {
+            guard rhs_match_body is Expression(rhs_expr) else {
+                return false
+            }
+
+            yield lhs_expr.equals(rhs_expr)
+        }
+        Block(lhs_block) => {
+            guard rhs_match_body is Block(rhs_block) else {
+                return false
+            }
+
+            yield lhs_block.equals(rhs_block)
+        }
+    }
 }
 
 enum ParsedCapture {
