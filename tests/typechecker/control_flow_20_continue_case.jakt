@@ -1,0 +1,25 @@
+/// Expect:
+/// - error: "Unreachable code"
+
+function test(first: i64, second: i64) -> String {
+    loop {
+        if first == 1 {
+            // Partial transfer control (can't break)
+            if second == 2 {
+                continue
+            } else {
+                // Doing other stuff
+            }
+        } else {
+            // Doing other stuff
+        }
+
+        return "NOT PASSED" // This should be reachable (in case first != 1 or (first == 1 and second != 2))
+    }
+
+    return "NOT PASSED" // This should not be reachable
+}
+
+function main() {
+    println("{}", test(first: 0, second: 0))
+}
