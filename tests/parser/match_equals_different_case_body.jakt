@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "hello\n"
+
+function main() {
+    if true {
+        match 1 {
+            else => println("hello")
+        }
+    } else {
+        match 1 {
+            else => println("world")
+        }
+    }
+}

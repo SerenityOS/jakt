@@ -1251,9 +1251,17 @@ boxed enum ParsedExpression {
                     return false
                 }
 
-                // FIXME: cases should probably be sorted before being compared
                 for i in ..lhs_cases.size() {
-                    if not lhs_cases[i].equals(rhs_cases[i]) {
+                    mut current_case_has_match = false
+
+                    for k in ..rhs_cases.size() {
+                        if lhs_cases[i].equals(rhs_cases[k]) {
+                            current_case_has_match = true
+                            break
+                        }
+                    }
+
+                    guard current_case_has_match else {
                         return false
                     }
                 }

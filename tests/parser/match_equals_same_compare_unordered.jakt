@@ -1,0 +1,18 @@
+/// Expect:
+/// - error: "if and else have identical blocks\n"
+
+function main() {
+    if true {
+        match 1 {
+            1 => println("1")
+            2 | 3 => println("2 or 3")
+            else => println("...")
+        }
+    } else {
+        match 1 {
+            2 | 3 => println("2 or 3")
+            1 => println("1")
+            else => println("...")
+        }
+    }
+}
