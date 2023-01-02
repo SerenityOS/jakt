@@ -1,0 +1,14 @@
+/// Expect:
+/// - error: "if and else have identical blocks\n"
+
+function main() {
+    if true {
+        match 1 {
+            else => println("hello")
+        }
+    } else {
+        match 1 {
+            else => println("hello")
+        }
+    }
+}
