@@ -4980,6 +4980,20 @@ struct Parser {
         let expr = .parse_expression(allow_assignments: false, allow_newlines: true)
         let cases = .parse_match_cases()
 
+
+        if cases.size() > 1 {
+            for i in ..(cases.size() - 1) {
+                for k in (i + 1)..cases.size() {
+                    if cases[i].has_equal_pattern(cases[k]) {
+                        .error_with_hint(
+                            "Duplicated match pattern", cases[k].marker_span,
+                            "Original pattern here", cases[i].marker_span
+                        )
+                    }
+                }
+            }
+        }
+
         return ParsedExpression::Match(
             expr
             cases
