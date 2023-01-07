@@ -1,0 +1,8 @@
+/// Expect:
+/// - output: "true\n"
+
+function main() {
+    mut set: {i64}? = {}
+    set!.add(42)
+    println("{}", set!.contains(42))
+}
