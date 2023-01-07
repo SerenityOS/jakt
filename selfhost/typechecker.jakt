@@ -632,6 +632,16 @@ struct Typechecker {
     function find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? =>
         .program.find_struct_in_scope(scope_id, name)
 
+    function unwrap_type_from_optional_if_needed(this, type: Type) throws -> Type {
+        let optional_struct_id = .find_struct_in_prelude("Optional")
+
+        if type is GenericInstance(id, args) and id.equals(optional_struct_id) {
+            return .get_type(args[0])
+        }
+
+        return type
+    }
+
     function typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         .typecheck_namespace_imports(parsed_namespace, scope_id)
         .typecheck_namespace_predecl(parsed_namespace, scope_id)
