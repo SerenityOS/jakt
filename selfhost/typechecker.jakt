@@ -7555,11 +7555,10 @@ struct Typechecker {
 
         mut key_hint: TypeId? = None
         mut value_hint: TypeId? = None
-        if type_hint.has_value()
-            and .get_type(type_hint!) is GenericInstance(id, args)
-            and id.equals(dictionary_struct_id) {
-            key_hint = args[0]
-            value_hint = args[1]
+        let type_hint_ids: [TypeId]? = .get_type_ids_from_type_hint_if_struct_ids_match(type_hint, expected_struct_id: dictionary_struct_id)
+        if type_hint_ids.has_value() {
+            key_hint = type_hint_ids![0]
+            value_hint = type_hint_ids![1]
         }
 
         for (key, value) in values {
