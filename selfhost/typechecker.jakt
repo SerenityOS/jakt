@@ -6774,10 +6774,9 @@ struct Typechecker {
         mut inferred_type_span: Span? = None
 
         mut inner_hint: TypeId? = None
-        if type_hint.has_value() {
-            if .get_type(type_hint!) is GenericInstance(id, args) and id.equals(array_struct_id) {
-                inner_hint = Some(args[0])
-            }
+        let type_hint_ids: [TypeId]? = .get_type_ids_from_type_hint_if_struct_ids_match(type_hint, expected_struct_id: array_struct_id)
+        if type_hint_ids.has_value() {
+            inner_hint = type_hint_ids![0]
         }
 
         mut vals: [CheckedExpression] = []
