@@ -642,6 +642,18 @@ struct Typechecker {
         return type
     }
 
+    function get_type_ids_from_type_hint_if_struct_ids_match(this, type_hint: TypeId?, expected_struct_id: StructId) throws -> [TypeId]? {
+        if not type_hint.has_value() {
+            return None
+        }
+
+        if .unwrap_type_from_optional_if_needed(type: .get_type(type_hint!)) is GenericInstance(id, args) and id.equals(expected_struct_id) {
+            return args
+        }
+
+        return None
+    }
+
     function typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         .typecheck_namespace_imports(parsed_namespace, scope_id)
         .typecheck_namespace_predecl(parsed_namespace, scope_id)
