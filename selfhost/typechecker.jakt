@@ -6787,8 +6787,11 @@ struct Typechecker {
 
         let set_struct_id = .find_struct_in_prelude("Set")
 
-        // TODO: type hints
         mut inner_hint: TypeId? = None
+        let type_hint_ids: [TypeId]? = .get_type_ids_from_type_hint_if_struct_ids_match(type_hint, expected_struct_id: set_struct_id)
+        if type_hint_ids.has_value() {
+            inner_hint = type_hint_ids![0]
+        }
 
         for value in values {
             let checked_value = .typecheck_expression(expr: value, scope_id, safety_mode, type_hint: inner_hint)
@@ -6819,16 +6822,12 @@ struct Typechecker {
             output.push(checked_value)
         }
 
-        if inner_type_id.equals(unknown_type_id()) and type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
-            if .get_type(type_hint!) is GenericInstance(id, args) and id.equals(set_struct_id) {
-                inner_type_id = args[0]
-            } else {
-                panic("expected Set struct")
-            }
-        }
-
         if inner_type_id.equals(unknown_type_id()) {
-            .error("Cannot infer generic type for Set<T>", span)
+            if inner_hint.has_value() {
+                inner_type_id = inner_hint!
+            } else {
+                .error("Cannot infer generic type for Set<T>", span)
+            }
         }
 
         let type_id = .find_or_add_type_id(Type::GenericInstance(
