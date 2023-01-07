@@ -875,28 +875,28 @@ enum ParsedMatchPattern {
         return true
     }
 
-    function equals(this, anon rhs_parsed_match_pattern: ParsedMatchPattern) -> bool => .defaults_equal(rhs_parsed_match_pattern.defaults) and match this {
-        EnumVariant(variant_names: lhs_variant_names, variant_arguments: lhs_variant_arguments) => match rhs_parsed_match_pattern {
-            EnumVariant(variant_names: rhs_variant_names, variant_arguments: rhs_variant_arguments) => {
-                guard lhs_variant_names.size() == rhs_variant_names.size() and lhs_variant_arguments.size() == rhs_variant_arguments.size() else {
+    function is_equal_pattern(this, anon rhs_parsed_match_pattern: ParsedMatchPattern) -> bool => match this {
+        EnumVariant(variant_names: lhs_variant_names) => {
+            guard rhs_parsed_match_pattern is EnumVariant(variant_names: rhs_variant_names) else {
+                return false
+            }
+
+            // compare name & namespaces in reverse order
+            // -> when one is a subset of the other they are treated equal
+            mut namespace_count = lhs_variant_names.size();
+            if rhs_variant_names.size() < namespace_count {
+                namespace_count = rhs_variant_names.size()
+            }
+
+            for i in 0..namespace_count {
+                let lhs_name = lhs_variant_names[lhs_variant_names.size() - i - 1].0
+                let rhs_name = rhs_variant_names[rhs_variant_names.size() - i - 1].0
+                guard lhs_name == rhs_name else {
                     return false
                 }
-
-                for i in ..lhs_variant_names.size() {
-                    if lhs_variant_names[i].0 != rhs_variant_names[i].0 {
-                        return false
-                    }
-                }
-
-                for i in ..lhs_variant_arguments.size() {
-                    if not lhs_variant_arguments[i].equals(rhs_variant_arguments[i]) {
-                        return false
-                    }
-                }
-
-                return true
             }
-            else => false
+
+            return true
         }
         Expression(lhs_parsed_expression) => match rhs_parsed_match_pattern {
             Expression(rhs_parsed_expression) => lhs_parsed_expression.equals(rhs_parsed_expression)
@@ -905,12 +905,54 @@ enum ParsedMatchPattern {
         CatchAll => rhs_parsed_match_pattern is CatchAll
         Invalid => rhs_parsed_match_pattern is Invalid
     }
+
+    function equals(this, anon rhs_parsed_match_pattern: ParsedMatchPattern) -> bool {
+        guard .is_equal_pattern(rhs_parsed_match_pattern) else {
+            return false
+        }
+
+        guard .defaults_equal(rhs_parsed_match_pattern.defaults) else {
+            return false
+        }
+
+        if this is EnumVariant(variant_arguments: lhs_variant_arguments) {
+            guard rhs_parsed_match_pattern is EnumVariant(variant_arguments: rhs_variant_arguments) else {
+                return false
+            }
+
+            guard lhs_variant_arguments.size() == rhs_variant_arguments.size() else {
+                return false
+            }
+
+            for i in ..lhs_variant_arguments.size() {
+                if not lhs_variant_arguments[i].equals(rhs_variant_arguments[i]) {
+                    return false
+                }
+            }
+        }
+
+        return true
+    }
 }
 
 struct ParsedMatchCase {
     patterns: [ParsedMatchPattern]
     marker_span: Span
     body: ParsedMatchBody
+
+    function has_equal_pattern(this, anon rhs_match_case: ParsedMatchCase) -> bool {
+        guard .patterns.size() == rhs_match_case.patterns.size() else {
+            return false
+        }
+
+        for i in ..(.patterns.size()) {
+            if not .patterns[i].is_equal_pattern(rhs_match_case.patterns[i]) {
+                return false
+            }
+        }
+
+        return true
+    }
 
     function equals(this, anon rhs_match_case: ParsedMatchCase) -> bool {
         guard .patterns.size() == rhs_match_case.patterns.size() else {
