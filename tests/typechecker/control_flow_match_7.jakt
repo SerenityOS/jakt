@@ -1,0 +1,33 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function test(first: i64, second: i64, third: i64) -> String {
+    loop {
+        match first {
+            1 => {
+                // Partially transfer control (can break)
+                if second == 2 {
+
+                    // Partially transfer control (can break)
+                    if third == 3 {
+                        break
+                    }
+
+                    continue
+                }
+            }
+            else => {
+                // Always return
+                return "NOT PASSED"
+            }
+        }
+
+        let x = 1 // This should be reachable (in case first == 1 and second != 2)
+    }
+
+    return "PASS" // This should be reachable
+}
+
+function main() {
+    println("{}", test(first: 1, second: 2, third: 3))
+}

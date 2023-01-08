@@ -1466,9 +1466,9 @@ boxed enum CheckedExpression {
                     }
                 }
                 if control_flow.has_value() {
-                    control_flow = control_flow!.unify_with(case_control_flow.definitive())
+                    control_flow = control_flow!.branch_unify_with(case_control_flow)
                 } else {
-                    control_flow = case_control_flow.definitive()
+                    control_flow = case_control_flow
                 }
             }
             yield control_flow ?? BlockControlFlow::MayReturn

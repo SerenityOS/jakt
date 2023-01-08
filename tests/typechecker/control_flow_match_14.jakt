@@ -1,0 +1,23 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function test(first: i64) -> String {
+    loop {
+        match first {
+            1 => {
+                // Always transfer control (can break)
+                break
+            }
+            else => {
+                // Never return
+                abort()
+            }
+        }
+    }
+
+    return "PASS" // This should be reachable (in case first == 1)
+}
+
+function main() {
+    println("{}", test(first: 1))
+}

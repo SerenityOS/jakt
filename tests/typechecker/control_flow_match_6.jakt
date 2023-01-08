@@ -1,0 +1,27 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function test(first: i64, second: i64) -> String {
+    loop {
+        match first {
+            1 => {
+                // Partially always return
+                if second == 2 {
+                    return "NOT PASSED"
+                }
+            }
+            else => {
+                // Always transfer control (can break)
+                break
+            }
+        }
+
+        break // This should be reachable (in case first == 1 and second != 2)
+    }
+
+    return "PASS" // This should be reachable (in case first != 1 or (first == 1 and second != 2))
+}
+
+function main() {
+    println("{}", test(first: 1, second: 0))
+}
