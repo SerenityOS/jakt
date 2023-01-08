@@ -737,7 +737,7 @@ class CheckedFunction {
     public is_comptime: bool
     public is_virtual: bool
     public is_override: bool
-    public is_skippable_generic_base: bool = false
+    public specialization_index: usize? = None
 
     public owner_scope: ScopeId? = None
 
@@ -774,6 +774,7 @@ class CheckedFunction {
         is_comptime: .is_comptime
         is_virtual: .is_virtual
         is_override: .is_override
+        specialization_index: .specialization_index
     )
 
     public fn signature_matches(this, anon other: CheckedFunction) throws -> bool {

@@ -3479,13 +3479,20 @@ struct Typechecker {
         args: [(String, CheckedExpression)]?
     ) throws -> FunctionId {
         mut checked_function = .get_function(function_id)
-        checked_function.generics.specializations.push(generic_arguments)
-
-        mut module = .current_module()
 
         if not checked_function.parsed_function.has_value() {
             return function_id
         }
+
+        let specialization_index = checked_function.generics.specializations.size()
+        checked_function.generics.specializations.push(generic_arguments)
+
+        let old_module_id = .current_module_id
+        defer .current_module_id = old_module_id
+
+        .current_module_id = checked_function.function_scope_id.module_id
+
+        mut module = .current_module()
 
         let new_function_id = module.next_function_id()
         mut parsed_function = checked_function.to_parsed_function()
@@ -3534,7 +3541,6 @@ struct Typechecker {
 
         parsed_function.must_instantiate = true
         checked_function.is_instantiated = true
-        checked_function.is_skippable_generic_base = true
 
         .current_function_id = Some(new_function_id)
         .typecheck_function_predecl(parsed_function, parent_scope_id: scope_id, this_arg_type_id: this_type_id, generics: checked_function.generics)
@@ -3543,6 +3549,9 @@ struct Typechecker {
 
         mut base_scope = .get_scope(.get_scope(checked_function.generics.base_scope_id).parent!)
         base_scope.functions.get(checked_function.name)!.push(new_function_id)
+
+        mut function_ = .get_function(new_function_id)
+        function_.specialization_index = specialization_index
 
         return new_function_id
     }

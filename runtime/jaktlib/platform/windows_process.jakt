@@ -84,7 +84,7 @@ struct ExitPollResult {
 fn default_constructed<T>() -> T {
     unsafe {
         cpp {
-            "return T{};"
+            "return {};"
         }
     }
 
@@ -92,9 +92,10 @@ fn default_constructed<T>() -> T {
 }
 
 fn size_of<T>() -> usize {
+    mut x = null<T>()
     unsafe {
         cpp {
-            "return sizeof(T);"
+            "return sizeof(*x);"
         }
     }
 
@@ -136,7 +137,7 @@ fn start_background_process(args: [String]) throws -> Process {
 
     let command_line_string = join_arguments(args)
     mut buffer = null<c_char>()
- 
+
     unsafe {
         cpp {
             "buffer = const_cast<char*>(command_line_string.characters());"
