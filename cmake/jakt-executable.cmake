@@ -83,6 +83,11 @@ function(add_jakt_executable executable)
   )
   list(REMOVE_DUPLICATES JAKT_EXECUTABLE_COMPILER_INCLUDES)
 
+  foreach(entry IN LISTS cpp_files)
+    get_filename_component(entry_base "${entry}" NAME_WE)
+    list(APPEND cpp_files "${entry_base}_specializations.cpp")
+  endforeach()
+
   set(binary_tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/${executable}_tmp")
   list(TRANSFORM cpp_files PREPEND "${binary_tmp_dir}/")
 
