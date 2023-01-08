@@ -1,0 +1,25 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function test(first: i64, second: i64) -> String {
+    loop {
+        match first {
+            1 => {
+                // Partially transfer control (can break)
+                if second == 2 {
+                    break
+                }
+            }
+            else => {
+                // Always transfer control (can't break)
+                continue
+            }
+        }
+    }
+
+    return "PASS" // This should be reachable (in case first == 1 and second == 2)
+}
+
+function main() {
+    println("{}", test(first: 1, second: 2))
+}

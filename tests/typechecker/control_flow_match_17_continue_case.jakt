@@ -1,0 +1,25 @@
+/// Expect:
+/// - error: "Unreachable code"
+
+function test(first: i64, second: i64) -> String {
+    loop {
+        match first {
+            1 => {
+                // Always transfer control (can't break)
+                continue
+            }
+            else => {
+                // Partially always return (can't break)
+                if second == 2 {
+                    return "NOT PASSED"
+                }
+            }
+        }
+    }
+
+    return "NOT PASSED" // This should not be reachable
+}
+
+function main() {
+    println("{}", test(first: 0, second: 2)) // This test should error, so let's pass values that won't make the loop spin indefinitely
+}
