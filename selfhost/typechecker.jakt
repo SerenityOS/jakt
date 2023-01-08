@@ -3619,56 +3619,7 @@ struct Typechecker {
                 }
             }
             // Note that a missing 'else' branch produces a partial result.
-            else => match then_block.control_flow {
-                NeverReturns => .maybe_statement_control_flow(else_statement, then_block.control_flow)
-                AlwaysReturns => match .maybe_statement_control_flow(else_statement, then_block.control_flow) {
-                    NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysReturns
-                    MayReturn => BlockControlFlow::MayReturn
-                    AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
-                    PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
-                    PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
-                    PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
-                }
-                MayReturn => match .maybe_statement_control_flow(else_statement, then_block.control_flow) {
-                    MayReturn | NeverReturns | AlwaysReturns => BlockControlFlow::MayReturn
-                    AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
-                    PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
-                    PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
-                    PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
-                }
-                PartialNeverReturns(might_break: then_might_break) => match .maybe_statement_control_flow(else_statement, then_block.control_flow) {
-                    NeverReturns | AlwaysReturns => BlockControlFlow::PartialNeverReturns(might_break: then_might_break)
-                    MayReturn => BlockControlFlow::PartialNeverReturns(might_break: then_might_break)
-                    AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
-                    PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break: might_break or then_might_break)
-                    PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or then_might_break)
-                    PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
-                }
-                PartialAlwaysReturns(might_break: then_might_break) => match .maybe_statement_control_flow(else_statement, then_block.control_flow) {
-                    NeverReturns | AlwaysReturns => BlockControlFlow::PartialAlwaysReturns(might_break: then_might_break)
-                    MayReturn => BlockControlFlow::PartialAlwaysReturns(might_break: then_might_break)
-                    AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
-                    PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or then_might_break)
-                    PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or then_might_break)
-                    PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
-                }
-                PartialAlwaysTransfersControl(might_break: then_might_break) => match .maybe_statement_control_flow(else_statement, then_block.control_flow) {
-                    NeverReturns | AlwaysReturns => BlockControlFlow::PartialAlwaysTransfersControl(might_break: then_might_break)
-                    MayReturn => BlockControlFlow::PartialAlwaysTransfersControl(might_break: then_might_break)
-                    AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
-                    PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
-                    PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
-                    PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
-                }
-                AlwaysTransfersControl(might_break: then_might_break) => match .maybe_statement_control_flow(else_statement, then_block.control_flow) {
-                    NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysTransfersControl(might_break: then_might_break)
-                    MayReturn => BlockControlFlow::PartialAlwaysTransfersControl(might_break: then_might_break)
-                    AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: might_break or then_might_break)
-                    PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break: might_break or then_might_break)
-                    PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or then_might_break)
-                    PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or then_might_break)
-                }
-            }
+            else => then_block.control_flow.branch_unify_with(.maybe_statement_control_flow(else_statement, then_block.control_flow))
         }
         Block(block) => block.control_flow
         // Note that 'while' blocks, which conditions are not always true,

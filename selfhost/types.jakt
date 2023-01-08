@@ -997,6 +997,58 @@ enum BlockControlFlow {
         }
     }
 
+    public function branch_unify_with(this, anon second: BlockControlFlow) => match this {
+        NeverReturns => second
+        AlwaysReturns => match second {
+            NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysReturns
+            MayReturn => BlockControlFlow::MayReturn
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
+        }
+        MayReturn => match second {
+            NeverReturns | AlwaysReturns => BlockControlFlow::MayReturn
+            MayReturn => BlockControlFlow::MayReturn
+            AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
+        }
+        PartialNeverReturns(might_break: this_might_break) => match second {
+            NeverReturns | AlwaysReturns => BlockControlFlow::PartialNeverReturns(might_break: this_might_break)
+            MayReturn => BlockControlFlow::PartialNeverReturns(might_break: this_might_break)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break: might_break or this_might_break)
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or this_might_break)
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+        }
+        PartialAlwaysReturns(might_break: this_might_break) => match second {
+            NeverReturns | AlwaysReturns => BlockControlFlow::PartialAlwaysReturns(might_break: this_might_break)
+            MayReturn => BlockControlFlow::PartialAlwaysReturns(might_break: this_might_break)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or this_might_break)
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or this_might_break)
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+        }
+        PartialAlwaysTransfersControl(might_break: this_might_break) => match second {
+            NeverReturns | AlwaysReturns => BlockControlFlow::PartialAlwaysTransfersControl(might_break: this_might_break)
+            MayReturn => BlockControlFlow::PartialAlwaysTransfersControl(might_break: this_might_break)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+        }
+        AlwaysTransfersControl(might_break: this_might_break) => match second {
+            NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysTransfersControl(might_break: this_might_break)
+            MayReturn => BlockControlFlow::PartialAlwaysTransfersControl(might_break: this_might_break)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: might_break or this_might_break)
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break: might_break or this_might_break)
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or this_might_break)
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+        }
+    }
+
     function updated(this, anon second: BlockControlFlow) => match this {
         NeverReturns => BlockControlFlow::NeverReturns
         AlwaysReturns => BlockControlFlow::AlwaysReturns
