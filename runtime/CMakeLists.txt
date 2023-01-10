@@ -34,9 +34,9 @@ set(JAKT_AK_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "jakt_ak_sourc
 set(IMPORTED_AK_SOURCES
     ${JAKT_AK_SOURCE_DIR}/AK/Assertions.cpp
     ${JAKT_AK_SOURCE_DIR}/AK/Base64.cpp
+    ${JAKT_AK_SOURCE_DIR}/AK/DeprecatedFlyString.cpp
     ${JAKT_AK_SOURCE_DIR}/AK/DeprecatedString.cpp
     ${JAKT_AK_SOURCE_DIR}/AK/FloatingPointStringConversions.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/FlyString.cpp
     ${JAKT_AK_SOURCE_DIR}/AK/Format.cpp
     ${JAKT_AK_SOURCE_DIR}/AK/FuzzyMatch.cpp
     ${JAKT_AK_SOURCE_DIR}/AK/GenericLexer.cpp
