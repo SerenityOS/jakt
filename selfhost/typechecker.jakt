@@ -76,12 +76,12 @@ struct Typechecker {
     self_type_id: TypeId? = None
     root_module_name: String
 
-    function type_name(this, anon type_id: TypeId) throws -> String {
+    function type_name(this, anon type_id: TypeId, debug_mode: bool = false) throws -> String {
         mut id = type_id
         if .program.get_type(id) is Self and .self_type_id.has_value() {
             id = .self_type_id!
         }
-        return .program.type_name(id)
+        return .program.type_name(id, debug_mode)
     }
 
     function dump_type_hint(this, type_id: TypeId, span: Span) throws {
@@ -1680,19 +1680,22 @@ struct Typechecker {
         generic_parameters.ensure_capacity(parsed_trait.generic_parameters.size())
 
         for gen_parameter in parsed_trait.generic_parameters {
-            module.types.push(Type::TypeVariable(gen_parameter.name))
-
             let parameter_type_id = TypeId(
                 module: .current_module_id
-                id: .current_module().types.size() - 1
+                id: .current_module().types.size()
             )
 
+            mut trait_implementations: [TypeId] = []
             mut parameter = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
+            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations))
+
             if gen_parameter.requires_list.has_value() {
                 .fill_trait_requirements(
                     names: gen_parameter.requires_list!,
                     trait_requirements: &mut parameter.constraints,
-                    scope_id)
+                    &mut trait_implementations
+                    scope_id
+                )
             }
 
             generic_parameters.push(parameter)
@@ -1886,20 +1889,23 @@ struct Typechecker {
         generic_parameters.ensure_capacity(parsed_record.generic_parameters.size())
 
         for gen_parameter in parsed_record.generic_parameters {
-            module.types.push(Type::TypeVariable(gen_parameter.name))
-
             let parameter_type_id = TypeId(
                 module: .current_module_id
-                id: .current_module().types.size() - 1
+                id: .current_module().types.size()
             )
 
             mut checked_param = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
+
+            mut trait_implementations: [TypeId] = []
+            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations))
 
             if gen_parameter.requires_list.has_value() {
                 .fill_trait_requirements(
                     names: gen_parameter.requires_list!,
                     trait_requirements: &mut checked_param.constraints,
-                    scope_id)
+                    &mut trait_implementations
+                    scope_id
+                )
             }
 
             generic_parameters.push(checked_param)
@@ -1967,19 +1973,23 @@ struct Typechecker {
             mut generic_parameters: [FunctionGenericParameter] = []
 
             for generic_parameter in func.generic_parameters {
-                module.types.push(Type::TypeVariable(generic_parameter.name))
                 let type_var_type_id = TypeId(
                     module: .current_module_id
-                    id: .current_module().types.size() - 1
+                    id: .current_module().types.size()
                 )
 
                 mut parameter = FunctionGenericParameter::parameter(type_var_type_id, span: generic_parameter.span)
+
+                mut trait_implementations: [TypeId] = []
+                module.types.push(Type::TypeVariable(name: generic_parameter.name, trait_implementations))
 
                 if generic_parameter.requires_list.has_value() {
                     .fill_trait_requirements(
                         names: generic_parameter.requires_list!,
                         trait_requirements: &mut parameter.checked_parameter.constraints,
-                        scope_id)
+                        &mut trait_implementations,
+                        scope_id
+                    )
                 }
 
                 generic_parameters.push(parameter)
@@ -2311,20 +2321,24 @@ struct Typechecker {
         generic_parameters.ensure_capacity(parsed_record.generic_parameters.size())
 
         for gen_parameter in parsed_record.generic_parameters {
-            module.types.push(Type::TypeVariable(gen_parameter.name))
-
             let parameter_type_id = TypeId(
                 module: .current_module_id
-                id: .current_module().types.size() - 1
+                id: .current_module().types.size()
             )
 
             mut parameter = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
+            mut trait_implementations: [TypeId] = []
+            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations))
+
             if gen_parameter.requires_list.has_value() {
                 .fill_trait_requirements(
                     names: gen_parameter.requires_list!,
                     trait_requirements: &mut parameter.constraints,
-                    scope_id)
+                    &mut trait_implementations,
+                    scope_id
+                )
             }
+
 
             generic_parameters.push(parameter)
 
@@ -2380,19 +2394,22 @@ struct Typechecker {
 
 
             for gen_parameter in func.generic_parameters {
-                module.types.push(Type::TypeVariable(gen_parameter.name))
                 let type_var_type_id = TypeId(
                     module: .current_module_id
-                    id: .current_module().types.size() - 1
+                    id: .current_module().types.size()
                 )
 
                 mut parameter = FunctionGenericParameter::parameter(type_var_type_id, span: gen_parameter.span)
+                mut trait_implementations: [TypeId] = []
+                module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations))
 
                 if gen_parameter.requires_list.has_value() {
                     .fill_trait_requirements(
                         names: gen_parameter.requires_list!,
                         trait_requirements: &mut parameter.checked_parameter.constraints,
-                        scope_id)
+                        &mut trait_implementations,
+                        scope_id
+                    )
                 }
 
                 checked_function.generics.params.push(parameter)
@@ -3186,11 +3203,12 @@ struct Typechecker {
         mut this
         names: [ParsedNameWithGenericParameters]
         trait_requirements: &mut [TraitId]
+        trait_implementations: &mut [TypeId]
         scope_id: ScopeId
     ) throws {
         trait_requirements.ensure_capacity(names.size())
         for name in names {
-            let type_id = .find_type_in_scope(scope_id, name: name.name)
+            mut type_id = .find_type_in_scope(scope_id, name: name.name)
             guard type_id.has_value() else {
                 .error(format("Couldn't find trait ‘{}’", name.name), name.name_span)
                 continue
@@ -3200,6 +3218,18 @@ struct Typechecker {
                 .error(format("Requirement ‘{}’ is not a trait", name.name), name.name_span)
                 continue
             }
+
+            if not name.generic_parameters.is_empty() {
+                mut generic_arguments: [TypeId] = []
+                for argument in name.generic_parameters {
+                    generic_arguments.push(.typecheck_typename(parsed_type: argument, scope_id: scope_id, name: None))
+                }
+
+                let final_type = Type::GenericTraitInstance(id: trait_id, args: generic_arguments)
+                type_id = .find_or_add_type_id(final_type)
+            }
+
+            trait_implementations.push(type_id!)
 
             trait_requirements.push(trait_id)
         }
@@ -3278,13 +3308,16 @@ struct Typechecker {
 
             if base_definition {
                 mut parameter = FunctionGenericParameter::parameter(type_var_type_id, span: generic_parameter.span)
+                mut trait_implementations: [TypeId] = []
+                current_module.types.push(Type::TypeVariable(name: generic_parameter.name, trait_implementations))
                 if generic_parameter.requires_list.has_value() {
                     .fill_trait_requirements(
                         names: generic_parameter.requires_list!,
                         trait_requirements: &mut parameter.checked_parameter.constraints,
-                        scope_id: parent_scope_id)
+                        &mut trait_implementations,
+                        scope_id: parent_scope_id
+                    )
                 }
-                current_module.types.push(Type::TypeVariable(generic_parameter.name))
                 checked_function.generics.params.push(parameter)
             } else if checked_function.generics.params[i].kind is Parameter {
                 type_var_type_id = checked_function.generics.params[i].type_id()
@@ -3482,7 +3515,7 @@ struct Typechecker {
 
         let span = parsed_function.name_span
         for substitution in generic_substitutions.iterator() {
-            if .get_type(TypeId::from_string(substitution.0)) is TypeVariable(type_name) {
+            if .get_type(TypeId::from_string(substitution.0)) is TypeVariable(name: type_name) {
                 .add_type_to_scope(scope_id, type_name, type_id: TypeId::from_string(substitution.1), span)
             }
         }
@@ -6048,11 +6081,21 @@ struct Typechecker {
 
                             yield Some(struct_id ?? StructLikeId::Struct(optional_struct_id))
                         }
-                        else => Some(StructLikeId::Struct(id))
+                        else => Some(StructLikeId::Struct(generic_arguments: args, id))
                     }
                 }
-                GenericEnumInstance(id) => Some(StructLikeId::Enum(id))
-                Trait(id) | GenericTraitInstance(id) => Some(StructLikeId::Trait(id))
+                GenericEnumInstance(id, args) => Some(StructLikeId::Enum(generic_arguments: args, id))
+                Trait(id) => Some(StructLikeId::Trait(id))
+                GenericTraitInstance(id, args) => Some(StructLikeId::Trait(generic_arguments: args, id))
+                TypeVariable(trait_implementations) => match trait_implementations.size() {
+                    0 => None
+                    // FIXME: Use all of the bounds instead of just the first one.
+                    else => match .get_type(trait_implementations[0]) {
+                        Trait(id) => Some(StructLikeId::Trait(id))
+                        GenericTraitInstance(id, args) => Some(StructLikeId::Trait(generic_arguments: args, id))
+                        else => None
+                    }
+                }
                 else => {
                     .error(
                         message: format(
@@ -7887,7 +7930,7 @@ struct Typechecker {
             resolved_namespaces.push(ResolvedNamespace(name, external_name: None, generic_parameters: None))
         }
 
-        let callee_scope_id = match parent_id.has_value() {
+        mut callee_scope_id = match parent_id.has_value() {
             true => match parent_id! {
                 Struct(id) => {
                     mut struct_ = .get_struct(id)
@@ -7931,6 +7974,17 @@ struct Typechecker {
                     }
                 }
                 yield caller_scope_id
+            }
+        }
+
+        mut generic_inferences_from_parent: [String:String] = [:]
+        if parent_id.has_value() and parent_id!.generic_arguments.has_value() {
+            let arguments = parent_id!.generic_arguments!
+            let parameters = parent_id!.generic_parameters(&.program)
+
+            for i in 0..arguments.size() {
+                generic_inferences_from_parent.set(parameters[i].to_string(), arguments[i].to_string())
+                .generic_inferences.set(parameters[i].to_string(), arguments[i].to_string())
             }
         }
 
@@ -8011,6 +8065,7 @@ struct Typechecker {
                 }
 
                 .generic_inferences.restore(generic_inferences_for_best_match)
+                .generic_inferences.set_from(generic_inferences_from_parent)
                 let callee = .get_function(resolved_function_id!)
                 callee_throws = callee.can_throw
                 return_type = callee.return_type_id
@@ -8323,7 +8378,7 @@ struct Typechecker {
         loop {
             current_type_id = .generic_inferences.map(current_type_id)
             let type_var_type = .get_type(current_type_id)
-            if type_var_type is TypeVariable(type_name) {
+            if type_var_type is TypeVariable(name: type_name) {
                 let maybe_found_type_id = .find_type_in_scope(scope_id, name: type_name)
                 if maybe_found_type_id.has_value() {
                     let found_type_id = maybe_found_type_id.value()
