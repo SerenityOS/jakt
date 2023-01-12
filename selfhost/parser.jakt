@@ -1629,6 +1629,10 @@ struct Parser {
         return .peek(0)
     }
 
+    function inject_token(mut this, token: Token) throws {
+        .tokens.insert(before_index: .index + 1, value: token)
+    }
+
     public function parse_namespace(mut this) throws -> ParsedNamespace {
         mut parsed_namespace = ParsedNamespace(
             name: None
@@ -2016,6 +2020,11 @@ struct Parser {
                                 }
                                 Comma | Eol => {
                                     .index++
+                                }
+                                RightShift => {
+                                    .inject_token(token: Token::GreaterThan(.current().span()))
+                                    .index += 1
+                                    break
                                 }
                                 else => {
                                     let index_before = .index
@@ -3395,6 +3404,46 @@ struct Parser {
         )
     }
 
+    function parse_type_parameter_list(mut this) throws -> [ParsedType] {
+        mut params: [ParsedType] = []
+        if .current() is LessThan {
+            .index++
+            mut saw_ending_bracket = false
+            while not .eof() {
+                match .current() {
+                    GreaterThan => {
+                        .index++
+                        saw_ending_bracket = true
+                        break
+                    }
+                    RightShift => {
+                        .inject_token(token: Token::GreaterThan(.current().span()))
+                        .index++
+                        saw_ending_bracket = true
+                        break
+                    }
+                    else => {
+                        mut index_before = .index
+                        params.push(.parse_typename())
+                        if .index == index_before {
+                            .error("Expected type parameter", .current().span())
+                            break
+                        }
+                        if .current() is Comma {
+                            .index++
+                        }
+                    }
+                }
+            }
+
+            if not saw_ending_bracket {
+                .error("Expected `>` after type parameters", .current().span())
+            }
+        }
+
+        return params
+    }
+
     function parse_typename(mut this) throws -> ParsedType {
         let start = .current().span()
         mut is_reference = false
@@ -3464,21 +3513,7 @@ struct Parser {
             .index++
             mut parsed_type =  ParsedType::Name(name, span)
             if .current() is LessThan {
-                mut params: [ParsedType] = []
-                if .current() is LessThan {
-                    .index++
-                    while not .current() is GreaterThan and not .eof() {
-                        params.push(.parse_typename())
-                        if .current() is Comma {
-                            .index++
-                        }
-                    }
-                    if .current() is GreaterThan {
-                        .index++
-                    } else {
-                        .error("Expected `>` after type parameters", .current().span())
-                    }
-                }
+                mut params = .parse_type_parameter_list()
                 parsed_type = ParsedType::GenericType(name, generic_parameters: params, span)
             }
 
@@ -3509,22 +3544,7 @@ struct Parser {
 
                 let type_name = namespaces.pop()!
 
-                mut params: [ParsedType] = []
-                if .current() is LessThan {
-                    .index++
-                    while not .current() is GreaterThan and not .eof() {
-                        params.push(.parse_typename())
-                        if .current() is Comma {
-                            .index++
-                        }
-                    }
-                    if .current() is GreaterThan {
-                        .index++
-                    } else {
-                        .error("Expected `>` after type parameters", .current().span())
-                    }
-                }
-
+                mut params = .parse_type_parameter_list()
                 parsed_type = ParsedType::NamespacedName(name: type_name, namespaces, params, span: .previous().span())
             }
 
@@ -5296,6 +5316,11 @@ struct Parser {
                         .index++
                         break
                     }
+                    RightShift => {
+                        .inject_token(token: Token::GreaterThan(.current().span()))
+                        .index++
+                        break
+                    }
                     Comma | Eol => {
                         .index++
                     }
@@ -5382,31 +5407,7 @@ struct Parser {
                         generic_parameters: []
                     )
                     .index++
-                    if .current() is LessThan {
-                        // Generic type
-                        .index++
-
-                        while not .eof() {
-                            match .current() {
-                                GreaterThan => {
-                                    .index++
-                                    break
-                                }
-                                Comma | Eol => {
-                                    .index++
-                                }
-                                else => {
-                                    let index_before = .index
-                                    let inner_type = .parse_typename()
-                                    if index_before == .index {
-                                        .error("Expected type name", .current().span())
-                                        break
-                                    }
-                                    parsed_name.generic_parameters.push(inner_type)
-                                }
-                            }
-                        }
-                    }
+                    parsed_name.generic_parameters = .parse_type_parameter_list()
                     result.push(parsed_name)
                 }
                 else(span) => {
@@ -5431,30 +5432,47 @@ struct Parser {
         .index++
         mut generic_parameters: [ParsedGenericParameter] = []
         .skip_newlines()
-        while not .current() is GreaterThan and not .current() is Garbage {
-            if .current() is Identifier(name, span) {
 
-                mut requires_list: [ParsedNameWithGenericParameters]? = None
+        mut saw_ending_bracket = false
+        while not .eof() {
+            match .current() {
+                Identifier(name, span) => {
+                    mut requires_list: [ParsedNameWithGenericParameters]? = None
 
-                .index++
-                if .current() is Requires {
                     .index++
-                    requires_list = .parse_trait_list()
-                }
+                    if .current() is Requires {
+                        .index++
+                        requires_list = .parse_trait_list()
+                    }
 
-                generic_parameters.push(ParsedGenericParameter(name, span, requires_list))
-                if .current() is Comma or .current() is Eol {
-                    .index++
+                    generic_parameters.push(ParsedGenericParameter(name, span, requires_list))
+                    if .current() is Comma or .current() is Eol {
+                        .index++
+                    }
                 }
-            } else {
-                .error("Expected generic parameter name", .current().span())
-                return generic_parameters
+                GreaterThan => {
+                    .index++
+                    saw_ending_bracket = true
+                    break
+                }
+                RightShift => {
+                    .inject_token(token: Token::GreaterThan(.current().span()))
+                    .index += 1
+                    saw_ending_bracket = true
+                    break
+                }
+                Garbage => {
+                    .error("Expected `>` to end the generic parameters", .current().span())
+                    return generic_parameters
+                }
+                else => {
+                    .error("Expected generic parameter name", .current().span())
+                    return generic_parameters
+                }
             }
         }
 
-        if .current() is GreaterThan {
-            .index++
-        } else {
+        if not saw_ending_bracket {
             .error("Expected `>` to end the generic parameters", .current().span())
             return generic_parameters
         }
