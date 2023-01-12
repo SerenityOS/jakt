@@ -1,0 +1,19 @@
+/// Expect:
+/// - output: "10\n"
+
+struct Foo<T> {
+    x: T
+}
+
+type Foo implements(Iterable<Foo<T>>) {
+    function next(mut this) -> Foo<T>? {
+        return None
+    }
+}
+
+function main() {
+    let x: Foo<i32> = Foo(x: 10i32)
+    mut y: Foo<Foo<i32>> = Foo(x)
+
+    println("{}", y.x.x)
+}
