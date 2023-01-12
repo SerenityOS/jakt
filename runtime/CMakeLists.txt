@@ -37,6 +37,7 @@ set(IMPORTED_AK_SOURCES
     ${JAKT_AK_SOURCE_DIR}/AK/DeprecatedFlyString.cpp
     ${JAKT_AK_SOURCE_DIR}/AK/DeprecatedString.cpp
     ${JAKT_AK_SOURCE_DIR}/AK/FloatingPointStringConversions.cpp
+    ${JAKT_AK_SOURCE_DIR}/AK/FlyString.cpp
     ${JAKT_AK_SOURCE_DIR}/AK/Format.cpp
     ${JAKT_AK_SOURCE_DIR}/AK/FuzzyMatch.cpp
     ${JAKT_AK_SOURCE_DIR}/AK/GenericLexer.cpp
