@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "OK\n"
+
+struct Thing {}
+struct GenericThing<T> {
+    ts: [T]? = None
+}
+
+function main() {
+    mut ts: [Thing] = []
+    mut gt: GenericThing<Thing> = GenericThing()
+    gt.ts = ts
+    println("OK")
+}

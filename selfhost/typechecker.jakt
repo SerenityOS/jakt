@@ -4680,17 +4680,19 @@ struct Typechecker {
                     }
                 }
 
-                let lhs_type = .get_type(lhs_type_id)
+                let lhs_type = .unwrap_type_from_optional_if_needed(type: .get_type(lhs_type_id))
                 if lhs_type is GenericInstance(id, args) {
-                    if .program.get_struct(id).name == "Optional" and checked_rhs.type().equals(args[0]) {
-                        return lhs_type_id
-                    }
-                    if .program.get_struct(id).name == "WeakPtr" and checked_rhs.type().equals(args[0]) {
-                        return lhs_type_id
+                    if .program.get_struct(id).name == "WeakPtr" {
+                        let unified_type = .unify(lhs: args[0], lhs_span, rhs: checked_rhs.type(), rhs_span)
+                        if unified_type.has_value() {
+                            return unified_type!
+                        }
                     }
                 }
 
-                let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
+                let effective_lhs_type_id = .find_or_add_type_id(lhs_type)
+
+                let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: effective_lhs_type_id, rhs_span: lhs_span)
                 if not result.has_value() {
                     .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
                 }
