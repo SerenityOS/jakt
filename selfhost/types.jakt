@@ -68,6 +68,12 @@ struct GenericInferences {
     function restore(mut this, anon checkpoint: [String:String]) {
         .values = checkpoint
     }
+
+    function set_from(mut this, anon checkpoint: [String:String]) {
+        for (key, value) in checkpoint {
+            .values[key] = value
+        }
+    }
 }
 
 enum SafetyMode {
@@ -116,9 +122,24 @@ struct EnumId {
 }
 
 enum StructLikeId {
+    generic_arguments: [TypeId]? = None
+
     Struct(StructId)
     Enum(EnumId)
     Trait(TraitId)
+
+    function generic_parameters(this, anon program: &CheckedProgram) throws -> [TypeId] {
+        let parameters = match this {
+            Struct(id) => program.get_struct(id).generic_parameters
+            Enum(id) => program.get_enum(id).generic_parameters
+            Trait(id) => program.get_trait(id).generic_parameters
+        }
+        mut result: [TypeId] = []
+        for parameter in parameters {
+            result.push(parameter.type_id)
+        }
+        return result
+    }
 }
 
 struct TypeId {
@@ -234,7 +255,7 @@ boxed enum Type {
     CInt
     Unknown
     Never
-    TypeVariable(String)
+    TypeVariable(name: String, trait_implementations: [TypeId])
     GenericInstance(id: StructId, args: [TypeId])
     GenericEnumInstance(id: EnumId, args: [TypeId])
     GenericTraitInstance(id: TraitId, args: [TypeId])
@@ -362,8 +383,9 @@ boxed enum Type {
         }
 
         match this {
-            TypeVariable(lhs_name) => {
-                if rhs is TypeVariable(rhs_name) {
+            // FIXME: Check implemented traits for equality.
+            TypeVariable(name: lhs_name) => {
+                if rhs is TypeVariable(name: rhs_name) {
                     return lhs_name == rhs_name
                 } else {
                     return false
@@ -579,10 +601,12 @@ class Module {
     public is_root: bool
     public function is_prelude(this) -> bool => .id.id == 0
 
-    public function new_type_variable(mut this) throws -> TypeId {
+    public function new_type_variable(mut this, implemented_traits: [TypeId]? = None) throws -> TypeId {
         let new_id = .types.size()
 
-        .types.push(Type::TypeVariable(format("T{}", new_id)))
+        let empty_implementation: [TypeId] = []
+        let trait_implementations = implemented_traits ?? empty_implementation
+        .types.push(Type::TypeVariable(name: format("T{}", new_id), trait_implementations))
 
         return TypeId(module: .id, id: new_id)
     }
@@ -1896,10 +1920,10 @@ class CheckedProgram {
         }
     }
 
-    public function type_name(this, anon type_id: TypeId) throws -> String {
+    public function type_name(this, anon type_id: TypeId, debug_mode: bool = false) throws -> String {
         let type = .get_type(type_id)
 
-        return match type {
+        return match debug_mode { true => format("({}@{}) ", type_id.id, type_id.module.id), else => "" } + match type {
             Never => "never"
             F32 => "f32"
             F64 => "f64"
@@ -1923,10 +1947,10 @@ class CheckedProgram {
             Function(params, return_type_id) => {
                 mut param_names: [String] = []
                 for x in params {
-                    param_names.push(.type_name(x))
+                    param_names.push(.type_name(x, debug_mode))
                 }
 
-                let return_type = .type_name(return_type_id)
+                let return_type = .type_name(return_type_id, debug_mode)
 
                 yield format("function({}) -> {}", join(param_names, separator: ", "), return_type)
             }
@@ -1944,7 +1968,7 @@ class CheckedProgram {
                         first = false
                     }
 
-                    output += .type_name(arg)
+                    output += .type_name(arg, debug_mode)
                 }
 
                 output += ">"
@@ -1963,7 +1987,7 @@ class CheckedProgram {
                         first = false
                     }
 
-                    output += .type_name(arg)
+                    output += .type_name(arg, debug_mode)
                 }
 
                 output += ">"
@@ -1983,15 +2007,15 @@ class CheckedProgram {
                 mut output = ""
 
                 if id.equals(array_struct_id) {
-                    output = format("[{}]", .type_name(args[0]))
+                    output = format("[{}]", .type_name(args[0], debug_mode))
                 } else if id.equals(dictionary_struct_id) {
-                    output = format("[{}:{}]", .type_name(args[0]), .type_name(args[1]))
+                    output = format("[{}:{}]", .type_name(args[0], debug_mode), .type_name(args[1], debug_mode))
                 } else if id.equals(optional_struct_id) {
-                    output = format("{}?", .type_name(args[0]))
+                    output = format("{}?", .type_name(args[0], debug_mode))
                 } else if id.equals(range_struct_id) {
-                    output = format("{}..{}", .type_name(args[0]), .type_name(args[0]))
+                    output = format("{}..{}", .type_name(args[0], debug_mode), .type_name(args[0], debug_mode))
                 } else if id.equals(set_struct_id) {
-                    output = format("{{{}}}", .type_name(args[0]))
+                    output = format("{{{}}}", .type_name(args[0], debug_mode))
                 } else if id.equals(tuple_struct_id) {
                     output = "("
                     mut first = true
@@ -2001,11 +2025,11 @@ class CheckedProgram {
                         } else {
                             first = false
                         }
-                        output += .type_name(arg)
+                        output += .type_name(arg, debug_mode)
                     }
                     output += ")"
                 } else if id.equals(weak_ptr_struct_id) {
-                    output = format("weak {}?", .type_name(args[0]))
+                    output = format("weak {}?", .type_name(args[0], debug_mode))
                 } else {
                     let structure = .get_struct(id)
                     output = structure.name
@@ -2017,7 +2041,7 @@ class CheckedProgram {
                         } else {
                             first = false
                         }
-                        output += .type_name(arg)
+                        output += .type_name(arg, debug_mode)
                     }
                     output += ">"
                 }
@@ -2034,16 +2058,16 @@ class CheckedProgram {
                     } else {
                         first = false
                     }
-                    output += .type_name(type_id)
+                    output += .type_name(type_id, debug_mode)
                 }
                 output += ">"
 
                 yield output
             }
             TypeVariable(name) => name
-            RawPtr(type_id) => format("raw {}", .type_name(type_id))
-            Reference(type_id) => format("&{}", .type_name(type_id))
-            MutableReference(type_id) => format("&mut {}", .type_name(type_id))
+            RawPtr(type_id) => format("raw {}", .type_name(type_id, debug_mode))
+            Reference(type_id) => format("&{}", .type_name(type_id, debug_mode))
+            MutableReference(type_id) => format("&mut {}", .type_name(type_id, debug_mode))
         }
     }
 
@@ -2074,6 +2098,7 @@ class CheckedProgram {
                 result = fixed_point
             }
         }
+
         return result
     }
 
@@ -2082,7 +2107,7 @@ class CheckedProgram {
         let type_ = .get_type(type_id)
 
         match type_ {
-            TypeVariable() => {
+            TypeVariable => {
                 let replacment_type_id_string = generic_inferences.get(type_id.to_string())
                 if replacment_type_id_string.has_value() {
                     return TypeId::from_string(replacment_type_id_string.value())

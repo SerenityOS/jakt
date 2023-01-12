@@ -1,0 +1,25 @@
+/// Expect:
+/// - output: "OK\n"
+
+trait Trait<T> {
+    function bar(this) -> T
+}
+
+struct Thing implements(Trait<u32>) {
+    function bar(this) -> u32 => 1337u32
+}
+
+class Class<T requires(Trait<u32>)> {
+    public function foo(this, anon v: T) {
+        let bar = v.bar()
+
+        if bar == 1337 {
+            println("OK")
+        }
+    }
+}
+
+function main() {
+    let c: Class<Thing> = Class()
+    c.foo(Thing())
+}
