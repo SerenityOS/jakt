@@ -3626,7 +3626,7 @@ struct Typechecker {
             scope.can_throw = true
         }
 
-        let block = .typecheck_block(
+        mut block = .typecheck_block(
             parsed_function.block
             parent_scope_id: function_scope_id
             safety_mode: SafetyMode::Safe
@@ -3642,6 +3642,21 @@ struct Typechecker {
         let return_type_id = match function_return_type_id.equals(unknown_type_id()) {
             true => .infer_function_return_type(block)
             else => .resolve_type_var(type_var_type_id: function_return_type_id, scope_id: function_scope_id)
+        }
+
+        // Unwrap return in throwing fat arrow function that returns void
+        // void can't automatically be cast to ErrorOr<void> which crashes c++ compilation
+        if parsed_function.is_fat_arrow and parsed_function.can_throw and return_type_id.equals(void_type_id()) {
+            let statement = block.statements[0]
+            match statement {
+                Return(val, span) => {
+                    let stmt = CheckedStatement::Expression(expr: val!, span: span!)
+                    block.statements = [stmt]
+                }
+                else => {
+                    panic("No return in fat arrow function")
+                }
+            }
         }
 
         if not function_linkage is External and not return_type_id.equals(void_type_id()) and not block.control_flow.always_transfers_control() {

@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "OK\n"
+
+function f() {
+    println("OK")
+}
+function g() throws => f()
+
+function main() {
+    f()
+}
