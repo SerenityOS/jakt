@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "OK\n"
+
+class Test {
+    function f() {
+        println("OK")
+    }
+
+    public function g() throws => f()
+}
+
+function main() {
+    Test::g()
+}
