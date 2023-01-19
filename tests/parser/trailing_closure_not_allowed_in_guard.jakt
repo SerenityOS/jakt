@@ -1,0 +1,15 @@
+/// Expect:
+/// - error: "Expected `else` keyword\n"
+
+function wrapped(anon action: &function() -> void) -> bool {
+    println("Before")
+    action()
+    println("After")
+    return true
+}
+
+function main() {
+    guard wrapped() {} else {
+        return
+    }
+}

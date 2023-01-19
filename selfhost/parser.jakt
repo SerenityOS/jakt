@@ -1586,6 +1586,7 @@ struct Parser {
     index: usize
     tokens: [Token]
     compiler: Compiler
+    can_have_trailing_closure: bool = true
 
     function parse(compiler: Compiler, tokens: [Token]) throws -> ParsedNamespace {
         mut parser = Parser(index: 0, tokens, compiler)
@@ -2441,10 +2442,13 @@ struct Parser {
         parsed_import.module_name = match .current() {
             Identifier(name, span) => match .peek(1) {
                 LParen => {
+                    let previous_can_have_trailing_closure = .can_have_trailing_closure
+                    .can_have_trailing_closure = false
                     let expression = ParsedExpression::Call(
                         call: .parse_call()!
                         span
                     )
+                    .can_have_trailing_closure = previous_can_have_trailing_closure
                     .index--
                     yield ImportName::Comptime(expression)
                 }
@@ -3791,7 +3795,12 @@ struct Parser {
             }
             While => {
                 .index++
+
+                let previous_can_have_trailing_closure = .can_have_trailing_closure
+                .can_have_trailing_closure = false
                 let condition = .parse_expression(allow_assignments: false, allow_newlines: true)
+                .can_have_trailing_closure = previous_can_have_trailing_closure
+
                 let block = .parse_block()
                 yield ParsedStatement::While(condition, block, span: merge_spans(start, .previous().span()))
             }
@@ -3873,7 +3882,10 @@ struct Parser {
     function parse_guard_statement(mut this) throws -> ParsedStatement {
         let span = .current().span()
         .index++
+        let previous_can_have_trailing_closure = .can_have_trailing_closure
+        .can_have_trailing_closure = false
         let expr = .parse_expression(allow_assignments: false, allow_newlines: true)
+        .can_have_trailing_closure = previous_can_have_trailing_closure
         if .current() is Else {
             .index++
         } else {
@@ -3957,7 +3969,11 @@ struct Parser {
             return ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
         }
 
+        let previous_can_have_trailing_closure = .can_have_trailing_closure
+        .can_have_trailing_closure = false
         let range = .parse_expression(allow_assignments: false, allow_newlines: false)
+        .can_have_trailing_closure = previous_can_have_trailing_closure
+
         mut block = .parse_block();
 
         if destructured_var_decls.size() > 0 {
@@ -3991,7 +4007,11 @@ struct Parser {
         let start_span = .current().span()
         .index++
 
+        let previous_can_have_trailing_closure = .can_have_trailing_closure
+        .can_have_trailing_closure = false
         let condition = .parse_expression(allow_assignments: false, allow_newlines: true)
+        .can_have_trailing_closure = previous_can_have_trailing_closure
+
         let then_block = .parse_block()
 
         mut else_statement: ParsedStatement? = None
@@ -5000,7 +5020,10 @@ struct Parser {
         mut start = .current().span()
         .index++
 
+        let previous_can_have_trailing_closure = .can_have_trailing_closure
+        .can_have_trailing_closure = false
         let expr = .parse_expression(allow_assignments: false, allow_newlines: true)
+        .can_have_trailing_closure = previous_can_have_trailing_closure
         let cases = .parse_match_cases()
 
 
@@ -5369,6 +5392,18 @@ struct Parser {
                     call.args.push((label, label_span, expr))
                 }
             }
+        }
+
+        // Look for a possible trailing closure. For now, this has to be a block with no parameters, which captures everything by reference.
+        // FIXME: Support explicit captures, and maybe parameters.
+        if .can_have_trailing_closure and .current() is LCurly {
+            let start = .current().span()
+            let block = .parse_block()
+            let span = merge_spans(start, .current().span())
+            let captures = [ParsedCapture::AllByReference(span: .empty_span())]
+            let trailing_closure = ParsedExpression::Function(captures, params: [], can_throw: false, is_fat_arrow: false, return_type: ParsedType::Empty, block, span)
+            let reference_to_closure = ParsedExpression::UnaryOp(expr: trailing_closure, op: UnaryOperator::Reference, span)
+            call.args.push(("", .empty_span(), reference_to_closure))
         }
 
         return call

@@ -65,7 +65,7 @@ Some of the features that encourage more readable programs:
 - [x] None coalescing for optionals (`foo ?? bar` yields `foo` if `foo` has a value, otherwise `bar`)
 - [x] `defer` statements.
 - [x] Pointers are always dereferenced with `.` (never `->`)
-- [ ] Trailing closure parameters can be passed outside the call parentheses.
+- [x] Trailing closure parameters can be passed outside the call parentheses.
 - [ ] Error propagation with `ErrorOr<T>` return type and dedicated `try` / `must` keywords.
 
 ## Function calls
