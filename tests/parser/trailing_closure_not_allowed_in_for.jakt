@@ -1,0 +1,13 @@
+/// Expect:
+/// - error: "No function with matching signature found.\n"
+
+function wrapped(anon action: &function() -> void) -> bool {
+    println("Before")
+    action()
+    println("After")
+    return true
+}
+
+function main() {
+    for thing in wrapped() {} {}
+}
