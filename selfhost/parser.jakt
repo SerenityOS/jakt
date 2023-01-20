@@ -3460,26 +3460,28 @@ struct Parser {
             }
         }
         Identifier(name) => {
-            let span = .current().span()
+            let name_span = .current().span()
             .index++
-            mut parsed_type =  ParsedType::Name(name, span)
+            mut parsed_type = ParsedType::Name(name, span: name_span)
             if .current() is LessThan {
+                let generic_start_span = .current().span()
+                .index++
                 mut params: [ParsedType] = []
-                if .current() is LessThan {
+                while not .current() is GreaterThan and not .eof() {
+                    let parsed_type_parameter = .parse_typename() 
+                    if parsed_type_parameter is Empty {
+                        .error_with_hint("Expected a type here", .current().span(), "This type forms a generic instantiation", merge_spans(name_span, generic_start_span))
+                        break
+                    }
+                    params.push(parsed_type_parameter)
+                    
+                    if not .current() is Comma and not .current() is GreaterThan {
+                        .error("Expected `,` or `>` after type parameter", .current().span())
+                        break
+                    }
                     .index++
-                    while not .current() is GreaterThan and not .eof() {
-                        params.push(.parse_typename())
-                        if .current() is Comma {
-                            .index++
-                        }
-                    }
-                    if .current() is GreaterThan {
-                        .index++
-                    } else {
-                        .error("Expected `>` after type parameters", .current().span())
-                    }
                 }
-                parsed_type = ParsedType::GenericType(name, generic_parameters: params, span)
+                parsed_type = ParsedType::GenericType(name, generic_parameters: params, span: name_span)
             }
 
             if .current() is ColonColon {
@@ -3498,7 +3500,7 @@ struct Parser {
                             if .previous() is Identifier {
                                 .index++
                             } else {
-                                .error("Expected name after", span)
+                                .error("Expected name after", name_span)
                             }
                         }
                         else => {

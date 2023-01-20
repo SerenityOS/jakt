@@ -1,0 +1,6 @@
+/// Expect:
+/// - error: "Expected a type here"
+
+function main() {
+  if 1 as! i64 < 0 { }
+}
