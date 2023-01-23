@@ -1871,6 +1871,7 @@ struct CodeGenerator {
                 generated_captures.push(match capture {
                     ByValue => capture.name()
                     ByReference | ByMutableReference => format("&{}", capture.name())
+                    AllByReference => "&"
                 })
             }
             mut generated_params: [String] = []
