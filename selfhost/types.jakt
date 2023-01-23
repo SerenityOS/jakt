@@ -900,17 +900,20 @@ enum CheckedCapture {
     ByValue(name: String, span: Span)
     ByReference(name: String, span: Span)
     ByMutableReference(name: String, span: Span)
+    AllByReference(span: Span)
 
     function name(this) => match this {
         ByValue(name) => name
         ByReference(name) => name
         ByMutableReference(name) => name
+        AllByReference() => ""
     }
 
     function span(this) => match this {
         ByValue(span) => span
         ByReference(span) => span
         ByMutableReference(span) => span
+        AllByReference(span) => span
     }
 }
 

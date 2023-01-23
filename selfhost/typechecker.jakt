@@ -6591,11 +6591,16 @@ struct Typechecker {
         let lambda_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "lambda")
         mut checked_captures: [CheckedCapture] = []
         for capture in captures {
-            if .find_var_in_scope(scope_id, var: capture.name()).has_value() {
+            if capture is AllByReference(span) {
+                checked_captures.push(CheckedCapture::AllByReference(span))
+            } else if .find_var_in_scope(scope_id, var: capture.name()).has_value() {
                 checked_captures.push(match capture {
                     ByValue(name, span) => CheckedCapture::ByValue(name, span)
                     ByReference(name, span) => CheckedCapture::ByReference(name, span)
                     ByMutableReference(name, span) => CheckedCapture::ByMutableReference(name, span)
+                    AllByReference(span) => {
+                        .compiler.panic("AllByReference capture should not be looked up by name")
+                    }
                 })
             } else {
                 .error(format("Variable '{}' not found", capture.name()), span)
