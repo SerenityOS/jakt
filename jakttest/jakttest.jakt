@@ -147,6 +147,7 @@ function print_usage()  {
     eprintln("\t--temp-dir <DIR>\t\tUse DIR as the temporary directory.")
     eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
     eprintln("\t-C,--cpp-compiler <PATH>\t\tUse the C++ compiler at PATH to compile objects. Defaults to clang++.")
+    eprintln("\t-T,--target-triple <TARGET>\t\tSpecify the target triple used for building Jakt executables, defaults to native")
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -245,6 +246,7 @@ struct Options {
     help_wanted: bool
     build_dir: String
     cpp_compiler_path: String?
+    target_triple: String?
 
     function from_args(args: [String]) throws -> Options {
         let files: [String] = []
@@ -258,6 +260,7 @@ struct Options {
             help_wanted: false
             build_dir: "build"
             cpp_compiler_path: None
+            target_triple: None
         )
 
         mut index = 1uz
@@ -285,6 +288,17 @@ struct Options {
                     break
                 }
                 options.cpp_compiler_path = args[index]
+                index++
+                continue
+            }
+
+            if args[index] == "-T" or args[index] == "--target-triple" {
+                index++
+                if index == args.size() {
+                    options.errors.push("Used --target-triple/-T without an argument")
+                    break
+                }
+                options.target_triple = args[index]
                 index++
                 continue
             }
@@ -633,6 +647,7 @@ struct TestScheduler {
         total_test_count: usize
         build_dir: String
         cpp_compiler_path: String? = None
+        opt_target_triple: String? = None
     ) throws -> TestsRunResult {
         // create an empty handler so SIGCHLD is not ignored
         os::ignore_sigchild()
@@ -640,6 +655,7 @@ struct TestScheduler {
         scheduler.failed_count = starting_failed_tests
         // pre-allocate the command buffer to avoid allocating inside a loop
         let run_once_script = os::get_script_execution_string()
+        let target_triple = opt_target_triple ?? ___jakt_get_target_triple_string()
         mut command_buffer: [String] = [
             run_once_script
             "jakttest/run_one.py"
@@ -648,7 +664,7 @@ struct TestScheduler {
             "--jakt-lib-dir"
             String::format("{}/lib", build_dir)
             "--target-triple"
-            ___jakt_get_target_triple_string()
+            target_triple
             "--cpp-compiler"
             cpp_compiler_path ?? "clang++"
             "--cpp-include"
