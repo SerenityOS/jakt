@@ -27,10 +27,10 @@ jobs:
       fail-fast: true
       matrix:
         platform: [ubuntu-22.04]
-        cxx_compiler: [clang++-14]
+        cxx_compiler: [clang++-15]
         include:
           - platform: macos-latest
-            cxx_compiler: "$(brew --prefix llvm@14)/bin/clang++"
+            cxx_compiler: "$(brew --prefix llvm@15)/bin/clang++"
 
     runs-on: ${{ matrix.platform }}
 
@@ -43,9 +43,19 @@ jobs:
           version: 1.10.0
           dest: ${{ github.workspace }}/ninja_bin
 
+      - name: Install Linux dependencies
+        if: ${{ matrix.platform == 'ubuntu-22.04' }}
+        run: |
+          . /etc/lsb-release
+          wget -O /usr/share/keyrings/llvm-snapshot.gpg.key https://apt.llvm.org/llvm-snapshot.gpg.key
+          sudo echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME} main" | sudo tee -a /etc/apt/sources.list.d/llvm.list
+          sudo echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-15 main" | sudo tee -a /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update
+          sudo apt-get install -y clang-15
+
       - name: Install macOS dependencies
         if: ${{ matrix.platform == 'macos-latest' }}
-        run: brew install coreutils
+        run: brew install coreutils llvm@15
 
       - name: Build Jakt Stage 1
         run: |
