@@ -188,6 +188,11 @@ function main(args: [String]) {
     let runtime_library_path = args_parser.option(["-RLP", "--runtime-library-path"]) ?? default_runtime_library_path.to_string()
     mut compiler_job_count = args_parser.option(["-J", "--jobs"]) ?? "2"
 
+    // FIXME: Remove this when parallel runs on windows work correctly.
+    if is_windows() {
+        compiler_job_count = "1"
+    }
+
     let clang_format_path = args_parser.option(["-F", "--clang-format-path"]) ?? "clang-format"
     let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? default_runtime_path.to_string()
     let binary_dir = Path::from_string(args_parser.option(["-B", "--binary-dir"]) ?? "build")
@@ -232,11 +237,6 @@ function main(args: [String]) {
         let project = Project(name: project_name!)
         project.populate()
         return 0
-    }
-
-    // FIXME: Remove this when parallel runs on windows work correctly.
-    if is_windows() {
-        compiler_job_count = "1"
     }
 
     mut file_name: String? = None
