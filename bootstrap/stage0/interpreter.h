@@ -58,6 +58,7 @@ InvalidType = (infallible_integer_cast<i32>((static_cast<u64>(45ULL)))),
 UnknownVariable = (infallible_integer_cast<i32>((static_cast<u64>(46ULL)))),
 Unimplemented = (infallible_integer_cast<i32>((static_cast<u64>(47ULL)))),
 UnwrapOptionalNone = (infallible_integer_cast<i32>((static_cast<u64>(48ULL)))),
+InvalidCharacterConstant = (infallible_integer_cast<i32>((static_cast<u64>(49ULL)))),
 };
 namespace Deferred_Details {
 struct Expression{

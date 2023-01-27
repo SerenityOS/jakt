@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/Array.h>
 #include <AK/Hex.h>
 #include <AK/StringBuilder.h>
 #include <AK/Types.h>
@@ -53,7 +52,7 @@ DeprecatedString encode_hex(const ReadonlyBytes input)
     for (auto ch : input)
         output.appendff("{:02x}", ch);
 
-    return output.build();
+    return output.to_deprecated_string();
 }
 #endif
 
