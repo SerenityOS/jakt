@@ -8,12 +8,12 @@
 #include <AK/ByteBuffer.h>
 #include <AK/Find.h>
 #include <AK/Function.h>
-#include <AK/Memory.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringView.h>
 #include <AK/Vector.h>
 
 #ifndef KERNEL
+#    include <AK/DeprecatedFlyString.h>
 #    include <AK/DeprecatedString.h>
 #    include <AK/FlyString.h>
 #    include <AK/String.h>
@@ -28,13 +28,19 @@ StringView::StringView(String const& string)
 {
 }
 
+StringView::StringView(FlyString const& string)
+    : m_characters(reinterpret_cast<char const*>(string.bytes().data()))
+    , m_length(string.bytes().size())
+{
+}
+
 StringView::StringView(DeprecatedString const& string)
     : m_characters(string.characters())
     , m_length(string.length())
 {
 }
 
-StringView::StringView(FlyString const& string)
+StringView::StringView(DeprecatedFlyString const& string)
     : m_characters(string.characters())
     , m_length(string.length())
 {
@@ -239,8 +245,6 @@ template Optional<u16> StringView::to_uint() const;
 template Optional<u32> StringView::to_uint() const;
 template Optional<unsigned long> StringView::to_uint() const;
 template Optional<unsigned long long> StringView::to_uint() const;
-template Optional<long> StringView::to_uint() const;
-template Optional<long long> StringView::to_uint() const;
 
 #ifndef KERNEL
 Optional<double> StringView::to_double(TrimWhitespace trim_whitespace) const

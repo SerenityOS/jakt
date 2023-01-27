@@ -93,7 +93,9 @@ public:
     {
     }
 
-    DeprecatedString(FlyString const&);
+    DeprecatedString(DeprecatedFlyString const&);
+
+    static ErrorOr<DeprecatedString> from_utf8(ReadonlyBytes);
 
     [[nodiscard]] static DeprecatedString repeated(char, size_t count);
     [[nodiscard]] static DeprecatedString repeated(StringView, size_t count);
@@ -106,7 +108,7 @@ public:
     {
         StringBuilder builder;
         builder.join(separator, collection, fmtstr);
-        return builder.build();
+        return builder.to_deprecated_string();
     }
 
     [[nodiscard]] bool matches(StringView mask, CaseSensitivity = CaseSensitivity::CaseInsensitive) const;
@@ -128,6 +130,8 @@ public:
     [[nodiscard]] DeprecatedString invert_case() const;
 
     [[nodiscard]] bool is_whitespace() const { return StringUtils::is_whitespace(*this); }
+
+    [[nodiscard]] DeprecatedStringCodePointIterator code_points() const;
 
     [[nodiscard]] DeprecatedString trim(StringView characters, TrimMode mode = TrimMode::Both) const
     {
@@ -158,7 +162,7 @@ public:
     [[nodiscard]] Optional<size_t> find(char needle, size_t start = 0) const { return StringUtils::find(*this, needle, start); }
     [[nodiscard]] Optional<size_t> find(StringView needle, size_t start = 0) const { return StringUtils::find(*this, needle, start); }
     [[nodiscard]] Optional<size_t> find_last(char needle) const { return StringUtils::find_last(*this, needle); }
-    // FIXME: Implement find_last(StringView) for API symmetry.
+    [[nodiscard]] Optional<size_t> find_last(StringView needle) const { return StringUtils::find_last(*this, needle); }
     Vector<size_t> find_all(StringView needle) const;
     using SearchDirection = StringUtils::SearchDirection;
     [[nodiscard]] Optional<size_t> find_any_of(StringView needles, SearchDirection direction) const { return StringUtils::find_any_of(*this, needles, direction); }
@@ -212,15 +216,13 @@ public:
 
     bool operator==(StringView) const;
 
-    bool operator==(FlyString const&) const;
+    bool operator==(DeprecatedFlyString const&) const;
 
     bool operator<(DeprecatedString const&) const;
-    bool operator<(char const*) const;
     bool operator>=(DeprecatedString const& other) const { return !(*this < other); }
     bool operator>=(char const* other) const { return !(*this < other); }
 
     bool operator>(DeprecatedString const&) const;
-    bool operator>(char const*) const;
     bool operator<=(DeprecatedString const& other) const { return !(*this > other); }
     bool operator<=(char const* other) const { return !(*this > other); }
 
@@ -284,7 +286,7 @@ public:
     template<typename... Parameters>
     [[nodiscard]] static DeprecatedString formatted(CheckedFormatString<Parameters...>&& fmtstr, Parameters const&... parameters)
     {
-        VariadicFormatParams variadic_format_parameters { parameters... };
+        VariadicFormatParams<AllowDebugOnlyFormatters::No, Parameters...> variadic_format_parameters { parameters... };
         return vformatted(fmtstr.view(), variadic_format_parameters);
     }
 

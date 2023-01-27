@@ -148,7 +148,6 @@ struct LiteralSuffix;
 
 namespace Token_Details {
 struct SingleQuotedString;
-struct SingleQuotedByteString;
 struct QuotedString;
 struct Number;
 struct Identifier;
@@ -308,7 +307,6 @@ struct Boolean;
 struct NumericConstant;
 struct QuotedString;
 struct SingleQuotedString;
-struct SingleQuotedByteString;
 struct Call;
 struct MethodCall;
 struct IndexedTuple;
@@ -346,6 +344,7 @@ namespace ParsedCapture_Details {
 struct ByValue;
 struct ByReference;
 struct ByMutableReference;
+struct AllByReference;
 }
 struct ParsedCapture;
 
@@ -726,6 +725,7 @@ namespace CheckedCapture_Details {
 struct ByValue;
 struct ByReference;
 struct ByMutableReference;
+struct AllByReference;
 }
 struct CheckedCapture;
 
@@ -747,6 +747,7 @@ struct NumericConstant;
 struct QuotedString;
 struct ByteConstant;
 struct CharacterConstant;
+struct CCharacterConstant;
 struct UnaryOp;
 struct BinaryOp;
 struct JaktTuple;

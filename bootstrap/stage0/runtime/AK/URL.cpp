@@ -348,7 +348,7 @@ DeprecatedString URL::serialize_origin() const
     builder.append(m_host);
     if (m_port.has_value())
         builder.appendff(":{}", *m_port);
-    return builder.build();
+    return builder.to_deprecated_string();
 }
 
 bool URL::equals(URL const& other, ExcludeFragment exclude_fragments) const
@@ -406,7 +406,7 @@ bool URL::code_point_is_in_percent_encode_set(u32 code_point, URL::PercentEncode
     case URL::PercentEncodeSet::EncodeURI:
         // NOTE: This is the same percent encode set that JS encodeURI() uses.
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI
-        return code_point >= 0x7E || (!is_ascii_alphanumeric(code_point) && !";,/?:@&=+$-_.!~*'()#"sv.contains(static_cast<char>(code_point)));
+        return code_point > 0x7E || (!is_ascii_alphanumeric(code_point) && !";,/?:@&=+$-_.!~*'()#"sv.contains(static_cast<char>(code_point)));
     default:
         VERIFY_NOT_REACHED();
     }
