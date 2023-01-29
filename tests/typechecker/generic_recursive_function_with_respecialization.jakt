@@ -14,5 +14,5 @@ function main() {
     let b = recurse('a')
 
     println("{}", a)
-    println("{}", b)
+    println("{:c}", b)
 }

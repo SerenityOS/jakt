@@ -159,7 +159,7 @@ struct TypeId {
 
     // FIXME: Remove when we have language support, used as workaround [String:String] <-> [TypeId:TypeId]
     function from_string(anon type_id_string: String) throws -> TypeId {
-        let parts = type_id_string.split('_')
+        let parts = type_id_string.split(c'_')
         if not (parts.size() == 2) {
             panic(format("Failed to convert string ‘{}’ to a TypeId: Wrong number of parts. (Wanted 2, got {})", type_id_string, parts.size()))
         }
@@ -1393,6 +1393,7 @@ boxed enum CheckedExpression {
     QuotedString(val: CheckedStringLiteral, span: Span)
     ByteConstant(val: String, span: Span)
     CharacterConstant(val: String, span: Span)
+    CCharacterConstant(val: String, span: Span)
     UnaryOp(expr: CheckedExpression, op: CheckedUnaryOperator, span: Span, type_id: TypeId)
     BinaryOp(lhs: CheckedExpression, op: BinaryOperator, rhs: CheckedExpression, span: Span, type_id: TypeId)
     JaktTuple(vals: [CheckedExpression], span: Span, type_id: TypeId)
@@ -1474,7 +1475,8 @@ boxed enum CheckedExpression {
         Boolean => builtin(BuiltinType::Bool)
         QuotedString(val) => val.type_id
         ByteConstant => builtin(BuiltinType::U8)
-        CharacterConstant => builtin(BuiltinType::CChar)
+        CCharacterConstant => builtin(BuiltinType::CChar)
+        CharacterConstant => builtin(BuiltinType::U32)
         EnumVariantArg(arg) => arg.type_id
         NamespacedVar(var) => var.type_id
         Var(var) => var.type_id

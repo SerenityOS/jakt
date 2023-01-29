@@ -2,7 +2,7 @@
 /// - output: "bar\n"
 
 function main() {
-    let result = "foo bar".split(' ')
+    let result = "foo bar".split(c' ')
 
     println("{}", result[1])
 }

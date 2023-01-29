@@ -14,8 +14,7 @@ function is_ascii_octdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'8')
 function is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
 
 enum Token {
-    SingleQuotedString(quote: String, span: Span)
-    SingleQuotedByteString(quote: String, span: Span)
+    SingleQuotedString(quote: String, prefix: String?, span: Span)
     QuotedString(quote: String, span: Span)
     Number(number: NumericConstant, span: Span)
     Identifier(name: String, span: Span)
@@ -277,9 +276,14 @@ struct Lexer implements(ThrowingIterable<Token>) {
             return .lex_number_or_name()
         }
 
-        let is_byte = .peek() == b'b'
-        if is_byte {
-            .index++
+        let prefix: String? = match .peek() {
+            b'b' => "b"
+            b'c' => "c"
+            else => None
+        }
+
+        if prefix.has_value() {
+            .index += 1
         }
 
         let start = .index
@@ -312,10 +316,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
 
         let quote = builder.to_string()
         let end = .index
-        if is_byte {
-            return Token::SingleQuotedByteString(quote, span: Span(start, end))
-        }
-        return Token::SingleQuotedString(quote, span: Span(start, end))
+        return Token::SingleQuotedString(quote, prefix, span: Span(start, end))
     }
 
     function lex_number_or_name(mut this) throws -> Token {
@@ -325,7 +326,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
             .error("unexpected eof", Span(start, end: start))
             return Token::Garbage(Span(start, end: start))
         }
-        if is_ascii_digit(.peek()) {  
+        if is_ascii_digit(.peek()) {
             return .lex_number()
         } else if is_ascii_alpha(.peek()) or .peek() == b'_' {
             mut string_builder = StringBuilder::create()
@@ -501,7 +502,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         .index++
 
         if delimiter == b'\'' {
-            return Token::SingleQuotedString(quote: str, span: Span(start, end))
+            return Token::SingleQuotedString(quote: str, prefix: None, span: Span(start, end))
         }
 
         return Token::QuotedString(quote: str, span: Span(start, end))

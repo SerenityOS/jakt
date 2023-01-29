@@ -13,7 +13,7 @@ enum ParsedTest {
     NoExpectOrSkip
 }
 
-function is_whitespace(anon cp: u32) -> bool => cp == ' ' as! u32 or cp == '\t' as! u32 or cp == '\r' as! u32
+function is_whitespace(anon cp: u32) -> bool => cp == ' ' or cp == '\t' or cp == '\r'
 
 struct Parser {
     iterator: CodePointIterator
@@ -48,7 +48,7 @@ struct Parser {
         mut builder = StringBuilder::create()
         while not .is_eof() {
             let cp = .iterator.next()!
-            guard cp != '"' as! u32 else {
+            guard cp != '"' else {
 
                 return builder.to_string()
             }
@@ -103,7 +103,7 @@ struct Parser {
                 break
             }
             .skip_whitespace()
-            guard .current() == '-' as! u32 and not .is_eof() else {
+            guard .current() == '-' and not .is_eof() else {
                 break
             }
             .iterator.next()
@@ -134,7 +134,7 @@ struct Parser {
             }
 
             .skip_whitespace()
-            if .is_eof() or .current() != ':' as! u32 {
+            if .is_eof() or .current() != ':' {
                 continue
             }
             .iterator.next()

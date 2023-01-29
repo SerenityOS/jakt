@@ -112,8 +112,7 @@ struct FormattedToken {
     }
 
     function token_text(this) throws -> String => match .token {
-        SingleQuotedString(quote) => format("'{}'", quote)
-        SingleQuotedByteString(quote) => format("b'{}'", quote)
+        SingleQuotedString(quote, prefix) => format("{}'{}'", prefix ?? "", quote)
         QuotedString(quote) => format("\"{}\"", quote)
         Number(prefix, number, suffix) => format("{}{}{}", prefix.to_string(), number, suffix.to_string())
         Identifier(name) => name

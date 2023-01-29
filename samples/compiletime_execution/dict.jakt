@@ -7,7 +7,7 @@ comptime is_empty() -> bool {
 }
 comptime get() => ["a":'a'].get("a")! == 'a'
 comptime set() throws -> bool {
-    mut dict: Dictionary<String, c_char> = [:]
+    mut dict: Dictionary<String, u32> = [:]
     dict.set("b", 'b')
     return dict.contains("b") and dict.get("b")! == 'b'
 }

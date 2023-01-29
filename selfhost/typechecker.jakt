@@ -5993,8 +5993,14 @@ struct Typechecker {
                 UnknownUnsigned(val) => .infer_unsigned_int(val, span, type_hint: type_hint_unwrapped)
             }
         }
-        SingleQuotedString(val, span) => CheckedExpression::CharacterConstant(val, span)
-        SingleQuotedByteString(val, span) => CheckedExpression::ByteConstant(val, span)
+        SingleQuotedString(val, prefix, span) => match prefix ?? "" {
+            "" => CheckedExpression::CharacterConstant(val, span)
+            "b" => CheckedExpression::ByteConstant(val, span)
+            "c" => CheckedExpression::CCharacterConstant(val, span)
+            else => {
+                .compiler.panic(format("Unknown string prefix {}", prefix))
+            }
+        }
         QuotedString(val, span) => {
             if .dump_try_hints {
                 .dump_try_hint(span)
@@ -6105,7 +6111,7 @@ struct Typechecker {
                         )
                         span: checked_expr.span()
                     )
-                    
+
                     yield None
                 }
             }
@@ -6356,7 +6362,7 @@ struct Typechecker {
                 checked_values.push(checked_value)
             }
 
-            // if a type is Optional wrap the value in Some() if it isn't already 
+            // if a type is Optional wrap the value in Some() if it isn't already
             if type_hint.has_value() and .get_type(type_hint!) is GenericInstance(id, args) and checked_types.size() == args.size() {
                 for i in 0..args.size() {
                     mut value_type = checked_types[i]

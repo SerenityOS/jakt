@@ -101,7 +101,7 @@ function parse_format_range(anon range: String, anon input_file_length: usize) t
     // range: <start-offset>:<end-offset>
     // {start,end}-offset: usize
 
-    let parts = range.split(':')
+    let parts = range.split(c':')
     if parts.is_empty() {
         return FormatRange(
             start: 0
