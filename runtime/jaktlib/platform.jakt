@@ -6,7 +6,7 @@ struct Target {
 
     function active() throws -> Target {
         let triple = ___jakt_get_target_triple_string()
-        let parts = triple.split('-')
+        let parts = triple.split(c'-')
         if parts.size() != 4 {
             eprintln("Invalid target triple '{}'", triple)
             throw Error::from_errno(22)
@@ -64,7 +64,7 @@ comptime platform_module(anon mut name: String) throws -> [String] {
     if sepatator.has_value() {
         let name_length = name.length()
         prefix = name.substring(start: 0, length: sepatator!)
-        name = name.substring(start: sepatator!, length: name_length - sepatator!) 
+        name = name.substring(start: sepatator!, length: name_length - sepatator!)
     }
 
     return add_to_each(platform_import_names(), prefix, suffix: format("_{}", name))

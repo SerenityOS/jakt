@@ -1016,8 +1016,7 @@ boxed enum ParsedExpression {
     Boolean(val: bool, span: Span)
     NumericConstant(val: NumericConstant, span: Span)
     QuotedString(val: String, span: Span)
-    SingleQuotedString(val: String, span: Span)
-    SingleQuotedByteString(val: String, span: Span)
+    SingleQuotedString(val: String, prefix: String?, span: Span)
     Call(call: ParsedCall, span: Span)
     MethodCall(expr: ParsedExpression, call: ParsedCall, is_optional: bool, span: Span)
     IndexedTuple(expr: ParsedExpression, index: usize, is_optional: bool, span: Span)
@@ -1107,12 +1106,8 @@ boxed enum ParsedExpression {
             QuotedString(val: rhs_val) => lhs_val == rhs_val
             else => false
         }
-        SingleQuotedString(val: lhs_val) => match rhs_expression {
-            SingleQuotedString(val: rhs_val) => lhs_val == rhs_val
-            else => false
-        }
-        SingleQuotedByteString(val: lhs_val) => match rhs_expression {
-            SingleQuotedByteString(val: rhs_val) => lhs_val == rhs_val
+        SingleQuotedString(val: lhs_val, prefix: lhs_prefix) => match rhs_expression {
+            SingleQuotedString(val: rhs_val, prefix: rhs_prefix) => (lhs_val == rhs_val) and (lhs_prefix == rhs_prefix)
             else => false
         }
         Call(call: lhs_call) => match rhs_expression {
@@ -4152,13 +4147,9 @@ struct Parser {
             .index++
             yield ParsedExpression::QuotedString(val: quote, span)
         }
-        SingleQuotedString(quote, span) => {
+        SingleQuotedString(quote, prefix, span) => {
             .index++
-            yield ParsedExpression::SingleQuotedString(val: quote, span)
-        }
-        SingleQuotedByteString(quote, span) => {
-            .index++
-            yield ParsedExpression::SingleQuotedByteString(val: quote, span)
+            yield ParsedExpression::SingleQuotedString(val: quote, prefix, span)
         }
         Number(prefix, number, suffix, span) => .parse_number(prefix, number, suffix, span)
         True(span) => {
@@ -5179,7 +5170,6 @@ struct Parser {
         | Number
         | QuotedString
         | SingleQuotedString
-        | SingleQuotedByteString
         | LParen => ParsedMatchPattern::Expression(defaults: [:], .parse_operand())
 
         Else => {

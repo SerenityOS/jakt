@@ -1525,7 +1525,8 @@ struct CodeGenerator {
             }
         }
         ByteConstant(val) => "'" + val + "'"
-        CharacterConstant(val) => "'" + val + "'"
+        CCharacterConstant(val) => "'" + val + "'"
+        CharacterConstant(val) => "static_cast<u32>(U'" + val + "')"
         Var(var) => match var.name {
             "this" => "*this"
             else => var.name

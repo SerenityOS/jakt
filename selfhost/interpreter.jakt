@@ -17,6 +17,7 @@ enum InterpretError : i32 {
     UnknownVariable
     Unimplemented
     UnwrapOptionalNone
+    InvalidCharacterConstant
 }
 
 function cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter: Interpreter, saturating: bool = false) throws -> Value {
@@ -154,7 +155,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
         )
         span: this_value.span
     )
-    CChar(x) => CheckedExpression::CharacterConstant(val: format("{}", x), span: this_value.span)
+    CChar(x) => CheckedExpression::CCharacterConstant(val: format("{}", x), span: this_value.span)
     CInt(x)  => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(x as! i32), span: this_value.span, type_id: builtin(BuiltinType::CInt))
     OptionalNone => CheckedExpression::OptionalNone(span: this_value.span, type_id: unknown_type_id())
     OptionalSome(value) => {
@@ -5795,7 +5796,17 @@ class Interpreter {
                 }
             }
         }
-        CharacterConstant(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::CChar(val.byte_at(0) as! c_char), span: span))
+        CCharacterConstant(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::CChar(val.byte_at(0) as! c_char), span: span))
+        CharacterConstant(val, span) => {
+            mut code_points = val.code_points()
+            let code_point = code_points.next()
+            if not code_point.has_value() {
+                .error("Invalid character constant", span)
+                throw Error::from_errno(InterpretError::InvalidCharacterConstant as! i32)
+            }
+
+            yield StatementResult::JustValue(Value(impl: ValueImpl::U32(code_point!), span: span))
+        }
         JaktArray(vals, repeat, span, type_id) => match repeat.has_value() {
             true => {
                 let count = match .execute_expression(repeat!, scope) {

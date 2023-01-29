@@ -2,6 +2,6 @@
 /// - output: "xxxxHello\n"
 
 function main() {
-    let exes = String::repeated(character: 'x', count: 4)
+    let exes = String::repeated(character: c'x', count: 4)
     println("{}Hello", exes);
 }

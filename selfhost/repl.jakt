@@ -103,6 +103,7 @@ function serialize_ast_node(anon node: CheckedExpression) throws -> String => ma
     }
     ByteConstant(val) => format("b'{}'", val)
     CharacterConstant(val) => format("'{}'", val)
+    CCharacterConstant(val) => format("c'{}'", val)
     UnaryOp(expr, op) => serialize_unary_operation(op, serialize_ast_node(expr))
     JaktTuple(vals) => {
         mut builder = StringBuilder::create()
@@ -170,7 +171,7 @@ function serialize_ast_node(anon node: CheckedExpression) throws -> String => ma
     }
     IndexedExpression(expr, index) => format("{}[{}]", serialize_ast_node(expr), serialize_ast_node(index))
     IndexedDictionary(expr, index) => format("{}[{}]", serialize_ast_node(expr), serialize_ast_node(index))
-    IndexedTuple(expr, index) 
+    IndexedTuple(expr, index)
     | IndexedStruct(expr, index) => format("{}.{}", serialize_ast_node(expr), index)
     NamespacedVar(namespaces, var) => {
         mut builder = StringBuilder::create()
@@ -323,7 +324,7 @@ struct REPL {
             mut bytes_: [u8] = []
             bytes_.ensure_capacity(line.length())
             while pos < line.length() {
-                bytes_.push(line.byte_at(pos)) 
+                bytes_.push(line.byte_at(pos))
                 ++pos
             }
 

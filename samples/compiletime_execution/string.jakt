@@ -14,8 +14,8 @@ comptime replace() throws => "well, hiya friends".replace(replace: "hiya", with:
 comptime byte_at() throws => "AAAA".byte_at(3)
 comptime starts_with() throws => "abcdef".starts_with("abc")
 comptime ends_with() throws => "abcdef".ends_with("def")
-comptime repeated() throws => String::repeated(character: 'A', count: 5)
-comptime split() throws => "a;b;c".split(';')
+comptime repeated() throws => String::repeated(character: c'A', count: 5)
+comptime split() throws => "a;b;c".split(c';')
 
 function main() {
     mut success = empty()
