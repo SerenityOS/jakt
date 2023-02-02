@@ -343,6 +343,7 @@ struct ParsedRecord {
 
 enum FunctionType {
     Normal
+    Destructor
     ImplicitConstructor
     ImplicitEnumConstructor
     ExternalClassConstructor
@@ -1702,7 +1703,7 @@ struct Parser {
                     }
                 }
                 Function | Comptime => {
-                    mut parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public, is_comptime: .current() is Comptime)
+                    mut parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public, is_comptime: .current() is Comptime, is_destructor: false)
                     .apply_attributes(&mut parsed_function, &active_attributes)
                     active_attributes = []
                     parsed_namespace.functions.push(parsed_function)
@@ -1748,7 +1749,7 @@ struct Parser {
                     .index++
                     match .current() {
                         Function => {
-                            mut parsed_function = .parse_function(FunctionLinkage::External, Visibility::Public, is_comptime: false)
+                            mut parsed_function = .parse_function(FunctionLinkage::External, Visibility::Public, is_comptime: false, is_destructor: false)
                             .apply_attributes(&mut parsed_function, &active_attributes)
                             active_attributes = []
                             parsed_namespace.functions.push(parsed_function)
@@ -2160,6 +2161,7 @@ struct Parser {
                         FunctionLinkage::Internal
                         Visibility::Public
                         is_comptime: false
+                        is_destructor: false
                         allow_missing_body: true
                     )
                     if method.block.stmts.is_empty() {
@@ -2625,7 +2627,7 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility, is_virtual: false, is_override: false, is_comptime)
+                    let parsed_method = .parse_method(function_linkage, visibility, is_virtual: false, is_override: false, is_comptime, is_destructor: false)
 
                     methods.push(parsed_method)
                 }
@@ -2776,7 +2778,7 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility, is_virtual: false, is_override: false, is_comptime)
+                    let parsed_method = .parse_method(function_linkage, visibility, is_virtual: false, is_override: false, is_comptime, is_destructor: false)
 
                     methods.push(parsed_method)
                 }
@@ -2980,9 +2982,10 @@ struct Parser {
 
                     fields.push(field)
                 }
-                Function | Comptime => {
+                Function | Comptime | Destructor => {
                     // Parse a method
                     let is_comptime = .current() is Comptime
+                    let is_destructor = .current() is Destructor
 
                     let function_linkage = match definition_linkage {
                         Internal => FunctionLinkage::Internal
@@ -3002,7 +3005,7 @@ struct Parser {
                     last_virtual = false
                     last_override = false
 
-                    mut parsed_method = .parse_method(function_linkage, visibility, is_virtual, is_override, is_comptime: .current() is Comptime)
+                    mut parsed_method = .parse_method(function_linkage, visibility, is_virtual, is_override, is_comptime, is_destructor)
                     .apply_attributes(&mut parsed_method, &active_attributes)
                     active_attributes = []
 
@@ -3285,6 +3288,7 @@ struct Parser {
         anon linkage: FunctionLinkage
         anon visibility: Visibility
         is_comptime: bool
+        is_destructor: bool
         allow_missing_body: bool = false
     ) throws -> ParsedFunction {
         mut parsed_function = ParsedFunction(
@@ -3304,32 +3308,59 @@ struct Parser {
             is_fat_arrow: false
         )
 
-        .index++
+        if is_destructor {
+            // Destructors have an implicit ‘mut this’ parameter.
+            parsed_function.type = FunctionType::Destructor
+            parsed_function.params.push(ParsedParameter(
+                requires_label: false
+                variable: ParsedVariable(
+                    name: "this",
+                    parsed_type: ParsedType::Empty
+                    is_mutable: true
+                    span: .current().span()
+                )
+                default_argument: None
+                span: .current().span()
+            ))
+        }
+
+        if not is_destructor {
+            .index++
+        }
 
         if .eof() {
             .error("Incomplete function definition", .current().span())
             return parsed_function
         }
 
-        guard .current() is Identifier(name) else {
-            .error("Incomplete function definition", .current().span())
-            return parsed_function
+        if is_destructor {
+            parsed_function.name = "~"
+            parsed_function.name_span = .previous().span()
+        } else {
+            guard .current() is Identifier(name) else {
+                .error("Incomplete function definition", .current().span())
+                return parsed_function
+            }
+            parsed_function.name = name
+            parsed_function.name_span = .current().span()
         }
-        parsed_function.name = name
-        parsed_function.name_span = .current().span()
 
         .index++
 
-        parsed_function.generic_parameters = .parse_generic_parameters()
+        if not is_destructor {
+            parsed_function.generic_parameters = .parse_generic_parameters()
+        }
 
         if .eof() {
             .error("Incomplete function", .current().span())
         }
 
-        parsed_function.params = .parse_function_parameters()
+        if not is_destructor {
+            parsed_function.params = .parse_function_parameters()
+        }
 
         // NOTE: main() always throws
-        mut can_throw = name == "main"
+        mut can_throw = parsed_function.name == "main"
         if .current() is Throws {
             can_throw = true
             .index++
@@ -3391,8 +3422,8 @@ struct Parser {
         )
     }
 
-    function parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_virtual: bool, is_override: bool, is_comptime: bool) throws -> ParsedMethod {
-        mut parsed_function = .parse_function(linkage, visibility, is_comptime)
+    function parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_virtual: bool, is_override: bool, is_comptime: bool, is_destructor: bool) throws -> ParsedMethod {
+        mut parsed_function = .parse_function(linkage, visibility, is_comptime, is_destructor)
 
         if linkage is External {
             parsed_function.must_instantiate = true

@@ -181,6 +181,7 @@ struct FormattedToken {
         Continue => "continue"
         Cpp => "cpp"
         Defer => "defer"
+        Destructor => "destructor"
         Else => "else"
         Enum => "enum"
         Extern => "extern"

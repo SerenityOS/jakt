@@ -1001,8 +1001,21 @@ struct CodeGenerator {
                 } else {
                     output += format("class {} : public RefCounted<{}>, public Weakable<{}> {{\n", struct_.name_for_codegen(), class_name_with_generics, class_name_with_generics)
                 }
-                output += "  public:\n"
-                output += format("virtual ~{}() = default;\n", struct_.name_for_codegen())
+
+                let scope = .program.get_scope(struct_.scope_id)
+                mut has_destructor = false
+                for (_, function_ids) in scope.functions {
+                    for function_id in function_ids {
+                        let function_ = .program.get_function(function_id)
+                        if function_.type is Destructor {
+                            has_destructor = true
+                        }
+                    }
+                }
+                if not has_destructor {
+                    output += "  public:\n"
+                    output += format("virtual ~{}() = default;\n", struct_.name_for_codegen())
+                }
             }
             Struct => {
                 output += format("struct {}", struct_.name_for_codegen())
@@ -1035,7 +1048,14 @@ struct CodeGenerator {
                 .current_function = Some(function_)
                 defer .current_function = previous_function_id
 
-                if function_.type is ImplicitConstructor {
+                if function_.type is Destructor {
+                    if struct_.generic_parameters.is_empty() {
+                        output += .codegen_destructor_predecl(&struct_)
+                    } else {
+                        output += .codegen_destructor(&struct_, &function_, is_inline: true)
+                    }
+                    output += "\n"
+                } else if function_.type is ImplicitConstructor {
                     if struct_.generic_parameters.is_empty() {
                         output += .codegen_constructor_predecl(function_)
                     } else {
@@ -3327,6 +3347,43 @@ struct CodeGenerator {
         return output
     }
 
+    function codegen_destructor_predecl(mut this, anon struct_: &CheckedStruct) throws -> String {
+        mut output = ""
+        output += "public:\n"
+        output += "    ~" + struct_.name + "();\n"
+        return output
+    }
+
+    function codegen_destructor(mut this, anon struct_: &CheckedStruct, anon function_: &CheckedFunction, is_inline: bool) throws -> String {
+        mut output = ""
+        let qualified_name = .codegen_type_possibly_as_namespace(type_id: struct_.type_id, as_namespace: true)
+
+        if not is_inline and not struct_.generic_parameters.is_empty() {
+            output += "template <"
+            mut first = true
+            for param in struct_.generic_parameters {
+                if first {
+                    first = false
+                } else {
+                    output += ","
+                }
+                output += "typename "
+                output += .codegen_type(param.type_id)
+            }
+            output += ">\n"
+        }
+
+        if is_inline {
+            output += format("~{}()", struct_.name)
+        } else {
+            output += format("{}::~{}()", qualified_name, struct_.name)
+        }
+
+        output += .codegen_block(block: function_.block)
+
+        return output
+    }
+
     function codegen_constructor_predecl(mut this, anon function_: CheckedFunction) throws -> String {
         let type_id = function_.return_type_id
         let type_ = .program.get_type(type_id)
@@ -3627,9 +3684,11 @@ struct CodeGenerator {
             if as_method and function_.is_static() {
                 output += "static "
             }
-            output += match function_.can_throw {
-                true => format("ErrorOr<{}>", .codegen_type(function_.return_type_id))
-                else => .codegen_type(function_.return_type_id)
+            if not function_.type is Destructor {
+                output += match function_.can_throw {
+                    true => format("ErrorOr<{}>", .codegen_type(function_.return_type_id))
+                    else => .codegen_type(function_.return_type_id)
+                }
             }
         }
 
@@ -3646,7 +3705,14 @@ struct CodeGenerator {
                 output += qualifier
                 output += "::"
             }
-            output += function_.name_for_codegen()
+            if function_.type is Destructor {
+                guard .program.get_type(containing_struct!) is Struct(struct_id) else {
+                    panic("Destructor doesn't have a containing struct")
+                }
+                output += "~" + .program.get_struct(struct_id).name
+            } else {
+                output += function_.name_for_codegen()
+            }
         }
 
         output += "("
