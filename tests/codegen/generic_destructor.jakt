@@ -1,0 +1,15 @@
+/// Expect:
+/// - output: "~Foo: 123\n~Foo: A\n"
+
+struct Foo<T> {
+    public value: T
+
+    destructor {
+       println("~Foo: {}", .value)
+    }
+}
+
+function main() {
+    mut a = Foo(value: "A")
+    let b = Foo(value: 123)
+}

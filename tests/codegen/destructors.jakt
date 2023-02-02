@@ -1,0 +1,38 @@
+/// Expect:
+/// - output: "~S3\n~S2\n~S1\n~S1\n~S1\n~S1\n~C9\n"
+
+struct S {
+    value: usize
+
+    destructor {
+        println("~S{}", .value)
+    }
+}
+
+class C {
+    public value: usize
+    
+    destructor {
+        println("~C{}", .value)
+    }
+}
+
+function main() {
+    {
+        let s1 = S(value: 1)
+        let s2 = S(value: 2)
+        let s3 = S(value: 3)
+    }
+
+    {
+        let s1 = S(value: 1)
+        let s2 = s1
+        let s3 = s1
+    }
+
+    {
+        let c1 = C(value: 9)
+        let c2 = c1
+        let c3 = c1
+    }
+}
