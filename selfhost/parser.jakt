@@ -3362,7 +3362,11 @@ struct Parser {
         // NOTE: main() always throws
         mut can_throw = parsed_function.name == "main"
         if .current() is Throws {
-            can_throw = true
+            if is_destructor {
+                .error("Destructor cannot throw", .current().span())
+            } else {
+                can_throw = true
+            }
             .index++
         }
         parsed_function.can_throw = can_throw

@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "Destructor cannot throw"
+
+struct S {
+    destructor throws {
+    }
+}
+
+function main() {
+}
