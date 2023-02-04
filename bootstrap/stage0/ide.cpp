@@ -2691,7 +2691,7 @@ NonnullRefPtr<types::CheckedFunction> const checked_function = ((program)->get_f
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = ((checked_function)->type);
 switch(__jakt_match_variant.index()) {
-case 2: {
+case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::FunctionType::ImplicitEnumConstructor>();
 {
 types::TypeId const type_id = ((checked_function)->return_type_id);
@@ -2700,7 +2700,7 @@ return (TRY((ide::get_enum_variant_signature_from_type_id_and_name(program,type_
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 1: {
+case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::FunctionType::ImplicitConstructor>();
 {
 return (TRY((ide::get_constructor_signature(program,function_id))));

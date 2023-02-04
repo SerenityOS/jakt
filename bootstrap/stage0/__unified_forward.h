@@ -216,12 +216,13 @@ struct Class;
 struct Continue;
 struct Cpp;
 struct Defer;
+struct Destructor;
 struct Else;
 struct Enum;
 struct Extern;
 struct False;
 struct For;
-struct Function;
+struct Fn;
 struct Comptime;
 struct If;
 struct Import;
@@ -388,6 +389,7 @@ struct BinaryOperator;
 
 namespace FunctionType_Details {
 struct Normal;
+struct Destructor;
 struct ImplicitConstructor;
 struct ImplicitEnumConstructor;
 struct ExternalClassConstructor;

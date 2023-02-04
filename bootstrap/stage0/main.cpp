@@ -83,7 +83,7 @@ TRY((((formatted_file).append_string(TRY((__jakt_format(Jakt::DeprecatedString("
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 108: {
+case 109: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Garbage>();JaktInternal::Optional<DeprecatedString> const& consumed = __jakt_match_value.consumed;
 {
 if (((consumed).has_value())){

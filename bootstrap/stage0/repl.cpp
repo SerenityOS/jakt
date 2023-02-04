@@ -548,7 +548,7 @@ continue;
 }
 parser::Parser parser = parser::Parser(static_cast<size_t>(0ULL),tokens,((*this).compiler),true);
 lexer::Token const first_token = (((tokens).first()).value());
-if (((((((((((first_token).index() == 74 /* Function */) || ((first_token).index() == 75 /* Comptime */)) || ((first_token).index() == 93 /* Struct */)) || ((first_token).index() == 65 /* Class */)) || ((first_token).index() == 70 /* Enum */)) || ((first_token).index() == 62 /* Boxed */)) || ((first_token).index() == 84 /* Namespace */)) || ((first_token).index() == 77 /* Import */)) || ((first_token).index() == 107 /* Trait */))){
+if (((((((((((first_token).index() == 75 /* Fn */) || ((first_token).index() == 76 /* Comptime */)) || ((first_token).index() == 94 /* Struct */)) || ((first_token).index() == 65 /* Class */)) || ((first_token).index() == 71 /* Enum */)) || ((first_token).index() == 62 /* Boxed */)) || ((first_token).index() == 85 /* Namespace */)) || ((first_token).index() == 78 /* Import */)) || ((first_token).index() == 108 /* Trait */))){
 parser::ParsedNamespace const parsed_namespace = ({ Optional<parser::ParsedNamespace> __jakt_var_703;
 auto __jakt_var_704 = [&]() -> ErrorOr<parser::ParsedNamespace> { return TRY((((parser).parse_namespace()))); }();
 if (__jakt_var_704.is_error()) {{

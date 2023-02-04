@@ -565,7 +565,7 @@ JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_fun
 ScopeGuard __jakt_var_448([&] {
 (((*this).current_function) = previous_function);
 });
-if (((((((function_)->linkage)).index() == 1 /* External */) || ((((function_)->type)).index() == 1 /* ImplicitConstructor */)) || ((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))){
+if (((((((function_)->linkage)).index() == 1 /* External */) || ((((function_)->type)).index() == 2 /* ImplicitConstructor */)) || ((((function_)->type)).index() == 3 /* ImplicitEnumConstructor */))){
 continue;
 }
 if ((!(((((((function_)->generics))->params)).is_empty())))){
@@ -643,7 +643,7 @@ JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_fun
 ScopeGuard __jakt_var_449([&] {
 (((*this).current_function) = previous_function);
 });
-if (((((((function_)->linkage)).index() == 1 /* External */) || ((((function_)->type)).index() == 1 /* ImplicitConstructor */)) || ((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))){
+if (((((((function_)->linkage)).index() == 1 /* External */) || ((((function_)->type)).index() == 2 /* ImplicitConstructor */)) || ((((function_)->type)).index() == 3 /* ImplicitEnumConstructor */))){
 continue;
 }
 if (((((((function_)->generics))->params)).is_empty())){
@@ -713,11 +713,11 @@ JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_fun
 ScopeGuard __jakt_var_450([&] {
 (((*this).current_function) = previous_function);
 });
-if (((((function_)->type)).index() == 1 /* ImplicitConstructor */)){
+if (((((function_)->type)).index() == 2 /* ImplicitConstructor */)){
 (output += TRY((((*this).codegen_constructor(function_,false)))));
 (output += Jakt::DeprecatedString("\n"sv));
 }
-else if (((!(((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))) && ((!(((function_)->is_comptime))) && ((((((function_)->generics))->params)).is_empty())))){
+else if (((!(((((function_)->type)).index() == 3 /* ImplicitEnumConstructor */))) && ((!(((function_)->is_comptime))) && ((((((function_)->generics))->params)).is_empty())))){
 (output += TRY((((*this).codegen_function_in_namespace(function_,((struct_).type_id),false)))));
 (output += Jakt::DeprecatedString("\n"sv));
 }
@@ -791,7 +791,7 @@ JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_fun
 ScopeGuard __jakt_var_451([&] {
 (((*this).current_function) = previous_function);
 });
-if (((!(((((function_)->type)).index() == 1 /* ImplicitConstructor */))) && ((!(((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))) && (!(((function_)->is_comptime)))))){
+if (((!(((((function_)->type)).index() == 2 /* ImplicitConstructor */))) && ((!(((((function_)->type)).index() == 3 /* ImplicitEnumConstructor */))) && (!(((function_)->is_comptime)))))){
 (output += TRY((((*this).codegen_function_in_namespace(function_,((enum_).type_id),false)))));
 (output += Jakt::DeprecatedString("\n"sv));
 }
@@ -1607,7 +1607,7 @@ JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_fun
 ScopeGuard __jakt_var_466([&] {
 (((*this).current_function) = previous_function_id);
 });
-if ((!(((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */)))){
+if ((!(((((function_)->type)).index() == 3 /* ImplicitEnumConstructor */)))){
 if ((((((enum_).generic_parameters)).is_empty()) && ((((((function_)->generics))->params)).is_empty()))){
 (output += TRY((((*this).codegen_function_predecl(function_,true)))));
 }
@@ -2567,15 +2567,15 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Ch
 types::CheckedTypeCast const& cast = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_475; {
 types::TypeId final_type_id = ((cast).type_id());
+NonnullRefPtr<typename types::Type> const type = ((((*this).program))->get_type(final_type_id));
 DeprecatedString const cast_type = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = cast;
 switch(__jakt_match_variant.index()) {
 case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedTypeCast::Fallible>();
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_476; {
-NonnullRefPtr<typename types::Type> const ty = ((((*this).program))->get_type(((cast).type_id())));
 types::TypeId const type_id = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::TypeId, ErrorOr<DeprecatedString>>{
-auto&& __jakt_match_variant = *ty;
+auto&& __jakt_match_variant = *type;
 switch(__jakt_match_variant.index()) {
 case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericInstance>();JaktInternal::DynamicArray<types::TypeId> const& args = __jakt_match_value.args;
@@ -2590,7 +2590,18 @@ utility::panic(Jakt::DeprecatedString("Fallible type cast must have Optional res
 }()
 ));
 DeprecatedString cast_type = Jakt::DeprecatedString("dynamic_cast"sv);
-if (((((*this).program))->is_integer(type_id))){
+if (((((((*this).program))->get_type(type_id)))->index() == 23 /* Struct */)){
+types::StructId const struct_id = ((((((*this).program))->get_type(type_id)))->get<types::Type::Struct>()).value;
+if (((((((((*this).program))->get_struct(struct_id))).record_type)).index() == 1 /* Class */)){
+(final_type_id = type_id);
+(cast_type = Jakt::DeprecatedString("fallible_class_cast"sv));
+}
+else if (((((*this).program))->is_integer(type_id))){
+(final_type_id = type_id);
+(cast_type = Jakt::DeprecatedString("fallible_integer_cast"sv));
+}
+}
+else if (((((*this).program))->is_integer(type_id))){
 (final_type_id = type_id);
 (cast_type = Jakt::DeprecatedString("fallible_integer_cast"sv));
 }
@@ -2603,7 +2614,16 @@ case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedTypeCast::Infallible>();
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_477; {
 DeprecatedString cast_type = Jakt::DeprecatedString("verify_cast"sv);
-if (((((*this).program))->is_integer(type_id))){
+if (((type)->index() == 23 /* Struct */)){
+types::StructId const struct_id = ((type)->get<types::Type::Struct>()).value;
+if (((((((((*this).program))->get_struct(struct_id))).record_type)).index() == 1 /* Class */)){
+(cast_type = Jakt::DeprecatedString("infallible_class_cast"sv));
+}
+else if (((((*this).program))->is_integer(type_id))){
+(cast_type = Jakt::DeprecatedString("infallible_integer_cast"sv));
+}
+}
+else if (((((*this).program))->is_integer(type_id))){
 (cast_type = Jakt::DeprecatedString("infallible_integer_cast"sv));
 }
 __jakt_var_477 = cast_type; goto __jakt_label_422;
@@ -3419,6 +3439,7 @@ else {
 if ((as_method && ((function_)->is_static()))){
 (output += Jakt::DeprecatedString("static "sv));
 }
+if ((!(((((function_)->type)).index() == 1 /* Destructor */)))){
 (output += JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<DeprecatedString>>{
 auto __jakt_enum_value = (((function_)->can_throw));
 if (__jakt_enum_value == true) {
@@ -3429,6 +3450,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).codegen_type(((function_)->retu
 }
 }()))
 );
+}
 }
 
 (output += Jakt::DeprecatedString(" "sv));
@@ -3450,7 +3472,20 @@ if ((!(((qualifier).is_empty())))){
 (output += qualifier);
 (output += Jakt::DeprecatedString("::"sv));
 }
+if (((((function_)->type)).index() == 1 /* Destructor */)){
+if (((((((*this).program))->get_type((containing_struct.value()))))->index() == 23 /* Struct */)){
+types::StructId const struct_id = ((((((*this).program))->get_type((containing_struct.value()))))->get<types::Type::Struct>()).value;
+(output += (Jakt::DeprecatedString("~"sv) + ((((((*this).program))->get_struct(struct_id))).name)));
+}
+else {
+utility::panic(Jakt::DeprecatedString("Destructor doesn't have a containing struct"sv));
+}
+
+}
+else {
 (output += ((function_)->name_for_codegen()));
+}
+
 }
 
 (output += Jakt::DeprecatedString("("sv));
@@ -3513,6 +3548,15 @@ if ((((function_)->can_throw) && ((((function_)->return_type_id)).equals(types::
 }
 
 (output += Jakt::DeprecatedString("}\n"sv));
+return (output);
+}
+}
+
+ErrorOr<DeprecatedString> codegen::CodeGenerator::codegen_destructor_predecl(types::CheckedStruct const& struct_) {
+{
+DeprecatedString output = Jakt::DeprecatedString(""sv);
+(output += Jakt::DeprecatedString("public:\n"sv));
+(output += ((Jakt::DeprecatedString("    ~"sv) + ((((struct_))).name)) + Jakt::DeprecatedString("();\n"sv)));
 return (output);
 }
 }
@@ -3764,8 +3808,48 @@ else {
 (output += TRY((__jakt_format(Jakt::DeprecatedString("class {} : public RefCounted<{}>, public Weakable<{}> {{\n"sv),((struct_).name_for_codegen()),class_name_with_generics,class_name_with_generics))));
 }
 
+NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((struct_).scope_id)))));
+bool has_destructor = false;
+{
+JaktInternal::DictionaryIterator<DeprecatedString,JaktInternal::DynamicArray<types::FunctionId>> _magic = ((((scope)->functions)).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<DeprecatedString,JaktInternal::DynamicArray<types::FunctionId>>> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<DeprecatedString,JaktInternal::DynamicArray<types::FunctionId>> ___function_ids__ = (_magic_value.value());
+{
+JaktInternal::Tuple<DeprecatedString,JaktInternal::DynamicArray<types::FunctionId>> const jakt_____function_ids__ = ___function_ids__;
+DeprecatedString const _ = ((jakt_____function_ids__).template get<0>());
+JaktInternal::DynamicArray<types::FunctionId> const function_ids = ((jakt_____function_ids__).template get<1>());
+
+{
+JaktInternal::ArrayIterator<types::FunctionId> _magic = ((function_ids).iterator());
+for (;;){
+JaktInternal::Optional<types::FunctionId> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::FunctionId function_id = (_magic_value.value());
+{
+NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
+if (((((function_)->type)).index() == 1 /* Destructor */)){
+(has_destructor = true);
+}
+}
+
+}
+}
+
+}
+
+}
+}
+
+if ((!(has_destructor))){
 (output += Jakt::DeprecatedString("  public:\n"sv));
 (output += TRY((__jakt_format(Jakt::DeprecatedString("virtual ~{}() = default;\n"sv),((struct_).name_for_codegen())))));
+}
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -3845,7 +3929,17 @@ NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->ge
 ScopeGuard __jakt_var_492([&] {
 (((*this).current_function) = previous_function_id);
 });
-if (((((function_)->type)).index() == 1 /* ImplicitConstructor */)){
+if (((((function_)->type)).index() == 1 /* Destructor */)){
+if (((((struct_).generic_parameters)).is_empty())){
+(output += TRY((((*this).codegen_destructor_predecl(((struct_)))))));
+}
+else {
+(output += TRY((((*this).codegen_destructor(((struct_)),((function_)),true)))));
+}
+
+(output += Jakt::DeprecatedString("\n"sv));
+}
+else if (((((function_)->type)).index() == 2 /* ImplicitConstructor */)){
 if (((((struct_).generic_parameters)).is_empty())){
 (output += TRY((((*this).codegen_constructor_predecl(function_)))));
 }
@@ -4451,7 +4545,7 @@ if ((!(((((function_id).module)).equals(((current_module)->id)))))){
 continue;
 }
 NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
-if (((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */)){
+if (((((function_)->type)).index() == 3 /* ImplicitEnumConstructor */)){
 continue;
 }
 JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function_id = ((*this).current_function);
@@ -4459,7 +4553,7 @@ JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_fun
 ScopeGuard __jakt_var_494([&] {
 (((*this).current_function) = previous_function_id);
 });
-if (((!(((((function_)->type)).index() == 1 /* ImplicitConstructor */))) && (((function_)->name_for_codegen()) != Jakt::DeprecatedString("main"sv)))){
+if (((!(((((function_)->type)).index() == 2 /* ImplicitConstructor */))) && (((function_)->name_for_codegen()) != Jakt::DeprecatedString("main"sv)))){
 (output += TRY((((*this).codegen_function_predecl(function_,false)))));
 (output += Jakt::DeprecatedString("\n"sv));
 }
@@ -4880,7 +4974,7 @@ return (Jakt::DeprecatedString(""sv));
 if (((function_)->is_comptime)){
 return (Jakt::DeprecatedString(""sv));
 }
-if (((((function_)->type)).index() == 1 /* ImplicitConstructor */)){
+if (((((function_)->type)).index() == 2 /* ImplicitConstructor */)){
 return (Jakt::DeprecatedString(""sv));
 }
 if (((((function_)->linkage)).index() == 1 /* External */)){
@@ -4965,6 +5059,50 @@ return (output);
 ErrorOr<DeprecatedString> codegen::CodeGenerator::fresh_var() {
 {
 return (TRY((__jakt_format(Jakt::DeprecatedString("__jakt_var_{}"sv),((((*this).fresh_var_counter)++))))));
+}
+}
+
+ErrorOr<DeprecatedString> codegen::CodeGenerator::codegen_destructor(types::CheckedStruct const& struct_,NonnullRefPtr<types::CheckedFunction> const& function_,bool const is_inline) {
+{
+DeprecatedString output = Jakt::DeprecatedString(""sv);
+DeprecatedString const qualified_name = TRY((((*this).codegen_type_possibly_as_namespace(((((struct_))).type_id),true))));
+if (((!(is_inline)) && (!(((((((struct_))).generic_parameters)).is_empty()))))){
+(output += Jakt::DeprecatedString("template <"sv));
+bool first = true;
+{
+JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((((struct_))).generic_parameters)).iterator());
+for (;;){
+JaktInternal::Optional<types::CheckedGenericParameter> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::CheckedGenericParameter param = (_magic_value.value());
+{
+if (first){
+(first = false);
+}
+else {
+(output += Jakt::DeprecatedString(","sv));
+}
+
+(output += Jakt::DeprecatedString("typename "sv));
+(output += TRY((((*this).codegen_type(((param).type_id))))));
+}
+
+}
+}
+
+(output += Jakt::DeprecatedString(">\n"sv));
+}
+if (is_inline){
+(output += TRY((__jakt_format(Jakt::DeprecatedString("~{}()"sv),((((struct_))).name)))));
+}
+else {
+(output += TRY((__jakt_format(Jakt::DeprecatedString("{}::~{}()"sv),qualified_name,((((struct_))).name)))));
+}
+
+(output += TRY((((*this).codegen_block(((((function_)))->block))))));
+return (output);
 }
 }
 
@@ -6265,7 +6403,7 @@ if (((((call).function_id)).has_value())){
 types::FunctionId const function_id = (((call).function_id).value());
 NonnullRefPtr<types::CheckedFunction> const function_ = ((((*this).program))->get_function(function_id));
 NonnullRefPtr<types::Module> const type_module = ((((*this).program))->get_module(((function_id).module)));
-if ((((((function_)->type)).index() == 1 /* ImplicitConstructor */) || ((((function_)->type)).index() == 3 /* ExternalClassConstructor */))){
+if ((((((function_)->type)).index() == 2 /* ImplicitConstructor */) || ((((function_)->type)).index() == 4 /* ExternalClassConstructor */))){
 types::TypeId const type_id = ((call).return_type);
 NonnullRefPtr<typename types::Type> const type = ((((*this).program))->get_type(type_id));
 (output += TRY((((*this).codegen_namespace_path(call)))));
@@ -6365,7 +6503,7 @@ return JaktInternal::ExplicitValue<void>();
 }()
 ));
 }
-else if (((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */)){
+else if (((((function_)->type)).index() == 3 /* ImplicitEnumConstructor */)){
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(((function_)->return_type_id)));
 switch(__jakt_match_variant.index()) {

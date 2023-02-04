@@ -12746,7 +12746,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 return (TRY((((*this).call_prelude_function(((call).name),(TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),JaktInternal::OptionalNone(),arguments,span,(TRY((Dictionary<DeprecatedString, types::TypeId>::create_with_entries({})))))))));
 }
 NonnullRefPtr<types::CheckedFunction> const function_to_run = ((((*this).program))->get_function((((call).function_id).value())));
-if (((((function_to_run)->type)).index() == 5 /* Closure */)){
+if (((((function_to_run)->type)).index() == 6 /* Closure */)){
 TRY((((*this).error(TRY((__jakt_format(Jakt::DeprecatedString("Cannot call a closure (nyi)"sv)))),span))));
 return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::Unimplemented))));
 }
@@ -16213,7 +16213,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 1: {
+case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::FunctionType::ImplicitConstructor>();
 {
 NonnullRefPtr<typename types::Type> const result_type = ((((*this).program))->get_type(((function_to_run)->return_type_id)));
@@ -16288,7 +16288,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 2: {
+case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::FunctionType::ImplicitEnumConstructor>();
 {
 NonnullRefPtr<typename types::Type> const result_type = ((((*this).program))->get_type(((function_to_run)->return_type_id)));

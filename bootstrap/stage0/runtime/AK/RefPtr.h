@@ -301,6 +301,12 @@ struct Traits<RefPtr<T>> : public GenericTraits<RefPtr<T>> {
     static bool equals(RefPtr<T> const& a, RefPtr<T> const& b) { return a.ptr() == b.ptr(); }
 };
 
+template<SpecializationOf<NonnullRefPtr> T, SpecializationOf<NonnullRefPtr> U>
+inline T verify_ptr_cast(U const& ptr)
+{
+    return T(verify_cast<typename T::ElementType>(*ptr));
+}
+
 template<typename T, typename U>
 inline NonnullRefPtr<T> static_ptr_cast(NonnullRefPtr<U> const& ptr)
 {
