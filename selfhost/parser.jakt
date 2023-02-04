@@ -1702,7 +1702,7 @@ struct Parser {
                         .index += 1
                     }
                 }
-                Function | Comptime => {
+                Fn | Comptime => {
                     mut parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public, is_comptime: .current() is Comptime, is_destructor: false)
                     .apply_attributes(&mut parsed_function, &active_attributes)
                     active_attributes = []
@@ -1748,7 +1748,7 @@ struct Parser {
                 Extern => {
                     .index++
                     match .current() {
-                        Function => {
+                        Fn => {
                             mut parsed_function = .parse_function(FunctionLinkage::External, Visibility::Public, is_comptime: false, is_destructor: false)
                             .apply_attributes(&mut parsed_function, &active_attributes)
                             active_attributes = []
@@ -2155,7 +2155,7 @@ struct Parser {
                     .index++
                     continue
                 }
-                Function => {
+                Fn => {
                     // pretend it's external so that we only parse the signature
                     mut method = .parse_function(
                         FunctionLinkage::Internal
@@ -2611,7 +2611,7 @@ struct Parser {
                     last_visibility_span = span
                     .index++
                 }
-                Function | Comptime => {
+                Fn | Comptime => {
                     let is_comptime = .current() is Comptime
 
                     let function_linkage = match definition_linkage {
@@ -2762,7 +2762,7 @@ struct Parser {
                     last_visibility_span = span
                     .index++
                 }
-                Function | Comptime => {
+                Fn | Comptime => {
                     let is_comptime = .current() is Comptime
 
                     let function_linkage = match definition_linkage {
@@ -2982,7 +2982,7 @@ struct Parser {
 
                     fields.push(field)
                 }
-                Function | Comptime | Destructor => {
+                Fn | Comptime | Destructor => {
                     // Parse a method
                     let is_comptime = .current() is Comptime
                     let is_destructor = .current() is Destructor
@@ -3587,7 +3587,7 @@ struct Parser {
 
             yield parsed_type
         }
-        Function => {
+        Fn => {
             let start = .current().span()
             .index++
 
@@ -4326,7 +4326,7 @@ struct Parser {
         }
         Ampersand => .parse_ampersand()
         Asterisk => .parse_asterisk()
-        Function => .parse_lambda()
+        Fn => .parse_lambda()
         DotDot => .parse_range()
         else => {
             let span = .current().span()
