@@ -146,7 +146,6 @@ enum Token {
         "false" => Token::False(span)
         "for" => Token::For(span)
         "fn" => Token::Fn(span)
-        "function" => Token::Fn(span)
         "comptime" => Token::Comptime(span)
         "if" => Token::If(span)
         "import" => Token::Import(span)
