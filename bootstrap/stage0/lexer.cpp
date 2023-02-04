@@ -1685,9 +1685,6 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::For(sp
 else if (__jakt_enum_value == Jakt::DeprecatedString("fn"sv)) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Fn(span) } );
 }
-else if (__jakt_enum_value == Jakt::DeprecatedString("function"sv)) {
-return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Fn(span) } );
-}
 else if (__jakt_enum_value == Jakt::DeprecatedString("comptime"sv)) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Comptime(span) } );
 }

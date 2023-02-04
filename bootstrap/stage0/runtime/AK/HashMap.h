@@ -154,8 +154,7 @@ public:
     }
 
     template<Concepts::HashCompatible<K> Key>
-    requires(IsSame<KeyTraits, Traits<K>>) Optional<typename ValueTraits::PeekType> get(Key const& key)
-        const
+    requires(IsSame<KeyTraits, Traits<K>>) Optional<typename ValueTraits::ConstPeekType> get(Key const& key) const
     requires(!IsPointer<typename ValueTraits::PeekType>)
     {
         auto it = find(key);
@@ -165,8 +164,7 @@ public:
     }
 
     template<Concepts::HashCompatible<K> Key>
-    requires(IsSame<KeyTraits, Traits<K>>) Optional<typename ValueTraits::ConstPeekType> get(Key const& key)
-        const
+    requires(IsSame<KeyTraits, Traits<K>>) Optional<typename ValueTraits::ConstPeekType> get(Key const& key) const
     requires(IsPointer<typename ValueTraits::PeekType>)
     {
         auto it = find(key);
@@ -199,6 +197,31 @@ public:
     void remove(IteratorType it)
     {
         m_table.remove(it);
+    }
+
+    Optional<V> take(K const& key)
+    {
+        if (auto it = find(key); it != end()) {
+            auto value = move(it->value);
+            m_table.remove(it);
+
+            return value;
+        }
+
+        return {};
+    }
+
+    template<Concepts::HashCompatible<K> Key>
+    requires(IsSame<KeyTraits, Traits<K>>) Optional<V> take(Key const& key)
+    {
+        if (auto it = find(key); it != end()) {
+            auto value = move(it->value);
+            m_table.remove(it);
+
+            return value;
+        }
+
+        return {};
     }
 
     V& ensure(K const& key)

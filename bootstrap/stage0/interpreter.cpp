@@ -12921,7 +12921,7 @@ return JaktInternal::ExplicitValue(args);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function on a non-generic array"sv),((this_argument).span)))));
+TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function  on a non-generic array"sv),((this_argument).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -12944,7 +12944,7 @@ return JaktInternal::ExplicitValue(args);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function on a non-generic dictionary"sv),((this_argument).span)))));
+TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function  on a non-generic dictionary"sv),((this_argument).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -12963,7 +12963,7 @@ JaktInternal::DynamicArray<types::TypeId> const generic_parameters = ((((((*this
 TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::DeprecatedString("Set"sv),JaktInternal::OptionalNone(),generic_parameters)))));
 }
 else {
-TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function on a non-generic set"sv),((this_argument).span)))));
+TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function  on a non-generic set"sv),((this_argument).span)))));
 return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
 }
 
@@ -15991,7 +15991,7 @@ return JaktInternal::ExplicitValue(args);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function on a non-generic array"sv),call_span))));
+TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function  on a non-generic array"sv),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -16014,7 +16014,7 @@ return JaktInternal::ExplicitValue(args);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function on a non-generic dictionary"sv),call_span))));
+TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function  on a non-generic dictionary"sv),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
 }
 };/*case end*/
@@ -16033,7 +16033,7 @@ JaktInternal::DynamicArray<types::TypeId> const generic_parameters = ((((((*this
 TRY((((effective_namespace).push(types::ResolvedNamespace(Jakt::DeprecatedString("Set"sv),JaktInternal::OptionalNone(),generic_parameters)))));
 }
 else {
-TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function on a non-generic set"sv),call_span))));
+TRY((((*this).error(Jakt::DeprecatedString("Attempted to call a prelude function  on a non-generic set"sv),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
 }
 

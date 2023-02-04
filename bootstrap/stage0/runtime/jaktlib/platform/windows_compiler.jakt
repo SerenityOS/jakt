@@ -1,6 +1,6 @@
 import jakt::path { Path }
 
-function run_compiler(
+fn run_compiler(
     cxx_compiler_path: String
     cpp_filename: String
     output_filename: String
