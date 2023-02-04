@@ -25,7 +25,7 @@ enum Entity {
         Struct | Class => Entity::Struct
         Enum => Entity::Enum
         Namespace => Entity::Namespace
-        Comptime | Function => Entity::Function(arrow: false, indented: false)
+        Comptime | Fn => Entity::Function(arrow: false, indented: false)
         else => Entity::Struct
     }
 }
@@ -187,7 +187,7 @@ struct FormattedToken {
         Extern => "extern"
         False => "false"
         For => "for"
-        Function => "function"
+        Fn => "fn"
         Comptime => "comptime"
         If => "if"
         Import => "import"
@@ -417,7 +417,7 @@ struct Stage0 {
 
         return match .state() {
             Toplevel(open_parens, open_curlies, open_squares) => match token {
-                Enum | Class | Struct | Function | Comptime | Namespace => {
+                Enum | Class | Struct | Fn | Comptime | Namespace => {
                     .push_state(State::EntityDeclaration(
                         entity: Entity::from_token(&token)
                         accept_generics: not token is Namespace
@@ -1198,7 +1198,7 @@ struct Stage0 {
                         preceding_trivia: []
                     )
                 }
-                Function => {
+                Fn => {
                     .push_state(State::FunctionTypeContext(
                         seen_final_type: false
                     ))
@@ -2256,7 +2256,7 @@ struct Stage0 {
                         preceding_trivia: []
                     )
                 }
-                Function => {
+                Fn => {
                     .replace_state(State::TypeContext(
                         open_parens: open_parens
                         open_curlies: open_curlies

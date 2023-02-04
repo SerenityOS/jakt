@@ -10,28 +10,28 @@ function make_memo<R, S>() throws -> Memo<R, S> {
     return Memo(value)
 }
 
-function memo_fix_helper<T, U>(anon fn: &function(anon loop_: &function(anon x: T) throws -> U, anon x: T) throws -> U, anon x: T, mut memo: Memo<T, U>) throws -> U {
+function memo_fix_helper<T, U>(anon function_: &function(anon loop_: &function(anon x: T) throws -> U, anon x: T) throws -> U, anon x: T, mut memo: Memo<T, U>) throws -> U {
     if memo.value.contains(x) {
         return memo.value[x]
     }
 
-    return memo_fix(fn, x, memo: Some(memo))
+    return memo_fix(function_, x, memo: Some(memo))
 }
 
-function memo_fix<T, U>(anon fn: &function(anon loop_: &function(anon x: T) throws -> U, anon x: T) throws -> U, anon x: T, mut memo: Memo<T, U>? = None) throws -> U {
+function memo_fix<T, U>(anon function_: &function(anon loop_: &function(anon x: T) throws -> U, anon x: T) throws -> U, anon x: T, mut memo: Memo<T, U>? = None) throws -> U {
     if not memo.has_value() {
         memo = make_memo<T, U>()
     }
 
-    let loop_ = function[&memo, &fn](anon x: T) throws -> U {
+    let loop_ = function[&memo, &function_](anon x: T) throws -> U {
         if memo!.value.contains(x) {
             return memo!.value[x]
         }
 
-        return memo_fix_helper(fn, x, memo: memo!)
+        return memo_fix_helper(function_, x, memo: memo!)
     }
 
-    let res = fn(&loop_, x)
+    let res = function_(&loop_, x)
     memo!.value.set(x, res)
     return res
 }

@@ -342,7 +342,7 @@ struct REPL {
             mut parser = Parser(index: 0, tokens, compiler: .compiler)
 
             let first_token = tokens.first()!
-            if first_token is Function
+            if first_token is Fn
                 or first_token is Comptime
                 or first_token is Struct
                 or first_token is Class
