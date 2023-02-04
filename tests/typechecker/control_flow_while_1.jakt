@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\n"
 
-function test(anon mut argument: i64) -> String {
+fn test(anon mut argument: i64) -> String {
     while argument > 0 {
         return "NOT PASSED" // This should be reachable (in case argument > 0)
     }
@@ -9,6 +9,6 @@ function test(anon mut argument: i64) -> String {
     return "PASS" // This should be reachable as well (in case argument <= 0)
 }
 
-function main() {
+fn main() {
     println("{}", test(-1))
 }

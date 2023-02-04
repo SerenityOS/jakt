@@ -7,7 +7,7 @@ class Foo<A, B, C> {
 	public c: C
 }
 
-function main() {
+fn main() {
 	let foo = Foo(a: 3.14f64, b: 0i32, c: "c as string")
 	print("{}", foo)
 }

@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "‘return’ is not allowed inside ‘defer’\n"
 
-function foo() {
+fn foo() {
     defer {
         return 2
     }
@@ -9,6 +9,6 @@ function foo() {
     return 1
 }
 
-function main() {
+fn main() {
     println("foo returned {}", foo())
 }

@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\n"
 
-function main() {
+fn main() {
     let i = 0
     match i + 1 {
         (

@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: ""
 
-function main() {
+fn main() {
     let x = (
         1,
         2,

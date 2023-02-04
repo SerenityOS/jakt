@@ -6,7 +6,7 @@ import a
 import b
 import subfolder::submodule { get_hello, Printer }
 
-function main() {
+fn main() {
     a::use_cool_things()
     b::not_cool()
     Printer::print_something()

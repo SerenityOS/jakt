@@ -1,5 +1,5 @@
 /// Expect:
 /// - error: "Expected complete block"
 
-function main() {
+fn main() {
     match x {

@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "Hello friends\n"
 
-function main() {
+fn main() {
     let original: String = "Hello darkness"
     let corrected = original.replace(replace: "darkness", with: "friends")
     println("{}", corrected);

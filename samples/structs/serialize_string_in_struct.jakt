@@ -5,6 +5,6 @@ struct Foo {
     name: String
 }
 
-function main() {
+fn main() {
     println("{}", Foo(name: "Bar"))
 }

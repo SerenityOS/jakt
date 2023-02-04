@@ -1,16 +1,16 @@
 import compiler { Compiler }
 import lexer { Lexer, Token }
 
-function concat<T>(anon xs: [T], anon y: T) throws -> [T] {
+fn concat<T>(anon xs: [T], anon y: T) throws -> [T] {
     mut ys: [T] = []
     ys.push_values(&xs)
     ys.push(y)
     return ys
 }
 
-function init<T>(anon xs: [T]) throws -> [T] => xs[..(xs.size() - 1)].to_array()
+fn init<T>(anon xs: [T]) throws -> [T] => xs[..(xs.size() - 1)].to_array()
 
-function collapse<T>(anon x: Optional<T>?) -> T? => match x.has_value() {
+fn collapse<T>(anon x: Optional<T>?) -> T? => match x.has_value() {
     true => x!
     else => None
 }
@@ -21,7 +21,7 @@ enum Entity {
     Namespace
     Function(arrow: bool, indented: bool)
 
-    function from_token(token: &Token) -> Entity => match token {
+    fn from_token(token: &Token) -> Entity => match token {
         Struct | Class => Entity::Struct
         Enum => Entity::Enum
         Namespace => Entity::Namespace
@@ -81,7 +81,7 @@ enum State {
     )
     FunctionTypeContext(seen_final_type: bool)
 
-    function name(this) throws => match this {
+    fn name(this) throws => match this {
         Toplevel => "toplevel"
         Import => "import"
         ImportList => "import list"
@@ -104,14 +104,14 @@ struct FormattedToken {
     trailing_trivia: [u8]
     preceding_trivia: [u8]
 
-    function debug_text(this) throws -> String => match .token {
+    fn debug_text(this) throws -> String => match .token {
         Identifier(name) => format("Identifier: {}", name)
         Eol(comment) => format("Eol: {}", comment ?? ""),
         Eof => "Eof"
         else => .token_text()
     }
 
-    function token_text(this) throws -> String => match .token {
+    fn token_text(this) throws -> String => match .token {
         SingleQuotedString(quote, prefix) => format("{}'{}'", prefix ?? "", quote)
         QuotedString(quote) => format("\"{}\"", quote)
         Number(prefix, number, suffix) => format("{}{}{}", prefix.to_string(), number, suffix.to_string())
@@ -234,7 +234,7 @@ struct Stage0 {
     dedents_to_skip: [usize]
     debug: bool
 
-    function create(mut compiler: Compiler, source: [u8], debug: bool) throws -> Stage0 {
+    fn create(mut compiler: Compiler, source: [u8], debug: bool) throws -> Stage0 {
         let old_file_contents = compiler.current_file_contents
         compiler.current_file_contents = source
         defer {
@@ -257,7 +257,7 @@ struct Stage0 {
         )
     }
 
-    function for_tokens(tokens: [Token], debug: bool) throws -> Stage0 {
+    fn for_tokens(tokens: [Token], debug: bool) throws -> Stage0 {
         return Stage0(
             tokens
             index: 0uz
@@ -273,7 +273,7 @@ struct Stage0 {
         )
     }
 
-    private function peek(this, offset: i64 = 0) -> Token {
+    private fn peek(this, offset: i64 = 0) -> Token {
         let effective_index = match offset {
             0 => .index
             else => (.index as! i64 + offset - 1) as! usize
@@ -285,7 +285,7 @@ struct Stage0 {
         return .tokens[effective_index]
     }
 
-    private function line_has_indent(this) -> bool {
+    private fn line_has_indent(this) -> bool {
         mut offset = 0
 
         loop {
@@ -305,23 +305,23 @@ struct Stage0 {
         return false
     }
 
-    private function consume(mut this) -> Token => .tokens[.index++]
-    function state(this) -> State => .states.last()!
-    private function push_state(mut this, anon state: State) throws {
+    private fn consume(mut this) -> Token => .tokens[.index++]
+    fn state(this) -> State => .states.last()!
+    private fn push_state(mut this, anon state: State) throws {
         .states.push(state)
     }
-    private function pop_state(mut this) {
+    private fn pop_state(mut this) {
         // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
         let dummy = .states.pop()
     }
 
-    private function replace_state(mut this, anon state: State) throws {
+    private fn replace_state(mut this, anon state: State) throws {
         // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
         let dummy = .states.pop()
         .states.push(state)
     }
 
-    private function to_array(anon x: String) throws -> [u8] {
+    private fn to_array(anon x: String) throws -> [u8] {
         mut res: [u8] = []
         for i in 0..x.length() {
             res.push(x.byte_at(i))
@@ -329,7 +329,7 @@ struct Stage0 {
         return res
     }
 
-    function formatted_peek(mut this) throws -> FormattedToken? {
+    fn formatted_peek(mut this) throws -> FormattedToken? {
         let states_cache = .states[..].to_array()
         let index_cache = .index
 
@@ -341,7 +341,7 @@ struct Stage0 {
         return token
     }
 
-    function next(mut this) throws -> FormattedToken? {
+    fn next(mut this) throws -> FormattedToken? {
         return .next_impl(reconsume: false)
         // mut res = .next_impl(reconsume: false)
         // if not res.has_value() { return res }
@@ -353,7 +353,7 @@ struct Stage0 {
         // )
     }
 
-    function next_impl(mut this, reconsume: bool) throws -> FormattedToken? {
+    fn next_impl(mut this, reconsume: bool) throws -> FormattedToken? {
         if .index >= .tokens.size() {
             return None
         }
@@ -2507,7 +2507,7 @@ enum BreakablePoint {
     Square(point: usize, length: usize)
     Logical(point: usize, length: usize)
 
-    function point(this) -> usize => match this {
+    fn point(this) -> usize => match this {
         Paren(point)
         | Curly(point)
         | Square(point)
@@ -2515,7 +2515,7 @@ enum BreakablePoint {
         => point
     }
 
-    function length(this) -> usize => match this {
+    fn length(this) -> usize => match this {
         Paren(length)
         | Curly(length)
         | Square(length)
@@ -2544,7 +2544,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
     logical_break_indent: usize?
     empty_line_count: usize
 
-    function for_tokens(tokens: [Token], debug: bool = false, max_allowed_line_length: usize = 120uz) throws -> Formatter {
+    fn for_tokens(tokens: [Token], debug: bool = false, max_allowed_line_length: usize = 120uz) throws -> Formatter {
         let none: Token? = None
         return Formatter(
             token_provider: Stage0::for_tokens(tokens, debug)
@@ -2562,7 +2562,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         )
     }
 
-    private function token_length(this, token: FormattedToken) throws -> usize {
+    private fn token_length(this, token: FormattedToken) throws -> usize {
         mut length = token.preceding_trivia.size()
         match token.token {
             Eol(comment) => {
@@ -2587,7 +2587,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         return length
     }
 
-    private function fixup_tokens_to_reflow(mut this) throws {
+    private fn fixup_tokens_to_reflow(mut this) throws {
         if .tokens_to_reflow.is_empty() {
             return
         }
@@ -2604,7 +2604,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         }
     }
 
-    private function to_array(anon s: String) throws -> [u8] {
+    private fn to_array(anon s: String) throws -> [u8] {
         mut result: [u8] = []
         for i in 0..s.length() {
             result.push(s.byte_at(i))
@@ -2612,7 +2612,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         return result
     }
 
-    function fixup_closing_enclosures(this, line: &mut [ReflowState]) throws {
+    fn fixup_closing_enclosures(this, line: &mut [ReflowState]) throws {
         if line.is_empty() {
             return
         }
@@ -2653,16 +2653,16 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         // }
     }
 
-    private function pick_breaking_point_index(this) -> usize {
+    private fn pick_breaking_point_index(this) -> usize {
         // Leftmost point.
         return 0
     }
 
-    private function should_ignore_state(anon state: State) -> bool {
+    private fn should_ignore_state(anon state: State) -> bool {
         return state is TypeContext or state is VariableDeclaration
     }
 
-    function peek(mut this) throws -> FormattedToken? {
+    fn peek(mut this) throws -> FormattedToken? {
         mut reflown_token: ReflowState? = None
         if .tokens_to_reflow.size() > 0 {
             reflown_token = .tokens_to_reflow[.tokens_to_reflow.size() - 1]
@@ -2671,7 +2671,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         return reflown_token?.token ?? .token_provider.formatted_peek()
     }
 
-    function next(mut this) throws -> [FormattedToken]? {
+    fn next(mut this) throws -> [FormattedToken]? {
         let reflown_token = .tokens_to_reflow.pop()
         mut maybe_next_underlying_token = reflown_token?.token ?? .token_provider.next()
         mut current_state = reflown_token?.state ?? .token_provider.state()
@@ -3023,7 +3023,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
     }
 }
 
-function bubble_sort(anon mut values: [String]) {
+fn bubble_sort(anon mut values: [String]) {
     mut i = 0
     while i < values.size() as! i64 - 1 {
         mut j = 0

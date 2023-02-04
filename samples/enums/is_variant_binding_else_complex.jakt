@@ -5,7 +5,7 @@ enum E {
     A(i64)
 }
 
-function main() {
+fn main() {
     let e = E::A(5)
 
     if 3 < 5 and e is A(x) and x == 2 and x > 4 {

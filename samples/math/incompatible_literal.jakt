@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Binary arithmetic operation between incompatible types (‘u8’ and ‘u16’)\n"
 
-function main() {
+fn main() {
     let x: u8 = 12;
     let y: u16 = 34;
     println("{}", x + y);

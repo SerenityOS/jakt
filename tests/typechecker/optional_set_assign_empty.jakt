@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "true\n"
 
-function main() {
+fn main() {
     mut set: {i64}? = {}
     set!.add(42)
     println("{}", set!.contains(42))

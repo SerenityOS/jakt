@@ -2,5 +2,5 @@
 /// - error: "Type mismatch: expected ‘i32’, but got ‘String’\n"
 
 class S {
-    public function get_value() -> i32 => "Hello"
+    public fn get_value() -> i32 => "Hello"
 }

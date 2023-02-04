@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Unreachable code"
 
-function test(anon mut argument: i64) -> String {
+fn test(anon mut argument: i64) -> String {
     loop {
         while argument > 1 {
             if (argument == 2) {
@@ -15,6 +15,6 @@ function test(anon mut argument: i64) -> String {
     return "NOT PASSED" // This should not be reachable
 }
 
-function main() {
+fn main() {
     println("{}", test(-1))
 }

@@ -1,9 +1,9 @@
 /// Expect:
 /// - error: "Call to function that may throw needs to be in a try statement or a function marked as throws"
 
-function marked() throws {
+fn marked() throws {
 }
 
-function unmarked() {
+fn unmarked() {
   marked()
 }

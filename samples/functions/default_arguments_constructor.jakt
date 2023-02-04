@@ -5,12 +5,12 @@ class Point {
     public x: i64
     public y: i64
 
-    public function make(x: i64 = 0, y: i64 = 0) throws -> Point {
+    public fn make(x: i64 = 0, y: i64 = 0) throws -> Point {
         return Point(x, y)
     }
 }
 
-function main() {
+fn main() {
     let p = Point::make()
     println("{}, {}", p.x, p.y)
 }

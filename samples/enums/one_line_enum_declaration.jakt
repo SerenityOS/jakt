@@ -3,7 +3,7 @@
 
 enum Apple { GrannySmith }
 
-function apple_name(apple: Apple) {
+fn apple_name(apple: Apple) {
     match (apple) {
         Apple::GrannySmith => {
             println("Granny Smith")
@@ -11,6 +11,6 @@ function apple_name(apple: Apple) {
     }
 }
 
-function main() {
+fn main() {
     apple_name(apple: Apple::GrannySmith())
 }

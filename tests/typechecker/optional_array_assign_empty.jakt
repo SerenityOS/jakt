@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "42\n"
 
-function main() {
+fn main() {
     mut arr: [i64]? = []
     arr!.push(42)
     println("{}", arr!.first())

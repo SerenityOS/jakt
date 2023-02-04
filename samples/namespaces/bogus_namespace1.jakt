@@ -2,10 +2,10 @@
 /// - error: "Not a namespace, enum, class, or struct: ‘NS::Foo’\n"
 
 namespace NS {
-    function foo() {}
+    fn foo() {}
 }
 
-function main() {
+fn main() {
     NS::foo()
     NS::Foo::foo()
 }

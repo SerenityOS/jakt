@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Cannot infer key type for Dictionary<K, V>\n"
 
-function main() {
+fn main() {
     let x = [:]
 }

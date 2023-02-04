@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "[1, 2, 3, 4]\n"
 
-function main() {
+fn main() {
     mut arr = [1, 2, 3, 4]
     let slice = arr[..]
     arr.push(5)

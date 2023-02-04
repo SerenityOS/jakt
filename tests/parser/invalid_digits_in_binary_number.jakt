@@ -2,7 +2,7 @@
 /// - error: "Could not parse binary number due to no digits"
 
 // Binary number must not contain any digits other than 0 or 1
-function main() {
+fn main() {
     let binary = 0b8
 
     println("{}", binary)

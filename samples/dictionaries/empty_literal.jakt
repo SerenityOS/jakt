@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "20\n"
 
-function main() {
+fn main() {
     mut dict: [String: [i64: i64]] = [:]
     dict.set(key: "a", value: [10: 20])
     println("{}", dict.get("a")!.get(10)!)

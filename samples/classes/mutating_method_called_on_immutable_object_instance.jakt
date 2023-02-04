@@ -2,10 +2,10 @@
 /// - error: "Cannot call mutating method on an immutable object instance"
 
 class Foo {
-    public function bar(mut this) {}
+    public fn bar(mut this) {}
 }
 
-function main() {
+fn main() {
     let foo = Foo()
     foo.bar()
 }

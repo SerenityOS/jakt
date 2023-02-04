@@ -6,7 +6,7 @@ enum E {
     B
 }
 
-function main() {
+fn main() {
     let e = E::B
     if e is A(x) and x == 5 {
         println("FAIL")

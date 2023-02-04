@@ -3,7 +3,7 @@
 
 import jakt::libc::io { fopen, fclose, fgetc, feof, putchar }
 
-function main(args: [String]) {
+fn main(args: [String]) {
     if args.size() <= 1 {
         eprintln("usage: cat <path>")
         return 1

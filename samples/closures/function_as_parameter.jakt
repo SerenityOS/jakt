@@ -1,10 +1,10 @@
 /// Expect:
 /// - output: "well, hello friends.\n"
 
-function hello(anon who: function() -> String) {
+fn hello(anon who: fn() -> String) {
     println("well, hello {}", who())
 }
 
-function main() {
-    hello(function() => "friends.")
+fn main() {
+    hello(fn() => "friends.")
 }

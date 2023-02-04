@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Function parameter count mismatch: expected ‘2’, but got ‘3’"
 
-function find<T>(anon arr: [T], anon cb: function(a: T, b: T) -> bool) -> T? {
+fn find<T>(anon arr: [T], anon cb: fn(a: T, b: T) -> bool) -> T? {
     for i in 0..arr.size() {
         if cb(a: arr[i], b: 0) {
             return i
@@ -10,8 +10,8 @@ function find<T>(anon arr: [T], anon cb: function(a: T, b: T) -> bool) -> T? {
     return None
 }
 
-function main() {
+fn main() {
     mut arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     
-    println("{}", find(arr, function(a: i64, b: i64, c: i32) => a == 5).value_or(-1))
+    println("{}", find(arr, fn(a: i64, b: i64, c: i32) => a == 5).value_or(-1))
 }

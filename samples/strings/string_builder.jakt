@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "abc123\n"
 
-function main() {
+fn main() {
     mut s = StringBuilder::create()
 
     s.append_c_string("abc".c_string());

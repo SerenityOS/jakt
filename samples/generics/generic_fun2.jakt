@@ -1,8 +1,8 @@
 /// Expect:
 /// - output: "13\n"
 
-function id<T>(anon x: T) => x
+fn id<T>(anon x: T) => x
 
-function main() {
+fn main() {
     println("{}", id(3) + 10)
 }

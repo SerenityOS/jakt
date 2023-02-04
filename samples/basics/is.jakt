@@ -9,7 +9,7 @@ class Bar {
     public y: i64
 }
 
-function main() {
+fn main() {
     let foo = Foo(x: 1)
 
     if foo is Foo {

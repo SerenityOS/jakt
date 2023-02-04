@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "1\n1\n1\n1\n1\n"
 
-function main() {
+fn main() {
     println("{}", match true {
         true => 1
         false => 0

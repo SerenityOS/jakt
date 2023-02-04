@@ -5,7 +5,7 @@ enum Foo {
     Bar(i64)
 }
 
-function main() {
+fn main() {
     let x = Foo::Bar(100)
 
     if x is Baz(y) {

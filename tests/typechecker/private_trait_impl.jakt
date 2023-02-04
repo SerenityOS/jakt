@@ -3,13 +3,13 @@
 
 
 trait Bar {
-    function bar(this)
+    fn bar(this)
 }
 
 class Foo implements(Bar) {
-    function bar(this) {
+    fn bar(this) {
         println("Foo::bar")
     }
 }
 
-function main() {}
+fn main() {}

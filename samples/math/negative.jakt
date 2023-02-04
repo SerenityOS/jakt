@@ -1,6 +1,6 @@
 /// Expect:
 /// - output: "-3\n"
 
-function main() {
+fn main() {
     println("{}", -10 + 7)
 }

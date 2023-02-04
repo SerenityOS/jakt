@@ -1,8 +1,8 @@
 /// Expect:
 /// - output: "OK\n"
 
-function main() {
-    let a = function() {
+fn main() {
+    let a = fn() {
         println("OK")
     }
 

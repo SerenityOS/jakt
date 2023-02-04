@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "10\n"
 
-function main() {
+fn main() {
     let x = 10
     let y = &raw x
 

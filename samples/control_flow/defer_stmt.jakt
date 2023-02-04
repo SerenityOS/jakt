@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "Well, hello\n friends!\n\n"
 
-function main() {
+fn main() {
     defer println(" friends!\n")
     println("Well, hello")
 }

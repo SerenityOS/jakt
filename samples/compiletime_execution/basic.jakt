@@ -10,6 +10,6 @@ comptime fibonacci(anon value: i64) -> i64 {
     return fibonacci(value - 1) + fibonacci(value - 2)
 }
 
-function main() {
+fn main() {
     println("fibonacci(16) = {}", fibonacci(16));
 }

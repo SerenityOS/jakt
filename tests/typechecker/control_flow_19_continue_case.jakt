@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Unreachable code"
 
-function test(first: i64) -> String {
+fn test(first: i64) -> String {
     loop {
         if first == 1 {
             continue // Always transfer control (can't break)
@@ -15,6 +15,6 @@ function test(first: i64) -> String {
     return "NOT PASSED" // This should not be reachable
 }
 
-function main() {
+fn main() {
     println("{}", test(first: 0))
 }

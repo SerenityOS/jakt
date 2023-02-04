@@ -2,6 +2,6 @@
 
 import jakt::arguments { ArgsParser }
 
-function test_common_import(mut args: ArgsParser) throws -> bool {
+fn test_common_import(mut args: ArgsParser) throws -> bool {
     return args.flag(["-h", "--help"])
 }

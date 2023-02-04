@@ -5,7 +5,7 @@ enum Foo {
     Id(i32)
     Name(String)
 
-    private function name_impl(this) throws -> String? {
+    private fn name_impl(this) throws -> String? {
         match this {
             Name(name) => {
                 return name
@@ -16,10 +16,10 @@ enum Foo {
         }
     }
 
-    function name(this) throws => this.name_impl()
+    fn name(this) throws => this.name_impl()
 }
 
-function main() {
+fn main() {
     let foo = Foo::Id(1)
     let bar = Foo::Name("Test")
     println("Foo's name is {} and bar's name is {}!", foo.name(), bar.name())

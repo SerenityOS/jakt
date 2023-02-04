@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "133\n113\n1230\n12\n3\n"
 
-function main() {
+fn main() {
     let a = 123 + 10
     let b = 123 - 10
     let c = 123 * 10

@@ -4,12 +4,12 @@
 struct Foo<T> {
     a: T
 
-    function test<U>(this, anon x: U) -> T {
+    fn test<U>(this, anon x: U) -> T {
         return this.a + x
     }
 }
 
-function main() {
+fn main() {
     let f = Foo(a: "foo")
     f.test(123) // Can't add String and i64
 }

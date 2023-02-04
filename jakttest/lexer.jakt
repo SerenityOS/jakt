@@ -7,11 +7,11 @@ import error { JaktError }
 import utility { Span }
 
 // FIXME: These should not need explicit "-> bool" return types.
-function is_ascii_alpha(anon c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
-function is_ascii_digit(anon c: u8) -> bool => (c >= b'0' and c <= b'9')
-function is_ascii_hexdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
-function is_ascii_octdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'8')
-function is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
+fn is_ascii_alpha(anon c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
+fn is_ascii_digit(anon c: u8) -> bool => (c >= b'0' and c <= b'9')
+fn is_ascii_hexdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
+fn is_ascii_octdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'8')
+fn is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
 
 enum Token {
     SingleQuotedString(quote: String, prefix: String?, span: Span)
@@ -119,11 +119,11 @@ enum Token {
     // Catch-all for failed parses
     Garbage(Span)
 
-    public function span(this) => match this {
+    public fn span(this) => match this {
         else(span) => span
     }
 
-    function from_keyword_or_identifier(string: String, span: Span) => match string {
+    fn from_keyword_or_identifier(string: String, span: Span) => match string {
         "and" => Token::And(span)
         "anon" => Token::Anon(span)
         "as" => Token::As(span)
@@ -195,7 +195,7 @@ enum NumericConstant {
     U64(u64)
     USize(u64)
 
-    public function to_usize(this) => match this {
+    public fn to_usize(this) => match this {
         I8(num) => num as! usize
         I16(num) => num as! usize
         I32(num) => num as! usize
@@ -208,7 +208,7 @@ enum NumericConstant {
     }
 }
 
-function make_number_token(number: u64, suffix: LiteralSuffix, span: Span) throws -> Token => match suffix {
+fn make_number_token(number: u64, suffix: LiteralSuffix, span: Span) throws -> Token => match suffix {
     // FIXME: Implement floats
     LiteralSuffix::U8 => Token::Number(number: NumericConstant::U8(number as! u8), span)
     LiteralSuffix::U16 => Token::Number(number: NumericConstant::U16(number as! u16), span)
@@ -227,7 +227,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
     input: [u8]
     errors: [JaktError]
 
-    function lex(input: [u8], errors: [JaktError]) throws -> [Token] {
+    fn lex(input: [u8], errors: [JaktError]) throws -> [Token] {
         mut lexer = Lexer(index: 0, input, errors)
         mut tokens: [Token] = []
 
@@ -238,12 +238,12 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return tokens
     }
 
-    function error(mut this, anon message: String, anon span: Span) throws {
+    fn error(mut this, anon message: String, anon span: Span) throws {
         .errors.push(JaktError::Message(message, span))
     }
 
     // Peek at next upcoming character
-    function peek(this) -> u8 {
+    fn peek(this) -> u8 {
         if .eof() {
             return 0
         }
@@ -252,18 +252,18 @@ struct Lexer implements(ThrowingIterable<Token>) {
 
     // Peek at upcoming characters, N steps ahead in the stream
     // FIXME: This could be merged with peek() once we support default arguments
-    function peek_ahead(this, anon steps: usize) -> u8 {
+    fn peek_ahead(this, anon steps: usize) -> u8 {
         if .index + steps >= .input.size() {
             return 0
         }
         return .input[.index + steps]
     }
 
-    function eof(this) -> bool {
+    fn eof(this) -> bool {
         return .index >= .input.size()
     }
 
-    function substring(this, start: usize, length: usize) throws -> String {
+    fn substring(this, start: usize, length: usize) throws -> String {
         mut builder = StringBuilder::create()
         for i in start..length {
             builder.append(.input[i])
@@ -271,7 +271,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return builder.to_string()
     }
 
-    function lex_character_constant_or_name(mut this) throws -> Token {
+    fn lex_character_constant_or_name(mut this) throws -> Token {
         if .peek_ahead(1) != b'\'' {
             return .lex_number_or_name()
         }
@@ -319,7 +319,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return Token::SingleQuotedString(quote, prefix, span: Span(start, end))
     }
 
-    function lex_number_or_name(mut this) throws -> Token {
+    fn lex_number_or_name(mut this) throws -> Token {
         let start = .index
 
         if .eof() {
@@ -349,7 +349,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return Token::Garbage(Span(start, end))
     }
 
-    function lex_number(mut this) throws -> Token {
+    fn lex_number(mut this) throws -> Token {
         let start = .index
         mut total = 0u64
 
@@ -423,7 +423,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return make_number_token(number: total, suffix, span: Span(start, end))
     }
 
-    function consume_numeric_literal_suffix(mut this) -> LiteralSuffix? {
+    fn consume_numeric_literal_suffix(mut this) -> LiteralSuffix? {
         match .peek() {
             b'u' | b'i' => {}
             else => {
@@ -475,7 +475,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
     }
 
 
-    function lex_quoted_string(mut this, delimiter: u8) throws -> Token {
+    fn lex_quoted_string(mut this, delimiter: u8) throws -> Token {
         let start = .index
 
         ++.index
@@ -508,7 +508,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return Token::QuotedString(quote: str, span: Span(start, end))
     }
 
-    function lex_plus(mut this) -> Token {
+    fn lex_plus(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::PlusEqual(Span(start, end: ++.index))
@@ -517,7 +517,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_minus(mut this) -> Token {
+    fn lex_minus(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::MinusEqual(Span(start, end: ++.index))
@@ -527,7 +527,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_asterisk(mut this) -> Token {
+    fn lex_asterisk(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::AsteriskEqual(Span(start, end: ++.index))
@@ -535,7 +535,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_forward_slash(mut this) throws -> Token {
+    fn lex_forward_slash(mut this) throws -> Token {
         let start = .index++
         if .peek() == b'=' {
             return Token::ForwardSlashEqual(Span(start, end: ++.index))
@@ -546,7 +546,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return .next() ?? Token::Eof(Span(start: .index, end: .index))
     }
 
-    function lex_caret(mut this) -> Token {
+    fn lex_caret(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::CaretEqual(Span(start, end: ++.index))
@@ -554,7 +554,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_pipe(mut this) -> Token {
+    fn lex_pipe(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::PipeEqual(Span(start, end: ++.index))
@@ -562,7 +562,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_percent_sign(mut this) -> Token {
+    fn lex_percent_sign(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::PercentSignEqual(Span(start, end: ++.index))
@@ -570,7 +570,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_exclamation_point(mut this) -> Token {
+    fn lex_exclamation_point(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::NotEqual(Span(start, end: ++.index))
@@ -578,7 +578,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_ampersand(mut this) -> Token {
+    fn lex_ampersand(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::AmpersandEqual(Span(start, end: ++.index))
@@ -586,7 +586,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_less_than(mut this) -> Token {
+    fn lex_less_than(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::LessThanOrEqual(Span(start, end: ++.index))
@@ -601,7 +601,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_greater_than(mut this) -> Token {
+    fn lex_greater_than(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::GreaterThanOrEqual(Span(start, end: ++.index))
@@ -616,7 +616,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_dot(mut this) -> Token {
+    fn lex_dot(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'.' => Token::DotDot(Span(start, end: ++.index))
@@ -624,7 +624,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_colon(mut this) -> Token {
+    fn lex_colon(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b':' => Token::ColonColon(Span(start, end: ++.index))
@@ -632,7 +632,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_question_mark(mut this) -> Token {
+    fn lex_question_mark(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'?' => {
@@ -646,7 +646,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function lex_equals(mut this) -> Token {
+    fn lex_equals(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::DoubleEqual(Span(start, end: ++.index))
@@ -655,7 +655,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    function next(mut this) throws -> Token? {
+    fn next(mut this) throws -> Token? {
         if .index == .input.size() {
             ++.index
             return Token::Eof(Span(start: .index - 1, end: .index - 1))

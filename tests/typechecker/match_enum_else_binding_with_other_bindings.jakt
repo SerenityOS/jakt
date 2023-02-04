@@ -7,12 +7,12 @@ enum Foo {
     C(y: i64)
 }
 
-function match_else_with_other_binding(a: Foo) -> i64 => match a {
+fn match_else_with_other_binding(a: Foo) -> i64 => match a {
     C(y) => y * 2
     else(x) => x
 }
 
-function main() {
+fn main() {
     println("{}", match_else_with_other_binding(a: Foo::A(x: 3)))
     println("{}", match_else_with_other_binding(a: Foo::B(x: 3)))
     println("{}", match_else_with_other_binding(a: Foo::C(y: 3)))

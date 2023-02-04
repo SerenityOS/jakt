@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\n"
 
-function test() -> i64 {
+fn test() -> i64 {
     let x = 2
 
     loop {
@@ -28,6 +28,6 @@ function test() -> i64 {
     return 1
 }
 
-function main() {
+fn main() {
     test()
 }

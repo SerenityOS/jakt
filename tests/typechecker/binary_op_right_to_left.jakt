@@ -1,7 +1,7 @@
 /// Expect: 
 /// - output: "98\n"
 
-function main() {
+fn main() {
     let x = 80 + 18i16;
     println("{}", x)
 }

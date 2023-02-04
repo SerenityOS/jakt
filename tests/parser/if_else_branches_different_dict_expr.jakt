@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "success\n"
 
-function main() throws {
+fn main() throws {
     if true {
         let x = ["a": 1, "b": 2]
     } else {

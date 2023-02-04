@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "5\n"
 
-function main() {
+fn main() {
     let i = Some(5)
     println("{}", i ?? 0)
 }

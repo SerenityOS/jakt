@@ -6,7 +6,7 @@ enum Foo {
     Y
 }
 
-function main() {
+fn main() {
     match Foo::X() {
         Y => 0
     }

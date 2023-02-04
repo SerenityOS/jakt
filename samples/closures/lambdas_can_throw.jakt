@@ -1,12 +1,12 @@
 /// Expect:
 /// - output: "69\n"
 
-function test(anon cb: function() throws -> String) throws {
+fn test(anon cb: fn() throws -> String) throws {
     println("{}", cb())
 }
 
-function main() {
-    test(function() throws -> String {
+fn main() {
+    test(fn() throws -> String {
         return format("{}", 69)
     })
 }

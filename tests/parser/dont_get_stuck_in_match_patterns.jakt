@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Expected complete block"
 struct Parser {
-    function parse_call_parameter_name(mut this) throws -> String {
+    fn parse_call_parameter_name(mut this) throws -> String {
         match .current() {
             Name(name) => {
                 match .peek(1) {
@@ -15,6 +15,6 @@ struct Parser {
 }
 
 
-function main(args: [String]) {
+fn main(args: [String]) {
 
 }

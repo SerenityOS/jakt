@@ -21,12 +21,12 @@ class Compiler {
     public optimize: bool
     public target_triple: String?
 
-    public function panic(this, anon message: String) throws -> never {
+    public fn panic(this, anon message: String) throws -> never {
         .print_errors()
         utility::panic(message)
     }
 
-    public function print_errors(this) throws {
+    public fn print_errors(this) throws {
         // FIXME: This method of enumerating errors might be a problem for really huge code bases.
         //        So at some point we might want to use better data structures here.
         mut idx = 0uz
@@ -57,18 +57,18 @@ class Compiler {
         }
     }
 
-    public function get_file_path(this, anon file_id: FileId) throws -> Path? {
+    public fn get_file_path(this, anon file_id: FileId) throws -> Path? {
         if file_id.id >= .files.size() {
             return None
         }
         return .files[file_id.id]
     }
 
-    public function current_file_id(this) -> FileId? {
+    public fn current_file_id(this) -> FileId? {
         return .current_file
     }
 
-    public function current_file_path(this) -> Path? {
+    public fn current_file_path(this) -> Path? {
         if .current_file.has_value() {
             return .files[.current_file!.id]
         }
@@ -76,7 +76,7 @@ class Compiler {
         return None
     }
 
-    public function get_file_id_or_register(mut this, anon file: Path) throws -> FileId {
+    public fn get_file_id_or_register(mut this, anon file: Path) throws -> FileId {
         // FIXME: maybe we want to index with the absolute path, just to be sure?
         let path = file.to_string()
         mut file_id = .file_ids.get(path)
@@ -93,7 +93,7 @@ class Compiler {
         return file_id!
     }
 
-    public function set_current_file(mut this, anon file_id: FileId) -> bool {
+    public fn set_current_file(mut this, anon file_id: FileId) -> bool {
         // FIXME: Make use of builtin types in lib.h
         let ErrNOENT = 2i32
         let ErrACCES = 13i32
@@ -125,25 +125,25 @@ class Compiler {
         return true
     }
 
-    public function current_file_state(this) -> (FileId?, [u8]) => (.current_file, .current_file_contents)
-    public function restore_file_state(mut this, anon state: (FileId?, [u8])) {
+    public fn current_file_state(this) -> (FileId?, [u8]) => (.current_file, .current_file_contents)
+    public fn restore_file_state(mut this, anon state: (FileId?, [u8])) {
         .current_file = state.0
         .current_file_contents = state.1
     }
 
-    public function dbg_println(this, anon message: String) {
+    public fn dbg_println(this, anon message: String) {
         if .debug_print {
             println("{}", message)
         }
     }
 
-    public function load_prelude(mut this) throws {
+    public fn load_prelude(mut this) throws {
         let module_name = "__prelude__"
         let file_name = Path::from_string(module_name)
         .get_file_id_or_register(file_name)
     }
 
-    public function search_for_path(this, anon input_module_name: String) throws -> Path? {
+    public fn search_for_path(this, anon input_module_name: String) throws -> Path? {
         // FIXME: Need a better way to convert u8 to a String.
         //        https://discord.com/channels/830522505605283862/976984180313452604/1035127640807448616
         mut builder = StringBuilder::create()

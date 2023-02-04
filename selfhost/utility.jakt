@@ -3,17 +3,17 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-function panic(anon message: String) -> never {
+fn panic(anon message: String) -> never {
     eprintln("internal error: {}", message)
     abort()
 }
 
-function todo(anon message: String) {
+fn todo(anon message: String) {
     eprintln("TODO: {}", message)
     abort()
 }
 
-function null<T>() -> raw T {
+fn null<T>() -> raw T {
     unsafe {
         cpp {
             "return nullptr;"
@@ -23,7 +23,7 @@ function null<T>() -> raw T {
     abort()
 }
 
-function allocate<T>(count: usize) -> raw T {
+fn allocate<T>(count: usize) -> raw T {
     unsafe {
         cpp {
             "return static_cast<T*>(malloc(count * sizeof(T)));"
@@ -33,7 +33,7 @@ function allocate<T>(count: usize) -> raw T {
     abort()
 }
 
-function add_arrays<T>(anon a: [T], anon b: [T]) throws -> [T] {
+fn add_arrays<T>(anon a: [T], anon b: [T]) throws -> [T] {
     mut result: [T] = []
 
     for x in a {
@@ -47,7 +47,7 @@ function add_arrays<T>(anon a: [T], anon b: [T]) throws -> [T] {
     return result
 }
 
-function join(anon strings: [String], separator: String) -> String {
+fn join(anon strings: [String], separator: String) -> String {
     mut output = ""
 
     mut i = 0uz
@@ -62,7 +62,7 @@ function join(anon strings: [String], separator: String) -> String {
     return output
 }
 
-function prepend_to_each(anon strings: [String], prefix: String) throws -> [String] {
+fn prepend_to_each(anon strings: [String], prefix: String) throws -> [String] {
     mut output: [String] = []
     for str in strings {
         output.push(prefix + str)
@@ -70,7 +70,7 @@ function prepend_to_each(anon strings: [String], prefix: String) throws -> [Stri
     return output
 }
 
-function append_to_each(anon strings: [String], suffix: String) throws -> [String] {
+fn append_to_each(anon strings: [String], suffix: String) throws -> [String] {
     mut output: [String] = []
     for str in strings {
         output.push(str + suffix)
@@ -78,7 +78,7 @@ function append_to_each(anon strings: [String], suffix: String) throws -> [Strin
     return output
 }
 
-function write_to_file(data: String, output_filename: String) throws {
+fn write_to_file(data: String, output_filename: String) throws {
     mut outfile = File::open_for_writing(output_filename)
     mut bytes: [u8] = []
     for i in 0..data.length() {
@@ -92,22 +92,22 @@ struct Span {
     start: usize
     end: usize
 
-    function contains(this, span: Span) -> bool {
+    fn contains(this, span: Span) -> bool {
         return .file_id.equals(span.file_id) and span.start >= .start and span.end <= .end
     }
 
-    function is_in_offset_range(this, start: usize, end: usize) => start <= .start and end >= .end
+    fn is_in_offset_range(this, start: usize, end: usize) => start <= .start and end >= .end
 }
 
 struct FileId {
     id: usize
 
-    function equals(this, anon rhs: FileId) -> bool {
+    fn equals(this, anon rhs: FileId) -> bool {
         return .id == rhs.id
     }
 }
 
-function escape_for_quotes(anon s: String) throws -> String {
+fn escape_for_quotes(anon s: String) throws -> String {
     mut builder = StringBuilder::create()
     for cp in s.code_points() {
         match cp {
@@ -121,7 +121,7 @@ function escape_for_quotes(anon s: String) throws -> String {
     return builder.to_string()
 }
 
-function interpret_escapes(anon s: String) throws -> String {
+fn interpret_escapes(anon s: String) throws -> String {
     mut builder = StringBuilder::create()
     mut in_escape = false
     for cp in s.code_points() {
@@ -158,14 +158,14 @@ function interpret_escapes(anon s: String) throws -> String {
     return builder.to_string()
 }
 
-function is_ascii_alpha(anon c: u8) => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
-function is_ascii_digit(anon c: u8) => (c >= b'0' and c <= b'9')
-function is_ascii_hexdigit(anon c: u8) => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
-function is_ascii_octdigit(anon c: u8) => (c >= b'0' and c <= b'7')
-function is_ascii_binary(anon c: u8) => (c == b'0' or c == b'1')
-function is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
+fn is_ascii_alpha(anon c: u8) => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
+fn is_ascii_digit(anon c: u8) => (c >= b'0' and c <= b'9')
+fn is_ascii_hexdigit(anon c: u8) => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
+fn is_ascii_octdigit(anon c: u8) => (c >= b'0' and c <= b'7')
+fn is_ascii_binary(anon c: u8) => (c == b'0' or c == b'1')
+fn is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
 
-function is_whitespace(anon byte: u8) => byte == b' ' or byte == b'\t' or byte == b'\r'
+fn is_whitespace(anon byte: u8) => byte == b' ' or byte == b'\t' or byte == b'\r'
 
 enum IterationDecision<T> {
     Break(value: T)

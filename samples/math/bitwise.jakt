@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "No error\n"
 
-function check(anon a: i64, anon b: i64) -> i64 {
+fn check(anon a: i64, anon b: i64) -> i64 {
     if a != b {
         println("Not equal!")
         println("{}", a)
@@ -11,7 +11,7 @@ function check(anon a: i64, anon b: i64) -> i64 {
     return 0
 }
 
-function main() {
+fn main() {
     mut errors = 0
 
     mut a = 1

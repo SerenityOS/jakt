@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Type mismatch: expected ‘String’, but got ‘i64’"
 
-function main() {
+fn main() {
     match 123 {
         1 => {
             yield "foo"

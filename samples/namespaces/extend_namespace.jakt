@@ -3,18 +3,18 @@
 
 namespace foo {
     namespace bar {
-        function baz() {
+        fn baz() {
             println("PASS")
         }
     }
 }
 
 namespace foo {
-    function run() {
+    fn run() {
         bar::baz()
     }
 }
 
-function main() {
+fn main() {
     foo::run()
 }

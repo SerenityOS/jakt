@@ -5,12 +5,12 @@ class Person {
     public name: String
     public age: i64
 
-    public function birthday(mut this) {
+    public fn birthday(mut this) {
         ++this.age
     }
 }
 
-function main() {
+fn main() {
     mut p = Person(name: "Bob", age: 1000)
 
     p.birthday()

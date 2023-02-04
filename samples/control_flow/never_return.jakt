@@ -1,13 +1,13 @@
 /// Expect:
 /// - output: ""
 
-function test() -> String {
+fn test() -> String {
     if false {
         return "hi"
     }
     abort()
 }
 
-function main() -> c_int {
+fn main() -> c_int {
     abort()
 }

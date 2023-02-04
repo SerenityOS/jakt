@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\nPASS\nPASS\n"
 
-function main() -> c_int {
+fn main() -> c_int {
     if true
         and true {
         println("PASS")

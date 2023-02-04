@@ -2,7 +2,7 @@
 /// - output: ""
 import helper { S }
 
-function main() {
+fn main() {
     mut s = S(value: None)
     // String? is not instantiated in the current module
     // but was in the helper. Let's see if typechecker

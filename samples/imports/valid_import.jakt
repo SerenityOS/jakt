@@ -3,6 +3,6 @@
 
 import foo
 
-function main() {
+fn main() {
     foo::bar()
 }

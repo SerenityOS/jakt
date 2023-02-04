@@ -2,9 +2,9 @@
 /// - output: "PASS\n"
 namespace Test
 {
-    function foo() => "PASS" 
+    fn foo() => "PASS" 
 }
 
-function main() {
+fn main() {
     println("{}", Test::foo())
 }

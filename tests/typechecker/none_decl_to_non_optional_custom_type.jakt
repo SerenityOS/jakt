@@ -4,6 +4,6 @@
 class Test {
 }
 
-function main() {
+fn main() {
     mut x: Test = None
 }

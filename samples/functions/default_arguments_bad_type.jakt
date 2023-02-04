@@ -1,10 +1,10 @@
 /// Expect:
 /// - error: "Type mismatch: expected ‘String’, but got ‘i64’\n"
 
-function say(text: String = 3) {
+fn say(text: String = 3) {
     println("{}", text)
 }
 
-function main() {
+fn main() {
     say()
 }

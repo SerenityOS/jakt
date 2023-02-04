@@ -2,12 +2,12 @@
 /// - output: "PASS\n"
 
 class Foo {
-    public function toss(this) throws {
+    public fn toss(this) throws {
         throw Error::from_errno(0)
     }
 }
 
-function main() {
+fn main() {
     let foo = Foo()
     try foo.toss() catch error {
         println("PASS")

@@ -2,10 +2,10 @@
 /// - error: "Can't access method ‘parts’, because it is marked private\n"
 
 struct WeirdEncapsulation {
-    private function parts(this) {}
+    private fn parts(this) {}
 }
 
-function main() {
+fn main() {
     let useless = WeirdEncapsulation()
     useless.parts()
 }

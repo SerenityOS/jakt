@@ -1,11 +1,11 @@
 /// Expect:
 /// - output: "OK\n"
 
-function f(a: [f64]) {
+fn f(a: [f64]) {
     println("OK")
 }
 
-function main() {
+fn main() {
     let n : i64 = 1
     f(a: [1.0f64; n])
 }

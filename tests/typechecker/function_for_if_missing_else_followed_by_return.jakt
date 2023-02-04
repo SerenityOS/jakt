@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "5\n"
 
-function foo() -> i64 {
+fn foo() -> i64 {
     for i in 1..10 {
         if i == 5 {
             return i
@@ -13,6 +13,6 @@ function foo() -> i64 {
     return -1
 }
 
-function main() {
+fn main() {
     println("{}", foo())
 }

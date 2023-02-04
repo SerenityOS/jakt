@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "133\n113\n1230\n12\n3\n"
 
-function main() {
+fn main() {
     mut a = 123
     a += 10
     mut b = 123

@@ -6,6 +6,6 @@ struct Bar {
     foo: Foo = Foo()
 }
 
-function main() {
+fn main() {
     let bar = Bar()
 }

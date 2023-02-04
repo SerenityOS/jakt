@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "255\n1\n127\n-127\n-128\n-127\n-128\n1\n"
 
-function main() {
+fn main() {
     let a: u8 = as_saturated(500u32)
     let b: u8 = as_truncated(257u32)
     let c = 127 as! i8

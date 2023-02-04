@@ -1,5 +1,5 @@
 /// Expect:
 /// - error: "Namespace ‘Foo’ not found"
-function boog() {
+fn boog() {
     Foo::Bar
 }

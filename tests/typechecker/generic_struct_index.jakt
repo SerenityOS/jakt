@@ -5,7 +5,7 @@ struct Foo<A> {
     a: A
 }
 
-function main() {
+fn main() {
     let x = Foo(a: "test")
     let y = Foo(a: 1)
 

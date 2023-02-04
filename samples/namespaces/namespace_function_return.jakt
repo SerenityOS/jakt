@@ -7,10 +7,10 @@ namespace Foo {
     }
 }
 
-function get_biz() -> Foo::Bar::Biz {
+fn get_biz() -> Foo::Bar::Biz {
     return Foo::Bar::Biz(a: 10)
 }
 
-function main() {
+fn main() {
     println("Biz: {}", get_biz())
 }

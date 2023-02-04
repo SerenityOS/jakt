@@ -1,13 +1,13 @@
 /// Expect:
 /// - output: "50\nHello, friends!\n"
 
-function area(width: i64, height: i64) => width * height
-function greeting(name: String) throws -> String => format("Hello, {}!", name)
-function greet(name: String) throws {
+fn area(width: i64, height: i64) => width * height
+fn greeting(name: String) throws -> String => format("Hello, {}!", name)
+fn greet(name: String) throws {
     println("{}", greeting(name))
 } 
 
-function main() {
+fn main() {
     let a = area(width: 5, height: 10)
     println("{}", a)
 

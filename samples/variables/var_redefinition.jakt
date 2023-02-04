@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Redefinition of variable ‘x’\n"
 
-function main() {
+fn main() {
     let x = 10
     let x = 20
     println("{}", x)

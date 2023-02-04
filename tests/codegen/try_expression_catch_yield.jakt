@@ -1,15 +1,15 @@
 /// Expect:
 /// - output: "Yield\nReturn\n"
 
-function throw_for_fun() throws -> String {
+fn throw_for_fun() throws -> String {
     throw Error::from_errno(123)
 }
 
-function return_for_fun() throws -> String {
+fn return_for_fun() throws -> String {
     return "Return"
 }
 
-function main() {
+fn main() {
     let action = "Yield"
     let foo = try throw_for_fun() catch err {
         yield action

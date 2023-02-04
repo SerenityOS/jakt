@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "unknown character"
 
-function main() {
+fn main() {
     !@#$!@@#%#$@
 }

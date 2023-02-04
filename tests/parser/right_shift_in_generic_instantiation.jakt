@@ -6,12 +6,12 @@ struct Foo<T> {
 }
 
 type Foo implements(Iterable<Foo<T>>) {
-    function next(mut this) -> Foo<T>? {
+    fn next(mut this) -> Foo<T>? {
         return None
     }
 }
 
-function main() {
+fn main() {
     let x: Foo<i32> = Foo(x: 10i32)
     mut y: Foo<Foo<i32>> = Foo(x)
 

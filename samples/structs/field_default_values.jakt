@@ -4,25 +4,25 @@
 struct Person1 {
     private name: String = "Jane"
     age: i64
-    function getName(this) => .name
-    function getAge(this) => .age
+    fn getName(this) => .name
+    fn getAge(this) => .age
 }
 
 struct Person2 {
     name: String
     private age: i64 = 100
-    function getName(this) => .name
-    function getAge(this) => .age
+    fn getName(this) => .name
+    fn getAge(this) => .age
 }
 
 struct Person3 {
     private name: String = "Jane"
     private age: i64 = 100
-    function getName(this) => .name
-    function getAge(this) => .age
+    fn getName(this) => .name
+    fn getAge(this) => .age
 }
 
-function main() {
+fn main() {
     let p1 = Person1(age: 100)
     println("{}", p1.getName())
     println("{}", p1.getAge())

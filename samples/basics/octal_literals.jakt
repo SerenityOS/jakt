@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "9\n769\n1653334\n4398046511103\n"
 
-function main() {
+fn main() {
     println("{}", 0o11)
     println("{}", 0o1401)
     println("{}", 0o623_5126)

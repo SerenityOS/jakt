@@ -21,28 +21,28 @@ enum ObjectivelyBetterOptional<T> {
     None
 }
 
-function make_result(okay: bool) -> BetterResult<i64, String> {
+fn make_result(okay: bool) -> BetterResult<i64, String> {
     if okay {
         return BetterResult::ImFineHowAreYou(42)
     }
     return BetterResult::TheWorldIsBurning("666")
 }
 
-function better_optional_from<T>(anon optional: T?) -> BetterOptional<T> {
+fn better_optional_from<T>(anon optional: T?) -> BetterOptional<T> {
     if optional.has_value() {
         return BetterOptional::Some(optional!)
     }
     return BetterOptional::None()
 }
 
-function to_objectively_better_optional<T>(anon optional: BetterOptional<T>) -> ObjectivelyBetterOptional<T> {
+fn to_objectively_better_optional<T>(anon optional: BetterOptional<T>) -> ObjectivelyBetterOptional<T> {
     return match optional {
         BetterOptional::Some(value) => ObjectivelyBetterOptional::Some(value: value, joke_metadata: "I'm a joke")
         BetterOptional::None => ObjectivelyBetterOptional::None()
     }
 }
 
-function main() {
+fn main() {
     match make_result(okay: true) {
         ImFineHowAreYou(x) => {
             let a: i64? = x

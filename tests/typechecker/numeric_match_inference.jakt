@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "good\n"
 
-function main() {
+fn main() {
     let x = 0x10u8;
 
     match x {

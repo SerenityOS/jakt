@@ -6,11 +6,11 @@ boxed enum E {
     B
 }
 
-function get_e() throws -> E {
+fn get_e() throws -> E {
     return E::A(5)
 }
 
-function main() {
+fn main() {
     let e = get_e()
     if e is A(value) {
         println("PASS")

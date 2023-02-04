@@ -2,11 +2,11 @@
 /// - output: "Well, hello friends\n"
 
 namespace Greeters {
-    function greet() {
+    fn greet() {
         println("Well, hello friends")
     }
 }
 
-function main() {
+fn main() {
     Greeters::greet()
 }

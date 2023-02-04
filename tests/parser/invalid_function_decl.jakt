@@ -1,5 +1,5 @@
 /// Expect:
 /// - error: "Incomplete function definition"
 
-comptime function foo() {}
+comptime fn foo() {}
 

@@ -5,12 +5,12 @@ class Memo<T, V> {
     public value: [T:V]
 }
 
-function make_memo<R, S>() throws -> Memo<R, S> {
+fn make_memo<R, S>() throws -> Memo<R, S> {
     let value: [R:S] = [:]
     return Memo(value)
 }
 
-function memo_fix_helper<T, U>(anon function_: &function(anon loop_: &function(anon x: T) throws -> U, anon x: T) throws -> U, anon x: T, mut memo: Memo<T, U>) throws -> U {
+fn memo_fix_helper<T, U>(anon function_: &fn(anon loop_: &fn(anon x: T) throws -> U, anon x: T) throws -> U, anon x: T, mut memo: Memo<T, U>) throws -> U {
     if memo.value.contains(x) {
         return memo.value[x]
     }
@@ -18,12 +18,12 @@ function memo_fix_helper<T, U>(anon function_: &function(anon loop_: &function(a
     return memo_fix(function_, x, memo: Some(memo))
 }
 
-function memo_fix<T, U>(anon function_: &function(anon loop_: &function(anon x: T) throws -> U, anon x: T) throws -> U, anon x: T, mut memo: Memo<T, U>? = None) throws -> U {
+fn memo_fix<T, U>(anon function_: &fn(anon loop_: &fn(anon x: T) throws -> U, anon x: T) throws -> U, anon x: T, mut memo: Memo<T, U>? = None) throws -> U {
     if not memo.has_value() {
         memo = make_memo<T, U>()
     }
 
-    let loop_ = function[&memo, &function_](anon x: T) throws -> U {
+    let loop_ = fn[&memo, &function_](anon x: T) throws -> U {
         if memo!.value.contains(x) {
             return memo!.value[x]
         }
@@ -36,9 +36,9 @@ function memo_fix<T, U>(anon function_: &function(anon loop_: &function(anon x: 
     return res
 }
 
-function main() {
+fn main() {
     let foo = memo_fix(
-        &function(anon loop_: &function(anon x: i32) throws -> i64, anon x: i32) throws -> i64 {
+        &fn(anon loop_: &fn(anon x: i32) throws -> i64, anon x: i32) throws -> i64 {
             if x == 0 {
                 return 1
             }

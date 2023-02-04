@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "55\n"
 
-function main() {
+fn main() {
     mut x = [1, 2, 3]
     x[1] = 55
 

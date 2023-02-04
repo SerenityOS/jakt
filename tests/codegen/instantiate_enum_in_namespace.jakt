@@ -7,7 +7,7 @@ namespace Ns {
     }
 }
 
-function main() {
+fn main() {
     let foo = Ns::Bar::A(22);
 
     match foo {

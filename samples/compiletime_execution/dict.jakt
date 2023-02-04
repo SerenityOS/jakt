@@ -45,7 +45,7 @@ comptime iterator() throws -> bool {
 }
 comptime dictionary_constructor() => Dictionary<String, c_char>().is_empty()
 
-function main() {
+fn main() {
     mut success = is_empty()
     success &= get()
     success &= set()

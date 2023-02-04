@@ -4,6 +4,6 @@
 class Foo {
 }
 
-function main() {
+fn main() {
     let foo: weak Foo? = None
 }

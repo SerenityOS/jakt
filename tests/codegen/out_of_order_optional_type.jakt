@@ -24,6 +24,6 @@ struct TypeId {
     id: usize
 }
 
-function main() {
+fn main() {
     // Should compile.
 }

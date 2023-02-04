@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "2\n"
 
-function main() {
+fn main() {
     let x = ("a", 2, true);
 
     println("{}", x.1)

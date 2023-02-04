@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "xxxxHello\n"
 
-function main() {
+fn main() {
     let exes = String::repeated(character: c'x', count: 4)
     println("{}Hello", exes);
 }

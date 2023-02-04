@@ -1,14 +1,14 @@
 /// Expect:
 /// - error: "Expected `else` keyword\n"
 
-function wrapped(anon action: &function() -> void) -> bool {
+fn wrapped(anon action: &fn() -> void) -> bool {
     println("Before")
     action()
     println("After")
     return true
 }
 
-function main() {
+fn main() {
     guard wrapped() {} else {
         return
     }

@@ -6,7 +6,7 @@ enum Foo {
     B
 }
 
-function main() {
+fn main() {
     let tuple = (Foo::A, 1)
 
     println("{}", tuple)

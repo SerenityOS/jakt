@@ -1,9 +1,9 @@
 /// Expect:
 /// - error: "Wrong number of arguments\n"
 
-function foo(a: i32, b: i32, c: i32) {
+fn foo(a: i32, b: i32, c: i32) {
 }
 
-function main() {
+fn main() {
     foo(a: 1, b: 2)
 }

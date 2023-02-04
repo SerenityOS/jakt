@@ -5,7 +5,7 @@ enum Foo {
     A
 }
 
-function main() {
+fn main() {
     let x = Foo::A()
     match x {
         else => 1

@@ -9,7 +9,7 @@ enum Bar {
 struct Foo {
     x: Bar
 
-    function equals(this, other: Foo) => match .x {
+    fn equals(this, other: Foo) => match .x {
         Y => match other.x {
             Y => true
             else => false
@@ -21,7 +21,7 @@ struct Foo {
     } 
 }
 
-function equals_out<T>(anon a: T?, anon b: T?) -> bool {
+fn equals_out<T>(anon a: T?, anon b: T?) -> bool {
     if a.has_value() and b.has_value() {
         return a!.equals(bad: b!)
     }
@@ -29,7 +29,7 @@ function equals_out<T>(anon a: T?, anon b: T?) -> bool {
     return not a.has_value() and not b.has_value()
 }
 
-function main() {
+fn main() {
     let a = Some(Foo(x: Bar::Y))
     let b = Some(Foo(x: Bar::Y))
 

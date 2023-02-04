@@ -3,8 +3,8 @@
 
 // These generic extern functions shouldn't compile to anything.
 
-extern function do_thing_with_type<T>(anon input: T) -> T
+extern fn do_thing_with_type<T>(anon input: T) -> T
 
-extern function do_more_things<T, U>(anon input: U) -> T
+extern fn do_more_things<T, U>(anon input: U) -> T
 
-function main() {}
+fn main() {}

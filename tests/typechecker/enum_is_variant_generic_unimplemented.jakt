@@ -6,7 +6,7 @@ enum Foo<T> {
     Baz
 }
 
-function main() {
+fn main() {
     let foo = Foo::Bar<i32>();
     // Note: This should be accepted, but we currently cannot represent `Foo<i32>::Bar`,
     //       so we can't keep the `i32` around until the codegen stage to generate either

@@ -13,16 +13,16 @@ enum ParsedTest {
     NoExpectOrSkip
 }
 
-function is_whitespace(anon cp: u32) -> bool => cp == ' ' or cp == '\t' or cp == '\r'
+fn is_whitespace(anon cp: u32) -> bool => cp == ' ' or cp == '\t' or cp == '\r'
 
 struct Parser {
     iterator: CodePointIterator
 
-    function is_eof(this) => .iterator.peek().has_value() == false
+    fn is_eof(this) => .iterator.peek().has_value() == false
 
-    function current(this) => .iterator.peek().value()
+    fn current(this) => .iterator.peek().value()
 
-    function lex_literal(mut this, anon literal: String) -> bool {
+    fn lex_literal(mut this, anon literal: String) -> bool {
         mut it = .iterator
         for lcp in literal.code_points() {
             let cp = it.next()
@@ -34,13 +34,13 @@ struct Parser {
         return true
     }
 
-    function skip_whitespace(mut this) {
+    fn skip_whitespace(mut this) {
         while not .is_eof() and is_whitespace(.current()) {
             .iterator.next()
         }
     }
 
-    function lex_quoted_string(mut this) throws -> String? {
+    fn lex_quoted_string(mut this) throws -> String? {
         if .is_eof() or .current() != '"' as! u32 {
             return None
         }
@@ -64,7 +64,7 @@ struct Parser {
         return None
     }
 
-    function parse_test(mut this) throws -> ParsedTest {
+    fn parse_test(mut this) throws -> ParsedTest {
         if not .lex_literal("///") {
             .iterator.next()
             return ParsedTest::NoExpectOrSkip
@@ -90,7 +90,7 @@ struct Parser {
         return .parse_test_information()
     }
 
-    function parse_test_information(mut this) throws -> ParsedTest {
+    fn parse_test_information(mut this) throws -> ParsedTest {
         mut success_test = false
         mut runtime_error = false
         mut compile_error = false
@@ -172,13 +172,13 @@ struct Parser {
         return ParsedTest::NoExpectOrSkip
     }
 
-    function parse(input: String) throws -> ParsedTest {
+    fn parse(input: String) throws -> ParsedTest {
         mut parser = Parser(iterator: input.code_points())
         return parser.parse_test()
     }
 }
 
-function parse_quoted_string(anon quote: String) throws -> String {
+fn parse_quoted_string(anon quote: String) throws -> String {
     mut builder = StringBuilder::create()
     mut i = 0uz
     while i < quote.length() {

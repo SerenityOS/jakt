@@ -1,4 +1,4 @@
-function main() {
+fn main() {
     let set = {1, 2, 3}
 
     println("{}", set.contains(1))
@@ -10,7 +10,7 @@ enum MyOptional<T> {
     None
 }
 
-function value_or_default<T>(anon x: MyOptional<T>, default: T) -> T {
+fn value_or_default<T>(anon x: MyOptional<T>, default: T) -> T {
     return match x {
         Some(value) => {
             let stuff = maybe_do_stuff_with(value)
@@ -28,7 +28,7 @@ enum Foo {
     )
 }
 
-function look_at_foo(anon x: Foo) -> i32 {
+fn look_at_foo(anon x: Foo) -> i32 {
     match x {
         StructLikeThingy(field_a: a, field_b) => {
             return a + field_b
@@ -44,19 +44,19 @@ enum AlertDescription: i8 {
 }
 
 // Use in match:
-function do_nothing_in_particular() => match AlertDescription::CloseNotify {
+fn do_nothing_in_particular() => match AlertDescription::CloseNotify {
     CloseNotify => { ... }
     UnexpectedMessage => { ... }
     BadRecordMAC => { ... }
 }
 
 namespace Greeters {
-    function greet() {
+    fn greet() {
         println("Well, hello friends")
     }
 }
 
-function task_that_might_fail() throws -> usize {
+fn task_that_might_fail() throws -> usize {
     if problem {
         throw Error::from_errno(EPROBLEM)
     }
@@ -65,7 +65,7 @@ function task_that_might_fail() throws -> usize {
 }
 
 
-function task_that_cannot_fail() -> usize {
+fn task_that_cannot_fail() -> usize {
     ...
     return result
 }

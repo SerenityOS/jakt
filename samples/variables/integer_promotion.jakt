@@ -5,7 +5,7 @@ struct Foo {
     x: u16
 }
 
-function main() {
+fn main() {
     mut a: u8 = 100
     a += 100
 

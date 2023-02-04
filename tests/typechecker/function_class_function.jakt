@@ -1,14 +1,14 @@
 /// Expect:
 /// - output: "3\n"
 
-function test(i : i32) -> i32 {
+fn test(i : i32) -> i32 {
     return i
 }
 
 class TestClass {
-    function init(mut this) {}
+    fn init(mut this) {}
 }
 
-function main() {
+fn main() {
     println("{}", test(i: 3));
 }

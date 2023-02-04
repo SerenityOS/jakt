@@ -5,7 +5,7 @@ enum Foo {
     Bar(i64)
 }
 
-function main() {
+fn main() {
     let foo = Foo::Bar(5)
     let bar = Foo::Bar(7)
 

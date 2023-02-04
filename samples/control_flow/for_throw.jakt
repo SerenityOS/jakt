@@ -2,12 +2,12 @@
 /// - stderr: "Runtime error: That was a bad idea"
 
 struct Iter implements(ThrowingIterable<i64>) {
-    function next(mut this) throws -> i64? {
+    fn next(mut this) throws -> i64? {
         throw Error::from_string_literal("That was a bad idea")
     }
 }
 
-function main() {
+fn main() {
     for x in Iter() {
         return 0
     }

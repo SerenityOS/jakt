@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "3\n85\n85\n85\n"
 
-function main() {
+fn main() {
     let v = [85; 3]
     println("{}", v.size())
     mut i = 0

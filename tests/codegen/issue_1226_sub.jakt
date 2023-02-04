@@ -4,7 +4,7 @@
 
 struct Foo {
 
-   function a() { }
-   function b() { a() }
+   fn a() { }
+   fn b() { a() }
 
 }

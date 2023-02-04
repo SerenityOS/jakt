@@ -1,11 +1,11 @@
 /// Expect:
 /// - output: "PASS\n"
 
-function test(cb: function() -> void) {
+fn test(cb: fn() -> void) {
     cb()
 }
 
-function main() {
+fn main() {
     let pass = "PASS"
-    test(cb: function[pass]() => println(pass))
+    test(cb: fn[pass]() => println(pass))
 }

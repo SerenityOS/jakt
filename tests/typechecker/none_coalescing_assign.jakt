@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "mayb\n"
 
-function main() {
+fn main() {
     mut i: String? = None
     i ??= "mayb"
     println(i ?? "hello")

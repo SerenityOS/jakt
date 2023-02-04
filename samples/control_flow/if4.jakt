@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "it is 80\n"
 
-function main() {
+fn main() {
     let x: i64 = 80;
 
     if x == 100 {

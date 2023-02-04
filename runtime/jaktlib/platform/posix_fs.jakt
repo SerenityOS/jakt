@@ -4,11 +4,11 @@ import platform_errno() { errno_value }
 import utility { allocate, null }
 
 import extern c "sys/stat.h" {
-    extern function mkdir(anon pathname: raw c_char, anon mode: u32) -> c_int
+    extern fn mkdir(anon pathname: raw c_char, anon mode: u32) -> c_int
 }
 
 import extern c "unistd.h" {
-    extern function getcwd(anon mut buf: raw c_char, anon size: usize) -> raw c_char
+    extern fn getcwd(anon mut buf: raw c_char, anon size: usize) -> raw c_char
 }
 
 import extern "dirent.h" {
@@ -18,12 +18,12 @@ import extern "dirent.h" {
         d_type: u32
     }
 
-    extern function opendir(anon pathname: raw c_char) -> raw DIR
-    extern function readdir(anon dir_fd: raw DIR) -> raw dirent
-    extern function closedir(anon dir_fd: raw DIR) -> c_int
+    extern fn opendir(anon pathname: raw c_char) -> raw DIR
+    extern fn readdir(anon dir_fd: raw DIR) -> raw dirent
+    extern fn closedir(anon dir_fd: raw DIR) -> c_int
 }
 
-function make_directory(path: String) throws {
+fn make_directory(path: String) throws {
     let rc = mkdir(path.c_string(), mode: 0o777)
     if rc == 0 {
         return
@@ -32,7 +32,7 @@ function make_directory(path: String) throws {
     throw Error::from_errno(errno_value())
 }
 
-function current_directory() throws -> String {
+fn current_directory() throws -> String {
     let buffer_size : usize = 4096; // Roughly PATH_MAX
     mut buffer = allocate<c_char>(count: buffer_size  + 1)
     defer {
@@ -53,7 +53,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
     path: Path
     dir_fd: raw DIR
 
-    public function next(mut this) throws -> (Path, bool)? {
+    public fn next(mut this) throws -> (Path, bool)? {
         let file = readdir(.dir_fd)
 
         if file == null<dirent>() {
@@ -83,11 +83,11 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
         return (Path::from_string(filename), is_directory)
     }
 
-    public function get_path(this) -> Path {
+    public fn get_path(this) -> Path {
         return .path
     }
 
-    public function from_path(path: Path) throws -> DirectoryIterator? {
+    public fn from_path(path: Path) throws -> DirectoryIterator? {
         let dir_fd = opendir(path.to_string().c_string())
         if dir_fd == null<DIR>() {
             return None

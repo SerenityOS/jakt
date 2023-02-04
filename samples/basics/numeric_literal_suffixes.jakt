@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "5\n5\n5\n5\n5\n5\n5\n5\n5\n"
 
-function main() {
+fn main() {
     mut a = 0uz
     a += 5 as! usize
     println("{}", a)

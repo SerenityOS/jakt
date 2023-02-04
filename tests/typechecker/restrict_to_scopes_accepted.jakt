@@ -6,18 +6,18 @@ struct Foo {
 }
 
 struct A {
-    function b(anon foo: Foo) => foo.x
+    fn b(anon foo: Foo) => foo.x
 }
 
 namespace Bar {
-    function bar(anon foo: Foo) => foo.x
+    fn bar(anon foo: Foo) => foo.x
 
-    function bar2(anon foo: Foo) => foo.x
+    fn bar2(anon foo: Foo) => foo.x
 }
 
-function baz(anon foo: Foo) => foo.x
+fn baz(anon foo: Foo) => foo.x
 
-function main() {
+fn main() {
     let foo = Foo(x: 42)
     A::b(foo)
     Bar::bar(foo)

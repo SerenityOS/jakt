@@ -1,10 +1,10 @@
 /// Expect:
 /// - output: "WHF\n"
 
-function say(text: String = "WHF") {
+fn say(text: String = "WHF") {
     println("{}", text)
 }
 
-function main() {
+fn main() {
     say()
 }

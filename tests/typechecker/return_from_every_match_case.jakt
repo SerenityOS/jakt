@@ -5,14 +5,14 @@ enum Foo {
     Baz
 }
 
-function test(foo: Foo) -> i64 {
+fn test(foo: Foo) -> i64 {
     match foo {
         Bar => { return 1 }
         Baz => { return 2 }
     }
 }
 
-function main() {
+fn main() {
     let foo = Foo::Bar
     println("{}", test(foo))
 }

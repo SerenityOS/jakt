@@ -1,11 +1,11 @@
 /// Expect:
 /// - output: "1003\n"
 
-function id<T>(anon x: T) -> T {
+fn id<T>(anon x: T) -> T {
     return x;
 }
 
-function main() {
+fn main() {
     let y = id(3);
 
     println("{}", y + 1000)

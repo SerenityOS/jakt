@@ -1,12 +1,12 @@
 /// Expect:
 /// - error: "Unreachable code\n"
 
-function foo() -> bool {
+fn foo() -> bool {
     return true
     return false
 }
 
-function main() {
+fn main() {
     foo()
 }
 

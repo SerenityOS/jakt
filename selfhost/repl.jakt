@@ -22,7 +22,7 @@ struct Editor {
     line_pointer: raw c_char
     prompt: String
 
-    function create(prompt: String) throws -> Editor {
+    fn create(prompt: String) throws -> Editor {
         mut std_in = fopen(pathname: "/dev/stdin".c_string(), mode: "r".c_string())
         if std_in == null<FILE>() {
             eprintln("Could not open /dev/stdin for reading")
@@ -37,7 +37,7 @@ struct Editor {
         return editor
     }
 
-    function get_line(mut this) throws -> LineResult {
+    fn get_line(mut this) throws -> LineResult {
         eprint("{}", .prompt)
 
         mut builder = StringBuilder::create()
@@ -57,7 +57,7 @@ struct Editor {
         return LineResult::Line(builder.to_string())
     }
 
-    function destroy(mut this) {
+    fn destroy(mut this) {
         fclose(stream: .standard_input_file)
         unsafe {
             cpp {
@@ -67,7 +67,7 @@ struct Editor {
     }
 }
 
-function serialize_unary_operation(anon op: CheckedUnaryOperator, anon expr: String) -> String => match op {
+fn serialize_unary_operation(anon op: CheckedUnaryOperator, anon expr: String) -> String => match op {
     PreIncrement => "++" + expr
     PostIncrement => expr + "++"
     PreDecrement => "--" + expr
@@ -82,7 +82,7 @@ function serialize_unary_operation(anon op: CheckedUnaryOperator, anon expr: Str
     else => "(<Unimplemented unary operator> " + expr + ")"
 }
 
-function serialize_ast_node(anon node: CheckedExpression) throws -> String => match node {
+fn serialize_ast_node(anon node: CheckedExpression) throws -> String => match node {
     Boolean(val) => format("{}", val)
     NumericConstant(val) => match val {
         I8(value) => format("{}i8", value)
@@ -220,7 +220,7 @@ struct REPL {
     root_interpreter_scope: InterpreterScope
     file_id: FileId
 
-    function create(runtime_path: Path, target_triple: String? = None) throws -> REPL {
+    fn create(runtime_path: Path, target_triple: String? = None) throws -> REPL {
         mut compiler = Compiler(
             files: []
             file_ids: [:]
@@ -289,7 +289,7 @@ struct REPL {
         )
     }
 
-    function handle_possible_error(mut this) throws -> bool {
+    fn handle_possible_error(mut this) throws -> bool {
         .compiler.print_errors()
         let has_error = .compiler.errors.size() > 0
         let arr: [JaktError] = []
@@ -297,7 +297,7 @@ struct REPL {
         return has_error
     }
 
-    function run(mut this) throws {
+    fn run(mut this) throws {
         mut editor = Editor::create(prompt: "> ")
         defer editor.destroy()
 

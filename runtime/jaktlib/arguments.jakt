@@ -8,7 +8,7 @@ struct ArgsParser {
     removed_indices: [usize]
     definitely_positional_args: [String]
 
-    function flag(mut this, anon names: [String]) throws -> bool {
+    fn flag(mut this, anon names: [String]) throws -> bool {
         for i in 0...args.size() {
             for name in names {
                 if .args[i] == name {
@@ -21,7 +21,7 @@ struct ArgsParser {
         return false
     }
 
-    function option(mut this, anon names: [String]) throws -> String? {
+    fn option(mut this, anon names: [String]) throws -> String? {
         for i in 1...args.size() {
             for name in names {
                 if .args[i] == name {
@@ -45,7 +45,7 @@ struct ArgsParser {
         return None
     }
 
-    function option_multiple(mut this, anon names: [String]) throws -> [String]
+    fn option_multiple(mut this, anon names: [String]) throws -> [String]
     {
         mut result: [String] = []
         for i in 1...args.size() {
@@ -70,7 +70,7 @@ struct ArgsParser {
         return result
     }
 
-    function from_args(anon args: [String]) throws -> ArgsParser {
+    fn from_args(anon args: [String]) throws -> ArgsParser {
         mut parser = ArgsParser(args, removed_indices: [], definitely_positional_args: [])
         mut i = 0uz
         for arg in parser.args {
@@ -85,7 +85,7 @@ struct ArgsParser {
         return parser
     }
 
-    function remaining_arguments(this) throws -> [String] {
+    fn remaining_arguments(this) throws -> [String] {
         mut remaining : [String] = []
 
         for i in 0...args.size() {

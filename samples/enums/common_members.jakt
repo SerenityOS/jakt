@@ -10,11 +10,11 @@ enum Sauce {
     Mayo(String)
 }
 
-function gib_sauce() throws -> Sauce {
+fn gib_sauce() throws -> Sauce {
     return Sauce::Mustard(expiry_date: "tomorrow lol", mild: true)
 }
 
-function main() {
+fn main() {
     let sauce = gib_sauce()
     let name = match sauce {
         Mustard(mild) => format("{} mustard", match mild { true => "mild", else => "regular" })

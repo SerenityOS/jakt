@@ -2,18 +2,18 @@
 /// - output: "3 2 1 0\n"
 
 // This should not be typechecked here, but rather when it's fully instantiated and used.
-function foo<T>(anon x: T, anon y: T) -> T {
+fn foo<T>(anon x: T, anon y: T) -> T {
     return x + y
 }
 
 // Make sure type inference kinda works
-function bar<T>(anon x: T) => x + 1
+fn bar<T>(anon x: T) => x + 1
 
 // Make sure we can access struct members
 struct Test {
     a: i32
 }
-function baz<T>(anon x: T) -> i32 {
+fn baz<T>(anon x: T) -> i32 {
     return x.a
 }
 
@@ -21,12 +21,12 @@ function baz<T>(anon x: T) -> i32 {
 struct Test2<T> {
     a: T
 
-    function test(this) -> T {
+    fn test(this) -> T {
         return this.a + 0
     }
 }
 
-function main() {
+fn main() {
     println("{} {} {} {}", foo(1, 2), bar(1 as! i8), baz(Test(a: 1)), Test2(a: 0).test())
 }
 

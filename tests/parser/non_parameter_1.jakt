@@ -1,10 +1,10 @@
 /// Expect:
 /// - error: "Expected parameter\n"
 
-function foo(= anon n: i32) {
+fn foo(= anon n: i32) {
     println("{}", n)
 }
 
-function main() {
+fn main() {
     foo(2)
 }

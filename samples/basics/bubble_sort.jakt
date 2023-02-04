@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "1\n2\n8\n9\n13\n22\n25\n50\n"
 
-function bubble_sort(mut values: [i64]) {
+fn bubble_sort(mut values: [i64]) {
     mut i = 0
     while i < values.size() as! i64 - 1 {
         mut j = 0
@@ -17,7 +17,7 @@ function bubble_sort(mut values: [i64]) {
     }
 }
 
-function main() {
+fn main() {
     mut v = [25, 13, 8, 1, 9, 22, 50, 2]
     bubble_sort(values: v)
     mut i = 0

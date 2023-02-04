@@ -3,8 +3,8 @@
 
 import a
 
-function main() {
-    let foo = a::call_function(function(x: i64) -> i64 {
+fn main() {
+    let foo = a::call_function(fn(x: i64) -> i64 {
         return x + 1
     })
 

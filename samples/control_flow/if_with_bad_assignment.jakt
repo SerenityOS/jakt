@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Assignment is not allowed in this position"
 
-function main() {
+fn main() {
     mut x = 100;
 
     if (x = 99) {

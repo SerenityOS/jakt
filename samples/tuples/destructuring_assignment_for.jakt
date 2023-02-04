@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "1, Hello\n2, World\n"
 
-function main() {
+fn main() {
     mut list = [(1, "Hello"), (2, "World")]
 
     for (idx, word) in list {

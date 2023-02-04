@@ -3,7 +3,7 @@
 
 import a
 
-function main() {
+fn main() {
     let x = a::adder(x: 2)
 
     println("{}", x)

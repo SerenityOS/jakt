@@ -1,8 +1,8 @@
 /// Expect:
 /// - error: "Returning a function is not currently supported\n"
 
-function test() -> function() -> void {
-    return function() {}
+fn test() -> fn() -> void {
+    return fn() {}
 }
 
-function main() {}
+fn main() {}

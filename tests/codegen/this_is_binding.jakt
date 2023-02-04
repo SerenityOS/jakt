@@ -4,14 +4,14 @@
 enum E {
     A(i64)
 
-    function go(this) {
+    fn go(this) {
         if this is A(foo) {
             println("{}", foo)
         }
     }
 }
 
-function main() {
+fn main() {
     let e = E::A(123)
     e.go()
 }

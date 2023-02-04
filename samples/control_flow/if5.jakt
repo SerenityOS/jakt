@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "none of the above\n"
 
-function main() {
+fn main() {
     let x: i64 = 70;
 
     if x == 100 {

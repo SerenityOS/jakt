@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "42\n"
 
-function main() {
+fn main() {
     mut i: i32? = None
     unsafe {
         cpp {

@@ -13,7 +13,7 @@ class Child : Parent {
 
 }
 
-function main() {
+fn main() {
     let child = Child(a: 1, b: 2)
     println("{} {}", child.a, child.b)
 }

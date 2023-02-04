@@ -2,12 +2,12 @@
 /// - output: "The secret is: Shhhh! Don't tell anyone!\nOpen sesame!\n"
 
 class Limited {
-    restricted(A) function get_secret() => "Shhhh! Don't tell anyone!"
-    restricted(A,B) function open_the_bank_vault() => "Open sesame!"
+    restricted(A) fn get_secret() => "Shhhh! Don't tell anyone!"
+    restricted(A,B) fn open_the_bank_vault() => "Open sesame!"
 }
 
 class A {
-    public function do_things() {
+    public fn do_things() {
         println("The secret is: {}", Limited::get_secret())
         println("{}", Limited::open_the_bank_vault())
     }
@@ -15,6 +15,6 @@ class A {
 
 class B {}
 
-function main() {
+fn main() {
     A::do_things()
 }

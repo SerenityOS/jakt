@@ -4,12 +4,12 @@
 class Foo {
     public my_size: usize
 
-    public function size(this) -> usize {
+    public fn size(this) -> usize {
         return .my_size
     }
 }
 
-function main() {
+fn main() {
     let a = Foo(my_size: 2uz)
     let b = Foo(my_size: 3uz)
 

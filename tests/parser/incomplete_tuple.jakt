@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Expected complete block"
 
-function p() {
+fn p() {
     let x = (A,
 }

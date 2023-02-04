@@ -9,7 +9,7 @@ struct Foo<T> {
     }
 }
 
-function main() {
+fn main() {
     mut a = Foo(value: "A")
     let b = Foo(value: 123)
 }

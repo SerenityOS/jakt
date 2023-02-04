@@ -6,7 +6,7 @@ enum Foo {
     Baz(m: String)
 }
 
-function main() {
+fn main() {
     let foo = Foo::Baz(m: "Hello")
 
     let result = match true {

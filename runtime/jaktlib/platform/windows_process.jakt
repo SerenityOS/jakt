@@ -2,7 +2,7 @@ import utility { allocate, join, null }
 import jakt::platform::windows_errno { errno_value }
 
 import extern c "windows.h" {
-    extern function GetLastError() -> i32
+    extern fn GetLastError() -> i32
 } before_include define {
     WIN32_LEAN_AND_MEAN = "1"
     NOMINMAX = "1"
@@ -23,10 +23,10 @@ import extern c "processthreadsapi.h" {
 
     // Hack: we don't have a type that actually matches the 'long' type, this is the next best thing.
     extern struct DWORD {
-        function DWORD(value: u32) -> DWORD
+        fn DWORD(value: u32) -> DWORD
     }
 
-    extern function CreateProcess(
+    extern fn CreateProcess(
         lpApplicationName: raw c_char
         lpCommandLine: raw c_char
         lpProcessAttributes: raw _SECURITY_ATTRIBUTES
@@ -39,29 +39,29 @@ import extern c "processthreadsapi.h" {
         lpProcessInformation: raw PROCESS_INFORMATION
     ) -> bool
 
-    extern function WaitForSingleObject(
+    extern fn WaitForSingleObject(
         hHandle: raw void
         dwMilliseconds: u32
     ) -> u32
 
-    extern function WaitForMultipleObjects(
+    extern fn WaitForMultipleObjects(
         nCount: u32
         lpHandles: raw raw void
         bWaitAll: bool
         dwMilliseconds: u32
     ) -> u32
 
-    extern function GetExitCodeProcess(
+    extern fn GetExitCodeProcess(
         hProcess: raw void
         lpExitCode: raw DWORD
     ) -> bool
 
-    extern function TerminateProcess(
+    extern fn TerminateProcess(
         hProcess: raw void
         uExitCode: u32
     ) -> bool
 
-    extern function CloseHandle(
+    extern fn CloseHandle(
         hObject: raw void
     ) -> bool
 } before_include define {
@@ -81,7 +81,7 @@ struct ExitPollResult {
     process: Process
 }
 
-function default_constructed<T>() -> T {
+fn default_constructed<T>() -> T {
     unsafe {
         cpp {
             "return T{};"
@@ -91,7 +91,7 @@ function default_constructed<T>() -> T {
     abort()
 }
 
-function size_of<T>() -> usize {
+fn size_of<T>() -> usize {
     unsafe {
         cpp {
             "return sizeof(T);"
@@ -101,7 +101,7 @@ function size_of<T>() -> usize {
     abort()
 }
 
-function join_arguments(args: [String]) throws -> String {
+fn join_arguments(args: [String]) throws -> String {
     // Join the arguments, but properly quote each argument so that the command line is parsed correctly.
     // All this because there's no way to pass arguments to CreateProcess separately.
     mut joined_builder = StringBuilder::create()
@@ -128,7 +128,7 @@ function join_arguments(args: [String]) throws -> String {
     return joined_builder.to_string()
 }
 
-function start_background_process(args: [String]) throws -> Process {
+fn start_background_process(args: [String]) throws -> Process {
     mut si = default_constructed<STARTUPINFO>()
     si.cb = size_of<STARTUPINFO>() as! u32
 
@@ -164,7 +164,7 @@ function start_background_process(args: [String]) throws -> Process {
     )
 }
 
-function poll_process_exit(process: &Process) throws -> ExitPollResult? {
+fn poll_process_exit(process: &Process) throws -> ExitPollResult? {
     let wait_result = WaitForSingleObject(
         hHandle: process.process_info.hProcess
         dwMilliseconds: 0
@@ -201,7 +201,7 @@ function poll_process_exit(process: &Process) throws -> ExitPollResult? {
     )
 }
 
-function exit_status(process: &Process) throws -> ExitPollResult {
+fn exit_status(process: &Process) throws -> ExitPollResult {
     mut exit_code = DWORD(value: 0)
     if not GetExitCodeProcess(
         hProcess: process.process_info.hProcess
@@ -216,7 +216,7 @@ function exit_status(process: &Process) throws -> ExitPollResult {
     )
 }
 
-function wait_for_process(process: &Process) throws -> ExitPollResult {
+fn wait_for_process(process: &Process) throws -> ExitPollResult {
     let wait_result = WaitForSingleObject(
         hHandle: process.process_info.hProcess
         dwMilliseconds: 0xFFFFFFFF
@@ -233,7 +233,7 @@ function wait_for_process(process: &Process) throws -> ExitPollResult {
     return exit_status(process)
 }
 
-function forcefully_kill_process(process: &Process) throws {
+fn forcefully_kill_process(process: &Process) throws {
     if not TerminateProcess(
         hProcess: process.process_info.hProcess
         uExitCode: 1
@@ -242,7 +242,7 @@ function forcefully_kill_process(process: &Process) throws {
     }
 }
 
-function wait_for_some_set_of_processes_that_at_least_includes(processes: &[usize:Process]) throws -> (usize?, ExitPollResult) {
+fn wait_for_some_set_of_processes_that_at_least_includes(processes: &[usize:Process]) throws -> (usize?, ExitPollResult) {
     if processes.is_empty() {
         throw Error::from_errno(38)
     }

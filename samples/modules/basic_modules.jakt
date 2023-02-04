@@ -3,6 +3,6 @@
 
 import b
 
-function main() {
+fn main() {
     b::not_cool()
 }

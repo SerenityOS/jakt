@@ -1,12 +1,12 @@
 /// Expect:
 /// - output: "684\n"
 
-function foo() -> i32 {
+fn foo() -> i32 {
     loop {
         return 684
     }
 }
 
-function main() {
+fn main() {
     println("{}", foo())
 }

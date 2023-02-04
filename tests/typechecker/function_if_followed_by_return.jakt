@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "456\n"
 
-function foo() -> i32 {
+fn foo() -> i32 {
     if false {
         return 123
     }
@@ -10,6 +10,6 @@ function foo() -> i32 {
     return 456
 }
 
-function main() {
+fn main() {
     println("{}", foo())
 }

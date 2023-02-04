@@ -11,7 +11,7 @@ class Derived: Base {
 class OtherDerived: Base {
 }
 
-function main() {
+fn main() {
     let derived = Derived(x: 123)
 
     // Infallible upcast

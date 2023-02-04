@@ -1,14 +1,14 @@
 /// Expect:
 /// - error: "Unsupported expression\n"
 
-function wrapped(anon action: &function() -> void) -> i32 {
+fn wrapped(anon action: &fn() -> void) -> i32 {
     println("Before")
     action()
     println("After")
     return 42
 }
 
-function main() {
+fn main() {
     match wrapped() {} {
     42 => {}
     else => {}

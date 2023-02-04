@@ -7,7 +7,7 @@ enum Foo {
     C
 }
 
-function main() {
+fn main() {
     let x = Foo::A()
 
     match x {

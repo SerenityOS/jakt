@@ -2,7 +2,7 @@
 /// - error: "Could not parse octal number due to no digits"
 
 // Octal number must not contain any digits other than 0-7
-function main() {
+fn main() {
     let octal = 0o8
 
     println("{}", octal)

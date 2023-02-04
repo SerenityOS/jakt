@@ -2,11 +2,11 @@
 /// - output: "Hello friends! The answer is 42\n"
 
 class S {
-    public function get_answer() -> i32 => 42
+    public fn get_answer() -> i32 => 42
 }
 
-function greeting() -> String => "Hello"
+fn greeting() -> String => "Hello"
 
-function main() {
+fn main() {
     println("{} friends! The answer is {}", greeting(), S::get_answer())
 }

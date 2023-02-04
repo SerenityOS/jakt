@@ -10,7 +10,7 @@ import compiler { Compiler }
 struct GenericInferences {
     values: [String:String]
 
-    function set(mut this, anon key: String, anon value: String) throws {
+    fn set(mut this, anon key: String, anon value: String) throws {
         if key == value {
             println("Warning: Generic parameter {} is being bound to itself", key)
             abort()
@@ -24,7 +24,7 @@ struct GenericInferences {
         .values[key] = mapped_value
     }
 
-    function set_all(mut this, keys: [CheckedGenericParameter], values: [TypeId]) throws {
+    fn set_all(mut this, keys: [CheckedGenericParameter], values: [TypeId]) throws {
         for i in 0..(keys.size()) {
             let key = keys[i].type_id.to_string()
             let value = values[i].to_string()
@@ -32,11 +32,11 @@ struct GenericInferences {
         }
     }
 
-    function get(this, anon key: String) -> String? {
+    fn get(this, anon key: String) -> String? {
         return .values.get(key)
     }
 
-    function map_name(this, anon type: String) -> String {
+    fn map_name(this, anon type: String) -> String {
         mut mapped = .values.get(type)
         mut final_mapped_result = mapped
         while mapped.has_value() {
@@ -46,13 +46,13 @@ struct GenericInferences {
         return final_mapped_result ?? type
     }
 
-    function map(this, anon type_id: TypeId) throws -> TypeId {
+    fn map(this, anon type_id: TypeId) throws -> TypeId {
         return TypeId::from_string(.map_name(type_id.to_string()))
     }
 
-    function iterator(this) => .values
+    fn iterator(this) => .values
 
-    function perform_checkpoint(mut this, reset: bool = true) throws -> [String:String] {
+    fn perform_checkpoint(mut this, reset: bool = true) throws -> [String:String] {
         let result = .values
         .values = [:]
 
@@ -65,11 +65,11 @@ struct GenericInferences {
         return result
     }
 
-    function restore(mut this, anon checkpoint: [String:String]) {
+    fn restore(mut this, anon checkpoint: [String:String]) {
         .values = checkpoint
     }
 
-    function set_from(mut this, anon checkpoint: [String:String]) throws {
+    fn set_from(mut this, anon checkpoint: [String:String]) throws {
         for (key, value) in checkpoint {
             .values[key] = value
         }
@@ -84,7 +84,7 @@ enum SafetyMode {
 struct ModuleId {
     id: usize
 
-    function equals(this, anon rhs: ModuleId) -> bool {
+    fn equals(this, anon rhs: ModuleId) -> bool {
         return this.id == rhs.id
     }
 }
@@ -98,7 +98,7 @@ struct FunctionId {
     module: ModuleId
     id: usize
 
-    function equals(this, anon rhs: FunctionId) -> bool {
+    fn equals(this, anon rhs: FunctionId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
 }
@@ -107,7 +107,7 @@ struct StructId {
     module: ModuleId
     id: usize
 
-    function equals(this, anon rhs: StructId) -> bool {
+    fn equals(this, anon rhs: StructId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
 }
@@ -116,7 +116,7 @@ struct EnumId {
     module: ModuleId
     id: usize
 
-    function equals(this, anon rhs: EnumId) -> bool {
+    fn equals(this, anon rhs: EnumId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
 }
@@ -128,7 +128,7 @@ enum StructLikeId {
     Enum(EnumId)
     Trait(TraitId)
 
-    function generic_parameters(this, anon program: &CheckedProgram) throws -> [TypeId] {
+    fn generic_parameters(this, anon program: &CheckedProgram) throws -> [TypeId] {
         let parameters = match this {
             Struct(id) => program.get_struct(id).generic_parameters
             Enum(id) => program.get_enum(id).generic_parameters
@@ -146,19 +146,19 @@ struct TypeId {
     module: ModuleId
     id: usize
 
-    function none() -> TypeId? => None
+    fn none() -> TypeId? => None
 
-    function equals(this, anon rhs: TypeId) -> bool {
+    fn equals(this, anon rhs: TypeId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
 
     // FIXME: Remove when we have language support, used as workaround [String:String] <-> [TypeId:TypeId]
-    function to_string(this) throws -> String {
+    fn to_string(this) throws -> String {
         return format("{}_{}", .module.id, .id)
     }
 
     // FIXME: Remove when we have language support, used as workaround [String:String] <-> [TypeId:TypeId]
-    function from_string(anon type_id_string: String) throws -> TypeId {
+    fn from_string(anon type_id_string: String) throws -> TypeId {
         let parts = type_id_string.split(c'_')
         if not (parts.size() == 2) {
             panic(format("Failed to convert string ‘{}’ to a TypeId: Wrong number of parts. (Wanted 2, got {})", type_id_string, parts.size()))
@@ -178,7 +178,7 @@ struct TraitId {
     module: ModuleId
     id: usize
 
-    function equals(this, anon other: TraitId) -> bool {
+    fn equals(this, anon other: TraitId) -> bool {
         return this.module.id == other.module.id and this.id == other.id
     }
 }
@@ -187,11 +187,11 @@ struct ScopeId {
     module_id: ModuleId
     id: usize
 
-    function equals(this, anon other: ScopeId) -> bool {
+    fn equals(this, anon other: ScopeId) -> bool {
         return this.module_id.id == other.module_id.id and this.id == other.id
     }
 
-    function to_string(this) throws -> String => format("{}:{}", .module_id.id, .id)
+    fn to_string(this) throws -> String => format("{}:{}", .module_id.id, .id)
 }
 
 enum BuiltinType {
@@ -214,7 +214,7 @@ enum BuiltinType {
     Unknown
     Never
 
-    function id(this) => match this {
+    fn id(this) => match this {
         Void => 0uz
         Bool => 1uz
         U8 => 2uz
@@ -269,12 +269,12 @@ boxed enum Type {
     Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
     Self
 
-    function is_concrete(this) -> bool => match this {
+    fn is_concrete(this) -> bool => match this {
         TypeVariable | Self | Unknown => false
         else => true
     }
 
-    function specificity(this, program: CheckedProgram, base_specificity: i64 = 1<<31) => match this {
+    fn specificity(this, program: CheckedProgram, base_specificity: i64 = 1<<31) => match this {
         TypeVariable => 0
         GenericInstance(args) => {
             mut specificity = base_specificity / 2
@@ -311,7 +311,7 @@ boxed enum Type {
         else => base_specificity
     }
 
-    function constructor_name(this) => match this {
+    fn constructor_name(this) => match this {
         Void => "Void"
         Bool => "Bool"
         U8 => "U8"
@@ -345,7 +345,7 @@ boxed enum Type {
         Self => "Self"
     }
 
-    function equals(this, anon rhs: Type) -> bool {
+    fn equals(this, anon rhs: Type) -> bool {
         if this is Void and rhs is Void {
             return true
         } else if this is Bool and rhs is Bool {
@@ -497,12 +497,12 @@ boxed enum Type {
         return false
     }
 
-    function is_builtin(this) -> bool => match this {
+    fn is_builtin(this) -> bool => match this {
         Void | Bool | U8 | U16 | U32 | U64 | I8 | I16 | I32 | I64 | F32 | F64 | Usize | JaktString | CChar | CInt => true
         else => false
     }
 
-    function get_bits(this) -> i64 => match this {
+    fn get_bits(this) -> i64 => match this {
         U8 | I8 | CChar => 8
         U16 | I16 => 16
         U32 | I32 | CInt => 32
@@ -512,14 +512,14 @@ boxed enum Type {
         else => 0
     }
 
-    function is_signed(this) -> bool => match this {
+    fn is_signed(this) -> bool => match this {
         I8 | I16 | I32 | I64 | CChar | CInt => true
         U8 | U16 | U32 | U64 | Usize => false
         F32 | F64 => true
         else => false
     }
 
-    function min(this) -> i64 => match this {
+    fn min(this) -> i64 => match this {
         CChar => -128
         CInt => -2147483648
         I8 => -128
@@ -530,7 +530,7 @@ boxed enum Type {
         else => 0
     }
 
-    function max(this) -> u64 => match this {
+    fn max(this) -> u64 => match this {
         CChar => 127u64
         CInt => 2147483647u64
         I8 => 127u64
@@ -546,7 +546,7 @@ boxed enum Type {
         else => 0u64
     }
 
-    function flip_signedness(this) throws -> TypeId => match this {
+    fn flip_signedness(this) throws -> TypeId => match this {
         I8 => builtin(BuiltinType::U8)
         I16 => builtin(BuiltinType::U16)
         I32 => builtin(BuiltinType::U32)
@@ -599,9 +599,9 @@ class Module {
     public resolved_import_path: String
 
     public is_root: bool
-    public function is_prelude(this) -> bool => .id.id == 0
+    public fn is_prelude(this) -> bool => .id.id == 0
 
-    public function new_type_variable(mut this, implemented_traits: [TypeId]? = None) throws -> TypeId {
+    public fn new_type_variable(mut this, implemented_traits: [TypeId]? = None) throws -> TypeId {
         let new_id = .types.size()
 
         let empty_implementation: [TypeId] = []
@@ -611,11 +611,11 @@ class Module {
         return TypeId(module: .id, id: new_id)
     }
 
-    public function next_function_id(this) -> FunctionId {
+    public fn next_function_id(this) -> FunctionId {
         return FunctionId(module: .id, id: .functions.size())
     }
 
-    public function add_function(mut this, checked_function: CheckedFunction) throws -> FunctionId {
+    public fn add_function(mut this, checked_function: CheckedFunction) throws -> FunctionId {
         let new_id = .next_function_id()
 
         .functions.push(checked_function)
@@ -623,7 +623,7 @@ class Module {
         return new_id
     }
 
-    public function add_variable(mut this, anon checked_variable: CheckedVariable) throws -> VarId {
+    public fn add_variable(mut this, anon checked_variable: CheckedVariable) throws -> VarId {
         let new_id = .variables.size()
 
         .variables.push(checked_variable)
@@ -657,7 +657,7 @@ boxed enum MaybeResolvedScope {
         relative_name: String
     )
 
-    function try_resolve(this, program: CheckedProgram) throws -> MaybeResolvedScope {
+    fn try_resolve(this, program: CheckedProgram) throws -> MaybeResolvedScope {
         return match this {
             Resolved(id) => MaybeResolvedScope::Resolved(id)
             Unresolved(parent_scope, relative_name) => {
@@ -734,9 +734,9 @@ class CheckedFunction {
     public external_name: String? = None
     public deprecated_message: String? = None
 
-    public function name_for_codegen(this) -> String => .external_name ?? .name
+    public fn name_for_codegen(this) -> String => .external_name ?? .name
 
-    public function map_types(mut this, anon map: &function(anon type_id: TypeId) throws -> TypeId) throws {
+    public fn map_types(mut this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws {
         .return_type_id = map(.return_type_id)
         mut changed_params: [CheckedParameter] = []
         for param in .params {
@@ -745,7 +745,7 @@ class CheckedFunction {
         .params = changed_params
     }
 
-    public function copy(this) throws -> CheckedFunction => CheckedFunction(
+    public fn copy(this) throws -> CheckedFunction => CheckedFunction(
         name: .name
         name_span: .name_span
         visibility: .visibility
@@ -766,7 +766,7 @@ class CheckedFunction {
         is_override: .is_override
     )
 
-    public function signature_matches(this, anon other: CheckedFunction) throws -> bool {
+    public fn signature_matches(this, anon other: CheckedFunction) throws -> bool {
         if this.name != other.name or
         this.can_throw != other.can_throw or
         this.is_comptime != other.is_comptime {
@@ -810,7 +810,7 @@ class CheckedFunction {
         return true
     }
 
-    public function is_static(this) -> bool {
+    public fn is_static(this) -> bool {
         if .params.size() < 1 {
             return true
         }
@@ -818,7 +818,7 @@ class CheckedFunction {
         return .params[0].variable.name != "this"
     }
 
-    public function is_mutating(this) -> bool {
+    public fn is_mutating(this) -> bool {
         if .params.size() < 1 {
             return false
         }
@@ -828,21 +828,21 @@ class CheckedFunction {
         return first_param_variable.name == "this" and first_param_variable.is_mutable
     }
 
-    public function add_param(mut this, anon checked_param: CheckedParameter) throws {
+    public fn add_param(mut this, anon checked_param: CheckedParameter) throws {
         .params.push(checked_param)
         .generics.base_params.push(checked_param)
     }
 
-    public function set_params(mut this, anon checked_params: [CheckedParameter]) throws {
+    public fn set_params(mut this, anon checked_params: [CheckedParameter]) throws {
         .params = checked_params
         .generics.base_params = checked_params
     }
 
-    public function is_specialized_for_types(this, types: [TypeId]) -> bool {
+    public fn is_specialized_for_types(this, types: [TypeId]) -> bool {
         return .generics.is_specialized_for_types(types)
     }
 
-    public function to_parsed_function(this) -> ParsedFunction {
+    public fn to_parsed_function(this) -> ParsedFunction {
         if not .parsed_function.has_value() {
             panic("to_parsed_function() called on a synthetic function")
         }
@@ -856,7 +856,7 @@ class FunctionGenerics {
     public params: [FunctionGenericParameter]
     public specializations: [[TypeId]]
 
-    public function is_specialized_for_types(this, types: [TypeId]) -> bool {
+    public fn is_specialized_for_types(this, types: [TypeId]) -> bool {
         if types.size() == 0 {
             return true
         }
@@ -887,7 +887,7 @@ struct CheckedParameter {
     variable: CheckedVariable
     default_value: CheckedExpression?
 
-    public function map_types(this, anon map: &function(anon type_id: TypeId) throws -> TypeId) throws -> CheckedParameter {
+    public fn map_types(this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws -> CheckedParameter {
         return CheckedParameter(
             requires_label: .requires_label
             variable: .variable.map_types(map)
@@ -902,14 +902,14 @@ enum CheckedCapture {
     ByMutableReference(name: String, span: Span)
     AllByReference(span: Span)
 
-    function name(this) => match this {
+    fn name(this) => match this {
         ByValue(name) => name
         ByReference(name) => name
         ByMutableReference(name) => name
         AllByReference() => ""
     }
 
-    function span(this) => match this {
+    fn span(this) => match this {
         ByValue(span) => span
         ByReference(span) => span
         ByMutableReference(span) => span
@@ -927,9 +927,9 @@ struct FunctionGenericParameter {
     kind: FunctionGenericParameterKind
     checked_parameter: CheckedGenericParameter
 
-    function type_id(this) => .checked_parameter.type_id
+    fn type_id(this) => .checked_parameter.type_id
 
-    function parameter(
+    fn parameter(
         anon type_id: TypeId
         span: Span
     ) throws => FunctionGenericParameter(
@@ -947,7 +947,7 @@ class CheckedVariable {
     public visibility: CheckedVisibility
     public owner_scope: ScopeId? = None
 
-    public function map_types(this, anon map: &function(anon type_id: TypeId) throws -> TypeId) throws -> CheckedVariable {
+    public fn map_types(this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws -> CheckedVariable {
         return CheckedVariable(
             name: .name
             type_id: map(.type_id)
@@ -977,7 +977,7 @@ enum BlockControlFlow {
     PartialAlwaysTransfersControl(might_break: bool)
     PartialNeverReturns(might_break: bool)
 
-    function unify_with(this, anon second: BlockControlFlow) => match this {
+    fn unify_with(this, anon second: BlockControlFlow) => match this {
         NeverReturns => second
         AlwaysReturns => match second {
             NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysReturns
@@ -1024,7 +1024,7 @@ enum BlockControlFlow {
         }
     }
 
-    public function branch_unify_with(this, anon second: BlockControlFlow) => match this {
+    public fn branch_unify_with(this, anon second: BlockControlFlow) => match this {
         NeverReturns => second
         AlwaysReturns => match second {
             NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysReturns
@@ -1076,7 +1076,7 @@ enum BlockControlFlow {
         }
     }
 
-    function updated(this, anon second: BlockControlFlow) => match this {
+    fn updated(this, anon second: BlockControlFlow) => match this {
         NeverReturns => BlockControlFlow::NeverReturns
         AlwaysReturns => BlockControlFlow::AlwaysReturns
         AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
@@ -1084,7 +1084,7 @@ enum BlockControlFlow {
         PartialAlwaysTransfersControl | PartialAlwaysReturns | PartialNeverReturns => .unify_with(second)
     }
 
-    function partial(this) => match this {
+    fn partial(this) => match this {
         NeverReturns => BlockControlFlow::PartialNeverReturns(might_break: false)
         AlwaysReturns => BlockControlFlow::PartialAlwaysReturns(might_break: false)
         MayReturn => BlockControlFlow::MayReturn
@@ -1094,7 +1094,7 @@ enum BlockControlFlow {
         PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
     }
 
-    function definitive(this) => match this {
+    fn definitive(this) => match this {
         NeverReturns => BlockControlFlow::NeverReturns
         AlwaysReturns => BlockControlFlow::AlwaysReturns
         AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
@@ -1102,32 +1102,32 @@ enum BlockControlFlow {
         else => BlockControlFlow::MayReturn
     }
 
-    function always_transfers_control(this) => match this {
+    fn always_transfers_control(this) => match this {
         AlwaysReturns | AlwaysTransfersControl => true
         else => false
     }
 
-    function never_returns(this) => match this {
+    fn never_returns(this) => match this {
         NeverReturns => true
         else => false
     }
 
-    function always_returns(this) => match this {
+    fn always_returns(this) => match this {
         AlwaysReturns => true
         else => false
     }
 
-    function may_return(this) => match this {
+    fn may_return(this) => match this {
         MayReturn | PartialAlwaysReturns | PartialAlwaysTransfersControl | PartialNeverReturns => true
         else => false
     }
 
-    function may_break(this) => match this {
+    fn may_break(this) => match this {
         PartialAlwaysReturns(might_break) | PartialAlwaysTransfersControl(might_break) | PartialNeverReturns(might_break) | AlwaysTransfersControl(might_break) => might_break
         else => false
     }
 
-    function is_reachable(this) => match this {
+    fn is_reachable(this) => match this {
         NeverReturns | AlwaysReturns | AlwaysTransfersControl => false
         else => true
     }
@@ -1166,7 +1166,7 @@ struct CheckedStruct {
 
     external_name: String? = None
 
-    function name_for_codegen(this) -> String => .external_name ?? .name
+    fn name_for_codegen(this) -> String => .external_name ?? .name
 }
 
 struct CheckedEnum {
@@ -1189,7 +1189,7 @@ struct CheckedGenericParameter {
     constraints: [TraitId]
     span: Span
 
-    function make(anon type_id: TypeId, span: Span) throws => CheckedGenericParameter(type_id, constraints: [], span)
+    fn make(anon type_id: TypeId, span: Span) throws => CheckedGenericParameter(type_id, constraints: [], span)
 }
 
 enum CheckedEnumVariant {
@@ -1198,7 +1198,7 @@ enum CheckedEnumVariant {
     WithValue(enum_id: EnumId, name: String, expr: CheckedExpression, span: Span)
     StructLike(enum_id: EnumId, name: String, fields: [VarId], span: Span)
 
-    function equals(this, anon other: CheckedEnumVariant) -> bool {
+    fn equals(this, anon other: CheckedEnumVariant) -> bool {
         return match this {
             Untyped(name: this_name) => match other {
                 Untyped(name: other_name) => this_name == other_name
@@ -1208,21 +1208,21 @@ enum CheckedEnumVariant {
         }
     }
 
-    function enum_id(this) -> EnumId => match this {
+    fn enum_id(this) -> EnumId => match this {
         Untyped(enum_id)
         | Typed(enum_id)
         | WithValue(enum_id)
         | StructLike(enum_id) => enum_id
     }
 
-    function span(this) -> Span => match this {
+    fn span(this) -> Span => match this {
         Untyped(span) => span
         Typed(span) => span
         WithValue(span) => span
         StructLike(span)  => span
     }
 
-    function name(this) -> String => match this {
+    fn name(this) -> String => match this {
         Untyped(name) => name
         Typed(name) => name
         WithValue(name) => name
@@ -1254,12 +1254,12 @@ boxed enum CheckedStatement {
     InlineCpp(lines: [String], span: Span)
     Garbage(Span)
 
-    function span(this) => match this {
+    fn span(this) => match this {
         Expression(span) => Some(span)
         else(span) => span
     }
 
-    function none() -> CheckedStatement? => None
+    fn none() -> CheckedStatement? => None
 }
 
 enum NumberConstant {
@@ -1267,7 +1267,7 @@ enum NumberConstant {
     Unsigned(u64)
     Floating(f64)
 
-    function can_fit_number(this, type_id: TypeId, program: CheckedProgram) -> bool {
+    fn can_fit_number(this, type_id: TypeId, program: CheckedProgram) -> bool {
         let type_ = program.get_type(type_id)
 
         return match this {
@@ -1291,7 +1291,7 @@ enum NumberConstant {
         }
     }
 
-    function to_usize(this) -> usize => match this {
+    fn to_usize(this) -> usize => match this {
         Signed(value) => value as! usize
         Unsigned(value) => value as! usize
         Floating(value) => {
@@ -1313,7 +1313,7 @@ enum CheckedNumericConstant {
     F32(f32)
     F64(f64)
 
-    function number_constant(this) -> NumberConstant? => match this {
+    fn number_constant(this) -> NumberConstant? => match this {
         I8(value) =>  NumberConstant::Signed(value as! i64)
         I16(value) =>  NumberConstant::Signed(value as! i64)
         I32(value) =>  NumberConstant::Signed(value as! i64)
@@ -1334,7 +1334,7 @@ enum CheckedNumericConstant {
 enum StringLiteral {
     Static(String)
 
-    function to_string(this) -> String => match this {
+    fn to_string(this) -> String => match this {
         Static(value) => value
     }
 }
@@ -1344,14 +1344,14 @@ struct CheckedStringLiteral {
     type_id: TypeId
     may_throw: bool
 
-    function to_string(this) -> String => .value.to_string()
+    fn to_string(this) -> String => .value.to_string()
 }
 
 enum CheckedTypeCast {
     Fallible(TypeId)
     Infallible(TypeId)
 
-    function type_id(this) -> TypeId => match this {
+    fn type_id(this) -> TypeId => match this {
         Fallible(type_id) => type_id
         Infallible(type_id) => type_id
     }
@@ -1421,7 +1421,7 @@ boxed enum CheckedExpression {
     TryBlock(stmt: CheckedStatement, catch_block: CheckedBlock, error_name: String, error_span: Span, span: Span, type_id: TypeId)
     Garbage(Span)
 
-    function to_number_constant(this, program: CheckedProgram) -> NumberConstant? => match this {
+    fn to_number_constant(this, program: CheckedProgram) -> NumberConstant? => match this {
         NumericConstant(val, span, type_id) => val.number_constant()
         UnaryOp(expr, op, span, type_id) => {
             mut result: NumberConstant? = None
@@ -1442,11 +1442,11 @@ boxed enum CheckedExpression {
         else => None
     }
 
-    function span(this) -> Span => match this {
+    fn span(this) -> Span => match this {
         else(span) => span
     }
 
-    function is_mutable(this, program: CheckedProgram) -> bool => match this {
+    fn is_mutable(this, program: CheckedProgram) -> bool => match this {
         Var(var) => var.is_mutable
         IndexedStruct(expr) => expr.is_mutable(program)
         IndexedExpression(expr) => expr.is_mutable(program)
@@ -1465,13 +1465,13 @@ boxed enum CheckedExpression {
         else => false
     }
 
-    function can_throw(this) -> bool => match this {
+    fn can_throw(this) -> bool => match this {
         Call(call) | MethodCall(call) => call.callee_throws
 
         else => false
     }
 
-    function type(this) -> TypeId => match this {
+    fn type(this) -> TypeId => match this {
         Boolean => builtin(BuiltinType::Bool)
         QuotedString(val) => val.type_id
         ByteConstant => builtin(BuiltinType::U8)
@@ -1484,7 +1484,7 @@ boxed enum CheckedExpression {
         else(type_id) => type_id
     }
 
-    function control_flow(this) -> BlockControlFlow => match this {
+    fn control_flow(this) -> BlockControlFlow => match this {
         Match(expr, match_cases, span, type_id, all_variants_constant) => {
             mut control_flow: BlockControlFlow? = None
             for case_ in match_cases {
@@ -1527,14 +1527,14 @@ struct CheckedCall {
 
     external_name: String?
 
-    function name_for_codegen(this) -> String => .external_name ?? .name
+    fn name_for_codegen(this) -> String => .external_name ?? .name
 }
 
-function unknown_type_id() -> TypeId => builtin(BuiltinType::Unknown)
-function void_type_id() -> TypeId => builtin(BuiltinType::Void)
-function never_type_id() -> TypeId => builtin(BuiltinType::Never)
+fn unknown_type_id() -> TypeId => builtin(BuiltinType::Unknown)
+fn void_type_id() -> TypeId => builtin(BuiltinType::Void)
+fn never_type_id() -> TypeId => builtin(BuiltinType::Never)
 
-function builtin(anon builtin: BuiltinType) -> TypeId {
+fn builtin(anon builtin: BuiltinType) -> TypeId {
     return TypeId(module: ModuleId(id: 0), id: builtin.id())
 }
 
@@ -1544,7 +1544,7 @@ class CheckedProgram {
     public modules: [Module]
     public loaded_modules: [String: LoadedModule]
 
-    public function create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, module_id: ModuleId) throws -> ScopeId {
+    public fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, module_id: ModuleId) throws -> ScopeId {
         // Check that parent_scope_id is a valid ScopeId
         if parent_scope_id.has_value() {
             // Check that the ModuleId is valid
@@ -1587,13 +1587,13 @@ class CheckedProgram {
         return ScopeId(module_id, id: .modules[module_id.id].scopes.size() - 1)
     }
 
-    public function get_module(this, anon id: ModuleId) -> Module => .modules[id.id]
-    public function get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
-    public function get_variable(this, anon id: VarId) -> CheckedVariable => .modules[id.module.id].variables[id.id]
-    public function get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
-    public function get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
-    public function get_struct(this, anon id: StructId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
-    public function get_scope(this, anon id: ScopeId) throws -> Scope {
+    public fn get_module(this, anon id: ModuleId) -> Module => .modules[id.id]
+    public fn get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
+    public fn get_variable(this, anon id: VarId) -> CheckedVariable => .modules[id.module.id].variables[id.id]
+    public fn get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
+    public fn get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
+    public fn get_struct(this, anon id: StructId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
+    public fn get_scope(this, anon id: ScopeId) throws -> Scope {
         let max_scope = .modules[id.module_id.id].scopes.size() - 1
         if id.id > max_scope {
             .compiler.panic(format("scope_id {} does not exist in module", id))
@@ -1602,24 +1602,24 @@ class CheckedProgram {
         return .modules[id.module_id.id].scopes[id.id]
     }
 
-    public function get_trait(this, anon id: TraitId) -> CheckedTrait => .modules[id.module.id].traits[id.id]
+    public fn get_trait(this, anon id: TraitId) -> CheckedTrait => .modules[id.module.id].traits[id.id]
 
-    public function prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
+    public fn prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
 
-    public function set_loaded_module(mut this, module_name: String, loaded_module: LoadedModule) throws {
+    public fn set_loaded_module(mut this, module_name: String, loaded_module: LoadedModule) throws {
         .loaded_modules.set(
             key: module_name
             value: loaded_module
         )
     }
-    public function get_loaded_module(this, anon module_name: String) -> LoadedModule? {
+    public fn get_loaded_module(this, anon module_name: String) -> LoadedModule? {
         return .loaded_modules.get(module_name)
     }
 
-    public function find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? {
+    public fn find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &function[var, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<CheckedVariable> {
+            &fn[var, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<CheckedVariable> {
                 let scope = .get_scope(scope_id)
                 let maybe_var = scope.vars.get(var)
                 if maybe_var.has_value() {
@@ -1630,10 +1630,10 @@ class CheckedProgram {
         )
     }
 
-    public function find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? {
+    public fn find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &function[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<Value> {
+            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<Value> {
                 let scope = .get_scope(scope_id)
                 let maybe_binding = scope.comptime_bindings.get(name)
                 if maybe_binding.has_value() {
@@ -1644,10 +1644,10 @@ class CheckedProgram {
         )
     }
 
-    public function find_enum_in_scope(this, scope_id: ScopeId, name: String) throws -> EnumId? {
+    public fn find_enum_in_scope(this, scope_id: ScopeId, name: String) throws -> EnumId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &function[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<EnumId> {
+            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<EnumId> {
                 let scope = .get_scope(scope_id)
                 let maybe_enum = scope.enums.get(name)
                 if maybe_enum.has_value() {
@@ -1658,10 +1658,10 @@ class CheckedProgram {
         )
     }
 
-    public function find_trait_in_scope(this, scope_id: ScopeId, name: String) throws -> TraitId? {
+    public fn find_trait_in_scope(this, scope_id: ScopeId, name: String) throws -> TraitId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &function[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<TraitId> {
+            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<TraitId> {
                 let scope = .get_scope(scope_id)
                 let maybe_trait = scope.traits.get(name)
                 if maybe_trait.has_value() {
@@ -1672,7 +1672,7 @@ class CheckedProgram {
         )
     }
 
-    public function is_integer(this, anon type_id: TypeId) -> bool {
+    public fn is_integer(this, anon type_id: TypeId) -> bool {
         let type = .get_type(type_id)
 
         return match type {
@@ -1681,7 +1681,7 @@ class CheckedProgram {
         }
     }
 
-    public function is_floating(this, anon type_id: TypeId) -> bool {
+    public fn is_floating(this, anon type_id: TypeId) -> bool {
         let type = .get_type(type_id)
 
         return match type {
@@ -1690,20 +1690,20 @@ class CheckedProgram {
         }
     }
 
-    public function is_numeric(this, anon type_id: TypeId) -> bool {
+    public fn is_numeric(this, anon type_id: TypeId) -> bool {
         return .is_integer(type_id) or .is_floating(type_id)
     }
 
-    public function is_string(this, anon type_id: TypeId) -> bool => .get_type(type_id) is JaktString
+    public fn is_string(this, anon type_id: TypeId) -> bool => .get_type(type_id) is JaktString
 
-    public function get_bits(this, anon type_id: TypeId) => .get_type(type_id).get_bits()
+    public fn get_bits(this, anon type_id: TypeId) => .get_type(type_id).get_bits()
 
-    public function is_signed(this, anon type_id: TypeId) => .get_type(type_id).is_signed()
+    public fn is_signed(this, anon type_id: TypeId) => .get_type(type_id).is_signed()
 
-    private function for_each_scope_accessible_unqualified_from_scope_impl(
+    private fn for_each_scope_accessible_unqualified_from_scope_impl(
         this
         scope_id: ScopeId
-        anon callback: &function(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
+        anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
     ) throws -> bool? {
         mut scopes_to_check = [scope_id]
         mut seen: {String} = {}
@@ -1785,15 +1785,15 @@ class CheckedProgram {
 
     }
 
-    public function for_each_scope_accessible_unqualified_from_scope<T>(
+    public fn for_each_scope_accessible_unqualified_from_scope<T>(
         this
         scope_id: ScopeId
-        anon callback: &function(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<T>
+        anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<T>
     ) throws -> T? {
         mut result: T? = None
         .for_each_scope_accessible_unqualified_from_scope_impl(
             scope_id
-            &function[&mut callback, &mut result](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
+            &fn[&mut callback, &mut result](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
                 match callback(scope_id, name_override, is_alias) {
                     Break(value) => {
                         result = value
@@ -1809,10 +1809,10 @@ class CheckedProgram {
         return result
     }
 
-    public function find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? {
+    public fn find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &function[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<StructId> {
+            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<StructId> {
                 let scope = .get_scope(scope_id)
                 let maybe_struct = scope.structs.get(name)
                 if maybe_struct.has_value() {
@@ -1824,7 +1824,7 @@ class CheckedProgram {
         )
     }
 
-    public function find_struct_in_prelude(this, anon name: String) throws -> StructId {
+    public fn find_struct_in_prelude(this, anon name: String) throws -> StructId {
         // start at the prelude scope id
         let scope_id = .prelude_scope_id()
         let struct_id = .find_struct_in_scope(scope_id, name)
@@ -1835,10 +1835,10 @@ class CheckedProgram {
         .compiler.panic(format("internal error: {} builtin definition not found", name))
     }
 
-    public function is_scope_directly_accessible_from(this, check_scope_id: ScopeId, scope_id: ScopeId) throws -> bool {
+    public fn is_scope_directly_accessible_from(this, check_scope_id: ScopeId, scope_id: ScopeId) throws -> bool {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &function[check_scope_id](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
+            &fn[check_scope_id](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
                 if check_scope_id.equals(scope_id) {
                     return IterationDecision::Break(value: true)
                 }
@@ -1848,7 +1848,7 @@ class CheckedProgram {
         ) ?? false
     }
 
-    public function find_namespace_in_scope(
+    public fn find_namespace_in_scope(
         this
         scope_id: ScopeId
         anon name: String
@@ -1856,7 +1856,7 @@ class CheckedProgram {
     ) throws -> (ScopeId, bool)? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &function[name, treat_aliases_as_imports, this](
+            &fn[name, treat_aliases_as_imports, this](
                 scope_id: ScopeId
                 name_override: String?
                 is_alias: bool
@@ -1873,14 +1873,14 @@ class CheckedProgram {
         )
     }
 
-    public function find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
+    public fn find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
         return .find_scoped_functions_with_name_in_scope(parent_scope_id, function_name)?.0
     }
 
-    public function find_scoped_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> ([FunctionId], ScopeId)? {
+    public fn find_scoped_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> ([FunctionId], ScopeId)? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id: parent_scope_id
-            &function[function_name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<([FunctionId], ScopeId)> {
+            &fn[function_name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<([FunctionId], ScopeId)> {
                 let scope = .get_scope(scope_id)
                 let maybe_functions = scope.functions.get(function_name)
                 if maybe_functions.has_value() {
@@ -1895,7 +1895,7 @@ class CheckedProgram {
     // Checks given struct id is weak ptr and
     //  validates args are compatible with weak ptr type
     // Returns the inner struct id if given struct is weak ptr
-    public function check_and_extract_weak_ptr(this, struct_id: StructId, args: [TypeId]) throws -> StructId? {
+    public fn check_and_extract_weak_ptr(this, struct_id: StructId, args: [TypeId]) throws -> StructId? {
         let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
 
         if struct_id.equals(weak_ptr_struct_id) {
@@ -1925,7 +1925,7 @@ class CheckedProgram {
         }
     }
 
-    public function type_name(this, anon type_id: TypeId, debug_mode: bool = false) throws -> String {
+    public fn type_name(this, anon type_id: TypeId, debug_mode: bool = false) throws -> String {
         let type = .get_type(type_id)
 
         return match debug_mode { true => format("({}@{}) ", type_id.id, type_id.module.id), else => "" } + match type {
@@ -1957,7 +1957,7 @@ class CheckedProgram {
 
                 let return_type = .type_name(return_type_id, debug_mode)
 
-                yield format("function({}) -> {}", join(param_names, separator: ", "), return_type)
+                yield format("fn({}) -> {}", join(param_names, separator: ", "), return_type)
             }
             Enum(id) => .get_enum(id).name
             Struct(id) => .get_struct(id).name
@@ -2076,7 +2076,7 @@ class CheckedProgram {
         }
     }
 
-    public function find_or_add_type_id(mut this, anon type: Type, module_id: ModuleId) throws -> TypeId {
+    public fn find_or_add_type_id(mut this, anon type: Type, module_id: ModuleId) throws -> TypeId {
         for module in .modules {
             for id in 0..module.types.size() {
                 if module.types[id].equals(type) {
@@ -2091,7 +2091,7 @@ class CheckedProgram {
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
-    public function substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: GenericInferences, module_id: ModuleId) throws -> TypeId {
+    public fn substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: GenericInferences, module_id: ModuleId) throws -> TypeId {
         mut result = .substitute_typevars_in_type_helper(type_id, generic_inferences, module_id)
 
         loop {
@@ -2108,7 +2108,7 @@ class CheckedProgram {
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
-    function substitute_typevars_in_type_helper(mut this, type_id: TypeId , generic_inferences: GenericInferences, module_id: ModuleId) throws -> TypeId {
+    fn substitute_typevars_in_type_helper(mut this, type_id: TypeId , generic_inferences: GenericInferences, module_id: ModuleId) throws -> TypeId {
         let type_ = .get_type(type_id)
 
         match type_ {
@@ -2284,7 +2284,7 @@ boxed enum ValueImpl {
     JaktTuple(fields: [Value], type_id: TypeId)
     Function(captures: [String:Value], params: [String:(TypeId, CheckedExpression?)], return_type_id: TypeId, type_id: TypeId, block: CheckedBlock, can_throw: bool, checked_params: [CheckedParameter])
 
-    function copy(this) throws => match this {
+    fn copy(this) throws => match this {
         Void => ValueImpl::Void
         Bool(x) => ValueImpl::Bool(x)
         U8(x) => ValueImpl::U8(x)
@@ -2355,7 +2355,7 @@ boxed enum ValueImpl {
         Function(captures, params, can_throw, return_type_id, type_id, block, checked_params) => ValueImpl::Function(captures, params, return_type_id, type_id, block, can_throw, checked_params)
     }
 
-    function equals(this, anon other: ValueImpl) => match this {
+    fn equals(this, anon other: ValueImpl) => match this {
         Void => other is Void
         Bool(x) => match other { Bool(y) => x == y else => false }
         U8(x) => match other { U8(y) => x == y else => false }
@@ -2381,8 +2381,8 @@ struct Value {
     impl: ValueImpl
     span: Span
 
-    function copy(this) throws => Value(impl: .impl.copy(), span: .span)
-    function type_name(this) => match .impl {
+    fn copy(this) throws => Value(impl: .impl.copy(), span: .span)
+    fn type_name(this) => match .impl {
         Void => "void"
         Bool => "bool"
         U8 => "u8"
@@ -2413,7 +2413,7 @@ struct Value {
         Function => "Function"
     }
 
-    function cast(this, anon expected: Value, span: Span) throws -> Value => match .impl {
+    fn cast(this, anon expected: Value, span: Span) throws -> Value => match .impl {
         U8(value) => match expected.impl {
             U16 => Value(impl: ValueImpl::U16(value as! u16), span: span)
             U32 => Value(impl: ValueImpl::U32(value as! u32), span: span)

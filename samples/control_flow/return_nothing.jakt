@@ -1,13 +1,13 @@
 /// Expect:
 /// - output: "PASS\n"
 
-function foo() {
+fn foo() {
     if true {
         println("PASS")
         return
     }
 }
 
-function main() {
+fn main() {
     foo()
 }

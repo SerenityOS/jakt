@@ -1,11 +1,11 @@
 /// Expect:
 /// - output: "Well, hello friends.\n5\nGoodbye friends.\n"
 
-function greet() => println("Well, hello friends.")
-function num() -> i64 => 5
-function str() => "Hello friends."
+fn greet() => println("Well, hello friends.")
+fn num() -> i64 => 5
+fn str() => "Hello friends."
 
-function main() {
+fn main() {
     greet()
     println("{}", num())
     println("{}", str().replace(replace: "Hello", with: "Goodbye"))

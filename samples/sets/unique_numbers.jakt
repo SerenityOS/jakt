@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "5\n"
 
-function main() {
+fn main() {
     let nums = [1, 2, 1, 2, 1, 2, 3, 4, 5, 1, 2]
     mut set = {nums[0]}
     for i in 0..nums.size() {

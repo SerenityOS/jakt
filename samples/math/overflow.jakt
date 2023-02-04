@@ -1,7 +1,7 @@
 /// Expect:
 /// - stderr: "Panic: Overflow in checked addition '127 + 1'\nPanic: Overflow in checked addition '32767 + 1'\nPanic: Overflow in checked addition '2147483647 + 1'\nPanic: Overflow in checked addition '9223372036854775807 + 1'\nPanic: Overflow in checked addition '255 + 1'\nPanic: Overflow in checked addition '65535 + 1'\nPanic: Overflow in checked addition '4294967295 + 1'\nPanic: Overflow in checked addition '18446744073709551615 + 1'\n"
 
-function main() {
+fn main() {
     {
         let a: i8 = 127
         let b: i8 = 1

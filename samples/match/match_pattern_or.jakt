@@ -7,7 +7,7 @@ enum Foo {
     Bat
 }
 
-function main() {
+fn main() {
     println("{}", match "foo" {
         "foo" | "bar" | "baz" => {
             yield "PASS"

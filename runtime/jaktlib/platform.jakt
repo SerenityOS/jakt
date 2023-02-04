@@ -4,7 +4,7 @@ struct Target {
     os: String
     abi: String
 
-    function active() throws -> Target {
+    fn active() throws -> Target {
         let triple = ___jakt_get_target_triple_string()
         let parts = triple.split(c'-')
         if parts.size() != 4 {
@@ -21,7 +21,7 @@ struct Target {
     }
 }
 
-function platform_import_names() throws -> [String] {
+fn platform_import_names() throws -> [String] {
     let target = Target::active()
 
     return match target.os {
@@ -36,7 +36,7 @@ function platform_import_names() throws -> [String] {
     }
 }
 
-function add_to_each(anon strings: [String], prefix: String, suffix: String) throws -> [String] {
+fn add_to_each(anon strings: [String], prefix: String, suffix: String) throws -> [String] {
     mut output: [String] = []
     for str in strings {
         output.push(prefix + str + suffix)
@@ -44,7 +44,7 @@ function add_to_each(anon strings: [String], prefix: String, suffix: String) thr
     return output
 }
 
-function last_namespace_separator(anon name: String) -> usize? {
+fn last_namespace_separator(anon name: String) -> usize? {
     mut i = name.length() - 1
     while (i >= 2) {
         if name.byte_at(i) == b':' and name.byte_at(i-1) == b':' {

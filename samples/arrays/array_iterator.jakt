@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "foo\nbar\nbaz\n"
 
-function main() {
+fn main() {
     let words = ["foo", "bar", "baz"]
     for word in words {
         println("{}", word)

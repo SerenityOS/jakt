@@ -2,14 +2,14 @@
 /// - output: "OK\n"
 
 struct Foo {
-    function bar(mut this, mut baz: Bar) {
+    fn bar(mut this, mut baz: Bar) {
         println("OK")
     }
 }
 
 class Bar {}
 
-function main() {
+fn main() {
     mut foo = Foo()
     let baz = Bar()
     foo.bar(baz)

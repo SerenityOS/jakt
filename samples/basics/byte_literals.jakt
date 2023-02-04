@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "b b\n63\n"
 
-function main() {
+fn main() {
     mut b = b'b'
     println("{:c} {:c}", b, b'b')
     ++b 

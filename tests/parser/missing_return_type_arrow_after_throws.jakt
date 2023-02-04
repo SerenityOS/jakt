@@ -1,9 +1,9 @@
 /// Expect:
 /// - error: "Expected ‘->’, ‘=>’ or ‘{’"
-function foo() throws i64 {
+fn foo() throws i64 {
     return 5
 }
 
-function main() {
+fn main() {
     let x = foo()
 }

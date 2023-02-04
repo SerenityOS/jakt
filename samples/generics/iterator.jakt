@@ -1,13 +1,13 @@
 /// Expect:
 /// - output: "1\n2\n3\nA\nB\nC\n"
 
-function foo<T>(anon xs: T) {
+fn foo<T>(anon xs: T) {
     for x in xs.iterator() {
         println("{}", x)
     }
 }
 
-function main() {
+fn main() {
     let arr = [1, 2, 3]
 
     foo(arr)

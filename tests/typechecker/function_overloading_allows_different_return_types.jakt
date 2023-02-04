@@ -1,12 +1,12 @@
 /// Expect:
 /// - output: "PASS\n"
 
-function identity(anon x: i64) throws => x
-function identity(anon x: String) => x
-function identity<T>(anon x: T) => x
+fn identity(anon x: i64) throws => x
+fn identity(anon x: String) => x
+fn identity<T>(anon x: T) => x
 
 
-function main() {
+fn main() {
     mut pass = true
     pass |= 64 == identity(64)
     pass |= "String" == identity("String")

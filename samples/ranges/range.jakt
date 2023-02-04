@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "45\n"
 
-function main() {
+fn main() {
     mut total = 0
 
     for x in 1..10 {

@@ -6,7 +6,7 @@ enum Foo {
     Baz
 }
 
-function main() {
+fn main() {
     let a = Foo::Bar(id: 3)
 
     let b = match a {

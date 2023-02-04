@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Unreachable code"
 
-function test(first: i64, second: i64, third: i64) -> String {
+fn test(first: i64, second: i64, third: i64) -> String {
     loop {
         match first {
             1 => {
@@ -26,6 +26,6 @@ function test(first: i64, second: i64, third: i64) -> String {
     return "NOT PASSED" // This should not be reachable
 }
 
-function main() {
+fn main() {
     println("{}", test(first: 0, second: 0, third: 0)) // This test should error, so let's pass values that won't make the loop spin indefinitely
 }

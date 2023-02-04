@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Condition must be a boolean expression\n"
 
-function main() {
+fn main() {
     if "foo" {}
 }

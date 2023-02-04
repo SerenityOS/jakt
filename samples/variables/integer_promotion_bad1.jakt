@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Integer promotion failed\n"
 
-function main() {
+fn main() {
     let i: u8 = 1000;
 }

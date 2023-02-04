@@ -2,12 +2,12 @@
 /// - error: "Wrong number of arguments"
 
 struct foo {
-    function a(this, anon a: i64, anon b: i64, anon c: i64) -> i64 {
+    fn a(this, anon a: i64, anon b: i64, anon c: i64) -> i64 {
         return a + b + c
     }
 }
 
-function main() {
+fn main() {
     mut c = foo()
     let d = c.a(1, 2, 3, 4)
 

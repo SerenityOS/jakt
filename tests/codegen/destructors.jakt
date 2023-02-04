@@ -17,7 +17,7 @@ class C {
     }
 }
 
-function main() {
+fn main() {
     {
         let s1 = S(value: 1)
         let s2 = S(value: 2)

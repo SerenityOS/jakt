@@ -1,9 +1,9 @@
 /// Expect: Skip
 
 import extern "Hello.h" {
-    extern function get_hello() -> String
+    extern fn get_hello() -> String
 
     extern class Printer {
-        public function print_something() -> void
+        public fn print_something() -> void
     }
 }

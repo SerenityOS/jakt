@@ -3,6 +3,6 @@
 
 import issue_1226_sub
 
-function main() {
+fn main() {
    println("PASS")
 }

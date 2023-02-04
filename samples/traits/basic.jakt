@@ -3,18 +3,18 @@
 
 // trait definition
 trait Hashable {
-    function hash(this) -> u64
+    fn hash(this) -> u64
 }
 
 trait Bar {
-    function bar(mut this)
+    fn bar(mut this)
 }
 
 
 // implementation on a struct
 struct S implements(Hashable, Bar) {
-    function hash(this) => 100u64
-    function bar(mut this) {
+    fn hash(this) => 100u64
+    fn bar(mut this) {
         println("S::bar")
     }
 }
@@ -23,7 +23,7 @@ enum Baz implements(Hashable) {
     Foo
     Bar
 
-    function hash(this) => match this {
+    fn hash(this) => match this {
         Foo => 44u64
         Bar => 100u64
     }
@@ -34,15 +34,15 @@ enum Baz implements(Hashable) {
 struct U64Hash implements(Hashable) {
     value: u64
 
-    function hash(this) => .value
+    fn hash(this) => .value
 }
 
 // trait requiremennt on function
-function print_hash<T requires(Hashable)>(anon value: T) {
+fn print_hash<T requires(Hashable)>(anon value: T) {
     println("{}", value.hash())
 }
 
-function main() {
+fn main() {
     print_hash(S())
     print_hash(U64Hash(value: 69u64))
 }

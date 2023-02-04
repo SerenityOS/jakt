@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "2\n"
 
-function main() {
+fn main() {
     let foo: i32? = 2
 
     println("{}", foo!)

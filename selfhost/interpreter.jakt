@@ -20,7 +20,7 @@ enum InterpretError : i32 {
     InvalidCharacterConstant
 }
 
-function cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter: Interpreter, saturating: bool = false) throws -> Value {
+fn cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter: Interpreter, saturating: bool = false) throws -> Value {
     let type = interpreter.program.get_type(type_id)
     let is_optional = match type {
         GenericInstance(id) => id.equals(interpreter.program.find_struct_in_prelude("Optional"))
@@ -121,7 +121,7 @@ function cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interp
     }
 }
 
-function value_to_checked_expression(anon this_value: Value, anon mut interpreter: Interpreter) throws -> CheckedExpression => match this_value.impl {
+fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Interpreter) throws -> CheckedExpression => match this_value.impl {
     Void => {
         interpreter.error("Cannot convert void to expression", this_value.span)
         throw Error::from_errno(InterpretError::InvalidType as! i32)
@@ -422,14 +422,14 @@ class InterpreterScope {
     public type_bindings: [String:TypeId]
     public defers: [Deferred]
 
-    public function create(bindings: [String:Value] = [:], parent: InterpreterScope? = None, type_bindings: [String:TypeId] = [:]) throws => InterpreterScope(
+    public fn create(bindings: [String:Value] = [:], parent: InterpreterScope? = None, type_bindings: [String:TypeId] = [:]) throws => InterpreterScope(
         bindings
         parent
         type_bindings
         defers: []
     )
 
-    public function from_runtime_scope(scope_id: ScopeId, program: CheckedProgram, parent: InterpreterScope? = None) throws -> InterpreterScope {
+    public fn from_runtime_scope(scope_id: ScopeId, program: CheckedProgram, parent: InterpreterScope? = None) throws -> InterpreterScope {
         mut bindings: [String:Value] = [:]
         mut current_id: ScopeId? = scope_id
         while current_id.has_value() {
@@ -452,7 +452,7 @@ class InterpreterScope {
         )
     }
 
-    public function must_get(this, anon name: String) throws -> Value {
+    public fn must_get(this, anon name: String) throws -> Value {
         if .bindings.contains(name) {
             return .bindings[name]
         }
@@ -469,7 +469,7 @@ class InterpreterScope {
         panic(format("Could not find binding for {}", name))
     }
 
-    public function set(mut this, anon name: String, anon value: Value) throws {
+    public fn set(mut this, anon name: String, anon value: Value) throws {
         if .bindings.contains(name) {
             .bindings[name] = value
             return
@@ -488,7 +488,7 @@ class InterpreterScope {
         panic(format("Could not find binding for {}", name))
     }
 
-    public function map_type(this, anon id: TypeId) throws -> TypeId {
+    public fn map_type(this, anon id: TypeId) throws -> TypeId {
         let name = id.to_string()
         if .type_bindings.contains(name) {
             return .type_bindings[name]
@@ -505,7 +505,7 @@ class InterpreterScope {
         return id
     }
 
-    function type_map_for_substitution_helper(this, map: &mut [String:String]) throws {
+    fn type_map_for_substitution_helper(this, map: &mut [String:String]) throws {
         if .parent.has_value() {
             .parent!.type_map_for_substitution_helper(map)
         }
@@ -515,13 +515,13 @@ class InterpreterScope {
         }
     }
 
-    public function type_map_for_substitution(this) throws -> GenericInferences {
+    public fn type_map_for_substitution(this) throws -> GenericInferences {
         mut map: [String:String] = [:]
         .type_map_for_substitution_helper(&mut map)
         return GenericInferences(values: map)
     }
 
-    public function perform_defers(mut this, mut interpreter: Interpreter, span: Span) throws {
+    public fn perform_defers(mut this, mut interpreter: Interpreter, span: Span) throws {
         while not .defers.is_empty() {
             let deferred = .defers.pop()
             match deferred! {
@@ -531,11 +531,11 @@ class InterpreterScope {
         }
     }
 
-    public function defer_expression(mut this, expr: CheckedExpression) throws {
+    public fn defer_expression(mut this, expr: CheckedExpression) throws {
         .defers.push(Deferred::Expression(expr))
     }
 
-    public function defer_statement(mut this, statement: CheckedStatement) throws {
+    public fn defer_statement(mut this, statement: CheckedStatement) throws {
         .defers.push(Deferred::Statement(statement))
     }
 }
@@ -560,7 +560,7 @@ class Interpreter {
     public spans: [Span]
     public current_function_id: FunctionId?
 
-    public function create(compiler: Compiler, program: CheckedProgram, spans: [Span]) throws -> Interpreter {
+    public fn create(compiler: Compiler, program: CheckedProgram, spans: [Span]) throws -> Interpreter {
         return Interpreter(
             compiler
             program
@@ -569,17 +569,17 @@ class Interpreter {
         )
     }
 
-    public function enter_span(mut this, anon span: Span) throws {
+    public fn enter_span(mut this, anon span: Span) throws {
         .spans.push(span)
     }
 
 
-    public function leave_span(mut this) {
+    public fn leave_span(mut this) {
         // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
         let dummy = .spans.pop()
     }
 
-    public function get_prelude_function(this, anon scope_id: ScopeId) throws -> bool {
+    public fn get_prelude_function(this, anon scope_id: ScopeId) throws -> bool {
         mut current_scope_id = scope_id
         let prelude_scope_id = .program.prelude_scope_id()
         loop {
@@ -597,7 +597,7 @@ class Interpreter {
         }
     }
 
-    public function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
+    public fn find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
 
         for module in .program.modules {
             for id in 0..module.types.size() {
@@ -612,7 +612,7 @@ class Interpreter {
         return TypeId(module: ModuleId(id: 0), id: .program.modules[0].types.size() - 1)
     }
 
-    public function call_prelude_function(mut this, anon prelude_function: String, anon namespace_: [ResolvedNamespace], this_argument: Value?, arguments: [Value], call_span: Span, type_bindings: [String:TypeId]) throws -> StatementResult {
+    public fn call_prelude_function(mut this, anon prelude_function: String, anon namespace_: [ResolvedNamespace], this_argument: Value?, arguments: [Value], call_span: Span, type_bindings: [String:TypeId]) throws -> StatementResult {
         if namespace_.size() != 1 {
             return match prelude_function {
                 "format" => {
@@ -2567,7 +2567,7 @@ class Interpreter {
         }
     }
 
-    public function execute(
+    public fn execute(
         mut this
         anon function_to_run_id: FunctionId
         mut namespace_: [ResolvedNamespace]?
@@ -2646,7 +2646,7 @@ class Interpreter {
                         let generic_parameters = match .program.get_type(id: type_id) {
                             GenericInstance(args) => args
                             else => {
-                                .error("Attempted to call a prelude function on a non-generic array", call_span)
+                                .error("Attempted to call a prelude function  on a non-generic array", call_span)
                                 throw Error::from_errno(InterpretError::InvalidType as! i32)
                             }
                         }
@@ -2656,7 +2656,7 @@ class Interpreter {
                         let generic_parameters = match .program.get_type(id: type_id) {
                             GenericInstance(args) => args
                             else => {
-                                .error("Attempted to call a prelude function on a non-generic dictionary", call_span)
+                                .error("Attempted to call a prelude function  on a non-generic dictionary", call_span)
                                 throw Error::from_errno(InterpretError::InvalidType as! i32)
                             }
                         }
@@ -2664,7 +2664,7 @@ class Interpreter {
                     }
                     JaktSet(type_id) => {
                         guard .program.get_type(id: type_id) is GenericInstance(args: generic_parameters) else {
-                            .error("Attempted to call a prelude function on a non-generic set", call_span)
+                            .error("Attempted to call a prelude function  on a non-generic set", call_span)
                             throw Error::from_errno(InterpretError::InvalidType as! i32)
                         }
                         effective_namespace.push(ResolvedNamespace(name: "Set", generic_parameters))
@@ -2815,7 +2815,7 @@ class Interpreter {
         throw Error::from_errno(InterpretError::Unimplemented as! i32)
     }
 
-    public function execute_statement(mut this, statement: CheckedStatement, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
+    public fn execute_statement(mut this, statement: CheckedStatement, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
         match statement {
             Expression(expr) => {
                 return .execute_expression(expr, scope)
@@ -3086,7 +3086,7 @@ class Interpreter {
         return StatementResult::JustValue(Value(impl: ValueImpl::Void, span: call_span))
     }
 
-    public function execute_block(mut this, block: CheckedBlock, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
+    public fn execute_block(mut this, block: CheckedBlock, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
         for statement in block.statements {
             .enter_span(statement.span() ?? call_span)
             defer .leave_span()
@@ -3113,7 +3113,7 @@ class Interpreter {
         return StatementResult::JustValue(Value(impl: ValueImpl::Void, span: call_span))
     }
 
-    public function error(mut this, anon message: String, anon span: Span) throws -> void {
+    public fn error(mut this, anon message: String, anon span: Span) throws -> void {
         .compiler.errors.push(JaktError::Message(
             message: message,
             span: span
@@ -3123,7 +3123,7 @@ class Interpreter {
         .compiler.print_errors()
     }
 
-    public function error_with_hint(mut this, anon message: String, anon span: Span, anon hint_message: String, anon hint_span: Span) throws -> void {
+    public fn error_with_hint(mut this, anon message: String, anon span: Span, anon hint_message: String, anon hint_span: Span) throws -> void {
         .compiler.errors.push(JaktError::MessageWithHint(
             message,
             span,
@@ -3135,7 +3135,7 @@ class Interpreter {
         .compiler.print_errors()
     }
 
-    public function execute_binary_operator(mut this, anon lhs_value: Value, anon rhs_value: Value, anon op: BinaryOperator, anon span: Span, anon scope: InterpreterScope) throws -> StatementResult => match op {
+    public fn execute_binary_operator(mut this, anon lhs_value: Value, anon rhs_value: Value, anon op: BinaryOperator, anon span: Span, anon scope: InterpreterScope) throws -> StatementResult => match op {
         Add => StatementResult::JustValue(
             Value(
                 impl: match lhs_value.impl {
@@ -4667,7 +4667,7 @@ class Interpreter {
         }
     }
 
-    public function update_binding(mut this, anon binding: CheckedExpression, mut scope: InterpreterScope, anon value: Value, span: Span) throws {
+    public fn update_binding(mut this, anon binding: CheckedExpression, mut scope: InterpreterScope, anon value: Value, span: Span) throws {
         match binding {
             Var(var) => {
                 scope.set(var.name, value)
@@ -4732,7 +4732,7 @@ class Interpreter {
         }
     }
 
-    public function execute_expression(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match .current_function_id.has_value() {
+    public fn execute_expression(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match .current_function_id.has_value() {
         false => .execute_expression_without_cast(expr, scope)
         else => match .execute_expression_without_cast(expr, scope) {
             Return(value) => StatementResult::Return(cast_value_to_type(value, .program.get_function(.current_function_id!).return_type_id, interpreter: this))
@@ -4744,7 +4744,7 @@ class Interpreter {
         }
     }
 
-    public function execute_expression_without_cast(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match expr {
+    public fn execute_expression_without_cast(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match expr {
         BinaryOp(lhs, op, rhs, span) => {
             let lhs_value = match .execute_expression(lhs, scope) {
                 Return(value) => {
@@ -5377,7 +5377,7 @@ class Interpreter {
                     let generic_parameters = match .program.get_type(id: type_id) {
                         GenericInstance(args) => args
                         else => {
-                            .error("Attempted to call a prelude function on a non-generic array", this_argument.span)
+                            .error("Attempted to call a prelude function  on a non-generic array", this_argument.span)
                             throw Error::from_errno(InterpretError::InvalidType as! i32)
                         }
                     }
@@ -5387,7 +5387,7 @@ class Interpreter {
                     let generic_parameters = match .program.get_type(id: type_id) {
                         GenericInstance(args) => args
                         else => {
-                            .error("Attempted to call a prelude function on a non-generic dictionary", this_argument.span)
+                            .error("Attempted to call a prelude function  on a non-generic dictionary", this_argument.span)
                             throw Error::from_errno(InterpretError::InvalidType as! i32)
                         }
                     }
@@ -5395,7 +5395,7 @@ class Interpreter {
                 }
                 JaktSet(type_id) => {
                     guard .program.get_type(id: type_id) is GenericInstance(args: generic_parameters) else {
-                        .error("Attempted to call a prelude function on a non-generic set", this_argument.span)
+                        .error("Attempted to call a prelude function  on a non-generic set", this_argument.span)
                         throw Error::from_errno(InterpretError::InvalidType as! i32)
                     }
                     effective_namespace.push(ResolvedNamespace(name: "Set", generic_parameters))

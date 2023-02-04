@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "-40\n10\n"
 
-function main() {
+fn main() {
     println("{}", 5 - 5 * 10 + 5)
     println("{}", 2 * 8 - 12 / 2)
 }

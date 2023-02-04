@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\nPASS\nzero: 0\n"
 
-function main() {
+fn main() {
     let x: String? = "PASS"
     println("{}", x ?? "FAIL")
 

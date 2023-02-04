@@ -6,20 +6,20 @@ struct Foo {
 }
 
 struct A {
-    function b(anon foo: Foo) { return foo.x }
-    function c(anon foo: Foo) { return foo.x }
+    fn b(anon foo: Foo) { return foo.x }
+    fn c(anon foo: Foo) { return foo.x }
 }
 
 namespace Bar {
-    function bar(anon foo: Foo) {
+    fn bar(anon foo: Foo) {
         return foo.x
     }
 
-    function bar2(anon foo: Foo) {
+    fn bar2(anon foo: Foo) {
         return foo.x
     }
 }
 
-function baz(anon foo: Foo) {
+fn baz(anon foo: Foo) {
     return foo.x
 }

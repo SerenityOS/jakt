@@ -1,18 +1,18 @@
 /// Expect:
 /// - output: "Caught 1234\nCaught 6969\nCaught 5252\n"
 
-function notoss() throws -> i32 {
+fn notoss() throws -> i32 {
     if not true {
         throw Error::from_errno(123456)
     }
     return 5
 }
 
-function toss(anon value: i32) throws {
+fn toss(anon value: i32) throws {
     throw Error::from_errno(value)
 }
 
-function main() {
+fn main() {
     try toss(1234) catch error {
         println("Caught {}", error.code())
     }

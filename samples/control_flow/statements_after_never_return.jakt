@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Unreachable code\n"
 
-function main() {
+fn main() {
     abort()
     println("hello")
 }

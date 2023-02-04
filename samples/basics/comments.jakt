@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "hello\n"
 
-function main() {
+fn main() {
     // This is a comment
     println("hello")
 }

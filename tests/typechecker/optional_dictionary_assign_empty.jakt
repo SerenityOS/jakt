@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "420\n"
 
-function main() {
+fn main() {
     mut dict: [i64:i64]? = [:]
     dict!.set(42, 420)
     println("{}", dict!.get(42))

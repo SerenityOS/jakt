@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "1\n7\n3\n6\n"
 
-function main() {
+fn main() {
     let my_first_none: i64? = None
     let my_second_none: i64? = None
 

@@ -4,13 +4,13 @@
 class Test {
     public x: i32
 
-    public function y(this) throws => this
-    public function throwing_y(this) throws -> String {
+    public fn y(this) throws => this
+    public fn throwing_y(this) throws -> String {
         throw Error::from_errno(69)
     }
 }
 
-function main() {
+fn main() {
     mut test: Test? = Test(x: 123)
     try {
         println("{}", test?.y()?.throwing_y() ?? "FAIL")

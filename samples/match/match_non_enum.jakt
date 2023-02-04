@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "3 bar\n"
 
-function main() {
+fn main() {
     let x = match 42 {
         (21 * 2) => [1, 2, 3]
         else => []

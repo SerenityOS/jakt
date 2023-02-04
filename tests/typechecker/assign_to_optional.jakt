@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "Foo\n"
 
-function main() {
+fn main() {
     let foo: String? = "Foo"
     println("{}", foo!)
 }

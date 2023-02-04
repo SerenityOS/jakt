@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "5\n"
 
-function main() {
+fn main() {
     let my_optional: i64? = 5
     let y = my_optional ?? 6
     println("{}", y)

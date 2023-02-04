@@ -2,11 +2,11 @@
 /// - output: "333\n123\n"
 import function_block_return { foo }
 
-function foo(x: i64) -> i64 {
+fn foo(x: i64) -> i64 {
     return x
 }
 
-function main() {
+fn main() {
     // call the imported function
     println("{}", foo())
     // call the overload

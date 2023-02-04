@@ -4,14 +4,14 @@
 class Foo {
     public x: i64
 
-    public function set(mut this, value: i64) {
+    public fn set(mut this, value: i64) {
         this.x = value
     }
 
-    public function get(this) => this.x
+    public fn get(this) => this.x
 }
 
-function main() {
+fn main() {
     mut foo = Foo(x: 1)
     mut opt_foo: Foo? = foo
 
