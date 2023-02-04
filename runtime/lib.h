@@ -218,6 +218,21 @@ ALWAYS_INLINE constexpr OutputType infallible_integer_cast(InputType input)
     }
 }
 
+template<AK::SpecializationOf<AK::NonnullRefPtr> T, AK::SpecializationOf<AK::NonnullRefPtr> U>
+inline Optional<T> fallible_class_cast(U const& ptr)
+{
+    if (!is<typename T::ElementType>(*ptr))
+        return Optional<T> {};
+    return T(static_cast<typename T::ElementType const&>(*ptr));
+}
+
+template<AK::SpecializationOf<AK::NonnullRefPtr> T, AK::SpecializationOf<AK::NonnullRefPtr> U>
+inline T infallible_class_cast(U const& ptr)
+{
+    VERIFY(is<typename T::ElementType>(*ptr));
+    return T(static_cast<typename T::ElementType const&>(*ptr));
+}
+
 template<typename OutputType, typename InputType>
 ALWAYS_INLINE constexpr OutputType as_saturated(InputType input)
 {
@@ -305,7 +320,9 @@ namespace Jakt {
 using JaktInternal::abort;
 using JaktInternal::as_saturated;
 using JaktInternal::as_truncated;
+using JaktInternal::fallible_class_cast;
 using JaktInternal::fallible_integer_cast;
+using JaktInternal::infallible_class_cast;
 using JaktInternal::infallible_integer_cast;
 using JaktInternal::Range;
 using JaktInternal::unchecked_add;
