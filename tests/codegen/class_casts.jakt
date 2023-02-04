@@ -1,0 +1,32 @@
+/// Expect:
+/// - output: "123\n"
+
+class Base {
+}
+
+class Derived: Base {
+    public x: i64
+}
+
+class OtherDerived: Base {
+}
+
+function main() {
+    let derived = Derived(x: 123)
+
+    // Infallible upcast
+    let base = derived as! Base
+
+    // Infallible downcast
+    println("{}", (base as! Derived).x)
+
+    // Fallible downcast (good)
+    if not (base as? Derived).has_value() {
+        println("Error 1")
+    }
+
+    // Fallible downcast (bad)
+    if (base as? OtherDerived).has_value() {
+        println("Error 2")
+    }
+}
