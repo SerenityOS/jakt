@@ -2962,12 +2962,12 @@ struct Typechecker {
             let scope = .get_scope(super_struct.scope_id)
             for (_, overload_set) in scope.functions {
                 for function_id in overload_set {
-                    let function_ = .get_function(function_id)
-                    if function_.is_virtual {
-                        if not all_virtuals.contains(function_.name) {
-                            all_virtuals[function_.name] = [function_]
+                    let function = .get_function(function_id)
+                    if function.is_virtual {
+                        if not all_virtuals.contains(function.name) {
+                            all_virtuals[function.name] = [function]
                         }else {
-                            all_virtuals[function_.name].push(function_)
+                            all_virtuals[function.name].push(function)
                         }
                     }
                 }
