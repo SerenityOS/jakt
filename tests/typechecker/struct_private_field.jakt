@@ -2,12 +2,12 @@
 /// - error: "Can't access field ‘age’, because it is marked private\n"
 
 struct WeirdEncapsulation {
-    function create(age: i32) => WeirdEncapsulation(age)
+    fn create(age: i32) => WeirdEncapsulation(age)
 
     private age: i32
 }
 
-function main() {
+fn main() {
     let useless = WeirdEncapsulation::create(age: 2)
     useless.age
 }

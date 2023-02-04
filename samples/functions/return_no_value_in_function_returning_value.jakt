@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Error: ’return’ with no value in function ’test’ returning ’i32’\n"
 
-function test() -> i32 {
+fn test() -> i32 {
 	return
 }
 

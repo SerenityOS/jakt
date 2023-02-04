@@ -10,7 +10,7 @@ boxed enum AST {
     BinaryOperation(lhs: AST, op: Operation, rhs: AST)
 }
 
-function eval(anon ast: AST) -> i64 {
+fn eval(anon ast: AST) -> i64 {
     match ast {
         AST::Int(i) => {
             return i
@@ -25,7 +25,7 @@ function eval(anon ast: AST) -> i64 {
     }
 }
 
-function main() {
+fn main() {
     let ast = AST::BinaryOperation(
         lhs: AST::Int(5), 
         op: Operation::Add(), 

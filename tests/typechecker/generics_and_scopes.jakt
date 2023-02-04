@@ -1,14 +1,14 @@
 /// Expect:
 /// - output: ""
 
-function id<T>(z: T) => z
+fn id<T>(z: T) => z
 
-function bar() {
+fn bar() {
     let y: u8 = id(z: 188u8)
 }
 
-function foobar(x: u32) -> u32 {
+fn foobar(x: u32) -> u32 {
     return x
 }
 
-function main(args: [String]) { }
+fn main(args: [String]) { }

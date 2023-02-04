@@ -4,7 +4,7 @@
 struct Countdown implements(Iterable<i64>) {
     from: i64
 
-    function next(mut this) -> i64? {
+    fn next(mut this) -> i64? {
         if this.from == -1 {
             return None
         }
@@ -15,7 +15,7 @@ struct Countdown implements(Iterable<i64>) {
     }
 }
 
-function main() {
+fn main() {
     for x in Countdown(from: 10) {
         println("{}", x)
     }

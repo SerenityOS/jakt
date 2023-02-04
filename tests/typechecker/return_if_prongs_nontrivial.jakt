@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "123\n"
 
-function max(a: i32, b: i32) -> i32 {
+fn max(a: i32, b: i32) -> i32 {
     if a > b {
         return a
     } else {
@@ -9,6 +9,6 @@ function max(a: i32, b: i32) -> i32 {
     }
 }
 
-function main() {
+fn main() {
     println("{}", max(a: 123i32, b: -123i32))
 }

@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "\"test\"\n"
 
-function main() {
+fn main() {
     unsafe {
         cpp {
             "printf(\"\\\"test\\\"\n\");"

@@ -2,8 +2,8 @@
 /// - error: "Cannot access function ‘get_secret’ from this scope\n"
 
 class Limited {
-    restricted(A) function get_secret() => "Shhhh! Don't tell anyone!"
-    restricted(A,B) function open_the_bank_vault() => "Open sesame!"
+    restricted(A) fn get_secret() => "Shhhh! Don't tell anyone!"
+    restricted(A,B) fn open_the_bank_vault() => "Open sesame!"
 }
 
 class A {}
@@ -11,12 +11,12 @@ class A {}
 class B {}
 
 class C {
-    public function do_things() {
+    public fn do_things() {
         println("The secret is: {}", Limited::get_secret())
         println("{}", Limited::open_the_bank_vault())
     }
 }
 
-function main() {
+fn main() {
     C::do_things()
 }

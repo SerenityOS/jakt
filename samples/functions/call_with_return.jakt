@@ -1,10 +1,10 @@
 /// Expect:
 /// - output: "Well, hello friends.\n"
 
-function greet() -> String {
+fn greet() -> String {
     return "Well, hello friends."
 }
 
-function main() {
+fn main() {
     println("{}", greet())
 }

@@ -2,11 +2,11 @@
 /// - error: "Functions are not allowed to yield values"
 
 class Foo {
-    public function test() -> String {
+    public fn test() -> String {
         yield "Foo"
     }
 }
 
-function main() {
+fn main() {
 
 }

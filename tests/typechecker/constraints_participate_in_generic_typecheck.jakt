@@ -2,15 +2,15 @@
 /// - output: "OK\n"
 
 trait Trait<T> {
-    function bar(this) -> T
+    fn bar(this) -> T
 }
 
 struct Thing implements(Trait<u32>) {
-    function bar(this) -> u32 => 1337u32
+    fn bar(this) -> u32 => 1337u32
 }
 
 class Class<T requires(Trait<u32>)> {
-    public function foo(this, anon v: T) {
+    public fn foo(this, anon v: T) {
         let bar = v.bar()
 
         if bar == 1337 {
@@ -19,7 +19,7 @@ class Class<T requires(Trait<u32>)> {
     }
 }
 
-function main() {
+fn main() {
     let c: Class<Thing> = Class()
     c.foo(Thing())
 }

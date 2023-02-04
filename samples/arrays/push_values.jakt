@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "x: [1, 2, 3, 5]\ny: [5]\n"
 
-function main() {
+fn main() {
     mut x = [1, 2, 3]
     mut y = [5]
 

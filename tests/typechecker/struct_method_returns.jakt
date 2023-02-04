@@ -5,10 +5,10 @@ struct Foo {
     value: i32,
 
     // Same as a block with return in it, so this is fine
-    function get_value(this) => this.value
+    fn get_value(this) => this.value
 }
 
-function main() {
+fn main() {
     let foo = Foo(value: 1)
     println("{}", foo.get_value())
 }

@@ -2,12 +2,12 @@
 /// - output: "Well hello friends!\n"
 
 [[name=Foo]] struct Bar {
-    [[name=bar]] function foo(this) {
+    [[name=bar]] fn foo(this) {
         println("Well hello friends!")
     }
 }
 
-function main() {
+fn main() {
     let bar = Bar()
     unsafe { cpp { "bar.bar();" } }
 }

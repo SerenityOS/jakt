@@ -10,6 +10,6 @@ struct Bar<T> {
     y: T,
 }
 
-function main() {
+fn main() {
     let x: Foo<i64> = Bar(x: 1, y: 2)
 }

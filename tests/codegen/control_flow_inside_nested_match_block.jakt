@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "OK\n"
 
-function test_continue() -> bool {
+fn test_continue() -> bool {
     mut break_out = false
     while not break_out {
         match 10 {
@@ -21,7 +21,7 @@ function test_continue() -> bool {
 }
 
 
-function test_break() -> bool {
+fn test_break() -> bool {
     loop {
         match 10 {
             10 => {
@@ -38,7 +38,7 @@ function test_break() -> bool {
 
 
 
-function main() {
+fn main() {
     if test_break() and test_continue() {
         println("OK")
     } else {

@@ -5,11 +5,11 @@ struct Foo {
     x: i64
 }
 
-function set_x(mut foo: Foo, x: i64) {
+fn set_x(mut foo: Foo, x: i64) {
     foo.x = x
 }
 
-function main() {
+fn main() {
     let foo = Foo(x: 5)
     println("{}", foo.x)
 

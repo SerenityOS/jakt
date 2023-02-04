@@ -3,11 +3,11 @@
 
 enum S {
     X
-    function my_func(this, anon def: i64 = 42) {
+    fn my_func(this, anon def: i64 = 42) {
         println("{}", def)
     }
 }
 
-function main() {
+fn main() {
     S::X.my_func()
 }

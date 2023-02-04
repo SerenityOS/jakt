@@ -1,10 +1,10 @@
 /// Expect:
 /// - output: "7\n"
 
-function subtract(x: i64, y: i64) {
+fn subtract(x: i64, y: i64) {
     println("{}", x - y)
 }
 
-function main() {
+fn main() {
     subtract(x: 10, y: 3)
 }

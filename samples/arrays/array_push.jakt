@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "9\n8\n7\n6\n5\n4\n3\n2\n1\n0\n"
 
-function main() {
+fn main() {
     mut values = [0; 0]
 
     for i in 0..10 {

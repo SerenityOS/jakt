@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Dereference of raw pointer outside of unsafe block"
 
-function main() {
+fn main() {
     let x = 10
     let y = &raw x
 

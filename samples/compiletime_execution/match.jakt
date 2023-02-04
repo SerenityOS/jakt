@@ -16,7 +16,7 @@ comptime match_some_enum(anon x: SomeEnum) => match x {
     C => 42i32
 }
 
-function main() {
+fn main() {
     println("{}", match_some_enum(SomeEnum::A(32i32)))
     println("{}", match_some_enum(SomeEnum::B(x: 32i32, y: 64i32)))
     println("{}", match_some_enum(SomeEnum::C))

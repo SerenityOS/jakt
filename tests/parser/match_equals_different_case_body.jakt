@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "hello\n"
 
-function main() {
+fn main() {
     if true {
         match 1 {
             else => println("hello")

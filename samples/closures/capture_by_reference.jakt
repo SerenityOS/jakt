@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\n"
 
-function test(cb: function() -> void) {
+fn test(cb: fn() -> void) {
     cb()
 }
 
@@ -9,8 +9,8 @@ class Foo {
     public message: String
 }
 
-function main() {
+fn main() {
     let pass = Foo(message: "PASS")
-    test(cb: function[&pass]() => println(pass.message))
+    test(cb: fn[&pass]() => println(pass.message))
 }
 

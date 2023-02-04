@@ -2,10 +2,10 @@
 /// - output: "Foo\n"
 
 class Foo {
-    public function call(this) => "Foo"
+    public fn call(this) => "Foo"
 }
 
-function main() {
+fn main() {
     let foo = Foo()
     mut weak_foo: weak Foo? = foo
 

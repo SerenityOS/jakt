@@ -3,7 +3,7 @@
 
 // This actually just checks if the error displaying is not choking on multiline error spans that
 // happen to be on lines with a changing number of digits (lines 8 to 10 in this case)
-function foo(anon x: i64) -> i64 {
+fn foo(anon x: i64) -> i64 {
     if x > 5 {
         return struct {
 
@@ -12,4 +12,4 @@ function foo(anon x: i64) -> i64 {
         return y
     }
 }
-function main() { }
+fn main() { }

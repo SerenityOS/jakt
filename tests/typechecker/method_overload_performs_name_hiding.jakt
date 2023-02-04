@@ -2,14 +2,14 @@
 /// - error: "No function with matching signature found."
 
 class A {
-    public function foo(this) => 0
+    public fn foo(this) => 0
 }
 
 class B : A {
-    public function foo(this, x: String) => 0
+    public fn foo(this, x: String) => 0
 }
 
-function main() {
+fn main() {
     let b = B()
     b.foo()
 }

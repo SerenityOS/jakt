@@ -9,6 +9,6 @@ boxed enum Foo<T> {
     E(Foo<T>)
 }
 
-function main() {
+fn main() {
     // Should parse.
 }

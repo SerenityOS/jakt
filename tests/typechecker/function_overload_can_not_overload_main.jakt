@@ -1,10 +1,10 @@
 /// Expect:
 /// - error: "Function 'main' declared multiple times."
 
-function main() {
+fn main() {
     return 0
 }
 
-function main(args: [String]) {
+fn main(args: [String]) {
     return ""
 }

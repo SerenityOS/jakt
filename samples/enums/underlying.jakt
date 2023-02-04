@@ -13,7 +13,7 @@ enum CuterLittlerEnum: u32 {
     C
 }
 
-function main() throws -> c_int {
+fn main() throws -> c_int {
     println("A = {}, B = {}, C = {}",
         CuteLittleEnum::A as! u64,
         CuteLittleEnum::B as! u64,

@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "3\n"
 
-function main() {
+fn main() {
     mut dict = ["a": 1, "b": 2]
 
     dict.set(key: "c", value: 3);

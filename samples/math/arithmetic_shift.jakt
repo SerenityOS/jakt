@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "-50\n-200\n"
 
-function main() {
+fn main() {
     let x: i64 = -100
 
     println("{}", x >>> 1)

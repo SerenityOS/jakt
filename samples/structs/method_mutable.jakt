@@ -5,15 +5,15 @@ struct Rectangle {
     width: i64,
     height: i64,
 
-    function grow(mut this) {
+    fn grow(mut this) {
         this.width *= 2;
         this.height *= 2;
     }
 
-    function area(this) => this.width * this.height
+    fn area(this) => this.width * this.height
 }
 
-function main() {
+fn main() {
     mut rect = Rectangle(width: 4, height: 8)
 
     rect.grow()

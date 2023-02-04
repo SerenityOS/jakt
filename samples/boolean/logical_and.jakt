@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "OK\nOK\n"
 
-function main() {
+fn main() {
     let i = 5
     if i == 5 and 7 > 6 {
         println("OK")

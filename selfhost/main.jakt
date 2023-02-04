@@ -37,8 +37,8 @@ import platform_compiler() {
     run_compiler
 }
 
-function usage() => "usage: jakt [-h] [OPTIONS] <filename>"
-function help() -> String {
+fn usage() => "usage: jakt [-h] [OPTIONS] <filename>"
+fn help() -> String {
     mut output = "Flags:\n"
     output += "  -h,--help\t\t\t\tPrint this help and exit.\n"
     output += "  -O\t\t\t\t\tBuild an optimized executable.\n"
@@ -85,7 +85,7 @@ function help() -> String {
     return output
 }
 
-function indent(anon level: usize) throws -> String {
+fn indent(anon level: usize) throws -> String {
     mut output = ""
     for i in 0uz..level {
         output += "    "
@@ -97,7 +97,7 @@ struct FormatRange {
     start: usize
     end: usize
 }
-function parse_format_range(anon range: String, anon input_file_length: usize) throws -> FormatRange? {
+fn parse_format_range(anon range: String, anon input_file_length: usize) throws -> FormatRange? {
     // range: <start-offset>:<end-offset>
     // {start,end}-offset: usize
 
@@ -136,7 +136,7 @@ function parse_format_range(anon range: String, anon input_file_length: usize) t
     )
 }
 
-function value_or_throw<T>(anon maybe: T?) throws -> T {
+fn value_or_throw<T>(anon maybe: T?) throws -> T {
     if maybe.has_value() {
         return maybe!
     }
@@ -144,7 +144,7 @@ function value_or_throw<T>(anon maybe: T?) throws -> T {
     throw Error::from_errno(1)
 }
 
-function main(args: [String]) {
+fn main(args: [String]) {
     if args.size() <= 1 {
         eprintln("{}", usage())
         return 1
@@ -401,7 +401,7 @@ function main(args: [String]) {
         }
 
         if not main_function_id.has_value() {
-            eprintln("Error: No main function found in program")
+            eprintln("Error: No main function  found in program")
             return 1
         }
 
@@ -439,13 +439,13 @@ function main(args: [String]) {
                     return 0
                 }
                 else => {
-                    eprintln("Error: Main function must return an integer")
+                    eprintln("Error: Main function  must return an integer")
                     return 1
                 }
             }
 
             Throw(x) => {
-                eprintln("Error: Main function threw: {}", serialize_ast_node(value_to_checked_expression(x, interpreter)))
+                eprintln("Error: Main function  threw: {}", serialize_ast_node(value_to_checked_expression(x, interpreter)))
                 return 1
             }
         }
@@ -585,7 +585,7 @@ function main(args: [String]) {
 
         try builder.build_all(
             binary_dir
-            compiler_invocation: &function[
+            compiler_invocation: &fn[
                 cxx_compiler_path
                 runtime_path
                 extra_include_paths
@@ -652,7 +652,7 @@ function main(args: [String]) {
     }
 }
 
-function format_output(file_path: Path, tokens: [Token], format_range: FormatRange?, format_debug: bool, format_inplace: bool) throws {
+fn format_output(file_path: Path, tokens: [Token], format_range: FormatRange?, format_debug: bool, format_inplace: bool) throws {
     mut formatted_file = StringBuilder::create()
 
     mut on_new_line = true

@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Control reaches end of never-returning function\n"
 
-function test() -> never {
+fn test() -> never {
 }
 
-function main() {}
+fn main() {}

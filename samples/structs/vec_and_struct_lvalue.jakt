@@ -6,7 +6,7 @@ struct Person {
     age: i64
 }
 
-function main() {
+fn main() {
     mut arr = [
         Person(name: "Jane", age: 100), 
         Person(name: "Björn", age: 200)

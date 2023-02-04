@@ -5,11 +5,11 @@ struct Foo {
     string: String
 }
 
-function overwrite(foo: &mut Foo) {
+fn overwrite(foo: &mut Foo) {
     (*foo).string = "PASS"    
 }
 
-function main() {
+fn main() {
     mut foo = Foo(string: "FAIL")
     overwrite(foo: &mut foo)
     println("{}", foo.string)

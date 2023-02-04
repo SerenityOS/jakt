@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "true\nfalse\n"
 
-function main() {
+fn main() {
     let set = {"a", "b"}
     println("{}", set.contains("b"))
     println("{}", set.contains("c"))

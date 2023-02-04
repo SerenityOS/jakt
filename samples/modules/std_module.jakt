@@ -3,7 +3,7 @@
 
 import jakt::arguments { ArgsParser }
 
-function main() {
+fn main() {
     mut args_parser = ArgsParser::from_args(["-h"])
 
     if args_parser.flag(["-h", "--help"]) {

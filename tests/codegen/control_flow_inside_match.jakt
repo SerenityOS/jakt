@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "OK\n"
 
-function test_continue() -> i64 {
+fn test_continue() -> i64 {
     mut x: i64 = 10
     loop {
         match x {
@@ -16,7 +16,7 @@ function test_continue() -> i64 {
     }
 }
 
-function test_break() -> i64 {
+fn test_break() -> i64 {
     mut x: i64 = 10
     loop {
         match x {
@@ -29,7 +29,7 @@ function test_break() -> i64 {
     return x
 }
 
-function main() {
+fn main() {
     let res_continue = test_continue()
     let res_break = test_break()
     if res_continue == res_break and res_continue == 42 {

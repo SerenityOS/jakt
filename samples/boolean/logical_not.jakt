@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "happiness\n"
 
-function main() {
+fn main() {
     if not (1 < 2) {
         println("whoops")
     }

@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Type mismatch: expected ‘String’, but got ‘u64’\n"
 
-function main() {
+fn main() {
     let foo: u64 = 0
     let bar: String = foo
 }

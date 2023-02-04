@@ -6,7 +6,7 @@ enum Foo {
     B
 }
 
-function main() {
+fn main() {
     match Foo::A {
         Foo::A => println("1")
         A => println("2")

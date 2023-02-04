@@ -4,7 +4,7 @@
 class Foo {
 }
 
-function main() {
+fn main() {
     mut x: weak Foo? = None
     x = 5
 }

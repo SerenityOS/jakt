@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "123\n"
 
-function main() {
+fn main() {
     mut item = Dictionary<String, i64>();
 
     item.set(key: "bob", value: 123);

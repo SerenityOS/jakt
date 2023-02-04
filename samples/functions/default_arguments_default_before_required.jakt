@@ -1,10 +1,10 @@
 /// Expect:
 /// - output: "Hello 5 false WHF 121\n"
 
-function say(text: String = "Hello", number: i64 = 5, boolean: bool = false, optional: String?, byte: u8) {
+fn say(text: String = "Hello", number: i64 = 5, boolean: bool = false, optional: String?, byte: u8) {
     println("{} {} {} {} {}", text, number, boolean, optional, byte)
 }
 
-function main() {
+fn main() {
     say(optional: "WHF", byte: b'y')
 }

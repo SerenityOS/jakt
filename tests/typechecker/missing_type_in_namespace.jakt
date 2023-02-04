@@ -2,9 +2,9 @@
 /// - error: "Unknown type"
 
 extern struct StringBuilder {
-    function append(mut this, anon s: u8)
-    function to_string(mut this) throws -> String
-    function create() throws -> StringBuilder
+    fn append(mut this, anon s: u8)
+    fn to_string(mut this) throws -> String
+    fn create() throws -> StringBuilder
 }
 
 namespace lexer {
@@ -12,6 +12,6 @@ struct Lexer {
 }
 }
 
-function main(args: [String]) {
+fn main(args: [String]) {
     mut tokens: [Token] = []
 }

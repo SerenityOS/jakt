@@ -6,7 +6,7 @@ struct Person {
     age: i64
 }
 
-function main() {
+fn main() {
     mut p = Person(name: "Jane", age: 100)
 
     p.age = 99;

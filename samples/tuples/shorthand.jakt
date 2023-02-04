@@ -1,11 +1,11 @@
 /// Expect:
 /// - output: "1 hello\n"
 
-function foo() -> (i64, String) {
+fn foo() -> (i64, String) {
     return (1, "hello")
 }
 
-function main() {
+fn main() {
     let x = foo()
     println("{} {}", x.0, x.1)
 }

@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Assignment to immutable variable"
 
-function main() {
+fn main() {
     let x = [1, 2, 3]
     x[1] = 55
 

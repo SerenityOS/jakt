@@ -36,7 +36,7 @@ comptime set_iterator() throws -> bool {
 }
 comptime set_constructor() throws => Set<u8>().is_empty()
 
-function main() {
+fn main() {
     mut success = is_empty()
     success &= contains()
     success &= add()

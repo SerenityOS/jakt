@@ -5,6 +5,6 @@
 // it errors out and doesn't increment the token index.
 // But because the inner loop that repeatedly parses function parameter expressions never considered errors,
 // it would get stuck in an infinite loop failing to parse "}".
-function main() {
+fn main() {
     println("test"
 }

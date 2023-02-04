@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Integer promotion failed\n"
 
-function main() {
+fn main() {
     mut i: u8 = 0;
     i += 1000;
 }

@@ -1,22 +1,22 @@
 /// Expect:
 /// - output: "greeting from the child\n"
 class Parent {
-    public virtual function greet(this) {
+    public virtual fn greet(this) {
         println("greeting from the parent")
     }
 }
 
 class Child: Parent {
-    public override function greet(this) {
+    public override fn greet(this) {
         println("greeting from the child")
     }
 }
 
-function use_parent(anon parent: Parent) {
+fn use_parent(anon parent: Parent) {
     parent.greet()
 }
 
-function main() {
+fn main() {
     let child = Child()
 
     use_parent(child)

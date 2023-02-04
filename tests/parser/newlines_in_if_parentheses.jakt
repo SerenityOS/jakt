@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "true\n"
 
-function main() {
+fn main() {
     if (
         true
     ) {

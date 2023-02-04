@@ -4,7 +4,7 @@ enum test {
     Other(test: i64)
 }
 
-function main() {
+fn main() {
     let a = test::Range(test: 1)
 
     println("{}", a is Other)

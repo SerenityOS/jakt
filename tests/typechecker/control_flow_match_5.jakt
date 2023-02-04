@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\n"
 
-function test(first: i64, second: i64) -> String {
+fn test(first: i64, second: i64) -> String {
     match first {
         1 => {
             // Partially always return
@@ -18,6 +18,6 @@ function test(first: i64, second: i64) -> String {
     return "PASS" // This should be reachable (in case first == 1 and second != 2)
 }
 
-function main() {
+fn main() {
     println("{}", test(first: 1, second: 0))
 }

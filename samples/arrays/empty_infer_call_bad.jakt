@@ -1,10 +1,10 @@
 /// Expect:
 /// - error: "Type mismatch: expected ‘f64’, but got ‘String’\n"
 
-function test(arr: [f64]) {
+fn test(arr: [f64]) {
     println("OK")
 }
 
-function main() {
+fn main() {
     test(arr: ["bad-type"])
 }

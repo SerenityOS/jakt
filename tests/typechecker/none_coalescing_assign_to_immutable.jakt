@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "left-hand side of ??= must be a mutable variable"
 
-function main() {
+fn main() {
     let i: String? = None
     i ??= "mayb"
     println(i ?? "hello")

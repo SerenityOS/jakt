@@ -1,11 +1,11 @@
 /// Expect:
 /// - output: "foo\nbar\n"
 
-function make_v() throws -> [String] {
+fn make_v() throws -> [String] {
     return ["foo", "bar"]
 }
 
-function main() {
+fn main() {
     let v: [String] = make_v()
     mut i = 0
     while i < 2 {

@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "21\n"
 
-function slices(anon s: ArraySlice<i64>, mut total: i64) -> i64 {
+fn slices(anon s: ArraySlice<i64>, mut total: i64) -> i64 {
     total += s[0]
 
     if s.size() > 1 {
@@ -11,7 +11,7 @@ function slices(anon s: ArraySlice<i64>, mut total: i64) -> i64 {
     return total
 }
 
-function main() {
+fn main() {
     let arr = [1, 2, 3, 4, 5, 6]
     mut total = 0
 

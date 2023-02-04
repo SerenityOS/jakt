@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Integer literal too large"
 
-function main() {
+fn main() {
     let too_large_u64 = 18_446_744_073_709_551_616;
 }

@@ -3,8 +3,8 @@ import jakt::platform::windows_errno { errno_value }
 import utility { allocate, null }
 
 import extern c "direct.h" {
-    extern function _mkdir(path: raw c_char) -> i32
-    extern function _getcwd(anon mut buffer: raw c_char, anon maxlen: i32) -> raw c_char
+    extern fn _mkdir(path: raw c_char) -> i32
+    extern fn _getcwd(anon mut buffer: raw c_char, anon maxlen: i32) -> raw c_char
 }
 
 import extern c "windows.h" {
@@ -13,9 +13,9 @@ import extern c "windows.h" {
         cFileName: raw c_char
     }
 
-    extern function FindFirstFile(anon pathname: raw c_char, anon data: raw WIN32_FIND_DATA) -> raw void
-    extern function FindNextFile(anon hfind: raw void, anon data: raw WIN32_FIND_DATA) -> bool
-    extern function FindClose(anon hfind: raw void) -> c_int
+    extern fn FindFirstFile(anon pathname: raw c_char, anon data: raw WIN32_FIND_DATA) -> raw void
+    extern fn FindNextFile(anon hfind: raw void, anon data: raw WIN32_FIND_DATA) -> bool
+    extern fn FindClose(anon hfind: raw void) -> c_int
 } before_include define {
     WIN32_LEAN_AND_MEAN = "1"
     NOMINMAX = "1"
@@ -23,13 +23,13 @@ import extern c "windows.h" {
     Yield
 }
 
-function make_directory(path: String) throws {
+fn make_directory(path: String) throws {
     if _mkdir(path: path.c_string()) != 0 {
         throw Error::from_errno(errno_value())
     }
 }
 
-function current_directory() throws -> String {
+fn current_directory() throws -> String {
     let buffer_size : i32 = 4096; // Roughly PATH_MAX
     mut buffer = allocate<c_char>(count: buffer_size as! usize + 1)
     defer {
@@ -51,7 +51,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
     dir_fd: raw void
     first_file: (Path, bool)?
 
-    public function next(mut this) throws -> (Path, bool)? {
+    public fn next(mut this) throws -> (Path, bool)? {
         if .first_file.has_value() {
             let file = .first_file!
             .first_file = None
@@ -78,7 +78,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
         }
     }
 
-    private function is_directory(mut this) throws -> bool {
+    private fn is_directory(mut this) throws -> bool {
         mut data = default_constructed<WIN32_FIND_DATA>()
 
         let search_path = format("{}\\*", .path.to_string())
@@ -103,7 +103,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
         return false
     }
 
-    private function file_from_data(mut this, data: WIN32_FIND_DATA) throws -> (Path, bool)? {
+    private fn file_from_data(mut this, data: WIN32_FIND_DATA) throws -> (Path, bool)? {
         mut builder = StringBuilder::create()
         builder.append_c_string(data.cFileName)
 
@@ -112,7 +112,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
         return (Path::from_string(builder.to_string()), is_directory)
     }
 
-    public function from_path(path: Path) throws -> DirectoryIterator? {
+    public fn from_path(path: Path) throws -> DirectoryIterator? {
         mut dir_fd = default_constructed<raw void>()
 
         mut directory_iterator = DirectoryIterator(path, dir_fd, first_file: None)
@@ -123,12 +123,12 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
         return directory_iterator
     }
 
-    public function get_path(this) -> Path {
+    public fn get_path(this) -> Path {
         return .path
     }
 }
 
-function default_constructed<T>() -> T {
+fn default_constructed<T>() -> T {
     unsafe {
         cpp {
             "return T{};"

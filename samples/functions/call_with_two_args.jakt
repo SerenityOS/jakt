@@ -1,11 +1,11 @@
 /// Expect:
 /// - output: "Well\nhello friends.\n"
 
-function greet(msg: String, msg2: String) {
+fn greet(msg: String, msg2: String) {
     println("{}", msg)
     println("{}", msg2)
 }
 
-function main() {
+fn main() {
     greet(msg: "Well", msg2: "hello friends.")
 }

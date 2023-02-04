@@ -23,6 +23,6 @@ boxed enum MyRecursiveEnum<T> {
     B
 }
 
-function main() {
+fn main() {
     // Should compile.
 }

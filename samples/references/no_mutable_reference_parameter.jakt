@@ -1,5 +1,5 @@
 /// Expect:
 /// - error: "Reference parameter can not be mutable"
 
-function foo(anon mut a: &i64) {
+fn foo(anon mut a: &i64) {
 }

@@ -5,6 +5,6 @@ struct WeirdEncapsulation {
     private age: i32
 }
 
-function main() {
+fn main() {
     WeirdEncapsulation(age: 2)
 }

@@ -3,12 +3,12 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-function panic(anon message: String) -> never {
+fn panic(anon message: String) -> never {
     eprintln("internal error: {}", message)
     abort()
 }
 
-function todo(anon message: String) -> never {
+fn todo(anon message: String) -> never {
     eprintln("TODO: {}", message)
     abort()
 }

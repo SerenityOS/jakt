@@ -1,11 +1,11 @@
 /// Expect:
 /// - output: "foo\nbar\n"
 
-function change_value(mut vector: [String]) {
+fn change_value(mut vector: [String]) {
     vector[1] = "bar"
 }
 
-function main() {
+fn main() {
     mut v = ["foo", "foo"]
     change_value(vector: v)
 

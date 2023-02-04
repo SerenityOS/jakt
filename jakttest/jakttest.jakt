@@ -19,34 +19,34 @@ import extern "fs.h" {
         // subset of `struct stat` from <sys/stat.h> that contains
         // just what is used.
         extern struct StatResults {
-            function modified_time(this) -> usize
+            fn modified_time(this) -> usize
             // Whether the file is executable by the current user
-            function is_executable(this) -> bool
-            function is_regular_file(this) -> bool
-            function is_directory(this) -> bool
+            fn is_executable(this) -> bool
+            fn is_regular_file(this) -> bool
+            fn is_directory(this) -> bool
         }
 
         extern class DirectoryIterator implements(ThrowingIterable<String>) {
             // Get next listing name. Note that the full path is not given,
             // just the base name.
-            public function next(mut this) throws -> String?
+            public fn next(mut this) throws -> String?
         }
         // Get a listing of a directory, using readdir().
-        extern function list_directory(path: String) throws -> DirectoryIterator
+        extern fn list_directory(path: String) throws -> DirectoryIterator
         // Returns whether the given path is a directory
 
         // Create a directory
-        extern function mkdir(path: String) throws
+        extern fn mkdir(path: String) throws
 
         // Remove a directory
-        extern function rmdir(path: String) throws
+        extern fn rmdir(path: String) throws
 
         // Remove a file
-        extern function unlink(path: String) throws
+        extern fn unlink(path: String) throws
 
         // Calls `stat` on a file. Silences `ENOENT` error by setting
         // StatResults.exists to false.
-        extern function stat_silencing_enoent(path: String) throws -> StatResults?
+        extern fn stat_silencing_enoent(path: String) throws -> StatResults?
 
 
     }
@@ -54,24 +54,24 @@ import extern "fs.h" {
 
 // FIXME: These three functions should be under a `namespace fs`, but due to
 // #1008 it will ignore the stuff from the import extern if I do.
-function is_directory(path: String) throws -> bool {
+fn is_directory(path: String) throws -> bool {
     let stat = fs::stat_silencing_enoent(path)
     return stat.has_value() and stat!.is_directory()
 }
 
-function mkdir_if_not_present(path: String) throws {
+fn mkdir_if_not_present(path: String) throws {
     let stat = fs::stat_silencing_enoent(path)
     if not stat.has_value() or not stat!.is_directory() {
         fs::mkdir(path)
     }
 }
 
-function path_exists(path: String) throws -> bool {
+fn path_exists(path: String) throws -> bool {
     let stat = fs::stat_silencing_enoent(path)
     return stat.has_value()
 }
 
-function has_jakt_extension(name: String) throws -> bool {
+fn has_jakt_extension(name: String) throws -> bool {
     if name.length() < 5 {
         return false
     }
@@ -81,7 +81,7 @@ function has_jakt_extension(name: String) throws -> bool {
 
 // Traverse directory in a DFS manner ta find files with the .jakt extension
 // and store results into the given array
-function get_jakt_files_under(directory: String, results: &mut [String]) throws -> [String] {
+fn get_jakt_files_under(directory: String, results: &mut [String]) throws -> [String] {
     mut path_stack: [String] = [directory]
 
     while not path_stack.is_empty() {
@@ -108,36 +108,36 @@ function get_jakt_files_under(directory: String, results: &mut [String]) throws 
 import extern "process.h" {
     namespace process {
         extern struct ExitPollResult {
-            function exit_code(this) -> i32
-            function pid(this) -> i32
+            fn exit_code(this) -> i32
+            fn pid(this) -> i32
         }
         /// Starts a background job by means of fork() and exec(). Returns
         /// the PID of the launched process.
-        extern function start_background_process(args: [String]) throws -> i32
+        extern fn start_background_process(args: [String]) throws -> i32
         /// Checks whether a process has finished executing. Returns its
         /// exit code if it has.
-        extern function poll_process_exit(pid: i32) throws -> ExitPollResult?
+        extern fn poll_process_exit(pid: i32) throws -> ExitPollResult?
         /// Kills a process by sending SIGKILL to it
-        extern function forcefully_kill_process(pid: i32) throws
+        extern fn forcefully_kill_process(pid: i32) throws
     }
 }
 
 import extern "os.h" {
     namespace os {
         /// Calls sysconf(_SC_NPROCESSORS_ONLN) to get the number of CPUs available
-        extern function get_num_cpus() throws -> usize
+        extern fn get_num_cpus() throws -> usize
 
         /// Returns %TEMP% in Windows and $TMP_DIR or /tmp in macOS/linux
-        extern function get_system_temporary_directory() throws -> String
+        extern fn get_system_temporary_directory() throws -> String
 
-        extern function ignore_sigchild() throws
+        extern fn ignore_sigchild() throws
 
         /// Returns "./jakttest/run_once.sh" on Unix, and a complex PowerShell invocation on windows
-        extern function get_script_execution_string() throws -> String
+        extern fn get_script_execution_string() throws -> String
     }
 }
 
-function print_usage()  {
+fn print_usage()  {
     eprintln("usage: jakttest [OPTIONS...] <temp-dir> [<path> ...]")
     eprintln("OPTIONS:")
     eprintln("\t-h\t\tShow this message and exit.")
@@ -149,7 +149,7 @@ function print_usage()  {
     eprintln("\t-C,--cpp-compiler <PATH>\t\tUse the C++ compiler at PATH to compile objects. Defaults to clang++.")
 }
 
-function compare_test(bytes: [u8], expected: String) throws -> bool {
+fn compare_test(bytes: [u8], expected: String) throws -> bool {
     // first, build up the content to compare to
     mut builder = StringBuilder::create()
     for b in bytes {
@@ -167,7 +167,7 @@ function compare_test(bytes: [u8], expected: String) throws -> bool {
     return true
 }
 
-function compare_error(bytes: [u8], expected: String) throws -> bool {
+fn compare_error(bytes: [u8], expected: String) throws -> bool {
     // first, build up the content to compare to
     mut builder = StringBuilder::create()
 
@@ -195,7 +195,7 @@ function compare_error(bytes: [u8], expected: String) throws -> bool {
     return true
 }
 
-function strip_line_breaks(anon input: String) throws -> String {
+fn strip_line_breaks(anon input: String) throws -> String {
     mut builder = StringBuilder::create();
     for i in 0..input.length() {
         let b = input.byte_at(i)
@@ -212,14 +212,14 @@ function strip_line_breaks(anon input: String) throws -> String {
     return builder.to_string()
 }
 
-function usize_from_ascii_digit(anon byte: u8) -> usize? {
+fn usize_from_ascii_digit(anon byte: u8) -> usize? {
     if byte >= b'0' and byte <= b'9' {
         return (byte - b'0') as! usize
     }
     return None
 }
 
-function usize_from_ascii_digits(anon digits: String) -> usize? {
+fn usize_from_ascii_digits(anon digits: String) -> usize? {
     mut value = 0uz
 
     for index in 0..digits.length() {
@@ -246,7 +246,7 @@ struct Options {
     build_dir: String
     cpp_compiler_path: String?
 
-    function from_args(args: [String]) throws -> Options {
+    fn from_args(args: [String]) throws -> Options {
         let files: [String] = []
         let errors: [String] = []
         mut options = Options(
@@ -363,31 +363,31 @@ enum TestStage {
     CompileCpp
     TestRun
 
-    function equals(this, anon other: TestStage) => match this {
+    fn equals(this, anon other: TestStage) => match this {
         TranspileJakt => other is TranspileJakt
         CompileCpp => other is CompileCpp
         TestRun => other is TestRun
     }
 
-    function to_string(this) => match this {
+    fn to_string(this) => match this {
         TranspileJakt => "Jakt transpilation to C++"
         CompileCpp => "Clang++ compilation of generated C++ source"
         TestRun => "Test binary run"
     }
 
-    function to_order(this) => match this {
+    fn to_order(this) => match this {
         TranspileJakt => 1
         CompileCpp => 2
         TestRun => 3
     }
 
-    function output_filenames(this) => match this {
+    fn output_filenames(this) => match this {
         TranspileJakt => ("", "compile_jakt.err")
         CompileCpp => ("", "compile_cpp.err")
         TestRun => ("runtest.out", "runtest.err")
     }
 
-    function from_exit_code(exit_code: i32) -> TestStage? => match exit_code {
+    fn from_exit_code(exit_code: i32) -> TestStage? => match exit_code {
         0i32 => TestStage::TestRun
         1i32 => TestStage::TestRun
         2i32 => TestStage::CompileCpp
@@ -401,7 +401,7 @@ enum ResultKind {
     CompileError
     RuntimeError
 
-    function to_stage(this) => match this {
+    fn to_stage(this) => match this {
         Okay | RuntimeError => TestStage::TestRun
         CompileError => TestStage::TranspileJakt
     }
@@ -454,7 +454,7 @@ struct TestScheduler {
 
     /// Returns whether the test that the exited process was running has passed
     /// or not
-    function on_test_exited(mut this, pid: i32, exit_code: i32) throws -> TestExitedResult {
+    fn on_test_exited(mut this, pid: i32, exit_code: i32) throws -> TestExitedResult {
         let test = .running_tests[pid]
         .free_directories.push(test.directory_index)
         .running_tests.remove(pid)
@@ -532,7 +532,7 @@ struct TestScheduler {
         return TestExitedResult::Passed
     }
 
-    function test_outputs(directory: String, stage: TestStage) throws -> ([u8], [u8]) {
+    fn test_outputs(directory: String, stage: TestStage) throws -> ([u8], [u8]) {
         let (output_filename, error_filename) = stage.output_filenames()
         mut result_output: [u8] = []
         if not output_filename.is_empty() {
@@ -555,7 +555,7 @@ struct TestScheduler {
         return (result_output, error_output)
     }
 
-    function poll_running_tests(mut this) throws {
+    fn poll_running_tests(mut this) throws {
         mut exited = process::poll_process_exit(pid: -1i32)
         while exited.has_value() {
             match .on_test_exited(pid: exited!.pid(), exit_code: exited!.exit_code()) {
@@ -571,7 +571,7 @@ struct TestScheduler {
         }
     }
 
-    function wait_for_free_directory(mut this) throws -> usize {
+    fn wait_for_free_directory(mut this) throws -> usize {
         // NOTE: `unsafe` creates its own scope (because variables *can* be
         // created inside an unsafe block) but in turn the C++ generated is not
         // inline, it's inside a block. Since we're using `set` to initialize it
@@ -602,7 +602,7 @@ struct TestScheduler {
         return .free_directories.pop()!
     }
 
-    function create(directories: [String], collect_reasons: bool) throws -> TestScheduler {
+    fn create(directories: [String], collect_reasons: bool) throws -> TestScheduler {
         mut running_tests: [i32:Test] = [:]
         running_tests.ensure_capacity(directories.size())
         mut free_directories: [usize] = []
@@ -625,7 +625,7 @@ struct TestScheduler {
                             failed_reasons)
     }
 
-    public function run_tests(
+    public fn run_tests(
         mut tests: [Test]
         directories: [String]
         collect_reasons: bool
@@ -689,7 +689,7 @@ struct TestScheduler {
     }
 }
 
-function main(args: [String]) {
+fn main(args: [String]) {
     let parsed_options = Options::from_args(args)
 
     if parsed_options.help_wanted {
@@ -876,7 +876,7 @@ function main(args: [String]) {
     }
 }
 
-function bytes_to_string(anon bytes: [u8]) throws -> String {
+fn bytes_to_string(anon bytes: [u8]) throws -> String {
     mut builder = StringBuilder::create()
 
     for byte in bytes {

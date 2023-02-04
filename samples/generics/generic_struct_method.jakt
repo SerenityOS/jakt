@@ -2,10 +2,10 @@
 /// - output: "PASS\n"
 
 struct A<T> {
-    public function test(this, anon x: T) => x
+    public fn test(this, anon x: T) => x
 }
 
-function main() {
+fn main() {
     let instance: A<String> = A()
     println("{}", instance.test("PASS"))
 }

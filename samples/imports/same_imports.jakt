@@ -5,7 +5,7 @@
 import foo { bar }
 import foo { Bar }
 
-function main() {
+fn main() {
     bar()
     println("{}", Bar::foo())
 }

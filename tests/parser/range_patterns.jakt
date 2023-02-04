@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "success\nsuccess\nsuccess\n"
 
-function main() {
+fn main() {
   let abc = 123;
 
   match abc {

@@ -7,13 +7,13 @@ enum Foo {
     C(x: i64)
 }
 
-function match_generic<T>(a: T) -> i64 {
+fn match_generic<T>(a: T) -> i64 {
     return match a {
         else(x) => x
     }
 }
 
-function main() {
+fn main() {
     let a = Foo::A(x: 1)
 
     println("{}", match_generic(a))

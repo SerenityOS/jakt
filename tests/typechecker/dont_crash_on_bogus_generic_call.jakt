@@ -5,14 +5,14 @@ struct Foo<T> {
     value: T
 }
 
-function inner<T>(value: T) -> Foo<T> {
+fn inner<T>(value: T) -> Foo<T> {
     return Foo(value)
 }
 
-function outer(value: T) -> Foo<T> {
+fn outer(value: T) -> Foo<T> {
     return inner(value)
 }
 
-function main() {
+fn main() {
     let foo = outer(value: 3)
 }

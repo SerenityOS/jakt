@@ -6,9 +6,9 @@ enum Foo {
     Baz(m: String)
 }
 
-function match_foo(foo: Foo) => foo is Baz(m: n) and n == "Hello"
+fn match_foo(foo: Foo) => foo is Baz(m: n) and n == "Hello"
 
-function main() {
+fn main() {
     let foo = Foo::Baz(m: "Hello")
 
     println("{}", match_foo(foo))

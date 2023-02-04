@@ -5,7 +5,7 @@ struct Foo<T> {
     x: T
 }
 
-function main() {
+fn main() {
     let f = Foo(x: 100);
 
     println("{}", f.x);

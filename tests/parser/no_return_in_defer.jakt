@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "‘return’ is not allowed inside ‘defer’"
 
-function main() {
+fn main() {
     defer {
         return
     }

@@ -4,7 +4,7 @@
 struct ActuallyANumber implements(FromStringLiteral) {
     value: i32
 
-    function from_string_literal(anon str: StringView) -> ActuallyANumber {
+    fn from_string_literal(anon str: StringView) -> ActuallyANumber {
         mut value = 0i32
         for i in 0..str.length() {
             value = value * 10 + (str.byte_at(i) - b'0') as! i32
@@ -15,20 +15,20 @@ struct ActuallyANumber implements(FromStringLiteral) {
 }
 
 struct BadString implements(ThrowingFromStringLiteral) {
-    function from_string_literal(anon str: StringView) throws -> BadString {
+    fn from_string_literal(anon str: StringView) throws -> BadString {
         throw Error::from_string_literal(str)
     }
 }
 
-function value_of(anon x: ActuallyANumber) -> i32 {
+fn value_of(anon x: ActuallyANumber) -> i32 {
     return x.value
 }
 
-function is_a_good_string(anon x: BadString) -> bool {
+fn is_a_good_string(anon x: BadString) -> bool {
     return true
 }
 
-function main() {
+fn main() {
     let x: ActuallyANumber = "1024"
     println("{}", x.value)
 

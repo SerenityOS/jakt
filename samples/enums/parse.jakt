@@ -36,4 +36,4 @@ enum IntegralWithUnderlyingType: i32 {
     Two
 }
 
-function main() {}
+fn main() {}

@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"
 
-function main() {
+fn main() {
     match 123 {
         (42) => 0
     }

@@ -1,8 +1,8 @@
 /// Expect:
 /// - output: "PASS\n"
 
-function main() {
-    let lambda = function[]() throws -> void {
+fn main() {
+    let lambda = fn[]() throws -> void {
         //  Implicit return
     }
 

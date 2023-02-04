@@ -1,8 +1,8 @@
 /// Expect:
 /// - error: "Trying to access generic parameter out of bounds"
 
-function foo() {}
+fn foo() {}
 
-function main() {
+fn main() {
     foo<String>()
 }

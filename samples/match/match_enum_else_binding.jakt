@@ -7,7 +7,7 @@ enum Foo {
     C(x: i64)
 }
 
-function main() {
+fn main() {
     let a = Foo::A(x: 1)
 
     match a {

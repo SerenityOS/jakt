@@ -15,7 +15,7 @@ struct ParallelExecutionPool {
     pid_index: usize
     max_concurrent: usize
 
-    function create(anon max_concurrent: usize) throws -> ParallelExecutionPool {
+    fn create(anon max_concurrent: usize) throws -> ParallelExecutionPool {
         return ParallelExecutionPool(
             pids: [:]
             completed: [:]
@@ -24,7 +24,7 @@ struct ParallelExecutionPool {
         )
     }
 
-    function run(mut this, anon args: [String]) throws -> usize {
+    fn run(mut this, anon args: [String]) throws -> usize {
         if .pids.size() >= .max_concurrent {
             .wait_for_any_job_to_complete()
         }
@@ -36,7 +36,7 @@ struct ParallelExecutionPool {
         return id
     }
 
-    function status(this, id: usize) -> ExitPollResult? {
+    fn status(this, id: usize) -> ExitPollResult? {
         if .completed.contains(id) {
             return .completed[id]
         }
@@ -44,7 +44,7 @@ struct ParallelExecutionPool {
         return None
     }
 
-    function wait_for_any_job_to_complete(mut this) throws -> void {
+    fn wait_for_any_job_to_complete(mut this) throws -> void {
         let (finished_pid, finished_status) = wait_for_some_set_of_processes_that_at_least_includes(processes: &.pids)
 
         mut pids_to_remove: [usize:ExitPollResult] = [:]
@@ -69,13 +69,13 @@ struct ParallelExecutionPool {
         }
     }
 
-    function wait_for_all_jobs_to_complete(mut this) throws -> void {
+    fn wait_for_all_jobs_to_complete(mut this) throws -> void {
         while not .pids.is_empty() {
             .wait_for_any_job_to_complete()
         }
     }
 
-    function kill_all(mut this) throws -> void {
+    fn kill_all(mut this) throws -> void {
         for (_, process) in .pids {
             forcefully_kill_process(&process)
         }
@@ -87,7 +87,7 @@ struct Builder {
     files_to_compile: [String]
     pool: ParallelExecutionPool
 
-    function for_building(files: [String], max_concurrent: usize) throws -> Builder {
+    fn for_building(files: [String], max_concurrent: usize) throws -> Builder {
         return Builder(
             linked_files: []
             files_to_compile: files
@@ -95,10 +95,10 @@ struct Builder {
         )
     }
 
-    function build_all(
+    fn build_all(
         mut this
         binary_dir: Path
-        compiler_invocation: &function(input_filename: String, output_filename: String) throws -> [String]
+        compiler_invocation: &fn(input_filename: String, output_filename: String) throws -> [String]
     ) throws -> void {
         mut ids: {usize} = {}
         for file_name in .files_to_compile {
@@ -137,7 +137,7 @@ struct Builder {
         .files_to_compile = []
     }
 
-    function link_into_archive(mut this, archiver: String, archive_filename: String) throws {
+    fn link_into_archive(mut this, archiver: String, archive_filename: String) throws {
         mut args = [
             archiver
             "cr"
@@ -156,7 +156,7 @@ struct Builder {
         }
     }
 
-    function link_into_executable(
+    fn link_into_executable(
         mut this
         cxx_compiler_path: String
         output_filename: String

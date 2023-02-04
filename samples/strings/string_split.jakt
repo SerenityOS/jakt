@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "bar\n"
 
-function main() {
+fn main() {
     let result = "foo bar".split(c' ')
 
     println("{}", result[1])

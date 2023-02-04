@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "11\n11\n12\n11\n11\n10\n"
 
-function main() {
+fn main() {
     mut x = 10
 
     println("{}", ++x)

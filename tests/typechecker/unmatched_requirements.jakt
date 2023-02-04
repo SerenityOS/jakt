@@ -4,9 +4,9 @@ trait Bar {}
 
 struct Foo {}
 
-function do_something_with_bar<T requires(Bar)>(value: T) { }
+fn do_something_with_bar<T requires(Bar)>(value: T) { }
 
-function main() {
+fn main() {
     do_something_with_bar<Foo>(value: Foo())
 }
 

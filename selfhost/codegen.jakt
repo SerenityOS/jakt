@@ -23,14 +23,14 @@ enum AllowedControlExits {
     /// `continue`/`break` allowed: `return` is also allowed in this context
     AtLoop
 
-    function allow_return(this) => match this {
+    fn allow_return(this) => match this {
         Nothing | JustReturn => AllowedControlExits::JustReturn
         AtLoop => AllowedControlExits::AtLoop
     }
 }
 
-function are_loop_exits_allowed(anon allowed_control_exits: AllowedControlExits) -> bool => allowed_control_exits is AtLoop
-function is_return_allowed(anon allowed_control_exits: AllowedControlExits) -> bool => not allowed_control_exits is Nothing
+fn are_loop_exits_allowed(anon allowed_control_exits: AllowedControlExits) -> bool => allowed_control_exits is AtLoop
+fn is_return_allowed(anon allowed_control_exits: AllowedControlExits) -> bool => not allowed_control_exits is Nothing
 
 struct ControlFlowState {
     allowed_exits: AllowedControlExits
@@ -40,7 +40,7 @@ struct ControlFlowState {
     passes_through_try: bool
     match_nest_level: usize
 
-    function no_control_flow() -> ControlFlowState {
+    fn no_control_flow() -> ControlFlowState {
         return ControlFlowState(
             allowed_exits: AllowedControlExits::Nothing
             passes_through_match: false
@@ -48,7 +48,7 @@ struct ControlFlowState {
             match_nest_level: 0
         )
     }
-    function enter_function(this) -> ControlFlowState {
+    fn enter_function(this) -> ControlFlowState {
         return ControlFlowState(
             allowed_exits: AllowedControlExits::JustReturn
             passes_through_match: false
@@ -56,7 +56,7 @@ struct ControlFlowState {
             match_nest_level: .match_nest_level
         )
     }
-    function enter_loop(this) -> ControlFlowState {
+    fn enter_loop(this) -> ControlFlowState {
         return ControlFlowState(
             allowed_exits: AllowedControlExits::AtLoop
             passes_through_match: false
@@ -64,7 +64,7 @@ struct ControlFlowState {
             match_nest_level: 0
         )
     }
-    function enter_match(this) -> ControlFlowState {
+    fn enter_match(this) -> ControlFlowState {
         mut level = .match_nest_level
         if .passes_through_match {
             level = .match_nest_level + 1
@@ -76,8 +76,8 @@ struct ControlFlowState {
             match_nest_level: level
         )
     }
-    function is_match_nested(this) => .match_nest_level != 0
-    function choose_control_flow_macro(this) -> String {
+    fn is_match_nested(this) => .match_nest_level != 0
+    fn choose_control_flow_macro(this) -> String {
         if are_loop_exits_allowed(.allowed_exits) {
             if .is_match_nested() {
                 return "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH"
@@ -99,7 +99,7 @@ struct CodegenDebugInfo {
     line_spans: [usize: [LineSpan]]
     statement_span_comments: bool
 
-    function span_to_source_location(mut this, anon span: Span) throws -> String {
+    fn span_to_source_location(mut this, anon span: Span) throws -> String {
         if .line_spans.is_empty() {
             .gather_line_spans()
         }
@@ -122,7 +122,7 @@ struct CodegenDebugInfo {
         panic("Reached end of file and could not find index")
     }
 
-    function gather_line_spans(mut this) throws {
+    fn gather_line_spans(mut this) throws {
         for file in .compiler.file_ids {
 
             if file.0 == "__prelude__" {
@@ -169,7 +169,7 @@ struct CodeGenerator {
     fresh_label_counter: usize
 
     // noreturn functions may not throw, so let them crash instead.
-    function current_error_handler(this) throws -> String {
+    fn current_error_handler(this) throws -> String {
         if .inside_defer or (.current_function.has_value() and .current_function!.return_type_id.equals(never_type_id()) and not .control_flow_state.passes_through_try) {
             return "MUST"
         }
@@ -177,11 +177,11 @@ struct CodeGenerator {
         return "TRY"
     }
 
-    function fresh_var(mut this) throws => format("__jakt_var_{}", .fresh_var_counter++)
+    fn fresh_var(mut this) throws => format("__jakt_var_{}", .fresh_var_counter++)
 
-    function fresh_label(mut this) throws => format("__jakt_label_{}", .fresh_label_counter++)
+    fn fresh_label(mut this) throws => format("__jakt_label_{}", .fresh_label_counter++)
 
-    function topologically_sort_modules(this) throws -> [ModuleId] {
+    fn topologically_sort_modules(this) throws -> [ModuleId] {
         mut in_degrees: [usize:i64] = [:]
 
         for module in .program.modules {
@@ -222,7 +222,7 @@ struct CodeGenerator {
         panic("Cyclic module imports")
     }
 
-    function generate(compiler: Compiler, anon program: CheckedProgram, debug_info: bool) throws -> [String:(String, String)] {
+    fn generate(compiler: Compiler, anon program: CheckedProgram, debug_info: bool) throws -> [String:(String, String)] {
         mut generator = CodeGenerator(
             compiler
             program
@@ -386,7 +386,7 @@ struct CodeGenerator {
         return result
     }
 
-    function postorder_traversal(this, encoded_type_id: String, mut visited: {String}, encoded_dependency_graph: [String: [String]], mut output: [TypeId]) throws {
+    fn postorder_traversal(this, encoded_type_id: String, mut visited: {String}, encoded_dependency_graph: [String: [String]], mut output: [TypeId]) throws {
         let type_id = TypeId::from_string(encoded_type_id)
         if visited.contains(type_id.to_string()) {
             return
@@ -400,7 +400,7 @@ struct CodeGenerator {
         output.push(type_id)
     }
 
-    function produce_codegen_dependency_graph(this, scope: Scope) throws -> [String : [String]] {
+    fn produce_codegen_dependency_graph(this, scope: Scope) throws -> [String : [String]] {
         mut dependency_graph: [String : [String]] = [:]
 
         for type_ in scope.types {
@@ -410,7 +410,7 @@ struct CodeGenerator {
         return dependency_graph
     }
 
-    function extract_dependencies_from(this, type_id: TypeId, dependency_graph: [String : [String]], top_level: bool) throws -> [String] {
+    fn extract_dependencies_from(this, type_id: TypeId, dependency_graph: [String : [String]], top_level: bool) throws -> [String] {
         mut dependencies: [String] = []
 
         if dependency_graph.contains(type_id.to_string()) {
@@ -436,7 +436,7 @@ struct CodeGenerator {
         return dependencies
     }
 
-    function extract_dependencies_from_enum(this, enum_id: EnumId, dependency_graph: [String : [String]], top_level: bool) throws -> [String] {
+    fn extract_dependencies_from_enum(this, enum_id: EnumId, dependency_graph: [String : [String]], top_level: bool) throws -> [String] {
         mut dependencies: [String] = []
 
         let enum_ = .program.get_enum(enum_id)
@@ -481,7 +481,7 @@ struct CodeGenerator {
         return dependencies
     }
 
-    function extract_dependencies_from_struct(this, struct_id: StructId, dependency_graph: [String : [String]], top_level: bool, args: [TypeId]) throws -> [String] {
+    fn extract_dependencies_from_struct(this, struct_id: StructId, dependency_graph: [String : [String]], top_level: bool, args: [TypeId]) throws -> [String] {
         mut dependencies: [String] = []
         let struct_ = .program.get_struct(struct_id)
 
@@ -529,7 +529,7 @@ struct CodeGenerator {
         return dependencies
     }
 
-    function codegen_namespace(mut this, scope: Scope, current_module: Module, as_forward: bool) throws -> String {
+    fn codegen_namespace(mut this, scope: Scope, current_module: Module, as_forward: bool) throws -> String {
         if scope.alias_path.has_value() or scope.import_path_if_extern.has_value() {
             return ""
         }
@@ -764,7 +764,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_namespace_predecl(mut this, scope: Scope, current_module: Module) throws -> String {
+    fn codegen_namespace_predecl(mut this, scope: Scope, current_module: Module) throws -> String {
         if scope.alias_path.has_value() or scope.import_path_if_extern.has_value() {
             return ""
         }
@@ -823,7 +823,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_function_generic_parameters(mut this, function_: CheckedFunction) throws -> String {
+    fn codegen_function_generic_parameters(mut this, function_: CheckedFunction) throws -> String {
         mut output = ""
 
         if not function_.generics.params.is_empty() {
@@ -844,7 +844,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_function_predecl(mut this, function_: CheckedFunction, as_method: bool = false) throws -> String {
+    fn codegen_function_predecl(mut this, function_: CheckedFunction, as_method: bool = false) throws -> String {
         mut output = ""
 
         if not function_.generics.params.is_empty() and function_.linkage is External {
@@ -929,7 +929,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_struct_predecl(mut this, struct_: CheckedStruct) throws -> String {
+    fn codegen_struct_predecl(mut this, struct_: CheckedStruct) throws -> String {
         if struct_.definition_linkage is External {
             return ""
         }
@@ -962,7 +962,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_struct(mut this, struct_: CheckedStruct) throws -> String {
+    fn codegen_struct(mut this, struct_: CheckedStruct) throws -> String {
         mut output = ""
 
         if struct_.definition_linkage is External {
@@ -1085,7 +1085,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_enum_predecl(mut this, enum_: CheckedEnum) throws -> String {
+    fn codegen_enum_predecl(mut this, enum_: CheckedEnum) throws -> String {
         mut output = ""
 
         if not enum_.underlying_type_id.equals(void_type_id()) {
@@ -1127,7 +1127,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_enum(mut this, enum_: CheckedEnum) throws -> String {
+    fn codegen_enum(mut this, enum_: CheckedEnum) throws -> String {
         mut output = ""
         if not enum_.underlying_type_id.equals(void_type_id()) {
             if .program.is_integer(enum_.underlying_type_id) {
@@ -1319,7 +1319,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_debug_description_getter(mut this, struct_: CheckedStruct, is_inline: bool = false) throws -> String {
+    fn codegen_debug_description_getter(mut this, struct_: CheckedStruct, is_inline: bool = false) throws -> String {
         mut output = ""
 
         if not is_inline and not struct_.generic_parameters.is_empty() {
@@ -1382,7 +1382,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_enum_debug_description_getter(mut this, enum_: CheckedEnum, is_inline: bool = false) throws -> String {
+    fn codegen_enum_debug_description_getter(mut this, enum_: CheckedEnum, is_inline: bool = false) throws -> String {
         mut output = ""
 
         if not is_inline and not enum_.generic_parameters.is_empty() {
@@ -1455,7 +1455,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_ak_formatter(mut this, name: String, generic_parameter_names: [String]) throws -> String {
+    fn codegen_ak_formatter(mut this, name: String, generic_parameter_names: [String]) throws -> String {
         mut output = ""
 
         let template_args = join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", ")
@@ -1487,7 +1487,7 @@ struct CodeGenerator {
         return output + "namespace Jakt {\n"
     }
 
-    function codegen_expression_and_deref_if_generic_and_needed(
+    fn codegen_expression_and_deref_if_generic_and_needed(
         mut this
         anon expression: CheckedExpression
     ) throws -> String => match .program.get_type(expression.type()) {
@@ -1498,7 +1498,7 @@ struct CodeGenerator {
         else => .codegen_expression(expression)
     }
 
-    function codegen_expression(mut this, anon expression: CheckedExpression) throws -> String => match expression {
+    fn codegen_expression(mut this, anon expression: CheckedExpression) throws -> String => match expression {
         Range(from, to, type_id) => {
             mut output = ""
             let type = .program.get_type(type_id)
@@ -2043,7 +2043,7 @@ struct CodeGenerator {
         }
     }
 
-    function codegen_match(mut this, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
+    fn codegen_match(mut this, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
         let last_control_flow = .control_flow_state
         .control_flow_state = .control_flow_state.enter_match()
         mut output = ""
@@ -2069,7 +2069,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_generic_match(mut this, expr: CheckedExpression, cases: [CheckedMatchCase], return_type_id: TypeId, all_variants_constant: bool) throws -> String {
+    fn codegen_generic_match(mut this, expr: CheckedExpression, cases: [CheckedMatchCase], return_type_id: TypeId, all_variants_constant: bool) throws -> String {
         mut output = ""
 
         mut is_generic_enum: bool = false
@@ -2213,7 +2213,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_enum_match(mut this, enum_: CheckedEnum, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
+    fn codegen_enum_match(mut this, enum_: CheckedEnum, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
         mut output = ""
         output += .control_flow_state.choose_control_flow_macro()
 
@@ -2340,7 +2340,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_match_body(mut this, body: CheckedMatchBody, return_type_id: TypeId) throws -> String {
+    fn codegen_match_body(mut this, body: CheckedMatchBody, return_type_id: TypeId) throws -> String {
         mut output = ""
 
         match body {
@@ -2366,7 +2366,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_function_return_type(mut this, anon function_: CheckedFunction) throws -> String {
+    fn codegen_function_return_type(mut this, anon function_: CheckedFunction) throws -> String {
         if function_.is_static() and function_.name_for_codegen() == "main" {
             return "ErrorOr<int>"
         }
@@ -2377,7 +2377,7 @@ struct CodeGenerator {
         return type_name
     }
 
-    function codegen_binary_expression(mut this, expression: CheckedExpression, type_id: TypeId, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator) throws -> String {
+    fn codegen_binary_expression(mut this, expression: CheckedExpression, type_id: TypeId, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator) throws -> String {
         if op is NoneCoalescing {
             let rhs_type_id = rhs.type()
             let rhs_type = .program.get_type(rhs_type_id)
@@ -2517,7 +2517,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_unchecked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_unchecked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
         mut output = "static_cast<"
         output += .codegen_type(type_id)
         output += ">("
@@ -2537,7 +2537,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_checked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_checked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
         mut output = ""
         output += "JaktInternal::"
 
@@ -2563,7 +2563,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_unchecked_binary_op_assignment(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_unchecked_binary_op_assignment(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
         mut output = ""
 
         output += "{"
@@ -2589,7 +2589,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_checked_binary_op_assignment(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_checked_binary_op_assignment(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
         mut output = ""
 
         output += "{"
@@ -2616,7 +2616,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_method_call(mut this, expr: CheckedExpression, call: CheckedCall, is_optional: bool) throws -> String {
+    fn codegen_method_call(mut this, expr: CheckedExpression, call: CheckedCall, is_optional: bool) throws -> String {
         mut output = ""
         if call.callee_throws {
             output += .current_error_handler()
@@ -2711,7 +2711,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_call(mut this, call: CheckedCall) throws -> String {
+    fn codegen_call(mut this, call: CheckedCall) throws -> String {
         mut output = ""
 
         if call.callee_throws {
@@ -2864,7 +2864,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_namespace_path(this, call: CheckedCall) throws -> String {
+    fn codegen_namespace_path(this, call: CheckedCall) throws -> String {
         if call.function_id.has_value() {
             let scope = .program.get_function(call.function_id!).owner_scope
             if scope.has_value() {
@@ -2906,7 +2906,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_block(mut this, block: CheckedBlock) throws -> String {
+    fn codegen_block(mut this, block: CheckedBlock) throws -> String {
         mut output = ""
 
         if block.yielded_type.has_value() {
@@ -2947,7 +2947,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_statement(mut this, statement: CheckedStatement) throws -> String {
+    fn codegen_statement(mut this, statement: CheckedStatement) throws -> String {
         mut add_newline = true
         mut output = ""
         if .debug_info.statement_span_comments and statement.span().has_value() and add_newline {
@@ -3113,11 +3113,11 @@ struct CodeGenerator {
     }
 
 
-    function codegen_type(this, anon type_id: TypeId) throws -> String {
+    fn codegen_type(this, anon type_id: TypeId) throws -> String {
         return .codegen_type_possibly_as_namespace(type_id, as_namespace: false)
     }
 
-    function codegen_type_possibly_as_namespace(this, type_id: TypeId, as_namespace: bool) throws -> String => match .program.get_type(type_id) {
+    fn codegen_type_possibly_as_namespace(this, type_id: TypeId, as_namespace: bool) throws -> String => match .program.get_type(type_id) {
         Void => "void"
         Bool => "bool"
         U8 => "u8"
@@ -3174,7 +3174,7 @@ struct CodeGenerator {
         }
     }
 
-    function codegen_generic_type_instance(this, id: StructId, args: [TypeId], as_namespace: bool) throws -> String {
+    fn codegen_generic_type_instance(this, id: StructId, args: [TypeId], as_namespace: bool) throws -> String {
         // FIXME: Handle WeakPtr
         mut output = ""
         let type_module = .program.get_module(id.module)
@@ -3226,7 +3226,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_generic_enum_instance(this, id: EnumId, args: [TypeId], as_namespace: bool) throws -> String {
+    fn codegen_generic_enum_instance(this, id: EnumId, args: [TypeId], as_namespace: bool) throws -> String {
         mut output = ""
         mut close_tag = false
         let enum_ = .program.get_enum(id)
@@ -3269,7 +3269,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_namespace_qualifier(
+    fn codegen_namespace_qualifier(
         this
         scope_id: ScopeId
         skip_current: bool = true
@@ -3302,7 +3302,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_function(mut this, anon function_: CheckedFunction, as_method: bool = false) throws -> String {
+    fn codegen_function(mut this, anon function_: CheckedFunction, as_method: bool = false) throws -> String {
         if function_.is_comptime {
             return ""
         }
@@ -3310,7 +3310,7 @@ struct CodeGenerator {
         return .codegen_function_in_namespace(function_, containing_struct: None, as_method)
     }
 
-    function codegen_struct_type(this, id: StructId, as_namespace: bool) throws -> String {
+    fn codegen_struct_type(this, id: StructId, as_namespace: bool) throws -> String {
         mut output = ""
         let type_module = .program.get_module(id.module)
         let checked_struct = .program.get_struct(id)
@@ -3328,7 +3328,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_enum_type(this, id: EnumId, as_namespace: bool) throws -> String {
+    fn codegen_enum_type(this, id: EnumId, as_namespace: bool) throws -> String {
         mut output = ""
         let type_module = .program.get_module(id.module)
         let checked_enum = .program.get_enum(id)
@@ -3353,14 +3353,14 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_destructor_predecl(mut this, anon struct_: &CheckedStruct) throws -> String {
+    fn codegen_destructor_predecl(mut this, anon struct_: &CheckedStruct) throws -> String {
         mut output = ""
         output += "public:\n"
         output += "    ~" + struct_.name + "();\n"
         return output
     }
 
-    function codegen_destructor(mut this, anon struct_: &CheckedStruct, anon function_: &CheckedFunction, is_inline: bool) throws -> String {
+    fn codegen_destructor(mut this, anon struct_: &CheckedStruct, anon function_: &CheckedFunction, is_inline: bool) throws -> String {
         mut output = ""
         let qualified_name = .codegen_type_possibly_as_namespace(type_id: struct_.type_id, as_namespace: true)
 
@@ -3390,7 +3390,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_constructor_predecl(mut this, anon function_: CheckedFunction) throws -> String {
+    fn codegen_constructor_predecl(mut this, anon function_: CheckedFunction) throws -> String {
         let type_id = function_.return_type_id
         let type_ = .program.get_type(type_id)
 
@@ -3481,7 +3481,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_constructor(mut this, anon function_: CheckedFunction, is_inline: bool = false) throws -> String {
+    fn codegen_constructor(mut this, anon function_: CheckedFunction, is_inline: bool = false) throws -> String {
         let type_id = function_.return_type_id
         let type_ = .program.get_type(type_id)
 
@@ -3667,7 +3667,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_function_in_namespace(mut this, function_: CheckedFunction, containing_struct: TypeId?, as_method: bool = false) throws -> String {
+    fn codegen_function_in_namespace(mut this, function_: CheckedFunction, containing_struct: TypeId?, as_method: bool = false) throws -> String {
         // Extern generics need to be in the header anyways, so we can't codegen for them.
         if not function_.generics.params.is_empty() {
             if function_.linkage is External {
@@ -3783,7 +3783,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_lambda_block(mut this, can_throw: bool, block: CheckedBlock, return_type_id: TypeId) throws -> String {
+    fn codegen_lambda_block(mut this, can_throw: bool, block: CheckedBlock, return_type_id: TypeId) throws -> String {
         mut output = "{\n"
 
         output += .codegen_block(block)

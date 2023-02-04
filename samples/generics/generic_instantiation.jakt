@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "100\n"
 
-function main() {
+fn main() {
     let item = Optional(100);
 
     println("{}", item!)

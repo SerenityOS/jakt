@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "Five plus ten = 15\n"
 
-function main() {
+fn main() {
     let s = String::number(5 + 10)
     println("Five plus ten = {}", s)
 }

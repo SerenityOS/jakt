@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "‘||’ is not allowed, use ‘or’ instead"
-function main() {
+fn main() {
     let x = "hello"
     if x.length() == 5 || x.length() < 3 {
         println("hello, {}", x)

@@ -1,8 +1,8 @@
 /// Expect:
 /// - error: "Expected `else` keyword"
 
-function a() {
+fn a() {
     guard true
 }
 
-function main() {}
+fn main() {}

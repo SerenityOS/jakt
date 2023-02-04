@@ -1,8 +1,8 @@
 /// Expect:
 /// - output: "one\n"
 
-function get_first(anon v: [String]) => v[0]
+fn get_first(anon v: [String]) => v[0]
 
-function main() {
+fn main() {
     println("{}", get_first(["one", "two"]))
 }

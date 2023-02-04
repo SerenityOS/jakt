@@ -4,8 +4,8 @@
 struct Foo {
     bar: i64
 
-    function baz(mut this) {
-        let lambda = function[this]() {
+    fn baz(mut this) {
+        let lambda = fn[this]() {
             println("{}", this.bar)
             this.bar++
         }
@@ -14,7 +14,7 @@ struct Foo {
     }
 }
 
-function main() {
+fn main() {
     mut foo = Foo(bar: 0)
 
     foo.baz()

@@ -5,15 +5,15 @@ struct Foo {
     x: usize
 }
 
-function throw_for_fun() throws -> Foo {
+fn throw_for_fun() throws -> Foo {
     throw Error::from_errno(123)
 }
 
-function pretend_to_throw_for_fun() throws -> Foo {
+fn pretend_to_throw_for_fun() throws -> Foo {
     return Foo(x: 123)
 }
 
-function main() {
+fn main() {
     println("{}", (try pretend_to_throw_for_fun())?.x)
     let foo = try throw_for_fun() catch {
         println("PASS")

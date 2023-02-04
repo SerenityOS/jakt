@@ -4,13 +4,13 @@
 import extern "vector" {
     namespace std {
         extern struct vector<T> {
-            function vector<T>() -> vector<T>
-            function empty(this) -> bool
+            fn vector<T>() -> vector<T>
+            fn empty(this) -> bool
         }
     }
 }
 
-function main() {
+fn main() {
     let v = std::vector<i32>()
     if v.empty() {
         println("PASS")

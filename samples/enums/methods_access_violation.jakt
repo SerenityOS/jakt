@@ -4,11 +4,11 @@
 enum Foo {
     Bar
 
-    private function test(this) {
+    private fn test(this) {
     }
 }
 
-function main() {
+fn main() {
     let x = Foo::Bar()
     x.test() // Should not compile, access violation.
 }

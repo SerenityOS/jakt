@@ -8,7 +8,7 @@ enum Foo {
     D(y: i64)
 }
 
-function main() {
+fn main() {
     let a = Foo::A(x: 1)
 
     let matched_a = match a {

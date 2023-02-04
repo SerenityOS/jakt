@@ -5,7 +5,7 @@ class A {
     public elements: [f64]
 }
 
-function main() {
+fn main() {
     mut a2 = A(elements: [0f64, 1f64, 2f64])
     println("{}", a2.elements[1])
 }

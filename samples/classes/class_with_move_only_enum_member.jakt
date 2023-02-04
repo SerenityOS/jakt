@@ -9,6 +9,6 @@ class C {
     public e: E
 }
 
-function main() {
+fn main() {
     let c = C(e: E::Okay())
 }

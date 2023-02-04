@@ -2,13 +2,13 @@
 /// - output: "PASS\n"
 
 class A {
-    public function f(this) -> A {
+    public fn f(this) -> A {
         println("PASS")
         return this
     }
 }
 
-function main() {
+fn main() {
     let a = A()
     let another_a = a.f()
 }

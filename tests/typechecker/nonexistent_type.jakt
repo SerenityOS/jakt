@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Unknown type"
 
-function main() {
+fn main() {
     let foo: ThisTypeDoesNotExist = 42
     println("{}", foo)
 }

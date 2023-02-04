@@ -1,6 +1,6 @@
 /// Expect:
 /// - output: "-14\n"
 
-function main() {
+fn main() {
     println("{}", -(4 + 10))
 }

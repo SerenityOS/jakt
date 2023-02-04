@@ -6,5 +6,5 @@ struct S {
     }
 }
 
-function main() {
+fn main() {
 }

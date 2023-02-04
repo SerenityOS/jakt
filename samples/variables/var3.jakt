@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "101\n"
 
-function main() {
+fn main() {
     mut x: i64 = 100
     x += 1
     println("{}", x)

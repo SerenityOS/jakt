@@ -3,4 +3,4 @@
 
 import baz
 
-function main() {}
+fn main() {}

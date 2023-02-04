@@ -1,10 +1,10 @@
 /// Expect:
 /// - output: "OK\n"
 
-function test(arr: [f64]) {
+fn test(arr: [f64]) {
     println("OK")
 }
 
-function main() {
+fn main() {
     test(arr: [])
 }

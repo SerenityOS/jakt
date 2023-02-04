@@ -1,11 +1,11 @@
 /// Expect:
 /// - output: "10\n9\n8\n7\n6\n5\n4\n3\n2\n1\n0\n"
 
-function main() {
+fn main() {
     recurse(count: 10)
 }
 
-function recurse(count: i64) {
+fn recurse(count: i64) {
     println("{}", count)
     if count > 0 {
         recurse(count: count - 1)

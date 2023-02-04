@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "19\nfalse\ntrue\n"
 
-function main() {
+fn main() {
     let x = "Well, hello friends"
 
     println("{}", x.length())

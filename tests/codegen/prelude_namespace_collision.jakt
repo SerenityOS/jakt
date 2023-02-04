@@ -4,13 +4,13 @@
 enum Foo {
     Range
 
-    function test()  {
+    fn test()  {
         let r = 0..4
 
         println("{}", r)
     }
 }
 
-function main() {
+fn main() {
     Foo::test()
 }

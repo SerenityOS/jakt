@@ -1,20 +1,20 @@
 /// Expect:
 /// - output: ""
 
-function foo(a: bool, b: bool) {
+fn foo(a: bool, b: bool) {
 }
 
-function bar(anon a: bool, b: bool) {
+fn bar(anon a: bool, b: bool) {
 }
 
-function baz(anon a: bool, anon b: bool) {
+fn baz(anon a: bool, anon b: bool) {
 }
 
-function qux(a: bool) {
+fn qux(a: bool) {
 
 }
 
-function main() {
+fn main() {
     foo(a: true, b: true)
     bar(true, b: true)
     baz(true, true)

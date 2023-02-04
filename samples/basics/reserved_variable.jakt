@@ -1,13 +1,13 @@
 /// Expect:
 /// - error: "reserved identifier name"
 
-function main() {
+fn main() {
     let __jakt_var_1 = "hello"
     try foo() catch {
         print(__jakt_var_1)
     }
 }
 
-function foo() throws -> void {
+fn foo() throws -> void {
     throw Error::from_errno(9000)
 }

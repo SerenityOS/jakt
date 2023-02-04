@@ -1,6 +1,6 @@
 /// Expect:
-/// - error: "Main function must take a single array of strings as its parameter\n"
+/// - error: "Main function  must take a single array of strings as its parameter\n"
 
-function main(x: [i64]) {
+fn main(x: [i64]) {
 
 }

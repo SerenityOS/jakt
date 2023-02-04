@@ -3,9 +3,9 @@
 
 
 trait Bar {
-    function bar(this)
+    fn bar(this)
 }
 
 class Foo implements(Bar) {}
 
-function main() {}
+fn main() {}

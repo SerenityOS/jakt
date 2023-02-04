@@ -6,7 +6,7 @@ enum Foo {
     Baz
 }
 
-function main() {
+fn main() {
     let foo = Foo::Bar;
     println("{}", foo is Buzzzzz);
 }

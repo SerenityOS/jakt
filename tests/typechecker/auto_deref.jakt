@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "arithmetic 586, boolean true, unary -70, match 1, access 139, index 0, brackets 0\n"
 
-function deref_arithmetic_binary(anon foo: &i32) -> i32 {
+fn deref_arithmetic_binary(anon foo: &i32) -> i32 {
     return (
         (foo + 1) +
         (foo * 1) +
@@ -16,7 +16,7 @@ function deref_arithmetic_binary(anon foo: &i32) -> i32 {
     )
 }
 
-function deref_boolean_binary(anon foo: &i32) -> bool {
+fn deref_boolean_binary(anon foo: &i32) -> bool {
     return (
         (foo == 1) or
         (foo != 1) or
@@ -27,7 +27,7 @@ function deref_boolean_binary(anon foo: &i32) -> bool {
     )
 }
 
-function deref_unary(anon foo: &mut i32) -> i32 {
+fn deref_unary(anon foo: &mut i32) -> i32 {
     ++foo
     --foo
     foo++
@@ -39,7 +39,7 @@ function deref_unary(anon foo: &mut i32) -> i32 {
     )
 }
 
-function deref_match(anon foo: &i32) -> i32 {
+fn deref_match(anon foo: &i32) -> i32 {
     return match foo {
         32i32 => 0
         else => 1
@@ -47,23 +47,23 @@ function deref_match(anon foo: &i32) -> i32 {
 }
 
 struct Foo {
-    function const_method(this) => 69
-    function mutable_method(mut this) => 69 + 1
+    fn const_method(this) => 69
+    fn mutable_method(mut this) => 69 + 1
 }
 
-function deref_access(anon foo: &mut Foo) -> i32 {
+fn deref_access(anon foo: &mut Foo) -> i32 {
     return foo.const_method() + foo.mutable_method()
 }
 
-function deref_index(anon foo: &(i32, i32)) -> i32 {
+fn deref_index(anon foo: &(i32, i32)) -> i32 {
     return foo.0
 }
 
-function deref_brackets(anon foo: &mut [i32]) -> i32 {
+fn deref_brackets(anon foo: &mut [i32]) -> i32 {
     return foo[0]
 }
 
-function main() {
+fn main() {
     mut foo = 69i32
     let arithmetic = deref_arithmetic_binary(&foo)
     let boolean = deref_boolean_binary(&foo)

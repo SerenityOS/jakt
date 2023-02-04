@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Dereference of a non-pointer type ‘i64’"
 
-function main() {
+fn main() {
     let x = 4
 
     println("{}", *x)

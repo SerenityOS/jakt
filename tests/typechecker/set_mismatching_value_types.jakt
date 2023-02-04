@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Type 'String' does not match type 'i64' of previous values in set\n"
 
-function main() {
+fn main() {
     let x = {1, "2", 3}
 }

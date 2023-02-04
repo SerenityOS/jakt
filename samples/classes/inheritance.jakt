@@ -2,7 +2,7 @@
 /// - output: "I am the parent\n"
 
 class Parent {
-    public function greet(this) {
+    public fn greet(this) {
         println("I am the parent")
     }
 }
@@ -10,7 +10,7 @@ class Parent {
 class Child: Parent {
 }
 
-function main() {
+fn main() {
     let child = Child()
     child.greet()
 }

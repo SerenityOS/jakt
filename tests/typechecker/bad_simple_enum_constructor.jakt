@@ -4,11 +4,11 @@
 enum E {
     A
 
-    function B() {
+    fn B() {
     }
 }
 
-function main() {
+fn main() {
     let e1 = E::A
     let e2 = E::B
 }

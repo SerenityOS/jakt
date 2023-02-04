@@ -1,10 +1,10 @@
 /// Expect:
 /// - output: "Well, hello friends.\n"
 
-function greet() {
+fn greet() {
     println("Well, hello friends.")
 }
 
-function main() {
+fn main() {
     greet()
 }

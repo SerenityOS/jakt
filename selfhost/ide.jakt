@@ -55,7 +55,7 @@ struct JaktSymbol {
     selection_range: Span,
     children: [JaktSymbol]
 
-    function to_json(this) throws -> String {
+    fn to_json(this) throws -> String {
         mut json_builder = StringBuilder::create()
         json_builder.append_string("{")
         json_builder.append_string(format("\"name\": \"{}\",", this.name))
@@ -76,7 +76,7 @@ struct JaktSymbol {
     }
 }
 
-function find_symbols_in_namespace(anon namespace_: ParsedNamespace) throws -> [JaktSymbol] {
+fn find_symbols_in_namespace(anon namespace_: ParsedNamespace) throws -> [JaktSymbol] {
     mut symbols: [JaktSymbol] = []
     for record in namespace_.records {
         symbols.push(record_to_symbol(record))
@@ -109,7 +109,7 @@ function find_symbols_in_namespace(anon namespace_: ParsedNamespace) throws -> [
         )]
 }
 
-function record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
+fn record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
     mut children: [JaktSymbol] = []
     mut record_span = record.name_span
 
@@ -164,7 +164,7 @@ function record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
     )
 }
 
-function function_to_symbol(anon function_: ParsedFunction, kind: String) throws -> JaktSymbol {
+fn function_to_symbol(anon function_: ParsedFunction, kind: String) throws -> JaktSymbol {
     mut function_span = function_.name_span
 
     for stmt in function_.block.stmts {
@@ -181,7 +181,7 @@ function function_to_symbol(anon function_: ParsedFunction, kind: String) throws
     )
 }
 
-function find_definition_in_program(program: CheckedProgram, span: Span) throws -> Span {
+fn find_definition_in_program(program: CheckedProgram, span: Span) throws -> Span {
     let result = find_span_in_program(program, span)
     if result.has_value() {
         return match result! {
@@ -196,7 +196,7 @@ function find_definition_in_program(program: CheckedProgram, span: Span) throws 
     }
 }
 
-function find_type_definition_for_type_id(program: CheckedProgram, type_id: TypeId, span: Span) throws -> Span {
+fn find_type_definition_for_type_id(program: CheckedProgram, type_id: TypeId, span: Span) throws -> Span {
     let array_struct_id = program.find_struct_in_prelude("Array")
     let dictionary_struct_id = program.find_struct_in_prelude("Dictionary")
     let optional_struct_id = program.find_struct_in_prelude("Optional")
@@ -250,7 +250,7 @@ function find_type_definition_for_type_id(program: CheckedProgram, type_id: Type
     }
 }
 
-function find_type_definition_in_program(program: CheckedProgram, span: Span) throws -> Span {
+fn find_type_definition_in_program(program: CheckedProgram, span: Span) throws -> Span {
     let result = find_span_in_program(program, span)
 
     if result.has_value() {
@@ -272,7 +272,7 @@ function find_type_definition_in_program(program: CheckedProgram, span: Span) th
     }
 }
 
-function find_typename_in_program(program: CheckedProgram, span: Span) throws -> String? {
+fn find_typename_in_program(program: CheckedProgram, span: Span) throws -> String? {
     let result = find_span_in_program(program, span)
 
     if result.has_value() {
@@ -312,7 +312,7 @@ function find_typename_in_program(program: CheckedProgram, span: Span) throws ->
     }
 }
 
-function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throws -> [String] {
+fn completions_for_type_id(program: CheckedProgram, type_id: TypeId) throws -> [String] {
     mut output: [String] = []
     let ty = program.get_type(type_id)
 
@@ -350,7 +350,7 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
     return output
 }
 
-function find_function_completions_in_scope(anon scope: Scope, program: CheckedProgram) throws -> [String] {
+fn find_function_completions_in_scope(anon scope: Scope, program: CheckedProgram) throws -> [String] {
     mut output: [String] = []
     for function_name in scope.functions.keys().iterator() {
         let overload_set = scope.functions.get(function_name)!
@@ -385,7 +385,7 @@ function find_function_completions_in_scope(anon scope: Scope, program: CheckedP
     return output
 }
 
-function find_dot_completions(program: CheckedProgram, span: Span) throws -> [String] {
+fn find_dot_completions(program: CheckedProgram, span: Span) throws -> [String] {
     let result = find_span_in_program(program, span)
 
     if result.has_value() {
@@ -404,7 +404,7 @@ function find_dot_completions(program: CheckedProgram, span: Span) throws -> [St
     }
 }
 
-function find_span_in_program(program: CheckedProgram, span: Span) throws -> Usage? {
+fn find_span_in_program(program: CheckedProgram, span: Span) throws -> Usage? {
     mut iterator = program.modules.iterator()
     let dummy = iterator.next()
     for module in iterator {
@@ -415,7 +415,7 @@ function find_span_in_program(program: CheckedProgram, span: Span) throws -> Usa
     return None
 }
 
-function find_span_in_scope(program: CheckedProgram, scope: Scope, span: Span) throws -> Usage? {
+fn find_span_in_scope(program: CheckedProgram, scope: Scope, span: Span) throws -> Usage? {
     for scope_var in scope.vars {
         let var = program.get_variable(scope_var.1)
         if var.definition_span.contains(span) {
@@ -461,7 +461,7 @@ function find_span_in_scope(program: CheckedProgram, scope: Scope, span: Span) t
     return None
 }
 
-function find_span_in_enum(program: CheckedProgram, checked_enum: CheckedEnum, span: Span) throws -> Usage? {
+fn find_span_in_enum(program: CheckedProgram, checked_enum: CheckedEnum, span: Span) throws -> Usage? {
     let scope = program.get_scope(checked_enum.scope_id)
 
     for variant in checked_enum.variants {
@@ -501,7 +501,7 @@ function find_span_in_enum(program: CheckedProgram, checked_enum: CheckedEnum, s
     return usage
 }
 
-function find_span_in_struct(program: CheckedProgram, checked_struct: CheckedStruct, span: Span) throws -> Usage? {
+fn find_span_in_struct(program: CheckedProgram, checked_struct: CheckedStruct, span: Span) throws -> Usage? {
     let scope = program.get_scope(checked_struct.scope_id)
 
     for field in checked_struct.fields {
@@ -517,7 +517,7 @@ function find_span_in_struct(program: CheckedProgram, checked_struct: CheckedStr
     return usage
 }
 
-function find_span_in_function(program: CheckedProgram, checked_function: CheckedFunction, span: Span) throws -> Usage? {
+fn find_span_in_function(program: CheckedProgram, checked_function: CheckedFunction, span: Span) throws -> Usage? {
     if checked_function.return_type_span.has_value() {
         if checked_function.return_type_span!.contains(span) {
             return Some(Usage::Typename(type_id: checked_function.return_type_id))
@@ -533,7 +533,7 @@ function find_span_in_function(program: CheckedProgram, checked_function: Checke
     return find_span_in_block(program, block: checked_function.block, span)
 }
 
-function find_span_in_block(program: CheckedProgram, block: CheckedBlock, span: Span) throws -> Usage? {
+fn find_span_in_block(program: CheckedProgram, block: CheckedBlock, span: Span) throws -> Usage? {
     for statement in block.statements {
         let found = find_span_in_statement(program, statement, span)
         if found.has_value() {
@@ -543,7 +543,7 @@ function find_span_in_block(program: CheckedProgram, block: CheckedBlock, span: 
     return None
 }
 
-function find_span_in_statement(program: CheckedProgram, statement: CheckedStatement, span: Span) throws -> Usage? {
+fn find_span_in_statement(program: CheckedProgram, statement: CheckedStatement, span: Span) throws -> Usage? {
     let none: Usage? = None
 
     return match statement {
@@ -625,7 +625,7 @@ function find_span_in_statement(program: CheckedProgram, statement: CheckedState
     }
 }
 
-function find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, span: Span) throws -> Usage? {
+fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, span: Span) throws -> Usage? {
     let none: Usage? = None
 
     return match expr {
@@ -893,7 +893,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
     }
 }
 
-function get_function_signature(program: CheckedProgram, function_id: FunctionId) throws -> String {
+fn get_function_signature(program: CheckedProgram, function_id: FunctionId) throws -> String {
     let checked_function = program.get_function(function_id)
 
     match checked_function.type {
@@ -972,10 +972,10 @@ function get_function_signature(program: CheckedProgram, function_id: FunctionId
         returns = ""
     }
 
-    return format("function {}{}({}){}{}", checked_function.name, generic_parameters, parameters, throws_str, returns)
+    return format("fn {}{}({}){}{}", checked_function.name, generic_parameters, parameters, throws_str, returns)
 }
 
-function get_var_signature(program: CheckedProgram, name: String, var_type_id: TypeId, mutability: Mutability, var_type: VarType, visibility: VarVisibility, struct_type_id: TypeId?) throws -> String {
+fn get_var_signature(program: CheckedProgram, name: String, var_type_id: TypeId, mutability: Mutability, var_type: VarType, visibility: VarVisibility, struct_type_id: TypeId?) throws -> String {
     return match var_type {
         Variable => {
             let mut_string = match mutability {
@@ -1007,7 +1007,7 @@ function get_var_signature(program: CheckedProgram, name: String, var_type_id: T
     }
 }
 
-function get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> String {
+fn get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> String {
     let array_struct_id = program.find_struct_in_prelude("Array")
     let dictionary_struct_id = program.find_struct_in_prelude("Dictionary")
     let optional_struct_id = program.find_struct_in_prelude("Optional")
@@ -1048,7 +1048,7 @@ function get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> 
 
             let return_type = program.type_name(return_type_id)
 
-            yield format("function({}) -> {}", join(param_names, separator: ", "), return_type)
+            yield format("fn({}) -> {}", join(param_names, separator: ", "), return_type)
         }
         RawPtr(type_id) => "raw " + get_type_signature(program, type_id)
         Enum(id) => {
@@ -1194,7 +1194,7 @@ function get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> 
     }
 }
 
-function get_enum_variant_signature(program: CheckedProgram, name: String, type_id: TypeId, variants: [(String?, TypeId)], number_constant: NumberConstant?) throws -> String {
+fn get_enum_variant_signature(program: CheckedProgram, name: String, type_id: TypeId, variants: [(String?, TypeId)], number_constant: NumberConstant?) throws -> String {
     mut output = get_type_signature(program, type_id)
     output += "::"
     output += name
@@ -1235,7 +1235,7 @@ function get_enum_variant_signature(program: CheckedProgram, name: String, type_
     return output
 }
 
-function get_enum_variant_signature_from_type_id_and_name(program: CheckedProgram, type_id: TypeId, name: String) throws -> String {
+fn get_enum_variant_signature_from_type_id_and_name(program: CheckedProgram, type_id: TypeId, name: String) throws -> String {
     let mod = program.modules[type_id.module.id]
     for enum_ in mod.enums {
         if enum_.type_id.equals(type_id) {
@@ -1293,7 +1293,7 @@ function get_enum_variant_signature_from_type_id_and_name(program: CheckedProgra
     return ""
 }
 
-function get_enum_variant_usage_from_type_id_and_name(program: CheckedProgram, type_id: TypeId, name: String) throws -> Usage {
+fn get_enum_variant_usage_from_type_id_and_name(program: CheckedProgram, type_id: TypeId, name: String) throws -> Usage {
     for enum_ in program.get_module(type_id.module).enums {
         if not enum_.type_id.equals(type_id) {
             continue
@@ -1320,7 +1320,7 @@ function get_enum_variant_usage_from_type_id_and_name(program: CheckedProgram, t
     panic("unreachable: should have found variant")
 }
 
-function enum_variant_fields(program: CheckedProgram, checked_enum_variant: CheckedEnumVariant) throws -> [(String?, TypeId)] {
+fn enum_variant_fields(program: CheckedProgram, checked_enum_variant: CheckedEnumVariant) throws -> [(String?, TypeId)] {
     return match checked_enum_variant {
         StructLike(fields) => {
             mut output: [(String?, TypeId)] = []
@@ -1340,7 +1340,7 @@ function enum_variant_fields(program: CheckedProgram, checked_enum_variant: Chec
     }
 }
 
-function get_constructor_signature(program: CheckedProgram, function_id: FunctionId) throws -> String {
+fn get_constructor_signature(program: CheckedProgram, function_id: FunctionId) throws -> String {
     let checked_function = program.get_function(function_id)
     let type_id = checked_function.return_type_id
     let mod = program.modules[type_id.module.id]

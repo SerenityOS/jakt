@@ -1,4 +1,4 @@
-function null<T>() -> raw T {
+fn null<T>() -> raw T {
     unsafe {
         cpp {
             "return nullptr;"
@@ -8,7 +8,7 @@ function null<T>() -> raw T {
     abort()
 }
 
-function allocate<T>(count: usize) -> raw T {
+fn allocate<T>(count: usize) -> raw T {
     unsafe {
         cpp {
             "return static_cast<T*>(malloc(count * sizeof(T)));"
@@ -18,7 +18,7 @@ function allocate<T>(count: usize) -> raw T {
     abort()
 }
 
-function join(anon strings: [String], separator: String) -> String {
+fn join(anon strings: [String], separator: String) -> String {
     mut output = ""
 
     mut i = 0uz

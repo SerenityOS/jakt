@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "1\n2\n4\n3\n"
 
-function main() {
+fn main() {
     let set = {1, 2, 3, 4}
     for value in set {
         println("{}", value)

@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Call to unknown function"
 
-function main() {
+fn main() {
     missing_function()
 }

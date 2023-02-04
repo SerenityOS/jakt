@@ -1,13 +1,13 @@
 /// Expect:
 /// - output: "PASS\n"
 
-function foo(a: &i64) {
+fn foo(a: &i64) {
 }
 
-function bar(b: &mut i64) {
+fn bar(b: &mut i64) {
 }
 
-function main() {
+fn main() {
     let a = 0
     foo(&a)
 

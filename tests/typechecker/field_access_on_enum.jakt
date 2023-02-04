@@ -6,7 +6,7 @@ enum E {
     B
 }
 
-function main() {
+fn main() {
     let e = E::A()
     e.x
 }

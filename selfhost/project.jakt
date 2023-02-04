@@ -13,7 +13,7 @@ struct Project
 {
     name: String
 
-    function populate(this) throws {
+    fn populate(this) throws {
         let current_directory = current_directory()
         let project_directory = current_directory + "/" + .name
 
@@ -34,7 +34,7 @@ struct Project
         println("Done!")
     }
 
-    function create_template_cmake_lists(this, project_directory : String) throws {
+    fn create_template_cmake_lists(this, project_directory : String) throws {
         let cml_contents = "cmake_minimum_required(VERSION 3.20)
 project(" + .name + "
    VERSION 1.0.0
@@ -53,16 +53,16 @@ add_jakt_executable(" + .name + "
         write_to_file(data: cml_contents, output_filename: project_directory + "/CMakeLists.txt")
     }
 
-    function create_sample_jakt_files(this, project_directory: String) throws {
+    fn create_sample_jakt_files(this, project_directory: String) throws {
         let main_jakt = "import second_module { get_string }
 
-function main() throws -> c_int {
+fn main() throws -> c_int {
     println(\"{}!\", get_string())
     return 0
 }
 "
 
-        let second_module_jakt = "function get_string() throws -> String {
+        let second_module_jakt = "fn get_string() throws -> String {
     return \"Hello, World\"
 }
 "
@@ -71,7 +71,7 @@ function main() throws -> c_int {
         write_to_file(data: second_module_jakt, output_filename: project_directory + "/src/second_module.jakt")
     }
 
-    function create_readme(this, project_directory: String) throws {
+    fn create_readme(this, project_directory: String) throws {
         let readme_text = "# Example Jakt Project
 
 This example jakt project has two modules, hurray!

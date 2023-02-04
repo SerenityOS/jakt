@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "hello\nPASS\n"
 
-function main() {
+fn main() {
     mut a: String? = None
     a = "hello"
     println("{}", a!)

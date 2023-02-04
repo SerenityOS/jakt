@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Functions are not allowed to yield values"
 
-function main() {
+fn main() {
     yield 1
 }

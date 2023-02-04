@@ -1,12 +1,12 @@
 /// Expect:
 /// - output: "2\n"
 
-function add(i: i64, adder: &function(anon i: i64) -> i64) -> i64  {
+fn add(i: i64, adder: &fn(anon i: i64) -> i64) -> i64  {
     return adder(i)
 }
 
-function main() {
-    let adder = function(anon i: i64) -> i64 {
+fn main() {
+    let adder = fn(anon i: i64) -> i64 {
         return i + 1
     }
 

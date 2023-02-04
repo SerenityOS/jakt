@@ -5,12 +5,12 @@ class Person {
     public name: String
     public age: i64
 
-    public function generate(name: String, age: i64) throws -> Person {
+    public fn generate(name: String, age: i64) throws -> Person {
         return Person(name: name, age: age + 1000);
     }
 }
 
-function main() {
+fn main() {
     let p = Person::generate(name: "Jane", age: 100)
 
     println("{}", p.name)

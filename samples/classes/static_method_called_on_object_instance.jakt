@@ -2,12 +2,12 @@
 /// - error: "Cannot call static method on an instance of an object"
 
 class Foo {
-    public function bar() {
+    public fn bar() {
         println("I am a static method")
     }
 }
 
-function main() {
+fn main() {
     let foo = Foo()
     foo.bar()
 }

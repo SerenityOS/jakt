@@ -2,12 +2,12 @@
 /// - error: "Call to deprecated function: Use println() instead"
 
 struct Bar {
-    [[deprecated("Use println() instead")]] function foo(this) {
+    [[deprecated("Use println() instead")]] fn foo(this) {
         println("Well hello friends!")
     }
 }
 
-function main() {
+fn main() {
     let bar = Bar()
     bar.foo()
 }

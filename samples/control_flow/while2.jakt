@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "10\n9\n8\n7\n6\n5\n4\n3\n2\n1\n"
 
-function main() {
+fn main() {
     mut x: i64 = 10
 
     while (x > 0) {

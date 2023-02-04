@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Type mismatch: expected ‘u64’, but got ‘String’\n"
 
-function foo() -> u64 {
+fn foo() -> u64 {
     return "Foo"
 }

@@ -5,7 +5,7 @@ class Foo {
     public x: String
 }
 
-function main() {
+fn main() {
     let foo = Foo(x: "foo")
     let dict = ["a": foo]
     println("{}", dict["a"].x)

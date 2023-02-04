@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Assignment to immutable variable"
 
-function main() {
+fn main() {
     mut foo = [1, 2, 3, 4]
     let slice = foo[1..2]
     slice[0] = 1

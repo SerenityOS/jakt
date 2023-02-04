@@ -17,7 +17,7 @@ comptime ends_with() throws => "abcdef".ends_with("def")
 comptime repeated() throws => String::repeated(character: c'A', count: 5)
 comptime split() throws => "a;b;c".split(c';')
 
-function main() {
+fn main() {
     mut success = empty()
     success = success and length() == 21
     success = success and substring() == "bcd"

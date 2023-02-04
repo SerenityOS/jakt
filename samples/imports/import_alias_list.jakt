@@ -2,7 +2,7 @@
 /// - output: "PASS\nPASS\n"
 import foo as baz { Bar, bar }
 
-function main() {
+fn main() {
     bar()
     println(Bar::foo())
 }

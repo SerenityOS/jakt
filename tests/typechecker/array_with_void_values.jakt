@@ -5,7 +5,7 @@ enum Bar {
     Value
 }
 
-function main() {
+fn main() {
     let foo = Bar::Value()
     [match foo {
         else => {

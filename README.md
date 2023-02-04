@@ -129,7 +129,7 @@ class Size {
     width: i64
     height: i64
 
-    public function area(this) => .width * .height
+    public fn area(this) => .width * .height
 }
 ```
 
@@ -149,7 +149,7 @@ There are three kinds of member functions:
 
 ```jakt
 class Foo {
-    function func() => println("Hello!")
+    fn func() => println("Hello!")
 }
 
 // Foo::func() can be called without an object.
@@ -160,7 +160,7 @@ Foo::func()
 
 ```jakt
 class Foo {
-    function func(this) => println("Hello!")
+    fn func(this) => println("Hello!")
 }
 
 // Foo::func() can only be called on an instance of Foo.
@@ -173,7 +173,7 @@ x.func()
 class Foo {
     x: i64
 
-    function set(mut this, anon x: i64) {
+    fn set(mut this, anon x: i64) {
         this.x = x
     }
 }
@@ -202,12 +202,12 @@ let foo: StringView = "foo" // This string is not allocated on the heap, and foo
 Overloaded string literals can be used by providing a type hint, whether by explicit type annotations, or by passing the literal to a function that expects a specific type:
 ```jakt
 struct NotString implements(FromStringLiteral) {
-    function from_string_literal(anon string: StringView) -> NotString => NotString()
+    fn from_string_literal(anon string: StringView) -> NotString => NotString()
 }
 
-function test(x: NotString) {}
+fn test(x: NotString) {}
 
-function main() {
+fn main() {
     let foo: NotString = "foo"
     test(x: "Some string literal")
 }
@@ -225,7 +225,7 @@ Dynamic arrays are provided via a built-in `Array<T>` type. They can grow and sh
 
 ```jakt
 // Function that takes an Array<i64> and returns an Array<String>
-function foo(numbers: [i64]) -> [String] {
+fn foo(numbers: [i64]) -> [String] {
     ...
 }
 ```
@@ -247,7 +247,7 @@ let values = ["foo", "bar", "baz"]
 - [x] Assigning into indexes (aka lvalue)
 
 ```jakt
-function main() {
+fn main() {
     let dict = ["a": 1, "b": 2]
 
     println("{}", dict["a"])
@@ -258,7 +258,7 @@ function main() {
 
 ```jakt
 // Function that takes a Dictionary<i64, String> and returns an Dictionary<String, bool>
-function foo(numbers: [i64:String]) -> [String:bool] {
+fn foo(numbers: [i64:String]) -> [String:bool] {
     ...
 }
 ```
@@ -276,7 +276,7 @@ let values = ["foo": 500, "bar": 600, "baz": 700]
 - [x] Reference semantics
 
 ```jakt
-function main() {
+fn main() {
     let set = {1, 2, 3}
 
     println("{}", set.contains(1))
@@ -291,7 +291,7 @@ function main() {
 - [ ] Tuple types
 
 ```
-function main() {
+fn main() {
     let x = ("a", 2, true)
 
     println("{}", x.1)
@@ -316,7 +316,7 @@ enum MyOptional<T> {
     None
 }
 
-function value_or_default<T>(anon x: MyOptional<T>, default: T) -> T {
+fn value_or_default<T>(anon x: MyOptional<T>, default: T) -> T {
     return match x {
         Some(value) => {
             let stuff = maybe_do_stuff_with(value)
@@ -334,7 +334,7 @@ enum Foo {
     )
 }
 
-function look_at_foo(anon x: Foo) -> i32 {
+fn look_at_foo(anon x: Foo) -> i32 {
     match x {
         StructLikeThingy(field_a: a, field_b) => {
             return a + field_b
@@ -350,7 +350,7 @@ enum AlertDescription: i8 {
 }
 
 // Use in match:
-function do_nothing_in_particular() => match AlertDescription::CloseNotify {
+fn do_nothing_in_particular() => match AlertDescription::CloseNotify {
     CloseNotify => { ... }
     UnexpectedMessage => { ... }
     BadRecordMAC => { ... }
@@ -366,11 +366,11 @@ function do_nothing_in_particular() => match AlertDescription::CloseNotify {
 **Jakt** supports both generic structures and generic functions.
 
 ```jakt
-function id<T>(anon x: T) -> T {
+fn id<T>(anon x: T) -> T {
     return x
 }
 
-function main() {
+fn main() {
     let y = id(3)
 
     println("{}", y + 1000)
@@ -382,7 +382,7 @@ struct Foo<T> {
     x: T
 }
 
-function main() {
+fn main() {
     let f = Foo(x: 100)
 
     println("{}", f.x)
@@ -396,12 +396,12 @@ function main() {
 
 ```
 namespace Greeters {
-    function greet() {
+    fn greet() {
         println("Well, hello friends")
     }
 }
 
-function main() {
+fn main() {
     Greeters::greet()
 }
 ```
@@ -436,11 +436,11 @@ To make generics a bit more powerful and expressive, you can add additional info
 
 ```jakt
 trait Hashable<Output> {
-    function hash(self) -> Output
+    fn hash(self) -> Output
 }
 
 class Foo implements(Hashable<i64>) {
-    function hash(self) => 42
+    fn hash(self) => 42
 }
 ```
 
@@ -448,15 +448,15 @@ Traits can be used to add constraints to generic types, but also provide default
 
 ```jakt
 trait Fancy {
-    function do_something(this) -> void
-    function do_something_twice(this) -> void {
+    fn do_something(this) -> void
+    fn do_something_twice(this) -> void {
         .do_something()
         .do_something()
     }
 }
 
 struct Boring implements(Fancy) {
-    function do_something(this) -> void {
+    fn do_something(this) -> void {
         println("I'm so boring")
     }
 
@@ -464,12 +464,12 @@ struct Boring implements(Fancy) {
 }
 
 struct Better implements(Fancy) {
-    function do_something(this) -> void {
+    fn do_something(this) -> void {
         println("I'm not boring")
     }
 
     // However, a custom implementation is still valid.
-    function do_something_twice(this) -> void {
+    fn do_something_twice(this) -> void {
         println("I'm not boring, but I'm doing it twice")
     }
 }
@@ -479,12 +479,12 @@ Traits can have methods that reference other traits as types, which can be used 
 
 ```jakt
 trait ConstIterable<T> {
-    function next(this) -> T?
+    fn next(this) -> T?
 }
 
 trait IntoIterator<T> {
     // Note how the return type is a reference to the ConstIterable trait (and not a concrete type)
-    function iterator(this) -> ConstIterable<T>
+    fn iterator(this) -> ConstIterable<T>
 }
 ```
 
@@ -503,7 +503,7 @@ To keep things safe, there are a few kinds of analysis we'd like to do (non-exha
 Functions that can fail with an error instead of returning normally are marked with the `throws` keyword:
 
 ```jakt
-function task_that_might_fail() throws -> usize {
+fn task_that_might_fail() throws -> usize {
     if problem {
         throw Error::from_errno(EPROBLEM)
     }
@@ -511,7 +511,7 @@ function task_that_might_fail() throws -> usize {
     return result
 }
 
-function task_that_cannot_fail() -> usize {
+fn task_that_cannot_fail() -> usize {
     ...
     return result
 }
@@ -580,13 +580,13 @@ A reference is either immutable (default) or mutable.
 To "get the value out" of a reference, it must be dereferenced using the `*` operator, however the compiler will automatically dereference references if the dereferencing is the single unambiguous correct use of the reference (in practice, manual dereferencing is only required where the reference is being stored or passed to functions).
 
 ```jakt
-function sum(a: &i64, b: &i64) -> i64 {
+fn sum(a: &i64, b: &i64) -> i64 {
     return a + b
     // Or with manual dereferencing:
     return *a + *b
 }
 
-function test() {
+fn test() {
     let a = 1
     let b = 2
     let c = sum(&a, &b)
@@ -599,7 +599,7 @@ For mutable references to structs, you'll need to wrap the dereference in parent
 struct Foo {
     x: i64
 }
-function zero_out(foo: &mut Foo) {
+fn zero_out(foo: &mut Foo) {
     foo.x = 0
     // Or with manual dereferencing:
     (*foo).x = 0

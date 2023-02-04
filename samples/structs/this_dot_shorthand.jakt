@@ -5,11 +5,11 @@ struct Size {
     width: i64
     height: i64
 
-    function area(this) => .width * .height
+    fn area(this) => .width * .height
 }
 
 
-function main() {
+fn main() {
     let s = Size(width: 5, height: 6)
     println("{}", s.area())
 }

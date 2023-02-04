@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "2\nfalse\n"
 
-function main() {
+fn main() {
     let dict = ["a": 1, "b": 2]
 
     println("{}", dict.get("b")!)

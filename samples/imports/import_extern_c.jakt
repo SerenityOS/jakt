@@ -2,21 +2,21 @@
 /// - output: "PASS\n"
 
 import extern c "stdlib.h"  {
-    extern function malloc(size: usize) -> raw void
-    extern function free(anon mut ptr: raw void) -> i32
+    extern fn malloc(size: usize) -> raw void
+    extern fn free(anon mut ptr: raw void) -> i32
 }
 
 import extern c "fcntl.h"  {
-    extern function open(path: raw c_char, flags: i32) -> i32
-    extern function read(fd: i32, mut buffer: raw void, max_len: usize) -> i64
-    extern function close(fd: i32) -> i32
+    extern fn open(path: raw c_char, flags: i32) -> i32
+    extern fn read(fd: i32, mut buffer: raw void, max_len: usize) -> i64
+    extern fn close(fd: i32) -> i32
 }
 
 // FIXME: Windows-only, for open/read/close (#1015)
 import extern c "io.h" {
 }
 
-function main() {
+fn main() {
     // NOTE: that zero is O_RDONLY.
     let fd = open(path: "import_extern_text.txt".c_string(),  flags: 0)
     if fd == -1i32 {

@@ -1,9 +1,9 @@
 /// Expect:
 /// - output: "PASS\nPASS\n"
 
-function main() {
-    let cb = function() => "PASS"
-    let cb2: function() -> String = function() => "PASS"
+fn main() {
+    let cb = fn() => "PASS"
+    let cb2: fn() -> String = fn() => "PASS"
     println("{}", cb())
     println("{}", cb2())
 }

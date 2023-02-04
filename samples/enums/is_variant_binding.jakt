@@ -6,7 +6,7 @@ enum Foo {
     Baz(m: String)
 }
 
-function main() {
+fn main() {
     let foo = Foo::Bar(5)
     let baz = Foo::Baz(m: "Hello")
 

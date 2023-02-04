@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Reference type ‘&i64’ not usable in this context"
 
-function main() {
+fn main() {
     let i = 0
     mut ref = &i
     {

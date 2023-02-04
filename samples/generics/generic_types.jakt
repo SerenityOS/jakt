@@ -1,11 +1,11 @@
 /// Expect:
 /// - output: "3\n"
 
-function do_pop<T>(anon mut arr: [T]) -> Optional<T> {
+fn do_pop<T>(anon mut arr: [T]) -> Optional<T> {
   return arr.pop()
 }
 
-function main() {
+fn main() {
   mut arr = [1, 2, 3];
 
   println("{}", do_pop(arr)!)

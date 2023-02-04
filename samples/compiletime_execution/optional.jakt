@@ -3,7 +3,7 @@
 
 comptime some() => Some(123)
 
-function main() {
+fn main() {
     if some()! == 123 {
         println("PASS")
     } else {

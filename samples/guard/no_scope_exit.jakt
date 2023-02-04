@@ -1,8 +1,8 @@
 /// Expect:
 /// - error: "Else block of guard must either `return`, `break`, `continue`, or `throw`"
 
-function a() {
+fn a() {
     guard true else {}
 }
 
-function main() {}
+fn main() {}

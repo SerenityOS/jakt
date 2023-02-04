@@ -1,13 +1,13 @@
 /// Expect:
 /// - output: "Before\nWell, hello friends!\nAfter\n"
 
-function wrapped(anon action: &function() -> void) {
+fn wrapped(anon action: &fn() -> void) {
     println("Before")
     action()
     println("After")
 }
 
-function main() {
+fn main() {
     let message = "Well, hello friends!"
     wrapped() {
         println(message)

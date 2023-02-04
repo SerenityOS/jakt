@@ -1,12 +1,12 @@
 /// Expect:
 /// - output: "3\n"
 
-function add<T>(i: T, adder: &function(anon i: T) -> T) -> T  {
+fn add<T>(i: T, adder: &fn(anon i: T) -> T) -> T  {
     return adder(i)
 }
 
-function main() {
-    let adder = function(anon i: i32) -> i32 {
+fn main() {
+    let adder = fn(anon i: i32) -> i32 {
         return i + 2
     }
 

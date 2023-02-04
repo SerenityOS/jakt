@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "101\ne\n"
 
-function recurse<T>(anon i: T) -> T {
+fn recurse<T>(anon i: T) -> T {
     if i > 100 {
         return i
     }
@@ -9,7 +9,7 @@ function recurse<T>(anon i: T) -> T {
     return recurse((i + 1) as! i32)
 }
 
-function main() {
+fn main() {
     let a = recurse(1)
     let b = recurse('a')
 

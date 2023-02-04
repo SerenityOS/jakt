@@ -1,17 +1,17 @@
 trait Iterable<T> {
-    function next(mut this) -> T?
+    fn next(mut this) -> T?
 }
 
 trait ThrowingIterable<T> {
-    function next(mut this) throws -> T?
+    fn next(mut this) throws -> T?
 }
 
 trait IntoIterator<T> {
-    function iterator(this) -> Iterable<T>
+    fn iterator(this) -> Iterable<T>
 }
 
 trait IntoThrowingIterator<T> {
-    function iterator(this) -> ThrowingIterable<T>
+    fn iterator(this) -> ThrowingIterable<T>
 }
 
 type Array implements(IntoIterator<T>) { }

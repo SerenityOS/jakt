@@ -4,13 +4,13 @@
 struct Test {
     x: i32
 
-    function y(this) throws => this
-    function throwing_y(this) throws -> String {
+    fn y(this) throws => this
+    fn throwing_y(this) throws -> String {
         throw Error::from_errno(69)
     }
 }
 
-function main() {
+fn main() {
     mut test: Test? = Test(x: 123)
     try {
         println("{}", test?.y()?.throwing_y() ?? "FAIL")

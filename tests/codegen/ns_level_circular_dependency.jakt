@@ -6,25 +6,25 @@ enum Test {
 }
 
 namespace Foo {
-    function foo(anon x: i32) -> Test {
+    fn foo(anon x: i32) -> Test {
         return Bar::bar(x)
     }
-    function bar(anon x: i32) -> i32 {
+    fn bar(anon x: i32) -> i32 {
         return x + 1
     }
 }
 
 namespace Bar {
-    function bar(anon x: i32) -> Test {
+    fn bar(anon x: i32) -> Test {
         let y = Foo::bar(x)
         return Test::X(y)
     }
-    function foo(anon x: i32) -> Test {
+    fn foo(anon x: i32) -> Test {
         return Foo::foo(x)
     }
 }
 
-function main() {
+fn main() {
     let test = Bar::foo(41i32)
     match test {
         X(x) => {

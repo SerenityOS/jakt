@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Can't fill an Array with more than one expression"
 
-function foo() {
+fn foo() {
     let a = [1, 2, 3;1]
 }

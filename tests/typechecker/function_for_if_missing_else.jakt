@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Control reaches end of non-void function\n"
 
-function foo() -> i64 {
+fn foo() -> i64 {
     for i in 1..10 {
         if i == 5 {
             return i
@@ -10,6 +10,6 @@ function foo() -> i64 {
     }
 }
 
-function main() {
+fn main() {
     println("{}", foo())
 }

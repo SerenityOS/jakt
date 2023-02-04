@@ -2,7 +2,7 @@
 /// - error: "Empty enums are not allowed"
 
 enum Foo {
-    function oops(mut this) { }
+    fn oops(mut this) { }
 }
 
-function main() { }
+fn main() { }

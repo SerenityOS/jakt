@@ -4,7 +4,7 @@
 struct Foo {
     id: usize
 
-    function test(this) {
+    fn test(this) {
         let test = What::Bar
 
         println("outer: {}", this)
@@ -16,14 +16,14 @@ enum What {
     Bar
     Baz
 
-    function count(this) -> Foo {
+    fn count(this) -> Foo {
         let foo = Foo(id: 99)
 
         return foo
     }
 }
 
-function main() {
+fn main() {
     let foo = Foo(id: 100)
     foo.test()
 }

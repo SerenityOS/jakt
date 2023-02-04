@@ -1,15 +1,15 @@
 /// Expect:
 /// - output: "5\n"
 
-function bar(a: i64) -> i64 {
+fn bar(a: i64) -> i64 {
     return a
 }
 
-function foo(a: &i64) -> i64 {
+fn foo(a: &i64) -> i64 {
     return bar(*a)
 }
 
-function main() {
+fn main() {
     let a = 5
     println("{}", foo(&a))
 }

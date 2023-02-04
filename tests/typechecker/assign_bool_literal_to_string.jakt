@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Type mismatch: expected ‘String’, but got ‘bool’"
 
-function foo() {
+fn foo() {
     let bar: String = false
 }

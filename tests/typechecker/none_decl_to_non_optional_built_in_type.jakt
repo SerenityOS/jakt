@@ -1,6 +1,6 @@
 /// Expect:
 /// - error: "Cannot assign None to a non-optional type"
 
-function main() {
+fn main() {
     mut x: i32 = None
 }

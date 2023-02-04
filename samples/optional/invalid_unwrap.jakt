@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Forced unwrap only works on Optional\n"
 
-function main() {
+fn main() {
     let foo = 123
     let bar = foo!
 }

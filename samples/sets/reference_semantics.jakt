@@ -1,12 +1,12 @@
 /// Expect:
 /// - output: "5\n"
 
-function foo(mut set: {i64}) throws {
+fn foo(mut set: {i64}) throws {
     set.add(4)
     set.add(5)
 }
 
-function main() {
+fn main() {
     mut set = {1, 2, 3}
     foo(set)
     println("{}", set.size());

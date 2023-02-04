@@ -6,17 +6,17 @@ struct B {
     r_omit: Range<i64>
 }
 
-function print_range(anon r: Range<i64>) {
+fn print_range(anon r: Range<i64>) {
     println("{}", r)
 }
 
-function build_range(start: i64, end: i64) -> Range<i64> {
+fn build_range(start: i64, end: i64) -> Range<i64> {
     return start..end
 }
 
-function n() => 2
+fn n() => 2
 
-function main() {
+fn main() {
     let range = 1..2
     let range_omit_start = ..2
 

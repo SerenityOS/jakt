@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "2 2\n"
 
-function main() {
+fn main() {
     mut set1: [i64] = []
     set1.push(1)
     set1.push(2)
