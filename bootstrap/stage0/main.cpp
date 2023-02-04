@@ -544,7 +544,7 @@ break;
 }
 
 if ((!(((main_function_id).has_value())))){
-warnln(Jakt::DeprecatedString("Error: No main function found in program"sv));
+warnln(Jakt::DeprecatedString("Error: No main function  found in program"sv));
 return (static_cast<i64>(1LL));
 }
 JaktInternal::DynamicArray<types::ResolvedNamespace> const namespace_ = (TRY((DynamicArray<types::ResolvedNamespace>::create_with({}))));
@@ -615,7 +615,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-warnln(Jakt::DeprecatedString("Error: Main function must return an integer"sv));
+warnln(Jakt::DeprecatedString("Error: Main function  must return an integer"sv));
 return (static_cast<i64>(1LL));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -628,7 +628,7 @@ case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::ExecutionResult::Throw>();
 types::Value const& x = __jakt_match_value.value;
 {
-warnln(Jakt::DeprecatedString("Error: Main function threw: {}"sv),TRY((repl::serialize_ast_node(TRY((interpreter::value_to_checked_expression(x,interpreter)))))));
+warnln(Jakt::DeprecatedString("Error: Main function  threw: {}"sv),TRY((repl::serialize_ast_node(TRY((interpreter::value_to_checked_expression(x,interpreter)))))));
 return (static_cast<i64>(1LL));
 }
 return JaktInternal::ExplicitValue<void>();

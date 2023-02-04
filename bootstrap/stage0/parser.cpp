@@ -2627,6 +2627,8 @@ JaktInternal::DynamicArray<parser::ParsedField> fields = (TRY((DynamicArray<pars
 JaktInternal::DynamicArray<parser::ParsedMethod> methods = (TRY((DynamicArray<parser::ParsedMethod>::create_with({}))));
 JaktInternal::Optional<parser::Visibility> last_visibility = JaktInternal::OptionalNone();
 JaktInternal::Optional<utility::Span> last_visibility_span = JaktInternal::OptionalNone();
+bool last_virtual = false;
+bool last_override = false;
 bool error = false;
 JaktInternal::DynamicArray<parser::ParsedAttribute> active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({}))));
 while ((!(((*this).eof())))){
@@ -2723,6 +2725,11 @@ TRY((((*this).error(Jakt::DeprecatedString("Attributes cannot be applied to fiel
 parser::Visibility const visibility = last_visibility.value_or_lazy_evaluated([&] { return default_visibility; });
 (last_visibility = JaktInternal::OptionalNone());
 (last_visibility_span = JaktInternal::OptionalNone());
+if ((last_virtual || last_override)){
+TRY((((*this).error(Jakt::DeprecatedString("Fields cannot be ‘virtual’ or ‘override’"sv),((((*this).current())).span())))));
+}
+(last_virtual = false);
+(last_override = false);
 parser::ParsedField const field = TRY((((*this).parse_field(visibility))));
 TRY((((fields).push(field))));
 }
@@ -2733,8 +2740,6 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::To
 {
 bool const is_comptime = ((((*this).current())).index() == 76 /* Comptime */);
 bool const is_destructor = ((((*this).current())).index() == 69 /* Destructor */);
-bool const is_virtual = ((((*this).current())).index() == 101 /* Virtual */);
-bool const is_override = ((((*this).current())).index() == 88 /* Override */);
 parser::FunctionLinkage const function_linkage = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::FunctionLinkage, ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>>>{
 auto&& __jakt_match_variant = definition_linkage;
 switch(__jakt_match_variant.index()) {
@@ -2755,6 +2760,10 @@ TRY((((*this).error(Jakt::DeprecatedString("External functions cannot be comptim
 parser::Visibility const visibility = last_visibility.value_or_lazy_evaluated([&] { return default_visibility; });
 (last_visibility = JaktInternal::OptionalNone());
 (last_visibility_span = JaktInternal::OptionalNone());
+bool const is_virtual = last_virtual;
+bool const is_override = last_override;
+(last_virtual = false);
+(last_override = false);
 parser::ParsedMethod parsed_method = TRY((((*this).parse_method(function_linkage,visibility,is_virtual,is_override,is_comptime,is_destructor))));
 TRY((((*this).apply_attributes(((parsed_method)),((active_attributes))))));
 (active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
@@ -2767,8 +2776,6 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::To
 {
 bool const is_comptime = ((((*this).current())).index() == 76 /* Comptime */);
 bool const is_destructor = ((((*this).current())).index() == 69 /* Destructor */);
-bool const is_virtual = ((((*this).current())).index() == 101 /* Virtual */);
-bool const is_override = ((((*this).current())).index() == 88 /* Override */);
 parser::FunctionLinkage const function_linkage = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::FunctionLinkage, ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>>>{
 auto&& __jakt_match_variant = definition_linkage;
 switch(__jakt_match_variant.index()) {
@@ -2789,6 +2796,10 @@ TRY((((*this).error(Jakt::DeprecatedString("External functions cannot be comptim
 parser::Visibility const visibility = last_visibility.value_or_lazy_evaluated([&] { return default_visibility; });
 (last_visibility = JaktInternal::OptionalNone());
 (last_visibility_span = JaktInternal::OptionalNone());
+bool const is_virtual = last_virtual;
+bool const is_override = last_override;
+(last_virtual = false);
+(last_override = false);
 parser::ParsedMethod parsed_method = TRY((((*this).parse_method(function_linkage,visibility,is_virtual,is_override,is_comptime,is_destructor))));
 TRY((((*this).apply_attributes(((parsed_method)),((active_attributes))))));
 (active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
@@ -2801,8 +2812,6 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::To
 {
 bool const is_comptime = ((((*this).current())).index() == 76 /* Comptime */);
 bool const is_destructor = ((((*this).current())).index() == 69 /* Destructor */);
-bool const is_virtual = ((((*this).current())).index() == 101 /* Virtual */);
-bool const is_override = ((((*this).current())).index() == 88 /* Override */);
 parser::FunctionLinkage const function_linkage = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::FunctionLinkage, ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>>>{
 auto&& __jakt_match_variant = definition_linkage;
 switch(__jakt_match_variant.index()) {
@@ -2823,6 +2832,10 @@ TRY((((*this).error(Jakt::DeprecatedString("External functions cannot be comptim
 parser::Visibility const visibility = last_visibility.value_or_lazy_evaluated([&] { return default_visibility; });
 (last_visibility = JaktInternal::OptionalNone());
 (last_visibility_span = JaktInternal::OptionalNone());
+bool const is_virtual = last_virtual;
+bool const is_override = last_override;
+(last_virtual = false);
+(last_override = false);
 parser::ParsedMethod parsed_method = TRY((((*this).parse_method(function_linkage,visibility,is_virtual,is_override,is_comptime,is_destructor))));
 TRY((((*this).apply_attributes(((parsed_method)),((active_attributes))))));
 (active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
@@ -2833,68 +2846,16 @@ return JaktInternal::ExplicitValue<void>();
 case 101: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Virtual>();
 {
-bool const is_comptime = ((((*this).current())).index() == 76 /* Comptime */);
-bool const is_destructor = ((((*this).current())).index() == 69 /* Destructor */);
-bool const is_virtual = ((((*this).current())).index() == 101 /* Virtual */);
-bool const is_override = ((((*this).current())).index() == 88 /* Override */);
-parser::FunctionLinkage const function_linkage = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::FunctionLinkage, ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>>>{
-auto&& __jakt_match_variant = definition_linkage;
-switch(__jakt_match_variant.index()) {
-case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::DefinitionLinkage::Internal>();
-return JaktInternal::ExplicitValue( parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } );
-};/*case end*/
-case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::DefinitionLinkage::External>();
-return JaktInternal::ExplicitValue( parser::FunctionLinkage { typename parser::FunctionLinkage::External() } );
-};/*case end*/
-default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-));
-if ((((function_linkage).index() == 1 /* External */) && is_comptime)){
-TRY((((*this).error(Jakt::DeprecatedString("External functions cannot be comptime"sv),((((*this).current())).span())))));
-}
-parser::Visibility const visibility = last_visibility.value_or_lazy_evaluated([&] { return default_visibility; });
-(last_visibility = JaktInternal::OptionalNone());
-(last_visibility_span = JaktInternal::OptionalNone());
-parser::ParsedMethod parsed_method = TRY((((*this).parse_method(function_linkage,visibility,is_virtual,is_override,is_comptime,is_destructor))));
-TRY((((*this).apply_attributes(((parsed_method)),((active_attributes))))));
-(active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
-TRY((((methods).push(parsed_method))));
+(last_virtual = true);
+((((*this).index)++));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 88: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Override>();
 {
-bool const is_comptime = ((((*this).current())).index() == 76 /* Comptime */);
-bool const is_destructor = ((((*this).current())).index() == 69 /* Destructor */);
-bool const is_virtual = ((((*this).current())).index() == 101 /* Virtual */);
-bool const is_override = ((((*this).current())).index() == 88 /* Override */);
-parser::FunctionLinkage const function_linkage = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::FunctionLinkage, ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>>>{
-auto&& __jakt_match_variant = definition_linkage;
-switch(__jakt_match_variant.index()) {
-case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::DefinitionLinkage::Internal>();
-return JaktInternal::ExplicitValue( parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } );
-};/*case end*/
-case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::DefinitionLinkage::External>();
-return JaktInternal::ExplicitValue( parser::FunctionLinkage { typename parser::FunctionLinkage::External() } );
-};/*case end*/
-default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-));
-if ((((function_linkage).index() == 1 /* External */) && is_comptime)){
-TRY((((*this).error(Jakt::DeprecatedString("External functions cannot be comptime"sv),((((*this).current())).span())))));
-}
-parser::Visibility const visibility = last_visibility.value_or_lazy_evaluated([&] { return default_visibility; });
-(last_visibility = JaktInternal::OptionalNone());
-(last_visibility_span = JaktInternal::OptionalNone());
-parser::ParsedMethod parsed_method = TRY((((*this).parse_method(function_linkage,visibility,is_virtual,is_override,is_comptime,is_destructor))));
-TRY((((*this).apply_attributes(((parsed_method)),((active_attributes))))));
-(active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
-TRY((((methods).push(parsed_method))));
+(last_override = true);
+((((*this).index)++));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/

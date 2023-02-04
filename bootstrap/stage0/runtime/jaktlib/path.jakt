@@ -7,13 +7,13 @@ import platform_module("jakt::platform::path") {
 struct Path {
     private path: String
 
-    function from_string(anon string: String) throws -> Path {
+    fn from_string(anon string: String) throws -> Path {
         mut path = Path(path: string)
         path.normalize_separators()
         return path
     }
 
-    function from_parts(anon parts: [String]) throws -> Path {
+    fn from_parts(anon parts: [String]) throws -> Path {
         mut path = Path(path: ".")
         for part in parts {
             path = path.join(part)
@@ -21,7 +21,7 @@ struct Path {
         return path
     }
 
-    private function normalize_separators(mut this) throws {
+    private fn normalize_separators(mut this) throws {
         mut separators = get_valid_path_separators()
         mut separator = get_path_separator()
         mut normalized_builder = StringBuilder::create()
@@ -36,11 +36,11 @@ struct Path {
         .path = normalized_builder.to_string()
     }
 
-    function to_string(this) -> String {
+    fn to_string(this) -> String {
         return .path
     }
 
-    function join(this, anon path: String) throws -> Path {
+    fn join(this, anon path: String) throws -> Path {
         if .path == "." or .path.length() == 0 {
             return Path(path)
         }
@@ -66,11 +66,11 @@ struct Path {
         return Path::from_string(join_builder.to_string())
     }
 
-    function is_dot(this) -> bool {
+    fn is_dot(this) -> bool {
         return .path == "." or .path == ".."
     }
 
-    function extension(this) throws -> String {
+    fn extension(this) throws -> String {
         for i in ((.path.length() - 1)..0).inclusive() {
             let c = .path.byte_at(i)
             if c == get_path_separator() {
@@ -85,7 +85,7 @@ struct Path {
         return ""
     }
 
-    function basename(this, strip_extension: bool = false) throws -> String {
+    fn basename(this, strip_extension: bool = false) throws -> String {
         let parts = .split_at_last_slash()
         if strip_extension {
             mut ext_length = .extension().length()
@@ -99,7 +99,7 @@ struct Path {
         return parts.1
     }
 
-    function replace_extension(this, anon new_extension: String) throws -> Path {
+    fn replace_extension(this, anon new_extension: String) throws -> Path {
         let parts = .split_at_last_slash()
         let basename = .basename(strip_extension: true)
         let extension = match new_extension {
@@ -113,7 +113,7 @@ struct Path {
         ])
     }
 
-    function parent(this) throws -> Path {
+    fn parent(this) throws -> Path {
         let parts = .split_at_last_slash()
         if parts.0 == "" {
             return Path(path: ".")
@@ -122,9 +122,9 @@ struct Path {
         return Path(path: parts.0)
     }
 
-    function exists(this) -> bool => File::exists(.path)
+    fn exists(this) -> bool => File::exists(.path)
 
-    private function split_at_last_slash(this) throws -> (String, String) {
+    private fn split_at_last_slash(this) throws -> (String, String) {
         let len = .path.length()
         let last_slash = Path::last_slash(.path)
 
@@ -137,7 +137,7 @@ struct Path {
         return ("", .path)
     }
 
-    private function last_slash(anon path: String) -> usize? {
+    private fn last_slash(anon path: String) -> usize? {
         mut i = path.length() - 1
         let separator = get_path_separator()
         while i >= 1 and path.byte_at(i) != separator {

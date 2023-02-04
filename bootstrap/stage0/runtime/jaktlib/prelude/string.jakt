@@ -1,11 +1,11 @@
 trait FromStringLiteral {
-    function from_string_literal(anon string: StringView) -> Self
+    fn from_string_literal(anon string: StringView) -> Self
 }
 
 trait ThrowingFromStringLiteral {
-    function from_string_literal(anon string: StringView) throws -> Self
+    fn from_string_literal(anon string: StringView) throws -> Self
 }
 
 type StringView implements(FromStringLiteral) {
-    function from_string_literal(anon string: StringView) -> StringView => string
+    fn from_string_literal(anon string: StringView) -> StringView => string
 }

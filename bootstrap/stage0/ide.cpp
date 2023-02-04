@@ -609,7 +609,7 @@ TRY((((param_names).push(TRY((((program)->type_name(x,false))))))));
 }
 
 DeprecatedString const return_type = TRY((((program)->type_name(return_type_id,false))));
-__jakt_var_724 = TRY((__jakt_format(Jakt::DeprecatedString("function({}) -> {}"sv),utility::join(param_names,Jakt::DeprecatedString(", "sv)),return_type))); goto __jakt_label_647;
+__jakt_var_724 = TRY((__jakt_format(Jakt::DeprecatedString("fn({}) -> {}"sv),utility::join(param_names,Jakt::DeprecatedString(", "sv)),return_type))); goto __jakt_label_647;
 
 }
 __jakt_label_647:; __jakt_var_724.release_value(); }));
@@ -2822,7 +2822,7 @@ else {
 (returns = Jakt::DeprecatedString(""sv));
 }
 
-return (TRY((__jakt_format(Jakt::DeprecatedString("function {}{}({}){}{}"sv),((checked_function)->name),generic_parameters,parameters,throws_str,returns))));
+return (TRY((__jakt_format(Jakt::DeprecatedString("fn {}{}({}){}{}"sv),((checked_function)->name),generic_parameters,parameters,throws_str,returns))));
 }
 }
 

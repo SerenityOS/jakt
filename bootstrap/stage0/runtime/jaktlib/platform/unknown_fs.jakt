@@ -1,27 +1,27 @@
 import jakt::path { Path }
 
-function make_directory(path: String) throws {
+fn make_directory(path: String) throws {
     eprintln("NOT IMPLEMENTED: make_directory {}", path)
     throw Error::from_errno(38)
 }
 
-function current_directory() throws -> String {
+fn current_directory() throws -> String {
     eprintln("NOT IMPLEMENTED: current_directory")
     throw Error::from_errno(38)
 }
 
 class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
-    public function next(mut this) throws -> (Path, bool)? {
+    public fn next(mut this) throws -> (Path, bool)? {
         eprintln("NOT IMPLEMENTED: DirectoryIterator::next()")
         throw Error::from_errno(38)
     }
 
-    public function from_path(path: Path) throws -> DirectoryIterator? {
+    public fn from_path(path: Path) throws -> DirectoryIterator? {
         eprintln("NOT IMPLEMENTED: DirectoryIterator::from_path(path: {})", path)
         throw Error::from_errno(38)
     }
 
-    public function get_path(this) throws -> Path {
+    public fn get_path(this) throws -> Path {
         eprintln("NOT IMPLEMENTED: DirectoryIterator::get_path()")
         throw Error::from_errno(38)
     }

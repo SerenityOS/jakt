@@ -47,8 +47,8 @@ return {};
 
 ErrorOr<void> project::Project::create_sample_jakt_files(DeprecatedString const project_directory) const {
 {
-DeprecatedString const main_jakt = Jakt::DeprecatedString("import second_module { get_string }\n\nfunction main() throws -> c_int {\n    println(\"{}!\", get_string())\n    return 0\n}\n"sv);
-DeprecatedString const second_module_jakt = Jakt::DeprecatedString("function get_string() throws -> String {\n    return \"Hello, World\"\n}\n"sv);
+DeprecatedString const main_jakt = Jakt::DeprecatedString("import second_module { get_string }\n\nfn main() throws -> c_int {\n    println(\"{}!\", get_string())\n    return 0\n}\n"sv);
+DeprecatedString const second_module_jakt = Jakt::DeprecatedString("fn get_string() throws -> String {\n    return \"Hello, World\"\n}\n"sv);
 TRY((utility::write_to_file(main_jakt,(project_directory + Jakt::DeprecatedString("/src/main.jakt"sv)))));
 TRY((utility::write_to_file(second_module_jakt,(project_directory + Jakt::DeprecatedString("/src/second_module.jakt"sv)))));
 }
