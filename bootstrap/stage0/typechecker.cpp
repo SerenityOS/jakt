@@ -5291,7 +5291,7 @@ return ((TRY((DynamicArray<types::FunctionId>::create_with({pseudo_function_id})
 JaktInternal::Optional<JaktInternal::Tuple<JaktInternal::DynamicArray<types::FunctionId>,types::ScopeId>> const maybe_overload_set = TRY((((*this).find_scoped_functions_with_name_in_scope(current_scope_id,((call).name)))));
 if (((maybe_overload_set).has_value())){
 NonnullRefPtr<types::CheckedFunction> const function_ = ((*this).get_function((((((maybe_overload_set.value())).template get<0>()))[static_cast<i64>(0LL)])));
-if (((!(must_be_enum_constructor)) || ((((function_)->type)).index() == 2 /* ImplicitEnumConstructor */))){
+if (((!(must_be_enum_constructor)) || ((((function_)->type)).index() == 3 /* ImplicitEnumConstructor */))){
 (owning_scope = ((function_)->owner_scope));
 (current_scope_id = (((maybe_overload_set.value())).template get<1>()));
 return ((((maybe_overload_set.value())).template get<0>()));
@@ -9629,7 +9629,7 @@ ScopeGuard __jakt_var_427([&] {
 }
 
 });
-if (((((callee_candidate)->type)).index() == 1 /* ImplicitConstructor */)){
+if (((((callee_candidate)->type)).index() == 2 /* ImplicitConstructor */)){
 types::CheckedStruct const struct_ = ((*this).get_struct((((callee_candidate)->struct_id).value())));
 TRY((((*this).check_implicit_constructor_argument_access(caller_scope_id,call,struct_))));
 }

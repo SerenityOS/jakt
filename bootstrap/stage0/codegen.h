@@ -61,6 +61,7 @@ ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> extract_dependencies_from_
 ErrorOr<DeprecatedString> codegen_expression(NonnullRefPtr<typename types::CheckedExpression> const expression);
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> extract_dependencies_from_struct(types::StructId const struct_id, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<DeprecatedString>> const dependency_graph, bool const top_level, JaktInternal::DynamicArray<types::TypeId> const args) const;
 ErrorOr<DeprecatedString> codegen_function_in_namespace(NonnullRefPtr<types::CheckedFunction> const function_, JaktInternal::Optional<types::TypeId> const containing_struct, bool const as_method);
+ErrorOr<DeprecatedString> codegen_destructor_predecl(types::CheckedStruct const& struct_);
 ErrorOr<DeprecatedString> codegen_method_call(NonnullRefPtr<typename types::CheckedExpression> const expr, types::CheckedCall const call, bool const is_optional);
 CodeGenerator(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, codegen::ControlFlowState a_control_flow_state, JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,DeprecatedString>> a_entered_yieldable_blocks, DeprecatedString a_deferred_output, JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> a_current_function, bool a_inside_defer, codegen::CodegenDebugInfo a_debug_info, JaktInternal::DynamicArray<DeprecatedString> a_namespace_stack, size_t a_fresh_var_counter, size_t a_fresh_label_counter);
 
@@ -76,6 +77,7 @@ ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> extract_dependencies_from(
 ErrorOr<DeprecatedString> codegen_match_body(types::CheckedMatchBody const body, types::TypeId const return_type_id);
 ErrorOr<DeprecatedString> codegen_function_predecl(NonnullRefPtr<types::CheckedFunction> const function_, bool const as_method);
 ErrorOr<DeprecatedString> fresh_var();
+ErrorOr<DeprecatedString> codegen_destructor(types::CheckedStruct const& struct_, NonnullRefPtr<types::CheckedFunction> const& function_, bool const is_inline);
 ErrorOr<DeprecatedString> codegen_block(types::CheckedBlock const block);
 ErrorOr<DeprecatedString> codegen_checked_binary_op_assignment(NonnullRefPtr<typename types::CheckedExpression> const lhs, NonnullRefPtr<typename types::CheckedExpression> const rhs, parser::BinaryOperator const op, types::TypeId const type_id);
 ErrorOr<DeprecatedString> codegen_enum_type(types::EnumId const id, bool const as_namespace) const;

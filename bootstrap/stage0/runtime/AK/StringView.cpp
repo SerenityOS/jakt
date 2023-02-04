@@ -15,7 +15,6 @@
 #ifndef KERNEL
 #    include <AK/DeprecatedFlyString.h>
 #    include <AK/DeprecatedString.h>
-#    include <AK/FlyString.h>
 #    include <AK/String.h>
 #endif
 
@@ -23,12 +22,6 @@ namespace AK {
 
 #ifndef KERNEL
 StringView::StringView(String const& string)
-    : m_characters(reinterpret_cast<char const*>(string.bytes().data()))
-    , m_length(string.bytes().size())
-{
-}
-
-StringView::StringView(FlyString const& string)
     : m_characters(reinterpret_cast<char const*>(string.bytes().data()))
     , m_length(string.bytes().size())
 {

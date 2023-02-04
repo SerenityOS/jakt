@@ -226,10 +226,12 @@ FixedArray<T> shatter_chunk(FixedArray<T>& source_chunk, size_t start, size_t sl
     if constexpr (IsTriviallyConstructible<T>) {
         TypedTransfer<T>::move(new_chunk.data(), wanted_slice.data(), wanted_slice.size());
     } else {
-        auto copied_chunk = FixedArray<T>::create(wanted_slice).release_value_but_fixme_should_propagate_errors();
+        // FIXME: propagate errors
+        auto copied_chunk = MUST(FixedArray<T>::try_create(wanted_slice));
         new_chunk.swap(copied_chunk);
     }
-    auto rest_of_chunk = FixedArray<T>::create(source_chunk.span().slice(start)).release_value_but_fixme_should_propagate_errors();
+    // FIXME: propagate errors
+    auto rest_of_chunk = MUST(FixedArray<T>::try_create(source_chunk.span().slice(start)));
     source_chunk.swap(rest_of_chunk);
     return new_chunk;
 }

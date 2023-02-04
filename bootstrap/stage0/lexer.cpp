@@ -1413,202 +1413,207 @@ case 68 /* Defer */: {
 TRY(builder.append("Token::Defer"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 69 /* Else */: {
+case 69 /* Destructor */: {
+[[maybe_unused]] auto const& that = this->template get<Token::Destructor>();
+TRY(builder.append("Token::Destructor"sv));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 70 /* Else */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Else>();
 TRY(builder.append("Token::Else"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 70 /* Enum */: {
+case 71 /* Enum */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Enum>();
 TRY(builder.append("Token::Enum"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 71 /* Extern */: {
+case 72 /* Extern */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Extern>();
 TRY(builder.append("Token::Extern"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 72 /* False */: {
+case 73 /* False */: {
 [[maybe_unused]] auto const& that = this->template get<Token::False>();
 TRY(builder.append("Token::False"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 73 /* For */: {
+case 74 /* For */: {
 [[maybe_unused]] auto const& that = this->template get<Token::For>();
 TRY(builder.append("Token::For"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 74 /* Function */: {
-[[maybe_unused]] auto const& that = this->template get<Token::Function>();
-TRY(builder.append("Token::Function"sv));
+case 75 /* Fn */: {
+[[maybe_unused]] auto const& that = this->template get<Token::Fn>();
+TRY(builder.append("Token::Fn"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 75 /* Comptime */: {
+case 76 /* Comptime */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Comptime>();
 TRY(builder.append("Token::Comptime"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 76 /* If */: {
+case 77 /* If */: {
 [[maybe_unused]] auto const& that = this->template get<Token::If>();
 TRY(builder.append("Token::If"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 77 /* Import */: {
+case 78 /* Import */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Import>();
 TRY(builder.append("Token::Import"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 78 /* In */: {
+case 79 /* In */: {
 [[maybe_unused]] auto const& that = this->template get<Token::In>();
 TRY(builder.append("Token::In"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 79 /* Is */: {
+case 80 /* Is */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Is>();
 TRY(builder.append("Token::Is"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 80 /* Let */: {
+case 81 /* Let */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Let>();
 TRY(builder.append("Token::Let"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 81 /* Loop */: {
+case 82 /* Loop */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Loop>();
 TRY(builder.append("Token::Loop"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 82 /* Match */: {
+case 83 /* Match */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Match>();
 TRY(builder.append("Token::Match"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 83 /* Mut */: {
+case 84 /* Mut */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Mut>();
 TRY(builder.append("Token::Mut"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 84 /* Namespace */: {
+case 85 /* Namespace */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Namespace>();
 TRY(builder.append("Token::Namespace"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 85 /* Not */: {
+case 86 /* Not */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Not>();
 TRY(builder.append("Token::Not"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 86 /* Or */: {
+case 87 /* Or */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Or>();
 TRY(builder.append("Token::Or"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 87 /* Override */: {
+case 88 /* Override */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Override>();
 TRY(builder.append("Token::Override"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 88 /* Private */: {
+case 89 /* Private */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Private>();
 TRY(builder.append("Token::Private"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 89 /* Public */: {
+case 90 /* Public */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Public>();
 TRY(builder.append("Token::Public"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 90 /* Raw */: {
+case 91 /* Raw */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Raw>();
 TRY(builder.append("Token::Raw"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 91 /* Return */: {
+case 92 /* Return */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Return>();
 TRY(builder.append("Token::Return"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 92 /* Restricted */: {
+case 93 /* Restricted */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Restricted>();
 TRY(builder.append("Token::Restricted"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 93 /* Struct */: {
+case 94 /* Struct */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Struct>();
 TRY(builder.append("Token::Struct"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 94 /* This */: {
+case 95 /* This */: {
 [[maybe_unused]] auto const& that = this->template get<Token::This>();
 TRY(builder.append("Token::This"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 95 /* Throw */: {
+case 96 /* Throw */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Throw>();
 TRY(builder.append("Token::Throw"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 96 /* Throws */: {
+case 97 /* Throws */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Throws>();
 TRY(builder.append("Token::Throws"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 97 /* True */: {
+case 98 /* True */: {
 [[maybe_unused]] auto const& that = this->template get<Token::True>();
 TRY(builder.append("Token::True"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 98 /* Try */: {
+case 99 /* Try */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Try>();
 TRY(builder.append("Token::Try"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 99 /* Unsafe */: {
+case 100 /* Unsafe */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Unsafe>();
 TRY(builder.append("Token::Unsafe"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 100 /* Virtual */: {
+case 101 /* Virtual */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Virtual>();
 TRY(builder.append("Token::Virtual"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 101 /* Weak */: {
+case 102 /* Weak */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Weak>();
 TRY(builder.append("Token::Weak"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 102 /* While */: {
+case 103 /* While */: {
 [[maybe_unused]] auto const& that = this->template get<Token::While>();
 TRY(builder.append("Token::While"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 103 /* Yield */: {
+case 104 /* Yield */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Yield>();
 TRY(builder.append("Token::Yield"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 104 /* Guard */: {
+case 105 /* Guard */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Guard>();
 TRY(builder.append("Token::Guard"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 105 /* Implements */: {
+case 106 /* Implements */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Implements>();
 TRY(builder.append("Token::Implements"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 106 /* Requires */: {
+case 107 /* Requires */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Requires>();
 TRY(builder.append("Token::Requires"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 107 /* Trait */: {
+case 108 /* Trait */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Trait>();
 TRY(builder.append("Token::Trait"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 108 /* Garbage */: {
+case 109 /* Garbage */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Garbage>();
 TRY(builder.append("Token::Garbage"sv));
 TRY(builder.append("("sv));
@@ -1659,6 +1664,9 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Cpp(sp
 else if (__jakt_enum_value == Jakt::DeprecatedString("defer"sv)) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Defer(span) } );
 }
+else if (__jakt_enum_value == Jakt::DeprecatedString("destructor"sv)) {
+return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Destructor(span) } );
+}
 else if (__jakt_enum_value == Jakt::DeprecatedString("else"sv)) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Else(span) } );
 }
@@ -1674,8 +1682,11 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::False(
 else if (__jakt_enum_value == Jakt::DeprecatedString("for"sv)) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::For(span) } );
 }
+else if (__jakt_enum_value == Jakt::DeprecatedString("fn"sv)) {
+return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Fn(span) } );
+}
 else if (__jakt_enum_value == Jakt::DeprecatedString("function"sv)) {
-return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Function(span) } );
+return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Fn(span) } );
 }
 else if (__jakt_enum_value == Jakt::DeprecatedString("comptime"sv)) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Comptime(span) } );
@@ -2130,201 +2141,206 @@ utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 69: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Else>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Destructor>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 70: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Enum>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Else>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 71: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Extern>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Enum>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 72: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::False>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Extern>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 73: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::False>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 74: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Function>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 75: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comptime>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Fn>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 76: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comptime>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 77: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Import>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 78: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::In>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Import>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 79: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Is>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::In>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 80: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Let>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Is>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 81: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Loop>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Let>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 82: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Loop>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 83: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Mut>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 84: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Namespace>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Mut>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 85: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Not>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Namespace>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 86: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Or>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Not>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 87: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Override>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Or>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 88: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Private>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Override>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 89: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Private>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 90: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Raw>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 91: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Return>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Raw>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 92: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Restricted>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Return>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 93: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Struct>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Restricted>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 94: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::This>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Struct>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 95: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throw>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::This>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 96: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throws>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throw>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 97: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::True>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throws>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 98: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Try>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::True>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 99: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Unsafe>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Try>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 100: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Virtual>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Unsafe>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 101: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Weak>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Virtual>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 102: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Weak>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 103: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Yield>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 104: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Yield>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 105: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Implements>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 106: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Requires>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Implements>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 107: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Trait>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Requires>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 108: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Trait>();
+utility::Span const& span = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(span);
+};/*case end*/
+case 109: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Garbage>();utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/

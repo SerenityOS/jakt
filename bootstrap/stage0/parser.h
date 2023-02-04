@@ -1220,6 +1220,8 @@ utility::Span span() const;
 namespace FunctionType_Details {
 struct Normal {
 };
+struct Destructor {
+};
 struct ImplicitConstructor {
 };
 struct ImplicitEnumConstructor {
@@ -1231,9 +1233,10 @@ struct Expression {
 struct Closure {
 };
 }
-struct FunctionType : public Variant<FunctionType_Details::Normal, FunctionType_Details::ImplicitConstructor, FunctionType_Details::ImplicitEnumConstructor, FunctionType_Details::ExternalClassConstructor, FunctionType_Details::Expression, FunctionType_Details::Closure> {
-using Variant<FunctionType_Details::Normal, FunctionType_Details::ImplicitConstructor, FunctionType_Details::ImplicitEnumConstructor, FunctionType_Details::ExternalClassConstructor, FunctionType_Details::Expression, FunctionType_Details::Closure>::Variant;
+struct FunctionType : public Variant<FunctionType_Details::Normal, FunctionType_Details::Destructor, FunctionType_Details::ImplicitConstructor, FunctionType_Details::ImplicitEnumConstructor, FunctionType_Details::ExternalClassConstructor, FunctionType_Details::Expression, FunctionType_Details::Closure> {
+using Variant<FunctionType_Details::Normal, FunctionType_Details::Destructor, FunctionType_Details::ImplicitConstructor, FunctionType_Details::ImplicitEnumConstructor, FunctionType_Details::ExternalClassConstructor, FunctionType_Details::Expression, FunctionType_Details::Closure>::Variant;
     using Normal = FunctionType_Details::Normal;
+    using Destructor = FunctionType_Details::Destructor;
     using ImplicitConstructor = FunctionType_Details::ImplicitConstructor;
     using ImplicitEnumConstructor = FunctionType_Details::ImplicitEnumConstructor;
     using ExternalClassConstructor = FunctionType_Details::ExternalClassConstructor;
@@ -1486,7 +1489,7 @@ ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_try_block();
 ErrorOr<JaktInternal::DynamicArray<parser::ParsedMatchPattern>> parse_match_patterns();
 ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_operand_postfix_operator(utility::Span const start, NonnullRefPtr<typename parser::ParsedExpression> const expr);
 ErrorOr<JaktInternal::DynamicArray<parser::ParsedGenericParameter>> parse_generic_parameters();
-ErrorOr<parser::ParsedMethod> parse_method(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_virtual, bool const is_override, bool const is_comptime);
+ErrorOr<parser::ParsedMethod> parse_method(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_virtual, bool const is_override, bool const is_comptime, bool const is_destructor);
 ErrorOr<parser::ParsedExternalTraitImplementation> parse_external_trait_implementation();
 ErrorOr<DeprecatedString> parse_argument_label();
 ErrorOr<parser::ParsedTrait> parse_trait();
@@ -1495,7 +1498,7 @@ ErrorOr<void> apply_attributes(parser::ParsedFunction& parsed_function, JaktInte
 ErrorOr<void> apply_attributes(parser::ParsedMethod& parsed_method, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
 ErrorOr<void> apply_attributes(parser::ParsedRecord& parsed_record, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
 utility::Span span(size_t const start, size_t const end) const;
-ErrorOr<parser::ParsedFunction> parse_function(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_comptime, bool const allow_missing_body);
+ErrorOr<parser::ParsedFunction> parse_function(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_comptime, bool const is_destructor, bool const allow_missing_body);
 ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<parser::IncludeAction>>> parse_include_action();
 ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_range();
 ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parse_guard_statement();
