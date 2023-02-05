@@ -6,7 +6,7 @@
   ],
   "patterns": [
     {
-      "include": "#function"
+      "include": "#fn"
     },
     {
       "include": "#namespace"
@@ -502,10 +502,10 @@
         }
       ]
     },
-    "function": {
+    "fn": {
       "patterns": [
         {
-          "name": "meta.function.declaration.jakt",
+          "name": "meta.fn.declaration.jakt",
           "match": "(?:\\b(public|private)\\s+)?(\\bextern\\s+)?(?:(\\boverride\\b)\\s+|(\\bvirtual\\b)\\s+)?(\\b(?:fn|comptime))\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
           "captures": {
             "1": {
@@ -521,15 +521,15 @@
               "name": "storage.modifier.specifier.virtual.jakt"
             },
             "5": {
-              "name": "keyword.function.jakt"
+              "name": "keyword.fn.jakt"
             },
             "6": {
-              "name": "entity.name.function"
+              "name": "entity.name.fn"
             }
           }
         },
         {
-          "name": "meta.function.argument-list.jakt",
+          "name": "meta.fn.argument-list.jakt",
           "begin": "(?<=(?:fn|comptime).*?)(\\()",
           "beginCaptures": {
             "1": {
@@ -549,7 +549,7 @@
           ]
         },
         {
-          "name": "meta.function.return-type.jakt",
+          "name": "meta.fn.return-type.jakt",
           "begin": "(?<=\\)\\s*)(throws)?\\s*(\\-\\>)",
           "beginCaptures": {
             "1": {
@@ -575,7 +575,7 @@
           ]
         },
         {
-          "name": "meta.function.return-throws.jakt",
+          "name": "meta.fn.return-throws.jakt",
           "begin": "(?<=\\)\\s*)(throws)",
           "beginCaptures": {
             "1": {
@@ -590,7 +590,7 @@
           ]
         },
         {
-          "name": "meta.function.return-shorthand.jakt",
+          "name": "meta.fn.return-shorthand.jakt",
           "begin": "(?<=(?:fn|comptime).*?)(\\=\\>)",
           "beginCaptures": {
             "1": {
@@ -605,7 +605,7 @@
           ]
         },
         {
-          "name": "meta.function.body.jakt",
+          "name": "meta.fn.body.jakt",
           "begin": "(?<=(?:fn|comptime).*?)(\\{)",
           "beginCaptures": {
             "1": {
@@ -625,7 +625,7 @@
           ]
         },
         {
-          "name": "meta.function.generic-arguments.jakt",
+          "name": "meta.fn.generic-arguments.jakt",
           "begin": "(?<=(?:fn|comptime)\\s+(\\w)*?)(<)",
           "beginCaptures": {
             "1": {
@@ -877,7 +877,7 @@
       "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(\\()",
       "beginCaptures": {
         "1": {
-          "name": "entity.name.function.call.jakt"
+          "name": "entity.name.fn.call.jakt"
         },
         "2": {
           "name": "punctuation.begin.bracket.jakt"
