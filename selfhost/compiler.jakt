@@ -49,7 +49,7 @@ class Compiler {
                                 file_contents = file.read_all()
                             } catch error {}
                         }
-                        print_error(file_name, contents: file_contents, error)
+                        print_error(file_name, file_contents, error)
                     }
                 }
             }

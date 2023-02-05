@@ -547,7 +547,7 @@ struct CodeGenerator {
                 .postorder_traversal(
                     encoded_type_id: entry.0
                     visited: seen_types
-                    dependency_graph: encoded_dependency_graph
+                    encoded_dependency_graph
                     output: traversal
                 )
                 for type_id in traversal {
