@@ -1632,7 +1632,7 @@ struct Stage0 {
                             dedents_on_open_curly
                         ))
                         return FormattedToken(
-                            token: Token::Comma(span: token.span())
+                            token: Token::Comma(token.span())
                             indent: .indent
                             trailing_trivia: [b' ']
                             preceding_trivia: []

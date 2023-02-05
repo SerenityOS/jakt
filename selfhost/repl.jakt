@@ -23,7 +23,7 @@ struct Editor {
     prompt: String
 
     fn create(prompt: String) throws -> Editor {
-        mut std_in = fopen(pathname: "/dev/stdin".c_string(), mode: "r".c_string())
+        mut std_in = fopen(str: "/dev/stdin".c_string(), mode: "r".c_string())
         if std_in == null<FILE>() {
             eprintln("Could not open /dev/stdin for reading")
             throw Error::from_errno(42)
@@ -58,7 +58,7 @@ struct Editor {
     }
 
     fn destroy(mut this) {
-        fclose(stream: .standard_input_file)
+        fclose(file: .standard_input_file)
         unsafe {
             cpp {
                 "free(line_pointer);"
