@@ -1,0 +1,4 @@
+/// Expect: Skip
+
+class Base {}
+class Derived: Base {}
