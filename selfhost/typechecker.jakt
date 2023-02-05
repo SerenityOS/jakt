@@ -2422,7 +2422,7 @@ struct Typechecker {
                     )
                 }
 
-                // checked_function.generics.params.push(parameter)
+                checked_function.generics.params.push(parameter)
                 .add_type_to_scope(scope_id: method_scope_id, type_name: gen_parameter.name, type_id: type_var_type_id, span: gen_parameter.span)
             }
 
