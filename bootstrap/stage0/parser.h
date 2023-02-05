@@ -253,7 +253,7 @@ using Variant<ParsedType_Details::Name, ParsedType_Details::NamespacedName, Pars
     using WeakPtr = ParsedType_Details::WeakPtr;
     using Function = ParsedType_Details::Function;
     using Empty = ParsedType_Details::Empty;
-template<typename V, typename... Args> static auto create(Args&&... args) {
+template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {
 return adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType(V(forward<Args>(args)...)));
 }
 ErrorOr<DeprecatedString> debug_description() const;
@@ -960,7 +960,7 @@ using Variant<ParsedExpression_Details::Boolean, ParsedExpression_Details::Numer
     using Try = ParsedExpression_Details::Try;
     using TryBlock = ParsedExpression_Details::TryBlock;
     using Garbage = ParsedExpression_Details::Garbage;
-template<typename V, typename... Args> static auto create(Args&&... args) {
+template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {
 return adopt_nonnull_ref_or_enomem(new (nothrow) ParsedExpression(V(forward<Args>(args)...)));
 }
 ErrorOr<DeprecatedString> debug_description() const;
@@ -1166,7 +1166,7 @@ using Variant<ParsedStatement_Details::Expression, ParsedStatement_Details::Defe
     using InlineCpp = ParsedStatement_Details::InlineCpp;
     using Guard = ParsedStatement_Details::Guard;
     using Garbage = ParsedStatement_Details::Garbage;
-template<typename V, typename... Args> static auto create(Args&&... args) {
+template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {
 return adopt_nonnull_ref_or_enomem(new (nothrow) ParsedStatement(V(forward<Args>(args)...)));
 }
 ErrorOr<DeprecatedString> debug_description() const;

@@ -1528,7 +1528,7 @@ DeprecatedString fully_instantiated_name = ((enum_).name);
 if (is_generic){
 (fully_instantiated_name += TRY((__jakt_format(Jakt::DeprecatedString("<{}>"sv),utility::join(generic_parameter_names,Jakt::DeprecatedString(", "sv))))));
 }
-(output += Jakt::DeprecatedString("template<typename V, typename... Args> static auto create(Args&&... args) {\n"sv));
+(output += Jakt::DeprecatedString("template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {\n"sv));
 (output += TRY((__jakt_format(Jakt::DeprecatedString("return adopt_nonnull_ref_or_enomem(new (nothrow) {}(V(forward<Args>(args)...)));\n"sv),fully_instantiated_name))));
 (output += Jakt::DeprecatedString("}\n"sv));
 }
@@ -5393,7 +5393,7 @@ return JaktInternal::ExplicitValue((qualified_name + Jakt::DeprecatedString("::"
 }
 }()))
 ;
-(output += TRY((__jakt_format(Jakt::DeprecatedString("ErrorOr<NonnullRefPtr<{}>> {}create"sv),class_name_with_generics,qualified_namespace))));
+(output += TRY((__jakt_format(Jakt::DeprecatedString("ErrorOr<NonnullRefPtr<{}>> {}__jakt_create"sv),class_name_with_generics,qualified_namespace))));
 (output += Jakt::DeprecatedString("("sv));
 (first = true);
 {
@@ -6417,8 +6417,7 @@ types::StructId const& struct_id = __jakt_match_value.value;
 types::CheckedStruct const struct_ = ((((*this).program))->get_struct(struct_id));
 if (((((struct_).record_type)).index() == 1 /* Class */)){
 (output += ((call).name_for_codegen()));
-(output += Jakt::DeprecatedString("::"sv));
-(output += Jakt::DeprecatedString("create"sv));
+(output += Jakt::DeprecatedString("::__jakt_create"sv));
 }
 else {
 (output += ((call).name_for_codegen()));
@@ -6459,7 +6458,7 @@ else {
 }
 }
 
-(output += Jakt::DeprecatedString(">::create"sv));
+(output += Jakt::DeprecatedString(">::__jakt_create"sv));
 }
 else {
 (output += ((call).name_for_codegen()));
@@ -6515,7 +6514,7 @@ types::CheckedEnum const enum_ = ((((*this).program))->get_enum(enum_id));
 NonnullRefPtr<types::Module> const enum_type_module = ((((*this).program))->get_module(((enum_id).module)));
 if (((enum_).is_boxed)){
 (output += TRY((((*this).codegen_namespace_path(call)))));
-(output += Jakt::DeprecatedString("template create<typename "sv));
+(output += Jakt::DeprecatedString("template __jakt_create<typename "sv));
 (output += TRY((((*this).codegen_type_possibly_as_namespace(((call).return_type),true)))));
 (output += ((Jakt::DeprecatedString("::"sv) + ((call).name_for_codegen())) + Jakt::DeprecatedString(">"sv)));
 }
@@ -6813,7 +6812,7 @@ if ((!(((((structure).generic_parameters)).is_empty())))){
 (class_name_with_generics += Jakt::DeprecatedString(">"sv));
 }
 (output += Jakt::DeprecatedString("public:\n"sv));
-(output += TRY((__jakt_format(Jakt::DeprecatedString("static ErrorOr<NonnullRefPtr<{}>> create"sv),class_name_with_generics))));
+(output += TRY((__jakt_format(Jakt::DeprecatedString("static ErrorOr<NonnullRefPtr<{}>> __jakt_create"sv),class_name_with_generics))));
 (output += Jakt::DeprecatedString("("sv));
 (first = true);
 {
