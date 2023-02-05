@@ -12,7 +12,7 @@ DeprecatedString extension;JaktInternal::DynamicArray<jakt__path::Path> director
 protected:
 explicit RecursiveFileIterator(DeprecatedString&& a_extension, JaktInternal::DynamicArray<jakt__path::Path>&& a_directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>>&& a_current_directory);
 public:
-static ErrorOr<NonnullRefPtr<RecursiveFileIterator>> create(DeprecatedString extension, JaktInternal::DynamicArray<jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory);
+static ErrorOr<NonnullRefPtr<RecursiveFileIterator>> __jakt_create(DeprecatedString extension, JaktInternal::DynamicArray<jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory);
 
 ErrorOr<JaktInternal::Optional<jakt__path::Path>> next();
 ErrorOr<DeprecatedString> debug_description() const;

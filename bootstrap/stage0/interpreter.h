@@ -92,7 +92,7 @@ ErrorOr<interpreter::StatementResult> execute_binary_operator(types::Value const
 protected:
 explicit Interpreter(NonnullRefPtr<compiler::Compiler>&& a_compiler, NonnullRefPtr<types::CheckedProgram>&& a_program, JaktInternal::DynamicArray<utility::Span>&& a_spans, JaktInternal::Optional<types::FunctionId>&& a_current_function_id);
 public:
-static ErrorOr<NonnullRefPtr<Interpreter>> create(NonnullRefPtr<compiler::Compiler> compiler, NonnullRefPtr<types::CheckedProgram> program, JaktInternal::DynamicArray<utility::Span> spans, JaktInternal::Optional<types::FunctionId> current_function_id);
+static ErrorOr<NonnullRefPtr<Interpreter>> __jakt_create(NonnullRefPtr<compiler::Compiler> compiler, NonnullRefPtr<types::CheckedProgram> program, JaktInternal::DynamicArray<utility::Span> spans, JaktInternal::Optional<types::FunctionId> current_function_id);
 
 void leave_span();
 ErrorOr<void> error(DeprecatedString const message, utility::Span const span);
@@ -138,7 +138,7 @@ ErrorOr<types::GenericInferences> type_map_for_substitution() const;
 protected:
 explicit InterpreterScope(JaktInternal::Dictionary<DeprecatedString,types::Value>&& a_bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>>&& a_parent, JaktInternal::Dictionary<DeprecatedString,types::TypeId>&& a_type_bindings, JaktInternal::DynamicArray<interpreter::Deferred>&& a_defers);
 public:
-static ErrorOr<NonnullRefPtr<InterpreterScope>> create(JaktInternal::Dictionary<DeprecatedString,types::Value> bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, JaktInternal::Dictionary<DeprecatedString,types::TypeId> type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> defers);
+static ErrorOr<NonnullRefPtr<InterpreterScope>> __jakt_create(JaktInternal::Dictionary<DeprecatedString,types::Value> bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, JaktInternal::Dictionary<DeprecatedString,types::TypeId> type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> defers);
 
 ErrorOr<types::TypeId> map_type(types::TypeId const id) const;
 ErrorOr<void> set(DeprecatedString const name, types::Value const value);

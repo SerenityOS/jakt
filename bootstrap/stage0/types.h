@@ -343,7 +343,7 @@ struct MaybeResolvedScope : public Variant<MaybeResolvedScope_Details::Resolved,
 using Variant<MaybeResolvedScope_Details::Resolved, MaybeResolvedScope_Details::Unresolved>::Variant;
     using Resolved = MaybeResolvedScope_Details::Resolved;
     using Unresolved = MaybeResolvedScope_Details::Unresolved;
-template<typename V, typename... Args> static auto create(Args&&... args) {
+template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {
 return adopt_nonnull_ref_or_enomem(new (nothrow) MaybeResolvedScope(V(forward<Args>(args)...)));
 }
 ErrorOr<DeprecatedString> debug_description() const;
@@ -388,7 +388,7 @@ DeprecatedString name;types::TypeId type_id;bool is_mutable;utility::Span defini
 protected:
 explicit CheckedVariable(DeprecatedString&& a_name, types::TypeId&& a_type_id, bool&& a_is_mutable, utility::Span&& a_definition_span, JaktInternal::Optional<utility::Span>&& a_type_span, types::CheckedVisibility&& a_visibility, JaktInternal::Optional<types::ScopeId>&& a_owner_scope);
 public:
-static ErrorOr<NonnullRefPtr<CheckedVariable>> create(DeprecatedString name, types::TypeId type_id, bool is_mutable, utility::Span definition_span, JaktInternal::Optional<utility::Span> type_span, types::CheckedVisibility visibility, JaktInternal::Optional<types::ScopeId> owner_scope);
+static ErrorOr<NonnullRefPtr<CheckedVariable>> __jakt_create(DeprecatedString name, types::TypeId type_id, bool is_mutable, utility::Span definition_span, JaktInternal::Optional<utility::Span> type_span, types::CheckedVisibility visibility, JaktInternal::Optional<types::ScopeId> owner_scope);
 
 ErrorOr<DeprecatedString> debug_description() const;
 };struct CheckedParameter {
@@ -663,7 +663,7 @@ using Variant<ValueImpl_Details::Void, ValueImpl_Details::Bool, ValueImpl_Detail
     using OptionalNone = ValueImpl_Details::OptionalNone;
     using JaktTuple = ValueImpl_Details::JaktTuple;
     using Function = ValueImpl_Details::Function;
-template<typename V, typename... Args> static auto create(Args&&... args) {
+template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {
 return adopt_nonnull_ref_or_enomem(new (nothrow) ValueImpl(V(forward<Args>(args)...)));
 }
 ErrorOr<DeprecatedString> debug_description() const;
@@ -678,7 +678,7 @@ bool is_static() const;
 protected:
 explicit CheckedFunction(DeprecatedString&& a_name, utility::Span&& a_name_span, types::CheckedVisibility&& a_visibility, types::TypeId&& a_return_type_id, JaktInternal::Optional<utility::Span>&& a_return_type_span, JaktInternal::DynamicArray<types::CheckedParameter>&& a_params, NonnullRefPtr<types::FunctionGenerics>&& a_generics, types::CheckedBlock&& a_block, bool&& a_can_throw, parser::FunctionType&& a_type, parser::FunctionLinkage&& a_linkage, types::ScopeId&& a_function_scope_id, JaktInternal::Optional<types::StructId>&& a_struct_id, bool&& a_is_instantiated, JaktInternal::Optional<parser::ParsedFunction>&& a_parsed_function, bool&& a_is_comptime, bool&& a_is_virtual, bool&& a_is_override, JaktInternal::Optional<types::ScopeId>&& a_owner_scope, JaktInternal::Optional<DeprecatedString>&& a_external_name, JaktInternal::Optional<DeprecatedString>&& a_deprecated_message);
 public:
-static ErrorOr<NonnullRefPtr<CheckedFunction>> create(DeprecatedString name, utility::Span name_span, types::CheckedVisibility visibility, types::TypeId return_type_id, JaktInternal::Optional<utility::Span> return_type_span, JaktInternal::DynamicArray<types::CheckedParameter> params, NonnullRefPtr<types::FunctionGenerics> generics, types::CheckedBlock block, bool can_throw, parser::FunctionType type, parser::FunctionLinkage linkage, types::ScopeId function_scope_id, JaktInternal::Optional<types::StructId> struct_id, bool is_instantiated, JaktInternal::Optional<parser::ParsedFunction> parsed_function, bool is_comptime, bool is_virtual, bool is_override, JaktInternal::Optional<types::ScopeId> owner_scope, JaktInternal::Optional<DeprecatedString> external_name, JaktInternal::Optional<DeprecatedString> deprecated_message);
+static ErrorOr<NonnullRefPtr<CheckedFunction>> __jakt_create(DeprecatedString name, utility::Span name_span, types::CheckedVisibility visibility, types::TypeId return_type_id, JaktInternal::Optional<utility::Span> return_type_span, JaktInternal::DynamicArray<types::CheckedParameter> params, NonnullRefPtr<types::FunctionGenerics> generics, types::CheckedBlock block, bool can_throw, parser::FunctionType type, parser::FunctionLinkage linkage, types::ScopeId function_scope_id, JaktInternal::Optional<types::StructId> struct_id, bool is_instantiated, JaktInternal::Optional<parser::ParsedFunction> parsed_function, bool is_comptime, bool is_virtual, bool is_override, JaktInternal::Optional<types::ScopeId> owner_scope, JaktInternal::Optional<DeprecatedString> external_name, JaktInternal::Optional<DeprecatedString> deprecated_message);
 
 parser::ParsedFunction to_parsed_function() const;
 bool is_specialized_for_types(JaktInternal::DynamicArray<types::TypeId> const types) const;
@@ -695,7 +695,7 @@ virtual ~Module() = default;
 types::ModuleId id;DeprecatedString name;JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>> functions;JaktInternal::DynamicArray<types::CheckedStruct> structures;JaktInternal::DynamicArray<types::CheckedEnum> enums;JaktInternal::DynamicArray<NonnullRefPtr<types::Scope>> scopes;JaktInternal::DynamicArray<NonnullRefPtr<typename types::Type>> types;JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedTrait>> traits;JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedVariable>> variables;JaktInternal::DynamicArray<types::ModuleId> imports;DeprecatedString resolved_import_path;bool is_root;protected:
 explicit Module(types::ModuleId&& a_id, DeprecatedString&& a_name, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>>&& a_functions, JaktInternal::DynamicArray<types::CheckedStruct>&& a_structures, JaktInternal::DynamicArray<types::CheckedEnum>&& a_enums, JaktInternal::DynamicArray<NonnullRefPtr<types::Scope>>&& a_scopes, JaktInternal::DynamicArray<NonnullRefPtr<typename types::Type>>&& a_types, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedTrait>>&& a_traits, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedVariable>>&& a_variables, JaktInternal::DynamicArray<types::ModuleId>&& a_imports, DeprecatedString&& a_resolved_import_path, bool&& a_is_root);
 public:
-static ErrorOr<NonnullRefPtr<Module>> create(types::ModuleId id, DeprecatedString name, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>> functions, JaktInternal::DynamicArray<types::CheckedStruct> structures, JaktInternal::DynamicArray<types::CheckedEnum> enums, JaktInternal::DynamicArray<NonnullRefPtr<types::Scope>> scopes, JaktInternal::DynamicArray<NonnullRefPtr<typename types::Type>> types, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedTrait>> traits, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedVariable>> variables, JaktInternal::DynamicArray<types::ModuleId> imports, DeprecatedString resolved_import_path, bool is_root);
+static ErrorOr<NonnullRefPtr<Module>> __jakt_create(types::ModuleId id, DeprecatedString name, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>> functions, JaktInternal::DynamicArray<types::CheckedStruct> structures, JaktInternal::DynamicArray<types::CheckedEnum> enums, JaktInternal::DynamicArray<NonnullRefPtr<types::Scope>> scopes, JaktInternal::DynamicArray<NonnullRefPtr<typename types::Type>> types, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedTrait>> traits, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedVariable>> variables, JaktInternal::DynamicArray<types::ModuleId> imports, DeprecatedString resolved_import_path, bool is_root);
 
 ErrorOr<types::TypeId> new_type_variable(JaktInternal::Optional<JaktInternal::DynamicArray<types::TypeId>> const implemented_traits);
 ErrorOr<types::FunctionId> add_function(NonnullRefPtr<types::CheckedFunction> const checked_function);
@@ -966,7 +966,7 @@ using Variant<CheckedStatement_Details::Expression, CheckedStatement_Details::De
     using Yield = CheckedStatement_Details::Yield;
     using InlineCpp = CheckedStatement_Details::InlineCpp;
     using Garbage = CheckedStatement_Details::Garbage;
-template<typename V, typename... Args> static auto create(Args&&... args) {
+template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {
 return adopt_nonnull_ref_or_enomem(new (nothrow) CheckedStatement(V(forward<Args>(args)...)));
 }
 ErrorOr<DeprecatedString> debug_description() const;
@@ -979,7 +979,7 @@ virtual ~Scope() = default;
 JaktInternal::Optional<DeprecatedString> namespace_name;JaktInternal::Optional<DeprecatedString> external_name;JaktInternal::Dictionary<DeprecatedString,types::VarId> vars;JaktInternal::Dictionary<DeprecatedString,types::Value> comptime_bindings;JaktInternal::Dictionary<DeprecatedString,types::StructId> structs;JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<types::FunctionId>> functions;JaktInternal::Dictionary<DeprecatedString,types::EnumId> enums;JaktInternal::Dictionary<DeprecatedString,types::TypeId> types;JaktInternal::Dictionary<DeprecatedString,types::TraitId> traits;JaktInternal::Dictionary<DeprecatedString,types::ModuleId> imports;JaktInternal::Dictionary<DeprecatedString,types::ScopeId> aliases;JaktInternal::Optional<types::ScopeId> parent;JaktInternal::Optional<types::ScopeId> alias_scope;JaktInternal::DynamicArray<types::ScopeId> children;bool can_throw;JaktInternal::Optional<DeprecatedString> import_path_if_extern;JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> alias_path;JaktInternal::DynamicArray<parser::IncludeAction> after_extern_include;JaktInternal::DynamicArray<parser::IncludeAction> before_extern_include;DeprecatedString debug_name;JaktInternal::DynamicArray<types::ScopeId> resolution_mixins;protected:
 explicit Scope(JaktInternal::Optional<DeprecatedString>&& a_namespace_name, JaktInternal::Optional<DeprecatedString>&& a_external_name, JaktInternal::Dictionary<DeprecatedString,types::VarId>&& a_vars, JaktInternal::Dictionary<DeprecatedString,types::Value>&& a_comptime_bindings, JaktInternal::Dictionary<DeprecatedString,types::StructId>&& a_structs, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<types::FunctionId>>&& a_functions, JaktInternal::Dictionary<DeprecatedString,types::EnumId>&& a_enums, JaktInternal::Dictionary<DeprecatedString,types::TypeId>&& a_types, JaktInternal::Dictionary<DeprecatedString,types::TraitId>&& a_traits, JaktInternal::Dictionary<DeprecatedString,types::ModuleId>&& a_imports, JaktInternal::Dictionary<DeprecatedString,types::ScopeId>&& a_aliases, JaktInternal::Optional<types::ScopeId>&& a_parent, JaktInternal::Optional<types::ScopeId>&& a_alias_scope, JaktInternal::DynamicArray<types::ScopeId>&& a_children, bool&& a_can_throw, JaktInternal::Optional<DeprecatedString>&& a_import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>>&& a_alias_path, JaktInternal::DynamicArray<parser::IncludeAction>&& a_after_extern_include, JaktInternal::DynamicArray<parser::IncludeAction>&& a_before_extern_include, DeprecatedString&& a_debug_name, JaktInternal::DynamicArray<types::ScopeId>&& a_resolution_mixins);
 public:
-static ErrorOr<NonnullRefPtr<Scope>> create(JaktInternal::Optional<DeprecatedString> namespace_name, JaktInternal::Optional<DeprecatedString> external_name, JaktInternal::Dictionary<DeprecatedString,types::VarId> vars, JaktInternal::Dictionary<DeprecatedString,types::Value> comptime_bindings, JaktInternal::Dictionary<DeprecatedString,types::StructId> structs, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<types::FunctionId>> functions, JaktInternal::Dictionary<DeprecatedString,types::EnumId> enums, JaktInternal::Dictionary<DeprecatedString,types::TypeId> types, JaktInternal::Dictionary<DeprecatedString,types::TraitId> traits, JaktInternal::Dictionary<DeprecatedString,types::ModuleId> imports, JaktInternal::Dictionary<DeprecatedString,types::ScopeId> aliases, JaktInternal::Optional<types::ScopeId> parent, JaktInternal::Optional<types::ScopeId> alias_scope, JaktInternal::DynamicArray<types::ScopeId> children, bool can_throw, JaktInternal::Optional<DeprecatedString> import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> alias_path, JaktInternal::DynamicArray<parser::IncludeAction> after_extern_include, JaktInternal::DynamicArray<parser::IncludeAction> before_extern_include, DeprecatedString debug_name, JaktInternal::DynamicArray<types::ScopeId> resolution_mixins);
+static ErrorOr<NonnullRefPtr<Scope>> __jakt_create(JaktInternal::Optional<DeprecatedString> namespace_name, JaktInternal::Optional<DeprecatedString> external_name, JaktInternal::Dictionary<DeprecatedString,types::VarId> vars, JaktInternal::Dictionary<DeprecatedString,types::Value> comptime_bindings, JaktInternal::Dictionary<DeprecatedString,types::StructId> structs, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<types::FunctionId>> functions, JaktInternal::Dictionary<DeprecatedString,types::EnumId> enums, JaktInternal::Dictionary<DeprecatedString,types::TypeId> types, JaktInternal::Dictionary<DeprecatedString,types::TraitId> traits, JaktInternal::Dictionary<DeprecatedString,types::ModuleId> imports, JaktInternal::Dictionary<DeprecatedString,types::ScopeId> aliases, JaktInternal::Optional<types::ScopeId> parent, JaktInternal::Optional<types::ScopeId> alias_scope, JaktInternal::DynamicArray<types::ScopeId> children, bool can_throw, JaktInternal::Optional<DeprecatedString> import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> alias_path, JaktInternal::DynamicArray<parser::IncludeAction> after_extern_include, JaktInternal::DynamicArray<parser::IncludeAction> before_extern_include, DeprecatedString debug_name, JaktInternal::DynamicArray<types::ScopeId> resolution_mixins);
 
 ErrorOr<DeprecatedString> debug_description() const;
 };class CheckedProgram : public RefCounted<CheckedProgram>, public Weakable<CheckedProgram> {
@@ -1001,7 +1001,7 @@ types::ScopeId prelude_scope_id() const;
 protected:
 explicit CheckedProgram(NonnullRefPtr<compiler::Compiler>&& a_compiler, JaktInternal::DynamicArray<NonnullRefPtr<types::Module>>&& a_modules, JaktInternal::Dictionary<DeprecatedString,types::LoadedModule>&& a_loaded_modules);
 public:
-static ErrorOr<NonnullRefPtr<CheckedProgram>> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::DynamicArray<NonnullRefPtr<types::Module>> modules, JaktInternal::Dictionary<DeprecatedString,types::LoadedModule> loaded_modules);
+static ErrorOr<NonnullRefPtr<CheckedProgram>> __jakt_create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::DynamicArray<NonnullRefPtr<types::Module>> modules, JaktInternal::Dictionary<DeprecatedString,types::LoadedModule> loaded_modules);
 
 NonnullRefPtr<types::CheckedFunction> get_function(types::FunctionId const id) const;
 ErrorOr<JaktInternal::Optional<types::Value>> find_comptime_binding_in_scope(types::ScopeId const scope_id, DeprecatedString const name) const;
@@ -1101,7 +1101,7 @@ virtual ~CheckedTrait() = default;
 DeprecatedString name;utility::Span name_span;JaktInternal::Dictionary<DeprecatedString,types::FunctionId> methods;JaktInternal::DynamicArray<types::CheckedGenericParameter> generic_parameters;types::ScopeId scope_id;protected:
 explicit CheckedTrait(DeprecatedString&& a_name, utility::Span&& a_name_span, JaktInternal::Dictionary<DeprecatedString,types::FunctionId>&& a_methods, JaktInternal::DynamicArray<types::CheckedGenericParameter>&& a_generic_parameters, types::ScopeId&& a_scope_id);
 public:
-static ErrorOr<NonnullRefPtr<CheckedTrait>> create(DeprecatedString name, utility::Span name_span, JaktInternal::Dictionary<DeprecatedString,types::FunctionId> methods, JaktInternal::DynamicArray<types::CheckedGenericParameter> generic_parameters, types::ScopeId scope_id);
+static ErrorOr<NonnullRefPtr<CheckedTrait>> __jakt_create(DeprecatedString name, utility::Span name_span, JaktInternal::Dictionary<DeprecatedString,types::FunctionId> methods, JaktInternal::DynamicArray<types::CheckedGenericParameter> generic_parameters, types::ScopeId scope_id);
 
 ErrorOr<DeprecatedString> debug_description() const;
 };namespace CheckedNumericConstant_Details {
@@ -1641,7 +1641,7 @@ using Variant<CheckedExpression_Details::Boolean, CheckedExpression_Details::Num
     using Try = CheckedExpression_Details::Try;
     using TryBlock = CheckedExpression_Details::TryBlock;
     using Garbage = CheckedExpression_Details::Garbage;
-template<typename V, typename... Args> static auto create(Args&&... args) {
+template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {
 return adopt_nonnull_ref_or_enomem(new (nothrow) CheckedExpression(V(forward<Args>(args)...)));
 }
 ErrorOr<DeprecatedString> debug_description() const;
@@ -1675,7 +1675,7 @@ virtual ~FunctionGenerics() = default;
 types::ScopeId base_scope_id;JaktInternal::DynamicArray<types::CheckedParameter> base_params;JaktInternal::DynamicArray<types::FunctionGenericParameter> params;JaktInternal::DynamicArray<JaktInternal::DynamicArray<types::TypeId>> specializations;protected:
 explicit FunctionGenerics(types::ScopeId&& a_base_scope_id, JaktInternal::DynamicArray<types::CheckedParameter>&& a_base_params, JaktInternal::DynamicArray<types::FunctionGenericParameter>&& a_params, JaktInternal::DynamicArray<JaktInternal::DynamicArray<types::TypeId>>&& a_specializations);
 public:
-static ErrorOr<NonnullRefPtr<FunctionGenerics>> create(types::ScopeId base_scope_id, JaktInternal::DynamicArray<types::CheckedParameter> base_params, JaktInternal::DynamicArray<types::FunctionGenericParameter> params, JaktInternal::DynamicArray<JaktInternal::DynamicArray<types::TypeId>> specializations);
+static ErrorOr<NonnullRefPtr<FunctionGenerics>> __jakt_create(types::ScopeId base_scope_id, JaktInternal::DynamicArray<types::CheckedParameter> base_params, JaktInternal::DynamicArray<types::FunctionGenericParameter> params, JaktInternal::DynamicArray<JaktInternal::DynamicArray<types::TypeId>> specializations);
 
 bool is_specialized_for_types(JaktInternal::DynamicArray<types::TypeId> const types) const;
 ErrorOr<DeprecatedString> debug_description() const;
@@ -2013,7 +2013,7 @@ using Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Det
     using MutableReference = Type_Details::MutableReference;
     using Function = Type_Details::Function;
     using Self = Type_Details::Self;
-template<typename V, typename... Args> static auto create(Args&&... args) {
+template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {
 return adopt_nonnull_ref_or_enomem(new (nothrow) Type(V(forward<Args>(args)...)));
 }
 ErrorOr<DeprecatedString> debug_description() const;
