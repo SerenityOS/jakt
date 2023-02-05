@@ -1270,7 +1270,7 @@ struct CodeGenerator {
             if is_generic {
                 fully_instantiated_name += format("<{}>", join(generic_parameter_names, separator: ", "))
             }
-            output += "template<typename V, typename... Args> static auto create(Args&&... args) {\n"
+            output += "template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {\n"
             output += format("return adopt_nonnull_ref_or_enomem(new (nothrow) {}(V(forward<Args>(args)...)));\n", fully_instantiated_name)
             output += "}\n"
         }
@@ -2756,8 +2756,7 @@ struct CodeGenerator {
                                 let struct_ = .program.get_struct(struct_id)
                                 if struct_.record_type is Class {
                                     output += call.name_for_codegen()
-                                    output += "::"
-                                    output += "create"
+                                    output += "::__jakt_create"
                                 } else {
                                     output += call.name_for_codegen()
                                 }
@@ -2777,7 +2776,7 @@ struct CodeGenerator {
                                         }
                                         output += .codegen_type(arg)
                                     }
-                                    output += ">::create"
+                                    output += ">::__jakt_create"
                                 } else {
                                     output += call.name_for_codegen()
                                     output += "<"
@@ -2804,7 +2803,7 @@ struct CodeGenerator {
                                 let enum_type_module = .program.get_module(enum_id.module)
                                 if enum_.is_boxed {
                                     output += .codegen_namespace_path(call)
-                                    output += "template create<typename "
+                                    output += "template __jakt_create<typename "
                                     output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
                                     output += "::" + call.name_for_codegen() + ">"
                                 } else {
@@ -3440,7 +3439,7 @@ struct CodeGenerator {
             }
 
             output += "public:\n"
-            output += format("static ErrorOr<NonnullRefPtr<{}>> create", class_name_with_generics)
+            output += format("static ErrorOr<NonnullRefPtr<{}>> __jakt_create", class_name_with_generics)
             output += "("
 
             first = true
@@ -3587,7 +3586,7 @@ struct CodeGenerator {
                 true => ""
                 else => qualified_name + "::"
             }
-            output += format("ErrorOr<NonnullRefPtr<{}>> {}create", class_name_with_generics, qualified_namespace)
+            output += format("ErrorOr<NonnullRefPtr<{}>> {}__jakt_create", class_name_with_generics, qualified_namespace)
             output += "("
 
             first = true
