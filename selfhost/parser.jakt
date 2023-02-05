@@ -4031,7 +4031,7 @@ struct Parser {
     fn parse_if_statement(mut this) throws -> ParsedStatement {
         if not .current() is If {
             .error("Expected ‘if’ statement", .current().span())
-            return ParsedStatement::Garbage(span: .current().span())
+            return ParsedStatement::Garbage(.current().span())
         }
 
         let start_span = .current().span()

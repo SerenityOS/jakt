@@ -520,7 +520,7 @@ fn find_span_in_struct(program: CheckedProgram, checked_struct: CheckedStruct, s
 fn find_span_in_function(program: CheckedProgram, checked_function: CheckedFunction, span: Span) throws -> Usage? {
     if checked_function.return_type_span.has_value() {
         if checked_function.return_type_span!.contains(span) {
-            return Some(Usage::Typename(type_id: checked_function.return_type_id))
+            return Some(Usage::Typename(checked_function.return_type_id))
         }
     }
 

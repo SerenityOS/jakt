@@ -309,8 +309,8 @@ struct CodeGenerator {
                 let scope = generator.program.get_scope(scope_id)
 
                 if as_forward {
-                    for child_scope in scope.children {
-                        let scope = generator.program.get_scope(scope_id: child_scope)
+                    for child_scope_id in scope.children {
+                        let scope = generator.program.get_scope(child_scope_id)
                         if scope.import_path_if_extern.has_value() {
                             let has_name = scope.namespace_name.has_value()
                             if has_name {
@@ -2087,7 +2087,7 @@ struct CodeGenerator {
         output += format(
             "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<{},{}>"
             .codegen_type(return_type_id)
-            .codegen_function_return_type(function_: .current_function!)
+            .codegen_function_return_type(function: .current_function!)
         ) + "{\n"
 
         if is_generic_enum {
@@ -2224,7 +2224,7 @@ struct CodeGenerator {
             output += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
             output += .codegen_type(type_id)
             output += ", "
-            output += .codegen_function_return_type(function_: .current_function!)
+            output += .codegen_function_return_type(function: .current_function!)
             output += ">{\n"
             output += "auto&& __jakt_match_variant = "
             if needs_deref {
@@ -2366,7 +2366,7 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_function_return_type(mut this, anon function: CheckedFunction) throws -> String {
+    fn codegen_function_return_type(mut this, function: CheckedFunction) throws -> String {
         if function.is_static() and function.name_for_codegen() == "main" {
             return "ErrorOr<int>"
         }

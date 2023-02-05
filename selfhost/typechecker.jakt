@@ -4272,11 +4272,11 @@ struct Typechecker {
     fn typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId, name: String?) throws -> TypeId => match parsed_type {
         Reference(inner) => {
             let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
-            yield .find_or_add_type_id(Type::Reference(id: inner_type_id))
+            yield .find_or_add_type_id(Type::Reference(inner_type_id))
         }
         MutableReference(inner) => {
             let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
-            yield .find_or_add_type_id(Type::MutableReference(id: inner_type_id))
+            yield .find_or_add_type_id(Type::MutableReference(inner_type_id))
         }
         NamespacedName(name, namespaces, params, span) => {
             mut current_namespace_scope_id = scope_id
@@ -4398,7 +4398,7 @@ struct Typechecker {
         RawPtr(inner, span) => {
             let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
 
-            yield .find_or_add_type_id(Type::RawPtr(id: inner_type_id))
+            yield .find_or_add_type_id(Type::RawPtr(inner_type_id))
         }
         GenericType(name, generic_parameters, span) => {
             mut checked_inner_types: [TypeId] = []
@@ -4806,7 +4806,7 @@ struct Typechecker {
         }
 
         // Ensure that we don't use any bindings we shouldn't have access to
-        let checked_else_block = .typecheck_block(block: else_block, parent_scope_id: scope_id, safety_mode)
+        let checked_else_block = .typecheck_block(else_block, parent_scope_id: scope_id, safety_mode)
 
         if not seen_scope_exit and checked_else_block.control_flow.may_return() {
             .error("Else block of guard must either `return`, `break`, `continue`, or `throw`", span) // FIXME: better span?
@@ -5294,7 +5294,7 @@ struct Typechecker {
             visibility: CheckedVisibility::Public
         )
         mut module = .current_module()
-        let error_id = module.add_variable(name: error_decl)
+        let error_id = module.add_variable(error_decl)
 
         let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "catch")
         .add_var_to_scope(scope_id: catch_scope_id, name: error_name, var_id: error_id, span: error_span)
@@ -5332,7 +5332,7 @@ struct Typechecker {
                     visibility: CheckedVisibility::Public
                 )
                 mut module = .current_module()
-                let error_id = module.add_variable(name: error_decl)
+                let error_id = module.add_variable(error_decl)
                 .add_var_to_scope(scope_id: catch_scope_id, name: catch_name!, var_id: error_id, span)
             }
 
@@ -7594,7 +7594,7 @@ struct Typechecker {
                         message: format("Type '{}' does not match type '{}' of previous keys in dictionary", current_key_type_name, key_type_name)
                         span: key.span()
                         hint: format("Dictionary was inferred to store keys of type '{}' here", key_type_name)
-                        span: key_type_span!
+                        hint_span: key_type_span!
                     )
                 }
                 if not value_type_id.equals(current_value_type_id) {
@@ -7604,7 +7604,7 @@ struct Typechecker {
                         message: format("Type '{}' does not match type '{}' of previous values in dictionary", current_value_type_name, value_type_name)
                         span: value.span()
                         hint: format("Dictionary was inferred to store values of type '{}' here", value_type_name)
-                        span: value_type_span!
+                        hint_span: value_type_span!
                     )
                 }
             }
@@ -8279,7 +8279,7 @@ struct Typechecker {
             mut invocation_scope = InterpreterScope::create(type_bindings)
             try {
                 result = interpreter.execute(
-                    function_to_run: resolved_function_id!
+                    function_to_run_id: resolved_function_id!
                     namespace_: resolved_namespaces
                     this_argument: this_argument
                     arguments: call_args
@@ -8357,6 +8357,12 @@ struct Typechecker {
                     maybe_checked_expr = param.default_value
                 } else {
                     let (name, span, expr) = args[consumed_arg]
+
+                    // The label is not required, but if it is present regardless, it has to match the parameter name
+                    if not name.is_empty() and name != param.variable.name {
+                        .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", name, param.variable.name), span)
+                    }
+
                     maybe_checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: param.variable.type_id)
                     consumed_arg++
                 }
