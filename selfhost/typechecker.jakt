@@ -4714,12 +4714,14 @@ struct Typechecker {
                 }
 
                 let lhs_type = .unwrap_type_from_optional_if_needed(type: .get_type(lhs_type_id))
-                if lhs_type is GenericInstance(id, args) {
-                    if .program.get_struct(id).name == "WeakPtr" {
-                        let unified_type = .unify(lhs: args[0], lhs_span, rhs: checked_rhs.type(), rhs_span)
-                        if unified_type.has_value() {
-                            return unified_type!
-                        }
+                if lhs_type is GenericInstance(id, args)
+                    and .program.get_struct(id).name == "WeakPtr"
+                    and not lhs_type_id.equals(rhs_type_id)
+                {
+                    // Try to handle assignment to `weak T?` from `T`
+                    let unified_type = .unify(lhs: args[0], lhs_span, rhs: checked_rhs.type(), rhs_span)
+                    if unified_type.has_value() {
+                        return unified_type!
                     }
                 }
 
