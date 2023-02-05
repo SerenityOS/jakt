@@ -108,6 +108,7 @@ fn display_message_with_span(anon severity: MessageSeverity, file_name: String, 
     while line_index < line_spans.size() and span.end > line_spans[line_index].0 {
         print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
         if span.end <= line_spans[line_index].1 {
+            print_underline(severity, width, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
             break
         }
         ++line_index
@@ -168,6 +169,31 @@ fn print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: 
         eprint("{:c}", c)
 
         ++index
+    }
+    eprintln("")
+}
+
+fn print_underline(severity: MessageSeverity, width: usize, file_span: (usize, usize), error_span: Span, line_number: usize, largest_line_number: usize) throws {
+    // Print the error label
+    for x in 0..(width + 2) {
+        eprint(" ")
+    }
+    eprint("│ ")
+
+    for index in (file_span.0)..(file_span.1) {
+        if index == error_span.start {
+            eprint("\u001b[{}m", severity.ansi_color_code())
+        }
+
+        if (index == error_span.end - 1) {
+            eprint("┬\u001b[0m")
+        }
+        else if (index >= error_span.start) and (index < error_span.end) {
+            eprint("─")
+        }
+        else {
+            eprint(" ")
+        }
     }
     eprintln("")
 }
