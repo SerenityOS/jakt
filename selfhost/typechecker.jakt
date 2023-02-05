@@ -2634,7 +2634,7 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_enum_constructor(mut this, record: ParsedRecord, enum_id: EnumId, parent_scope_id: ScopeId) throws {
+    fn typecheck_enum_constructor(mut this, parsed_record: ParsedRecord, enum_id: EnumId, parent_scope_id: ScopeId) throws {
         mut next_constant_value = 0u64
         mut seen_names: {String} = {}
 
@@ -2658,7 +2658,7 @@ struct Typechecker {
             common_fields.push(field.variable_id)
         }
 
-        match record.record_type {
+        match parsed_record.record_type {
             ValueEnum(underlying_type, variants) => {
                 let underlying_type_id = .typecheck_typename(parsed_type: underlying_type, scope_id: parent_scope_id, name: None)
                 mut module = .current_module()
@@ -3191,7 +3191,7 @@ struct Typechecker {
             .add_var_to_scope(
                 scope_id: check_scope!,
                 name: parameter.variable.name,
-                variable: var_id,
+                var_id,
                 span: parameter.variable.span,
             )
         }
@@ -5967,7 +5967,7 @@ struct Typechecker {
     ) throws -> CheckedExpression => match expr {
         IndexedStruct(expr, field_name, span, is_optional) => .typecheck_indexed_struct(expr, field_name, scope_id, is_optional, safety_mode, span)
         Boolean(val, span) => {
-            .unify_with_type(found_type: builtin(BuiltinType::Bool), expected_type: type_hint, rhs_span: span)
+            .unify_with_type(found_type: builtin(BuiltinType::Bool), expected_type: type_hint, span)
             yield CheckedExpression::Boolean(val, span)
         }
         NumericConstant(val, span) => {
@@ -6709,7 +6709,7 @@ struct Typechecker {
         }
         mut checked_namespaces: [CheckedNamespace] = []
         while i < min_length {
-            checked_namespaces.push(CheckedNamespace(name: namespace_[i], scope_id: scope))
+            checked_namespaces.push(CheckedNamespace(name: namespace_[i], scope))
             i++
         }
 
@@ -8416,37 +8416,19 @@ struct Typechecker {
     }
 
     fn validate_argument_label(mut this, param: CheckedParameter, label: String, span: Span, expr: ParsedExpression, default_value: CheckedExpression?) throws -> bool {
-        if label == param.variable.name {
+        let name = .get_argument_name(arg: (label, span, expr))
+        if name == param.variable.name {
             return true
         }
-        match expr {
-            Var(name, span) => {
-                if name == param.variable.name {
-                    return true
-                }
-                if not default_value.has_value() {
-                    .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", name, param.variable.name), span)
-                }
-                return false
-            }
-            UnaryOp(expr, op) => {
-                if op is Reference or op is MutableReference or op is Dereference {
-                    if expr is Var(name, span) {
-                        if name == param.variable.name {
-                            return true
-                        }
-                        if not default_value.has_value() {
-                            .error(format("Wrong parameter name in argument label (got ‘{}’, expected ‘{}’)", name, param.variable.name), span)
-                        }
-                        return false
-                    }
-                }
-            }
-            else => {}
-        }
+
         if not default_value.has_value() {
-            .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", label, param.variable.name), span)
+            if label.is_empty() {
+                .error(format("Missing argument label (expected '{}:')", param.variable.name), expr.span())
+            } else {
+                .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", label, param.variable.name), span)
+            }
         }
+
         return false
     }
 

@@ -1,0 +1,9 @@
+/// Expect:
+/// - error: "Wrong parameter name in argument label (got 'bad', expected 'good')\n"
+
+fn test(good: i64) {}
+
+fn main() {
+    let good = 2
+    test(bad: good)
+}

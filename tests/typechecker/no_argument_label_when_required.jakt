@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Wrong parameter name in argument label"
+/// - error: "Missing argument label (expected 'a:')"
 
 fn foo(a: bool, b: bool) {
 }

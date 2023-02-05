@@ -2058,7 +2058,7 @@ struct Parser {
                 Identifier(name, span) => {
                     alias.alias_name = ParsedName(
                         name
-                        name_span: span
+                        span
                     )
                     .index++
                 }
