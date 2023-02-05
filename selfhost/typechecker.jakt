@@ -8450,6 +8450,28 @@ struct Typechecker {
         return false
     }
 
+    fn get_argument_name(this, arg: (String, Span, ParsedExpression)) -> String {
+        if not arg.0.is_empty() {
+            return arg.0
+        }
+
+        match arg.2 {
+            Var(name) => {
+                return name
+            }
+            UnaryOp(expr, op) => {
+                if op is Reference or op is MutableReference or op is Dereference {
+                    if expr is Var(name) {
+                        return name
+                    }
+                }
+            }
+            else => {}
+        }
+
+        return ""
+    }
+
     fn find_all_implementations_of_trait(mut this, type_id: TypeId, trait_id: TraitId) throws -> [[TypeId]] {
         return match .get_type(type_id) {
             Struct(struct_id) | GenericInstance(id: struct_id) => {
