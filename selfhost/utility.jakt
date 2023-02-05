@@ -96,7 +96,7 @@ struct Span {
         return .file_id.equals(span.file_id) and span.start >= .start and span.end <= .end
     }
 
-    fn is_in_offset_range(this, start: usize, end: usize) => start <= .start and end >= .end
+    fn is_in_offset_range(this, start: usize, end: usize) -> bool => start <= .start and end >= .end
 }
 
 struct FileId {

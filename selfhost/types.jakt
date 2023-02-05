@@ -55,7 +55,7 @@ struct GenericInferences {
         return TypeId::from_string(.map_name(type_id.to_string()))
     }
 
-    fn iterator(this) => .values
+    fn iterator(this) -> [String:String] => .values
 
     fn perform_checkpoint(mut this, reset: bool = true) throws -> [String:String] {
         let result = .values
@@ -219,7 +219,7 @@ enum BuiltinType {
     Unknown
     Never
 
-    fn id(this) => match this {
+    fn id(this) -> usize => match this {
         Void => 0uz
         Bool => 1uz
         U8 => 2uz
@@ -279,7 +279,7 @@ boxed enum Type {
         else => true
     }
 
-    fn specificity(this, program: CheckedProgram, base_specificity: i64 = 1<<31) => match this {
+    fn specificity(this, program: CheckedProgram, base_specificity: i64 = 1<<31) -> i64 => match this {
         TypeVariable => 0
         GenericInstance(args) => {
             mut specificity = base_specificity / 2
@@ -316,7 +316,7 @@ boxed enum Type {
         else => base_specificity
     }
 
-    fn constructor_name(this) => match this {
+    fn constructor_name(this) -> String => match this {
         Void => "Void"
         Bool => "Bool"
         U8 => "U8"
@@ -592,6 +592,8 @@ class Scope {
 
     public debug_name: String
     public resolution_mixins: [ScopeId]
+
+    public is_block_scope: bool = true
 }
 
 class Module {
@@ -928,12 +930,12 @@ struct FunctionGenericParameter {
     kind: FunctionGenericParameterKind
     checked_parameter: CheckedGenericParameter
 
-    fn type_id(this) => .checked_parameter.type_id
+    fn type_id(this) -> TypeId => .checked_parameter.type_id
 
     fn parameter(
         anon type_id: TypeId
         span: Span
-    ) throws => FunctionGenericParameter(
+    ) throws -> FunctionGenericParameter => FunctionGenericParameter(
         kind: FunctionGenericParameterKind::Parameter
         checked_parameter: CheckedGenericParameter::make(type_id, span)
     )
@@ -978,7 +980,7 @@ enum BlockControlFlow {
     PartialAlwaysTransfersControl(might_break: bool)
     PartialNeverReturns(might_break: bool)
 
-    fn unify_with(this, anon second: BlockControlFlow) => match this {
+    fn unify_with(this, anon second: BlockControlFlow) -> BlockControlFlow => match this {
         NeverReturns => second
         AlwaysReturns => match second {
             NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysReturns
@@ -1025,7 +1027,7 @@ enum BlockControlFlow {
         }
     }
 
-    public fn branch_unify_with(this, anon second: BlockControlFlow) => match this {
+    public fn branch_unify_with(this, anon second: BlockControlFlow) -> BlockControlFlow => match this {
         NeverReturns => second
         AlwaysReturns => match second {
             NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysReturns
@@ -1077,7 +1079,7 @@ enum BlockControlFlow {
         }
     }
 
-    fn updated(this, anon second: BlockControlFlow) => match this {
+    fn updated(this, anon second: BlockControlFlow) -> BlockControlFlow => match this {
         NeverReturns => BlockControlFlow::NeverReturns
         AlwaysReturns => BlockControlFlow::AlwaysReturns
         AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
@@ -1085,7 +1087,7 @@ enum BlockControlFlow {
         PartialAlwaysTransfersControl | PartialAlwaysReturns | PartialNeverReturns => .unify_with(second)
     }
 
-    fn partial(this) => match this {
+    fn partial(this) -> BlockControlFlow => match this {
         NeverReturns => BlockControlFlow::PartialNeverReturns(might_break: false)
         AlwaysReturns => BlockControlFlow::PartialAlwaysReturns(might_break: false)
         MayReturn => BlockControlFlow::MayReturn
@@ -1095,7 +1097,7 @@ enum BlockControlFlow {
         PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
     }
 
-    fn definitive(this) => match this {
+    fn definitive(this) -> BlockControlFlow => match this {
         NeverReturns => BlockControlFlow::NeverReturns
         AlwaysReturns => BlockControlFlow::AlwaysReturns
         AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
@@ -1103,32 +1105,36 @@ enum BlockControlFlow {
         else => BlockControlFlow::MayReturn
     }
 
-    fn always_transfers_control(this) => match this {
+    fn always_transfers_control(this) -> bool => match this {
         AlwaysReturns | AlwaysTransfersControl => true
         else => false
     }
 
-    fn never_returns(this) => match this {
+    fn never_returns(this) -> bool => match this {
         NeverReturns => true
         else => false
     }
 
-    fn always_returns(this) => match this {
+    fn always_returns(this) -> bool => match this {
         AlwaysReturns => true
         else => false
     }
 
-    fn may_return(this) => match this {
+    fn may_return(this) -> bool => match this {
         MayReturn | PartialAlwaysReturns | PartialAlwaysTransfersControl | PartialNeverReturns => true
         else => false
     }
 
-    fn may_break(this) => match this {
-        PartialAlwaysReturns(might_break) | PartialAlwaysTransfersControl(might_break) | PartialNeverReturns(might_break) | AlwaysTransfersControl(might_break) => might_break
+    fn may_break(this) -> bool => match this {
+        PartialAlwaysReturns(might_break)
+        | PartialAlwaysTransfersControl(might_break)
+        | PartialNeverReturns(might_break)
+        | AlwaysTransfersControl(might_break)
+        => might_break
         else => false
     }
 
-    fn is_reachable(this) => match this {
+    fn is_reachable(this) -> bool => match this {
         NeverReturns | AlwaysReturns | AlwaysTransfersControl => false
         else => true
     }
@@ -1190,7 +1196,10 @@ struct CheckedGenericParameter {
     constraints: [TraitId]
     span: Span
 
-    fn make(anon type_id: TypeId, span: Span) throws => CheckedGenericParameter(type_id, constraints: [], span)
+    fn make(
+        anon type_id: TypeId
+        span: Span
+    ) throws -> CheckedGenericParameter => CheckedGenericParameter(type_id, constraints: [], span)
 }
 
 enum CheckedEnumVariant {
@@ -1220,7 +1229,7 @@ enum CheckedEnumVariant {
         Untyped(span) => span
         Typed(span) => span
         WithValue(span) => span
-        StructLike(span)  => span
+        StructLike(span) => span
     }
 
     fn name(this) -> String => match this {
@@ -1255,7 +1264,7 @@ boxed enum CheckedStatement {
     InlineCpp(lines: [String], span: Span)
     Garbage(Span)
 
-    fn span(this) => match this {
+    fn span(this) -> Span? => match this {
         Expression(span) => Some(span)
         else(span) => span
     }
@@ -1471,13 +1480,45 @@ boxed enum CheckedExpression {
     }
 
     fn is_mutable(this, program: CheckedProgram) -> bool => match this {
+        Boolean
+        | NumericConstant
+        | QuotedString
+        | ByteConstant
+        | CharacterConstant
+        | CCharacterConstant
+        => true
         Var(var) => var.is_mutable
-        IndexedStruct(expr) => expr.is_mutable(program)
-        IndexedExpression(expr) => expr.is_mutable(program)
-        ComptimeIndex(expr) => expr.is_mutable(program)
-        IndexedTuple(expr) => expr.is_mutable(program)
-        IndexedDictionary(expr) => expr.is_mutable(program)
-        ForcedUnwrap(expr) => expr.is_mutable(program)
+        IndexedStruct(expr)
+        | IndexedExpression(expr)
+        | ComptimeIndex(expr)
+        | IndexedTuple(expr)
+        | IndexedDictionary(expr)
+        | ForcedUnwrap(expr)
+        => expr.is_mutable(program)
+        JaktArray(vals)
+        | JaktSet(vals)
+        => {
+            mut result = false
+            for val in vals {
+                if val.is_mutable(program) {
+                    result = true
+                    break
+                }
+            }
+
+            yield result
+        }
+        JaktDictionary(vals) => {
+            mut result = false
+            for (_, val) in vals {
+                if val.is_mutable(program) {
+                    result = true
+                    break
+                }
+            }
+
+            yield result
+        }
         UnaryOp(expr, op) => match op {
             Dereference => match program.get_type(expr.type()) {
                 MutableReference => true
@@ -1570,7 +1611,7 @@ class CheckedProgram {
     public modules: [Module]
     public loaded_modules: [String: LoadedModule]
 
-    public fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, module_id: ModuleId) throws -> ScopeId {
+    public fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, module_id: ModuleId, for_block: bool = true) throws -> ScopeId {
         // Check that parent_scope_id is a valid ScopeId
         if parent_scope_id.has_value() {
             // Check that the ModuleId is valid
@@ -1606,6 +1647,7 @@ class CheckedProgram {
             before_extern_include: []
             debug_name
             resolution_mixins: []
+            is_block_scope: for_block
         )
 
         .modules[module_id.id].scopes.push(scope)
@@ -1722,9 +1764,9 @@ class CheckedProgram {
 
     public fn is_string(this, anon type_id: TypeId) -> bool => .get_type(type_id) is JaktString
 
-    public fn get_bits(this, anon type_id: TypeId) => .get_type(type_id).get_bits()
+    public fn get_bits(this, anon type_id: TypeId) -> i64 => .get_type(type_id).get_bits()
 
-    public fn is_signed(this, anon type_id: TypeId) => .get_type(type_id).is_signed()
+    public fn is_signed(this, anon type_id: TypeId) -> bool => .get_type(type_id).is_signed()
 
     private fn for_each_scope_accessible_unqualified_from_scope_impl(
         this
@@ -2354,7 +2396,7 @@ boxed enum ValueImpl {
         scope_id: ScopeId
     )
 
-    fn copy(this) throws => match this {
+    fn copy(this) throws -> ValueImpl => match this {
         Void => ValueImpl::Void
         Bool(x) => ValueImpl::Bool(x)
         U8(x) => ValueImpl::U8(x)
@@ -2443,7 +2485,7 @@ boxed enum ValueImpl {
         )
     }
 
-    fn equals(this, anon other: ValueImpl) => match this {
+    fn equals(this, anon other: ValueImpl) -> bool => match this {
         Void => other is Void
         Bool(x) => match other { Bool(y) => x == y else => false }
         U8(x) => match other { U8(y) => x == y else => false }
@@ -2469,8 +2511,8 @@ struct Value {
     impl: ValueImpl
     span: Span
 
-    fn copy(this) throws => Value(impl: .impl.copy(), span: .span)
-    fn type_name(this) => match .impl {
+    fn copy(this) throws -> Value => Value(impl: .impl.copy(), span: .span)
+    fn type_name(this) -> String => match .impl {
         Void => "void"
         Bool => "bool"
         U8 => "u8"

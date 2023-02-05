@@ -82,6 +82,7 @@ struct Typechecker {
     self_type_id: TypeId? = None
     root_module_name: String
     in_comptime_function_call: bool = false
+    had_an_error: bool = false
 
     fn type_name(this, anon type_id: TypeId, debug_mode: bool = false) throws -> String {
         mut id = type_id
@@ -147,7 +148,7 @@ struct Typechecker {
         )
 
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
-        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: false, debug_name: "root")
+        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: false, debug_name: "root", for_block: false)
         typechecker.typecheck_module_import(
             import_: ParsedModuleImport(
                 module_name: ImportName::Literal(
@@ -165,13 +166,13 @@ struct Typechecker {
         return typechecker
     }
 
-    fn get_function(this, anon id: FunctionId) => .program.get_function(id)
-    fn get_variable(this, anon id: VarId) => .program.get_variable(id)
-    fn get_trait(this, anon id: TraitId) => .program.get_trait(id)
-    fn get_type(this, anon id: TypeId) => .program.get_type(id)
-    fn get_enum(this, anon id: EnumId) => .program.get_enum(id)
-    fn get_struct(this, anon id: StructId) => .program.get_struct(id)
-    fn get_scope(this, anon id: ScopeId) throws => .program.get_scope(id)
+    fn get_function(this, anon id: FunctionId) -> CheckedFunction => .program.get_function(id)
+    fn get_variable(this, anon id: VarId) -> CheckedVariable => .program.get_variable(id)
+    fn get_trait(this, anon id: TraitId) -> CheckedTrait => .program.get_trait(id)
+    fn get_type(this, anon id: TypeId) -> Type => .program.get_type(id)
+    fn get_enum(this, anon id: EnumId) -> CheckedEnum => .program.get_enum(id)
+    fn get_struct(this, anon id: StructId) -> CheckedStruct => .program.get_struct(id)
+    fn get_scope(this, anon id: ScopeId) throws -> Scope => .program.get_scope(id)
     fn find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? => .program.find_var_in_scope(scope_id, var)
 
     fn lookup_struct_field(this, struct_id: StructId, name: String) throws -> FieldRecord? {
@@ -214,7 +215,7 @@ struct Typechecker {
     fn prelude_scope_id(this) -> ScopeId => .program.prelude_scope_id()
     fn root_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 1), id: 0)
 
-    fn current_module(this) => .program.get_module(.current_module_id)
+    fn current_module(this) -> Module => .program.get_module(.current_module_id)
 
     public fn scope_can_access(this, accessor: ScopeId, accessee: ScopeId) throws -> bool {
         if accessor.equals(accessee) {
@@ -234,6 +235,8 @@ struct Typechecker {
     fn error(mut this, anon message: String, anon span: Span) throws {
         if not .ignore_errors {
             .compiler.errors.push(JaktError::Message(message, span))
+        } else {
+            .had_an_error = true
         }
     }
 
@@ -243,11 +246,11 @@ struct Typechecker {
         }
     }
 
-    fn is_integer(this, anon type_id: TypeId) => .program.is_integer(type_id)
-    fn is_floating(this, anon type_id: TypeId) => .program.is_floating(type_id)
-    fn is_numeric(this, anon type_id: TypeId) => .program.is_numeric(type_id)
+    fn is_integer(this, anon type_id: TypeId) -> bool => .program.is_integer(type_id)
+    fn is_floating(this, anon type_id: TypeId) -> bool => .program.is_floating(type_id)
+    fn is_numeric(this, anon type_id: TypeId) -> bool => .program.is_numeric(type_id)
 
-    fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String) throws -> ScopeId => .program.create_scope(parent_scope_id, can_throw, debug_name, module_id: .current_module_id)
+    fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, for_block: bool = true) throws -> ScopeId => .program.create_scope(parent_scope_id, can_throw, debug_name, module_id: .current_module_id, for_block)
 
     fn create_module(mut this, name: String, is_root: bool, path: String? = None) throws -> ModuleId {
         let new_id = .program.modules.size()
@@ -330,6 +333,7 @@ struct Typechecker {
             parent_scope_id: None
             can_throw: false
             debug_name: "prelude"
+            for_block: false
         )
 
         let tokens = Lexer::lex(compiler: .compiler)
@@ -972,6 +976,7 @@ struct Typechecker {
                 parent_scope_id: .root_scope_id()
                 can_throw: false
                 debug_name: format("module({})", sanitized_module_name)
+                for_block: false
             )
 
             mut imported_scope = .get_scope(imported_scope_id)
@@ -1313,6 +1318,7 @@ struct Typechecker {
                     parent_scope_id: scope_id
                     can_throw: false
                     debug_name: format("alias-scope({})", scope.debug_name)
+                    for_block: false
                 )
                 mut new_scope = .get_scope(new_scope_id)
                 new_scope.alias_path = alias_path
@@ -1394,6 +1400,7 @@ struct Typechecker {
                         safety_mode: SafetyMode::Safe
                     )
                     .ignore_errors = old_ignore_errors
+                    .had_an_error = false
 
                     let function_return_type_id = func.return_type_id
 
@@ -1456,6 +1463,7 @@ struct Typechecker {
                 parent_scope_id
                 can_throw: false
                 debug_name
+                for_block: false
             )
             mut child_scope = .get_scope(namespace_scope_id)
             child_scope.namespace_name = namespace_.name
@@ -1642,7 +1650,7 @@ struct Typechecker {
     }
 
     fn typecheck_trait_predecl(mut this, parsed_trait: ParsedTrait, scope_id: ScopeId) throws {
-        let trait_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("trait({})", parsed_trait.name))
+        let trait_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("trait({})", parsed_trait.name), for_block: false)
         .add_type_to_scope(
             scope_id: trait_scope_id
             type_name: "Self"
@@ -1824,7 +1832,7 @@ struct Typechecker {
         .self_type_id = enum_type_id
         defer .self_type_id = old_self_type_id
 
-        let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("enum({})", parsed_record.name))
+        let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("enum({})", parsed_record.name), for_block: false)
         mut scope = .get_scope(enum_scope_id)
         scope.namespace_name = parsed_record.name
 
@@ -2357,135 +2365,13 @@ struct Typechecker {
 
         let is_extern = parsed_record.definition_linkage is External
         for method in parsed_record.methods {
-            let func = method.parsed_function
-
-            let method_scope_id = .create_scope(parent_scope_id: struct_scope_id, can_throw: func.can_throw, debug_name: format("method({}::{})", parsed_record.name, func.name))
-            let block_scope_id = .create_scope(parent_scope_id: method_scope_id, can_throw: func.can_throw, debug_name: format("method-block({}::{})", parsed_record.name, func.name))
-
-            let is_generic = not func.generic_parameters.is_empty()
-
-            mut checked_function = CheckedFunction(
-                name: func.name
-                name_span: func.name_span
-                visibility: .typecheck_visibility(visibility: method.visibility, scope_id: struct_scope_id)
-                return_type_id: unknown_type_id()
-                return_type_span: func.return_type_span
-                params: []
-                generics: FunctionGenerics(
-                    base_scope_id: method_scope_id
-                    base_params: []
-                    params: []
-                    specializations: []
-                )
-                block: CheckedBlock(
-                    statements: []
-                    scope_id: block_scope_id
-                    control_flow: BlockControlFlow::MayReturn
-                    yielded_type: TypeId::none()
-                    yielded_none: false
-                )
-                can_throw: func.can_throw
-                type: func.type
-                linkage: func.linkage
-                function_scope_id: method_scope_id
-                struct_id
-                is_instantiated: not is_generic or is_extern
-                parsed_function: method.parsed_function
-                is_comptime: method.parsed_function.is_comptime
-                is_virtual: method.is_virtual
-                is_override: method.is_override
-                external_name: func.external_name
-                deprecated_message: func.deprecated_message
-            )
-
-            let function_id = module.add_function(checked_function)
-            let previous_index = .current_function_id
-            .current_function_id = function_id
-
-
-            for gen_parameter in func.generic_parameters {
-                let type_var_type_id = TypeId(
-                    module: .current_module_id
-                    id: .current_module().types.size()
-                )
-
-                mut parameter = FunctionGenericParameter::parameter(type_var_type_id, span: gen_parameter.span)
-                mut trait_implementations: [TypeId] = []
-                module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations))
-
-                if gen_parameter.requires_list.has_value() {
-                    .fill_trait_requirements(
-                        names: gen_parameter.requires_list!,
-                        trait_requirements: &mut parameter.checked_parameter.constraints,
-                        &mut trait_implementations,
-                        scope_id
-                    )
-                }
-
-                checked_function.generics.params.push(parameter)
-                .add_type_to_scope(scope_id: method_scope_id, type_name: gen_parameter.name, type_id: type_var_type_id, span: gen_parameter.span)
-            }
-
-            for param in func.params {
-                if param.variable.name == "this" {
-                    let checked_variable = CheckedVariable(
-                        name: param.variable.name
-                        type_id: struct_type_id
-                        is_mutable: param.variable.is_mutable
-                        definition_span: param.variable.span
-                        type_span: None
-                        visibility: CheckedVisibility::Public
-                    )
-
-                    checked_function.add_param(CheckedParameter(
-                        requires_label: param.requires_label
-                        variable: checked_variable
-                        default_value: None
-                    ))
-
-                } else {
-                    let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id, name: param.variable.name)
-
-                    let checked_variable = CheckedVariable(
-                        name: param.variable.name
-                        type_id: param_type
-                        is_mutable: param.variable.is_mutable
-                        definition_span: param.variable.span
-                        type_span: param.variable.parsed_type.span()
-                        visibility: CheckedVisibility::Public
-                    )
-
-                    mut checked_default_value: CheckedExpression? = None
-                    if param.default_argument.has_value() {
-                        //FIXME: Get the real safety mode from somewhere, right now it assumes it is safe
-                        mut checked_default_value_expr = .typecheck_expression(param.default_argument!, scope_id, safety_mode: SafetyMode::Safe, type_hint: param_type)
-
-                        if checked_default_value_expr is OptionalNone(span: expr_span) {
-                            checked_default_value_expr = CheckedExpression::OptionalNone(span: expr_span, type_id: param_type)
-                        }
-
-                        let default_value_type_id = checked_default_value_expr.type()
-                        checked_default_value = checked_default_value_expr
-                        .check_types_for_compat(
-                            lhs_type_id: param_type
-                            rhs_type_id: default_value_type_id
-                            generic_inferences: &mut .generic_inferences
-                            span: param.span
-                        )
-                    }
-
-                    checked_function.add_param(CheckedParameter(
-                        requires_label: param.requires_label
-                        variable: checked_variable
-                        default_value: checked_default_value
-                    ))
-
-                }
-            }
+            let function_id = .typecheck_function_predecl(parsed_function: method.parsed_function, parent_scope_id: struct_scope_id, this_arg_type_id: struct_type_id)
+            let checked_function = .get_function(function_id)
 
             if checked_function.is_virtual and checked_function.is_static() {
                 .error("Functions cannot be both virtual and static", checked_function.name_span)
             }
+
             if checked_function.is_override and checked_function.is_static() {
                 .error("Functions cannot be both override and static", checked_function.name_span)
             }
@@ -2550,7 +2436,7 @@ struct Typechecker {
         let struct_type_id = TypeId(module: module_id, id: .current_module().types.size() - 1)
         .add_type_to_scope(scope_id, type_name: parsed_record.name, type_id: struct_type_id, span: parsed_record.name_span)
 
-        let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("struct({})", parsed_record.name))
+        let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("struct({})", parsed_record.name), for_block: false)
         mut scope = .get_scope(struct_scope_id)
 
         scope.namespace_name = parsed_record.name
@@ -3245,7 +3131,7 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId, this_arg_type_id: TypeId?, mut generics: FunctionGenerics? = None) throws {
+    fn typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId, this_arg_type_id: TypeId?, mut generics: FunctionGenerics? = None) throws -> FunctionId {
         let function_scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: format("fn({})", parsed_function.name))
         let scope_debug_name = format("function-block({})", parsed_function.name)
         let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: parsed_function.can_throw, debug_name: scope_debug_name)
@@ -3303,7 +3189,7 @@ struct Typechecker {
 
         let external_linkage = parsed_function.linkage is External
 
-        let check_scope = match is_generic {
+        let check_scope = match is_generic or parsed_function.return_type is Empty {
             true => Some(.create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: scope_debug_name))
             else => None
         }
@@ -3370,15 +3256,40 @@ struct Typechecker {
 
         // Check return type
         mut function_return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id, name: None)
-        if not parsed_function.is_fat_arrow and parsed_function.return_type is Empty {
-            function_return_type_id = void_type_id()
+        if parsed_function.return_type is Empty {
+            if parsed_function.is_fat_arrow {
+                let old_ignore_errors = .ignore_errors
+                .ignore_errors = true
+                let block = .typecheck_block(
+                    parsed_block: parsed_function.block,
+                    parent_scope_id: check_scope!,
+                    safety_mode: SafetyMode::Safe
+                )
+                if .had_an_error {
+                    function_return_type_id = void_type_id()
+                    .ignore_errors = false // If we're here, the code can never be "correct"
+                    .error_with_hint(
+                        "Can't infer the return type of this function"
+                        parsed_function.return_type_span
+                        "Try adding an explicit return type to the function here"
+                        parsed_function.return_type_span
+                    )
+                } else {
+                    function_return_type_id = .infer_function_return_type(block)
+                }
+
+                .ignore_errors = old_ignore_errors
+                .had_an_error = false
+            } else {
+                function_return_type_id = void_type_id()
+            }
         }
 
         checked_function.return_type_id = function_return_type_id
 
         .check_that_type_doesnt_contain_reference(type_id: function_return_type_id, span: parsed_function.return_type_span)
 
-        if not parsed_function.generic_parameters.is_empty() {
+        if not parsed_function.generic_parameters.is_empty() and function_return_type_id.equals(unknown_type_id()) {
             let old_ignore_errors = .ignore_errors
             .ignore_errors = true
             let block = .typecheck_block(
@@ -3387,6 +3298,7 @@ struct Typechecker {
                 safety_mode: SafetyMode::Safe
             )
             .ignore_errors = old_ignore_errors
+            .had_an_error = false
 
             let return_type_id = match function_return_type_id.equals(unknown_type_id()) {
                 true => .infer_function_return_type(block)
@@ -3403,6 +3315,8 @@ struct Typechecker {
             overload_set: [function_id],
             span: parsed_function.name_span
         )
+
+        return function_id
     }
 
     fn check_that_type_doesnt_contain_reference(mut this, type_id: TypeId, span: Span) throws {
@@ -6328,6 +6242,7 @@ struct Typechecker {
                     .ignore_errors = true
                     let type_id = .typecheck_typename(parsed_type: unchecked_type, scope_id, name: None)
                     .ignore_errors = old_ignore_errors
+                    .had_an_error = false
 
                     mut operator_is = CheckedUnaryOperator::Is(type_id)
                     if unchecked_type is Name(name) {
@@ -6595,6 +6510,8 @@ struct Typechecker {
         .ignore_errors = true
         let type_id = .typecheck_typename(parsed_type: inner, scope_id, name: None)
         .ignore_errors = old_ignore_errors
+        .had_an_error = false
+
         mut checked_op = CheckedUnaryOperator::Is(type_id)
         let expr_type_id = checked_expr.type()
         match inner {
@@ -6695,12 +6612,27 @@ struct Typechecker {
             }
         }
 
-        let lambda_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "lambda")
+        mut module = .current_module()
+
+        mut effective_namespace_parent_scope_id = scope_id
+        mut effective_namespace_parent_scope = .get_scope(scope_id)
+        while effective_namespace_parent_scope.is_block_scope {
+            effective_namespace_parent_scope_id = effective_namespace_parent_scope.parent!
+            effective_namespace_parent_scope = .get_scope(effective_namespace_parent_scope_id)
+        }
+
+        mut lambda_scope_id = .create_scope(parent_scope_id: effective_namespace_parent_scope_id, can_throw, debug_name: "lambda")
+        mut is_capturing_everything = false
         mut checked_captures: [CheckedCapture] = []
         mut has_dependent_capture = false
         for capture in captures {
             if capture is AllByReference {
                 checked_captures.push(CheckedCapture::AllByReference(name: "", span: capture.span))
+                if not is_capturing_everything {
+                    is_capturing_everything = true
+                    // Switch the lambda scope to point to the local block instead.
+                    lambda_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "lambda")
+                }
             } else if .find_var_in_scope(scope_id, var: capture.name).has_value() {
                 let name = capture.name
                 let span = capture.span
@@ -6722,12 +6654,36 @@ struct Typechecker {
                         .compiler.panic("AllByReference capture should not be looked up by name")
                     }
                 })
+                if not is_capturing_everything {
+                    let var = .find_var_in_scope(scope_id, var: capture.name)!
+                    let is_this = var.name == "this"
+                    let var_id = module.add_variable(CheckedVariable(
+                        name
+                        type_id: var.type_id
+                        is_mutable: var.is_mutable and (is_this or capture is ByReference or capture is ByMutableReference)
+                        definition_span: var.definition_span
+                        type_span: var.type_span
+                        visibility: var.visibility
+                        owner_scope: var.owner_scope
+                    ))
+                    .add_var_to_scope(scope_id: lambda_scope_id, name, var_id, span)
+                }
             } else {
                 .error(format("Variable '{}' not found", capture.name), span)
             }
         }
 
-        mut module = .current_module()
+        // if we're not capturing everything, transfer over the types from the parent scopes
+        if not is_capturing_everything {
+            mut current_scope_id = scope_id
+            mut lambda_scope = .get_scope(lambda_scope_id)
+            while not current_scope_id.equals(effective_namespace_parent_scope_id) {
+                let current_scope = .get_scope(current_scope_id)
+                lambda_scope.resolution_mixins.push(current_scope_id)
+                current_scope_id = current_scope.parent!
+            }
+        }
+
         mut checked_params: [CheckedParameter] = []
         mut first = true
         for param in params {
@@ -7505,6 +7461,7 @@ struct Typechecker {
                                     .ignore_errors = false
                                     .error("Bindings aren't allowed in a generic else", case_.marker_span)
                                     .ignore_errors = old_ignore_errors
+                                    .had_an_error = false
                                 }
 
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
@@ -8080,6 +8037,7 @@ struct Typechecker {
                         .ignore_errors = true
                         resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
                         .ignore_errors = old_ignore_errors
+                        .had_an_error = false
 
                         if not resolved_function_id_candidates.is_empty() {
                             break
@@ -8223,6 +8181,7 @@ struct Typechecker {
                         span
                     )
                     .ignore_errors = old_ignore_errors
+                    .had_an_error = false
                 }
 
                 return_type = .substitute_typevars_in_type(type_id: return_type, generic_inferences: .generic_inferences)
@@ -8241,6 +8200,7 @@ struct Typechecker {
                         span
                     )
                     .ignore_errors = old_ignore_errors
+                    .had_an_error = false
                 }
 
                 for generic_typevar in callee.generics.params {
@@ -8635,6 +8595,7 @@ struct Typechecker {
             typechecker.ignore_errors = true
             defer {
                 typechecker.ignore_errors = old_ignore_errors
+                typechecker.had_an_error = false
             }
 
             mut found = false
@@ -8686,6 +8647,7 @@ struct Typechecker {
                     typechecker.ignore_errors = true
                     defer {
                         typechecker.ignore_errors = old_ignore_errors
+                        typechecker.had_an_error = false
                     }
 
                     yield typechecker.check_types_for_compat(
@@ -8701,6 +8663,7 @@ struct Typechecker {
                     typechecker.ignore_errors = true
                     defer {
                         typechecker.ignore_errors = old_ignore_errors
+                        typechecker.had_an_error = false
                     }
 
                     yield typechecker.check_types_for_compat(

@@ -3,7 +3,8 @@ import types {
     CheckedExpression, CheckedField, CheckedMatchBody, CheckedNumericConstant, CheckedParameter, CheckedProgram
     CheckedStatement, CheckedStringLiteral, CheckedVariable, CheckedVisibility, EnumId, EnumVariantPatternArgument
     FunctionId, GenericInferences, ModuleId, NumericOrStringValue, ParsedStatement, ResolvedNamespace, SafetyMode
-    Scope, ScopeId, Span, StringLiteral, StructId, Type, TypeId, TypecheckFunctions, Value, ValueImpl, VarId
+    Scope, ScopeId, Span, StringLiteral, StructId, Type, TypeId, TypecheckFunctions, Value, ValueImpl, VarId,
+    CheckedUnaryOperator, CheckedTypeCast,
     builtin, unknown_type_id
 }
 import parser { ParsedBlock }
@@ -643,7 +644,11 @@ class InterpreterScope {
     public type_bindings: [String:TypeId]
     public defers: [Deferred]
 
-    public fn create(bindings: [String:Value] = [:], parent: InterpreterScope? = None, type_bindings: [String:TypeId] = [:]) throws => InterpreterScope(
+    public fn create(
+        bindings: [String:Value] = [:]
+        parent: InterpreterScope? = None
+        type_bindings: [String: TypeId] = [:]
+    ) throws -> InterpreterScope => InterpreterScope(
         bindings
         parent
         type_bindings
@@ -966,7 +971,11 @@ class Interpreter {
         Yield(expr, span) => CheckedStatement::Yield(expr: .perform_final_interpretation_expr_pass(expr, scope), span)
     }
 
-    public fn perform_final_interpretation_expr_pass(mut this, expr: CheckedExpression, scope: InterpreterScope) throws  -> CheckedExpression => match expr {
+    public fn perform_final_interpretation_expr_pass(mut this, expr: CheckedExpression, scope: InterpreterScope) throws  -> CheckedExpression {
+        if expr is UnaryOp(op) and op is TypeCast {
+            eprintln("{0:c}[31mFixup{0:c}[0m {1}", 0x1b, expr)
+        }
+        return match expr {
         ComptimeIndex(expr, index, is_optional, span) => {
             let index_result = .execute_expression(expr: index, scope)
 
@@ -1073,16 +1082,22 @@ class Interpreter {
         }
         UnaryOp(expr, op, span, type_id) => CheckedExpression::UnaryOp(
             expr: .perform_final_interpretation_expr_pass(expr, scope),
-            op: op,
+            op: match op {
+                TypeCast(cast) => CheckedUnaryOperator::TypeCast(match cast {
+                    Fallible(type_id) => CheckedTypeCast::Fallible(scope.map_type(type_id))
+                    Infallible(type_id) => CheckedTypeCast::Infallible(scope.map_type(type_id))
+                })
+                else => op
+            },
             span: span,
-            type_id: type_id
+            type_id: scope.map_type(type_id)
         )
         BinaryOp(lhs, op, rhs, span, type_id) => CheckedExpression::BinaryOp(
             lhs: .perform_final_interpretation_expr_pass(expr: lhs, scope),
             op: op,
             rhs: .perform_final_interpretation_expr_pass(expr: rhs, scope),
             span: span,
-            type_id: type_id
+            type_id: scope.map_type(type_id)
         )
         Call(call, span, type_id) => {
             mut new_args: [(String, CheckedExpression)] = []
@@ -1134,7 +1149,7 @@ class Interpreter {
         }
         // FIXME: Implement the rest
         else => expr
-    }
+    }}
 
     public fn get_prelude_function(this, anon scope_id: ScopeId) throws -> bool {
         mut current_scope_id = scope_id

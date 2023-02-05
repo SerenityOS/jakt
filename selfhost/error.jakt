@@ -43,11 +43,11 @@ fn print_error(file_name: String, file_contents: [u8]?, error: JaktError) throws
 enum MessageSeverity {
     Hint
     Error
-    public fn name(this) throws => match this {
+    public fn name(this) throws -> String => match this {
         Hint => "Hint"
         Error => "Error"
     }
-    public fn ansi_color_code(this) throws => match this {
+    public fn ansi_color_code(this) throws -> String => match this {
         Hint => "94"  // Bright Blue
         Error => "31" // Red
     }
@@ -85,7 +85,7 @@ fn display_message_with_span(anon severity: MessageSeverity, file_name: String, 
 
         ++line_index
     }
-    
+
     let width = format("{}", largest_line_number).length()
 
     // Start printing the error and additional info, including source line numbers surrounded with a nice border

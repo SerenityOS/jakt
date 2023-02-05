@@ -18,9 +18,9 @@ fn is_whitespace(anon cp: u32) -> bool => cp == ' ' or cp == '\t' or cp == '\r'
 struct Parser {
     iterator: CodePointIterator
 
-    fn is_eof(this) => .iterator.peek().has_value() == false
+    fn is_eof(this) -> bool => .iterator.peek().has_value() == false
 
-    fn current(this) => .iterator.peek().value()
+    fn current(this) -> u32 => .iterator.peek().value()
 
     fn lex_literal(mut this, anon literal: String) -> bool {
         mut it = .iterator

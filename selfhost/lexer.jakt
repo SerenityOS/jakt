@@ -125,11 +125,11 @@ enum Token {
     // Catch-all for failed parses
     Garbage(consumed: String?, span: Span)
 
-    public fn span(this) => match this {
+    public fn span(this) -> Span => match this {
         else(span) => span
     }
 
-    fn from_keyword_or_identifier(string: String, span: Span) => match string {
+    fn from_keyword_or_identifier(string: String, span: Span) -> Token => match string {
         "and" => Token::And(span)
         "anon" => Token::Anon(span)
         "as" => Token::As(span)
