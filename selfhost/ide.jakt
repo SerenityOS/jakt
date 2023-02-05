@@ -82,8 +82,8 @@ fn find_symbols_in_namespace(anon namespace_: ParsedNamespace) throws -> [JaktSy
         symbols.push(record_to_symbol(record))
     }
 
-    for function_ in namespace_.functions {
-        symbols.push(function_to_symbol(function_, kind: "function"))
+    for function in namespace_.functions {
+        symbols.push(function_to_symbol(function, kind: "function"))
     }
 
     for sub_namespace in namespace_.namespaces {
@@ -164,19 +164,19 @@ fn record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
     )
 }
 
-fn function_to_symbol(anon function_: ParsedFunction, kind: String) throws -> JaktSymbol {
-    mut function_span = function_.name_span
+fn function_to_symbol(anon function: ParsedFunction, kind: String) throws -> JaktSymbol {
+    mut function_span = function.name_span
 
-    for stmt in function_.block.stmts {
+    for stmt in function.block.stmts {
         function_span = merge_spans(function_span, stmt.span())
     }
 
     return JaktSymbol(
-        name: function_.name
+        name: function.name
         detail: None
         kind
         range: function_span
-        selection_range: function_.name_span
+        selection_range: function.name_span
         children: []
     )
 }

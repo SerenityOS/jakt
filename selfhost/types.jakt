@@ -2564,7 +2564,7 @@ enum NumericOrStringValue {
 }
 
 class TypecheckFunctions {
-    public block: function(
+    public block: fn(
         parsed_block: ParsedBlock
         parent_scope_id: ScopeId
         safety_mode: SafetyMode
