@@ -589,24 +589,24 @@ struct CodeGenerator {
         current_module: Module
         define_pass: bool = false
     ) throws -> String? {
-        let function_ = .program.get_function(function_id)
-        if not function_.function_scope_id.module_id.equals(current_module.id) {
+        let function = .program.get_function(function_id)
+        if not function.function_scope_id.module_id.equals(current_module.id) {
             return None
         }
 
-        if function_.is_comptime {
+        if function.is_comptime {
             return None
         }
 
         let previous_function = .current_function
-        .current_function = function_
+        .current_function = function
         defer .current_function = previous_function
 
-        if function_.linkage is External or function_.type is ImplicitConstructor or function_.type is ImplicitEnumConstructor {
+        if function.linkage is External or function.type is ImplicitConstructor or function.type is ImplicitEnumConstructor {
             return None
         }
 
-        if function_.generics.params.is_empty() or not function_.specialization_index.has_value() {
+        if function.generics.params.is_empty() or not function.specialization_index.has_value() {
             return None
         }
 
@@ -650,14 +650,14 @@ struct CodeGenerator {
             )
         } else if is_full_respecialization {
             mut args: [String] = []
-            for arg in function_.generics.specializations[function_.specialization_index!] {
+            for arg in function.generics.specializations[function.specialization_index!] {
                 args.push(.codegen_type(arg))
             }
 
             output += format(
                 "\n/* specialisation {} of function {}: {} */"
-                function_.specialization_index!
-                function_.name
+                function.specialization_index!
+                function.name
                 args
             )
             output += "\ntemplate<> "
@@ -665,9 +665,9 @@ struct CodeGenerator {
                 output += "[[noreturn]] "
             }
 
-            output += match function_.can_throw {
-                true => format("ErrorOr<{}>", .codegen_type(function_.return_type_id))
-                else => .codegen_type(function_.return_type_id)
+            output += match function.can_throw {
+                true => format("ErrorOr<{}>", .codegen_type(function.return_type_id))
+                else => .codegen_type(function.return_type_id)
             }
 
             output += " "
@@ -680,11 +680,11 @@ struct CodeGenerator {
                 output += qualifier
                 output += "::"
             }
-            output += function_.name_for_codegen()
+            output += function.name_for_codegen()
 
             output += "<"
             mut first = true
-            for type_id in function_.generics.specializations[function_.specialization_index!] {
+            for type_id in function.generics.specializations[function.specialization_index!] {
                 if first {
                     first = false
                 } else {
@@ -696,7 +696,7 @@ struct CodeGenerator {
             output += ">("
 
             first = true
-            for param in function_.params {
+            for param in function.params {
                 let variable = param.variable
                 if variable.name == "this" {
                     continue
@@ -1140,7 +1140,7 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_function_predecl(mut this, function_: CheckedFunction, as_method: bool = false, allow_generics: bool = false) throws -> String {
+    fn codegen_function_predecl(mut this, function: CheckedFunction, as_method: bool = false, allow_generics: bool = false) throws -> String {
         mut output = ""
 
         if (allow_generics or not function.generics.params.is_empty()) and function.linkage is External {
@@ -4103,7 +4103,7 @@ struct CodeGenerator {
 
         let last_control_flow = .control_flow_state
         .control_flow_state = last_control_flow.enter_function()
-        let block = .codegen_block(block: function_.block)
+        let block = .codegen_block(block: function.block)
         .control_flow_state = last_control_flow
         output += block
 

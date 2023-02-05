@@ -853,11 +853,11 @@ class Interpreter {
     }
 
     private fn invoke_typecheck_block(
-        anon fn: &function(parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode, yield_type_hint: TypeId?) throws -> CheckedBlock
+        anon function: &fn(parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode, yield_type_hint: TypeId?) throws -> CheckedBlock
         anon block: ParsedBlock
         anon parent_scope_id: ScopeId
     ) throws -> CheckedBlock {
-        return fn(parsed_block: block, parent_scope_id, safety_mode: SafetyMode::Safe, yield_type_hint: None)
+        return function(parsed_block: block, parent_scope_id, safety_mode: SafetyMode::Safe, yield_type_hint: None)
     }
 
 
@@ -966,7 +966,7 @@ class Interpreter {
         Yield(expr, span) => CheckedStatement::Yield(expr: .perform_final_interpretation_expr_pass(expr, scope), span)
     }
 
-    public function perform_final_interpretation_expr_pass(mut this, expr: CheckedExpression, scope: InterpreterScope) throws  -> CheckedExpression => match expr {
+    public fn perform_final_interpretation_expr_pass(mut this, expr: CheckedExpression, scope: InterpreterScope) throws  -> CheckedExpression => match expr {
         ComptimeIndex(expr, index, is_optional, span) => {
             let index_result = .execute_expression(expr: index, scope)
 
@@ -1216,11 +1216,11 @@ class Interpreter {
                     )
                 }
                 "as_saturated" => {
-                    let function_ = .program.get_function(.program.find_functions_with_name_in_scope(
+                    let function = .program.get_function(.program.find_functions_with_name_in_scope(
                         parent_scope_id: .program.prelude_scope_id()
                         function_name: "as_saturated")![0])
 
-                    let output_type_id = type_bindings.get(function_.generics.params[0].type_id().to_string())
+                    let output_type_id = type_bindings.get(function.generics.params[0].type_id().to_string())
                     yield StatementResult::JustValue(
                         cast_value_to_type(arguments[0], output_type_id!, interpreter: this, saturating: true)
                     )
@@ -6847,7 +6847,7 @@ class Interpreter {
         }
     }
 
-    public function array_type_of_struct(mut this, anon struct_id: StructId) throws -> TypeId {
+    public fn array_type_of_struct(mut this, anon struct_id: StructId) throws -> TypeId {
         let array_struct_id = .program.find_struct_in_prelude("Array")
         let type = Type::GenericInstance(
             id: array_struct_id
@@ -6858,7 +6858,7 @@ class Interpreter {
         return .find_or_add_type_id(type)
     }
 
-    public function array_value_of_type(mut this, values: [Value], type: TypeId, span: Span) throws -> Value {
+    public fn array_value_of_type(mut this, values: [Value], type: TypeId, span: Span) throws -> Value {
         let array_struct_id = .program.find_struct_in_prelude("Array")
         let array_type = Type::GenericInstance(
             id: array_struct_id
@@ -6875,7 +6875,7 @@ class Interpreter {
         )
     }
 
-    public function tuple_type(mut this, anon members: [TypeId]) throws -> TypeId {
+    public fn tuple_type(mut this, anon members: [TypeId]) throws -> TypeId {
         let tuple_struct_id = .program.find_struct_in_prelude("Tuple")
         let type = Type::GenericInstance(
             id: tuple_struct_id
@@ -6884,7 +6884,7 @@ class Interpreter {
         return .find_or_add_type_id(type)
     }
 
-    public function tuple_value(mut this, members: [Value], type: TypeId, span: Span) throws -> Value {
+    public fn tuple_value(mut this, members: [Value], type: TypeId, span: Span) throws -> Value {
         return Value(
             impl: ValueImpl::JaktTuple(
                 fields: members
@@ -6894,12 +6894,12 @@ class Interpreter {
         )
     }
 
-    public function string_value(mut this, anon string: String, span: Span) throws -> Value => Value(
+    public fn string_value(mut this, anon string: String, span: Span) throws -> Value => Value(
         impl: ValueImpl::JaktString(string)
         span
     )
 
-    public function reflect_methods(mut this, span: Span) throws -> Value {
+    public fn reflect_methods(mut this, span: Span) throws -> Value {
         let method_struct_id = match .program.find_reflected_primitive("Method") {
             Struct(id) => id
             else => {
@@ -6923,7 +6923,7 @@ class Interpreter {
         )
     }
 
-    public function reflect_fields(mut this, fields: [VarId], span: Span, scope: InterpreterScope) throws -> [Value] {
+    public fn reflect_fields(mut this, fields: [VarId], span: Span, scope: InterpreterScope) throws -> [Value] {
         let field_struct_id = match .program.find_reflected_primitive("Field") {
             Struct(id) => id
             else => {
@@ -7015,7 +7015,7 @@ class Interpreter {
         return record_type_fields
     }
 
-    public function reflect_sum_enum_variants(mut this, subject_enum: CheckedEnum, span: Span, scope: InterpreterScope) throws -> [Value] {
+    public fn reflect_sum_enum_variants(mut this, subject_enum: CheckedEnum, span: Span, scope: InterpreterScope) throws -> [Value] {
         let sum_enum_variant_enum_id = match .program.find_reflected_primitive("SumEnumVariant") {
             Enum(id) => id
             else => {
@@ -7094,13 +7094,13 @@ class Interpreter {
                     result.push(variant_value)
                 }
                 else => {}
-            }            
+            }
         }
 
         return result
     }
 
-    public function reflect_type(mut this, type_id: TypeId, span: Span, scope: InterpreterScope) throws -> Value {
+    public fn reflect_type(mut this, type_id: TypeId, span: Span, scope: InterpreterScope) throws -> Value {
         let mapped_type_id = scope.map_type(type_id)
         let mapped_type_key = mapped_type_id.to_string()
 

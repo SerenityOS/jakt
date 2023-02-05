@@ -577,9 +577,9 @@ struct Typechecker {
 
     fn set_owner_scope_if_needed(mut this, parent_scope_id: ScopeId, overload_set: [FunctionId]) throws {
         for overload in overload_set {
-            mut function_ = .get_function(overload)
-            if not function_.owner_scope.has_value() {
-                function_.owner_scope = parent_scope_id
+            mut function = .get_function(overload)
+            if not function.owner_scope.has_value() {
+                function.owner_scope = parent_scope_id
             }
         }
     }
@@ -1553,12 +1553,12 @@ struct Typechecker {
                                 continue
                             }
 
-                            let function_ = .get_function(function_id)
-                            if function_.block.statements.is_empty() {
+                            let function = .get_function(function_id)
+                            if function.block.statements.is_empty() {
                                 continue
                             }
 
-                            mut replaced_function = function_.copy()
+                            mut replaced_function = function.copy()
                             let inferences = .generic_inferences
                             replaced_function.map_types(&fn[inferences](anon type_id: TypeId) throws -> TypeId {
                                 return inferences.map(type_id)
@@ -1608,12 +1608,12 @@ struct Typechecker {
                                 continue
                             }
 
-                            let function_ = .get_function(function_id)
-                            if function_.block.statements.is_empty() {
+                            let function = .get_function(function_id)
+                            if function.block.statements.is_empty() {
                                 continue
                             }
 
-                            mut replaced_function = function_.copy()
+                            mut replaced_function = function.copy()
                             let inferences = .generic_inferences
                             replaced_function.map_types(&fn[inferences](anon type_id: TypeId) throws -> TypeId {
                                 return inferences.map(type_id)
@@ -2520,9 +2520,9 @@ struct Typechecker {
                         continue
                     }
 
-                    let function_ = .program.modules[function_id.module.id].functions[function_id.id]
+                    let function = .program.modules[function_id.module.id].functions[function_id.id]
 
-                    if function_.block.statements.is_empty() {
+                    if function.block.statements.is_empty() {
                         continue
                     }
 
@@ -3550,8 +3550,8 @@ struct Typechecker {
         mut base_scope = .get_scope(.get_scope(checked_function.generics.base_scope_id).parent!)
         base_scope.functions.get(checked_function.name)!.push(new_function_id)
 
-        mut function_ = .get_function(new_function_id)
-        function_.specialization_index = specialization_index
+        mut function = .get_function(new_function_id)
+        function.specialization_index = specialization_index
 
         return new_function_id
     }
@@ -5214,7 +5214,7 @@ struct Typechecker {
         compiler: .compiler
         program: .program
         typecheck_functions: TypecheckFunctions(
-            block: function[this](
+            block: fn[this](
                 parsed_block: ParsedBlock
                 parent_scope_id: ScopeId
                 safety_mode: SafetyMode
@@ -7884,9 +7884,9 @@ struct Typechecker {
         // 2. Look for a function with this name.
         let maybe_overload_set = .find_scoped_functions_with_name_in_scope(parent_scope_id: current_scope_id, function_name: call.name)
         if maybe_overload_set.has_value() {
-            let function_ = .get_function(maybe_overload_set!.0[0])
-            if not must_be_enum_constructor or function_.type is ImplicitEnumConstructor {
-                owning_scope = function_.owner_scope
+            let function = .get_function(maybe_overload_set!.0[0])
+            if not must_be_enum_constructor or function.type is ImplicitEnumConstructor {
+                owning_scope = function.owner_scope
                 current_scope_id = maybe_overload_set!.1
                 return maybe_overload_set!.0
             }
@@ -8304,14 +8304,14 @@ struct Typechecker {
 
         let external_name = match resolved_function_id.has_value() {
             true => {
-                let function_ = .get_function(resolved_function_id!)
-                if function_.deprecated_message.has_value() {
+                let function = .get_function(resolved_function_id!)
+                if function.deprecated_message.has_value() {
                     .error(
-                        format("Call to deprecated function: {}", function_.deprecated_message!)
+                        format("Call to deprecated function: {}", function.deprecated_message!)
                         span
                     )
                 }
-                yield function_.external_name
+                yield function.external_name
             }
             else => None
         }
@@ -8337,7 +8337,7 @@ struct Typechecker {
         if not in_comptime_function and resolved_function_id.has_value() and .get_function(resolved_function_id!).is_comptime {
             let resolved_function = .get_function(resolved_function_id!)
             mut interpreter = .interpreter()
-            let function_ = .program.get_function(generic_checked_function_to_instantiate ?? resolved_function_id!)
+            let function = .program.get_function(generic_checked_function_to_instantiate ?? resolved_function_id!)
             mut call_args: [Value] = []
             mut this_argument: Value? = None
             mut eval_scope = InterpreterScope::from_runtime_scope(scope_id: caller_scope_id, program: .program)

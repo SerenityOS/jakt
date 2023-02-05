@@ -15,7 +15,7 @@ struct Bar {
     b: String
 }
 
-function main() {
+fn main() {
     let json = to_json(&Bar(a: 1, c: true, b: "hello friends"))
     mut foo = Foo(a: 0, b: "", c: false)
     mut parser = JsonParser::create(json)
