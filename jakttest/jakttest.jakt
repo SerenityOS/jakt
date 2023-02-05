@@ -363,25 +363,25 @@ enum TestStage {
     CompileCpp
     TestRun
 
-    fn equals(this, anon other: TestStage) => match this {
+    fn equals(this, anon other: TestStage) -> bool => match this {
         TranspileJakt => other is TranspileJakt
         CompileCpp => other is CompileCpp
         TestRun => other is TestRun
     }
 
-    fn to_string(this) => match this {
+    fn to_string(this) -> String => match this {
         TranspileJakt => "Jakt transpilation to C++"
         CompileCpp => "Clang++ compilation of generated C++ source"
         TestRun => "Test binary run"
     }
 
-    fn to_order(this) => match this {
+    fn to_order(this) -> u64 => match this {
         TranspileJakt => 1
         CompileCpp => 2
         TestRun => 3
     }
 
-    fn output_filenames(this) => match this {
+    fn output_filenames(this) -> (String, String) => match this {
         TranspileJakt => ("", "compile_jakt.err")
         CompileCpp => ("", "compile_cpp.err")
         TestRun => ("runtest.out", "runtest.err")
@@ -401,7 +401,7 @@ enum ResultKind {
     CompileError
     RuntimeError
 
-    fn to_stage(this) => match this {
+    fn to_stage(this) -> TestStage => match this {
         Okay | RuntimeError => TestStage::TestRun
         CompileError => TestStage::TranspileJakt
     }

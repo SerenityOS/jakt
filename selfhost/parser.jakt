@@ -719,7 +719,7 @@ enum BinaryOperator {
         Garbage => rhs_op is Garbage
     }
 
-    fn is_assignment(this) => match this {
+    fn is_assignment(this) -> bool => match this {
         Assign
         | BitwiseAndAssign
         | BitwiseOrAssign
@@ -1035,11 +1035,11 @@ boxed enum ParsedExpression {
     Reflect(type: ParsedType, span: Span)
     Garbage(Span)
 
-    fn span(this) => match this {
+    fn span(this) -> Span => match this {
         else(span) => span
     }
 
-    fn precedence(this) => match this {
+    fn precedence(this) -> i64 => match this {
         Operator(op, span) => match op {
             Multiply
             | Modulo
@@ -1418,7 +1418,7 @@ boxed enum ParsedType {
     Function(params: [ParsedParameter], can_throw: bool, return_type: ParsedType, span: Span)
     Empty
 
-    fn span(this) => match this {
+    fn span(this) -> Span => match this {
         Empty => Span(file_id: FileId(id: 0uz), start: 0, end: 0) // FIXME: For some reason we can't see `empty_span()` here.
         else(span) => span
     }
@@ -1593,7 +1593,7 @@ struct Parser {
         return Span(file_id: .compiler.current_file!, start, end)
     }
 
-    fn empty_span(this) => .span(start: 0, end: 0)
+    fn empty_span(this) -> Span => .span(start: 0, end: 0)
 
     fn error(mut this, anon message: String, anon span: Span) throws {
         if not .compiler.ignore_parser_errors {
@@ -1607,9 +1607,9 @@ struct Parser {
         }
     }
 
-    fn eof(this) => .index >= .tokens.size() - 1
+    fn eof(this) -> bool => .index >= .tokens.size() - 1
 
-    fn eol(this) => .eof() or .tokens[.index] is Eol
+    fn eol(this) -> bool => .eof() or .tokens[.index] is Eol
 
     fn peek(this, anon steps: usize) -> Token {
         if .eof() or (steps + .index) >= .tokens.size()  {
@@ -3376,6 +3376,8 @@ struct Parser {
             let start = .current().span()
             parsed_function.return_type = .parse_typename()
             parsed_function.return_type_span = merge_spans(start, .previous().span())
+        } else {
+            parsed_function.return_type_span = .previous().span()
         }
 
         if linkage is External {
@@ -4158,7 +4160,7 @@ struct Parser {
         return expr_stack[0]
     }
 
-    fn parse_operand_base(mut this) throws => match .current() {
+    fn parse_operand_base(mut this) throws -> ParsedExpression => match .current() {
         Dot(span) => {
             yield ParsedExpression::Var(name: "this", span)
         }

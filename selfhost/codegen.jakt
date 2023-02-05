@@ -77,7 +77,7 @@ struct ControlFlowState {
             match_nest_level: level
         )
     }
-    fn is_match_nested(this) => .match_nest_level != 0
+    fn is_match_nested(this) -> bool => .match_nest_level != 0
     fn choose_control_flow_macro(this) -> String {
         if are_loop_exits_allowed(.allowed_exits) {
             if .is_match_nested() {
@@ -178,9 +178,9 @@ struct CodeGenerator {
         return "TRY"
     }
 
-    fn fresh_var(mut this) throws => format("__jakt_var_{}", .fresh_var_counter++)
+    fn fresh_var(mut this) throws -> String => format("__jakt_var_{}", .fresh_var_counter++)
 
-    fn fresh_label(mut this) throws => format("__jakt_label_{}", .fresh_label_counter++)
+    fn fresh_label(mut this) throws -> String => format("__jakt_label_{}", .fresh_label_counter++)
 
     fn topologically_sort_modules(this) throws -> [ModuleId] {
         mut in_degrees: [usize:i64] = [:]
