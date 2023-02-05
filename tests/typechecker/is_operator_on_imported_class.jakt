@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "OK\n"
+
+import simple_base_and_derived
+
+fn main() {
+    let a = Derived()
+    if a is Derived {
+        println("OK")
+    }
+}

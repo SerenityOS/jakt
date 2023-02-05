@@ -1660,8 +1660,8 @@ struct CodeGenerator {
                 Is(type_id) => {
                     let is_type = match .program.get_type(type_id) {
                         Struct(id) => {
-                            let type_module = .program.get_module(id.module)
-                            yield .program.get_struct(id).name_for_codegen()
+                            let struct_ = .program.get_struct(id)
+                            yield .codegen_namespace_qualifier(scope_id: struct_.scope_id) + struct_.name_for_codegen()
                         }
                         else => .codegen_type(type_id)
                     }
