@@ -649,7 +649,7 @@ class Interpreter {
                                         | CInt(x)
                                         => format(format_string, x)
                                         else => {
-                                            .error(format("comptime format can only format primitves, got {}", arguments[1].impl), call_span)
+                                            .error(format("comptime format can only format primitives, got {}", arguments[1].impl), call_span)
                                             throw Error::from_errno(InterpretError::InvalidType as! i32);
                                         }
                                     }
@@ -701,7 +701,7 @@ class Interpreter {
                                 else => eprint(format_string, x)
                             }
                             else => {
-                                .error(format( "comptime format can only format primitves, got {}", arguments[1].impl), call_span)
+                                .error(format( "comptime format can only format primitives, got {}", arguments[1].impl), call_span)
                                 throw Error::from_errno(InterpretError::InvalidType as! i32);
                             }
                         }
