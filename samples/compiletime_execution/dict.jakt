@@ -39,7 +39,7 @@ comptime iterator() throws -> bool {
     mut dict = ["m":'m',"n":'n',"o":'o']
     mut output = ""
     for (key, val) in dict {
-        output += format("{}=>", key) + format("{}\n", key)
+        output += format("{}=>{:c}\n", key, val)
     }
     return output == "m=>m\nn=>n\no=>o\n"
 }
