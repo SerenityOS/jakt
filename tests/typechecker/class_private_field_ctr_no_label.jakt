@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Can't access field 'private_field' when calling implicit constructor of 'Foo' because it is marked private\n"
+
+class Foo {
+    private_field: i64
+    public public_field: i64
+}
+
+fn main() {
+    let private_field = 1
+    let object = Foo(private_field, public_field: 42)
+}

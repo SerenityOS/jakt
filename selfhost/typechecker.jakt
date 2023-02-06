@@ -8313,7 +8313,9 @@ struct Typechecker {
             for arg in call.args {
                 for field in struct_.fields {
                     let variable = .get_variable(field.variable_id)
-                    if (variable.name == arg.0 and variable.visibility is Private) {
+
+                    let name = .get_argument_name(arg)
+                    if (variable.name == name and variable.visibility is Private) {
                         .error(format("Can't access field '{}' when calling implicit constructor of '{}' because it is marked private", variable.name, struct_.name), arg.1)
                         return
                     }
