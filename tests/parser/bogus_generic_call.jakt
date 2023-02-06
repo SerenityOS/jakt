@@ -1,0 +1,7 @@
+/// Expect:
+/// - error: "Call to unknown function"
+
+fn f() {
+    // Background: I pasted some C++ into a jakt program and it made the compiler loop infinitely :^)
+    static_cast<A::B const&>(x)
+}

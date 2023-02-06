@@ -3564,6 +3564,9 @@ struct Parser {
                             if .previous() is ColonColon {
                                 namespaces.push(namespace_name)
                                 .index++
+                            } else {
+                                .error("Expected ‘::’ here", span: Span(file_id: span.file_id, start: span.start, end: span.start))
+                                break
                             }
                         }
                         ColonColon => {
@@ -3571,6 +3574,7 @@ struct Parser {
                                 .index++
                             } else {
                                 .error("Expected name after", span)
+                                break
                             }
                         }
                         else => {
