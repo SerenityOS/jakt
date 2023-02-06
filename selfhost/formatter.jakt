@@ -81,7 +81,7 @@ enum State {
     )
     FunctionTypeContext(seen_final_type: bool)
 
-    fn name(this) throws => match this {
+    fn name(this) throws -> String => match this {
         Toplevel => "toplevel"
         Import => "import"
         ImportList => "import list"

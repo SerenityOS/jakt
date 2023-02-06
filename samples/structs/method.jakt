@@ -5,7 +5,7 @@ struct Rectangle {
     width: i64,
     height: i64,
 
-    fn area(this) => this.width * this.height
+    fn area(this) -> i64 => this.width * this.height
 }
 
 fn main() {

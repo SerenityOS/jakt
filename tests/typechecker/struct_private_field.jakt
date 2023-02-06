@@ -2,7 +2,7 @@
 /// - error: "Can't access field ‘age’, because it is marked private\n"
 
 struct WeirdEncapsulation {
-    fn create(age: i32) => WeirdEncapsulation(age)
+    fn create(age: i32) -> WeirdEncapsulation => WeirdEncapsulation(age)
 
     private age: i32
 }

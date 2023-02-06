@@ -11,7 +11,7 @@ struct S {
 
 class C {
     public value: usize
-    
+
     destructor {
         println("~C{}", .value)
     }

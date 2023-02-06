@@ -9,13 +9,17 @@ fn null<T>() -> raw T {
 }
 
 fn allocate<T>(count: usize) -> raw T {
-    unsafe {
-        cpp {
-            "return static_cast<T*>(malloc(count * sizeof(T)));"
+    let alloc_impl = fn[count](anon ptr: &mut raw T) -> void {
+        unsafe {
+            cpp {
+                "ptr = static_cast<RemoveReference<decltype(ptr)>>(calloc(count, sizeof(*ptr)));"
+            }
         }
     }
 
-    abort()
+    mut ptr = null<T>()
+    alloc_impl(&mut ptr)
+    return ptr
 }
 
 fn join(anon strings: [String], separator: String) -> String {

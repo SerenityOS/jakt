@@ -9,7 +9,7 @@ enum Bar {
 struct Foo {
     x: Bar
 
-    fn equals(this, other: Foo) => match .x {
+    fn equals(this, other: Foo) -> bool => match .x {
         Y => match other.x {
             Y => true
             else => false
@@ -18,7 +18,7 @@ struct Foo {
             Z => true
             else => false
         }
-    } 
+    }
 }
 
 fn equals_out<T>(anon a: T?, anon b: T?) -> bool {

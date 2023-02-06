@@ -24,7 +24,7 @@ enum AllowedControlExits {
     /// `continue`/`break` allowed: `return` is also allowed in this context
     AtLoop
 
-    fn allow_return(this) => match this {
+    fn allow_return(this) -> AllowedControlExits => match this {
         Nothing | JustReturn => AllowedControlExits::JustReturn
         AtLoop => AllowedControlExits::AtLoop
     }
@@ -602,7 +602,11 @@ struct CodeGenerator {
         .current_function = function
         defer .current_function = previous_function
 
-        if function.linkage is External or function.type is ImplicitConstructor or function.type is ImplicitEnumConstructor {
+        if function.linkage is External or
+            function.type is ImplicitConstructor or
+            function.type is ImplicitEnumConstructor or
+            function.type is Destructor {
+
             return None
         }
 
@@ -715,7 +719,11 @@ struct CodeGenerator {
                 output += variable.name
             }
 
-            output += ");\n"
+            output += ")"
+            if not function.is_static() and not function.is_mutating() {
+                output += " const"
+            }
+            output += ";\n"
         } else {
             output = format("\n/* specialisation {} of function {} omitted, not fully specialized: {} */\n"
                 function.specialization_index!
@@ -914,7 +922,11 @@ struct CodeGenerator {
                     .current_function = function
                     defer .current_function = previous_function
 
-                    if function.linkage is External or function.type is ImplicitConstructor or function.type is ImplicitEnumConstructor {
+                    if function.linkage is External or
+                        function.type is ImplicitConstructor or
+                        function.type is ImplicitEnumConstructor or
+                        function.type is Destructor {
+
                         continue
                     }
 
@@ -922,7 +934,9 @@ struct CodeGenerator {
                         continue
                     }
 
-                    output += .codegen_function_predecl(function, allow_generics: true)
+                    if not function.specialization_index.has_value() {
+                        output += .codegen_function_predecl(function, allow_generics: true)
+                    }
                 }
             }
 
@@ -963,7 +977,11 @@ struct CodeGenerator {
                 .current_function = function
                 defer .current_function = previous_function
 
-                if function.linkage is External or function.type is ImplicitConstructor or function.type is ImplicitEnumConstructor {
+                if function.linkage is External or
+                    function.type is ImplicitConstructor or
+                    function.type is ImplicitEnumConstructor or
+                    function.type is Destructor {
+
                     continue
                 }
 
@@ -1001,7 +1019,13 @@ struct CodeGenerator {
                     if function.type is ImplicitConstructor {
                         output += .codegen_constructor(function)
                         output += "\n"
-                    } else if not function.type is ImplicitEnumConstructor and not function.is_comptime {
+                    } else if function.type is Destructor {
+                        output += .codegen_destructor(&struct_, &function, is_inline: false)
+                        output += "\n"
+                    } else if not function.type is ImplicitEnumConstructor and
+                        not function.is_comptime and
+                        function.generics.params.is_empty() {
+
                         output += .codegen_function_in_namespace(function, containing_struct: struct_.type_id)
                         output += "\n"
                     }
@@ -1035,7 +1059,12 @@ struct CodeGenerator {
                     .current_function = function
                     defer .current_function = previous_function
 
-                    if not function.type is ImplicitConstructor and not function.type is ImplicitEnumConstructor and not function.is_comptime {
+                    if not function.type is ImplicitConstructor and
+                        not function.type is ImplicitEnumConstructor and
+                        not function.type is Destructor and
+                        not function.is_comptime and
+                        function.generics.params.is_empty() {
+
                         output += .codegen_function_in_namespace(function, containing_struct: enum_.type_id)
                         output += "\n"
                     }
@@ -1106,7 +1135,11 @@ struct CodeGenerator {
                 .current_function = Some(function)
                 defer .current_function = previous_function_id
 
-                if not function.type is ImplicitConstructor and function.name_for_codegen() != "main" and function.generics.params.is_empty() {
+                if not function.type is ImplicitConstructor and
+                    not function.type is Destructor and
+                    function.name_for_codegen() != "main" and
+                    function.generics.params.is_empty() {
+
                     output += .codegen_function_predecl(function)
                     output += "\n"
                 }
@@ -3198,7 +3231,7 @@ struct CodeGenerator {
         for namespace_ in call.namespace_ {
             // hack warning: this is to get around C++'s limitation that a constructor
             // can't be called like other static methods
-            if index == call.namespace_.size() - 1 and namespace_.name == call.name {
+            if index == call.namespace_.size() - 1 and namespace_.name == call.name_for_codegen() {
                 break
             }
 
@@ -3600,14 +3633,18 @@ struct CodeGenerator {
         mut first = true
         while current_scope_id.has_value() {
             let scope = .program.get_scope(current_scope_id!)
+            let name = scope.external_name ?? scope.namespace_name
+            let is_constructor_call = first and possible_constructor_name == name
+
             defer {
-                first = false
+                if name.has_value() {
+                    first = false
+                }
                 current_scope_id = scope.parent
             }
 
-            let name = scope.external_name ?? scope.namespace_name
             if name.has_value() {
-                if first and possible_constructor_name == name {
+                if is_constructor_call {
                     // Don't include the constructor name in the namespace qualifier
                     continue
                 }
@@ -3672,7 +3709,7 @@ struct CodeGenerator {
     fn codegen_destructor_predecl(mut this, anon struct_: &CheckedStruct) throws -> String {
         mut output = ""
         output += "public:\n"
-        output += "    ~" + struct_.name + "();\n"
+        output += "    ~" + struct_.name_for_codegen() + "();\n"
         return output
     }
 
@@ -3696,9 +3733,9 @@ struct CodeGenerator {
         }
 
         if is_inline {
-            output += format("~{}()", struct_.name)
+            output += format("~{}()", struct_.name_for_codegen())
         } else {
-            output += format("{}::~{}()", qualified_name, struct_.name)
+            output += format("{}::~{}()", qualified_name, struct_.name_for_codegen())
         }
 
         output += .codegen_block(block: function.block)
@@ -4000,7 +4037,9 @@ struct CodeGenerator {
 
         mut output = ""
 
-        output += .codegen_function_generic_parameters(function)
+        if not skip_template {
+            output += .codegen_function_generic_parameters(function)
+        }
 
         let is_main = function.name_for_codegen() == "main" and not containing_struct.has_value()
 
@@ -4038,7 +4077,7 @@ struct CodeGenerator {
                 guard .program.get_type(containing_struct!) is Struct(struct_id) else {
                     panic("Destructor doesn't have a containing struct")
                 }
-                output += "~" + .program.get_struct(struct_id).name
+                output += "~" + .program.get_struct(struct_id).name_for_codegen()
             } else {
                 output += function.name_for_codegen()
             }

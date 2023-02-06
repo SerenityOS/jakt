@@ -4,22 +4,22 @@
 struct Person1 {
     private name: String = "Jane"
     age: i64
-    fn getName(this) => .name
-    fn getAge(this) => .age
+    fn getName(this) -> String => .name
+    fn getAge(this) -> i64 => .age
 }
 
 struct Person2 {
     name: String
     private age: i64 = 100
-    fn getName(this) => .name
-    fn getAge(this) => .age
+    fn getName(this) -> String => .name
+    fn getAge(this) -> i64 => .age
 }
 
 struct Person3 {
     private name: String = "Jane"
     private age: i64 = 100
-    fn getName(this) => .name
-    fn getAge(this) => .age
+    fn getName(this) -> String => .name
+    fn getAge(this) -> i64 => .age
 }
 
 fn main() {

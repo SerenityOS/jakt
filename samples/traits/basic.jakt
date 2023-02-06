@@ -23,7 +23,7 @@ enum Baz implements(Hashable) {
     Foo
     Bar
 
-    fn hash(this) => match this {
+    fn hash(this) -> u64 => match this {
         Foo => 44u64
         Bar => 100u64
     }
@@ -34,7 +34,7 @@ enum Baz implements(Hashable) {
 struct U64Hash implements(Hashable) {
     value: u64
 
-    fn hash(this) => .value
+    fn hash(this) -> u64 => .value
 }
 
 // trait requiremennt on function

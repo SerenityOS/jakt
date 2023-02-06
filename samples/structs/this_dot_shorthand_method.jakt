@@ -5,9 +5,9 @@ struct Size {
     width: i64
     height: i64
 
-    fn area(this) => .width * .height
+    fn area(this) -> i64 => .width * .height
 
-    fn volume(this) => .area() * 10
+    fn volume(this) -> i64 => .area() * 10
 }
 
 

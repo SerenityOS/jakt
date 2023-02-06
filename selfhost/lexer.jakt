@@ -191,7 +191,7 @@ enum LiteralPrefix {
     Octal
     Binary
 
-    fn to_string(this) => match this {
+    fn to_string(this) -> String => match this {
         None => ""
         Hexadecimal => "0x"
         Octal => "0o"
@@ -213,7 +213,7 @@ enum LiteralSuffix {
     F32
     F64
 
-    fn to_string(this) => match this {
+    fn to_string(this) -> String => match this {
         None => ""
         UZ => "uz"
         U8 => "u8"

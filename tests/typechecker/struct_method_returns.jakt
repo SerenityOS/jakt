@@ -5,7 +5,7 @@ struct Foo {
     value: i32,
 
     // Same as a block with return in it, so this is fine
-    fn get_value(this) => this.value
+    fn get_value(this) -> i32 => this.value
 }
 
 fn main() {
