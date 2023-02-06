@@ -7,7 +7,7 @@ fn foo<T>(anon x: T, anon y: T) -> T {
 }
 
 // Make sure type inference kinda works
-fn bar<T>(anon x: T) => x + 1
+fn bar<T>(anon x: T) -> T => x + 1
 
 // Make sure we can access struct members
 struct Test {

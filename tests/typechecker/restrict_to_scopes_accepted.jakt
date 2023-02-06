@@ -6,16 +6,16 @@ struct Foo {
 }
 
 struct A {
-    fn b(anon foo: Foo) => foo.x
+    fn b(anon foo: Foo) -> i32 => foo.x
 }
 
 namespace Bar {
-    fn bar(anon foo: Foo) => foo.x
+    fn bar(anon foo: Foo) -> i32 => foo.x
 
-    fn bar2(anon foo: Foo) => foo.x
+    fn bar2(anon foo: Foo) -> i32 => foo.x
 }
 
-fn baz(anon foo: Foo) => foo.x
+fn baz(anon foo: Foo) -> i32 => foo.x
 
 fn main() {
     let foo = Foo(x: 42)

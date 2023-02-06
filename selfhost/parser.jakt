@@ -27,7 +27,7 @@ enum NumericConstant {
     UnknownSigned(i64)
     UnknownUnsigned(u64)
 
-    public fn to_usize(this) => match this {
+    public fn to_usize(this) -> usize => match this {
         I8(num) => num as! usize
         I16(num) => num as! usize
         I32(num) => num as! usize
@@ -320,7 +320,7 @@ enum RecordType {
     SumEnum(is_boxed: bool, fields: [ParsedField], variants: [SumEnumVariant])
     Garbage
 
-    public fn record_type_name(this) => match this {
+    public fn record_type_name(this) -> String => match this {
         Struct => "struct"
         Class => "class"
         ValueEnum => "value enum"
@@ -1703,7 +1703,12 @@ struct Parser {
                     }
                 }
                 Fn | Comptime => {
-                    mut parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public, is_comptime: .current() is Comptime, is_destructor: false)
+                    mut parsed_function = .parse_function(
+                        FunctionLinkage::Internal
+                        Visibility::Public
+                        is_comptime: .current() is Comptime
+                        is_destructor: false
+                    )
                     .apply_attributes(&mut parsed_function, &active_attributes)
                     active_attributes = []
                     parsed_namespace.functions.push(parsed_function)
@@ -1749,7 +1754,12 @@ struct Parser {
                     .index++
                     match .current() {
                         Fn => {
-                            mut parsed_function = .parse_function(FunctionLinkage::External, Visibility::Public, is_comptime: false, is_destructor: false)
+                            mut parsed_function = .parse_function(
+                                FunctionLinkage::External
+                                Visibility::Public
+                                is_comptime: false
+                                is_destructor: false
+                            )
                             .apply_attributes(&mut parsed_function, &active_attributes)
                             active_attributes = []
                             parsed_namespace.functions.push(parsed_function)
@@ -2627,7 +2637,14 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility, is_virtual: false, is_override: false, is_comptime, is_destructor: false)
+                    let parsed_method = .parse_method(
+                        function_linkage
+                        visibility
+                        is_virtual: false
+                        is_override: false
+                        is_comptime
+                        is_destructor: false
+                    )
 
                     methods.push(parsed_method)
                 }

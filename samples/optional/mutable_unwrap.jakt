@@ -8,7 +8,7 @@ class Foo {
         this.x = value
     }
 
-    public fn get(this) => this.x
+    public fn get(this) -> i64 => this.x
 }
 
 fn main() {
