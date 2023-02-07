@@ -4727,7 +4727,7 @@ struct Typechecker {
 
                 let effective_lhs_type_id = .find_or_add_type_id(lhs_type)
 
-                let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: effective_lhs_type_id, rhs_span: lhs_span)
+                let result = .unify(lhs: effective_lhs_type_id, lhs_span: lhs_span, rhs: rhs_type_id, rhs_span: rhs_span)
                 if not result.has_value() {
                     .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
                 }
@@ -5244,7 +5244,9 @@ struct Typechecker {
                 return CheckedStatement::Garbage(span)
             }
         } else {
-            if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
+            if not .is_subclass_of(ancestor_type_id: lhs_type_id, child_type_id: rhs_type_id) and
+                not lhs_type_id.equals(rhs_type_id) 
+                and not rhs_type_id.equals(unknown_type_id()) {
                 .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
             }
         }

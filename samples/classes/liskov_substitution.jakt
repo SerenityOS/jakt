@@ -1,0 +1,19 @@
+/// Expect:
+/// - output: "PASS\n"
+
+class Base {
+    public virtual fn greet(this) { println("FAIL") }
+}
+
+class Derived: Base {
+    public override fn greet(this) { println("PASS") }
+}
+
+class DoubleDerived: Derived {
+    public override fn greet(this) { println("PASS") }
+}
+
+fn main() {
+    let x: Base = DoubleDerived()
+    x.greet()
+}
