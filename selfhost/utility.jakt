@@ -135,10 +135,8 @@ fn interpret_escapes(anon s: String) throws -> String {
                 }
             }
             b'"' as! u32 | b'\'' as! u32 => {
-                if in_escape {
-                    builder.append_code_point(cp)
-                    in_escape = false
-                }
+                builder.append_code_point(cp)
+                in_escape = false
             }
             b'n' as! u32 => {
                 if in_escape {
