@@ -1236,7 +1236,7 @@ contexts:
     - match: \b(let|const|static|throw)\b
       scope: storage.type.jakt
 
-    - match: \bfunction\b
+    - match: \bfn\b
       scope: storage.type.function.jakt
 
     - match: \bmod\b
