@@ -430,10 +430,10 @@ contexts:
         (?x)
         \b(?:
           [ium]8x(?:2|4|8|16|32) | [iu]8x64   |
-          [ium]16x(?:2|4|8|16)   | [iu]16x32  | 
+          [ium]16x(?:2|4|8|16)   | [iu]16x32  |
           [iumf]32x(?:2|4|8)     | [iuf]32x16 |
           [iumf]64x(?:2|4)       | [iuf]64x8  |
-          m1x(?:64|32|16|8)                   | 
+          m1x(?:64|32|16|8)                   |
           __m(?:64|128|256)[di]?
         )\b
       scope: storage.type.jakt
@@ -1102,11 +1102,11 @@ contexts:
     - match: '\{\{|\}\}'
       scope: constant.character.escape.jakt
     - match: |-
-        (?x)                      
+        (?x)
         \{
           (\d+|{{identifier}})?
           (
-            :                     
+            :
             (.?[<>^])?            # [[fill]align]
             [+-]?                 # [sign]
             \#?                   # ['#']
