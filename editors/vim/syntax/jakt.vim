@@ -28,7 +28,7 @@ let s:jakt_syntax_keywords = {
     \ , 'jaktBoolean' :["true"
     \ ,                 "false"
     \ ,                ]
-    \ , 'jaktKeyword' :["function"
+    \ , 'jaktKeyword' :["fn"
     \ ,                 "extern"
     \ ,                 "import"
     \ ,                 "comptime"
