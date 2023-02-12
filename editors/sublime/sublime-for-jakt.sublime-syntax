@@ -318,7 +318,7 @@ contexts:
           push: generic-angles
         - include: type-any-identifier
         - match: '{{identifier}}'
-        - match: '(?=\S)'
+        - match: '(?=(\{)|$|(\=\>))'
           pop: true
 
   pattern-param:
