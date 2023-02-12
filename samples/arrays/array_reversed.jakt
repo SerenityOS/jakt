@@ -1,0 +1,8 @@
+/// Expect:
+/// - output: "[1, 2, 3, 4]\n[4, 3, 2, 1]"
+
+fn main() {
+    let x = [1, 2, 3, 4]
+    println("{}", x)
+    println("{}", x.reversed())
+}

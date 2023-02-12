@@ -374,6 +374,16 @@ public:
             return {};
         return at(size() - 1);
     }
+    
+    ErrorOr<DynamicArray> reversed() const
+    {
+        auto array = TRY(create_empty());
+        TRY(array.ensure_capacity(size()));
+        for (int i = size() - 1; i >= 0 ; --i) {
+            TRY(array.push(at(i)));
+        }
+        return array;
+    }
 
 private:
     explicit DynamicArray(NonnullRefPtr<Storage> storage)
