@@ -5080,6 +5080,173 @@ struct Typechecker {
         spans: []
     )
 
+    fn scope_lifetime_subsumes(this, anon larger: ScopeId?, anon smaller: ScopeId?, checked: &mut {String}) throws -> bool {
+        if not larger.has_value() {
+            return false
+        }
+
+        if not smaller.has_value() {
+            return true
+        }
+
+        let larger_id = larger!
+        let smaller_id = smaller!
+
+        if checked.contains(larger_id.to_string()) {
+            return false
+        }
+        checked.add(larger_id.to_string())
+
+        // Just go through the parent chain of the larger scope, if 'smaller' is a child of one (or equal to), assume it's a subscope.
+        mut scope_id = Some(larger_id)
+        mut first = true
+        while scope_id.has_value() {
+            if not first and scope_id!.equals(smaller_id) {
+                return true
+            }
+            first = false
+            let scope = .program.get_scope(scope_id!)
+            for child_scope_id in scope.children {
+                if .scope_lifetime_subsumes(child_scope_id, smaller_id, checked) {
+                    return true
+                }
+            }
+            scope_id = scope.parent
+        }
+
+        return false
+    }
+
+    fn scope_lifetime_subsumes(this, anon larger: ScopeId?, anon smaller: ScopeId?) throws -> bool {
+        mut checked: {String} = {}
+        return .scope_lifetime_subsumes(larger, smaller, &mut checked)
+    }
+
+    fn scope_lifetime_union(this, anon first: ScopeId?, anon second: ScopeId?) throws -> ScopeId? {
+        // If one is immediate, the union is also immediate:
+        if not first.has_value() or not second.has_value() {
+            return None
+        }
+
+        let first_id = first!
+        let second_id = second!
+
+        // Fast path: if one is root, the union is the other
+        if first_id.equals(.root_scope_id()) {
+            return second_id
+        }
+        if second_id.equals(.root_scope_id()) {
+            return first_id
+        }
+
+        // Go through first's parent chain and check if it's a direct child of second
+        {
+            mut scope_id = Some(first_id)
+            while scope_id.has_value() {
+                if scope_id!.equals(second_id) {
+                    return first_id
+                }
+                scope_id = .get_scope(scope_id!).parent
+            }
+        }
+
+        // Go through second's parent chain and check if it's a direct child of first
+        {
+            mut scope_id = Some(second_id)
+            while scope_id.has_value() {
+                if scope_id!.equals(first_id) {
+                    return second_id
+                }
+                scope_id = .get_scope(scope_id!).parent
+            }
+        }
+
+        // First and second are diverging lifetimes, we can't really do anything about that.
+        return None
+    }
+
+    fn required_scope_id_in_hierarchy_for(mut this, anon expr: CheckedExpression, current_scope_id: ScopeId) throws -> ScopeId? => match expr {
+        Boolean
+        | NumericConstant
+        | QuotedString
+        | ByteConstant
+        | CharacterConstant
+        | CCharacterConstant
+        | Reflect
+        => .root_scope_id()
+        // Immediate values, let's not have lifetime extension for now.
+        BinaryOp => None
+        UnaryOp(op, expr) => match op {
+            PreIncrement | PreDecrement => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
+            // NOTE: This should be the scope of whatever the pointer points to,
+            // but we don't have that information, so just use the scope of the pointer - the referenced object will
+            // outlive the pointer anyway.
+            Dereference => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
+            Reference | MutableReference => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
+            else => None
+        }
+        JaktArray(vals) | JaktTuple(vals) | JaktSet(vals) => {
+            mut final_scope_id: ScopeId? = None
+            for val in vals {
+                final_scope_id = .scope_lifetime_union(
+                    final_scope_id
+                    .required_scope_id_in_hierarchy_for(val, current_scope_id)
+                )
+            }
+            yield final_scope_id
+        }
+        JaktDictionary(vals) => {
+            mut final_scope_id: ScopeId? = None
+            for (key, val) in vals {
+                final_scope_id = .scope_lifetime_union(
+                    final_scope_id
+                    .scope_lifetime_union(
+                        .required_scope_id_in_hierarchy_for(key, current_scope_id)
+                        .required_scope_id_in_hierarchy_for(val, current_scope_id)
+                    )
+                )
+            }
+            yield final_scope_id
+        }
+        Range => None
+        IndexedExpression(expr)
+        | IndexedDictionary(expr)
+        | IndexedTuple(expr)
+        | IndexedStruct(expr)
+        | IndexedCommonEnumMember(expr)
+        | ComptimeIndex(expr)
+        => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
+        // FIXME: Actually look into the match and figure out the lifetimes.
+        Match => None
+        // FIXME: Implement this
+        EnumVariantArg => None
+        Call => None
+        // FIXME: This assumes far too much, the returned value might not even be a reference to the internals of the object.
+        //        but the absolute smallest guaranteed lifetime for something returned from a member function is the lifetime of the object (for now).
+        MethodCall(expr) => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
+        Var(var) | NamespacedVar(var) => var.owner_scope ?? current_scope_id // If the variable doesn't have an owner yet, we're in the process of defining it.
+        OptionalNone => None
+        OptionalSome => None
+        ForcedUnwrap(expr) => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
+        Block => None // Blocks can't yield values (for now)
+        Function(captures) | DependentFunction(captures) => {
+            mut final_scope_id: ScopeId? = None
+            for capture in captures {
+                mut scope_id: ScopeId? = None
+                // FIXME: We should actually figure out what "all" means by looking at the function's body when making the function.
+                if capture is ByMutableReference or capture is ByReference {
+                    let scope_id = .find_var_in_scope(scope_id: current_scope_id, var: capture.name)?.owner_scope
+                }
+                final_scope_id = .scope_lifetime_union(final_scope_id, scope_id)
+            }
+            yield final_scope_id
+        }
+        // FIXME: Check what the expression actually returns, also check the catch block (if one exists)
+        Try => None
+        TryBlock => None
+        Garbage => None
+    }
+
     fn typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id, name: var.name)
         mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode, type_hint: lhs_type_id)
@@ -5096,10 +5263,19 @@ struct Typechecker {
         let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
         let optional_struct_id = .find_struct_in_prelude("Optional")
 
+
+        if .type_contains_reference(type_id: lhs_type_id) {
+            // If the variable type is a reference, we need to make sure that this scope does not outlive the reference.
+            let init_scope_id = .required_scope_id_in_hierarchy_for(checked_expr, current_scope_id: scope_id)
+            if .scope_lifetime_subsumes(scope_id, init_scope_id) {
+                .error(
+                    "Cannot assign a reference to a variable that outlives the reference"
+                    checked_expr.span()
+                )
+            }
+        }
+
         let lhs_type = .get_type(lhs_type_id)
-
-        .check_that_type_doesnt_contain_reference(type_id: lhs_type_id, span)
-
         if checked_expr is OptionalNone(span, type_id) {
             if lhs_type is GenericInstance(id, args) {
                 if not (id.equals(optional_struct_id) or id.equals(weak_ptr_struct_id)) {

@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Reference type ‘&i64’ not usable in this context"
+/// - error: "Attempt to rebind a reference will result in write-through\n"
 
 fn main() {
     let i = 0
