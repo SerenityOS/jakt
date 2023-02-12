@@ -1,0 +1,9 @@
+/// Expect:
+/// - output: "[\"Well\", \"Hello\", \"Friends\", \"!\"]\n[\"Hello\", \"Friends\"]\n"
+fn main() {
+   mut string_list: [String] = ["Well", "Hello", "Friends", "!"]
+   println("{}", string_list)
+   string_list.erase(start: 0, length: 1)
+   string_list.erase(start: 2, length: 1)
+   println("{}", string_list)
+}

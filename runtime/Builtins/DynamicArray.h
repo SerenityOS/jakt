@@ -84,6 +84,28 @@ public:
         return false;
     }
 
+    ErrorOr<void> erase(size_t start, size_t length) {
+        if(length == 0) {
+            return {};
+        }
+        VERIFY(start + length <= m_size);
+        for(size_t i = start; i < m_size; i++) {
+            if(i >= start + length) {
+                // FIXME: is there a way to do this as one operation(assigment) rather then iterating over all tail elements 
+                // and manually shifting them up?
+                m_elements[i-length] = move(m_elements[i]);
+            } else {
+                m_elements[i].~T();
+            }
+        }
+        m_size = m_size - length;
+        // if we clear more or equal to 25% of capacity, then shrink
+        if(length >= m_capacity / 4) {
+            TRY(ensure_capacity(m_capacity - length));
+        }
+        return {};
+    }
+
     ErrorOr<void> add_size(size_t size)
     {
         if (Checked<size_t>::addition_would_overflow(m_size, size)) {
@@ -297,6 +319,11 @@ public:
     ErrorOr<void> add_capacity(size_t capacity)
     {
         TRY(m_storage->add_capacity(capacity));
+        return {};
+    }
+
+    ErrorOr<void> erase(size_t start, size_t length) {
+        TRY(m_storage->erase(start, length));
         return {};
     }
 

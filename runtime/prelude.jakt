@@ -26,6 +26,7 @@ extern struct Array<T> {
     fn first(this) -> T?
     fn last(this) -> T?
     fn insert(mut this, before_index: usize, value: T) throws
+    fn erase(mut this, start: usize, length: usize) throws 
 }
 
 extern struct ArraySlice<T> {
