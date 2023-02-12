@@ -1257,7 +1257,7 @@ contexts:
     - match: \btrait\b
       scope: storage.type.trait.jakt
 
-    - match: \b(mutable|public|unsafe|class|throws)\b
+    - match: \b(mut|public|unsafe|class|throws)\b
       scope: storage.modifier.jakt
 
     - match: \b(else|for|if|loop|match|try|while|yield|guard)\b
