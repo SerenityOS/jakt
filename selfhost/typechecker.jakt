@@ -3258,15 +3258,7 @@ struct Typechecker {
     }
 
     fn check_that_type_doesnt_contain_reference(mut this, type_id: TypeId, span: Span) throws {
-        let type = .get_type(type_id)
-
-        // FIXME: Check for any type that contains a reference as a generic parameter, etc.
-        let contains_reference = match type {
-            Reference | MutableReference => true
-            else => false
-        }
-
-        if contains_reference {
+        if .type_contains_reference(type_id) {
             .error(
                 format(
                     "Reference type ‘{}’ not usable in this context"
@@ -3274,6 +3266,16 @@ struct Typechecker {
                 )
                 span
             )
+        }
+    }
+
+    fn type_contains_reference(mut this, type_id: TypeId) throws -> bool {
+        let type = .get_type(type_id)
+
+        // FIXME: Check for any type that contains a reference as a generic parameter, etc.
+        return match type {
+            Reference | MutableReference => true
+            else => false
         }
     }
 
@@ -5356,21 +5358,28 @@ struct Typechecker {
         return CheckedStatement::Return(val: checked_expr, span)
     }
 
-    fn typecheck_expression_and_dereference_if_needed(mut this, anon expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?, span: Span) throws -> CheckedExpression {
-        mut checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint)
-        match .get_type(checked_expr.type()) {
-            Reference(type_id) | MutableReference(type_id) => {
-                checked_expr = CheckedExpression::UnaryOp(
-                    expr: checked_expr
-                    op: CheckedUnaryOperator::Dereference
-                    span: span
-                    type_id
-                )
-            }
-            else => {}
+    fn dereference_if_needed(mut this, anon checked_expr: CheckedExpression, span: Span) throws -> CheckedExpression {
+        return match .get_type(checked_expr.type()) {
+            Reference(type_id) | MutableReference(type_id) => CheckedExpression::UnaryOp(
+                expr: checked_expr
+                op: CheckedUnaryOperator::Dereference
+                span: span
+                type_id
+            )
+            else => checked_expr
         }
+    }
 
-        return checked_expr
+    fn typecheck_expression_and_dereference_if_needed(
+        mut this
+        anon expr: ParsedExpression
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        type_hint: TypeId?
+        span: Span
+    ) throws -> CheckedExpression {
+        mut checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint)
+        return .dereference_if_needed(checked_expr, span)
     }
 
     fn map_generic_arguments(mut this, type_id: TypeId, args: [TypeId]) throws {
@@ -6216,19 +6225,37 @@ struct Typechecker {
             yield .typecheck_unary_operation(checked_expr, checked_op, span, scope_id, safety_mode)
         }
         BinaryOp(lhs, op, rhs, span) => {
+            mut original_checked_lhs: CheckedExpression? = None
+            mut original_checked_rhs: CheckedExpression? = None
             mut checked_lhs: CheckedExpression? = None
             mut checked_rhs: CheckedExpression? = None
             if lhs is NumericConstant(val: UnknownSigned) or lhs is NumericConstant(val: UnknownUnsigned) {
                 // If we have a constant on the lhs, infer starting the the right:
-                checked_rhs = .typecheck_expression_and_dereference_if_needed(rhs, scope_id, safety_mode, type_hint: None, span)
+                original_checked_rhs = .typecheck_expression(rhs, scope_id, safety_mode, type_hint: None)
+                checked_rhs = .dereference_if_needed(original_checked_rhs!, span)
                 let hint = checked_rhs!.type()
 
-                checked_lhs = .typecheck_expression_and_dereference_if_needed(lhs, scope_id, safety_mode, type_hint: hint, span)
+                original_checked_lhs = .typecheck_expression(lhs, scope_id, safety_mode, type_hint: hint)
+                checked_lhs = .dereference_if_needed(original_checked_lhs!, span)
             } else {
-                checked_lhs = .typecheck_expression_and_dereference_if_needed(lhs, scope_id, safety_mode, type_hint: None, span)
+                original_checked_lhs = .typecheck_expression(lhs, scope_id, safety_mode, type_hint: None)
+                checked_lhs = .dereference_if_needed(original_checked_lhs!, span)
                 let hint = checked_lhs!.type()
 
-                checked_rhs = .typecheck_expression_and_dereference_if_needed(rhs, scope_id, safety_mode, type_hint: hint, span)
+                original_checked_rhs = .typecheck_expression(rhs, scope_id, safety_mode, type_hint: hint)
+                checked_rhs = .dereference_if_needed(original_checked_rhs!, span)
+            }
+
+            if .type_contains_reference(type_id: original_checked_lhs!.type())
+                and rhs is UnaryOp(op)
+                and (op is Reference or op is MutableReference) {
+
+                .error_with_hint(
+                    "Attempt to rebind a reference will result in write-through"
+                    span
+                    "This reference will be immediately dereferenced and then assigned"
+                    rhs.span()
+                )
             }
 
             let output_type = .typecheck_binary_operation(checked_lhs: checked_lhs!, op, checked_rhs: checked_rhs!, scope_id, span)
