@@ -664,7 +664,7 @@ contexts:
         - match: ','
           scope: punctuation.separator.jakt
           pop: true
-        - match: '(?=\})'
+        - match: '(?=(\})|$)'
           pop: true
         - include: comments
         - match: ':'
