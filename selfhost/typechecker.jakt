@@ -3192,6 +3192,28 @@ struct Typechecker {
             first = false
         }
 
+        if parsed_function.stores_arguments.has_value() {
+            for (index, _) in parsed_function.stores_arguments! {
+                if index >= checked_function.params.size() {
+                    .compiler.panic("stores_argument() index out of bounds")
+                }
+
+                match .get_type(checked_function.params[index].variable.type_id) {
+                    Reference | MutableReference => {}
+                    else => {
+                        .error_with_hint(
+                            "This parameter is not a reference",
+                            checked_function.params[index].variable.definition_span
+                            "stores_argument() may only be used to declare reference lifetime requirements"
+                            checked_function.params[index].variable.definition_span
+                        )
+                    }
+                }
+            }
+        }
+
+        checked_function.stores_arguments = parsed_function.stores_arguments
+
         // Check return type
         mut function_return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id, name: None)
         if parsed_function.return_type is Empty {
@@ -8415,6 +8437,37 @@ struct Typechecker {
                 yield function.external_name
             }
             else => None
+        }
+
+        if resolved_function_id.has_value() {
+            let function = .get_function(resolved_function_id!)
+            if function.stores_arguments.has_value() {
+                let argument_behaviour = function.stores_arguments!
+                for (index, level) in argument_behaviour {
+                    let resolve_arg = fn[&args, &this_expr, &function](anon index: usize) -> CheckedExpression {
+                        if function.is_static() {
+                            return args[index].1
+                        }
+                        if index == 0uz {
+                            return this_expr!
+                        }
+                        return args[index - 1].1
+                    }
+
+                    let arg_scope_id = .required_scope_id_in_hierarchy_for(resolve_arg(index), current_scope_id: caller_scope_id)
+                    let stored_scope_id = match level {
+                        InStaticStorage => Some(.root_scope_id())
+                        InObject(argument_index) => .required_scope_id_in_hierarchy_for(resolve_arg(argument_index), current_scope_id: caller_scope_id)
+                    }
+
+                    if .scope_lifetime_subsumes(stored_scope_id, arg_scope_id) {
+                        .error(
+                            "Cannot pass this argument by reference, it is not guaranteed to outlive the object it will be stored in"
+                            resolve_arg(index).span()
+                        )
+                    }
+                }
+            }
         }
 
         let function_call = CheckedCall(

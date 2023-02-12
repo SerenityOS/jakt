@@ -1,0 +1,19 @@
+/// Expect:
+/// - error: "Cannot pass this argument by reference, it is not guaranteed to outlive the object it will be stored in\n"
+
+extern struct Vector<T> {
+    fn Vector<T>() -> Vector<T>
+
+    [[stores_arguments(y: this)]]
+    fn append(mut this, anon y: &T) -> void
+}
+
+fn main() {
+    let x = 10i32
+    {
+        let y = 10i32
+        mut v = Vector<i32>()
+        v.append(&x)
+        v.append(&y)
+    }
+}

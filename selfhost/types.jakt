@@ -1,9 +1,9 @@
-import parser { Parser, BinaryOperator, DefinitionLinkage, UnaryOperator,
-                FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
-                ParsedExpression, ParsedFunction, ParsedNamespace, ParsedModuleImport,
-                ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
-                ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
-                ParsedMatchBody, ParsedMatchCase, ParsedParameter, ParsedCapture, IncludeAction }
+import parser {
+    ArgumentStoreLevel, BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, FunctionLinkage, FunctionType
+    IncludeAction, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport, ParsedField
+    ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedModuleImport, ParsedNamespace, ParsedParameter
+    ParsedRecord, ParsedStatement, ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator
+}
 import utility { panic, todo, join, FileId, Span, IterationDecision }
 import compiler { Compiler }
 
@@ -745,6 +745,7 @@ class CheckedFunction {
 
     public external_name: String? = None
     public deprecated_message: String? = None
+    public stores_arguments: [(usize, ArgumentStoreLevel)]? = None
 
     public fn name_for_codegen(this) -> String => .external_name ?? .name
 
@@ -777,6 +778,10 @@ class CheckedFunction {
         is_virtual: .is_virtual
         is_override: .is_override
         specialization_index: .specialization_index
+        owner_scope: .owner_scope
+        external_name: .external_name
+        deprecated_message: .deprecated_message
+        stores_arguments: .stores_arguments
     )
 
     public fn signature_matches(this, anon other: CheckedFunction) throws -> bool {

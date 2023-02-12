@@ -351,7 +351,10 @@ enum FunctionType {
     Closure
 }
 
-
+enum ArgumentStoreLevel {
+    InObject(argument_index: usize)
+    InStaticStorage
+}
 
 struct ParsedFunction {
     name: String
@@ -371,6 +374,7 @@ struct ParsedFunction {
 
     external_name: String? = None
     deprecated_message: String? = None // if not None, the function is deprecated
+    stores_arguments: [(usize, ArgumentStoreLevel)]? = None // if not None, the function stores the given arguments, extending their lifetime requirements.
 
     fn equals(this, anon other: ParsedFunction) -> bool {
         if this.name != other.name or
@@ -1833,6 +1837,52 @@ struct Parser {
                     let message = attribute.arguments.first()?.name ?? format("The function '{}' is marked as deprecated", parsed_function.name)
                     parsed_function.deprecated_message = message
                 }
+                "stores_arguments" => {
+                    // [[stores_arguments(foo: this, bar)]] -> [(foo, InObject("this")), (bar, InStaticStorage)]
+                    mut stores_arguments: [(usize, ArgumentStoreLevel)] = []
+                    for argument in attribute.arguments {
+                        let target = argument.assigned_value
+
+                        mut target_index: usize? = None
+                        mut name_index: usize? = None
+                        mut index = 0uz
+                        for param in parsed_function.params {
+                            defer index += 1
+                            if param.variable.name == argument.name {
+                                name_index = index
+                            }
+                            if target.has_value() and param.variable.name == target! {
+                                target_index = index
+                            }
+                        }
+                        if not name_index.has_value() {
+                            .error(
+                                format("Argument '{}' declared as stored here does not exist", argument.name)
+                                argument.span
+                            )
+                            continue
+                        }
+                        if target.has_value() and not target_index.has_value() {
+                            .error(
+                                format("Argument '{}' declared as store target here does not exist", target!)
+                                argument.span
+                            )
+                            continue
+                        }
+
+                        mut entry = (name_index!, ArgumentStoreLevel::InStaticStorage)
+                        if target.has_value() {
+                            entry.1 = ArgumentStoreLevel::InObject(argument_index: target_index!)
+                        }
+                        stores_arguments.push(entry)
+                    }
+
+                    if parsed_function.stores_arguments.has_value() {
+                        parsed_function.stores_arguments!.push_values(&stores_arguments)
+                    } else {
+                        parsed_function.stores_arguments = stores_arguments
+                    }
+                }
                 else => {
                     .error(
                         format("The attribute '{}' does not apply to functions", attribute.name)
@@ -1901,6 +1951,10 @@ struct Parser {
                 .index++
                 yield name
             }
+            This => {
+                .index++
+                yield "this"
+            }
             else => {
                 .error("Expected identifier", .current().span())
                 return None
@@ -1917,6 +1971,10 @@ struct Parser {
                     Identifier(name) => {
                         .index++
                         yield name
+                    }
+                    This => {
+                        .index++
+                        yield "this"
                     }
                     QuotedString(quote) => {
                         .index++
@@ -1935,6 +1993,10 @@ struct Parser {
                         Identifier(name) => {
                             .index++
                             yield name
+                        }
+                        This => {
+                            .index++
+                            yield "this"
                         }
                         QuotedString(quote) => {
                             .index++
@@ -1975,6 +2037,10 @@ struct Parser {
                 Identifier(name) => {
                     .index++
                     yield Some(name)
+                }
+                This => {
+                    .index++
+                    yield "this"
                 }
                 QuotedString(quote) => {
                     .index++
