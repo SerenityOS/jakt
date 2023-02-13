@@ -3,7 +3,7 @@
 
 class GoodEncapsulation {
     muda_amount: u32
-    public ora_amount: u32
+    pub ora_amount: u32
 }
 
 fn main() {

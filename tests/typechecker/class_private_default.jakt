@@ -3,7 +3,7 @@
 
 class GoodEncapsulation {
     fn cant_touch(this) {}
-    public fn oraoraora(this) {}
+    pub fn oraoraora(this) {}
 }
 
 fn main() {

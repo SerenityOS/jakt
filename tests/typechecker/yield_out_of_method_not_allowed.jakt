@@ -2,7 +2,7 @@
 /// - error: "Functions are not allowed to yield values"
 
 class Foo {
-    public fn test() -> String {
+    pub fn test() -> String {
         yield "Foo"
     }
 }

@@ -2,9 +2,9 @@
 /// - output: "Foo(a: 3.14, b: 0, c: c as string)"
 
 class Foo<A, B, C> {
-	public a: A
-	public b: B
-	public c: C
+	pub a: A
+	pub b: B
+	pub c: C
 }
 
 fn main() {

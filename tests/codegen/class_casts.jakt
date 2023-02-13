@@ -5,7 +5,7 @@ class Base {
 }
 
 class Derived: Base {
-    public x: i64
+    pub x: i64
 }
 
 class OtherDerived: Base {

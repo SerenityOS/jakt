@@ -2,10 +2,10 @@
 /// - output: "Jane\n1100\n"
 
 class Person {
-    public name: String
-    public age: i64
+    pub name: String
+    pub age: i64
 
-    public fn generate(name: String, age: i64) throws -> Person {
+    pub fn generate(name: String, age: i64) throws -> Person {
         return Person(name: name, age: age + 1000);
     }
 }

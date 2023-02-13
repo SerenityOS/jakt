@@ -14,11 +14,11 @@ class RecursiveFileIterator implements(ThrowingIterable<Path>) {
     private directory_list: [Path]
     private current_directory: DirectoryIterator?
     
-    public fn make(directory: Path, extension: String) throws -> RecursiveFileIterator {
+    pub fn make(directory: Path, extension: String) throws -> RecursiveFileIterator {
         return RecursiveFileIterator(extension, directory_list: [directory], current_directory: None)
     }
 
-    public fn next(mut this) throws -> Path?  {
+    pub fn next(mut this) throws -> Path?  {
         if not .current_directory.has_value() {
             if .directory_list.size() > 0 {
                 let path = .directory_list.pop()!

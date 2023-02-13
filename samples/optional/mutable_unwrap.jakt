@@ -2,13 +2,13 @@
 /// - output: "2\n"
 
 class Foo {
-    public x: i64
+    pub x: i64
 
-    public fn set(mut this, value: i64) {
+    pub fn set(mut this, value: i64) {
         this.x = value
     }
 
-    public fn get(this) => this.x
+    pub fn get(this) => this.x
 }
 
 fn main() {

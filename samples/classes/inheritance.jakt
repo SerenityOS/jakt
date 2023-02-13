@@ -2,7 +2,7 @@
 /// - output: "I am the parent\n"
 
 class Parent {
-    public fn greet(this) {
+    pub fn greet(this) {
         println("I am the parent")
     }
 }

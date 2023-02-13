@@ -2,9 +2,9 @@
 /// - error: "Cannot use a logical Not on a value of non-boolean type"
 
 class Foo {
-    public my_size: usize
+    pub my_size: usize
 
-    public fn size(this) -> usize {
+    pub fn size(this) -> usize {
         return .my_size
     }
 }

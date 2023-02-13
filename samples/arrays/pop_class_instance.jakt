@@ -2,7 +2,7 @@
 /// - output: "PASS\n"
 
 class C {
-    public message: String
+    pub message: String
 }
 
 fn main() {

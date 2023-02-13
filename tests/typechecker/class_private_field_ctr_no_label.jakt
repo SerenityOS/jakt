@@ -3,7 +3,7 @@
 
 class Foo {
     private_field: i64
-    public public_field: i64
+    pub public_field: i64
 }
 
 fn main() {

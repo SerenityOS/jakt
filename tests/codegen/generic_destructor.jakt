@@ -2,7 +2,7 @@
 /// - output: "~Foo: 123\n~Foo: A\n"
 
 struct Foo<T> {
-    public value: T
+    pub value: T
 
     destructor {
        println("~Foo: {}", .value)

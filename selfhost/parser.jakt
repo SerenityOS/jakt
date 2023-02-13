@@ -27,7 +27,7 @@ enum NumericConstant {
     UnknownSigned(i64)
     UnknownUnsigned(u64)
 
-    public fn to_usize(this) => match this {
+    pub fn to_usize(this) => match this {
         I8(num) => num as! usize
         I16(num) => num as! usize
         I32(num) => num as! usize
@@ -320,7 +320,7 @@ enum RecordType {
     SumEnum(is_boxed: bool, fields: [ParsedField], variants: [SumEnumVariant])
     Garbage
 
-    public fn record_type_name(this) => match this {
+    pub fn record_type_name(this) => match this {
         Struct => "struct"
         Class => "class"
         ValueEnum => "value enum"
@@ -1633,7 +1633,7 @@ struct Parser {
         .tokens.insert(before_index: .index + 1, value: token)
     }
 
-    public fn parse_namespace(mut this) throws -> ParsedNamespace {
+    pub fn parse_namespace(mut this) throws -> ParsedNamespace {
         mut parsed_namespace = ParsedNamespace(
             name: None
             name_span: None
@@ -2886,7 +2886,7 @@ struct Parser {
         return parsed_enum
     }
 
-    public fn parse_struct_class_body(
+    pub fn parse_struct_class_body(
         mut this
         definition_linkage: DefinitionLinkage
         default_visibility: Visibility
@@ -3040,7 +3040,7 @@ struct Parser {
         return (fields, methods)
     }
 
-    public fn parse_struct(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord {
+    pub fn parse_struct(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord {
         mut parsed_struct = ParsedRecord(
             name: "",
             name_span: .empty_span(),
@@ -3099,7 +3099,7 @@ struct Parser {
         return parsed_struct
     }
 
-    public fn parse_class(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord {
+    pub fn parse_class(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord {
         mut parsed_class = ParsedRecord(
             name: "",
             name_span: .empty_span(),
@@ -3170,7 +3170,7 @@ struct Parser {
         return parsed_class
     }
 
-    public fn parse_function_parameters(mut this) throws -> [ParsedParameter] {
+    pub fn parse_function_parameters(mut this) throws -> [ParsedParameter] {
         if .current() is LParen {
             .index++
         } else {
@@ -3283,7 +3283,7 @@ struct Parser {
         return params
     }
 
-    public fn parse_function(
+    pub fn parse_function(
         mut this
         anon linkage: FunctionLinkage
         anon visibility: Visibility

@@ -5,7 +5,7 @@ class Class {
     fn private_function(this) {
         println("PASS")
     }
-    public fn public_function(this) {
+    pub fn public_function(this) {
         this.private_function()
     }
 }

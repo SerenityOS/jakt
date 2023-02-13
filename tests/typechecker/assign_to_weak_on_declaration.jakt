@@ -2,7 +2,7 @@
 /// - output: "Foo\n"
 
 class Foo {
-    public fn call(this) => "Foo"
+    pub fn call(this) => "Foo"
 }
 
 fn main() {

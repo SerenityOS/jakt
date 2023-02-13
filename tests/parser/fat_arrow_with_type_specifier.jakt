@@ -2,7 +2,7 @@
 /// - output: "Hello friends! The answer is 42\n"
 
 class S {
-    public fn get_answer() -> i32 => 42
+    pub fn get_answer() -> i32 => 42
 }
 
 fn greeting() -> String => "Hello"

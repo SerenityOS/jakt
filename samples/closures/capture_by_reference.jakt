@@ -6,7 +6,7 @@ fn test(cb: fn() -> void) {
 }
 
 class Foo {
-    public message: String
+    pub message: String
 }
 
 fn main() {

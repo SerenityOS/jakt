@@ -2,11 +2,11 @@
 /// - error: "No function with matching signature found."
 
 class A {
-    public fn foo(this) => 0
+    pub fn foo(this) => 0
 }
 
 class B : A {
-    public fn foo(this, x: String) => 0
+    pub fn foo(this, x: String) => 0
 }
 
 fn main() {

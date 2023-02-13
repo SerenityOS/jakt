@@ -6,7 +6,7 @@ enum E {
 }
 
 class C {
-    public e: E
+    pub e: E
 }
 
 fn main() {

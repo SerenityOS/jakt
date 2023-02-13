@@ -7,7 +7,7 @@ class Limited {
 }
 
 class A {
-    public fn do_things() {
+    pub fn do_things() {
         println("The secret is: {}", Limited::get_secret())
         println("{}", Limited::open_the_bank_vault())
     }

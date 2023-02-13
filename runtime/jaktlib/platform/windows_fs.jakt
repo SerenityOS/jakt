@@ -51,7 +51,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
     dir_fd: raw void
     first_file: (Path, bool)?
 
-    public fn next(mut this) throws -> (Path, bool)? {
+    pub fn next(mut this) throws -> (Path, bool)? {
         if .first_file.has_value() {
             let file = .first_file!
             .first_file = None
@@ -112,7 +112,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
         return (Path::from_string(builder.to_string()), is_directory)
     }
 
-    public fn from_path(path: Path) throws -> DirectoryIterator? {
+    pub fn from_path(path: Path) throws -> DirectoryIterator? {
         mut dir_fd = default_constructed<raw void>()
 
         mut directory_iterator = DirectoryIterator(path, dir_fd, first_file: None)
@@ -123,7 +123,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
         return directory_iterator
     }
 
-    public fn get_path(this) -> Path {
+    pub fn get_path(this) -> Path {
         return .path
     }
 }

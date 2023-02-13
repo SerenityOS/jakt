@@ -5,15 +5,15 @@ class Rect {
     private width: i64
     private height: i64
 
-    public fn construct(width: i64, height: i64) throws -> Rect {
+    pub fn construct(width: i64, height: i64) throws -> Rect {
         return Rect(width, height)
     }
 
-    public fn construct(square_with_sides: i64) throws -> Rect {
+    pub fn construct(square_with_sides: i64) throws -> Rect {
         return Rect(width: square_with_sides, height: square_with_sides)
     }
 
-    public fn area(this) -> i64 {
+    pub fn area(this) -> i64 {
         return this.width * this.height
     }
 }

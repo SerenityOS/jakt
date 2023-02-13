@@ -1,13 +1,13 @@
 /// Expect:
 /// - output: "greeting from the child\n"
 class Parent {
-    public virtual fn greet(this) {
+    pub virtual fn greet(this) {
         println("greeting from the parent")
     }
 }
 
 class Child: Parent {
-    public override fn greet(this) {
+    pub override fn greet(this) {
         println("greeting from the child")
     }
 }

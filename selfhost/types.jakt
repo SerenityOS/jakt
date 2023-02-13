@@ -560,48 +560,48 @@ boxed enum Type {
 }
 
 class Scope {
-    public namespace_name: String?
-    public external_name: String?
+    pub namespace_name: String?
+    pub external_name: String?
 
-    public vars: [String: VarId]
-    public comptime_bindings: [String: Value]
-    public structs: [String: StructId]
-    public functions: [String: [FunctionId]]
-    public enums: [String: EnumId]
-    public types: [String: TypeId]
-    public traits: [String: TraitId]
-    public imports: [String: ModuleId] // FIXME: Span
-    public aliases: [String: ScopeId]
-    public parent: ScopeId?
-    public alias_scope: ScopeId? = None
-    public children: [ScopeId]
-    public can_throw: bool
-    public import_path_if_extern: String?
-    public alias_path: [ResolvedNamespace]? = None
-    public after_extern_include: [IncludeAction]
-    public before_extern_include: [IncludeAction]
+    pub vars: [String: VarId]
+    pub comptime_bindings: [String: Value]
+    pub structs: [String: StructId]
+    pub functions: [String: [FunctionId]]
+    pub enums: [String: EnumId]
+    pub types: [String: TypeId]
+    pub traits: [String: TraitId]
+    pub imports: [String: ModuleId] // FIXME: Span
+    pub aliases: [String: ScopeId]
+    pub parent: ScopeId?
+    pub alias_scope: ScopeId? = None
+    pub children: [ScopeId]
+    pub can_throw: bool
+    pub import_path_if_extern: String?
+    pub alias_path: [ResolvedNamespace]? = None
+    pub after_extern_include: [IncludeAction]
+    pub before_extern_include: [IncludeAction]
 
-    public debug_name: String
-    public resolution_mixins: [ScopeId]
+    pub debug_name: String
+    pub resolution_mixins: [ScopeId]
 }
 
 class Module {
-    public id: ModuleId
-    public name: String
-    public functions: [CheckedFunction]
-    public structures: [CheckedStruct]
-    public enums: [CheckedEnum]
-    public scopes: [Scope]
-    public types: [Type]
-    public traits: [CheckedTrait]
-    public variables: [CheckedVariable]
-    public imports: [ModuleId]
-    public resolved_import_path: String
+    pub id: ModuleId
+    pub name: String
+    pub functions: [CheckedFunction]
+    pub structures: [CheckedStruct]
+    pub enums: [CheckedEnum]
+    pub scopes: [Scope]
+    pub types: [Type]
+    pub traits: [CheckedTrait]
+    pub variables: [CheckedVariable]
+    pub imports: [ModuleId]
+    pub resolved_import_path: String
 
-    public is_root: bool
-    public fn is_prelude(this) -> bool => .id.id == 0
+    pub is_root: bool
+    pub fn is_prelude(this) -> bool => .id.id == 0
 
-    public fn new_type_variable(mut this, implemented_traits: [TypeId]? = None) throws -> TypeId {
+    pub fn new_type_variable(mut this, implemented_traits: [TypeId]? = None) throws -> TypeId {
         let new_id = .types.size()
 
         let empty_implementation: [TypeId] = []
@@ -611,11 +611,11 @@ class Module {
         return TypeId(module: .id, id: new_id)
     }
 
-    public fn next_function_id(this) -> FunctionId {
+    pub fn next_function_id(this) -> FunctionId {
         return FunctionId(module: .id, id: .functions.size())
     }
 
-    public fn add_function(mut this, checked_function: CheckedFunction) throws -> FunctionId {
+    pub fn add_function(mut this, checked_function: CheckedFunction) throws -> FunctionId {
         let new_id = .next_function_id()
 
         .functions.push(checked_function)
@@ -623,7 +623,7 @@ class Module {
         return new_id
     }
 
-    public fn add_variable(mut this, anon checked_variable: CheckedVariable) throws -> VarId {
+    pub fn add_variable(mut this, anon checked_variable: CheckedVariable) throws -> VarId {
         let new_id = .variables.size()
 
         .variables.push(checked_variable)
@@ -633,11 +633,11 @@ class Module {
 }
 
 class CheckedTrait {
-    public name: String
-    public name_span: Span
-    public methods: [String: FunctionId]
-    public generic_parameters: [CheckedGenericParameter]
-    public scope_id: ScopeId
+    pub name: String
+    pub name_span: Span
+    pub methods: [String: FunctionId]
+    pub generic_parameters: [CheckedGenericParameter]
+    pub scope_id: ScopeId
 }
 
 struct LoadedModule {
@@ -710,33 +710,33 @@ enum CheckedVisibility {
 }
 
 class CheckedFunction {
-    public name: String
-    public name_span: Span
-    public visibility: CheckedVisibility
-    public return_type_id: TypeId
-    public return_type_span: Span?
-    public params: [CheckedParameter]
-    public generics: FunctionGenerics
-    public block: CheckedBlock
-    public can_throw: bool
-    public type: FunctionType
-    public linkage: FunctionLinkage
-    public function_scope_id: ScopeId
-    public struct_id: StructId?
-    public is_instantiated: bool
-    public parsed_function: ParsedFunction?
-    public is_comptime: bool
-    public is_virtual: bool
-    public is_override: bool
+    pub name: String
+    pub name_span: Span
+    pub visibility: CheckedVisibility
+    pub return_type_id: TypeId
+    pub return_type_span: Span?
+    pub params: [CheckedParameter]
+    pub generics: FunctionGenerics
+    pub block: CheckedBlock
+    pub can_throw: bool
+    pub type: FunctionType
+    pub linkage: FunctionLinkage
+    pub function_scope_id: ScopeId
+    pub struct_id: StructId?
+    pub is_instantiated: bool
+    pub parsed_function: ParsedFunction?
+    pub is_comptime: bool
+    pub is_virtual: bool
+    pub is_override: bool
 
-    public owner_scope: ScopeId? = None
+    pub owner_scope: ScopeId? = None
 
-    public external_name: String? = None
-    public deprecated_message: String? = None
+    pub external_name: String? = None
+    pub deprecated_message: String? = None
 
-    public fn name_for_codegen(this) -> String => .external_name ?? .name
+    pub fn name_for_codegen(this) -> String => .external_name ?? .name
 
-    public fn map_types(mut this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws {
+    pub fn map_types(mut this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws {
         .return_type_id = map(.return_type_id)
         mut changed_params: [CheckedParameter] = []
         for param in .params {
@@ -745,7 +745,7 @@ class CheckedFunction {
         .params = changed_params
     }
 
-    public fn copy(this) throws -> CheckedFunction => CheckedFunction(
+    pub fn copy(this) throws -> CheckedFunction => CheckedFunction(
         name: .name
         name_span: .name_span
         visibility: .visibility
@@ -766,7 +766,7 @@ class CheckedFunction {
         is_override: .is_override
     )
 
-    public fn signature_matches(this, anon other: CheckedFunction) throws -> bool {
+    pub fn signature_matches(this, anon other: CheckedFunction) throws -> bool {
         if this.name != other.name or
         this.can_throw != other.can_throw or
         this.is_comptime != other.is_comptime {
@@ -810,7 +810,7 @@ class CheckedFunction {
         return true
     }
 
-    public fn is_static(this) -> bool {
+    pub fn is_static(this) -> bool {
         if .params.size() < 1 {
             return true
         }
@@ -818,7 +818,7 @@ class CheckedFunction {
         return .params[0].variable.name != "this"
     }
 
-    public fn is_mutating(this) -> bool {
+    pub fn is_mutating(this) -> bool {
         if .params.size() < 1 {
             return false
         }
@@ -828,21 +828,21 @@ class CheckedFunction {
         return first_param_variable.name == "this" and first_param_variable.is_mutable
     }
 
-    public fn add_param(mut this, anon checked_param: CheckedParameter) throws {
+    pub fn add_param(mut this, anon checked_param: CheckedParameter) throws {
         .params.push(checked_param)
         .generics.base_params.push(checked_param)
     }
 
-    public fn set_params(mut this, anon checked_params: [CheckedParameter]) throws {
+    pub fn set_params(mut this, anon checked_params: [CheckedParameter]) throws {
         .params = checked_params
         .generics.base_params = checked_params
     }
 
-    public fn is_specialized_for_types(this, types: [TypeId]) -> bool {
+    pub fn is_specialized_for_types(this, types: [TypeId]) -> bool {
         return .generics.is_specialized_for_types(types)
     }
 
-    public fn to_parsed_function(this) -> ParsedFunction {
+    pub fn to_parsed_function(this) -> ParsedFunction {
         if not .parsed_function.has_value() {
             panic("to_parsed_function() called on a synthetic function")
         }
@@ -851,12 +851,12 @@ class CheckedFunction {
 }
 
 class FunctionGenerics {
-    public base_scope_id: ScopeId
-    public base_params: [CheckedParameter]
-    public params: [FunctionGenericParameter]
-    public specializations: [[TypeId]]
+    pub base_scope_id: ScopeId
+    pub base_params: [CheckedParameter]
+    pub params: [FunctionGenericParameter]
+    pub specializations: [[TypeId]]
 
-    public fn is_specialized_for_types(this, types: [TypeId]) -> bool {
+    pub fn is_specialized_for_types(this, types: [TypeId]) -> bool {
         if types.size() == 0 {
             return true
         }
@@ -887,7 +887,7 @@ struct CheckedParameter {
     variable: CheckedVariable
     default_value: CheckedExpression?
 
-    public fn map_types(this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws -> CheckedParameter {
+    pub fn map_types(this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws -> CheckedParameter {
         return CheckedParameter(
             requires_label: .requires_label
             variable: .variable.map_types(map)
@@ -939,15 +939,15 @@ struct FunctionGenericParameter {
 }
 
 class CheckedVariable {
-    public name: String
-    public type_id: TypeId
-    public is_mutable: bool
-    public definition_span: Span
-    public type_span: Span?
-    public visibility: CheckedVisibility
-    public owner_scope: ScopeId? = None
+    pub name: String
+    pub type_id: TypeId
+    pub is_mutable: bool
+    pub definition_span: Span
+    pub type_span: Span?
+    pub visibility: CheckedVisibility
+    pub owner_scope: ScopeId? = None
 
-    public fn map_types(this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws -> CheckedVariable {
+    pub fn map_types(this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws -> CheckedVariable {
         return CheckedVariable(
             name: .name
             type_id: map(.type_id)
@@ -1024,7 +1024,7 @@ enum BlockControlFlow {
         }
     }
 
-    public fn branch_unify_with(this, anon second: BlockControlFlow) => match this {
+    pub fn branch_unify_with(this, anon second: BlockControlFlow) => match this {
         NeverReturns => second
         AlwaysReturns => match second {
             NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysReturns
@@ -1540,11 +1540,11 @@ fn builtin(anon builtin: BuiltinType) -> TypeId {
 
 // This is the "result" object produced by type-checking.
 class CheckedProgram {
-    public compiler: Compiler
-    public modules: [Module]
-    public loaded_modules: [String: LoadedModule]
+    pub compiler: Compiler
+    pub modules: [Module]
+    pub loaded_modules: [String: LoadedModule]
 
-    public fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, module_id: ModuleId) throws -> ScopeId {
+    pub fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, module_id: ModuleId) throws -> ScopeId {
         // Check that parent_scope_id is a valid ScopeId
         if parent_scope_id.has_value() {
             // Check that the ModuleId is valid
@@ -1587,13 +1587,13 @@ class CheckedProgram {
         return ScopeId(module_id, id: .modules[module_id.id].scopes.size() - 1)
     }
 
-    public fn get_module(this, anon id: ModuleId) -> Module => .modules[id.id]
-    public fn get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
-    public fn get_variable(this, anon id: VarId) -> CheckedVariable => .modules[id.module.id].variables[id.id]
-    public fn get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
-    public fn get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
-    public fn get_struct(this, anon id: StructId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
-    public fn get_scope(this, anon id: ScopeId) throws -> Scope {
+    pub fn get_module(this, anon id: ModuleId) -> Module => .modules[id.id]
+    pub fn get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
+    pub fn get_variable(this, anon id: VarId) -> CheckedVariable => .modules[id.module.id].variables[id.id]
+    pub fn get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
+    pub fn get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
+    pub fn get_struct(this, anon id: StructId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
+    pub fn get_scope(this, anon id: ScopeId) throws -> Scope {
         let max_scope = .modules[id.module_id.id].scopes.size() - 1
         if id.id > max_scope {
             .compiler.panic(format("scope_id {} does not exist in module", id))
@@ -1602,21 +1602,21 @@ class CheckedProgram {
         return .modules[id.module_id.id].scopes[id.id]
     }
 
-    public fn get_trait(this, anon id: TraitId) -> CheckedTrait => .modules[id.module.id].traits[id.id]
+    pub fn get_trait(this, anon id: TraitId) -> CheckedTrait => .modules[id.module.id].traits[id.id]
 
-    public fn prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
+    pub fn prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
 
-    public fn set_loaded_module(mut this, module_name: String, loaded_module: LoadedModule) throws {
+    pub fn set_loaded_module(mut this, module_name: String, loaded_module: LoadedModule) throws {
         .loaded_modules.set(
             key: module_name
             value: loaded_module
         )
     }
-    public fn get_loaded_module(this, anon module_name: String) -> LoadedModule? {
+    pub fn get_loaded_module(this, anon module_name: String) -> LoadedModule? {
         return .loaded_modules.get(module_name)
     }
 
-    public fn find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? {
+    pub fn find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[var, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<CheckedVariable> {
@@ -1630,7 +1630,7 @@ class CheckedProgram {
         )
     }
 
-    public fn find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? {
+    pub fn find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<Value> {
@@ -1644,7 +1644,7 @@ class CheckedProgram {
         )
     }
 
-    public fn find_enum_in_scope(this, scope_id: ScopeId, name: String) throws -> EnumId? {
+    pub fn find_enum_in_scope(this, scope_id: ScopeId, name: String) throws -> EnumId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<EnumId> {
@@ -1658,7 +1658,7 @@ class CheckedProgram {
         )
     }
 
-    public fn find_trait_in_scope(this, scope_id: ScopeId, name: String) throws -> TraitId? {
+    pub fn find_trait_in_scope(this, scope_id: ScopeId, name: String) throws -> TraitId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<TraitId> {
@@ -1672,7 +1672,7 @@ class CheckedProgram {
         )
     }
 
-    public fn is_integer(this, anon type_id: TypeId) -> bool {
+    pub fn is_integer(this, anon type_id: TypeId) -> bool {
         let type = .get_type(type_id)
 
         return match type {
@@ -1681,7 +1681,7 @@ class CheckedProgram {
         }
     }
 
-    public fn is_floating(this, anon type_id: TypeId) -> bool {
+    pub fn is_floating(this, anon type_id: TypeId) -> bool {
         let type = .get_type(type_id)
 
         return match type {
@@ -1690,15 +1690,15 @@ class CheckedProgram {
         }
     }
 
-    public fn is_numeric(this, anon type_id: TypeId) -> bool {
+    pub fn is_numeric(this, anon type_id: TypeId) -> bool {
         return .is_integer(type_id) or .is_floating(type_id)
     }
 
-    public fn is_string(this, anon type_id: TypeId) -> bool => .get_type(type_id) is JaktString
+    pub fn is_string(this, anon type_id: TypeId) -> bool => .get_type(type_id) is JaktString
 
-    public fn get_bits(this, anon type_id: TypeId) => .get_type(type_id).get_bits()
+    pub fn get_bits(this, anon type_id: TypeId) => .get_type(type_id).get_bits()
 
-    public fn is_signed(this, anon type_id: TypeId) => .get_type(type_id).is_signed()
+    pub fn is_signed(this, anon type_id: TypeId) => .get_type(type_id).is_signed()
 
     private fn for_each_scope_accessible_unqualified_from_scope_impl(
         this
@@ -1785,7 +1785,7 @@ class CheckedProgram {
 
     }
 
-    public fn for_each_scope_accessible_unqualified_from_scope<T>(
+    pub fn for_each_scope_accessible_unqualified_from_scope<T>(
         this
         scope_id: ScopeId
         anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<T>
@@ -1809,7 +1809,7 @@ class CheckedProgram {
         return result
     }
 
-    public fn find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? {
+    pub fn find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<StructId> {
@@ -1824,7 +1824,7 @@ class CheckedProgram {
         )
     }
 
-    public fn find_struct_in_prelude(this, anon name: String) throws -> StructId {
+    pub fn find_struct_in_prelude(this, anon name: String) throws -> StructId {
         // start at the prelude scope id
         let scope_id = .prelude_scope_id()
         let struct_id = .find_struct_in_scope(scope_id, name)
@@ -1835,7 +1835,7 @@ class CheckedProgram {
         .compiler.panic(format("internal error: {} builtin definition not found", name))
     }
 
-    public fn is_scope_directly_accessible_from(this, check_scope_id: ScopeId, scope_id: ScopeId) throws -> bool {
+    pub fn is_scope_directly_accessible_from(this, check_scope_id: ScopeId, scope_id: ScopeId) throws -> bool {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[check_scope_id](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
@@ -1848,7 +1848,7 @@ class CheckedProgram {
         ) ?? false
     }
 
-    public fn find_namespace_in_scope(
+    pub fn find_namespace_in_scope(
         this
         scope_id: ScopeId
         anon name: String
@@ -1873,11 +1873,11 @@ class CheckedProgram {
         )
     }
 
-    public fn find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
+    pub fn find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
         return .find_scoped_functions_with_name_in_scope(parent_scope_id, function_name)?.0
     }
 
-    public fn find_scoped_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> ([FunctionId], ScopeId)? {
+    pub fn find_scoped_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> ([FunctionId], ScopeId)? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id: parent_scope_id
             &fn[function_name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<([FunctionId], ScopeId)> {
@@ -1895,7 +1895,7 @@ class CheckedProgram {
     // Checks given struct id is weak ptr and
     //  validates args are compatible with weak ptr type
     // Returns the inner struct id if given struct is weak ptr
-    public fn check_and_extract_weak_ptr(this, struct_id: StructId, args: [TypeId]) throws -> StructId? {
+    pub fn check_and_extract_weak_ptr(this, struct_id: StructId, args: [TypeId]) throws -> StructId? {
         let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
 
         if struct_id.equals(weak_ptr_struct_id) {
@@ -1925,7 +1925,7 @@ class CheckedProgram {
         }
     }
 
-    public fn type_name(this, anon type_id: TypeId, debug_mode: bool = false) throws -> String {
+    pub fn type_name(this, anon type_id: TypeId, debug_mode: bool = false) throws -> String {
         let type = .get_type(type_id)
 
         return match debug_mode { true => format("({}@{}) ", type_id.id, type_id.module.id), else => "" } + match type {
@@ -2076,7 +2076,7 @@ class CheckedProgram {
         }
     }
 
-    public fn find_or_add_type_id(mut this, anon type: Type, module_id: ModuleId) throws -> TypeId {
+    pub fn find_or_add_type_id(mut this, anon type: Type, module_id: ModuleId) throws -> TypeId {
         for module in .modules {
             for id in 0..module.types.size() {
                 if module.types[id].equals(type) {
@@ -2091,7 +2091,7 @@ class CheckedProgram {
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
-    public fn substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: GenericInferences, module_id: ModuleId) throws -> TypeId {
+    pub fn substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: GenericInferences, module_id: ModuleId) throws -> TypeId {
         mut result = .substitute_typevars_in_type_helper(type_id, generic_inferences, module_id)
 
         loop {

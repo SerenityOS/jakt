@@ -43,11 +43,11 @@ fn print_error(file_name: String, file_contents: [u8]?, error: JaktError) throws
 enum MessageSeverity {
     Hint
     Error
-    public fn name(this) throws => match this {
+    pub fn name(this) throws => match this {
         Hint => "Hint"
         Error => "Error"
     }
-    public fn ansi_color_code(this) throws => match this {
+    pub fn ansi_color_code(this) throws => match this {
         Hint => "94"  // Bright Blue
         Error => "31" // Red
     }

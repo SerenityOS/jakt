@@ -2,10 +2,10 @@
 /// - error: "Can't access field ‘muda_amount’, because it is marked private\n"
 
 class GoodEncapsulation {
-    public fn create() throws => GoodEncapsulation(muda_amount: 20, ora_amount: 9001)
+    pub fn create() throws => GoodEncapsulation(muda_amount: 20, ora_amount: 9001)
 
     muda_amount: u32
-    public ora_amount: u32
+    pub ora_amount: u32
 }
 
 fn main() {

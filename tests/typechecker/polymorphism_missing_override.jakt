@@ -2,13 +2,13 @@
 /// - error: "Missing override keyword on function that is virtual\n"
 
 class Parent {
-    public virtual fn greet(this) {
+    pub virtual fn greet(this) {
         println("greeting from the parent")
     }
 }
 
 class Child: Parent {
-    public fn greet(this) {
+    pub fn greet(this) {
         println("greeting from the child")
     }
 }

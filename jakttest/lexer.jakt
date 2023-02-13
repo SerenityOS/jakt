@@ -119,7 +119,7 @@ enum Token {
     // Catch-all for failed parses
     Garbage(Span)
 
-    public fn span(this) => match this {
+    pub fn span(this) => match this {
         else(span) => span
     }
 
@@ -196,7 +196,7 @@ enum NumericConstant {
     U64(u64)
     USize(u64)
 
-    public fn to_usize(this) => match this {
+    pub fn to_usize(this) => match this {
         I8(num) => num as! usize
         I16(num) => num as! usize
         I32(num) => num as! usize

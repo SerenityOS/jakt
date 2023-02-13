@@ -2,11 +2,11 @@
 /// - error: "Cannot call an instance method statically\n"
 
 class Foo {
-    public fn a(mut this) {
+    pub fn a(mut this) {
         let c = b()
     }
 
-    public fn b(mut this) -> i64 => 2
+    pub fn b(mut this) -> i64 => 2
 }
 
 fn main() {

@@ -2,10 +2,10 @@
 /// - output: "1001\n"
 
 class Person {
-    public name: String
-    public age: i64
+    pub name: String
+    pub age: i64
 
-    public fn birthday(mut this) {
+    pub fn birthday(mut this) {
         ++this.age
     }
 }

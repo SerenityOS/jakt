@@ -10,7 +10,7 @@ struct Thing implements(Trait<u32>) {
 }
 
 class Class<T requires(Trait<u32>)> {
-    public fn foo(this, anon v: T) {
+    pub fn foo(this, anon v: T) {
         let bar = v.bar()
 
         if bar == 1337 {

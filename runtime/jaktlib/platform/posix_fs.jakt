@@ -53,7 +53,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
     path: Path
     dir_fd: raw DIR
 
-    public fn next(mut this) throws -> (Path, bool)? {
+    pub fn next(mut this) throws -> (Path, bool)? {
         let file = readdir(.dir_fd)
 
         if file == null<dirent>() {
@@ -83,11 +83,11 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
         return (Path::from_string(filename), is_directory)
     }
 
-    public fn get_path(this) -> Path {
+    pub fn get_path(this) -> Path {
         return .path
     }
 
-    public fn from_path(path: Path) throws -> DirectoryIterator? {
+    pub fn from_path(path: Path) throws -> DirectoryIterator? {
         let dir_fd = opendir(path.to_string().c_string())
         if dir_fd == null<DIR>() {
             return None

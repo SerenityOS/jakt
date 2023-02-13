@@ -2,7 +2,7 @@
 /// - output: "100\n"
 
 class Foo<T> {
-    public x: T
+    pub x: T
 }
 
 fn main() {

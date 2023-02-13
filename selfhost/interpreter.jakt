@@ -638,19 +638,19 @@ enum Deferred {
 }
 
 class InterpreterScope {
-    public bindings: [String:Value]
-    public parent: InterpreterScope?
-    public type_bindings: [String:TypeId]
-    public defers: [Deferred]
+    pub bindings: [String:Value]
+    pub parent: InterpreterScope?
+    pub type_bindings: [String:TypeId]
+    pub defers: [Deferred]
 
-    public fn create(bindings: [String:Value] = [:], parent: InterpreterScope? = None, type_bindings: [String:TypeId] = [:]) throws => InterpreterScope(
+    pub fn create(bindings: [String:Value] = [:], parent: InterpreterScope? = None, type_bindings: [String:TypeId] = [:]) throws => InterpreterScope(
         bindings
         parent
         type_bindings
         defers: []
     )
 
-    public fn from_runtime_scope(scope_id: ScopeId, program: CheckedProgram, parent: InterpreterScope? = None) throws -> InterpreterScope {
+    pub fn from_runtime_scope(scope_id: ScopeId, program: CheckedProgram, parent: InterpreterScope? = None) throws -> InterpreterScope {
         mut bindings: [String:Value] = [:]
         mut current_id: ScopeId? = scope_id
         while current_id.has_value() {
@@ -673,7 +673,7 @@ class InterpreterScope {
         )
     }
 
-    public fn must_get(this, anon name: String) throws -> Value {
+    pub fn must_get(this, anon name: String) throws -> Value {
         if .bindings.contains(name) {
             return .bindings[name]
         }
@@ -690,7 +690,7 @@ class InterpreterScope {
         panic(format("Could not find binding for {}", name))
     }
 
-    public fn set(mut this, anon name: String, anon value: Value) throws {
+    pub fn set(mut this, anon name: String, anon value: Value) throws {
         if .bindings.contains(name) {
             .bindings[name] = value
             return
@@ -709,7 +709,7 @@ class InterpreterScope {
         panic(format("Could not find binding for {}", name))
     }
 
-    public fn map_type(this, anon id: TypeId) throws -> TypeId {
+    pub fn map_type(this, anon id: TypeId) throws -> TypeId {
         let name = id.to_string()
         if .type_bindings.contains(name) {
             return .type_bindings[name]
@@ -736,13 +736,13 @@ class InterpreterScope {
         }
     }
 
-    public fn type_map_for_substitution(this) throws -> GenericInferences {
+    pub fn type_map_for_substitution(this) throws -> GenericInferences {
         mut map: [String:String] = [:]
         .type_map_for_substitution_helper(&mut map)
         return GenericInferences(values: map)
     }
 
-    public fn perform_defers(mut this, mut interpreter: Interpreter, span: Span) throws {
+    pub fn perform_defers(mut this, mut interpreter: Interpreter, span: Span) throws {
         while not .defers.is_empty() {
             let deferred = .defers.pop()
             match deferred! {
@@ -752,11 +752,11 @@ class InterpreterScope {
         }
     }
 
-    public fn defer_expression(mut this, expr: CheckedExpression) throws {
+    pub fn defer_expression(mut this, expr: CheckedExpression) throws {
         .defers.push(Deferred::Expression(expr))
     }
 
-    public fn defer_statement(mut this, statement: CheckedStatement) throws {
+    pub fn defer_statement(mut this, statement: CheckedStatement) throws {
         .defers.push(Deferred::Statement(statement))
     }
 }
@@ -776,12 +776,12 @@ enum StatementResult {
 }
 
 class Interpreter {
-    public compiler: Compiler
-    public program: CheckedProgram
-    public spans: [Span]
-    public current_function_id: FunctionId?
+    pub compiler: Compiler
+    pub program: CheckedProgram
+    pub spans: [Span]
+    pub current_function_id: FunctionId?
 
-    public fn create(compiler: Compiler, program: CheckedProgram, spans: [Span]) throws -> Interpreter {
+    pub fn create(compiler: Compiler, program: CheckedProgram, spans: [Span]) throws -> Interpreter {
         return Interpreter(
             compiler
             program
@@ -790,17 +790,17 @@ class Interpreter {
         )
     }
 
-    public fn enter_span(mut this, anon span: Span) throws {
+    pub fn enter_span(mut this, anon span: Span) throws {
         .spans.push(span)
     }
 
 
-    public fn leave_span(mut this) {
+    pub fn leave_span(mut this) {
         // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
         let dummy = .spans.pop()
     }
 
-    public fn get_prelude_function(this, anon scope_id: ScopeId) throws -> bool {
+    pub fn get_prelude_function(this, anon scope_id: ScopeId) throws -> bool {
         mut current_scope_id = scope_id
         let prelude_scope_id = .program.prelude_scope_id()
         loop {
@@ -818,7 +818,7 @@ class Interpreter {
         }
     }
 
-    public fn find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
+    pub fn find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
 
         for module in .program.modules {
             for id in 0..module.types.size() {
@@ -833,7 +833,7 @@ class Interpreter {
         return TypeId(module: ModuleId(id: 0), id: .program.modules[0].types.size() - 1)
     }
 
-    public fn call_prelude_function(mut this, anon prelude_function: String, anon namespace_: [ResolvedNamespace], this_argument: Value?, arguments: [Value], call_span: Span, type_bindings: [String:TypeId]) throws -> StatementResult {
+    pub fn call_prelude_function(mut this, anon prelude_function: String, anon namespace_: [ResolvedNamespace], this_argument: Value?, arguments: [Value], call_span: Span, type_bindings: [String:TypeId]) throws -> StatementResult {
         if namespace_.size() != 1 {
             return match prelude_function {
                 "format" => {
@@ -2728,7 +2728,7 @@ class Interpreter {
         }
     }
 
-    public fn execute(
+    pub fn execute(
         mut this
         anon function_to_run_id: FunctionId
         mut namespace_: [ResolvedNamespace]?
@@ -2976,7 +2976,7 @@ class Interpreter {
         throw Error::from_errno(InterpretError::Unimplemented as! i32)
     }
 
-    public fn execute_statement(mut this, statement: CheckedStatement, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
+    pub fn execute_statement(mut this, statement: CheckedStatement, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
         match statement {
             Expression(expr) => {
                 return .execute_expression(expr, scope)
@@ -3247,7 +3247,7 @@ class Interpreter {
         return StatementResult::JustValue(Value(impl: ValueImpl::Void, span: call_span))
     }
 
-    public fn execute_block(mut this, block: CheckedBlock, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
+    pub fn execute_block(mut this, block: CheckedBlock, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
         for statement in block.statements {
             .enter_span(statement.span() ?? call_span)
             defer .leave_span()
@@ -3274,7 +3274,7 @@ class Interpreter {
         return StatementResult::JustValue(Value(impl: ValueImpl::Void, span: call_span))
     }
 
-    public fn error(mut this, anon message: String, anon span: Span) throws -> void {
+    pub fn error(mut this, anon message: String, anon span: Span) throws -> void {
         .compiler.errors.push(JaktError::Message(
             message: message,
             span: span
@@ -3284,7 +3284,7 @@ class Interpreter {
         .compiler.print_errors()
     }
 
-    public fn error_with_hint(mut this, anon message: String, anon span: Span, anon hint_message: String, anon hint_span: Span) throws -> void {
+    pub fn error_with_hint(mut this, anon message: String, anon span: Span, anon hint_message: String, anon hint_span: Span) throws -> void {
         .compiler.errors.push(JaktError::MessageWithHint(
             message,
             span,
@@ -3296,7 +3296,7 @@ class Interpreter {
         .compiler.print_errors()
     }
 
-    public fn execute_binary_operator(mut this, anon lhs_value: Value, anon rhs_value: Value, anon op: BinaryOperator, anon span: Span, anon scope: InterpreterScope) throws -> StatementResult => match op {
+    pub fn execute_binary_operator(mut this, anon lhs_value: Value, anon rhs_value: Value, anon op: BinaryOperator, anon span: Span, anon scope: InterpreterScope) throws -> StatementResult => match op {
         Add => StatementResult::JustValue(
             Value(
                 impl: match lhs_value.impl {
@@ -4828,7 +4828,7 @@ class Interpreter {
         }
     }
 
-    public fn update_binding(mut this, anon binding: CheckedExpression, mut scope: InterpreterScope, anon value: Value, span: Span) throws {
+    pub fn update_binding(mut this, anon binding: CheckedExpression, mut scope: InterpreterScope, anon value: Value, span: Span) throws {
         match binding {
             Var(var) => {
                 scope.set(var.name, value)
@@ -4893,7 +4893,7 @@ class Interpreter {
         }
     }
 
-    public fn execute_expression(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match .current_function_id.has_value() {
+    pub fn execute_expression(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match .current_function_id.has_value() {
         false => .execute_expression_without_cast(expr, scope)
         else => match .execute_expression_without_cast(expr, scope) {
             Return(value) => StatementResult::Return(cast_value_to_type(value, .program.get_function(.current_function_id!).return_type_id, interpreter: this))
@@ -4905,7 +4905,7 @@ class Interpreter {
         }
     }
 
-    public fn execute_expression_without_cast(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match expr {
+    pub fn execute_expression_without_cast(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match expr {
         BinaryOp(lhs, op, rhs, span) => {
             let lhs_value = match .execute_expression(lhs, scope) {
                 Return(value) => {

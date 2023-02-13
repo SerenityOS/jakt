@@ -2,7 +2,7 @@
 /// - output: "PASS\n"
 
 class A {
-    public fn f(this) -> A {
+    pub fn f(this) -> A {
         println("PASS")
         return this
     }

@@ -2,7 +2,7 @@
 /// - output: "PASS\n"
 
 class A<T> {
-    public fn test(this, anon x: T) => x
+    pub fn test(this, anon x: T) => x
 }
 
 fn main() {

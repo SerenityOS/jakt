@@ -2,7 +2,7 @@
 /// - error: "Cannot call static method on an instance of an object"
 
 class Foo {
-    public fn bar() {
+    pub fn bar() {
         println("I am a static method")
     }
 }

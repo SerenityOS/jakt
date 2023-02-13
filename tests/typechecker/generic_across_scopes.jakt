@@ -2,7 +2,7 @@
 /// - output: "40320\n"
 
 class Memo<T, V> {
-    public value: [T:V]
+    pub value: [T:V]
 }
 
 fn make_memo<R, S>() throws -> Memo<R, S> {

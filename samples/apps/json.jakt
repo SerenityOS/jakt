@@ -23,7 +23,7 @@ class JsonParser {
     input: String
     index: usize
 
-    public fn construct(input: String) throws -> JsonParser {
+    pub fn construct(input: String) throws -> JsonParser {
         return JsonParser(input, index: 0)
     }
 
@@ -31,7 +31,7 @@ class JsonParser {
         return .index >= .input.length()
     }
 
-    public fn parse(mut this) throws -> JsonValue {
+    pub fn parse(mut this) throws -> JsonValue {
         // FIXME: Jakt::JsonParser ignores trailing whitespace for some reason.
         let value = .parse_helper()
         if not .eof() {

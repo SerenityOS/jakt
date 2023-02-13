@@ -2,11 +2,11 @@
 /// - output: "OK\nOK\n"
 
 class Foo {
-    public x: i64
+    pub x: i64
 }
 
 class Bar {
-    public y: i64
+    pub y: i64
 }
 
 fn main() {

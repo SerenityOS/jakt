@@ -29,7 +29,7 @@ import extern "fs.h" {
         extern class DirectoryIterator implements(ThrowingIterable<String>) {
             // Get next listing name. Note that the full path is not given,
             // just the base name.
-            public fn next(mut this) throws -> String?
+            pub fn next(mut this) throws -> String?
         }
         // Get a listing of a directory, using readdir().
         extern fn list_directory(path: String) throws -> DirectoryIterator
@@ -625,7 +625,7 @@ struct TestScheduler {
                             failed_reasons)
     }
 
-    public fn run_tests(
+    pub fn run_tests(
         mut tests: [Test]
         directories: [String]
         collect_reasons: bool

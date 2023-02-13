@@ -2,7 +2,7 @@
 /// - output: "foo\nfoo\n"
 
 class Foo {
-    public x: String
+    pub x: String
 }
 
 fn main() {

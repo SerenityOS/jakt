@@ -206,7 +206,7 @@ struct Typechecker {
 
     fn current_module(this) => .program.get_module(.current_module_id)
 
-    public fn scope_can_access(this, accessor: ScopeId, accessee: ScopeId) throws -> bool {
+    pub fn scope_can_access(this, accessor: ScopeId, accessee: ScopeId) throws -> bool {
         if accessor.equals(accessee) {
             return true
         }

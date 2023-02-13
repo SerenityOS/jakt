@@ -124,7 +124,7 @@ enum Token {
     // Catch-all for failed parses
     Garbage(consumed: String?, span: Span)
 
-    public fn span(this) => match this {
+    pub fn span(this) => match this {
         else(span) => span
     }
 

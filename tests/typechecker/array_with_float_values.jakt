@@ -2,7 +2,7 @@
 /// - output: "1\n"
 
 class A {
-    public elements: [f64]
+    pub elements: [f64]
 }
 
 fn main() {

@@ -2,10 +2,10 @@
 /// - output: "PASS\n123\nPASS\nNone\n"
 
 class Test {
-    public x: i32
+    pub x: i32
 
-    public fn y(this) throws => this
-    public fn throwing_y(this) throws -> String {
+    pub fn y(this) throws => this
+    pub fn throwing_y(this) throws -> String {
         throw Error::from_errno(69)
     }
 }

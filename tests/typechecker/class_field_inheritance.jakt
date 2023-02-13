@@ -2,11 +2,11 @@
 /// - output: "1 2\n"
 
 class Grandparent {
-    public a: i64
+    pub a: i64
 }
 
 class Parent : Grandparent {
-    public b: i64
+    pub b: i64
 }
 
 class Child : Parent {
