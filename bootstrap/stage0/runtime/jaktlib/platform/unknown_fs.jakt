@@ -11,17 +11,17 @@ fn current_directory() throws -> String {
 }
 
 class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
-    public fn next(mut this) throws -> (Path, bool)? {
+    pub fn next(mut this) throws -> (Path, bool)? {
         eprintln("NOT IMPLEMENTED: DirectoryIterator::next()")
         throw Error::from_errno(38)
     }
 
-    public fn from_path(path: Path) throws -> DirectoryIterator? {
+    pub fn from_path(path: Path) throws -> DirectoryIterator? {
         eprintln("NOT IMPLEMENTED: DirectoryIterator::from_path(path: {})", path)
         throw Error::from_errno(38)
     }
 
-    public fn get_path(this) throws -> Path {
+    pub fn get_path(this) throws -> Path {
         eprintln("NOT IMPLEMENTED: DirectoryIterator::get_path()")
         throw Error::from_errno(38)
     }

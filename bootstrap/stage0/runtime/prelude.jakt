@@ -159,16 +159,16 @@ extern struct Error {
 }
 
 extern class File {
-    public fn open_for_reading(anon path: String) throws -> File
-    public fn open_for_writing(anon path: String) throws -> File
+    pub fn open_for_reading(anon path: String) throws -> File
+    pub fn open_for_writing(anon path: String) throws -> File
 
-    public fn read(mut this, anon buffer: [u8]) throws -> usize
-    public fn write(mut this, anon data: [u8]) throws -> usize
+    pub fn read(mut this, anon buffer: [u8]) throws -> usize
+    pub fn write(mut this, anon data: [u8]) throws -> usize
 
-    public fn read_all(mut this) throws -> [u8]
+    pub fn read_all(mut this) throws -> [u8]
 
-    public fn exists(anon path: String) -> bool
-    public fn current_executable_path() throws -> String
+    pub fn exists(anon path: String) -> bool
+    pub fn current_executable_path() throws -> String
 }
 
 extern fn ___jakt_get_target_triple_string() throws -> String
