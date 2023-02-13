@@ -342,7 +342,7 @@
     },
     "field": {
       "name": "meta.field.jakt",
-      "begin": "(?:\\b(public|private)\\s+)?\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)",
+      "begin": "(?:\\b(pub|private)\\s+)?\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)",
       "beginCaptures": {
         "1": {
           "name": "storage.modifier.visibility.jakt"
@@ -506,7 +506,7 @@
       "patterns": [
         {
           "name": "meta.function.declaration.jakt",
-          "match": "(?:\\b(public|private)\\s+)?(\\bextern\\s+)?(?:(\\boverride\\b)\\s+|(\\bvirtual\\b)\\s+)?(\\b(?:fn|comptime))\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
+          "match": "(?:\\b(pub|private)\\s+)?(\\bextern\\s+)?(?:(\\boverride\\b)\\s+|(\\bvirtual\\b)\\s+)?(\\b(?:fn|comptime))\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
           "captures": {
             "1": {
               "name": "storage.modifier.visibility.jakt"
