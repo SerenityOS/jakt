@@ -314,6 +314,18 @@ ALWAYS_INLINE decltype(auto) deref_if_ref_pointer(T&& value)
         return static_cast<Conditional<IsRvalueReference<T>, RemoveReference<T>, T>>(value);
 }
 
+namespace Detail {
+template<auto... Xs>
+struct DependentValue {};
+}
+
+template<typename T, auto Reason>
+T fail_comptime_call()
+{
+    static_assert(DependentFalse<Detail::DependentValue<Reason>>);
+    return declval<T>();
+}
+
 }
 
 namespace Jakt {

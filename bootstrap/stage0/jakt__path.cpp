@@ -12,7 +12,7 @@ jakt__path::Path path = jakt__path::Path(Jakt::DeprecatedString("."sv));
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((parts).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -42,7 +42,7 @@ return (i);
 }
 }
 
-jakt__path::Path::Path(DeprecatedString a_path) :path(a_path){}
+jakt__path::Path::Path(DeprecatedString a_path) :path(move(a_path)){}
 
 bool jakt__path::Path::is_dot() const {
 {
@@ -61,7 +61,7 @@ ErrorOr<DeprecatedString> jakt__path::Path::extension() const {
 {
 JaktInternal::Range<size_t> _magic = (((JaktInternal::Range<size_t>{static_cast<size_t>((JaktInternal::checked_sub<size_t>(((((*this).path)).length()),static_cast<size_t>(1ULL)))),static_cast<size_t>(static_cast<size_t>(0ULL))})).inclusive());
 for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -104,7 +104,7 @@ DeprecatedStringBuilder normalized_builder = TRY((DeprecatedStringBuilder::creat
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).path)).length()))});
 for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }

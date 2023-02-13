@@ -25,7 +25,7 @@ JaktInternal::DynamicArray<DeprecatedString> output = (TRY((DynamicArray<Depreca
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((strings).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -67,7 +67,7 @@ bool in_escape = false;
 {
 DeprecatedStringCodePointIterator _magic = ((s).code_points());
 for (;;){
-JaktInternal::Optional<u32> _magic_value = ((_magic).next());
+JaktInternal::Optional<u32> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -90,19 +90,15 @@ return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>(('"')))) {
 {
-if (in_escape){
 TRY((((builder).append_code_point(cp))));
 (in_escape = false);
-}
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>(('\'')))) {
 {
-if (in_escape){
 TRY((((builder).append_code_point(cp))));
 (in_escape = false);
-}
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -144,7 +140,7 @@ JaktInternal::DynamicArray<DeprecatedString> output = (TRY((DynamicArray<Depreca
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((strings).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -167,7 +163,7 @@ JaktInternal::DynamicArray<u8> bytes = (TRY((DynamicArray<u8>::create_with({})))
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((data).length()))});
 for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -191,7 +187,7 @@ size_t i = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((strings).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -236,7 +232,7 @@ DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
 {
 DeprecatedStringCodePointIterator _magic = ((s).code_points());
 for (;;){
-JaktInternal::Optional<u32> _magic_value = ((_magic).next());
+JaktInternal::Optional<u32> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -299,7 +295,7 @@ return (((start <= ((*this).start)) && (end >= ((*this).end))));
 }
 }
 
-utility::Span::Span(utility::FileId a_file_id, size_t a_start, size_t a_end) :file_id(a_file_id), start(a_start), end(a_end){}
+utility::Span::Span(utility::FileId a_file_id, size_t a_start, size_t a_end) :file_id(move(a_file_id)), start(move(a_start)), end(move(a_end)){}
 
 ErrorOr<DeprecatedString> utility::FileId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("FileId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -312,7 +308,7 @@ return ((((*this).id) == ((rhs).id)));
 }
 }
 
-utility::FileId::FileId(size_t a_id) :id(a_id){}
+utility::FileId::FileId(size_t a_id) :id(move(a_id)){}
 
 }
 } // namespace Jakt

@@ -10,7 +10,7 @@ class RecursiveFileIterator : public RefCounted<RecursiveFileIterator>, public W
 virtual ~RecursiveFileIterator() = default;
 DeprecatedString extension;JaktInternal::DynamicArray<jakt__path::Path> directory_list;JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory;static ErrorOr<NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator>> make(jakt__path::Path const directory, DeprecatedString const extension);
 protected:
-explicit RecursiveFileIterator(DeprecatedString&& a_extension, JaktInternal::DynamicArray<jakt__path::Path>&& a_directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>>&& a_current_directory);
+explicit RecursiveFileIterator(DeprecatedString a_extension, JaktInternal::DynamicArray<jakt__path::Path> a_directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> a_current_directory);
 public:
 static ErrorOr<NonnullRefPtr<RecursiveFileIterator>> __jakt_create(DeprecatedString extension, JaktInternal::DynamicArray<jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory);
 

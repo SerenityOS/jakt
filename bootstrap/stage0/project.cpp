@@ -35,7 +35,7 @@ TRY((utility::write_to_file(readme_text,(project_directory + Jakt::DeprecatedStr
 return {};
 }
 
-project::Project::Project(DeprecatedString a_name) :name(a_name){}
+project::Project::Project(DeprecatedString a_name) :name(move(a_name)){}
 
 ErrorOr<void> project::Project::create_template_cmake_lists(DeprecatedString const project_directory) const {
 {

@@ -1,16 +1,13 @@
 #include "jakt__platform.h"
 namespace Jakt {
 namespace jakt__platform {
-
-
-
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> add_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings,DeprecatedString const prefix,DeprecatedString const suffix) {
 {
 JaktInternal::DynamicArray<DeprecatedString> output = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((strings).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -38,10 +35,6 @@ return ((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))));
 return (JaktInternal::OptionalNone());
 }
 }
-
-
-
-
 
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> platform_import_names() {
 {
@@ -103,7 +96,7 @@ return (jakt__platform::Target(((parts)[static_cast<i64>(0LL)]),((parts)[static_
 }
 }
 
-jakt__platform::Target::Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi) :arch(a_arch), platform(a_platform), os(a_os), abi(a_abi){}
+jakt__platform::Target::Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi) :arch(move(a_arch)), platform(move(a_platform)), os(move(a_os)), abi(move(a_abi)){}
 
 }
 } // namespace Jakt
