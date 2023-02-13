@@ -1730,9 +1730,6 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Privat
 else if (__jakt_enum_value == Jakt::DeprecatedString("pub"sv)) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Pub(span) } );
 }
-else if (__jakt_enum_value == Jakt::DeprecatedString("public"sv)) {
-return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Pub(span) } );
-}
 else if (__jakt_enum_value == Jakt::DeprecatedString("raw"sv)) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Raw(span) } );
 }
