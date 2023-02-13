@@ -1,5 +1,5 @@
 import jakt::platform { platform_module, platform_errno }
-import utility { null }
+import utility { null, allocate }
 import platform_errno() { errno_value }
 
 import extern c "signal.h" {}
@@ -27,16 +27,6 @@ struct Process {
 struct ExitPollResult {
     exit_code: i32
     process: Process
-}
-
-fn allocate<T>(count: usize) -> raw T {
-    unsafe {
-        cpp {
-            "return static_cast<T*>(calloc(count, sizeof(T)));"
-        }
-    }
-
-    abort()
 }
 
 fn start_background_process(anon args: [String]) throws -> Process {

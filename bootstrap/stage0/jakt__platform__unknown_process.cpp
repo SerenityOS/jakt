@@ -49,7 +49,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("process: "sv));TRY(builder.appendff("{}", process));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-jakt__platform__unknown_process::ExitPollResult::ExitPollResult(i32 a_exit_code, jakt__platform__unknown_process::Process a_process) :exit_code(a_exit_code), process(a_process){}
+jakt__platform__unknown_process::ExitPollResult::ExitPollResult(i32 a_exit_code, jakt__platform__unknown_process::Process a_process) :exit_code(move(a_exit_code)), process(move(a_process)){}
 
 }
 } // namespace Jakt

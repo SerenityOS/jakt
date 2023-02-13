@@ -15,7 +15,7 @@ size_t i = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((parser).args)).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -42,7 +42,7 @@ JaktInternal::DynamicArray<DeprecatedString> result = (TRY((DynamicArray<Depreca
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(1ULL)),static_cast<size_t>(((((*this).args)).size()))});
 for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -51,7 +51,7 @@ size_t i = (_magic_value.value());
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((names).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -90,7 +90,7 @@ ErrorOr<bool> jakt__arguments::ArgsParser::flag(JaktInternal::DynamicArray<Depre
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).args)).size()))});
 for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -99,7 +99,7 @@ size_t i = (_magic_value.value());
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((names).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -123,7 +123,7 @@ return (false);
 }
 }
 
-jakt__arguments::ArgsParser::ArgsParser(JaktInternal::DynamicArray<DeprecatedString> a_args, JaktInternal::DynamicArray<size_t> a_removed_indices, JaktInternal::DynamicArray<DeprecatedString> a_definitely_positional_args) :args(a_args), removed_indices(a_removed_indices), definitely_positional_args(a_definitely_positional_args){}
+jakt__arguments::ArgsParser::ArgsParser(JaktInternal::DynamicArray<DeprecatedString> a_args, JaktInternal::DynamicArray<size_t> a_removed_indices, JaktInternal::DynamicArray<DeprecatedString> a_definitely_positional_args) :args(move(a_args)), removed_indices(move(a_removed_indices)), definitely_positional_args(move(a_definitely_positional_args)){}
 
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> jakt__arguments::ArgsParser::remaining_arguments() const {
 {
@@ -131,7 +131,7 @@ JaktInternal::DynamicArray<DeprecatedString> remaining = (TRY((DynamicArray<Depr
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).args)).size()))});
 for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -148,7 +148,7 @@ TRY((((remaining).push(((((*this).args))[i])))));
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).definitely_positional_args)).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -169,7 +169,7 @@ ErrorOr<JaktInternal::Optional<DeprecatedString>> jakt__arguments::ArgsParser::o
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(1ULL)),static_cast<size_t>(((((*this).args)).size()))});
 for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -178,7 +178,7 @@ size_t i = (_magic_value.value());
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((names).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }

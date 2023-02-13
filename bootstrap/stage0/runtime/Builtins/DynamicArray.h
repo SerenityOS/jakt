@@ -237,8 +237,8 @@ public:
     {
         auto array = TRY(create_empty());
         TRY(array.ensure_capacity(list.size()));
-        for (auto& item : list)
-            TRY(array.push(item));
+        for (auto const& item : list)
+            TRY(array.push(move(const_cast<T&>(item))));
         return array;
     }
 

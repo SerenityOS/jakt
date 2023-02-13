@@ -281,38 +281,11 @@ formatter::FormattedToken token;formatter::State state;size_t enclosures_to_igno
 
 ErrorOr<DeprecatedString> debug_description() const;
 };template <typename T>
-JaktInternal::Optional<T> collapse(JaktInternal::Optional<JaktInternal::Optional<T>> const x) {
-{
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<T>,JaktInternal::Optional<T>>{
-auto __jakt_enum_value = (((x).has_value()));
-if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((x.value()));
-}
-else {
-return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
-}
-}()))
-);
-}
-}
-
+JaktInternal::Optional<T> collapse(JaktInternal::Optional<JaktInternal::Optional<T>> const x);
 template <typename T>
-ErrorOr<JaktInternal::DynamicArray<T>> concat(JaktInternal::DynamicArray<T> const xs,T const y) {
-{
-JaktInternal::DynamicArray<T> ys = (TRY((DynamicArray<T>::create_with({}))));
-TRY((((ys).push_values(((xs))))));
-TRY((((ys).push(y))));
-return (ys);
-}
-}
-
+ErrorOr<JaktInternal::DynamicArray<T>> concat(JaktInternal::DynamicArray<T> const xs, T const y);
 template <typename T>
-ErrorOr<JaktInternal::DynamicArray<T>> init(JaktInternal::DynamicArray<T> const xs) {
-{
-return (TRY((((((xs)[(JaktInternal::Range<size_t>{static_cast<size_t>(0LL),static_cast<size_t>((JaktInternal::checked_sub<size_t>(((xs).size()),static_cast<size_t>(1ULL))))})])).to_array()))));
-}
-}
-
+ErrorOr<JaktInternal::DynamicArray<T>> init(JaktInternal::DynamicArray<T> const xs);
 }
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::formatter::BreakablePoint> : Jakt::Formatter<Jakt::StringView>{

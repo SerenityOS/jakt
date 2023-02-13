@@ -55,65 +55,11 @@ Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
 
 ErrorOr<DeprecatedString> debug_description() const;
 };template <typename T>
-ErrorOr<JaktInternal::DynamicArray<T>> add_arrays(JaktInternal::DynamicArray<T> const a,JaktInternal::DynamicArray<T> const b) {
-{
-JaktInternal::DynamicArray<T> result = (TRY((DynamicArray<T>::create_with({}))));
-{
-JaktInternal::ArrayIterator<T> _magic = ((a).iterator());
-for (;;){
-JaktInternal::Optional<T> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-T x = (_magic_value.value());
-{
-TRY((((result).push(x))));
-}
-
-}
-}
-
-{
-JaktInternal::ArrayIterator<T> _magic = ((b).iterator());
-for (;;){
-JaktInternal::Optional<T> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-T x = (_magic_value.value());
-{
-TRY((((result).push(x))));
-}
-
-}
-}
-
-return (result);
-}
-}
-
+ErrorOr<JaktInternal::DynamicArray<T>> add_arrays(JaktInternal::DynamicArray<T> const a, JaktInternal::DynamicArray<T> const b);
 template <typename T>
-T* null() {
-{
-{
-return nullptr;
-}
-
-abort();
-}
-}
-
+T* null();
 template <typename T>
-T* allocate(size_t const count) {
-{
-{
-return static_cast<T*>(malloc(count * sizeof(T)));
-}
-
-abort();
-}
-}
-
+T* allocate(size_t const count);
 }
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::utility::FileId> : Jakt::Formatter<Jakt::StringView>{

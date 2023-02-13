@@ -410,6 +410,10 @@
 #define SHELL_JOB_DEBUG 0
 #endif
 
+#ifndef SHELL_POSIX_PARSER_DEBUG
+#define SHELL_POSIX_PARSER_DEBUG 0
+#endif
+
 #ifndef SOLITAIRE_DEBUG
 #define SOLITAIRE_DEBUG 0
 #endif

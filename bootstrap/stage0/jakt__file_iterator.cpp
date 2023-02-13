@@ -14,7 +14,7 @@ return (TRY((jakt__file_iterator::RecursiveFileIterator::__jakt_create(extension
 }
 }
 
-jakt__file_iterator::RecursiveFileIterator::RecursiveFileIterator(DeprecatedString&& a_extension, JaktInternal::DynamicArray<jakt__path::Path>&& a_directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>>&& a_current_directory): extension(move(a_extension)), directory_list(move(a_directory_list)), current_directory(move(a_current_directory)){}
+jakt__file_iterator::RecursiveFileIterator::RecursiveFileIterator(DeprecatedString a_extension, JaktInternal::DynamicArray<jakt__path::Path> a_directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> a_current_directory): extension(move(a_extension)), directory_list(move(a_directory_list)), current_directory(move(a_current_directory)){}
 ErrorOr<NonnullRefPtr<RecursiveFileIterator>> jakt__file_iterator::RecursiveFileIterator::__jakt_create(DeprecatedString extension, JaktInternal::DynamicArray<jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) RecursiveFileIterator (move(extension), move(directory_list), move(current_directory)))); return o; }
 ErrorOr<JaktInternal::Optional<jakt__path::Path>> jakt__file_iterator::RecursiveFileIterator::next() {
 {

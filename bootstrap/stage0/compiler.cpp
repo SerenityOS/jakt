@@ -101,7 +101,7 @@ DeprecatedString const standard_module_name = Jakt::DeprecatedString("jakt"sv);
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).include_paths)).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -126,7 +126,7 @@ return (candidate_path);
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).include_paths)).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> _magic_value = ((_magic).next());
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -179,7 +179,7 @@ void compiler::Compiler::restore_file_state(JaktInternal::Tuple<JaktInternal::Op
 }
 }
 
-compiler::Compiler::Compiler(JaktInternal::DynamicArray<jakt__path::Path>&& a_files, JaktInternal::Dictionary<DeprecatedString,utility::FileId>&& a_file_ids, JaktInternal::DynamicArray<error::JaktError>&& a_errors, JaktInternal::Optional<utility::FileId>&& a_current_file, JaktInternal::DynamicArray<u8>&& a_current_file_contents, bool&& a_dump_lexer, bool&& a_dump_parser, bool&& a_ignore_parser_errors, bool&& a_debug_print, jakt__path::Path&& a_std_include_path, JaktInternal::DynamicArray<DeprecatedString>&& a_include_paths, bool&& a_json_errors, bool&& a_dump_type_hints, bool&& a_dump_try_hints, bool&& a_optimize, JaktInternal::Optional<DeprecatedString>&& a_target_triple): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), std_include_path(move(a_std_include_path)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)), optimize(move(a_optimize)), target_triple(move(a_target_triple)){}
+compiler::Compiler::Compiler(JaktInternal::DynamicArray<jakt__path::Path> a_files, JaktInternal::Dictionary<DeprecatedString,utility::FileId> a_file_ids, JaktInternal::DynamicArray<error::JaktError> a_errors, JaktInternal::Optional<utility::FileId> a_current_file, JaktInternal::DynamicArray<u8> a_current_file_contents, bool a_dump_lexer, bool a_dump_parser, bool a_ignore_parser_errors, bool a_debug_print, jakt__path::Path a_std_include_path, JaktInternal::DynamicArray<DeprecatedString> a_include_paths, bool a_json_errors, bool a_dump_type_hints, bool a_dump_try_hints, bool a_optimize, JaktInternal::Optional<DeprecatedString> a_target_triple): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), std_include_path(move(a_std_include_path)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)), optimize(move(a_optimize)), target_triple(move(a_target_triple)){}
 ErrorOr<NonnullRefPtr<Compiler>> compiler::Compiler::__jakt_create(JaktInternal::DynamicArray<jakt__path::Path> files, JaktInternal::Dictionary<DeprecatedString,utility::FileId> file_ids, JaktInternal::DynamicArray<error::JaktError> errors, JaktInternal::Optional<utility::FileId> current_file, JaktInternal::DynamicArray<u8> current_file_contents, bool dump_lexer, bool dump_parser, bool ignore_parser_errors, bool debug_print, jakt__path::Path std_include_path, JaktInternal::DynamicArray<DeprecatedString> include_paths, bool json_errors, bool dump_type_hints, bool dump_try_hints, bool optimize, JaktInternal::Optional<DeprecatedString> target_triple) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Compiler (move(files), move(file_ids), move(errors), move(current_file), move(current_file_contents), move(dump_lexer), move(dump_parser), move(ignore_parser_errors), move(debug_print), move(std_include_path), move(include_paths), move(json_errors), move(dump_type_hints), move(dump_try_hints), move(optimize), move(target_triple)))); return o; }
 JaktInternal::Optional<jakt__path::Path> compiler::Compiler::current_file_path() const {
 {
@@ -203,7 +203,7 @@ size_t idx = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<jakt__path::Path> _magic = ((((*this).files)).iterator());
 for (;;){
-JaktInternal::Optional<jakt__path::Path> _magic_value = ((_magic).next());
+JaktInternal::Optional<jakt__path::Path> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
@@ -214,7 +214,7 @@ DeprecatedString const file_name = ((file).to_string());
 {
 JaktInternal::ArrayIterator<error::JaktError> _magic = ((((*this).errors)).iterator());
 for (;;){
-JaktInternal::Optional<error::JaktError> _magic_value = ((_magic).next());
+JaktInternal::Optional<error::JaktError> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
