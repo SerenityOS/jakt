@@ -129,7 +129,7 @@ class Size {
     width: i64
     height: i64
 
-    public fn area(this) => .width * .height
+    pub fn area(this) => .width * .height
 }
 ```
 
