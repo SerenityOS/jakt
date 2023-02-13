@@ -2603,7 +2603,7 @@ struct Parser {
                     last_visibility_span = span
                     .index++
                 }
-                Public(span) => {
+                Pub(span) => {
                     if last_visibility.has_value() {
                         .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
                     }
@@ -2754,7 +2754,7 @@ struct Parser {
                     last_visibility_span = span
                     .index++
                 }
-                Public(span) => {
+                Pub(span) => {
                     if last_visibility.has_value() {
                         .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
                     }
@@ -2930,7 +2930,7 @@ struct Parser {
                     // Treat comma as whitespace? Might require them in the future
                     .index++
                 }
-                Public(span) => {
+                Pub(span) => {
                     if last_visibility.has_value() {
                         .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
                     }

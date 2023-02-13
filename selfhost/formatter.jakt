@@ -201,7 +201,7 @@ struct FormattedToken {
         Not => "not"
         Or => "or"
         Private => "private"
-        Public => "public"
+        Pub => "pub"
         Raw => "raw"
         Return => "return"
         Restricted => "restricted"
@@ -564,7 +564,7 @@ struct Stage0 {
                         preceding_trivia: []
                     )
                 }
-                Public | Private | Virtual | Override | Extern | Boxed => FormattedToken(
+                Pub | Private | Virtual | Override | Extern | Boxed => FormattedToken(
                     token
                     indent: .indent
                     trailing_trivia: [b' ']
@@ -825,7 +825,7 @@ struct Stage0 {
                         preceding_trivia: []
                     )
                 }
-                Public | Private | Virtual | Override => FormattedToken(
+                Pub | Private | Virtual | Override => FormattedToken(
                     token
                     indent: .indent
                     trailing_trivia: [b' ']

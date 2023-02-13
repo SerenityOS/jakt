@@ -992,7 +992,7 @@ fn get_var_signature(program: CheckedProgram, name: String, var_type_id: TypeId,
                 record_string = get_type_signature(program, type_id: struct_type_id!)
             }
             let visibility_string = match visibility {
-                Public => "public "
+                Public => "pub "
                 Private => "private "
                 else => ""
             }
