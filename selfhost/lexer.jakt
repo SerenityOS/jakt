@@ -161,7 +161,6 @@ enum Token {
         "override" => Token::Override(span)
         "private" => Token::Private(span)
         "pub" => Token::Pub(span)
-        "public" => Token::Pub(span)
         "raw" => Token::Raw(span)
         "return" => Token::Return(span)
         "restricted" => Token::Restricted(span)
