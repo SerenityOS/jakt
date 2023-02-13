@@ -64,19 +64,17 @@ void DeprecatedStringBuilder::clear()
 
 ErrorOr<void> DeprecatedStringBuilder::append_code_point(u32 code_point)
 {
-    ErrorOr<void> error_from_code_point = {};
-    auto nwritten = Jakt::UnicodeUtils::code_point_to_utf8(code_point, [this, &error_from_code_point](char c) {
-        auto maybe_error = append(c);
-        if (maybe_error.is_error())
-            error_from_code_point = maybe_error;
-    });
-    if (error_from_code_point.is_error())
-        return error_from_code_point.release_error();
+    auto nwritten = TRY(Jakt::UnicodeUtils::try_code_point_to_utf8(code_point, [this](char c) -> ErrorOr<void> {
+        TRY(append(c));
+        return {};
+    }));
+
     if (nwritten < 0) {
         TRY(append(0xef));
         TRY(append(0xbf));
         TRY(append(0xbd));
     }
+
     return {};
 }
 

@@ -561,7 +561,7 @@ TRY((((*this).error_with_hint(Jakt::DeprecatedString("Multiple visibility modifi
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 90: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pub>();
 utility::Span const& span = __jakt_match_value.value;
 {
 if (((last_visibility).has_value())){
@@ -1442,6 +1442,11 @@ if (((((*this).previous())).index() == 6 /* ColonColon */)){
 TRY((((namespaces).push(namespace_name))));
 ((((*this).index)++));
 }
+else {
+TRY((((*this).error(Jakt::DeprecatedString("Expected ‘::’ here"sv),utility::Span(((span).file_id),((span).start),((span).start))))));
+return JaktInternal::LoopBreak{};
+}
+
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -1453,6 +1458,7 @@ if (((((*this).previous())).index() == 3 /* Identifier */)){
 }
 else {
 TRY((((*this).error(Jakt::DeprecatedString("Expected name after"sv),span))));
+return JaktInternal::LoopBreak{};
 }
 
 }
@@ -2415,7 +2421,7 @@ return JaktInternal::LoopBreak{};
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 90: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pub>();
 utility::Span const& span = __jakt_match_value.value;
 {
 TRY((((*this).error(Jakt::DeprecatedString("Expected trait name"sv),span))));
@@ -2664,7 +2670,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 90: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pub>();
 utility::Span const& span = __jakt_match_value.value;
 {
 if (((last_visibility).has_value())){
@@ -3225,7 +3231,7 @@ TRY((((*this).error_with_hint(Jakt::DeprecatedString("Multiple visibility modifi
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 90: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pub>();
 utility::Span const& span = __jakt_match_value.value;
 {
 if (((last_visibility).has_value())){
@@ -5376,7 +5382,7 @@ return (parsed_trait);
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 90: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pub>();
 utility::Span const& span = __jakt_match_value.value;
 {
 TRY((((*this).error_with_hint(Jakt::DeprecatedString("Expected 'function' keyword inside trait definition"sv),span,TRY((__jakt_format(Jakt::DeprecatedString("Inside '{}' trait's definition only function declarations can appear"sv),((parsed_trait).name)))),((parsed_trait).name_span)))));
@@ -9156,7 +9162,7 @@ return JaktInternal::LoopBreak{};
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 90: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pub>();
 utility::Span const& span = __jakt_match_value.value;
 {
 TRY((((*this).error(Jakt::DeprecatedString("Expected alias target name"sv),span))));
@@ -10065,7 +10071,7 @@ TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 90: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pub>();
 utility::Span const& span = __jakt_match_value.value;
 {
 TRY((((*this).error(Jakt::DeprecatedString("Expected alias name"sv),span))));

@@ -85,10 +85,10 @@ struct ExplicitValueOrControlFlow {
         if constexpr (IsVoid<Return>)
             return;
         else
-            return move(value).template get<Return>();
+            return move(move(value).template get<Return>());
     }
-    Value release_value()
 
+    Value release_value()
     {
         if constexpr (IsVoid<Value>)
             return;

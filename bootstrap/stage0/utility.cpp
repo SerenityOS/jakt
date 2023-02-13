@@ -90,19 +90,15 @@ return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>(('"')))) {
 {
-if (in_escape){
 TRY((((builder).append_code_point(cp))));
 (in_escape = false);
-}
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>(('\'')))) {
 {
-if (in_escape){
 TRY((((builder).append_code_point(cp))));
 (in_escape = false);
-}
 }
 return JaktInternal::ExplicitValue<void>();
 }

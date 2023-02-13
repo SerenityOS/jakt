@@ -1518,9 +1518,9 @@ case 89 /* Private */: {
 TRY(builder.append("Token::Private"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 90 /* Public */: {
-[[maybe_unused]] auto const& that = this->template get<Token::Public>();
-TRY(builder.append("Token::Public"sv));
+case 90 /* Pub */: {
+[[maybe_unused]] auto const& that = this->template get<Token::Pub>();
+TRY(builder.append("Token::Pub"sv));
 TRY(builder.appendff("({})", that.value));
 break;}
 case 91 /* Raw */: {
@@ -1727,8 +1727,11 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Overri
 else if (__jakt_enum_value == Jakt::DeprecatedString("private"sv)) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Private(span) } );
 }
+else if (__jakt_enum_value == Jakt::DeprecatedString("pub"sv)) {
+return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Pub(span) } );
+}
 else if (__jakt_enum_value == Jakt::DeprecatedString("public"sv)) {
-return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Public(span) } );
+return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Pub(span) } );
 }
 else if (__jakt_enum_value == Jakt::DeprecatedString("raw"sv)) {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Raw(span) } );
@@ -2243,7 +2246,7 @@ utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 90: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pub>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/

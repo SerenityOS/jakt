@@ -109,6 +109,7 @@ ErrorOr<JaktInternal::Optional<typechecker::TraitImplementationDescriptor>> find
 ErrorOr<types::TypeId> find_or_add_type_id(NonnullRefPtr<typename types::Type> const type);
 ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<types::ScopeId,bool>>> find_namespace_in_scope(types::ScopeId const scope_id, DeprecatedString const name, bool const treat_aliases_as_imports) const;
 ErrorOr<void> typecheck_enum_predecl(parser::ParsedRecord const parsed_record, types::EnumId const enum_id, types::ScopeId const scope_id);
+DeprecatedString get_argument_name(JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>> const arg) const;
 types::ScopeId root_scope_id() const;
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_unary_operation(NonnullRefPtr<typename types::CheckedExpression> const checked_expr, types::CheckedUnaryOperator const checked_op, utility::Span const span, types::ScopeId const scope_id, types::SafetyMode const safety_mode);
 ErrorOr<types::TypeId> final_type_resolution_form(types::TypeId const type_id, types::ScopeId const scope_id) const;
@@ -165,7 +166,7 @@ ErrorOr<types::ModuleId> create_module(DeprecatedString const name, bool const i
 ErrorOr<void> set_owner_scope_if_needed(types::ScopeId const parent_scope_id, JaktInternal::DynamicArray<types::FunctionId> const overload_set);
 ErrorOr<void> set_owner_scope_if_needed(types::ScopeId const parent_scope_id, types::VarId const var_id);
 ErrorOr<void> typecheck_namespace_function_predecl(parser::ParsedNamespace const parsed_namespace, types::ScopeId const scope_id);
-ErrorOr<void> typecheck_enum_constructor(parser::ParsedRecord const record, types::EnumId const enum_id, types::ScopeId const parent_scope_id);
+ErrorOr<void> typecheck_enum_constructor(parser::ParsedRecord const parsed_record, types::EnumId const enum_id, types::ScopeId const parent_scope_id);
 ErrorOr<void> typecheck_enum(parser::ParsedRecord const record, types::EnumId const enum_id, types::ScopeId const parent_scope_id);
 ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<types::CheckedEnumVariantBinding>>> typecheck_enum_variant_bindings(types::CheckedEnumVariant const variant, JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> const bindings, utility::Span const span);
 ErrorOr<bool> implements_trait(types::TypeId const type_id, types::TraitId const trait_id, JaktInternal::Optional<JaktInternal::DynamicArray<types::TypeId>> const generic_arguments);
