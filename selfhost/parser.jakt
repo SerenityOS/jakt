@@ -1354,6 +1354,11 @@ struct ParsedVarDecl {
     }
 }
 
+struct ParsedVarDeclTuple {
+    var_decls: [ParsedVarDecl]
+    span: Span
+}
+
 struct ParsedField {
     // FIXME: It would be nice to extend the ParsedVarDecl struct instead.
     var_decl: ParsedVarDecl
@@ -3703,8 +3708,10 @@ struct Parser {
         }
     }
 
-    fn parse_destructuring_assignment(mut this, is_mutable: bool) throws -> [ParsedVarDecl] {
+    fn parse_destructuring_assignment(mut this, is_mutable: bool) throws -> ParsedVarDeclTuple {
+        let start = .current().span()
         .index++
+
         mut var_declarations: [ParsedVarDecl] = []
 
         loop {
@@ -3717,16 +3724,20 @@ struct Parser {
                 }
                 RParen => {
                     .index++
-                    return var_declarations
+                    break
                 }
                 else => {
                     .error("Expected close of destructuring assignment block", .current().span())
-                    return []
+                    var_declarations = []
+                    break
                 }
             }
         }
 
-        return []
+        return ParsedVarDeclTuple(
+            var_decls: var_declarations,
+            span: merge_spans(start, .previous().span())
+        )
     }
 
     fn parse_variable_declaration(mut this, is_mutable: bool) throws -> ParsedVarDecl {
@@ -3954,7 +3965,7 @@ struct Parser {
                 )
 
                 if .current() is LParen {
-                    vars = .parse_destructuring_assignment(is_mutable)
+                    vars = .parse_destructuring_assignment(is_mutable).var_decls
                     for var in vars {
                         tuple_var_name += var.name
                         tuple_var_name += "_"
@@ -4060,18 +4071,22 @@ struct Parser {
         mut iterator_name = ""
         mut destructured_var_decls: [ParsedVarDecl] = []
 
+        mut name_span = .current().span()
+
         match .current() {
             Identifier(name) => {
                 iterator_name = name
                 .index++
             }
             LParen => {
-                destructured_var_decls = .parse_destructuring_assignment(is_mutable: false)
+                let destructured_assignment = .parse_destructuring_assignment(is_mutable: false)
+                destructured_var_decls = destructured_assignment.var_decls
                 mut tuple_var_name = ""
                 for var in destructured_var_decls {
                     tuple_var_name += var.name
                     tuple_var_name += "__"
                 }
+                name_span = destructured_assignment.span
                 iterator_name = tuple_var_name
             }
             else => {
@@ -4080,7 +4095,6 @@ struct Parser {
             }
         }
 
-        let name_span = .current().span()
         if .current() is In {
             .index++
         } else {
