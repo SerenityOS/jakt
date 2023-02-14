@@ -205,6 +205,7 @@ struct FormattedToken {
         Raw => "raw"
         Return => "return"
         Restricted => "restricted"
+        Sizeof => "sizeof"
         Struct => "struct"
         This => "this"
         Throw => "throw"

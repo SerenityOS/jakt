@@ -1996,6 +1996,7 @@ struct CodeGenerator {
                 RawAddress => "const_cast<" + .codegen_type(type_id) + ">(" + "&"
                 LogicalNot => "!"
                 BitwiseNot => "~"
+                Sizeof => "sizeof"
                 Is(type_id) => {
                     let is_type = match .program.get_type(type_id) {
                         Struct(id) => {
@@ -2044,7 +2045,10 @@ struct CodeGenerator {
                 else => ""
             }
             output += "("
-            let object = .codegen_expression(expr)
+            let object = match op {
+                Sizeof(type_id) => .codegen_type(type_id)
+                else => .codegen_expression(expr)
+            }
             output += object
             output += match op {
                 PostIncrement => "++)"
