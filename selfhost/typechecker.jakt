@@ -4696,7 +4696,7 @@ struct Typechecker {
         DestructuringAssignment(vars, var_decl, span) => .typecheck_destructuring_assignment(vars, var_decl, scope_id, safety_mode, span)
         If(condition, then_block, else_statement, span) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode, span)
         Garbage(span) => CheckedStatement::Garbage(span)
-        For(iterator_name, name_span, range, block, span) => .typecheck_for(iterator_name,  name_span, range, block, scope_id, safety_mode, span)
+        For(iterator_name, name_span, is_destructuring, range, block, span) => .typecheck_for(iterator_name, name_span, is_destructuring, range, block, scope_id, safety_mode, span)
         Guard(expr, else_block, remaining_code, span) => .typecheck_guard(expr, else_block, remaining_code, scope_id, safety_mode, span)
     }
 
@@ -4764,6 +4764,7 @@ struct Typechecker {
         mut this
         iterator_name: String
         name_span: Span
+        is_destructuring: bool
         range: ParsedExpression
         block: ParsedBlock
         scope_id: ScopeId
@@ -4952,7 +4953,12 @@ struct Typechecker {
                                     // FIXME: loop variable mutability should be independent
                                     // of iterable mutability
                                     is_mutable: true,
-                                    inlay_span: name_span,
+                                    inlay_span: match is_destructuring {
+                                        // No need for a type hint on the tuple as a whole when destructuring,
+                                        // as each of its constituents already gets one.
+                                        true => None
+                                        else => name_span
+                                    },
                                     span: name_span
                                 ),
                                 init: ParsedExpression::ForcedUnwrap(

@@ -520,7 +520,7 @@ boxed enum ParsedStatement {
     Block(block: ParsedBlock, span: Span)
     Loop(block: ParsedBlock, span: Span)
     While(condition: ParsedExpression, block: ParsedBlock, span: Span)
-    For(iterator_name: String, name_span: Span, range: ParsedExpression, block: ParsedBlock, span: Span)
+    For(iterator_name: String, name_span: Span, is_destructuring: bool, range: ParsedExpression, block: ParsedBlock, span: Span)
     Break(Span)
     Continue(Span)
     Return(expr: ParsedExpression?, span: Span)
@@ -4107,9 +4107,11 @@ struct Parser {
         let range = .parse_expression(allow_assignments: false, allow_newlines: false)
         .can_have_trailing_closure = previous_can_have_trailing_closure
 
+        mut is_destructuring = false
         mut block = .parse_block();
 
         if destructured_var_decls.size() > 0 {
+            is_destructuring = true
             mut tuple_var_name = "jakt__"
             tuple_var_name += iterator_name
             mut tuple_var_decl = ParsedVarDecl(
@@ -4128,7 +4130,7 @@ struct Parser {
             block.stmts = block_stmts
         }
 
-        return ParsedStatement::For(iterator_name, name_span, range, block, span: merge_spans(start_span, .previous().span()))
+        return ParsedStatement::For(iterator_name, name_span, is_destructuring, range, block, span: merge_spans(start_span, .previous().span()))
     }
 
     fn parse_if_statement(mut this) throws -> ParsedStatement {
