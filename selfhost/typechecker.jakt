@@ -4439,6 +4439,9 @@ struct Typechecker {
             Is | IsEnumVariant => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: builtin(BuiltinType::Bool))
             }
+            Sizeof => {
+                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: builtin(BuiltinType::Usize))
+            }
             RawAddress => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(Type::RawPtr(expr_type_id)))
             }
@@ -6381,6 +6384,10 @@ struct Typechecker {
                         Infallible => CheckedTypeCast::Infallible(type_id)
                     }
                     yield CheckedUnaryOperator::TypeCast(checked_cast)
+                }
+                Sizeof(unchecked_type) => {
+                    let type_id = .typecheck_typename(parsed_type: unchecked_type, scope_id, name: None)
+                    yield CheckedUnaryOperator::Sizeof(type_id)
                 }
                 Is(unchecked_type) => {
                     let old_ignore_errors = .ignore_errors

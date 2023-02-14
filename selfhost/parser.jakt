@@ -766,6 +766,7 @@ enum UnaryOperator {
     TypeCast(TypeCast)
     Is(ParsedType)
     IsEnumVariant(inner: ParsedType, bindings: [EnumVariantPatternArgument])
+    Sizeof(ParsedType)
 
     fn equals(this, anon rhs_op: UnaryOperator) -> bool => match this {
         PreIncrement => rhs_op is PreIncrement
@@ -785,6 +786,10 @@ enum UnaryOperator {
         }
         Is(lhs_type) => match rhs_op {
             Is(rhs_type) => lhs_type.equals(rhs_type)
+            else => false
+        }
+        Sizeof(lhs_type) => match rhs_op {
+            Sizeof(rhs_type) => lhs_type.equals(rhs_type)
             else => false
         }
         IsEnumVariant(inner: lhs_inner_type, bindings: lhs_bindings) => match rhs_op {
@@ -4301,6 +4306,17 @@ struct Parser {
             let expr = .parse_operand()
             let span = merge_spans(start, expr.span())
             yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::BitwiseNot, span)
+        }
+        Sizeof(span) => {
+            let start = .current().span()
+            .index++
+            let parsed_type = .parse_typename()
+            let span = merge_spans(start, parsed_type.span())
+            yield ParsedExpression::UnaryOp(
+                expr: ParsedExpression::Garbage(span)
+                op: UnaryOperator::Sizeof(parsed_type)
+                span
+            )
         }
         Reflect(span) => {
             let start = .current().span()
