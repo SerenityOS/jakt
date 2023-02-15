@@ -45,7 +45,7 @@ fn help() -> String {
     output += "  -dl\t\t\t\t\tPrint debug info for the lexer.\n"
     output += "  -dp\t\t\t\t\tPrint debug info for the parser.\n"
     output += "  -dt\t\t\t\t\tPrint debug info for the typechecker.\n"
-    output += "  -S\t\t\t\t\tOnly output source (do not build).\n"
+    output += "  -S,--emit-cpp-source-only\t\tOnly output source (do not build).\n"
     output += "  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"
     output += "  --runtime-library-path PATH\t\tSpecify the path to the runtime library.\n"
     output += "  -J,--jobs NUMBER\t\t\tSpecify the number of jobs to run in parallel, defaults to 2 (1 on windows).\n"
@@ -54,7 +54,6 @@ fn help() -> String {
     output += "  -d\t\t\t\t\tInsert debug statement spans in generated C++ code.\n"
     output += "  --debug-print\t\t\t\tOutput debug print.\n"
     output += "  -p --prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n"
-    output += "  -S,--emit-cpp-source-only\t\tWrite the C++ source to file, even when not building.\n"
     output += "  -c,--check-only\t\t\tOnly check the code for errors.\n"
     output += "  -j,--json-errors\t\t\tEmit machine-readable (JSON) errors.\n"
     output += "  -H,--type-hints\t\t\tEmit machine-readable type hints (for IDE integration).\n"
@@ -173,7 +172,7 @@ fn main(args: [String]) {
     let lexer_debug = args_parser.flag(["-dl"])
     let parser_debug = args_parser.flag(["-dp"])
     let typechecker_debug = args_parser.flag(["-dt"])
-    let build_executable = not args_parser.flag(["-S"])
+    let build_executable = not args_parser.flag(["-S", "--emit-cpp-source-only"])
     let run_executable = args_parser.flag(["-cr", "--compile-run"])
     let codegen_debug = args_parser.flag(["-d"])
     let debug_print = args_parser.flag(["--debug-print"])
@@ -182,7 +181,6 @@ fn main(args: [String]) {
     let dump_type_hints = args_parser.flag(["-H", "--type-hints"])
     let dump_try_hints = args_parser.flag(["--try-hints"])
     let check_only = args_parser.flag(["-c", "--check-only"])
-    let write_source_to_file = args_parser.flag(["-S", "--emit-cpp-source-only"])
     let generate_depfile = args_parser.option(["-M", "--dep-file"])
     let target_triple = args_parser.option(["-T", "--target-triple"])
     let runtime_library_path = args_parser.option(["-RLP", "--runtime-library-path"]) ?? default_runtime_library_path.to_string()
