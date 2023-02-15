@@ -534,6 +534,14 @@ fn main(args: [String]) {
             return 1
         }
 
+        if prettify_cpp_source {
+            mut command = format("{} -i {}", clang_format_path, path.to_string())
+            if dot_clang_format_path.has_value() {
+                command = format("{} --style=file:{}", command, dot_clang_format_path)
+            }
+            system(command.c_string())
+        }
+
         if generate_depfile.has_value() and file.ends_with(".cpp") {
             let escaped = file.replace(replace: " ", with: "\\ ")
             let escaped_module_file_path = module_file_path.replace(replace: " ", with: "\\ ")
