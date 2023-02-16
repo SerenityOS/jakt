@@ -1,0 +1,59 @@
+/// Expect:
+/// - output: "true true true true true true true true\n"
+
+
+
+struct Rect<T> {
+    x: T
+    y: T
+    width: T
+    height: T
+}
+
+enum Color : u8 {
+    Red
+    Green
+    Blue
+}
+
+enum Fancy<T> {
+    x: i32
+
+    A(T)
+    B
+    C(f: i32, g: T)
+}
+
+fn test_sizeof() throws -> [usize] {
+    mut result: [usize] = []
+    result.push(sizeof i32)
+    result.push(sizeof i64)
+    result.push(sizeof Rect<i32>)
+    result.push(sizeof Rect<i64>)
+    result.push(sizeof Color)
+    result.push(sizeof Fancy<i32>)
+    result.push(sizeof Fancy<i64>)
+
+    return result
+}
+
+comptime test_comptime() throws -> [usize] {
+    return test_sizeof()
+}
+
+fn main() {
+    let sizes = test_sizeof()
+    let comptime_sizes = test_comptime()
+
+    mut ok = true
+    for i in 0..sizes.size() {
+        let i_ok = sizes[i] == comptime_sizes[i]
+        ok = ok and i_ok
+        if not i_ok {
+            eprintln("size mismatch: {} != {}", sizes[i], comptime_sizes[i])
+        }
+        print("{} ", i_ok)
+    }
+
+    println("{}", ok)
+}

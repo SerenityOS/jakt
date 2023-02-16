@@ -5,12 +5,13 @@ import types {
     FunctionId, GenericInferences, ModuleId, NumericOrStringValue, ParsedStatement, ResolvedNamespace, SafetyMode
     Scope, ScopeId, Span, StringLiteral, StructId, Type, TypeId, TypecheckFunctions, Value, ValueImpl, VarId,
     CheckedUnaryOperator, CheckedTypeCast,
-    builtin, unknown_type_id
+    builtin, unknown_type_id, void_type_id,
 }
 import parser { ParsedBlock }
 import utility { escape_for_quotes, interpret_escapes, panic }
 import error { JaktError }
 import compiler { Compiler }
+import jakt::platform { Target }
 
 enum InterpretError : i32 {
     CallToExternalFunction = 42i32
@@ -22,6 +23,319 @@ enum InterpretError : i32 {
     Unimplemented
     UnwrapOptionalNone
     InvalidCharacterConstant
+}
+
+trait TargetSize {
+    fn size_t_size(this) throws -> usize
+    fn pointer_size(this) throws -> usize
+    fn int_size(this) throws -> usize
+    fn size_t_alignment(this) throws -> usize => .size_t_size()
+    fn pointer_alignment(this) throws -> usize => .pointer_size()
+    fn int_alignment(this) throws -> usize => .int_size()
+}
+
+type Target implements(TargetSize) {
+    fn size_t_size(this) throws -> usize => match .arch {
+        "x86_64" => 8
+        "x86" => 4
+        else => {
+            throw Error::from_string_literal("size_t size is unknown for this architecture")
+        }
+    }
+
+    fn pointer_size(this) throws -> usize => match .arch {
+        "x86_64" => 8
+        "x86" => 4
+        else => {
+            throw Error::from_string_literal("pointer size is unknown for this architecture")
+        }
+    }
+
+    fn int_size(this) throws -> usize => match .arch {
+        "x86_64" => 4
+        "x86" => 4
+        else => {
+            throw Error::from_string_literal("int size is unknown for this architecture")
+        }
+    }
+}
+
+fn align_of_impl(
+    type_id: TypeId
+    anon interpreter: Interpreter
+) throws -> usize => match interpreter.program.get_type(type_id) {
+    Void | Unknown | Never => 0
+    Bool => 1
+    I8 | U8 => 1
+    I16 | U16 => 2
+    I32 | U32 => 4
+    I64 | U64 => 8
+    F32 => 4
+    F64 => 8
+    Usize => Target::active().size_t_alignment()
+    JaktString => Target::active().pointer_alignment()
+    CChar => 1
+    CInt => Target::active().int_alignment()
+    TypeVariable
+    | GenericTraitInstance
+    | GenericResolvedType => 0
+    GenericInstance(id: struct_id, args)
+    | Struct(struct_id) default(args: [TypeId] = []) => {
+        let struct_ = interpreter.program.get_struct(struct_id)
+        let resolve_type_id = fn[&struct_, &args](anon type_id: TypeId) -> TypeId {
+            mut i = 0
+            for param in struct_.generic_parameters {
+                defer i += 1
+                if param.type_id.equals(type_id) {
+                    return args[i]
+                }
+            }
+
+            return type_id
+        }
+        mut align = 0uz
+        for field in struct_.fields {
+            let field_alignment = align_of_impl(
+                type_id: resolve_type_id(interpreter.program.get_variable(field.variable_id).type_id)
+                interpreter
+            )
+            if field_alignment > align {
+                align = field_alignment
+            }
+        }
+        yield align
+    }
+    GenericEnumInstance(id: enum_id, args)
+    | Enum(enum_id) default(args: [TypeId] = []) => {
+        let enum_ = interpreter.program.get_enum(enum_id)
+        let resolve_type_id = fn[&enum_, &args](anon type_id: TypeId) -> TypeId {
+            mut i = 0
+            for param in enum_.generic_parameters {
+                defer i += 1
+                if param.type_id.equals(type_id) {
+                    return args[i]
+                }
+            }
+
+            return type_id
+        }
+
+        yield match enum_.underlying_type_id.equals(void_type_id()) {
+            true => {
+                mut align = 0uz
+                for variant in enum_.variants {
+                    let variant_align = match variant {
+                        Untyped => 0uz
+                        Typed(type_id) => align_of_impl(type_id: resolve_type_id(type_id), interpreter)
+                        // NOTE: Cannot occur here.
+                        WithValue => 0uz
+                        StructLike(fields) => {
+                            mut align = 0uz
+                            for field in fields {
+                                let field_alignment = align_of_impl(
+                                    type_id: resolve_type_id(interpreter.program.get_variable(field).type_id)
+                                    interpreter
+                                )
+                                if field_alignment > align {
+                                    align = field_alignment
+                                }
+                            }
+                            yield align
+                        }
+                    }
+
+                    if variant_align > align {
+                        align = variant_align
+                    }
+                }
+
+                let index_type = match enum_.variants.size() {
+                    0uz..256uz => BuiltinType::U8
+                    else => BuiltinType::Usize
+                }
+                let index_align = align_of_impl(type_id: builtin(index_type), interpreter)
+                if index_align > align {
+                    align = index_align
+                }
+
+                yield align
+            }
+            else => align_of_impl(type_id: enum_.underlying_type_id, interpreter)
+        }
+    }
+    RawPtr => Target::active().pointer_alignment()
+    Trait => 0
+    Reference => Target::active().pointer_alignment()
+    MutableReference => Target::active().pointer_alignment()
+    Function => 0
+    Self => 0
+}
+
+fn size_of_impl(
+    type_id: TypeId
+    anon interpreter: Interpreter
+) throws -> usize => match interpreter.program.get_type(type_id) {
+    Void | Unknown | Never => 0
+    Bool => 1
+    I8 | U8 => 1
+    I16 | U16 => 2
+    I32 | U32 => 4
+    I64 | U64 => 8
+    F32 => 4
+    F64 => 8
+    Usize => Target::active().size_t_size()
+    JaktString => Target::active().pointer_size()
+    CChar => 1
+    CInt => Target::active().int_size()
+    TypeVariable
+    | GenericTraitInstance
+    | GenericResolvedType => 0
+
+    GenericInstance(id: struct_id, args)
+    | Struct(struct_id) default(args: [TypeId] = []) => {
+        let struct_ = interpreter.program.get_struct(struct_id)
+        let resolve_type_id = fn[&struct_, &args](anon type_id: TypeId) -> TypeId {
+            mut i = 0
+            for param in struct_.generic_parameters {
+                defer i += 1
+                if param.type_id.equals(type_id) {
+                    return args[i]
+                }
+            }
+
+            return type_id
+        }
+
+        mut size = 0uz
+        mut align = 0uz
+        for field in struct_.fields {
+            mut type_id = resolve_type_id(interpreter.program.get_variable(field.variable_id).type_id)
+            let field_size = size_of_impl(type_id, interpreter)
+            let field_align = align_of_impl(type_id, interpreter)
+            let slack = size % field_align
+            if slack != 0 {
+                size += field_align - slack
+            }
+            if align < field_align {
+                align = field_align
+            }
+
+            size += field_size
+        }
+
+        if size == 0 {
+            size = 1 // NOTE: Empty structs are 1 byte in C++, we're talking to C++.
+        } else {
+            // Align to the struct's alignment.
+            let total_slack = size % align
+            if total_slack != 0 {
+                size += align - total_slack
+            }
+        }
+
+        yield size
+    }
+
+    GenericEnumInstance(id: enum_id, args)
+    | Enum(enum_id) default(args: [TypeId] = []) => {
+        let enum_ = interpreter.program.get_enum(enum_id)
+        let resolve_type_id = fn[&enum_, &args](anon type_id: TypeId) -> TypeId {
+            mut i = 0
+            for param in enum_.generic_parameters {
+                defer i += 1
+                if param.type_id.equals(type_id) {
+                    return args[i]
+                }
+            }
+
+            return type_id
+        }
+        yield match enum_.underlying_type_id.equals(void_type_id()) {
+            true => {
+                mut size = 0uz
+                mut container_align = 0uz
+                for variant in enum_.variants {
+                    let variant_size = match variant {
+                        Untyped => 0uz
+                        Typed(type_id) => {
+                            let align = align_of_impl(type_id: resolve_type_id(type_id), interpreter)
+                            if align > container_align {
+                                container_align = align
+                            }
+
+                            yield size_of_impl(type_id, interpreter)
+                        }
+                        // NOTE: Cannot occur here.
+                        WithValue => 0uz
+                        StructLike(fields) => {
+                            mut size = 0uz
+                            mut align = 0uz
+                            for field in fields {
+                                let type_id = resolve_type_id(interpreter.program.get_variable(field).type_id)
+                                let field_size = size_of_impl(type_id, interpreter)
+                                let field_alignment = align_of_impl(type_id, interpreter)
+                                let slack = size % field_alignment
+                                if slack != 0 {
+                                    size += field_alignment - slack
+                                }
+                                if align < field_alignment {
+                                    align = field_alignment
+                                }
+                                size += field_size
+                            }
+
+                            if size == 0 {
+                                size = 1
+                            } else {
+                                let total_slack = size % align
+                                if total_slack != 0 {
+                                    size += align - total_slack
+                                }
+                            }
+
+                            if align > container_align {
+                                container_align = align
+                            }
+
+                            yield size
+                        }
+                    }
+
+                    if variant_size > size {
+                        size = variant_size
+                    }
+                }
+
+                let index_type = match enum_.variants.size() {
+                    0uz..256uz => BuiltinType::U8
+                    else => BuiltinType::Usize
+                }
+                let index_align = align_of_impl(type_id: builtin(index_type), interpreter)
+                let index_size = size_of_impl(type_id: builtin(index_type), interpreter)
+                let index_slack = size % index_align
+                if index_slack != 0 {
+                    size += index_align - index_slack
+                }
+                size += index_size
+
+                if container_align > index_align {
+                    let slack = size % container_align
+                    if slack != 0 {
+                        size += container_align - slack
+                    }
+                }
+
+                yield size
+            }
+            else => align_of_impl(type_id: enum_.underlying_type_id, interpreter)
+        }
+    }
+    RawPtr => Target::active().pointer_size()
+    Trait => 0
+    Reference => Target::active().pointer_size()
+    MutableReference => Target::active().pointer_size()
+    Function => 0
+    Self => 0
 }
 
 fn format_value_impl(anon format_string: String, anon value: Value, interpreter: Interpreter) throws -> String => match value.impl {
@@ -5393,334 +5707,340 @@ class Interpreter {
 
             yield value
         }
-        UnaryOp(expr, op, span) => {
-            let value = match .execute_expression(expr, scope) {
-                Return(value) => {
-                    return StatementResult::Return(value)
+        UnaryOp(expr, op, span) => match op {
+            Sizeof(type_id) => StatementResult::JustValue(Value(
+                impl: ValueImpl::USize(size_of_impl(type_id, this))
+                span
+            ))
+            else => {
+                let value = match .execute_expression(expr, scope) {
+                    Return(value) => {
+                        return StatementResult::Return(value)
+                    }
+                    Throw(value) => {
+                        return StatementResult::Throw(value)
+                    }
+                    JustValue(value) => value
+                    Continue => {
+                        return StatementResult::Continue
+                    }
+                    Break => {
+                        return StatementResult::Break
+                    }
+                    Yield(expr) => {
+                        panic("Invalid control flow")
+                    }
                 }
-                Throw(value) => {
-                    return StatementResult::Throw(value)
-                }
-                JustValue(value) => value
-                Continue => {
-                    return StatementResult::Continue
-                }
-                Break => {
-                    return StatementResult::Break
-                }
-                Yield(expr) => {
-                    panic("Invalid control flow")
-                }
-            }
-            yield match op {
-                LogicalNot => match value.impl {
-                    Bool(value) => StatementResult::JustValue(Value(
-                        impl: ValueImpl::Bool(not value)
-                        span
-                    ))
-                    else => {
-                        .error(
-                            format("Invalid type for unary operator"),
+                yield match op {
+                    LogicalNot => match value.impl {
+                        Bool(value) => StatementResult::JustValue(Value(
+                            impl: ValueImpl::Bool(not value)
                             span
-                        )
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
-                    }
-                }
-                PostIncrement => StatementResult::JustValue(match value.impl {
-                    U8(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::U8(x + 1), span), span)
-                        yield value
-                    }
-                    I8(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::I8(x + 1), span), span)
-                        yield value
-                    }
-                    U16(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::U16(x + 1), span), span)
-                        yield value
-                    }
-                    I16(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::I16(x + 1), span), span)
-                        yield value
-                    }
-                    U32(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::U32(x + 1), span), span)
-                        yield value
-                    }
-                    I32(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::I32(x + 1), span), span)
-                        yield value
-                    }
-                    U64(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::U64(x + 1), span), span)
-                        yield value
-                    }
-                    I64(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::I64(x + 1), span), span)
-                        yield value
-                    }
-                    CChar(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::CChar(x + 1), span), span)
-                        yield value
-                    }
-                    CInt(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::CInt(x + 1), span), span)
-                        yield value
-                    }
-                    USize(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::USize(x + 1), span), span)
-                        yield value
-                    }
-                    else => {
-                        .error(
-                            format("Invalid type for unary operator"),
-                            span
-                        )
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
-                    }
-                })
-                PreIncrement => StatementResult::JustValue(match value.impl {
-                    U8(x) => {
-                        let value = Value(impl: ValueImpl::U8(x + 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    I8(x) => {
-                        let value = Value(impl: ValueImpl::I8(x + 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    U16(x) => {
-                        let value = Value(impl: ValueImpl::U16(x + 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    I16(x) => {
-                        let value = Value(impl: ValueImpl::I16(x + 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    U32(x) => {
-                        let value = Value(impl: ValueImpl::U32(x + 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    I32(x) => {
-                        let value = Value(impl: ValueImpl::I32(x + 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    U64(x) => {
-                        let value = Value(impl: ValueImpl::U64(x + 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    I64(x) => {
-                        let value = Value(impl: ValueImpl::I64(x + 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    CChar(x) => {
-                        let value = Value(impl: ValueImpl::CChar(x + 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    CInt(x) => {
-                        let value = Value(impl: ValueImpl::CInt(x + 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    USize(x) => {
-                        let value = Value(impl: ValueImpl::USize(x + 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    else => {
-                        .error(
-                            format("Invalid type for unary operator"),
-                            span
-                        )
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
-                    }
-                })
-                PostDecrement => StatementResult::JustValue(match value.impl {
-                    U8(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::U8(x - 1), span), span)
-                        yield value
-                    }
-                    I8(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::I8(x - 1), span), span)
-                        yield value
-                    }
-                    U16(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::U16(x - 1), span), span)
-                        yield value
-                    }
-                    I16(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::I16(x - 1), span), span)
-                        yield value
-                    }
-                    U32(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::U32(x - 1), span), span)
-                        yield value
-                    }
-                    I32(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::I32(x - 1), span), span)
-                        yield value
-                    }
-                    U64(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::U64(x - 1), span), span)
-                        yield value
-                    }
-                    I64(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::I64(x - 1), span), span)
-                        yield value
-                    }
-                    CChar(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::CChar(x - 1), span), span)
-                        yield value
-                    }
-                    CInt(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::CInt(x - 1), span), span)
-                        yield value
-                    }
-                    USize(x) => {
-                        .update_binding(expr, scope, Value(impl: ValueImpl::USize(x - 1), span), span)
-                        yield value
-                    }
-                    else => {
-                        .error(
-                            format("Invalid type for unary operator"),
-                            span
-                        )
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
-                    }
-                })
-                PreDecrement => StatementResult::JustValue(match value.impl {
-                    U8(x) => {
-                        let value = Value(impl: ValueImpl::U8(x - 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    I8(x) => {
-                        let value = Value(impl: ValueImpl::I8(x - 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    U16(x) => {
-                        let value = Value(impl: ValueImpl::U16(x - 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    I16(x) => {
-                        let value = Value(impl: ValueImpl::I16(x - 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    U32(x) => {
-                        let value = Value(impl: ValueImpl::U32(x - 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    I32(x) => {
-                        let value = Value(impl: ValueImpl::I32(x - 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    U64(x) => {
-                        let value = Value(impl: ValueImpl::U64(x - 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    I64(x) => {
-                        let value = Value(impl: ValueImpl::I64(x - 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    CChar(x) => {
-                        let value = Value(impl: ValueImpl::CChar(x - 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    CInt(x) => {
-                        let value = Value(impl: ValueImpl::CInt(x - 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    USize(x) => {
-                        let value = Value(impl: ValueImpl::USize(x - 1), span)
-                        .update_binding(expr, scope, value, span)
-                        yield value
-                    }
-                    else => {
-                        .error(
-                            format("Invalid type for unary operator"),
-                            span
-                        )
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
-                    }
-                })
-                TypeCast(cast) => match cast {
-                    Infallible(type_id) => StatementResult::JustValue(cast_value_to_type(value, type_id, interpreter: this))
-                    Fallible(type_id) => {
-                        // FIXME: Actually implement this :)
-                        yield StatementResult::JustValue(
-                            Value(
-                                impl: ValueImpl::OptionalSome(value: cast_value_to_type(value, type_id, interpreter: this))
+                        ))
+                        else => {
+                            .error(
+                                format("Invalid type for unary operator"),
                                 span
                             )
-                        )
-
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
                     }
-                }
-                IsEnumVariant(enum_variant, bindings) => match value.impl {
-                    Enum(fields, constructor) => {
-                        let constructor_name = .program.get_function(constructor).name
-                        if enum_variant.name() != constructor_name {
-                            return StatementResult::JustValue(
+                    PostIncrement => StatementResult::JustValue(match value.impl {
+                        U8(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::U8(x + 1), span), span)
+                            yield value
+                        }
+                        I8(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::I8(x + 1), span), span)
+                            yield value
+                        }
+                        U16(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::U16(x + 1), span), span)
+                            yield value
+                        }
+                        I16(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::I16(x + 1), span), span)
+                            yield value
+                        }
+                        U32(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::U32(x + 1), span), span)
+                            yield value
+                        }
+                        I32(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::I32(x + 1), span), span)
+                            yield value
+                        }
+                        U64(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::U64(x + 1), span), span)
+                            yield value
+                        }
+                        I64(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::I64(x + 1), span), span)
+                            yield value
+                        }
+                        CChar(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::CChar(x + 1), span), span)
+                            yield value
+                        }
+                        CInt(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::CInt(x + 1), span), span)
+                            yield value
+                        }
+                        USize(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::USize(x + 1), span), span)
+                            yield value
+                        }
+                        else => {
+                            .error(
+                                format("Invalid type for unary operator"),
+                                span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    })
+                    PreIncrement => StatementResult::JustValue(match value.impl {
+                        U8(x) => {
+                            let value = Value(impl: ValueImpl::U8(x + 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        I8(x) => {
+                            let value = Value(impl: ValueImpl::I8(x + 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        U16(x) => {
+                            let value = Value(impl: ValueImpl::U16(x + 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        I16(x) => {
+                            let value = Value(impl: ValueImpl::I16(x + 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        U32(x) => {
+                            let value = Value(impl: ValueImpl::U32(x + 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        I32(x) => {
+                            let value = Value(impl: ValueImpl::I32(x + 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        U64(x) => {
+                            let value = Value(impl: ValueImpl::U64(x + 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        I64(x) => {
+                            let value = Value(impl: ValueImpl::I64(x + 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        CChar(x) => {
+                            let value = Value(impl: ValueImpl::CChar(x + 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        CInt(x) => {
+                            let value = Value(impl: ValueImpl::CInt(x + 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        USize(x) => {
+                            let value = Value(impl: ValueImpl::USize(x + 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        else => {
+                            .error(
+                                format("Invalid type for unary operator"),
+                                span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    })
+                    PostDecrement => StatementResult::JustValue(match value.impl {
+                        U8(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::U8(x - 1), span), span)
+                            yield value
+                        }
+                        I8(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::I8(x - 1), span), span)
+                            yield value
+                        }
+                        U16(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::U16(x - 1), span), span)
+                            yield value
+                        }
+                        I16(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::I16(x - 1), span), span)
+                            yield value
+                        }
+                        U32(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::U32(x - 1), span), span)
+                            yield value
+                        }
+                        I32(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::I32(x - 1), span), span)
+                            yield value
+                        }
+                        U64(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::U64(x - 1), span), span)
+                            yield value
+                        }
+                        I64(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::I64(x - 1), span), span)
+                            yield value
+                        }
+                        CChar(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::CChar(x - 1), span), span)
+                            yield value
+                        }
+                        CInt(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::CInt(x - 1), span), span)
+                            yield value
+                        }
+                        USize(x) => {
+                            .update_binding(expr, scope, Value(impl: ValueImpl::USize(x - 1), span), span)
+                            yield value
+                        }
+                        else => {
+                            .error(
+                                format("Invalid type for unary operator"),
+                                span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    })
+                    PreDecrement => StatementResult::JustValue(match value.impl {
+                        U8(x) => {
+                            let value = Value(impl: ValueImpl::U8(x - 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        I8(x) => {
+                            let value = Value(impl: ValueImpl::I8(x - 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        U16(x) => {
+                            let value = Value(impl: ValueImpl::U16(x - 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        I16(x) => {
+                            let value = Value(impl: ValueImpl::I16(x - 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        U32(x) => {
+                            let value = Value(impl: ValueImpl::U32(x - 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        I32(x) => {
+                            let value = Value(impl: ValueImpl::I32(x - 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        U64(x) => {
+                            let value = Value(impl: ValueImpl::U64(x - 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        I64(x) => {
+                            let value = Value(impl: ValueImpl::I64(x - 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        CChar(x) => {
+                            let value = Value(impl: ValueImpl::CChar(x - 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        CInt(x) => {
+                            let value = Value(impl: ValueImpl::CInt(x - 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        USize(x) => {
+                            let value = Value(impl: ValueImpl::USize(x - 1), span)
+                            .update_binding(expr, scope, value, span)
+                            yield value
+                        }
+                        else => {
+                            .error(
+                                format("Invalid type for unary operator"),
+                                span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    })
+                    TypeCast(cast) => match cast {
+                        Infallible(type_id) => StatementResult::JustValue(cast_value_to_type(value, type_id, interpreter: this))
+                        Fallible(type_id) => {
+                            // FIXME: Actually implement this :)
+                            yield StatementResult::JustValue(
                                 Value(
-                                    impl: ValueImpl::Bool(false)
+                                    impl: ValueImpl::OptionalSome(value: cast_value_to_type(value, type_id, interpreter: this))
+                                    span
+                                )
+                            )
+
+                        }
+                    }
+                    IsEnumVariant(enum_variant, bindings) => match value.impl {
+                        Enum(fields, constructor) => {
+                            let constructor_name = .program.get_function(constructor).name
+                            if enum_variant.name() != constructor_name {
+                                return StatementResult::JustValue(
+                                    Value(
+                                        impl: ValueImpl::Bool(false)
+                                        span
+                                    )
+                                )
+                            }
+
+                            // FIXME: Bindings
+                            // match enum_variant {
+                            //     Typed => {
+                            //     }
+                            //     Untyped
+                            //     StructLike
+                            //     WithValue => {
+                            //         .error(
+                            //             format("Unimplemented value enum for unary operator '{}'", op),
+                            //             span
+                            //         )
+                            //         throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                            //     }
+                            // }
+
+                            yield StatementResult::JustValue(
+                                Value(
+                                    impl: ValueImpl::Bool(true)
                                     span
                                 )
                             )
                         }
-
-                        // FIXME: Bindings
-                        // match enum_variant {
-                        //     Typed => {
-                        //     }
-                        //     Untyped
-                        //     StructLike
-                        //     WithValue => {
-                        //         .error(
-                        //             format("Unimplemented value enum for unary operator '{}'", op),
-                        //             span
-                        //         )
-                        //         throw Error::from_errno(InterpretError::Unimplemented as! i32)
-                        //     }
-                        // }
-
-                        yield StatementResult::JustValue(
-                            Value(
-                                impl: ValueImpl::Bool(true)
+                        else => {
+                            .error(
+                                format("Invalid value for unary operator '{}'", op),
                                 span
                             )
-                        )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
                     }
                     else => {
                         .error(
-                            format("Invalid value for unary operator '{}'", op),
+                            format("Unimplemented unary operator '{}'", op),
                             span
                         )
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_errno(InterpretError::Unimplemented as! i32)
                     }
-                }
-                else => {
-                    .error(
-                        format("Unimplemented unary operator '{}'", op),
-                        span
-                    )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
                 }
             }
         }
