@@ -7352,7 +7352,15 @@ struct Typechecker {
         return (covered_name, checked_match_case, result_type)
     }
 
-    fn typecheck_match(mut this, expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+    fn typecheck_match(
+        mut this
+        expr: ParsedExpression
+        cases: [ParsedMatchCase]
+        span: Span
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        type_hint: TypeId?
+    ) throws -> CheckedExpression {
         let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
         let subject_type_id = checked_expr.type()
         let type_to_match_on = .get_type(subject_type_id)
