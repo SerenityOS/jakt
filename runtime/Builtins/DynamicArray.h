@@ -475,6 +475,26 @@ public:
         return at(size() - 1);
     }
 
+    operator Span<T const>() const
+    {
+        return { unsafe_data(), size() };
+    }
+
+    T* unsafe_data()
+    {
+        return m_storage->unsafe_data() + m_offset;
+    }
+
+    T const* unsafe_data() const
+    {
+        return m_storage->unsafe_data() + m_offset;
+    }
+
+    bool operator==(ArraySlice const& other) const
+    {
+        return static_cast<Span<T const>>(*this) == static_cast<Span<T const>>(other);
+    }
+
 private:
     RefPtr<DynamicArrayStorage<T>> m_storage;
     size_t m_offset { 0 };
