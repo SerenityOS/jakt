@@ -446,7 +446,7 @@ public:
 
     ArraySlice<T> slice_range(size_t from, size_t to) const
     {
-        return slice(from + m_offset, to - from + m_offset);
+        return slice(from + m_offset, to - from);
     }
 
     ArraySlice<T> slice(size_t offset, size_t size) const;
