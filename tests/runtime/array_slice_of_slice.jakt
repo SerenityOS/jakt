@@ -1,0 +1,6 @@
+/// Expect:
+/// - output: "4\n"
+
+fn main() {
+    println("{}", [1u8; 100][50..][0..4].size())
+}
