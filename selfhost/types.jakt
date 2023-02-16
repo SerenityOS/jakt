@@ -1579,6 +1579,13 @@ boxed enum CheckedExpression {
             true => BlockControlFlow::NeverReturns
             else => BlockControlFlow::MayReturn
         }
+        TryBlock(stmt, catch_block) => {
+            guard stmt is Block(block) else {
+                panic("Try block doesn't have a block")
+            }
+
+            yield block.control_flow.branch_unify_with(catch_block.control_flow)
+        }
         else => BlockControlFlow::MayReturn
     }
 }

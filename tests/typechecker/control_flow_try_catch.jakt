@@ -1,0 +1,16 @@
+/// Expect:
+/// - error: "Unreachable code"
+
+fn test() -> i64 {
+    try {
+        return 1
+    } catch err {
+        abort()
+    }
+
+    println("Unreachable")
+}
+
+fn main() {
+    test()
+}
