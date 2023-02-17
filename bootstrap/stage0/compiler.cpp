@@ -3,22 +3,22 @@ namespace Jakt {
 namespace compiler {
 ErrorOr<DeprecatedString> compiler::Compiler::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Compiler("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("files: "sv));TRY(builder.appendff("{}, ", files));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("file_ids: "sv));TRY(builder.appendff("{}, ", file_ids));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("errors: "sv));TRY(builder.appendff("{}, ", errors));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("current_file: "sv));TRY(builder.appendff("{}, ", current_file));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("current_file_contents: "sv));TRY(builder.appendff("{}, ", current_file_contents));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("dump_lexer: "sv));TRY(builder.appendff("{}, ", dump_lexer));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("dump_parser: "sv));TRY(builder.appendff("{}, ", dump_parser));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("ignore_parser_errors: "sv));TRY(builder.appendff("{}, ", ignore_parser_errors));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("debug_print: "sv));TRY(builder.appendff("{}, ", debug_print));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("std_include_path: "sv));TRY(builder.appendff("{}, ", std_include_path));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("include_paths: "sv));TRY(builder.appendff("{}, ", include_paths));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("json_errors: "sv));TRY(builder.appendff("{}, ", json_errors));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("dump_type_hints: "sv));TRY(builder.appendff("{}, ", dump_type_hints));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("dump_try_hints: "sv));TRY(builder.appendff("{}, ", dump_try_hints));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("optimize: "sv));TRY(builder.appendff("{}, ", optimize));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("target_triple: "sv));TRY(builder.appendff("{}", target_triple));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("files: {}, ", files));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("file_ids: {}, ", file_ids));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("errors: {}, ", errors));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("current_file: {}, ", current_file));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("current_file_contents: {}, ", current_file_contents));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("dump_lexer: {}, ", dump_lexer));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("dump_parser: {}, ", dump_parser));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("ignore_parser_errors: {}, ", ignore_parser_errors));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("debug_print: {}, ", debug_print));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("std_include_path: {}, ", std_include_path));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("include_paths: {}, ", include_paths));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("json_errors: {}, ", json_errors));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("dump_type_hints: {}, ", dump_type_hints));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("dump_try_hints: {}, ", dump_try_hints));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("optimize: {}, ", optimize));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("target_triple: {}", target_triple));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<void> compiler::Compiler::load_prelude() {

@@ -3,9 +3,9 @@ namespace Jakt {
 namespace jakt__file_iterator {
 ErrorOr<DeprecatedString> jakt__file_iterator::RecursiveFileIterator::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("RecursiveFileIterator("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("extension: "sv));TRY(builder.appendff("\"{}\", ", extension));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("directory_list: "sv));TRY(builder.appendff("{}, ", directory_list));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("current_directory: "sv));TRY(builder.appendff("{}", current_directory));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("extension: \"{}\", ", extension));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("directory_list: {}, ", directory_list));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("current_directory: {}", current_directory));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator>> jakt__file_iterator::RecursiveFileIterator::make(jakt__path::Path const directory,DeprecatedString const extension) {

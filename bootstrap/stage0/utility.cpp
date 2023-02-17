@@ -278,9 +278,9 @@ return (TRY((((builder).to_string()))));
 
 ErrorOr<DeprecatedString> utility::Span::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Span("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("file_id: "sv));TRY(builder.appendff("{}, ", file_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("start: "sv));TRY(builder.appendff("{}, ", start));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("end: "sv));TRY(builder.appendff("{}", end));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("file_id: {}, ", file_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("start: {}, ", start));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("end: {}", end));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 bool utility::Span::contains(utility::Span const span) const {
@@ -299,7 +299,7 @@ utility::Span::Span(utility::FileId a_file_id, size_t a_start, size_t a_end) :fi
 
 ErrorOr<DeprecatedString> utility::FileId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("FileId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "sv));TRY(builder.appendff("{}", id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 bool utility::FileId::equals(utility::FileId const rhs) const {

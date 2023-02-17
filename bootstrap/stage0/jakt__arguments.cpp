@@ -3,9 +3,9 @@ namespace Jakt {
 namespace jakt__arguments {
 ErrorOr<DeprecatedString> jakt__arguments::ArgsParser::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ArgsParser("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("args: "sv));TRY(builder.appendff("{}, ", args));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("removed_indices: "sv));TRY(builder.appendff("{}, ", removed_indices));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("definitely_positional_args: "sv));TRY(builder.appendff("{}", definitely_positional_args));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("args: {}, ", args));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("removed_indices: {}, ", removed_indices));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("definitely_positional_args: {}", definitely_positional_args));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<jakt__arguments::ArgsParser> jakt__arguments::ArgsParser::from_args(JaktInternal::DynamicArray<DeprecatedString> const args) {

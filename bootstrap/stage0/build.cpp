@@ -3,9 +3,9 @@ namespace Jakt {
 namespace build {
 ErrorOr<DeprecatedString> build::Builder::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Builder("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("linked_files: "sv));TRY(builder.appendff("{}, ", linked_files));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("files_to_compile: "sv));TRY(builder.appendff("{}, ", files_to_compile));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("pool: "sv));TRY(builder.appendff("{}", pool));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("linked_files: {}, ", linked_files));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("files_to_compile: {}, ", files_to_compile));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("pool: {}", pool));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<void> build::Builder::link_into_archive(DeprecatedString const archiver,DeprecatedString const archive_filename) {
@@ -162,10 +162,10 @@ return {};
 
 ErrorOr<DeprecatedString> build::ParallelExecutionPool::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParallelExecutionPool("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("pids: "sv));TRY(builder.appendff("{}, ", pids));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("completed: "sv));TRY(builder.appendff("{}, ", completed));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("pid_index: "sv));TRY(builder.appendff("{}, ", pid_index));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("max_concurrent: "sv));TRY(builder.appendff("{}", max_concurrent));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("pids: {}, ", pids));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("completed: {}, ", completed));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("pid_index: {}, ", pid_index));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("max_concurrent: {}", max_concurrent));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<build::ParallelExecutionPool> build::ParallelExecutionPool::create(size_t const max_concurrent) {
@@ -208,15 +208,15 @@ JaktInternal::Tuple<size_t,jakt__platform__unknown_process::Process> const jakt_
 size_t const index = ((jakt__index__process__).template get<0>());
 jakt__platform__unknown_process::Process const process = ((jakt__index__process__).template get<1>());
 
-JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> __jakt_var_832;
-auto __jakt_var_833 = [&]() -> ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> { return TRY((jakt__platform__unknown_process::poll_process_exit(((process))))); }();
-if (__jakt_var_833.is_error()) {{
+JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> __jakt_var_836;
+auto __jakt_var_837 = [&]() -> ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> { return TRY((jakt__platform__unknown_process::poll_process_exit(((process))))); }();
+if (__jakt_var_837.is_error()) {{
 TRY((((pids_to_remove).set(index,finished_status))));
 continue;
 }
-} else {__jakt_var_832 = __jakt_var_833.release_value();
+} else {__jakt_var_836 = __jakt_var_837.release_value();
 }
-__jakt_var_832.release_value(); });
+__jakt_var_836.release_value(); });
 if (((status).has_value())){
 TRY((((pids_to_remove).set(index,(status.value())))));
 }

@@ -3,7 +3,7 @@ namespace Jakt {
 namespace jakt__path {
 ErrorOr<DeprecatedString> jakt__path::Path::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Path("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("path: "sv));TRY(builder.appendff("\"{}\"", path));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("path: \"{}\"", path));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<jakt__path::Path> jakt__path::Path::from_parts(JaktInternal::DynamicArray<DeprecatedString> const parts) {

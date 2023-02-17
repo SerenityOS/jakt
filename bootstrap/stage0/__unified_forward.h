@@ -235,6 +235,7 @@ struct Raw;
 struct Reflect;
 struct Return;
 struct Restricted;
+struct Sizeof;
 struct Struct;
 struct This;
 struct Throw;
@@ -278,6 +279,7 @@ struct ParsedNameWithGenericParameters;
 struct SumEnumVariant;
 struct ParsedBlock;
 struct ParsedAttributeArgument;
+struct ParsedVarDeclTuple;
 struct ParsedAttribute;
 struct ParsedTrait;
 struct Parser;
@@ -527,6 +529,7 @@ struct BitwiseNot;
 struct TypeCast;
 struct Is;
 struct IsEnumVariant;
+struct Sizeof;
 }
 struct UnaryOperator;
 
@@ -723,6 +726,7 @@ struct BitwiseNot;
 struct TypeCast;
 struct Is;
 struct IsEnumVariant;
+struct Sizeof;
 }
 struct CheckedUnaryOperator;
 
