@@ -2481,16 +2481,18 @@ struct CodeGenerator {
                     }
                     variant_type_name += name
 
-                    output += "auto& __jakt_match_value = __jakt_enum_value.template get<"
-                    output += variant_type_name
-                    output += ">();\n"
+                    if not args.is_empty() {
+                        output += "auto& __jakt_match_value = __jakt_enum_value.template get<"
+                        output += variant_type_name
+                        output += ">();\n"
 
-                    for arg in args {
-                        output += "auto& "
-                        output += arg.binding
-                        output += " = __jakt_match_value."
-                        output += arg.name ?? "value"
-                        output += ";\n"
+                        for arg in args {
+                            output += "auto& "
+                            output += arg.binding
+                            output += " = __jakt_match_value."
+                            output += arg.name ?? "value"
+                            output += ";\n"
+                        }
                     }
 
                     for default_ in defaults {
@@ -2598,18 +2600,15 @@ struct CodeGenerator {
                         output += format("case {}: ", index) + "{\n"
                         match variant {
                             Untyped(name) => {
-                                output += format("auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
-                                    .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true),
-                                    name
-                                )
                             }
                             Typed(name, type_id) => {
-                                output += format(
-                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
-                                    .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true),
-                                    name
-                                )
                                 if not args.is_empty() {
+                                    output += format(
+                                        "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
+                                        .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true),
+                                        name
+                                    )
+
                                     let arg = args[0]
                                     let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
                                     output += .codegen_type(var.type_id)
@@ -2622,15 +2621,15 @@ struct CodeGenerator {
                                 }
                             }
                             StructLike(name, fields) => {
-                                output += format(
-                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<{}::{}>();",
-                                    .codegen_type_possibly_as_namespace(
-                                        type_id: subject_type_id,
-                                        as_namespace: true,
-                                    ),
-                                    name)
-
                                 if not args.is_empty() {
+                                    output += format(
+                                        "auto&& __jakt_match_value = __jakt_match_variant.template get<{}::{}>();",
+                                        .codegen_type_possibly_as_namespace(
+                                            type_id: subject_type_id,
+                                            as_namespace: true,
+                                        ),
+                                        name)
+
                                     for arg in args {
                                         let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
                                         output += .codegen_type(var.type_id)
