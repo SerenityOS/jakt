@@ -73,7 +73,6 @@ return ( typename utility::IterationDecision<bool> { typename utility::Iteration
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<NonnullRefPtr<types::CheckedVariable>>>::Continue>();
 {
 return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
 }
@@ -106,7 +105,6 @@ return ( typename utility::IterationDecision<bool> { typename utility::Iteration
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<types::Value>>::Continue>();
 {
 return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
 }
@@ -139,7 +137,6 @@ return ( typename utility::IterationDecision<bool> { typename utility::Iteration
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<types::EnumId>>::Continue>();
 {
 return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
 }
@@ -172,7 +169,6 @@ return ( typename utility::IterationDecision<bool> { typename utility::Iteration
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<types::TraitId>>::Continue>();
 {
 return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
 }
@@ -205,7 +201,6 @@ return ( typename utility::IterationDecision<bool> { typename utility::Iteration
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<types::StructId>>::Continue>();
 {
 return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
 }
@@ -238,7 +233,6 @@ return ( typename utility::IterationDecision<bool> { typename utility::Iteration
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<bool>>::Continue>();
 {
 return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
 }
@@ -271,7 +265,6 @@ return ( typename utility::IterationDecision<bool> { typename utility::Iteration
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<JaktInternal::Tuple<types::ScopeId,bool>>>::Continue>();
 {
 return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
 }
@@ -304,7 +297,6 @@ return ( typename utility::IterationDecision<bool> { typename utility::Iteration
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<JaktInternal::Tuple<JaktInternal::DynamicArray<types::FunctionId>,types::ScopeId>>>::Continue>();
 {
 return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
 }
@@ -337,7 +329,6 @@ return ( typename utility::IterationDecision<bool> { typename utility::Iteration
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<JaktInternal::Tuple<types::TypeId,types::ScopeId>>>::Continue>();
 {
 return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
 }

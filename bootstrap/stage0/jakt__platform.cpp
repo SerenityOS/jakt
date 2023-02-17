@@ -78,10 +78,10 @@ return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_
 
 ErrorOr<DeprecatedString> jakt__platform::Target::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Target("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("arch: "sv));TRY(builder.appendff("\"{}\", ", arch));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("platform: "sv));TRY(builder.appendff("\"{}\", ", platform));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("os: "sv));TRY(builder.appendff("\"{}\", ", os));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("abi: "sv));TRY(builder.appendff("\"{}\"", abi));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("arch: \"{}\", ", arch));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("platform: \"{}\", ", platform));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("os: \"{}\", ", os));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("abi: \"{}\"", abi));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<jakt__platform::Target> jakt__platform::Target::active() {

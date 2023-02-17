@@ -446,7 +446,7 @@ public:
 
     ArraySlice<T> slice_range(size_t from, size_t to) const
     {
-        return slice(from + m_offset, to - from + m_offset);
+        return slice(from + m_offset, to - from);
     }
 
     ArraySlice<T> slice(size_t offset, size_t size) const;
@@ -473,6 +473,26 @@ public:
         if (is_empty())
             return {};
         return at(size() - 1);
+    }
+
+    operator Span<T const>() const
+    {
+        return { unsafe_data(), size() };
+    }
+
+    T* unsafe_data()
+    {
+        return m_storage->unsafe_data() + m_offset;
+    }
+
+    T const* unsafe_data() const
+    {
+        return m_storage->unsafe_data() + m_offset;
+    }
+
+    bool operator==(ArraySlice const& other) const
+    {
+        return static_cast<Span<T const>>(*this) == static_cast<Span<T const>>(other);
     }
 
 private:

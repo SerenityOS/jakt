@@ -131,7 +131,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
 fn default_constructed<T>() -> T {
     unsafe {
         cpp {
-            "return T{};"
+            "return {};"
         }
     }
 

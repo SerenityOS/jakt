@@ -29,8 +29,8 @@ using Variant<IterationDecision_Details::Break<T>, IterationDecision_Details::Co
 ErrorOr<DeprecatedString> debug_description() const {
 auto builder = TRY(DeprecatedStringBuilder::create());
 switch (this->index()) {case 0 /* Break */: {
-[[maybe_unused]] auto const& that = this->template get<IterationDecision::Break>();
 TRY(builder.append("IterationDecision::Break"sv));
+[[maybe_unused]] auto const& that = this->template get<IterationDecision::Break>();
 TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -40,8 +40,7 @@ TRY(builder.appendff("value: {}", that.value));
 TRY(builder.append(")"sv));
 break;}
 case 1 /* Continue */: {
-[[maybe_unused]] auto const& that = this->template get<IterationDecision::Continue>();
-TRY(builder.append("IterationDecision::Continue"sv));
+return DeprecatedString("IterationDecision::Continue"sv);
 break;}
 }
 return builder.to_string();
