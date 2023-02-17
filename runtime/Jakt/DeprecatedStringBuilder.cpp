@@ -14,30 +14,35 @@
 
 namespace Jakt {
 
+ErrorOr<DeprecatedStringBuilder> DeprecatedStringBuilder::create()
+{
+    return DeprecatedStringBuilder {};
+}
+
 inline ErrorOr<void> DeprecatedStringBuilder::will_append(size_t size)
 {
-    TRY(m_buffer.add_capacity(size));
+    if (!m_buffer.has_value()) {
+        m_buffer = TRY(DynamicArray<u8>::create_empty());
+    }
+    TRY(m_buffer->add_capacity(size));
     return {};
 }
 
-DeprecatedStringBuilder::DeprecatedStringBuilder(DynamicArray<u8> buffer)
-    : m_buffer(buffer)
-{
-}
+DeprecatedStringBuilder::DeprecatedStringBuilder() = default;
 
 ErrorOr<void> DeprecatedStringBuilder::append(StringView string)
 {
     if (string.is_empty())
         return {};
     TRY(will_append(string.length()));
-    TRY(m_buffer.push_values((u8 const*)string.characters_without_null_termination(), string.length()));
+    TRY(m_buffer->push_values((u8 const*)string.characters_without_null_termination(), string.length()));
     return {};
 }
 
 ErrorOr<void> DeprecatedStringBuilder::append(char ch)
 {
     TRY(will_append(1));
-    TRY(m_buffer.push(ch));
+    TRY(m_buffer->push(ch));
     return {};
 }
 
@@ -54,12 +59,12 @@ ErrorOr<DeprecatedString> DeprecatedStringBuilder::to_string() const
 
 StringView DeprecatedStringBuilder::string_view() const
 {
-    return StringView { data(), m_buffer.size() };
+    return StringView { data(), length() };
 }
 
 void DeprecatedStringBuilder::clear()
 {
-    static_cast<void>(m_buffer.resize(0));
+    m_buffer = {};
 }
 
 ErrorOr<void> DeprecatedStringBuilder::append_code_point(u32 code_point)
