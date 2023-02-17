@@ -177,7 +177,9 @@ extern fn abort() -> never
 extern fn as_saturated<U, T>(anon input: T) -> U
 extern fn as_truncated<U, T>(anon input: T) -> U
 extern fn unchecked_add<T>(anon a: T, anon b: T) -> T
+extern fn unchecked_sub<T>(anon a: T, anon b: T) -> T
 extern fn unchecked_mul<T>(anon a: T, anon b: T) -> T
+extern fn unchecked_div<T>(anon a: T, anon b: T) -> T
 
 namespace Reflect {
     struct Span {
