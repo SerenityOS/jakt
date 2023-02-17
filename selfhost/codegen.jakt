@@ -1746,10 +1746,10 @@ struct CodeGenerator {
             let variant = enum_.variants[i]
             let name = variant.name()
             output += format("case {} /* {} */: {{\n", i, name)
-            output += format("[[maybe_unused]] auto const& that = this->template get<{}::{}>();\n", enum_.name, name)
-            output += format("TRY(builder.append(\"{}::{}\"sv));\n", enum_.name, name)
             match variant {
                 StructLike(fields) => {
+                    output += format("TRY(builder.append(\"{}::{}\"sv));\n", enum_.name, name)
+                    output += format("[[maybe_unused]] auto const& that = this->template get<{}::{}>();\n", enum_.name, name)
                     output += "TRY(builder.append(\"(\"sv));\n"
                     output += "{\n";
                     output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
@@ -1771,13 +1771,17 @@ struct CodeGenerator {
                     output += "TRY(builder.append(\")\"sv));\n"
                 }
                 Typed(type_id) => {
+                    output += format("TRY(builder.append(\"{}::{}\"sv));\n", enum_.name, name)
+                    output += format("[[maybe_unused]] auto const& that = this->template get<{}::{}>();\n", enum_.name, name)
                     if .program.is_string(type_id){
                         output += "TRY(builder.appendff(\"(\\\"{}\\\")\", that.value));\n"
                     } else {
                         output += "TRY(builder.appendff(\"({})\", that.value));\n"
                     }
                 }
-                else => {}
+                else => {
+                    output += format("return DeprecatedString(\"{}::{}\"sv);\n", enum_.name, name)
+                }
             }
 
             output += "break;}\n"
