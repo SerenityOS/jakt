@@ -1685,8 +1685,7 @@ struct CodeGenerator {
         for field in struct_.fields {
             let field_var = .program.get_variable(field.variable_id)
             output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));"
-            output += format("TRY(builder.append(\"{}: \"sv));", field_var.name)
-            output += "TRY(builder.appendff(\""
+            output += format("TRY(builder.appendff(\"{}: ", field_var.name)
             if .program.is_string(field_var.type_id) {
                 output += "\\\"{}\\\""
             } else {
