@@ -9,14 +9,15 @@
 #include <Builtins/Dictionary.h>
 #include <Builtins/Set.h>
 
-#include <Jakt/PrettyPrint.h>
 #include <Jakt/AKIntegration.h>
+#include <Jakt/PrettyPrint.h>
 
+#include <AK/DeprecatedString.h>
 #include <AK/Format.h>
 #include <AK/Forward.h>
-#include <AK/DeprecatedString.h>
-#include <AK/StringView.h>
+#include <AK/Optional.h>
 #include <AK/String.h>
+#include <AK/StringView.h>
 #include <AK/Tuple.h>
 
 #include <stdarg.h>
@@ -25,11 +26,8 @@ namespace Jakt {
 
 class DeprecatedStringBuilder {
 public:
-    static ErrorOr<DeprecatedStringBuilder> create()
-    {
-        auto array = TRY(DynamicArray<u8>::create_empty());
-        return DeprecatedStringBuilder { move(array) };
-    }
+    static ErrorOr<DeprecatedStringBuilder> create();
+
     ~DeprecatedStringBuilder() = default;
 
     ErrorOr<void> append(StringView);
@@ -50,8 +48,8 @@ public:
     [[nodiscard]] StringView string_view() const;
     void clear();
 
-    [[nodiscard]] size_t length() const { return m_buffer.size(); }
-    [[nodiscard]] bool is_empty() const { return m_buffer.is_empty(); }
+    [[nodiscard]] size_t length() const { return m_buffer.has_value() ? m_buffer->size() : 0; }
+    [[nodiscard]] bool is_empty() const { return !m_buffer.has_value() || m_buffer->is_empty(); }
 
     template<class SeparatorType, class CollectionType>
     ErrorOr<void> join(SeparatorType const& separator, CollectionType const& collection, StringView fmtstr = "{}"sv)
@@ -71,13 +69,23 @@ public:
     ErrorOr<void> append_c_string(char const* string) { return append(string, strlen(string)); }
 
 private:
-    explicit DeprecatedStringBuilder(DynamicArray<u8> buffer);
+    DeprecatedStringBuilder();
 
     ErrorOr<void> will_append(size_t);
-    u8* data() { return m_buffer.unsafe_data(); }
-    u8 const* data() const { return const_cast<DeprecatedStringBuilder*>(this)->m_buffer.unsafe_data(); }
+    u8* data()
+    {
+        if (m_buffer.has_value())
+            return m_buffer->unsafe_data();
+        return nullptr;
+    }
+    u8 const* data() const
+    {
+        if (m_buffer.has_value())
+            return m_buffer->unsafe_data();
+        return nullptr;
+    }
 
-    DynamicArray<u8> m_buffer;
+    Optional<DynamicArray<u8>> m_buffer;
 };
 
 }
