@@ -2067,21 +2067,32 @@ struct CodeGenerator {
                             panic(format("Unexpected type in IsEnumVariant: {}", .program.get_type(enum_type_id)))
                         }
                     })
-                    let is_boxed = enum_.is_boxed
-                    if is_boxed and object != "*this"{
-                        suffix += "->"
-                    } else {
-                        suffix += "."
-                    }
-                    // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
-                    mut variant_index = 0;
-                    for variant in enum_.variants {
-                        if variant.name() == name {
-                            break
+                    match enum_.record_type {
+                        SumEnum => {
+                            let is_boxed = enum_.is_boxed
+                            if is_boxed and object != "*this"{
+                                suffix += "->"
+                            } else {
+                                suffix += "."
+                            }
+
+                            // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
+                            mut variant_index = 0;
+                            for variant in enum_.variants {
+                                if variant.name() == name {
+                                    break
+                                }
+                                variant_index++
+                            }
+                            suffix += format("index() == {} /* {} */", variant_index, name)
                         }
-                        variant_index++
+                        ValueEnum => {
+                            suffix += format("== {}::{}", enum_.name, name)
+                        }
+                        else => {
+                            panic(format("Unexpected enum record type in IsEnumVariant: {}", enum_.record_type))
+                        }
                     }
-                    suffix += format("index() == {} /* {} */", variant_index, name)
                     yield suffix
                 }
                 RawAddress => "))"

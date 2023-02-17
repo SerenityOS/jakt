@@ -6419,8 +6419,10 @@ struct Typechecker {
                             mut exists = false
                             for variant in enum_.variants {
                                 exists = match variant {
-                                    StructLike(name: var_name) | Typed(name: var_name) | Untyped(name: var_name) => var_name == name
-                                    else => false
+                                    StructLike(name: var_name)
+                                    | Typed(name: var_name)
+                                    | Untyped(name: var_name)
+                                    | WithValue(name: var_name) => var_name == name
                                 }
                                 if exists {
                                     operator_is = CheckedUnaryOperator::IsEnumVariant(enum_variant: variant, bindings: [], type_id: expr_type_id)

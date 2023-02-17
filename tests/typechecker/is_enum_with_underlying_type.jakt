@@ -1,0 +1,17 @@
+/// Expect:
+/// - output: "PASS\n"
+
+enum E : u8 {
+    A
+    B
+}
+
+fn main() {
+    let e = E::A
+    if e is A {
+        println("PASS")
+    }
+    if e is B {
+        println("FAIL")
+    }
+}
