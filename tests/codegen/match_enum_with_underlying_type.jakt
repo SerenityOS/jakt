@@ -1,0 +1,19 @@
+/// Expect:
+/// - output: "PASS PASS\n"
+
+enum E : i64 {
+    A
+    B
+}
+
+fn main() {
+    let msg1 = match E::A {
+        A => "PASS"
+        B => "FAIL"
+    }
+    let msg2 = match E::B {
+        A => "FAIL"
+        else => "PASS"
+    }
+    println("{} {}", msg1, msg2)
+}

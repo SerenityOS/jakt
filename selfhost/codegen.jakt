@@ -2681,8 +2681,32 @@ struct CodeGenerator {
             output += "}/*switch end*/\n"
             output += "}()\n))"
         } else {
-            todo("underlying type enum match")
-            // FIXME: underlying type enum match
+            output += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
+            output += .codegen_type(type_id)
+            output += ", "
+            output += .codegen_function_return_type(function: .current_function!)
+            output += ">{\n"
+            output += "switch (" + .codegen_expression(expr) + ") {\n"
+
+            for match_case in match_cases {
+                match match_case {
+                    EnumVariant(name, body) => {
+                        output += "case " + enum_.name + "::" + name + ": {\n"
+                        output += .codegen_match_body(body, return_type_id: type_id)
+                        output += "}\n"
+                    }
+                    CatchAll(body) => {
+                        output += "default: {\n"
+                        output += .codegen_match_body(body, return_type_id: type_id)
+                        output += "}\n"
+                    }
+                    else => {
+                        todo(format("underlying type enum match, match_case: {}", match_case))
+                    }
+                }
+            }
+            output += "}/*switch end*/\n"
+            output += "}()\n))"
         }
 
         return output
