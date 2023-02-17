@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "42\n"
+
+fn main() {
+    let x = Test::A
+    println("{}", x as! i64)
+}
+
+enum Test : i64 {
+    A = 42
+}
