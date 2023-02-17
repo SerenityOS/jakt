@@ -1,0 +1,18 @@
+/// Expect:
+/// - error: "Call to function that may throw needs to be in a try statement or a function marked as throws"
+
+fn throwing_function() throws -> i64 {
+    throw Error::from_errno(123)
+}
+
+fn non_throwing_function() -> i64 {
+    let x = try throwing_function() catch { 
+        let y = throwing_function()
+        yield y
+    }
+    return x
+}
+
+fn main() {
+    println("{}", non_throwing_function())
+}

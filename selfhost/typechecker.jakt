@@ -5405,7 +5405,8 @@ struct Typechecker {
         mut module = .current_module()
         let error_id = module.add_variable(error_decl)
 
-        let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "catch")
+        let parent_scope = .get_scope(scope_id)
+        let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: parent_scope.can_throw, debug_name: "catch")
         .add_var_to_scope(scope_id: catch_scope_id, name: error_name, var_id: error_id, span: error_span)
         let checked_catch_block = .typecheck_block(catch_block, parent_scope_id: catch_scope_id, safety_mode)
 
@@ -5430,7 +5431,8 @@ struct Typechecker {
         mut type_id = optional_type_id
 
         if catch_block.has_value() {
-            let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "catch")
+            let parent_scope = .get_scope(scope_id)
+            let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: parent_scope.can_throw, debug_name: "catch")
             if catch_name.has_value() {
                 let error_struct_id = .find_struct_in_prelude("Error")
                 let error_decl = CheckedVariable(
