@@ -61,6 +61,7 @@ list(APPEND JAKT_STAGE0_ALL_SOURCES
 
 # Note: This currently does not build under windows, but it is not needed by the runtime.
 list(FILTER JAKT_STAGE0_ALL_SOURCES EXCLUDE REGEX ".*AK/Time\.cpp$")
+list(FILTER JAKT_STAGE0_ALL_SOURCES EXCLUDE REGEX ".*AK/DOSPackedTime\.cpp$")
 
 add_executable(jakt_stage0 "${JAKT_STAGE0_ALL_SOURCES}")
 add_executable(Jakt::jakt_stage0 ALIAS jakt_stage0)
