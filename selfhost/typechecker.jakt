@@ -5417,7 +5417,8 @@ struct Typechecker {
     }
 
     fn typecheck_try(mut this, expr: ParsedExpression, catch_block: ParsedBlock?, catch_name: String?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span, type_hint: TypeId?) throws -> CheckedExpression {
-        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint)
+        let try_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "try")
+        let checked_expr = .typecheck_expression(expr, scope_id: try_scope_id, safety_mode, type_hint)
         let error_struct_id = .find_struct_in_prelude("Error")
         mut module = .current_module()
         mut checked_catch_block: CheckedBlock? = None
