@@ -2675,7 +2675,6 @@ struct Parser {
                     }
                 }
                 RCurly => {
-                    .index++
                     break
                 }
                 Comma | Eol => {
@@ -2731,10 +2730,12 @@ struct Parser {
             }
         }
 
-        if .eof() {
+        if not .current() is RCurly {
             .error("Invalid enum definition, expected `}`", .current().span())
             return (variants, methods)
         }
+
+        .index++
 
         if variants.is_empty() {
             .error("Empty enums are not allowed", partial_enum.name_span)
