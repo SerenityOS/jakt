@@ -1,0 +1,17 @@
+/// Expect:
+/// - output: "PASS 1\n"
+
+fn always_throwing() throws -> i64 {
+    throw Error::from_errno(123)
+}
+
+fn non_throwing() -> i64 {
+    let x = try always_throwing() catch { return 1 }
+
+    println("FAIL {}", x)
+    return x
+}
+
+fn main() {
+    println("PASS {}", non_throwing())
+}

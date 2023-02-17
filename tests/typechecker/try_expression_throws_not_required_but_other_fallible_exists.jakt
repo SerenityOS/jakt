@@ -1,0 +1,19 @@
+/// Expect:
+/// - error: "Call to function that may throw needs to be in a try statement or a function marked as throws"
+
+fn potentially_throwing() throws -> i64 {
+    return 42
+}
+
+// Function needs to be marked as `throws`, as the first error is taken care of, but the second one is not
+fn non_throwing_but_should() -> i64 {
+    let x = try potentially_throwing() catch { yield 1 }
+
+    let y = potentially_throwing()
+
+    return x
+}
+
+fn main() {
+    println("{}", non_throwing_but_should())
+}
