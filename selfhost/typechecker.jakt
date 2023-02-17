@@ -5460,6 +5460,11 @@ struct Typechecker {
                 } else {
                     type_id = block.yielded_type ?? expression_type_id
                 }
+            } else {
+                if not expression_type_id.equals(builtin(BuiltinType::Void)) {
+                    // FIXME: Span pointing at the "catch"
+                    .error(message: "In a try expression that returns a value, 'catch' block must either yield a value or transfer control flow", span)
+                }
             }
             checked_catch_block = block
         }

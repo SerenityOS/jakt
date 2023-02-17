@@ -1,0 +1,20 @@
+/// Expect:
+/// - error: "In a try expression that returns a value, 'catch' block must either yield a value or transfer control flow"
+
+fn always_throwing() throws -> i64 {
+    throw Error::from_errno(1)
+}
+
+fn non_throwing() {
+    let x = try always_throwing() catch { }
+
+    println("{}", x)
+}
+
+fn main() {
+    try {
+        non_throwing()
+    } catch {
+        println("FAIL")
+    }
+}
