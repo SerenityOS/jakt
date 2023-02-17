@@ -7320,8 +7320,8 @@ struct Typechecker {
                     }
                 }
             }
-            else => {
-                todo(format("implement {} match case for matched variant", variant.name()))
+            WithValue(name) => {
+                covered_name = name
             }
         }
 
