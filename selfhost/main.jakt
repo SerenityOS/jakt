@@ -143,7 +143,7 @@ fn value_or_throw<T>(anon maybe: T?) throws -> T {
     throw Error::from_errno(1)
 }
 
-fn main(args: [String]) {
+fn main(args: [String]) -> c_int {
     if args.size() <= 1 {
         eprintln("{}", usage())
         return 1
@@ -661,6 +661,8 @@ fn main(args: [String]) {
     if run_executable {
         return system(output_filename.c_string())
     }
+
+    return 0
 }
 
 fn format_output(file_path: Path, tokens: [Token], format_range: FormatRange?, format_debug: bool, format_inplace: bool) throws {
