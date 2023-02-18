@@ -274,6 +274,13 @@ boxed enum Type {
     Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
     Self
 
+
+    fn is_boxed(this, program: CheckedProgram) -> bool => match this {
+        Struct(struct_id) | GenericInstance(id: struct_id) => program.get_struct(struct_id).record_type is Class
+        Enum(enum_id) | GenericEnumInstance(id: enum_id) => program.get_enum(enum_id).is_boxed
+        else => false
+    }
+
     fn is_concrete(this) -> bool => match this {
         TypeVariable | Self | Unknown => false
         else => true
