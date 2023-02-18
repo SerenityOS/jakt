@@ -892,13 +892,17 @@ struct Throw;
 }
 struct ExecutionResult;
 
-ErrorOr<types::Value> cast_value_to_type(types::Value const this_value, types::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter, bool const saturating);
+ErrorOr<DeprecatedString> comptime_format_impl(DeprecatedString const format_string, JaktInternal::ArraySlice<types::Value> const arguments, NonnullRefPtr<interpreter::Interpreter> const interpreter);
 
-ErrorOr<DeprecatedString> format_value_impl(DeprecatedString const format_string, types::Value const value, NonnullRefPtr<interpreter::Interpreter> const interpreter);
+ErrorOr<size_t> align_of_impl(types::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter);
+
+ErrorOr<size_t> size_of_impl(types::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter);
+
+ErrorOr<types::Value> cast_value_to_type(types::Value const this_value, types::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter, bool const saturating);
 
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> value_to_checked_expression(types::Value const this_value, NonnullRefPtr<interpreter::Interpreter> interpreter);
 
-ErrorOr<DeprecatedString> comptime_format_impl(DeprecatedString const format_string, JaktInternal::ArraySlice<types::Value> const arguments, NonnullRefPtr<interpreter::Interpreter> const interpreter);
+ErrorOr<DeprecatedString> format_value_impl(DeprecatedString const format_string, types::Value const value, NonnullRefPtr<interpreter::Interpreter> const interpreter);
 
 }
 namespace typechecker {

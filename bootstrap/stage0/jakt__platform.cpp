@@ -84,6 +84,34 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("abi: \"{}\"", abi));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
+jakt__platform::Target::Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi) :arch(move(a_arch)), platform(move(a_platform)), os(move(a_os)), abi(move(a_abi)){}
+
+ErrorOr<size_t> jakt__platform::Target::int_alignment() const {
+{
+return (TRY((((*this).int_size()))));
+}
+}
+
+ErrorOr<size_t> jakt__platform::Target::pointer_size() const {
+{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+auto __jakt_enum_value = (((*this).arch));
+if (__jakt_enum_value == Jakt::DeprecatedString("x86_64"sv)) {
+return JaktInternal::ExplicitValue(static_cast<size_t>(8ULL));
+}
+else if (__jakt_enum_value == Jakt::DeprecatedString("x86"sv)) {
+return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
+}
+else {
+{
+return Error::__jakt_from_string_literal((StringView::from_string_literal("pointer size is unknown for this architecture"sv)));
+}
+}
+}()))
+);
+}
+}
+
 ErrorOr<jakt__platform::Target> jakt__platform::Target::active() {
 {
 DeprecatedString const triple = TRY((___jakt_get_target_triple_string()));
@@ -96,7 +124,57 @@ return (jakt__platform::Target(((parts)[static_cast<i64>(0LL)]),((parts)[static_
 }
 }
 
-jakt__platform::Target::Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi) :arch(move(a_arch)), platform(move(a_platform)), os(move(a_os)), abi(move(a_abi)){}
+ErrorOr<size_t> jakt__platform::Target::size_t_size() const {
+{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+auto __jakt_enum_value = (((*this).arch));
+if (__jakt_enum_value == Jakt::DeprecatedString("x86_64"sv)) {
+return JaktInternal::ExplicitValue(static_cast<size_t>(8ULL));
+}
+else if (__jakt_enum_value == Jakt::DeprecatedString("x86"sv)) {
+return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
+}
+else {
+{
+return Error::__jakt_from_string_literal((StringView::from_string_literal("size_t size is unknown for this architecture"sv)));
+}
+}
+}()))
+);
+}
+}
+
+ErrorOr<size_t> jakt__platform::Target::size_t_alignment() const {
+{
+return (TRY((((*this).size_t_size()))));
+}
+}
+
+ErrorOr<size_t> jakt__platform::Target::int_size() const {
+{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+auto __jakt_enum_value = (((*this).arch));
+if (__jakt_enum_value == Jakt::DeprecatedString("x86_64"sv)) {
+return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
+}
+else if (__jakt_enum_value == Jakt::DeprecatedString("x86"sv)) {
+return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
+}
+else {
+{
+return Error::__jakt_from_string_literal((StringView::from_string_literal("int size is unknown for this architecture"sv)));
+}
+}
+}()))
+);
+}
+}
+
+ErrorOr<size_t> jakt__platform::Target::pointer_alignment() const {
+{
+return (TRY((((*this).pointer_size()))));
+}
+}
 
 }
 } // namespace Jakt

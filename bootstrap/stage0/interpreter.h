@@ -5,6 +5,7 @@
 #include "utility.h"
 #include "error.h"
 #include "compiler.h"
+#include "jakt__platform.h"
 namespace Jakt {
 namespace interpreter {
 namespace StatementResult_Details {

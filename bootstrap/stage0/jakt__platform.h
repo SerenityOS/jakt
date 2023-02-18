@@ -4,9 +4,15 @@ namespace Jakt {
 namespace jakt__platform {
 struct Target {
   public:
-DeprecatedString arch;DeprecatedString platform;DeprecatedString os;DeprecatedString abi;static ErrorOr<jakt__platform::Target> active();
-Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi);
+DeprecatedString arch;DeprecatedString platform;DeprecatedString os;DeprecatedString abi;Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi);
 
+ErrorOr<size_t> int_alignment() const;
+ErrorOr<size_t> pointer_size() const;
+static ErrorOr<jakt__platform::Target> active();
+ErrorOr<size_t> size_t_size() const;
+ErrorOr<size_t> size_t_alignment() const;
+ErrorOr<size_t> int_size() const;
+ErrorOr<size_t> pointer_alignment() const;
 ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt

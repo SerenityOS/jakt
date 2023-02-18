@@ -26,6 +26,7 @@ extern struct Array<T> {
     fn first(this) -> T?
     fn last(this) -> T?
     fn insert(mut this, before_index: usize, value: T) throws
+    fn unsafe_data(this) -> raw T
 }
 
 extern struct ArraySlice<T> {
@@ -36,6 +37,7 @@ extern struct ArraySlice<T> {
     fn to_array(this) throws -> Array<T>
     fn first(this) -> T?
     fn last(this) -> T?
+    fn unsafe_data(this) -> raw T
 }
 
 [[name=DeprecatedStringCodePointIterator]]
@@ -177,7 +179,9 @@ extern fn abort() -> never
 extern fn as_saturated<U, T>(anon input: T) -> U
 extern fn as_truncated<U, T>(anon input: T) -> U
 extern fn unchecked_add<T>(anon a: T, anon b: T) -> T
+extern fn unchecked_sub<T>(anon a: T, anon b: T) -> T
 extern fn unchecked_mul<T>(anon a: T, anon b: T) -> T
+extern fn unchecked_div<T>(anon a: T, anon b: T) -> T
 
 namespace Reflect {
     struct Span {

@@ -502,6 +502,18 @@ private:
 };
 
 template<typename T>
+bool operator==(ArraySlice<T> const& slice, DynamicArray<T> const& array)
+{
+    return static_cast<Span<T const>>(slice) == static_cast<Span<T const>>(array);
+}
+
+template<typename T>
+bool operator==(DynamicArray<T> const& array, ArraySlice<T> const& slice)
+{
+    return static_cast<Span<T const>>(array) == static_cast<Span<T const>>(slice);
+}
+
+template<typename T>
 ArraySlice<T> DynamicArray<T>::slice(size_t offset, size_t size) const
 {
     return { *m_storage, offset, size };

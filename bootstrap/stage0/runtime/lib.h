@@ -96,9 +96,21 @@ inline constexpr T unchecked_add(T value, T other)
 }
 
 template<typename T>
+inline constexpr T unchecked_sub(T value, T other)
+{
+    return value - other;
+}
+
+template<typename T>
 inline constexpr T unchecked_mul(T value, T other)
 {
     return value * other;
+}
+
+template<typename T>
+inline constexpr T unchecked_div(T value, T other)
+{
+    return value / other;
 }
 
 template<typename T>
@@ -338,7 +350,9 @@ using JaktInternal::infallible_class_cast;
 using JaktInternal::infallible_integer_cast;
 using JaktInternal::Range;
 using JaktInternal::unchecked_add;
+using JaktInternal::unchecked_div;
 using JaktInternal::unchecked_mul;
+using JaktInternal::unchecked_sub;
 using JaktInternal::___jakt_get_target_triple_string;
 }
 
