@@ -1,5 +1,5 @@
 /// Expect:
-/// - output: "1\n2\n4\n3\n"
+/// - output: "1\n4\n2\n3\n"
 
 fn main() {
     let set = {1, 2, 3, 4}

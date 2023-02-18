@@ -1,5 +1,5 @@
 /// Expect:
-/// - output: "hello: 2\nwell: 1\nfriends: 3\n"
+/// - output: "well: 1\nhello: 2\nfriends: 3\n"
 
 fn main() {
     let dictionary = ["well": 1, "hello": 2, "friends": 3]
