@@ -19,7 +19,7 @@ fn make_lookup_table() throws -> [u32] {
     return data
 }
 
-fn main(args: [String]) {
+fn main(args: [String]) -> c_int {
     if args.size() <= 1 {
         eprintln("usage: crc32 <path>")
         return 1
@@ -39,4 +39,5 @@ fn main(args: [String]) {
 
     let digest = ~state
     println("{}", digest)
+    return 0
 }

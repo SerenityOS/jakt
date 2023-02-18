@@ -5,7 +5,7 @@ enum Foo {
     Bar(i64)
 }
 
-fn main() {
+fn main() -> c_int {
     let foo = Foo::Bar(5)
     let bar = Foo::Bar(7)
 
@@ -15,4 +15,5 @@ fn main() {
     }
 
     println("hello there: {}", x)
+    return 1
 }

@@ -4,7 +4,7 @@
 fn find<T>(anon arr: [T], anon cb: fn(a: T) -> bool) -> T? {
     for i in 0..arr.size() {
         if cb(a: arr[i]) {
-            return i
+            return i as! T
         }
     }
     return None

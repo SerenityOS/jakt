@@ -7,8 +7,9 @@ struct Iter implements(ThrowingIterable<i64>) {
     }
 }
 
-fn main() {
+fn main() -> c_int {
     for x in Iter() {
         return 0
     }
+    return 0
 }

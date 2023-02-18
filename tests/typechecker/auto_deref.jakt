@@ -52,7 +52,7 @@ struct Foo {
 }
 
 fn deref_access(anon foo: &mut Foo) -> i32 {
-    return foo.const_method() + foo.mutable_method()
+    return (foo.const_method() + foo.mutable_method()) as! i32
 }
 
 fn deref_index(anon foo: &(i32, i32)) -> i32 {

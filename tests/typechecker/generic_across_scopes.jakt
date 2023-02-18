@@ -12,7 +12,7 @@ fn make_memo<R, S>() throws -> Memo<R, S> {
 
 fn memo_fix_helper<T, U>(anon function_: &fn(anon loop_: &fn(anon x: T) throws -> U, anon x: T) throws -> U, anon x: T, mut memo: Memo<T, U>) throws -> U {
     if memo.value.contains(x) {
-        return memo.value[x]
+        return memo.value[x] as! U
     }
 
     return memo_fix(function_, x, memo: Some(memo))
@@ -25,7 +25,7 @@ fn memo_fix<T, U>(anon function_: &fn(anon loop_: &fn(anon x: T) throws -> U, an
 
     let loop_ = fn[&memo, &function_](anon x: T) throws -> U {
         if memo!.value.contains(x) {
-            return memo!.value[x]
+            return memo!.value[x] as! U
         }
 
         return memo_fix_helper(function_, x, memo: memo!)
