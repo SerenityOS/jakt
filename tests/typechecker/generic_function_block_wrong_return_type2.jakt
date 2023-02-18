@@ -1,0 +1,17 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘i64?’, but got ‘usize’"
+
+fn find<T>(anon arr: [T], anon cb: fn(a: T) -> bool) -> T? {
+    for i in 0..arr.size() {
+        if cb(a: arr[i]) {
+            return i
+        }
+    }
+    return None
+}
+
+fn main() {
+    mut arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+    println("{}", find(arr, fn(a: i64) -> bool => a == 5).value_or(-1))
+}

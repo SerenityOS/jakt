@@ -1,0 +1,13 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘void’, but got ‘C’"
+
+class C {
+    public fn give_c() throws {
+        let my_c = C()
+        return my_c
+    }
+}
+
+fn main() {
+    println("{}", C::give_c())
+}
