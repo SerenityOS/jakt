@@ -1,6 +1,19 @@
 #include "jakt__platform.h"
 namespace Jakt {
 namespace jakt__platform {
+JaktInternal::Optional<size_t> last_namespace_separator(DeprecatedString const name) {
+{
+size_t i = (JaktInternal::checked_sub<size_t>(((name).length()),static_cast<size_t>(1ULL)));
+while ((i >= static_cast<size_t>(2ULL))){
+if (((((name).byte_at(i)) == ':') && (((name).byte_at((JaktInternal::checked_sub<size_t>(i,static_cast<size_t>(1ULL))))) == ':'))){
+return ((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))));
+}
+((i--));
+}
+return (JaktInternal::OptionalNone());
+}
+}
+
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> add_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings,DeprecatedString const prefix,DeprecatedString const suffix) {
 {
 JaktInternal::DynamicArray<DeprecatedString> output = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
@@ -20,19 +33,6 @@ TRY((((output).push(((prefix + str) + suffix)))));
 }
 
 return (output);
-}
-}
-
-JaktInternal::Optional<size_t> last_namespace_separator(DeprecatedString const name) {
-{
-size_t i = (JaktInternal::checked_sub<size_t>(((name).length()),static_cast<size_t>(1ULL)));
-while ((i >= static_cast<size_t>(2ULL))){
-if (((((name).byte_at(i)) == ':') && (((name).byte_at((JaktInternal::checked_sub<size_t>(i,static_cast<size_t>(1ULL))))) == ':'))){
-return ((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))));
-}
-((i--));
-}
-return (JaktInternal::OptionalNone());
 }
 }
 
@@ -124,6 +124,12 @@ return (jakt__platform::Target(((parts)[static_cast<i64>(0LL)]),((parts)[static_
 }
 }
 
+ErrorOr<size_t> jakt__platform::Target::size_t_alignment() const {
+{
+return (TRY((((*this).size_t_size()))));
+}
+}
+
 ErrorOr<size_t> jakt__platform::Target::size_t_size() const {
 {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
@@ -141,12 +147,6 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("size_
 }
 }()))
 );
-}
-}
-
-ErrorOr<size_t> jakt__platform::Target::size_t_alignment() const {
-{
-return (TRY((((*this).size_t_size()))));
 }
 }
 

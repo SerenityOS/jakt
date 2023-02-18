@@ -6,21 +6,21 @@ namespace Jakt {
 namespace jakt__path {
 struct Path {
   public:
-DeprecatedString path;static ErrorOr<jakt__path::Path> from_parts(JaktInternal::DynamicArray<DeprecatedString> const parts);
-static JaktInternal::Optional<size_t> last_slash(DeprecatedString const path);
+DeprecatedString path;ErrorOr<DeprecatedString> extension() const;
 Path(DeprecatedString a_path);
 
-bool is_dot() const;
-DeprecatedString to_string() const;
-ErrorOr<DeprecatedString> extension() const;
-ErrorOr<JaktInternal::Tuple<DeprecatedString,DeprecatedString>> split_at_last_slash() const;
-ErrorOr<void> normalize_separators();
-ErrorOr<jakt__path::Path> join(DeprecatedString const path) const;
 ErrorOr<DeprecatedString> basename(bool const strip_extension) const;
-ErrorOr<jakt__path::Path> parent() const;
-ErrorOr<jakt__path::Path> replace_extension(DeprecatedString const new_extension) const;
+ErrorOr<jakt__path::Path> join(DeprecatedString const path) const;
+DeprecatedString to_string() const;
 bool exists() const;
+ErrorOr<jakt__path::Path> replace_extension(DeprecatedString const new_extension) const;
+static JaktInternal::Optional<size_t> last_slash(DeprecatedString const path);
 static ErrorOr<jakt__path::Path> from_string(DeprecatedString const string);
+static ErrorOr<jakt__path::Path> from_parts(JaktInternal::DynamicArray<DeprecatedString> const parts);
+ErrorOr<JaktInternal::Tuple<DeprecatedString,DeprecatedString>> split_at_last_slash() const;
+ErrorOr<jakt__path::Path> parent() const;
+ErrorOr<void> normalize_separators();
+bool is_dot() const;
 ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt

@@ -32,23 +32,35 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 return {};
 }
 
-ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>>> gather_line_spans(JaktInternal::DynamicArray<u8> const file_contents) {
+ErrorOr<void> print_error(DeprecatedString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents,error::JaktError const error) {
 {
-size_t idx = static_cast<size_t>(0ULL);
-JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>> output = (TRY((DynamicArray<JaktInternal::Tuple<size_t,size_t>>::create_with({}))));
-size_t start = idx;
-while ((idx < ((file_contents).size()))){
-if ((((file_contents)[idx]) == '\n')){
-TRY((((output).push((Tuple{start, idx})))));
-(start = (JaktInternal::checked_add<size_t>(idx,static_cast<size_t>(1ULL))));
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<void>>{
+auto&& __jakt_match_variant = error;
+switch(__jakt_match_variant.index()) {
+case 0: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<error::JaktError::Message>();DeprecatedString const& message = __jakt_match_value.message;
+utility::Span const& span = __jakt_match_value.span;
+{
+TRY((error::display_message_with_span( error::MessageSeverity { typename error::MessageSeverity::Error() } ,file_name,file_contents,message,span)));
 }
-({auto& _jakt_ref = idx;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 1: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<error::JaktError::MessageWithHint>();DeprecatedString const& message = __jakt_match_value.message;
+utility::Span const& span = __jakt_match_value.span;
+DeprecatedString const& hint = __jakt_match_value.hint;
+utility::Span const& hint_span = __jakt_match_value.hint_span;
+{
+TRY((error::display_message_with_span( error::MessageSeverity { typename error::MessageSeverity::Error() } ,file_name,file_contents,message,span)));
+TRY((error::display_message_with_span( error::MessageSeverity { typename error::MessageSeverity::Hint() } ,file_name,file_contents,hint,hint_span)));
 }
-if ((start <= idx)){
-TRY((((output).push((Tuple{start, idx})))));
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+default: VERIFY_NOT_REACHED();}/*switch end*/
+}()
+));
 }
-return (output);
-}
+return {};
 }
 
 ErrorOr<void> display_message_with_span(error::MessageSeverity const severity,DeprecatedString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents,DeprecatedString const message,utility::Span const span) {
@@ -158,6 +170,25 @@ warnln(Jakt::DeprecatedString("┴─"sv));
 return {};
 }
 
+ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>>> gather_line_spans(JaktInternal::DynamicArray<u8> const file_contents) {
+{
+size_t idx = static_cast<size_t>(0ULL);
+JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>> output = (TRY((DynamicArray<JaktInternal::Tuple<size_t,size_t>>::create_with({}))));
+size_t start = idx;
+while ((idx < ((file_contents).size()))){
+if ((((file_contents)[idx]) == '\n')){
+TRY((((output).push((Tuple{start, idx})))));
+(start = (JaktInternal::checked_add<size_t>(idx,static_cast<size_t>(1ULL))));
+}
+({auto& _jakt_ref = idx;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
+}
+if ((start <= idx)){
+TRY((((output).push((Tuple{start, idx})))));
+}
+return (output);
+}
+}
+
 ErrorOr<void> print_underline(error::MessageSeverity const severity,size_t const width,JaktInternal::Tuple<size_t,size_t> const file_span,utility::Span const error_span,size_t const line_number,size_t const largest_line_number) {
 {
 {
@@ -259,35 +290,49 @@ outln(Jakt::DeprecatedString("{{\"type\":\"diagnostic\",\"message\":\"{}\",\"sev
 return {};
 }
 
-ErrorOr<void> print_error(DeprecatedString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents,error::JaktError const error) {
+ErrorOr<DeprecatedString> error::MessageSeverity::debug_description() const {
+auto builder = TRY(DeprecatedStringBuilder::create());
+switch (this->index()) {case 0 /* Hint */: {
+return DeprecatedString("MessageSeverity::Hint"sv);
+break;}
+case 1 /* Error */: {
+return DeprecatedString("MessageSeverity::Error"sv);
+break;}
+}
+return builder.to_string();
+}
+ErrorOr<DeprecatedString> error::MessageSeverity::ansi_color_code() const {
 {
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<void>>{
-auto&& __jakt_match_variant = error;
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
+auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<error::JaktError::Message>();DeprecatedString const& message = __jakt_match_value.message;
-utility::Span const& span = __jakt_match_value.span;
-{
-TRY((error::display_message_with_span( error::MessageSeverity { typename error::MessageSeverity::Error() } ,file_name,file_contents,message,span)));
-}
-return JaktInternal::ExplicitValue<void>();
+return JaktInternal::ExplicitValue(Jakt::DeprecatedString("94"sv));
 };/*case end*/
 case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<error::JaktError::MessageWithHint>();DeprecatedString const& message = __jakt_match_value.message;
-utility::Span const& span = __jakt_match_value.span;
-DeprecatedString const& hint = __jakt_match_value.hint;
-utility::Span const& hint_span = __jakt_match_value.hint_span;
-{
-TRY((error::display_message_with_span( error::MessageSeverity { typename error::MessageSeverity::Error() } ,file_name,file_contents,message,span)));
-TRY((error::display_message_with_span( error::MessageSeverity { typename error::MessageSeverity::Hint() } ,file_name,file_contents,hint,hint_span)));
-}
-return JaktInternal::ExplicitValue<void>();
+return JaktInternal::ExplicitValue(Jakt::DeprecatedString("31"sv));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
-));
+)));
 }
-return {};
+}
+
+ErrorOr<DeprecatedString> error::MessageSeverity::name() const {
+{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
+auto&& __jakt_match_variant = *this;
+switch(__jakt_match_variant.index()) {
+case 0: {
+return JaktInternal::ExplicitValue(Jakt::DeprecatedString("Hint"sv));
+};/*case end*/
+case 1: {
+return JaktInternal::ExplicitValue(Jakt::DeprecatedString("Error"sv));
+};/*case end*/
+default: VERIFY_NOT_REACHED();}/*switch end*/
+}()
+)));
+}
 }
 
 ErrorOr<DeprecatedString> error::JaktError::debug_description() const {
@@ -341,51 +386,6 @@ return JaktInternal::ExplicitValue(span);
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<error::JaktError::MessageWithHint>();utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(span);
-};/*case end*/
-default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-)));
-}
-}
-
-ErrorOr<DeprecatedString> error::MessageSeverity::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
-switch (this->index()) {case 0 /* Hint */: {
-return DeprecatedString("MessageSeverity::Hint"sv);
-break;}
-case 1 /* Error */: {
-return DeprecatedString("MessageSeverity::Error"sv);
-break;}
-}
-return builder.to_string();
-}
-ErrorOr<DeprecatedString> error::MessageSeverity::ansi_color_code() const {
-{
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
-auto&& __jakt_match_variant = *this;
-switch(__jakt_match_variant.index()) {
-case 0: {
-return JaktInternal::ExplicitValue(Jakt::DeprecatedString("94"sv));
-};/*case end*/
-case 1: {
-return JaktInternal::ExplicitValue(Jakt::DeprecatedString("31"sv));
-};/*case end*/
-default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-)));
-}
-}
-
-ErrorOr<DeprecatedString> error::MessageSeverity::name() const {
-{
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
-auto&& __jakt_match_variant = *this;
-switch(__jakt_match_variant.index()) {
-case 0: {
-return JaktInternal::ExplicitValue(Jakt::DeprecatedString("Hint"sv));
-};/*case end*/
-case 1: {
-return JaktInternal::ExplicitValue(Jakt::DeprecatedString("Error"sv));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()

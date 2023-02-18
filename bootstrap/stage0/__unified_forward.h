@@ -16,14 +16,14 @@ struct ArgsParser;
 }
 namespace jakt__platform {
 struct Target;
+JaktInternal::Optional<size_t> last_namespace_separator(DeprecatedString const name);
+
+
+
 
 
 
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> add_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const prefix, DeprecatedString const suffix);
-
-JaktInternal::Optional<size_t> last_namespace_separator(DeprecatedString const name);
-
-
 
 
 
@@ -39,9 +39,9 @@ struct Path;
 }
 namespace jakt__platform__unknown_fs {
 class DirectoryIterator;
-ErrorOr<void> make_directory(DeprecatedString const path);
-
 ErrorOr<DeprecatedString> current_directory();
+
+ErrorOr<void> make_directory(DeprecatedString const path);
 
 }
 namespace jakt__file_iterator {
@@ -59,63 +59,63 @@ struct Continue;
 template<typename T>
 struct IterationDecision;
 
-bool is_ascii_binary(u8 const c);
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> append_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const suffix);
 
 bool is_ascii_alpha(u8 const c);
 
 bool is_whitespace(u8 const byte);
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> prepend_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const prefix);
-
 bool is_ascii_digit(u8 const c);
-
-void todo(DeprecatedString const message);
 
 bool is_ascii_alphanumeric(u8 const c);
 
-ErrorOr<DeprecatedString> interpret_escapes(DeprecatedString const s);
-
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> append_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const suffix);
+DeprecatedString join(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const separator);
 
 ErrorOr<void> write_to_file(DeprecatedString const data, DeprecatedString const output_filename);
 
-DeprecatedString join(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const separator);
+void todo(DeprecatedString const message);
 
 bool is_ascii_octdigit(u8 const c);
 
+ErrorOr<DeprecatedString> escape_for_quotes(DeprecatedString const s);
+
 bool is_ascii_hexdigit(u8 const c);
+
+ErrorOr<DeprecatedString> interpret_escapes(DeprecatedString const s);
 
 [[noreturn]] void panic(DeprecatedString const message);
 
-ErrorOr<DeprecatedString> escape_for_quotes(DeprecatedString const s);
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> prepend_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const prefix);
+
+bool is_ascii_binary(u8 const c);
 
 }
 namespace error {
-namespace JaktError_Details {
-struct Message;
-struct MessageWithHint;
-}
-struct JaktError;
-
 namespace MessageSeverity_Details {
 struct Hint;
 struct Error;
 }
 struct MessageSeverity;
 
+namespace JaktError_Details {
+struct Message;
+struct MessageWithHint;
+}
+struct JaktError;
+
 ErrorOr<void> print_error_json(DeprecatedString const file_name, error::JaktError const error);
 
-ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>>> gather_line_spans(JaktInternal::DynamicArray<u8> const file_contents);
+ErrorOr<void> print_error(DeprecatedString const file_name, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents, error::JaktError const error);
 
 ErrorOr<void> display_message_with_span(error::MessageSeverity const severity, DeprecatedString const file_name, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents, DeprecatedString const message, utility::Span const span);
+
+ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>>> gather_line_spans(JaktInternal::DynamicArray<u8> const file_contents);
 
 ErrorOr<void> print_underline(error::MessageSeverity const severity, size_t const width, JaktInternal::Tuple<size_t,size_t> const file_span, utility::Span const error_span, size_t const line_number, size_t const largest_line_number);
 
 ErrorOr<void> print_source_line(error::MessageSeverity const severity, JaktInternal::DynamicArray<u8> const file_contents, JaktInternal::Tuple<size_t,size_t> const file_span, utility::Span const error_span, size_t const line_number, size_t const largest_line_number);
 
 ErrorOr<void> display_message_with_span_json(error::MessageSeverity const severity, DeprecatedString const file_name, DeprecatedString const message, utility::Span const span);
-
-ErrorOr<void> print_error(DeprecatedString const file_name, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents, error::JaktError const error);
 
 }
 namespace compiler {
@@ -265,39 +265,111 @@ struct LiteralPrefix;
 
 }
 namespace parser {
-struct ParsedGenericParameter;
-struct ParsedField;
-struct EnumVariantPatternArgument;
-struct ParsedPatternDefault;
-struct ParsedRecord;
-struct ParsedExternalTraitImplementation;
+struct ParsedMatchCase;
 struct ParsedFunction;
-struct ParsedExternImport;
 struct ParsedModuleImport;
 struct ParsedVariable;
 struct ParsedNameWithGenericParameters;
-struct SumEnumVariant;
-struct ParsedBlock;
-struct ParsedAttributeArgument;
 struct ParsedVarDeclTuple;
-struct ParsedAttribute;
-struct ParsedTrait;
-struct Parser;
-struct ParsedCall;
-struct ParsedNamespace;
-struct ParsedName;
-struct ParsedAlias;
+struct ParsedAttributeArgument;
 struct ParsedVarDecl;
+struct ParsedNamespace;
 struct ParsedMethod;
-struct ParsedMatchCase;
+struct ParsedExternalTraitImplementation;
+struct ParsedGenericParameter;
+struct ParsedTrait;
+struct ParsedExternImport;
+struct ParsedCall;
+struct SumEnumVariant;
+struct VisibilityRestriction;
+struct ParsedName;
+struct ParsedField;
+struct ParsedAlias;
+struct Parser;
+struct EnumVariantPatternArgument;
+struct ParsedPatternDefault;
 struct ParsedParameter;
 struct ValueEnumVariant;
-struct VisibilityRestriction;
-namespace IncludeAction_Details {
-struct Define;
-struct Undefine;
+struct ParsedRecord;
+struct ParsedAttribute;
+struct ParsedBlock;
+namespace ImportName_Details {
+struct Literal;
+struct Comptime;
 }
-struct IncludeAction;
+struct ImportName;
+
+namespace ParsedMatchPattern_Details {
+struct EnumVariant;
+struct Expression;
+struct CatchAll;
+struct Invalid;
+}
+struct ParsedMatchPattern;
+
+namespace Visibility_Details {
+struct Public;
+struct Private;
+struct Restricted;
+}
+struct Visibility;
+
+namespace ArgumentStoreLevel_Details {
+struct InObject;
+struct InStaticStorage;
+}
+struct ArgumentStoreLevel;
+
+namespace ParsedMatchBody_Details {
+struct Expression;
+struct Block;
+}
+struct ParsedMatchBody;
+
+namespace ParsedCapture_Details {
+struct ByValue;
+struct ByReference;
+struct ByMutableReference;
+struct ByComptimeDependency;
+struct AllByReference;
+}
+struct ParsedCapture;
+
+namespace ParsedType_Details {
+struct Name;
+struct NamespacedName;
+struct GenericType;
+struct JaktArray;
+struct Dictionary;
+struct JaktTuple;
+struct Set;
+struct Optional;
+struct Reference;
+struct MutableReference;
+struct RawPtr;
+struct WeakPtr;
+struct Function;
+struct Empty;
+}
+struct ParsedType;
+
+namespace TypeCast_Details {
+struct Fallible;
+struct Infallible;
+}
+struct TypeCast;
+
+namespace DefinitionLinkage_Details {
+struct Internal;
+struct External;
+}
+struct DefinitionLinkage;
+
+namespace ImportList_Details {
+struct List;
+struct All;
+}
+struct ImportList;
 
 namespace ParsedExpression_Details {
 struct Boolean;
@@ -333,20 +405,30 @@ struct Garbage;
 }
 struct ParsedExpression;
 
-namespace ImportList_Details {
-struct List;
-struct All;
+namespace FunctionLinkage_Details {
+struct Internal;
+struct External;
 }
-struct ImportList;
+struct FunctionLinkage;
 
-namespace ParsedCapture_Details {
-struct ByValue;
-struct ByReference;
-struct ByMutableReference;
-struct ByComptimeDependency;
-struct AllByReference;
+namespace UnaryOperator_Details {
+struct PreIncrement;
+struct PostIncrement;
+struct PreDecrement;
+struct PostDecrement;
+struct Negate;
+struct Dereference;
+struct RawAddress;
+struct Reference;
+struct MutableReference;
+struct LogicalNot;
+struct BitwiseNot;
+struct TypeCast;
+struct Is;
+struct IsEnumVariant;
+struct Sizeof;
 }
-struct ParsedCapture;
+struct UnaryOperator;
 
 namespace BinaryOperator_Details {
 struct Add;
@@ -386,16 +468,22 @@ struct Garbage;
 }
 struct BinaryOperator;
 
-namespace FunctionType_Details {
-struct Normal;
-struct Destructor;
-struct ImplicitConstructor;
-struct ImplicitEnumConstructor;
-struct ExternalClassConstructor;
-struct Expression;
-struct Closure;
+namespace NumericConstant_Details {
+struct I8;
+struct I16;
+struct I32;
+struct I64;
+struct U8;
+struct U16;
+struct U32;
+struct U64;
+struct USize;
+struct F32;
+struct F64;
+struct UnknownSigned;
+struct UnknownUnsigned;
 }
-struct FunctionType;
+struct NumericConstant;
 
 namespace ParsedStatement_Details {
 struct Expression;
@@ -419,37 +507,11 @@ struct Garbage;
 }
 struct ParsedStatement;
 
-namespace ParsedMatchPattern_Details {
-struct EnumVariant;
-struct Expression;
-struct CatchAll;
-struct Invalid;
+namespace IncludeAction_Details {
+struct Define;
+struct Undefine;
 }
-struct ParsedMatchPattern;
-
-namespace FunctionLinkage_Details {
-struct Internal;
-struct External;
-}
-struct FunctionLinkage;
-
-namespace ImportName_Details {
-struct Literal;
-struct Comptime;
-}
-struct ImportName;
-
-namespace ParsedMatchBody_Details {
-struct Expression;
-struct Block;
-}
-struct ParsedMatchBody;
-
-namespace DefinitionLinkage_Details {
-struct Internal;
-struct External;
-}
-struct DefinitionLinkage;
+struct IncludeAction;
 
 namespace RecordType_Details {
 struct Struct;
@@ -460,61 +522,57 @@ struct Garbage;
 }
 struct RecordType;
 
-namespace Visibility_Details {
-struct Public;
-struct Private;
-struct Restricted;
+namespace FunctionType_Details {
+struct Normal;
+struct Destructor;
+struct ImplicitConstructor;
+struct ImplicitEnumConstructor;
+struct ExternalClassConstructor;
+struct Expression;
+struct Closure;
 }
-struct Visibility;
+struct FunctionType;
 
-namespace ArgumentStoreLevel_Details {
-struct InObject;
-struct InStaticStorage;
+ErrorOr<utility::Span> merge_spans(utility::Span const start, utility::Span const end);
+
+f32 f64_to_f32(f64 const number);
+
 }
-struct ArgumentStoreLevel;
-
-namespace ParsedType_Details {
-struct Name;
-struct NamespacedName;
-struct GenericType;
-struct JaktArray;
-struct Dictionary;
-struct JaktTuple;
-struct Set;
-struct Optional;
-struct Reference;
-struct MutableReference;
-struct RawPtr;
-struct WeakPtr;
-struct Function;
-struct Empty;
-}
-struct ParsedType;
-
-namespace TypeCast_Details {
-struct Fallible;
-struct Infallible;
-}
-struct TypeCast;
-
-namespace NumericConstant_Details {
-struct I8;
-struct I16;
-struct I32;
-struct I64;
-struct U8;
-struct U16;
-struct U32;
-struct U64;
-struct USize;
-struct F32;
-struct F64;
-struct UnknownSigned;
-struct UnknownUnsigned;
-}
-struct NumericConstant;
-
-namespace UnaryOperator_Details {
+namespace types {
+class FunctionGenerics;
+struct StructId;
+struct CheckedStringLiteral;
+struct GenericInferences;
+class CheckedFunction;
+struct ScopeId;
+struct LoadedModule;
+class CheckedVariable;
+class CheckedTrait;
+struct Value;
+class CheckedProgram;
+struct ResolvedNamespace;
+class TypecheckFunctions;
+struct CheckedStruct;
+struct CheckedParameter;
+struct CheckedCall;
+struct CheckedVarDecl;
+struct FunctionGenericParameter;
+struct CheckedNamespace;
+struct CheckedField;
+struct CheckedGenericParameter;
+class Scope;
+struct TypeId;
+struct FieldRecord;
+struct CheckedEnum;
+struct CheckedBlock;
+struct TraitId;
+struct FunctionId;
+class Module;
+struct VarId;
+struct ModuleId;
+struct EnumId;
+struct CheckedEnumVariantBinding;
+namespace CheckedUnaryOperator_Details {
 struct PreIncrement;
 struct PostIncrement;
 struct PreDecrement;
@@ -531,47 +589,8 @@ struct Is;
 struct IsEnumVariant;
 struct Sizeof;
 }
-struct UnaryOperator;
+struct CheckedUnaryOperator;
 
-ErrorOr<utility::Span> merge_spans(utility::Span const start, utility::Span const end);
-
-f32 f64_to_f32(f64 const number);
-
-}
-namespace types {
-class FunctionGenerics;
-struct CheckedStringLiteral;
-struct GenericInferences;
-struct CheckedStruct;
-class CheckedVariable;
-class CheckedProgram;
-struct Value;
-struct VarId;
-class TypecheckFunctions;
-struct CheckedParameter;
-struct CheckedCall;
-struct CheckedVarDecl;
-struct CheckedNamespace;
-struct CheckedGenericParameter;
-struct CheckedBlock;
-struct TraitId;
-struct FunctionId;
-class Module;
-class CheckedTrait;
-class CheckedFunction;
-struct EnumId;
-struct StructId;
-struct ScopeId;
-struct LoadedModule;
-struct CheckedEnum;
-struct FunctionGenericParameter;
-struct ResolvedNamespace;
-class Scope;
-struct TypeId;
-struct FieldRecord;
-struct ModuleId;
-struct CheckedEnumVariantBinding;
-struct CheckedField;
 namespace NumericOrStringValue_Details {
 struct StringValue;
 struct SignedNumericValue;
@@ -620,31 +639,6 @@ struct Self;
 }
 struct Type;
 
-namespace CheckedMatchBody_Details {
-struct Expression;
-struct Block;
-}
-struct CheckedMatchBody;
-
-namespace CheckedStatement_Details {
-struct Expression;
-struct Defer;
-struct DestructuringAssignment;
-struct VarDecl;
-struct If;
-struct Block;
-struct Loop;
-struct While;
-struct Return;
-struct Break;
-struct Continue;
-struct Throw;
-struct Yield;
-struct InlineCpp;
-struct Garbage;
-}
-struct CheckedStatement;
-
 namespace ValueImpl_Details {
 struct Void;
 struct Bool;
@@ -677,11 +671,41 @@ struct Function;
 }
 struct ValueImpl;
 
-namespace StructOrEnumId_Details {
-struct Struct;
-struct Enum;
+namespace BlockControlFlow_Details {
+struct AlwaysReturns;
+struct AlwaysTransfersControl;
+struct NeverReturns;
+struct MayReturn;
+struct PartialAlwaysReturns;
+struct PartialAlwaysTransfersControl;
+struct PartialNeverReturns;
 }
-struct StructOrEnumId;
+struct BlockControlFlow;
+
+namespace CheckedMatchBody_Details {
+struct Expression;
+struct Block;
+}
+struct CheckedMatchBody;
+
+namespace CheckedStatement_Details {
+struct Expression;
+struct Defer;
+struct DestructuringAssignment;
+struct VarDecl;
+struct If;
+struct Block;
+struct Loop;
+struct While;
+struct Return;
+struct Break;
+struct Continue;
+struct Throw;
+struct Yield;
+struct InlineCpp;
+struct Garbage;
+}
+struct CheckedStatement;
 
 namespace CheckedEnumVariant_Details {
 struct Untyped;
@@ -711,35 +735,27 @@ struct Floating;
 }
 struct NumberConstant;
 
-namespace CheckedUnaryOperator_Details {
-struct PreIncrement;
-struct PostIncrement;
-struct PreDecrement;
-struct PostDecrement;
-struct Negate;
-struct Dereference;
-struct RawAddress;
-struct Reference;
-struct MutableReference;
-struct LogicalNot;
-struct BitwiseNot;
-struct TypeCast;
-struct Is;
-struct IsEnumVariant;
-struct Sizeof;
+namespace CheckedVisibility_Details {
+struct Public;
+struct Private;
+struct Restricted;
 }
-struct CheckedUnaryOperator;
+struct CheckedVisibility;
 
-namespace BlockControlFlow_Details {
-struct AlwaysReturns;
-struct AlwaysTransfersControl;
-struct NeverReturns;
-struct MayReturn;
-struct PartialAlwaysReturns;
-struct PartialAlwaysTransfersControl;
-struct PartialNeverReturns;
+namespace CheckedNumericConstant_Details {
+struct I8;
+struct I16;
+struct I32;
+struct I64;
+struct U8;
+struct U16;
+struct U32;
+struct U64;
+struct USize;
+struct F32;
+struct F64;
 }
-struct BlockControlFlow;
+struct CheckedNumericConstant;
 
 namespace CheckedCapture_Details {
 struct ByValue;
@@ -749,6 +765,12 @@ struct ByComptimeDependency;
 struct AllByReference;
 }
 struct CheckedCapture;
+
+namespace StructOrEnumId_Details {
+struct Struct;
+struct Enum;
+}
+struct StructOrEnumId;
 
 namespace SafetyMode_Details {
 struct Safe;
@@ -761,6 +783,18 @@ struct Resolved;
 struct Unresolved;
 }
 struct MaybeResolvedScope;
+
+namespace StringLiteral_Details {
+struct Static;
+}
+struct StringLiteral;
+
+namespace StructLikeId_Details {
+struct Struct;
+struct Enum;
+struct Trait;
+}
+struct StructLikeId;
 
 namespace CheckedExpression_Details {
 struct Boolean;
@@ -801,40 +835,6 @@ struct Garbage;
 }
 struct CheckedExpression;
 
-namespace StringLiteral_Details {
-struct Static;
-}
-struct StringLiteral;
-
-namespace StructLikeId_Details {
-struct Struct;
-struct Enum;
-struct Trait;
-}
-struct StructLikeId;
-
-namespace CheckedVisibility_Details {
-struct Public;
-struct Private;
-struct Restricted;
-}
-struct CheckedVisibility;
-
-namespace CheckedNumericConstant_Details {
-struct I8;
-struct I16;
-struct I32;
-struct I64;
-struct U8;
-struct U16;
-struct U32;
-struct U64;
-struct USize;
-struct F32;
-struct F64;
-}
-struct CheckedNumericConstant;
-
 namespace BuiltinType_Details {
 struct Void;
 struct Bool;
@@ -867,8 +867,21 @@ types::TypeId never_type_id();
 
 }
 namespace interpreter {
-class Interpreter;
 class InterpreterScope;
+class Interpreter;
+enum class InterpretError: i32;
+namespace ExecutionResult_Details {
+struct Return;
+struct Throw;
+}
+struct ExecutionResult;
+
+namespace Deferred_Details {
+struct Expression;
+struct Statement;
+}
+struct Deferred;
+
 namespace StatementResult_Details {
 struct Return;
 struct Throw;
@@ -878,21 +891,6 @@ struct Break;
 struct JustValue;
 }
 struct StatementResult;
-
-enum class InterpretError: i32;
-namespace Deferred_Details {
-struct Expression;
-struct Statement;
-}
-struct Deferred;
-
-namespace ExecutionResult_Details {
-struct Return;
-struct Throw;
-}
-struct ExecutionResult;
-
-ErrorOr<DeprecatedString> comptime_format_impl(DeprecatedString const format_string, JaktInternal::ArraySlice<types::Value> const arguments, NonnullRefPtr<interpreter::Interpreter> const interpreter);
 
 ErrorOr<size_t> align_of_impl(types::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter);
 
@@ -904,19 +902,15 @@ ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> value_to_checked_expre
 
 ErrorOr<DeprecatedString> format_value_impl(DeprecatedString const format_string, types::Value const value, NonnullRefPtr<interpreter::Interpreter> const interpreter);
 
+ErrorOr<DeprecatedString> comptime_format_impl(DeprecatedString const format_string, JaktInternal::ArraySlice<types::Value> const arguments, NonnullRefPtr<interpreter::Interpreter> const interpreter);
+
 }
 namespace typechecker {
 struct TraitImplementationDescriptor;
+struct TraitImplCheck;
 struct AlreadyImplementedFor;
 struct ImportRestrictions;
 struct Typechecker;
-struct TraitImplCheck;
-namespace FunctionMatchResult_Details {
-struct MatchSuccess;
-struct MatchError;
-}
-struct FunctionMatchResult;
-
 namespace NumericOrStringValue_Details {
 struct StringValue;
 struct SignedNumericValue;
@@ -924,12 +918,18 @@ struct UnsignedNumericValue;
 }
 struct NumericOrStringValue;
 
+namespace FunctionMatchResult_Details {
+struct MatchSuccess;
+struct MatchError;
+}
+struct FunctionMatchResult;
+
 }
 namespace codegen {
-struct LineSpan;
-struct CodegenDebugInfo;
-struct CodeGenerator;
 struct ControlFlowState;
+struct CodegenDebugInfo;
+struct LineSpan;
+struct CodeGenerator;
 namespace AllowedControlExits_Details {
 struct Nothing;
 struct JustReturn;
@@ -947,14 +947,6 @@ struct FormattedToken;
 struct ReflowState;
 struct Formatter;
 struct Stage0;
-namespace BreakablePoint_Details {
-struct Paren;
-struct Curly;
-struct Square;
-struct Logical;
-}
-struct BreakablePoint;
-
 namespace State_Details {
 struct Toplevel;
 struct Import;
@@ -972,14 +964,6 @@ struct FunctionTypeContext;
 }
 struct State;
 
-namespace Entity_Details {
-struct Struct;
-struct Enum;
-struct Namespace;
-struct Function;
-}
-struct Entity;
-
 namespace ExpressionMode_Details {
 struct OutsideExpression;
 struct BeforeExpressions;
@@ -988,14 +972,30 @@ struct InExpression;
 }
 struct ExpressionMode;
 
+namespace BreakablePoint_Details {
+struct Paren;
+struct Curly;
+struct Square;
+struct Logical;
+}
+struct BreakablePoint;
+
+namespace Entity_Details {
+struct Struct;
+struct Enum;
+struct Namespace;
+struct Function;
+}
+struct Entity;
+
 void bubble_sort(JaktInternal::DynamicArray<DeprecatedString> values);
 
 }
 namespace jakt__libc__io {
 }
 namespace repl {
-struct Editor;
 struct REPL;
+struct Editor;
 namespace LineResult_Details {
 struct Line;
 struct Eof;
@@ -1019,6 +1019,14 @@ struct Mutable;
 }
 struct Mutability;
 
+namespace VarVisibility_Details {
+struct DoesNotApply;
+struct Public;
+struct Private;
+struct Restricted;
+}
+struct VarVisibility;
+
 namespace Usage_Details {
 struct Variable;
 struct Call;
@@ -1034,21 +1042,13 @@ struct Field;
 }
 struct VarType;
 
-namespace VarVisibility_Details {
-struct DoesNotApply;
-struct Public;
-struct Private;
-struct Restricted;
-}
-struct VarVisibility;
-
 ErrorOr<ide::JaktSymbol> record_to_symbol(parser::ParsedRecord const record);
 
-ErrorOr<JaktInternal::Optional<DeprecatedString>> find_typename_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
+ErrorOr<ide::Usage> get_enum_variant_usage_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id, DeprecatedString const name);
 
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> completions_for_type_id(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id);
 
-ErrorOr<ide::Usage> get_enum_variant_usage_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id, DeprecatedString const name);
+ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::TypeId>>> enum_variant_fields(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnumVariant const checked_enum_variant);
 
 ErrorOr<DeprecatedString> get_enum_variant_signature_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id, DeprecatedString const name);
 
@@ -1056,21 +1056,17 @@ ErrorOr<DeprecatedString> get_type_signature(NonnullRefPtr<types::CheckedProgram
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_scope(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::Scope> const scope, utility::Span const span);
 
-ErrorOr<DeprecatedString> get_constructor_signature(NonnullRefPtr<types::CheckedProgram> const program, types::FunctionId const function_id);
-
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> find_dot_completions(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
 ErrorOr<utility::Span> find_definition_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
 ErrorOr<DeprecatedString> get_var_signature(NonnullRefPtr<types::CheckedProgram> const program, DeprecatedString const name, types::TypeId const var_type_id, ide::Mutability const mutability, ide::VarType const var_type, ide::VarVisibility const visibility, JaktInternal::Optional<types::TypeId> const struct_type_id);
 
-ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::TypeId>>> enum_variant_fields(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnumVariant const checked_enum_variant);
+ErrorOr<DeprecatedString> get_constructor_signature(NonnullRefPtr<types::CheckedProgram> const program, types::FunctionId const function_id);
 
 ErrorOr<utility::Span> find_type_definition_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_expression(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<typename types::CheckedExpression> const expr, utility::Span const span);
-
-ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_block(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedBlock const block, utility::Span const span);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
@@ -1080,15 +1076,19 @@ ErrorOr<JaktInternal::DynamicArray<ide::JaktSymbol>> find_symbols_in_namespace(p
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_function(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::CheckedFunction> const checked_function, utility::Span const span);
 
+ErrorOr<JaktInternal::Optional<DeprecatedString>> find_typename_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
+
 ErrorOr<utility::Span> find_type_definition_for_type_id(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id, utility::Span const span);
+
+ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_statement(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<typename types::CheckedStatement> const statement, utility::Span const span);
 
 ErrorOr<DeprecatedString> get_enum_variant_signature(NonnullRefPtr<types::CheckedProgram> const program, DeprecatedString const name, types::TypeId const type_id, JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::TypeId>> const variants, JaktInternal::Optional<types::NumberConstant> const number_constant);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_enum(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnum const checked_enum, utility::Span const span);
 
-ErrorOr<ide::JaktSymbol> function_to_symbol(parser::ParsedFunction const function, DeprecatedString const kind);
+ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_block(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedBlock const block, utility::Span const span);
 
-ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_statement(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<typename types::CheckedStatement> const statement, utility::Span const span);
+ErrorOr<ide::JaktSymbol> function_to_symbol(parser::ParsedFunction const function, DeprecatedString const kind);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_struct(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedStruct const checked_struct, utility::Span const span);
 
@@ -1098,15 +1098,15 @@ ErrorOr<DeprecatedString> get_function_signature(NonnullRefPtr<types::CheckedPro
 namespace jakt__platform__unknown_process {
 struct Process;
 struct ExitPollResult;
-ErrorOr<jakt__platform__unknown_process::Process> start_background_process(JaktInternal::DynamicArray<DeprecatedString> const args);
-
 ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<size_t>,jakt__platform__unknown_process::ExitPollResult>> wait_for_some_set_of_processes_that_at_least_includes(JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::Process> const& processes);
 
 ErrorOr<jakt__platform__unknown_process::ExitPollResult> wait_for_process(jakt__platform__unknown_process::Process const& process);
 
-ErrorOr<void> forcefully_kill_process(jakt__platform__unknown_process::Process const& process);
+ErrorOr<jakt__platform__unknown_process::Process> start_background_process(JaktInternal::DynamicArray<DeprecatedString> const args);
 
 ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> poll_process_exit(jakt__platform__unknown_process::Process const& process);
+
+ErrorOr<void> forcefully_kill_process(jakt__platform__unknown_process::Process const& process);
 
 }
 namespace build {
@@ -1120,12 +1120,12 @@ ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> run_compiler(DeprecatedStr
 struct FormatRange;
 ErrorOr<void> format_output(jakt__path::Path const file_path, JaktInternal::DynamicArray<lexer::Token> const tokens, JaktInternal::Optional<FormatRange> const format_range, bool const format_debug, bool const format_inplace);
 
-ErrorOr<DeprecatedString> indent(size_t const level);
+DeprecatedString usage();
 
 DeprecatedString help();
 
-DeprecatedString usage();
-
 ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(DeprecatedString const range, size_t const input_file_length);
+
+ErrorOr<DeprecatedString> indent(size_t const level);
 
 } // namespace Jakt

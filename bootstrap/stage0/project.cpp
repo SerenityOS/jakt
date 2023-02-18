@@ -6,6 +6,14 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\"", name));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
+ErrorOr<void> project::Project::create_template_cmake_lists(DeprecatedString const project_directory) const {
+{
+DeprecatedString const cml_contents = ((((Jakt::DeprecatedString("cmake_minimum_required(VERSION 3.20)\nproject("sv) + ((*this).name)) + Jakt::DeprecatedString("\n   VERSION 1.0.0\n   LANGUAGES CXX\n)\n\nfind_package(Jakt REQUIRED)\n\nadd_jakt_executable("sv)) + ((*this).name)) + Jakt::DeprecatedString("\n   MAIN_SOURCE src/main.jakt\n   MODULE_SOURCES\n     src/second_module.jakt\n)\n"sv));
+TRY((utility::write_to_file(cml_contents,(project_directory + Jakt::DeprecatedString("/CMakeLists.txt"sv)))));
+}
+return {};
+}
+
 ErrorOr<void> project::Project::populate() const {
 {
 DeprecatedString const current_directory = TRY((jakt__platform__unknown_fs::current_directory()));
@@ -35,16 +43,6 @@ TRY((utility::write_to_file(readme_text,(project_directory + Jakt::DeprecatedStr
 return {};
 }
 
-project::Project::Project(DeprecatedString a_name) :name(move(a_name)){}
-
-ErrorOr<void> project::Project::create_template_cmake_lists(DeprecatedString const project_directory) const {
-{
-DeprecatedString const cml_contents = ((((Jakt::DeprecatedString("cmake_minimum_required(VERSION 3.20)\nproject("sv) + ((*this).name)) + Jakt::DeprecatedString("\n   VERSION 1.0.0\n   LANGUAGES CXX\n)\n\nfind_package(Jakt REQUIRED)\n\nadd_jakt_executable("sv)) + ((*this).name)) + Jakt::DeprecatedString("\n   MAIN_SOURCE src/main.jakt\n   MODULE_SOURCES\n     src/second_module.jakt\n)\n"sv));
-TRY((utility::write_to_file(cml_contents,(project_directory + Jakt::DeprecatedString("/CMakeLists.txt"sv)))));
-}
-return {};
-}
-
 ErrorOr<void> project::Project::create_sample_jakt_files(DeprecatedString const project_directory) const {
 {
 DeprecatedString const main_jakt = Jakt::DeprecatedString("import second_module { get_string }\n\nfn main() throws -> c_int {\n    println(\"{}!\", get_string())\n    return 0\n}\n"sv);
@@ -54,6 +52,8 @@ TRY((utility::write_to_file(second_module_jakt,(project_directory + Jakt::Deprec
 }
 return {};
 }
+
+project::Project::Project(DeprecatedString a_name) :name(move(a_name)){}
 
 }
 } // namespace Jakt
