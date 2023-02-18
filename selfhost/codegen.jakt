@@ -456,14 +456,14 @@ struct CodeGenerator {
     fn extract_dependencies_from(this, type_id: TypeId, dependency_graph: [String : [String]], top_level: bool) throws -> [String] {
         mut dependencies: [String] = []
 
-        if dependency_graph.contains(type_id.to_string()) {
+        let type_ = .program.get_type(type_id)
+        if not type_.is_boxed(program: .program) and dependency_graph.contains(type_id.to_string()) {
             for dependency in dependency_graph.get(type_id.to_string())! {
                 dependencies.push(dependency)
             }
             return dependencies
         }
 
-        let type_ = .program.get_type(type_id)
         let inner_dependencies = match type_ {
             Enum(enum_id) => .extract_dependencies_from_enum(enum_id, dependency_graph, top_level)
             GenericEnumInstance(id) => .extract_dependencies_from_enum(enum_id: id, dependency_graph, top_level)
