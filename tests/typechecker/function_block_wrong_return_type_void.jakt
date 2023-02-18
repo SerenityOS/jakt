@@ -1,0 +1,14 @@
+/// Expect:
+/// - error: "’return’ with no value in function ’foo’ returning ’i64’"
+
+fn foo(anon x: i64) -> i64 {
+    if x == 6 {
+        return 4
+    } else {
+        return
+    }
+}
+
+fn main() {
+    let x = foo(7)
+}

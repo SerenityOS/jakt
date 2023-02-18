@@ -1,0 +1,13 @@
+/// Expect:
+/// - error: "’return’ with no value in function ’give_c’ returning ’i32’"
+
+class C {
+    public fn give_c() -> i32 {
+        let foo = true
+        return
+    }
+}
+
+fn main() {
+    println("{}", C::give_c())
+}

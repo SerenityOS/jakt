@@ -1,0 +1,7 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘u8’, but got ‘i64’"
+
+fn foo() -> u8 {
+    let i = 123
+    return i
+}
