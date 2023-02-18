@@ -5570,6 +5570,10 @@ struct Typechecker {
         )
         let checked_expr = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint, span)
 
+        if type_hint.has_value() {
+            .unify_with_type(found_type: checked_expr.type(), expected_type: type_hint!, span)
+        }
+
         return CheckedStatement::Return(val: checked_expr, span)
     }
 

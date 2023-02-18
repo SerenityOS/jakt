@@ -5,14 +5,15 @@ enum Foo {
     Bar(i64)
 }
 
-fn main() {
+fn main() -> c_int {
     let foo = Foo::Bar(5)
     let bar = Foo::Bar(7)
 
     guard foo is Bar(x) and x < 10 else {
         println("not matched")
-        return -1
+        return 1
     }
 
     println("hello there: {}", x)
+    return 0
 }

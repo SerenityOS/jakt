@@ -3,7 +3,7 @@
 
 import jakt::libc::io { fopen, fclose, fgetc, feof, putchar }
 
-fn main(args: [String]) {
+fn main(args: [String]) -> c_int {
     if args.size() <= 1 {
         eprintln("usage: cat <path>")
         return 1
@@ -19,4 +19,6 @@ fn main(args: [String]) {
         putchar(c)
         c = fgetc(file)
     }
+
+    return 0
 }

@@ -8,7 +8,7 @@ enum Foo {
     )
 }
 
-fn main() {
+fn main() -> c_int {
     let x = Foo::Bar(x: 0i32, y: 42)
     match x {
         Bar(y, x) => {
@@ -18,4 +18,5 @@ fn main() {
             }
         }
     }
+    return 0
 }

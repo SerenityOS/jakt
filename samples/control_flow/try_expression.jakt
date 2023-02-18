@@ -13,7 +13,7 @@ fn pretend_to_throw_for_fun() throws -> Foo {
     return Foo(x: 123)
 }
 
-fn main() {
+fn main() -> c_int {
     println("{}", (try pretend_to_throw_for_fun())?.x)
     let foo = try throw_for_fun() catch {
         println("PASS")

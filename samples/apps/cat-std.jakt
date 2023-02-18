@@ -1,7 +1,7 @@
 /// Expect:
 /// - stderr: "usage: cat <path>\n"
 
-fn main(args: [String]) {
+fn main(args: [String]) -> c_int {
     if args.size() <= 1 {
         eprintln("usage: cat <path>")
         return 1
@@ -15,4 +15,6 @@ fn main(args: [String]) {
             print("{:c}", array[idx])
         }
     }
+
+    return 0
 }

@@ -6,7 +6,7 @@ enum Foo {
     Baz
 }
 
-fn main() {
+fn main() -> c_int {
     let a = Foo::Bar(id: 3)
 
     let b = match a {
@@ -21,4 +21,5 @@ fn main() {
     }
 
     println("{}", b)
+    return 0
 }
