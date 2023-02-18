@@ -9,8 +9,8 @@ DeprecatedString arch;DeprecatedString platform;DeprecatedString os;DeprecatedSt
 ErrorOr<size_t> int_alignment() const;
 ErrorOr<size_t> pointer_size() const;
 static ErrorOr<jakt__platform::Target> active();
-ErrorOr<size_t> size_t_size() const;
 ErrorOr<size_t> size_t_alignment() const;
+ErrorOr<size_t> size_t_size() const;
 ErrorOr<size_t> int_size() const;
 ErrorOr<size_t> pointer_alignment() const;
 ErrorOr<DeprecatedString> debug_description() const;

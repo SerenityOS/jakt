@@ -412,53 +412,6 @@ return JaktInternal::ExplicitValue(Jakt::DeprecatedString("<Unimplemented>"sv));
 }
 }
 
-ErrorOr<DeprecatedString> repl::Editor::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Editor("sv));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("standard_input_file: {}, ", standard_input_file));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("line_pointer: {}, ", line_pointer));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("prompt: \"{}\"", prompt));
-}
-TRY(builder.append(")"sv));return builder.to_string(); }
-ErrorOr<repl::Editor> repl::Editor::create(DeprecatedString const prompt) {
-{
-FILE* std_in = fopen(((Jakt::DeprecatedString("/dev/stdin"sv)).characters()),((Jakt::DeprecatedString("r"sv)).characters()));
-if ((std_in == utility::null<FILE>())){
-warnln(Jakt::DeprecatedString("Could not open /dev/stdin for reading"sv));
-return Error::from_errno(static_cast<i32>(42));
-}
-repl::Editor const editor = repl::Editor(std_in,utility::allocate<char>(static_cast<size_t>(4096ULL)),prompt);
-return (editor);
-}
-}
-
-void repl::Editor::destroy() {
-{
-fclose(((*this).standard_input_file));
-{
-free(line_pointer);
-}
-
-}
-}
-
-repl::Editor::Editor(FILE* a_standard_input_file, char* a_line_pointer, DeprecatedString a_prompt) :standard_input_file(move(a_standard_input_file)), line_pointer(move(a_line_pointer)), prompt(move(a_prompt)){}
-
-ErrorOr<repl::LineResult> repl::Editor::get_line() {
-{
-warn(Jakt::DeprecatedString("{}"sv),((*this).prompt));
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
-{
-char* const c_string = fgets(((*this).line_pointer),static_cast<size_t>(4096ULL),((*this).standard_input_file));
-if ((c_string == utility::null<char>())){
-return ( repl::LineResult { typename repl::LineResult::Eof() } );
-}
-TRY((((builder).append_c_string(c_string))));
-}
-
-return ( repl::LineResult { typename repl::LineResult::Line(TRY((((builder).to_string())))) } );
-}
-}
-
 ErrorOr<DeprecatedString> repl::REPL::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("REPL("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("compiler: {}, ", *compiler));
@@ -703,6 +656,53 @@ bool const has_error = (((((((*this).compiler))->errors)).size()) > static_cast<
 JaktInternal::DynamicArray<error::JaktError> const arr = (TRY((DynamicArray<error::JaktError>::create_with({}))));
 (((((*this).compiler))->errors) = arr);
 return (has_error);
+}
+}
+
+ErrorOr<DeprecatedString> repl::Editor::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Editor("sv));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("standard_input_file: {}, ", standard_input_file));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("line_pointer: {}, ", line_pointer));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("prompt: \"{}\"", prompt));
+}
+TRY(builder.append(")"sv));return builder.to_string(); }
+ErrorOr<repl::Editor> repl::Editor::create(DeprecatedString const prompt) {
+{
+FILE* std_in = fopen(((Jakt::DeprecatedString("/dev/stdin"sv)).characters()),((Jakt::DeprecatedString("r"sv)).characters()));
+if ((std_in == utility::null<FILE>())){
+warnln(Jakt::DeprecatedString("Could not open /dev/stdin for reading"sv));
+return Error::from_errno(static_cast<i32>(42));
+}
+repl::Editor const editor = repl::Editor(std_in,utility::allocate<char>(static_cast<size_t>(4096ULL)),prompt);
+return (editor);
+}
+}
+
+repl::Editor::Editor(FILE* a_standard_input_file, char* a_line_pointer, DeprecatedString a_prompt) :standard_input_file(move(a_standard_input_file)), line_pointer(move(a_line_pointer)), prompt(move(a_prompt)){}
+
+ErrorOr<repl::LineResult> repl::Editor::get_line() {
+{
+warn(Jakt::DeprecatedString("{}"sv),((*this).prompt));
+DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+{
+char* const c_string = fgets(((*this).line_pointer),static_cast<size_t>(4096ULL),((*this).standard_input_file));
+if ((c_string == utility::null<char>())){
+return ( repl::LineResult { typename repl::LineResult::Eof() } );
+}
+TRY((((builder).append_c_string(c_string))));
+}
+
+return ( repl::LineResult { typename repl::LineResult::Line(TRY((((builder).to_string())))) } );
+}
+}
+
+void repl::Editor::destroy() {
+{
+fclose(((*this).standard_input_file));
+{
+free(line_pointer);
+}
+
 }
 }
 

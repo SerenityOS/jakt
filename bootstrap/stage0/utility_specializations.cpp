@@ -29,14 +29,31 @@
 namespace Jakt {
 namespace utility {
 
+/* specialisation 0 of function allocate: ["char"] */
+template<> char* allocate<char>(size_t const count);
+
 /* specialisation 0 of function null: ["FILE"] */
 template<> FILE* null<FILE>();
 
 /* specialisation 1 of function null: ["char"] */
 template<> char* null<char>();
+template<>
+char* allocate<char>(size_t const count) {
+{
+Function<void(char*&)> const alloc_impl = [count](char*& ptr) -> void {
+{
+{
+ptr = static_cast<RemoveReference<decltype(ptr)>>(calloc(count, sizeof(*ptr)));
+}
 
-/* specialisation 0 of function allocate: ["char"] */
-template<> char* allocate<char>(size_t const count);
+}
+}
+;
+char* ptr = utility::null<char>();
+alloc_impl(((ptr)));
+return (ptr);
+}
+}
 template<>
 FILE* null<FILE>() {
 {
@@ -55,23 +72,6 @@ return nullptr;
 }
 
 abort();
-}
-}
-template<>
-char* allocate<char>(size_t const count) {
-{
-Function<void(char*&)> const alloc_impl = [count](char*& ptr) -> void {
-{
-{
-ptr = static_cast<RemoveReference<decltype(ptr)>>(calloc(count, sizeof(*ptr)));
-}
-
-}
-}
-;
-char* ptr = utility::null<char>();
-alloc_impl(((ptr)));
-return (ptr);
 }
 }
 }

@@ -1,19 +1,19 @@
 #include "jakt__platform__unknown_fs.h"
 namespace Jakt {
 namespace jakt__platform__unknown_fs {
+ErrorOr<DeprecatedString> current_directory() {
+{
+warnln(Jakt::DeprecatedString("NOT IMPLEMENTED: current_directory"sv));
+return Error::from_errno(static_cast<i32>(38));
+}
+}
+
 ErrorOr<void> make_directory(DeprecatedString const path) {
 {
 warnln(Jakt::DeprecatedString("NOT IMPLEMENTED: make_directory {}"sv),path);
 return Error::from_errno(static_cast<i32>(38));
 }
 return {};
-}
-
-ErrorOr<DeprecatedString> current_directory() {
-{
-warnln(Jakt::DeprecatedString("NOT IMPLEMENTED: current_directory"sv));
-return Error::from_errno(static_cast<i32>(38));
-}
 }
 
 ErrorOr<DeprecatedString> jakt__platform__unknown_fs::DirectoryIterator::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("DirectoryIterator("sv));{

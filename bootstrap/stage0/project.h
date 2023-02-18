@@ -7,12 +7,12 @@ namespace Jakt {
 namespace project {
 struct Project {
   public:
-DeprecatedString name;ErrorOr<void> populate() const;
+DeprecatedString name;ErrorOr<void> create_template_cmake_lists(DeprecatedString const project_directory) const;
+ErrorOr<void> populate() const;
 ErrorOr<void> create_readme(DeprecatedString const project_directory) const;
+ErrorOr<void> create_sample_jakt_files(DeprecatedString const project_directory) const;
 Project(DeprecatedString a_name);
 
-ErrorOr<void> create_template_cmake_lists(DeprecatedString const project_directory) const;
-ErrorOr<void> create_sample_jakt_files(DeprecatedString const project_directory) const;
 ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt

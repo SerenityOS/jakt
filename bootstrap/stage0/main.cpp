@@ -144,119 +144,6 @@ out(Jakt::DeprecatedString("{}"sv),TRY((((formatted_file).to_string()))));
 return {};
 }
 
-ErrorOr<DeprecatedString> indent(size_t const level) {
-{
-DeprecatedString output = Jakt::DeprecatedString(""sv);
-{
-JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(level)});
-for (;;){
-JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-size_t i = (_magic_value.value());
-{
-(output += Jakt::DeprecatedString("    "sv));
-}
-
-}
-}
-
-return (output);
-}
-}
-
-DeprecatedString help() {
-{
-DeprecatedString output = Jakt::DeprecatedString("Flags:\n"sv);
-(output += Jakt::DeprecatedString("  -h,--help\t\t\t\tPrint this help and exit.\n"sv));
-(output += Jakt::DeprecatedString("  -O\t\t\t\t\tBuild an optimized executable.\n"sv));
-(output += Jakt::DeprecatedString("  -dl\t\t\t\t\tPrint debug info for the lexer.\n"sv));
-(output += Jakt::DeprecatedString("  -dp\t\t\t\t\tPrint debug info for the parser.\n"sv));
-(output += Jakt::DeprecatedString("  -dt\t\t\t\t\tPrint debug info for the typechecker.\n"sv));
-(output += Jakt::DeprecatedString("  -S,--emit-cpp-source-only\t\tOnly output source (do not build).\n"sv));
-(output += Jakt::DeprecatedString("  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"sv));
-(output += Jakt::DeprecatedString("  --runtime-library-path PATH\t\tSpecify the path to the runtime library.\n"sv));
-(output += Jakt::DeprecatedString("  -J,--jobs NUMBER\t\t\tSpecify the number of jobs to run in parallel, defaults to 2 (1 on windows).\n"sv));
-(output += Jakt::DeprecatedString("  -cr,--compile-run\t\t\tBuild and run an executable file.\n"sv));
-(output += Jakt::DeprecatedString("  -r,--run\t\t\t\tRun the given file without compiling it (all positional arguments after the file name will be passed to main).\n"sv));
-(output += Jakt::DeprecatedString("  -d\t\t\t\t\tInsert debug statement spans in generated C++ code.\n"sv));
-(output += Jakt::DeprecatedString("  --debug-print\t\t\t\tOutput debug print.\n"sv));
-(output += Jakt::DeprecatedString("  -p,--prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n"sv));
-(output += Jakt::DeprecatedString("  -c,--check-only\t\t\tOnly check the code for errors.\n"sv));
-(output += Jakt::DeprecatedString("  -j,--json-errors\t\t\tEmit machine-readable (JSON) errors.\n"sv));
-(output += Jakt::DeprecatedString("  -H,--type-hints\t\t\tEmit machine-readable type hints (for IDE integration).\n"sv));
-(output += Jakt::DeprecatedString("  -f,--format\t\t\t\tFormat a file or directory and output the result.\n"sv));
-(output += Jakt::DeprecatedString("  -fi,--format-inplace\t\t\tFormat a file or directory and save the result inplace.\n"sv));
-(output += Jakt::DeprecatedString("  -fd,--format-debug\t\t\tOutput debug info for the formatter.\n"sv));
-(output += Jakt::DeprecatedString("  -fr,--format-range\t\t\tEmit part of the document with formatting applied.\n"sv));
-(output += Jakt::DeprecatedString("  --try-hints\t\t\t\tEmit machine-readable try hints (for IDE integration).\n"sv));
-(output += Jakt::DeprecatedString("  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"sv));
-(output += Jakt::DeprecatedString("  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"sv));
-(output += Jakt::DeprecatedString("\nOptions:\n"sv));
-(output += Jakt::DeprecatedString("  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\t\t\t\tDefaults to clang-format\n"sv));
-(output += Jakt::DeprecatedString("  -D,--dot-clang-format-path PATH\tPath to the .clang-format file to use.\n\t\t\t\t\tDefaults to none, invoking clangs default .clang-format file handling.\n"sv));
-(output += Jakt::DeprecatedString("  -R,--runtime-path PATH\t\tPath of the Jakt runtime headers.\n\t\t\t\t\tDefaults to $PWD/runtime.\n"sv));
-(output += Jakt::DeprecatedString("  -B,--binary-dir PATH\t\t\tOutput directory for compiled files.\n\t\t\t\t\tDefaults to $PWD/build.\n"sv));
-(output += Jakt::DeprecatedString("  -C,--cxx-compiler-path PATH\t\tPath of the C++ compiler to use when compiling the generated sources.\n\t\t\t\t\tDefaults to clang++.\n"sv));
-(output += Jakt::DeprecatedString("  -I PATH\t\t\t\tAdd PATH to compiler's include list. Can be specified multiple times.\n"sv));
-(output += Jakt::DeprecatedString("  -L PATH\t\t\t\tAdd PATH to linker's search list. Can be specified multiple times.\n"sv));
-(output += Jakt::DeprecatedString("  -l,--link-with LIB\t\t\tLink executable with LIB. Can be specified multiple times.\n"sv));
-(output += Jakt::DeprecatedString("  -o,--output-filename FILE\t\tName of the output binary.\n\t\t\t\t\tDefaults to the input-filename without the extension.\n"sv));
-(output += Jakt::DeprecatedString("  -g,--goto-def INDEX\t\t\tReturn the span for the definition at index.\n"sv));
-(output += Jakt::DeprecatedString("  -t,--goto-type-def INDEX\t\tReturn the span for the type definition at index.\n"sv));
-(output += Jakt::DeprecatedString("  -e,--hover INDEX\t\t\tReturn the type of element at index.\n"sv));
-(output += Jakt::DeprecatedString("  -m,--completions INDEX\t\tReturn dot completions at index.\n"sv));
-(output += Jakt::DeprecatedString("  --create NAME\t\t\t\tCreate sample project in $PWD/NAME\n"sv));
-(output += Jakt::DeprecatedString("  --ak-is-my-only-stdlib\t\tForget about interop, AK is the one and only STL.\n"sv));
-return (output);
-}
-}
-
-DeprecatedString usage() {
-{
-return (Jakt::DeprecatedString("usage: jakt [-h] [OPTIONS] <filename>"sv));
-}
-}
-
-ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(DeprecatedString const range,size_t const input_file_length) {
-{
-JaktInternal::DynamicArray<DeprecatedString> const parts = ((range).split(':'));
-if (((parts).is_empty())){
-return (FormatRange(static_cast<size_t>(0ULL),input_file_length));
-}
-JaktInternal::Optional<u32> const start_input = ((((parts)[static_cast<i64>(0LL)])).to_uint());
-if ((!(((start_input).has_value())))){
-return (JaktInternal::OptionalNone());
-}
-size_t const start = (infallible_integer_cast<size_t>(((start_input.value()))));
-size_t const end = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<JaktInternal::Optional<FormatRange>>>{
-auto __jakt_enum_value = (((parts).size()));
-if (__jakt_enum_value == static_cast<size_t>(1ULL)) {
-return JaktInternal::ExplicitValue(input_file_length);
-}
-else if (__jakt_enum_value == static_cast<size_t>(2ULL)) {
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_864; {
-JaktInternal::Optional<u32> const end_input = ((((parts)[static_cast<i64>(1LL)])).to_uint());
-if ((!(((end_input).has_value())))){
-return (JaktInternal::OptionalNone());
-}
-__jakt_var_864 = (infallible_integer_cast<size_t>(((end_input.value())))); goto __jakt_label_770;
-
-}
-__jakt_label_770:; __jakt_var_864.release_value(); }));
-}
-else {
-{
-return (JaktInternal::OptionalNone());
-}
-}
-}()))
-;
-return (FormatRange(start,end));
-}
-}
-
 ErrorOr<int> main(JaktInternal::DynamicArray<DeprecatedString> const args) {
 
 
@@ -268,17 +155,17 @@ ErrorOr<int> main(JaktInternal::DynamicArray<DeprecatedString> const args) {
 {
 if ((((args).size()) <= static_cast<size_t>(1ULL))){
 warnln(Jakt::DeprecatedString("{}"sv),usage());
-return (static_cast<i64>(1LL));
+return (static_cast<size_t>(1ULL));
 }
 jakt__arguments::ArgsParser args_parser = TRY((jakt__arguments::ArgsParser::from_args(args)));
 if (TRY((((args_parser).flag((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("-h"sv), Jakt::DeprecatedString("--help"sv)}))))))))){
 outln(Jakt::DeprecatedString("{}\n"sv),usage());
 outln(Jakt::DeprecatedString("{}"sv),help());
-return (static_cast<i64>(0LL));
+return (static_cast<size_t>(0ULL));
 }
 if (TRY((((args_parser).flag((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("-v"sv), Jakt::DeprecatedString("--version"sv)}))))))))){
 outln(Jakt::DeprecatedString("unreleased"sv));
-return (static_cast<i64>(0LL));
+return (static_cast<size_t>(0ULL));
 }
 jakt__path::Path const current_executable_path = TRY((jakt__path::Path::from_string(TRY((File::current_executable_path())))));
 jakt__path::Path const install_base_path = TRY((((TRY((((current_executable_path).parent())))).parent())));
@@ -337,15 +224,15 @@ bool const format_inplace = TRY((((args_parser).flag((TRY((DynamicArray<Deprecat
 bool const format_debug = TRY((((args_parser).flag((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("-fd"sv), Jakt::DeprecatedString("--format-debug"sv)}))))))));
 DeprecatedString const input_format_range = TRY((((args_parser).option((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("-fr"sv), Jakt::DeprecatedString("--format-range"sv)})))))))).value_or_lazy_evaluated([&] { return Jakt::DeprecatedString(""sv); });
 bool const ak_stdlib = TRY((((args_parser).flag((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("--ak-is-my-only-stdlib"sv)}))))))));
-size_t const max_concurrent = (infallible_integer_cast<size_t>((({ Optional<u32> __jakt_var_865;
-auto __jakt_var_866 = [&]() -> ErrorOr<u32> { return TRY((value_or_throw<u32>(((compiler_job_count).to_uint())))); }();
-if (__jakt_var_866.is_error()) {{
+size_t const max_concurrent = (infallible_integer_cast<size_t>((({ Optional<u32> __jakt_var_864;
+auto __jakt_var_865 = [&]() -> ErrorOr<u32> { return TRY((value_or_throw<u32>(((compiler_job_count).to_uint())))); }();
+if (__jakt_var_865.is_error()) {{
 warnln(Jakt::DeprecatedString("error: invalid value for --jobs: {}"sv),compiler_job_count);
 return (static_cast<i64>(1LL));
 }
-} else {__jakt_var_865 = __jakt_var_866.release_value();
+} else {__jakt_var_864 = __jakt_var_865.release_value();
 }
-__jakt_var_865.release_value(); }))));
+__jakt_var_864.release_value(); }))));
 if (TRY((((args_parser).flag((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("--repl"sv)}))))))))){
 repl::REPL repl = TRY((repl::REPL::create(TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({runtime_path, Jakt::DeprecatedString("jaktlib"sv)}))))))),target_triple)));
 TRY((((repl).run())));
@@ -552,7 +439,7 @@ JaktInternal::Optional<types::CheckedParameter> const first_main_param = ((((((c
 JaktInternal::DynamicArray<types::Value> const arguments = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<types::Value>,ErrorOr<int>>{
 auto __jakt_enum_value = (((first_main_param).has_value()));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<types::Value>> __jakt_var_867; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<types::Value>> __jakt_var_866; {
 JaktInternal::DynamicArray<types::Value> passed_arguments = (TRY((DynamicArray<types::Value>::create_with({types::Value(TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::JaktString>((file_name.value())))),call_span)}))));
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((interpreted_main_arguments).iterator());
@@ -569,10 +456,10 @@ TRY((((passed_arguments).push(types::Value(TRY((types::ValueImpl::template __jak
 }
 }
 
-__jakt_var_867 = (TRY((DynamicArray<types::Value>::create_with({types::Value(TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::JaktArray>(passed_arguments,(((((first_main_param.value())).variable))->type_id)))),call_span)})))); goto __jakt_label_771;
+__jakt_var_866 = (TRY((DynamicArray<types::Value>::create_with({types::Value(TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::JaktArray>(passed_arguments,(((((first_main_param.value())).variable))->type_id)))),call_span)})))); goto __jakt_label_770;
 
 }
-__jakt_label_771:; __jakt_var_867.release_value(); }));
+__jakt_label_770:; __jakt_var_866.release_value(); }));
 }
 else {
 return JaktInternal::ExplicitValue((TRY((DynamicArray<types::Value>::create_with({})))));
@@ -732,8 +619,8 @@ DeprecatedString const contents = ((contents_module_file_path_).template get<0>(
 DeprecatedString const module_file_path = ((contents_module_file_path_).template get<1>());
 
 jakt__path::Path const path = TRY((((binary_dir).join(file))));
-auto __jakt_var_869 = [&]() -> ErrorOr<void> { return TRY((utility::write_to_file(contents,((path).to_string())))), ErrorOr<void>{}; }();
-if (__jakt_var_869.is_error()) {auto error = __jakt_var_869.release_error();
+auto __jakt_var_868 = [&]() -> ErrorOr<void> { return TRY((utility::write_to_file(contents,((path).to_string())))), ErrorOr<void>{}; }();
+if (__jakt_var_868.is_error()) {auto error = __jakt_var_868.release_error();
 {
 warnln(Jakt::DeprecatedString("Error: Could not write to file: {} ({})"sv),file,error);
 return (static_cast<i64>(1LL));
@@ -752,12 +639,12 @@ TRY((((depfile_builder).append('\n'))));
 }
 
 if (((generate_depfile).has_value())){
-auto __jakt_var_870 = [&]() -> ErrorOr<void> {{
+auto __jakt_var_869 = [&]() -> ErrorOr<void> {{
 TRY((utility::write_to_file(TRY((((depfile_builder).to_string()))),(generate_depfile.value()))));
 }
 
 ;return {};}();
-if (__jakt_var_870.is_error()) {auto error = __jakt_var_870.release_error();{
+if (__jakt_var_869.is_error()) {auto error = __jakt_var_869.release_error();{
 warnln(Jakt::DeprecatedString("Error: Could not write to file list ({})"sv),error);
 return (static_cast<i64>(1LL));
 }
@@ -820,20 +707,20 @@ JaktInternal::DynamicArray<DeprecatedString> extra_compiler_flags = (TRY((Dynami
 if (ak_stdlib){
 TRY((((extra_compiler_flags).push(Jakt::DeprecatedString("-DJAKT_USING_AK_AS_STANDARD_LIBRARY=1"sv)))));
 }
-auto __jakt_var_872 = [&]() -> ErrorOr<void> { return TRY((((builder).build_all(binary_dir,(([cxx_compiler_path, runtime_path, extra_include_paths, optimize, extra_compiler_flags](DeprecatedString input_filename, DeprecatedString output_filename) -> ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> {
+auto __jakt_var_871 = [&]() -> ErrorOr<void> { return TRY((((builder).build_all(binary_dir,(([cxx_compiler_path, runtime_path, extra_include_paths, optimize, extra_compiler_flags](DeprecatedString input_filename, DeprecatedString output_filename) -> ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> {
 {
 return (TRY((jakt__platform__unknown_compiler::run_compiler(cxx_compiler_path,input_filename,output_filename,runtime_path,extra_include_paths,(TRY((DynamicArray<DeprecatedString>::create_with({})))),(TRY((DynamicArray<DeprecatedString>::create_with({})))),optimize,extra_compiler_flags))));
 }
 }
 )))))), ErrorOr<void>{}; }();
-if (__jakt_var_872.is_error()) {{
+if (__jakt_var_871.is_error()) {{
 return (static_cast<i64>(1LL));
 }
 }
 ;
 if (((link_archive).has_value())){
-auto __jakt_var_874 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_archive(archiver_path.value_or_lazy_evaluated([&] { return Jakt::DeprecatedString("ar"sv); }),(link_archive.value()))))), ErrorOr<void>{}; }();
-if (__jakt_var_874.is_error()) {{
+auto __jakt_var_873 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_archive(archiver_path.value_or_lazy_evaluated([&] { return Jakt::DeprecatedString("ar"sv); }),(link_archive.value()))))), ErrorOr<void>{}; }();
+if (__jakt_var_873.is_error()) {{
 return (static_cast<i64>(1LL));
 }
 }
@@ -880,8 +767,8 @@ if ((false && (TRY((((TRY((jakt__path::Path::from_string(cxx_compiler_path)))).b
 TRY((((extra_arguments).push(Jakt::DeprecatedString("/link"sv)))));
 TRY((((extra_arguments).push(Jakt::DeprecatedString("/subsystem:console"sv)))));
 }
-auto __jakt_var_876 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_executable(cxx_compiler_path,output_filename,extra_arguments)))), ErrorOr<void>{}; }();
-if (__jakt_var_876.is_error()) {{
+auto __jakt_var_875 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_executable(cxx_compiler_path,output_filename,extra_arguments)))), ErrorOr<void>{}; }();
+if (__jakt_var_875.is_error()) {{
 return (static_cast<i64>(1LL));
 }
 }
@@ -892,8 +779,122 @@ return (static_cast<i64>(1LL));
 if (run_executable){
 return (system(((output_filename).characters())));
 }
+return (static_cast<i64>(0LL));
 }
 return 0;
+}
+
+DeprecatedString usage() {
+{
+return (Jakt::DeprecatedString("usage: jakt [-h] [OPTIONS] <filename>"sv));
+}
+}
+
+DeprecatedString help() {
+{
+DeprecatedString output = Jakt::DeprecatedString("Flags:\n"sv);
+(output += Jakt::DeprecatedString("  -h,--help\t\t\t\tPrint this help and exit.\n"sv));
+(output += Jakt::DeprecatedString("  -O\t\t\t\t\tBuild an optimized executable.\n"sv));
+(output += Jakt::DeprecatedString("  -dl\t\t\t\t\tPrint debug info for the lexer.\n"sv));
+(output += Jakt::DeprecatedString("  -dp\t\t\t\t\tPrint debug info for the parser.\n"sv));
+(output += Jakt::DeprecatedString("  -dt\t\t\t\t\tPrint debug info for the typechecker.\n"sv));
+(output += Jakt::DeprecatedString("  -S,--emit-cpp-source-only\t\tOnly output source (do not build).\n"sv));
+(output += Jakt::DeprecatedString("  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"sv));
+(output += Jakt::DeprecatedString("  --runtime-library-path PATH\t\tSpecify the path to the runtime library.\n"sv));
+(output += Jakt::DeprecatedString("  -J,--jobs NUMBER\t\t\tSpecify the number of jobs to run in parallel, defaults to 2 (1 on windows).\n"sv));
+(output += Jakt::DeprecatedString("  -cr,--compile-run\t\t\tBuild and run an executable file.\n"sv));
+(output += Jakt::DeprecatedString("  -r,--run\t\t\t\tRun the given file without compiling it (all positional arguments after the file name will be passed to main).\n"sv));
+(output += Jakt::DeprecatedString("  -d\t\t\t\t\tInsert debug statement spans in generated C++ code.\n"sv));
+(output += Jakt::DeprecatedString("  --debug-print\t\t\t\tOutput debug print.\n"sv));
+(output += Jakt::DeprecatedString("  -p,--prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n"sv));
+(output += Jakt::DeprecatedString("  -c,--check-only\t\t\tOnly check the code for errors.\n"sv));
+(output += Jakt::DeprecatedString("  -j,--json-errors\t\t\tEmit machine-readable (JSON) errors.\n"sv));
+(output += Jakt::DeprecatedString("  -H,--type-hints\t\t\tEmit machine-readable type hints (for IDE integration).\n"sv));
+(output += Jakt::DeprecatedString("  -f,--format\t\t\t\tFormat a file or directory and output the result.\n"sv));
+(output += Jakt::DeprecatedString("  -fi,--format-inplace\t\t\tFormat a file or directory and save the result inplace.\n"sv));
+(output += Jakt::DeprecatedString("  -fd,--format-debug\t\t\tOutput debug info for the formatter.\n"sv));
+(output += Jakt::DeprecatedString("  -fr,--format-range\t\t\tEmit part of the document with formatting applied.\n"sv));
+(output += Jakt::DeprecatedString("  --try-hints\t\t\t\tEmit machine-readable try hints (for IDE integration).\n"sv));
+(output += Jakt::DeprecatedString("  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"sv));
+(output += Jakt::DeprecatedString("  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"sv));
+(output += Jakt::DeprecatedString("\nOptions:\n"sv));
+(output += Jakt::DeprecatedString("  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\t\t\t\tDefaults to clang-format\n"sv));
+(output += Jakt::DeprecatedString("  -D,--dot-clang-format-path PATH\tPath to the .clang-format file to use.\n\t\t\t\t\tDefaults to none, invoking clangs default .clang-format file handling.\n"sv));
+(output += Jakt::DeprecatedString("  -R,--runtime-path PATH\t\tPath of the Jakt runtime headers.\n\t\t\t\t\tDefaults to $PWD/runtime.\n"sv));
+(output += Jakt::DeprecatedString("  -B,--binary-dir PATH\t\t\tOutput directory for compiled files.\n\t\t\t\t\tDefaults to $PWD/build.\n"sv));
+(output += Jakt::DeprecatedString("  -C,--cxx-compiler-path PATH\t\tPath of the C++ compiler to use when compiling the generated sources.\n\t\t\t\t\tDefaults to clang++.\n"sv));
+(output += Jakt::DeprecatedString("  -I PATH\t\t\t\tAdd PATH to compiler's include list. Can be specified multiple times.\n"sv));
+(output += Jakt::DeprecatedString("  -L PATH\t\t\t\tAdd PATH to linker's search list. Can be specified multiple times.\n"sv));
+(output += Jakt::DeprecatedString("  -l,--link-with LIB\t\t\tLink executable with LIB. Can be specified multiple times.\n"sv));
+(output += Jakt::DeprecatedString("  -o,--output-filename FILE\t\tName of the output binary.\n\t\t\t\t\tDefaults to the input-filename without the extension.\n"sv));
+(output += Jakt::DeprecatedString("  -g,--goto-def INDEX\t\t\tReturn the span for the definition at index.\n"sv));
+(output += Jakt::DeprecatedString("  -t,--goto-type-def INDEX\t\tReturn the span for the type definition at index.\n"sv));
+(output += Jakt::DeprecatedString("  -e,--hover INDEX\t\t\tReturn the type of element at index.\n"sv));
+(output += Jakt::DeprecatedString("  -m,--completions INDEX\t\tReturn dot completions at index.\n"sv));
+(output += Jakt::DeprecatedString("  --create NAME\t\t\t\tCreate sample project in $PWD/NAME\n"sv));
+(output += Jakt::DeprecatedString("  --ak-is-my-only-stdlib\t\tForget about interop, AK is the one and only STL.\n"sv));
+return (output);
+}
+}
+
+ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(DeprecatedString const range,size_t const input_file_length) {
+{
+JaktInternal::DynamicArray<DeprecatedString> const parts = ((range).split(':'));
+if (((parts).is_empty())){
+return (FormatRange(static_cast<size_t>(0ULL),input_file_length));
+}
+JaktInternal::Optional<u32> const start_input = ((((parts)[static_cast<i64>(0LL)])).to_uint());
+if ((!(((start_input).has_value())))){
+return (JaktInternal::OptionalNone());
+}
+size_t const start = (infallible_integer_cast<size_t>(((start_input.value()))));
+size_t const end = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<JaktInternal::Optional<FormatRange>>>{
+auto __jakt_enum_value = (((parts).size()));
+if (__jakt_enum_value == static_cast<size_t>(1ULL)) {
+return JaktInternal::ExplicitValue(input_file_length);
+}
+else if (__jakt_enum_value == static_cast<size_t>(2ULL)) {
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_876; {
+JaktInternal::Optional<u32> const end_input = ((((parts)[static_cast<i64>(1LL)])).to_uint());
+if ((!(((end_input).has_value())))){
+return (JaktInternal::OptionalNone());
+}
+__jakt_var_876 = (infallible_integer_cast<size_t>(((end_input.value())))); goto __jakt_label_771;
+
+}
+__jakt_label_771:; __jakt_var_876.release_value(); }));
+}
+else {
+{
+return (JaktInternal::OptionalNone());
+}
+}
+}()))
+;
+return (FormatRange(start,end));
+}
+}
+
+ErrorOr<DeprecatedString> indent(size_t const level) {
+{
+DeprecatedString output = Jakt::DeprecatedString(""sv);
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(level)});
+for (;;){
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+(output += Jakt::DeprecatedString("    "sv));
+}
+
+}
+}
+
+return (output);
+}
 }
 
 ErrorOr<DeprecatedString> FormatRange::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("FormatRange("sv));{

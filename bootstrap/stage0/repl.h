@@ -39,10 +39,10 @@ ErrorOr<DeprecatedString> debug_description() const;
 struct Editor {
   public:
 FILE* standard_input_file;char* line_pointer;DeprecatedString prompt;static ErrorOr<repl::Editor> create(DeprecatedString const prompt);
-void destroy();
 Editor(FILE* a_standard_input_file, char* a_line_pointer, DeprecatedString a_prompt);
 
 ErrorOr<repl::LineResult> get_line();
+void destroy();
 ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt

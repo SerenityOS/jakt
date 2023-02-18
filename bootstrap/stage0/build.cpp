@@ -8,36 +8,6 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("pool: {}", pool));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-ErrorOr<void> build::Builder::link_into_archive(DeprecatedString const archiver,DeprecatedString const archive_filename) {
-{
-JaktInternal::DynamicArray<DeprecatedString> args = (TRY((DynamicArray<DeprecatedString>::create_with({archiver, Jakt::DeprecatedString("cr"sv), archive_filename}))));
-{
-JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).linked_files)).iterator());
-for (;;){
-JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-DeprecatedString file = (_magic_value.value());
-{
-TRY((((args).push(file))));
-}
-
-}
-}
-
-size_t const id = TRY((((((*this).pool)).run(args))));
-TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
-if (((((((((*this).pool)).status(id)).value())).exit_code) != static_cast<i32>(0))){
-warnln(Jakt::DeprecatedString("Error: Linking failed"sv));
-return Error::from_errno(static_cast<i32>(1));
-}
-}
-return {};
-}
-
-build::Builder::Builder(JaktInternal::DynamicArray<DeprecatedString> a_linked_files, JaktInternal::DynamicArray<DeprecatedString> a_files_to_compile, build::ParallelExecutionPool a_pool) :linked_files(move(a_linked_files)), files_to_compile(move(a_files_to_compile)), pool(move(a_pool)){}
-
 ErrorOr<void> build::Builder::link_into_executable(DeprecatedString const cxx_compiler_path,DeprecatedString const output_filename,JaktInternal::DynamicArray<DeprecatedString> const extra_arguments) {
 {
 JaktInternal::DynamicArray<DeprecatedString> args = (TRY((DynamicArray<DeprecatedString>::create_with({cxx_compiler_path, Jakt::DeprecatedString("-o"sv), output_filename}))));
@@ -86,6 +56,36 @@ ErrorOr<build::Builder> build::Builder::for_building(JaktInternal::DynamicArray<
 return (build::Builder((TRY((DynamicArray<DeprecatedString>::create_with({})))),files,TRY((build::ParallelExecutionPool::create(max_concurrent)))));
 }
 }
+
+ErrorOr<void> build::Builder::link_into_archive(DeprecatedString const archiver,DeprecatedString const archive_filename) {
+{
+JaktInternal::DynamicArray<DeprecatedString> args = (TRY((DynamicArray<DeprecatedString>::create_with({archiver, Jakt::DeprecatedString("cr"sv), archive_filename}))));
+{
+JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).linked_files)).iterator());
+for (;;){
+JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+DeprecatedString file = (_magic_value.value());
+{
+TRY((((args).push(file))));
+}
+
+}
+}
+
+size_t const id = TRY((((((*this).pool)).run(args))));
+TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
+if (((((((((*this).pool)).status(id)).value())).exit_code) != static_cast<i32>(0))){
+warnln(Jakt::DeprecatedString("Error: Linking failed"sv));
+return Error::from_errno(static_cast<i32>(1));
+}
+}
+return {};
+}
+
+build::Builder::Builder(JaktInternal::DynamicArray<DeprecatedString> a_linked_files, JaktInternal::DynamicArray<DeprecatedString> a_files_to_compile, build::ParallelExecutionPool a_pool) :linked_files(move(a_linked_files)), files_to_compile(move(a_files_to_compile)), pool(move(a_pool)){}
 
 ErrorOr<void> build::Builder::build_all(jakt__path::Path const binary_dir,Function<ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>(DeprecatedString, DeprecatedString)> const& compiler_invocation) {
 {
