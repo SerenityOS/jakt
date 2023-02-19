@@ -1,0 +1,4 @@
+/// Expect:
+/// - error: "Expected identifier"
+
+[[ fn

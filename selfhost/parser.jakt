@@ -1967,6 +1967,7 @@ struct Parser {
             }
             else => {
                 .error("Expected identifier", .current().span())
+                .index++
                 return None
             }
         }
