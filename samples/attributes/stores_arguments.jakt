@@ -10,9 +10,9 @@ extern struct Vector<T> {
 
 fn main() {
     let x = 10i32
+    mut v = Vector<i32>()
     {
         let y = 10i32
-        mut v = Vector<i32>()
         v.append(&x)
         v.append(&y)
     }
