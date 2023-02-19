@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "42\n"
+
+struct Struct {
+    i: i64,
+
+    fn method(this) -> i64 {
+        let i_ptr = &.i
+
+        return *i_ptr
+    }
+}
+
+fn main() {
+    let s = Struct(i: 42)
+
+    println("{}", s.method())
+}

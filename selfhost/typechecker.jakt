@@ -5111,7 +5111,7 @@ struct Typechecker {
         spans: []
     )
 
-    fn scope_lifetime_subsumes(this, anon larger: ScopeId?, anon smaller: ScopeId?, checked: &mut {String}) throws -> bool {
+    fn scope_lifetime_subsumes(this, anon larger: ScopeId?, anon smaller: ScopeId?) throws -> bool {
         if not larger.has_value() {
             return false
         }
@@ -5123,34 +5123,31 @@ struct Typechecker {
         let larger_id = larger!
         let smaller_id = smaller!
 
-        if checked.contains(larger_id.to_string()) {
+        // If the scopes are equal, the smaller one is not a subscope.
+        if larger_id.equals(smaller_id) {
             return false
         }
-        checked.add(larger_id.to_string())
 
-        // Just go through the parent chain of the larger scope, if 'smaller' is a child of one (or equal to), assume it's a subscope.
-        mut scope_id = Some(larger_id)
-        mut first = true
-        while scope_id.has_value() {
-            if not first and scope_id!.equals(smaller_id) {
+        // Go through the parent chain of the smaller scope, if 'larger' is a
+        // equal to or a child of the parent, assume the smaller one is a
+        // subscope.
+        mut scope_id = .program.get_scope(smaller_id).parent
+        while(scope_id.has_value()) {
+            if scope_id!.equals(larger_id) {
                 return true
             }
-            first = false
+
             let scope = .program.get_scope(scope_id!)
             for child_scope_id in scope.children {
-                if .scope_lifetime_subsumes(child_scope_id, smaller_id, checked) {
+                if child_scope_id.equals(larger_id) {
                     return true
                 }
             }
+
             scope_id = scope.parent
         }
 
         return false
-    }
-
-    fn scope_lifetime_subsumes(this, anon larger: ScopeId?, anon smaller: ScopeId?) throws -> bool {
-        mut checked: {String} = {}
-        return .scope_lifetime_subsumes(larger, smaller, &mut checked)
     }
 
     fn scope_lifetime_union(this, anon first: ScopeId?, anon second: ScopeId?) throws -> ScopeId? {
