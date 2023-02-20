@@ -2878,16 +2878,13 @@ struct Typechecker {
         }
 
         for method in record.methods {
-            if method.is_override {
-                if not all_virtuals.contains(method.parsed_function.name) {
-                    .error("Missing virtual for override", method.parsed_function.name_span)
-                }
-            } else if all_virtuals.contains(method.parsed_function.name) {
-                .error("Missing override keyword on function that is virtual", method.parsed_function.name_span)
-            }
+            .typecheck_override(
+                method: method
+                parent_scope_id: .get_struct(struct_id).scope_id
+                all_virtuals: all_virtuals
+            )
             .typecheck_method(func: method.parsed_function, parent_id: StructLikeId::Struct(struct_id))
         }
-
 
         {
             let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: true)
@@ -2932,6 +2929,78 @@ struct Typechecker {
         checks.throw_errors(record_decl_span: .get_struct(struct_id).name_span, typechecker: &mut this)
 
         .current_struct_type_id = None
+    }
+
+    fn typecheck_override(mut this, method: ParsedMethod, parent_scope_id: ScopeId, all_virtuals: [String: [CheckedFunction]]) throws {
+        guard method.is_override else {
+            if all_virtuals.contains(method.parsed_function.name) {
+                .error("Missing override keyword on function that is virtual", method.parsed_function.name_span)
+            }
+            return
+        }
+
+        mut overrides = all_virtuals.get(method.parsed_function.name)
+        guard overrides.has_value() else {
+            .error("Missing virtual for override", method.parsed_function.name_span)
+            return
+        }
+
+        let override_target: CheckedFunction? = overrides!.pop()
+        guard override_target.has_value() else {
+            .error("Missing virtual for override", method.parsed_function.name_span)
+            return
+        }
+
+        let method_id = .find_function_matching_signature_in_scope(
+            parent_scope_id: parent_scope_id,
+            prototype: method.parsed_function
+        )
+        let method_function = .get_function(method_id!)
+
+        if not method_function.return_type_id.equals(override_target!.return_type_id) {
+            .error(
+                "Override function return type does not match virtual function",
+                method_function.return_type_span ?? method_function.name_span
+            )
+        }
+
+        if method_function.can_throw != override_target!.can_throw {
+            .error(
+                "Override function throwability does not match virtual function",
+                method_function.name_span
+            )
+        }
+
+        if method_function.params.size() != override_target!.params.size() {
+            .error(
+                "Override function parameters do not match virtual function",
+                method_function.name_span
+            )
+            return
+        }
+
+        for param_index in 0..method_function.params.size() {
+            let method_param = method_function.params[param_index]
+            let virtual_param = override_target!.params[param_index]
+
+            if virtual_param.variable.is_mutable != method_param.variable.is_mutable {
+                .error(
+                    "Override function parameter mutability does not match virtual function",
+                    method_param.variable.definition_span
+                )
+            }
+
+            if param_index == 0 and method_param.variable.name == "this" {
+                continue
+            }
+
+            if not method_param.variable.type_id.equals(virtual_param.variable.type_id) {
+                .error(
+                    "Override function parameter type does not match virtual function",
+                    method_param.variable.type_span ?? method_param.variable.definition_span
+                )
+            }
+        }
     }
 
     fn typecheck_method(mut this, func: ParsedFunction, parent_id: StructLikeId) throws -> FunctionId? {

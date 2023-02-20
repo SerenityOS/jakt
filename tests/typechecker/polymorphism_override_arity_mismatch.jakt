@@ -1,0 +1,20 @@
+/// Expect:
+/// - error: "Override function parameters do not match virtual function\n"
+
+class Parent {
+    public virtual fn solution(this, add: i64) -> i64 {
+        return 1337 + add
+    }
+}
+
+class Child: Parent {
+    public override fn solution(this) -> i64 {
+        return 42
+    }
+}
+
+fn main() {
+    mut child = Child()
+
+    println("{}", child.solution())
+}
