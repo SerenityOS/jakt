@@ -1,0 +1,17 @@
+/// Expect:
+/// - error: "Cannot call unsafe function in safe context"
+
+import extern c "string.h" {
+    extern unsafe fn memcpy(destination: raw i64, source: raw i64, byte_count: usize)
+}
+
+fn main() {
+    mut x = 123
+    mut y = 456
+    memcpy(
+        destination: &raw x
+        source: &raw y
+        byte_count: sizeof i64
+    )
+    println("x: {}, y: {}", x, y)
+}
