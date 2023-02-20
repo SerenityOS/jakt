@@ -1786,13 +1786,30 @@ struct Parser {
                 Extern => {
                     .index++
                     match .current() {
+                        Unsafe => {
+                            .index++
+                            if .current() is Fn {
+                                mut parsed_function = .parse_function(
+                                    FunctionLinkage::External
+                                    Visibility::Public
+                                    is_comptime: false
+                                    is_destructor: false
+                                    is_unsafe: true
+                                )
+                                .apply_attributes(&mut parsed_function, &active_attributes)
+                                active_attributes = []
+                                parsed_namespace.functions.push(parsed_function)
+                            } else {
+                                .error("Expected 'fn' after 'unsafe'", .current().span())
+                            }
+                        }
                         Fn => {
                             mut parsed_function = .parse_function(
                                 FunctionLinkage::External
                                 Visibility::Public
                                 is_comptime: false
                                 is_destructor: false
-                                is_unsafe: false // FIXME: Parse extern unsafe functions.
+                                is_unsafe: false
                             )
                             .apply_attributes(&mut parsed_function, &active_attributes)
                             active_attributes = []
