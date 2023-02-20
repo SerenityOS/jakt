@@ -371,6 +371,7 @@ struct ParsedFunction {
     must_instantiate: bool
     is_comptime: bool
     is_fat_arrow: bool
+    is_unsafe: bool
 
     external_name: String? = None
     deprecated_message: String? = None // if not None, the function is deprecated
@@ -1716,12 +1717,30 @@ struct Parser {
                         .index += 1
                     }
                 }
+                Unsafe => {
+                    .index++
+                    if .current() is Fn {
+                        mut parsed_function = .parse_function(
+                            FunctionLinkage::Internal
+                            Visibility::Public
+                            is_comptime: .current() is Comptime
+                            is_destructor: false
+                            is_unsafe: true
+                        )
+                        .apply_attributes(&mut parsed_function, &active_attributes)
+                        active_attributes = []
+                        parsed_namespace.functions.push(parsed_function)
+                    } else {
+                        .error("Expected 'fn' after 'unsafe'", .current().span())
+                    }
+                }
                 Fn | Comptime => {
                     mut parsed_function = .parse_function(
                         FunctionLinkage::Internal
                         Visibility::Public
                         is_comptime: .current() is Comptime
                         is_destructor: false
+                        is_unsafe: false
                     )
                     .apply_attributes(&mut parsed_function, &active_attributes)
                     active_attributes = []
@@ -1773,6 +1792,7 @@ struct Parser {
                                 Visibility::Public
                                 is_comptime: false
                                 is_destructor: false
+                                is_unsafe: false // FIXME: Parse extern unsafe functions.
                             )
                             .apply_attributes(&mut parsed_function, &active_attributes)
                             active_attributes = []
@@ -2249,6 +2269,7 @@ struct Parser {
                         Visibility::Public
                         is_comptime: false
                         is_destructor: false
+                        is_unsafe: false // FIXME: Parse unsafe trait methods(?)
                         allow_missing_body: true
                     )
                     if method.block.stmts.is_empty() {
@@ -2720,6 +2741,7 @@ struct Parser {
                         is_override: false
                         is_comptime
                         is_destructor: false
+                        is_unsafe: false // FIXME: Parse unsafe methods.
                     )
 
                     methods.push(parsed_method)
@@ -2873,7 +2895,15 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility, is_virtual: false, is_override: false, is_comptime, is_destructor: false)
+                    let parsed_method = .parse_method(
+                        function_linkage
+                        visibility
+                        is_virtual: false
+                        is_override: false
+                        is_comptime
+                        is_destructor: false
+                        is_unsafe: false // FIXME: Parse unsafe methods.
+                    )
 
                     methods.push(parsed_method)
                 }
@@ -3100,7 +3130,15 @@ struct Parser {
                     last_virtual = false
                     last_override = false
 
-                    mut parsed_method = .parse_method(function_linkage, visibility, is_virtual, is_override, is_comptime, is_destructor)
+                    mut parsed_method = .parse_method(
+                        function_linkage
+                        visibility
+                        is_virtual
+                        is_override
+                        is_comptime
+                        is_destructor
+                        is_unsafe: false // FIXME: Parse unsafe methods.
+                    )
                     .apply_attributes(&mut parsed_method, &active_attributes)
                     active_attributes = []
 
@@ -3384,6 +3422,7 @@ struct Parser {
         anon visibility: Visibility
         is_comptime: bool
         is_destructor: bool
+        is_unsafe: bool
         allow_missing_body: bool = false
     ) throws -> ParsedFunction {
         mut parsed_function = ParsedFunction(
@@ -3401,6 +3440,7 @@ struct Parser {
             must_instantiate: false,
             is_comptime
             is_fat_arrow: false
+            is_unsafe
         )
 
         if is_destructor {
@@ -3523,8 +3563,8 @@ struct Parser {
         )
     }
 
-    fn parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_virtual: bool, is_override: bool, is_comptime: bool, is_destructor: bool) throws -> ParsedMethod {
-        mut parsed_function = .parse_function(linkage, visibility, is_comptime, is_destructor)
+    fn parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_virtual: bool, is_override: bool, is_comptime: bool, is_destructor: bool, is_unsafe: bool) throws -> ParsedMethod {
+        mut parsed_function = .parse_function(linkage, visibility, is_comptime, is_destructor, is_unsafe)
 
         if linkage is External {
             parsed_function.must_instantiate = true

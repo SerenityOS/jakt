@@ -1985,6 +1985,7 @@ struct Typechecker {
                 is_comptime: func.is_comptime
                 is_virtual: false
                 is_override: false
+                is_unsafe: func.is_unsafe
             )
 
             let function_id = module.add_function(checked_function)
@@ -2158,6 +2159,7 @@ struct Typechecker {
                 is_comptime: false
                 is_virtual: false
                 is_override: false
+                is_unsafe: false
                 external_name: parsed_record.external_name
             )
 
@@ -2684,6 +2686,7 @@ struct Typechecker {
                                 is_comptime: false
                                 is_virtual: false
                                 is_override: false
+                                is_unsafe: false
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(
@@ -2748,6 +2751,7 @@ struct Typechecker {
                                 is_comptime: false
                                 is_virtual: false
                                 is_override: false
+                                is_unsafe: false
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(
@@ -2799,6 +2803,7 @@ struct Typechecker {
                                 is_comptime: false
                                 is_virtual: false
                                 is_override: false
+                                is_unsafe: false
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(
@@ -3184,6 +3189,7 @@ struct Typechecker {
             is_comptime: parsed_function.is_comptime
             is_virtual: false
             is_override: false
+            is_unsafe: parsed_function.is_unsafe
             external_name: parsed_function.external_name
             deprecated_message: parsed_function.deprecated_message
         )
@@ -4433,6 +4439,7 @@ struct Typechecker {
                 is_comptime: false
                 is_virtual: false
                 is_override: false
+                is_unsafe: false
             )
             mut module = .current_module()
             let function_id = module.add_function(checked_function)
@@ -8431,6 +8438,10 @@ struct Typechecker {
                 let callee = .get_function(resolved_function_id!)
                 callee_throws = callee.can_throw
                 return_type = callee.return_type_id
+
+                if callee.is_unsafe and safety_mode is Safe {
+                    .error("Cannot call unsafe function in safe context", span)
+                }
 
                 // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
                 // type variable. For the moment, we'll just checked to see if it's a type variable.

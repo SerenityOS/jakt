@@ -746,6 +746,7 @@ class CheckedFunction {
     public is_comptime: bool
     public is_virtual: bool
     public is_override: bool
+    public is_unsafe: bool
     public specialization_index: usize? = None
 
     public owner_scope: ScopeId? = None
@@ -784,6 +785,7 @@ class CheckedFunction {
         is_comptime: .is_comptime
         is_virtual: .is_virtual
         is_override: .is_override
+        is_unsafe: .is_unsafe
         specialization_index: .specialization_index
         owner_scope: .owner_scope
         external_name: .external_name
@@ -2363,6 +2365,7 @@ class CheckedProgram {
                     is_comptime: previous_function.is_comptime
                     is_virtual: previous_function.is_virtual
                     is_override: previous_function.is_override
+                    is_unsafe: previous_function.is_unsafe
                 )
 
                 let new_function_id = .modules[module_id.id].add_function(checked_function: new_function)

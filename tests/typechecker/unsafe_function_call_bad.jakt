@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "Cannot call unsafe function in safe context"
+
+unsafe fn hello() {
+    println("I am unsafe")
+}
+
+fn main() {
+    hello()
+}
