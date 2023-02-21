@@ -4512,7 +4512,7 @@ struct Typechecker {
             Negate => {
                 return .typecheck_unary_negate(expr: checked_expr, span, type_id: expr_type_id)
             }
-            Is | IsEnumVariant => {
+            Is | IsEnumVariant | IsNone => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: builtin(BuiltinType::Bool))
             }
             Sizeof => {
@@ -6509,6 +6509,18 @@ struct Typechecker {
                             if not exists and type_id.equals(unknown_type_id()) {
                                 .error(format("Enum variant {} does not exist on {}", name, .type_name(expr_type_id)), span)
                             }
+                        } else if name == "None" {
+                            let optional_struct_id = .find_struct_in_prelude("Optional")
+                            let checked_expr_type = .get_type(checked_expr.type())
+
+                            if not checked_expr_type is GenericInstance(id: optional_struct_id) {
+                                .error(
+                                    "The left-hand side of an `is None` statement must be an optional type"
+                                    checked_expr.span()
+                                )
+                            }
+
+                            operator_is = CheckedUnaryOperator::IsNone
                         } else if type_id.equals(unknown_type_id()) {
                             .error(format("Unknown type or invalid type name: {}", name), span)
                         }

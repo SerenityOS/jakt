@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "The left-hand side of an `is None` statement must be an optional type\n"
+
+fn main() {
+    if 64 is None {
+        println("FAIL")
+    }
+}

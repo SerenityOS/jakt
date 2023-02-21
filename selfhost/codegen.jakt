@@ -2010,6 +2010,7 @@ struct CodeGenerator {
                     }
                     yield "is<" + is_type + ">("
                 }
+                IsNone => "!"
                 TypeCast(cast) => {
                     mut final_type_id = cast.type_id();
                     let type = .program.get_type(final_type_id)
@@ -2095,6 +2096,7 @@ struct CodeGenerator {
                     }
                     yield suffix
                 }
+                IsNone => ").has_value()"
                 RawAddress => "))"
                 else => ")"
             }
