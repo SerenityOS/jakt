@@ -1396,6 +1396,7 @@ enum CheckedUnaryOperator {
     TypeCast(CheckedTypeCast)
     Is(TypeId)
     IsEnumVariant(enum_variant: CheckedEnumVariant, bindings: [CheckedEnumVariantBinding], type_id: TypeId)
+    IsNone
     Sizeof(TypeId)
 }
 
