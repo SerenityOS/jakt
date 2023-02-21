@@ -2,8 +2,8 @@ include(FetchContent)
 
 FetchContent_Declare(Serenity
     GIT_REPOSITORY https://github.com/serenityos/serenity.git
-    GIT_TAG origin/master
-    GIT_SHALLOW TRUE
+    GIT_TAG 33e87d16271bc09ae63456e890af556b65a2f1cd # FIXME: Issue 1385, revert and restore shallow clone
+    GIT_SHALLOW FALSE
     SOURCE_DIR serenity
     EXCLUDE_FROM_ALL
 )
