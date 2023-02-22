@@ -2096,7 +2096,7 @@ struct CodeGenerator {
                     }
                     yield suffix
                 }
-                IsNone => ").has_value()"
+                IsSome | IsNone => ").has_value()"
                 RawAddress => "))"
                 else => ")"
             }

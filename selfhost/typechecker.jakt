@@ -4512,7 +4512,7 @@ struct Typechecker {
             Negate => {
                 return .typecheck_unary_negate(expr: checked_expr, span, type_id: expr_type_id)
             }
-            Is | IsEnumVariant | IsNone => {
+            Is | IsEnumVariant | IsSome | IsNone => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: builtin(BuiltinType::Bool))
             }
             Sizeof => {
@@ -4798,7 +4798,14 @@ struct Typechecker {
             .error("Else block of guard must either `return`, `break`, `continue`, or `throw`", span) // FIXME: better span?
         }
 
-        let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(condition: expr, acc: None, then_block: remaining_code, else_statement: ParsedStatement::Block(block: else_block, span), span)
+        let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
+            condition: expr
+            acc: None
+            then_block: remaining_code
+            else_statement: ParsedStatement::Block(block: else_block, span)
+            scope_id
+            span
+        )
         let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
         if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", new_condition.span())
@@ -5062,46 +5069,89 @@ struct Typechecker {
         return .typecheck_statement(rewritten_statement, scope_id, safety_mode)
     }
 
-    fn expand_context_for_bindings(mut this, condition: ParsedExpression, acc: ParsedExpression?, then_block: ParsedBlock?, else_statement: ParsedStatement?, span: Span) throws -> (ParsedExpression, ParsedBlock?, ParsedStatement?) {
+    fn expand_context_for_bindings(
+        mut this
+        condition: ParsedExpression
+        acc: ParsedExpression?
+        then_block: ParsedBlock?
+        else_statement: ParsedStatement?
+        scope_id: ScopeId
+        span: Span
+    ) throws -> (ParsedExpression, ParsedBlock?, ParsedStatement?) {
         match condition {
             BinaryOp(lhs, op, rhs) => {
                 if op is LogicalAnd {
-                    let (rhs_condition, rhs_then_block, rhs_else_statement) = .expand_context_for_bindings(condition: rhs, acc, then_block, else_statement, span)
+                    let (rhs_condition, rhs_then_block, rhs_else_statement) = .expand_context_for_bindings(
+                        condition: rhs
+                        acc
+                        then_block
+                        else_statement
+                        scope_id
+                        span
+                    )
                     mut accumulated_condition = rhs_condition
-                    return .expand_context_for_bindings(condition: lhs, acc: accumulated_condition, then_block: rhs_then_block, else_statement: rhs_else_statement, span)
+                    return .expand_context_for_bindings(
+                        condition: lhs
+                        acc: accumulated_condition
+                        then_block: rhs_then_block
+                        else_statement: rhs_else_statement
+                        scope_id
+                        span
+                    )
                 }
             }
             UnaryOp(expr, op) => {
-                match op {
-                    IsEnumVariant(inner, bindings) => {
-                        let unary_op_single_condition = ParsedExpression::UnaryOp(expr, op: UnaryOperator::Is(inner), span)
-                        mut outer_if_stmts: [ParsedStatement] = []
-                        for binding in bindings {
-                            let var = ParsedVarDecl(
-                                name: binding.binding
-                                parsed_type: ParsedType::Empty
-                                is_mutable: false
-                                inlay_span: None
-                                span: binding.span
-                            )
+                if op is IsEnumVariant(inner, bindings) {
+                    let unary_op_single_condition = ParsedExpression::UnaryOp(expr, op: UnaryOperator::Is(inner), span)
+                    mut outer_if_stmts: [ParsedStatement] = []
+
+                    let ignore_errors_state = .ignore_errors
+                    .ignore_errors = true
+                    let pre_checked_unary_op = .typecheck_expression(
+                        unary_op_single_condition,
+                        scope_id,
+                        safety_mode: SafetyMode::Safe,
+                        type_hint: None
+                    )
+                    .ignore_errors = ignore_errors_state
+
+                    for binding in bindings {
+                        let var = ParsedVarDecl(
+                            name: binding.binding
+                            parsed_type: ParsedType::Empty
+                            is_mutable: false
+                            inlay_span: None
+                            span: binding.span
+                        )
+                        if pre_checked_unary_op is UnaryOp(op) and op is IsSome {
+                            let init = ParsedExpression::ForcedUnwrap(expr, span)
+                            outer_if_stmts.push(ParsedStatement::VarDecl(var, init, span))
+                        } else {
                             let enum_variant_arg = ParsedExpression::EnumVariantArg(expr, arg: binding, enum_variant: inner, span)
                             outer_if_stmts.push(ParsedStatement::VarDecl(var, init: enum_variant_arg, span))
                         }
-                        mut inner_condition = condition
-                        if then_block.has_value() {
-                            if acc.has_value() {
-                                inner_condition = acc!
-                                outer_if_stmts.push(ParsedStatement::If(condition: inner_condition, then_block: then_block!, else_statement, span))
-                            } else {
-                                outer_if_stmts.push_values(&then_block!.stmts)
-                            }
-                        }
-
-                        let new_then_block = ParsedBlock(stmts: outer_if_stmts)
-                        return .expand_context_for_bindings(condition: unary_op_single_condition, acc: None, then_block: new_then_block, else_statement, span)
-
                     }
-                    else => {}
+                    mut inner_condition = condition
+                    if then_block.has_value() {
+                        if acc.has_value() {
+                            inner_condition = acc!
+                            outer_if_stmts.push(
+                                ParsedStatement::If(condition: inner_condition, then_block: then_block!, else_statement, span)
+                            )
+                        } else {
+                            outer_if_stmts.push_values(&then_block!.stmts)
+                        }
+                    }
+
+                    let new_then_block = ParsedBlock(stmts: outer_if_stmts)
+                    return .expand_context_for_bindings(
+                        condition: unary_op_single_condition
+                        acc: None
+                        then_block: new_then_block
+                        else_statement
+                        scope_id
+                        span
+                    )
                 }
             }
             else => {}
@@ -5114,7 +5164,14 @@ struct Typechecker {
     }
 
     fn typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(condition, acc: None, then_block, else_statement, span)
+        let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
+            condition
+            acc: None
+            then_block
+            else_statement
+            scope_id
+            span
+        )
         let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
 
         if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
@@ -5639,6 +5696,7 @@ struct Typechecker {
             acc: None
             then_block: None
             else_statement: None
+            scope_id
             span
         )
         let checked_expr = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint, span)
@@ -6502,25 +6560,40 @@ struct Typechecker {
                                     | WithValue(name: var_name) => var_name == name
                                 }
                                 if exists {
-                                    operator_is = CheckedUnaryOperator::IsEnumVariant(enum_variant: variant, bindings: [], type_id: expr_type_id)
+                                    operator_is = CheckedUnaryOperator::IsEnumVariant(
+                                        enum_variant: variant,
+                                        bindings: [],
+                                        type_id: expr_type_id
+                                    )
                                     break
                                 }
                             }
                             if not exists and type_id.equals(unknown_type_id()) {
-                                .error(format("Enum variant {} does not exist on {}", name, .type_name(expr_type_id)), span)
+                                .error(
+                                    format("Enum variant {} does not exist on {}", name, .type_name(expr_type_id)),
+                                    span
+                                )
                             }
-                        } else if name == "None" {
+                        } else if name == "Some" or name == "None" {
                             let optional_struct_id = .find_struct_in_prelude("Optional")
                             let checked_expr_type = .get_type(checked_expr.type())
 
                             if not checked_expr_type is GenericInstance(id: optional_struct_id) {
                                 .error(
-                                    "The left-hand side of an `is None` statement must have a None variant"
+                                    format(
+                                        "The left-hand side of an `is {}` statement must have a {} variant",
+                                        name,
+                                        name
+                                    ),
                                     checked_expr.span()
                                 )
                             }
 
-                            operator_is = CheckedUnaryOperator::IsNone
+                            operator_is = match name {
+                                "Some" => CheckedUnaryOperator::IsSome
+                                "None" => CheckedUnaryOperator::IsNone
+                                else => { panic("unreachable") }
+                            }
                         } else if type_id.equals(unknown_type_id()) {
                             .error(format("Unknown type or invalid type name: {}", name), span)
                         }
@@ -7788,7 +7861,14 @@ struct Typechecker {
                                 }
                                 is_value_match = true
 
-                                let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(condition: expr, acc: None, then_block: None, else_statement: None, span)
+                                let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
+                                    condition: expr
+                                    acc: None
+                                    then_block: None
+                                    else_statement: None
+                                    scope_id
+                                    span
+                                )
                                 let checked_expression = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: Some(subject_type_id), span)
 
                                 if not checked_expression.to_number_constant(program: .program).has_value() {

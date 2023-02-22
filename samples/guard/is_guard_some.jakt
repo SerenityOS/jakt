@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "hello there: 5\n"
+
+fn main() -> c_int {
+    let foo = Some(5)
+
+    guard foo is Some(i) else {
+        println("foo is not a Some")
+        return 1
+    }
+
+    println("hello there: {}", i)
+    return 0
+}
