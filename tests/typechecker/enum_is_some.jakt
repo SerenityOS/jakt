@@ -1,0 +1,15 @@
+/// Expect:
+/// - output: "PASS\n"
+
+enum Foo {
+    Bar
+    Some(i32)
+}
+
+fn main() {
+    let foo = Foo::Some(42)
+
+    if foo is Some(x) and x == 42 {
+        println("PASS")
+    }
+}

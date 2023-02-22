@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "The left-hand side of an `is Some` statement must have a Some variant\n"
+
+fn main() {
+    if 64 is Some {
+        println("FAIL")
+    }
+}
