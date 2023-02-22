@@ -6515,7 +6515,7 @@ struct Typechecker {
 
                             if not checked_expr_type is GenericInstance(id: optional_struct_id) {
                                 .error(
-                                    "The left-hand side of an `is None` statement must be an optional type"
+                                    "The left-hand side of an `is None` statement must have a None variant"
                                     checked_expr.span()
                                 )
                             }

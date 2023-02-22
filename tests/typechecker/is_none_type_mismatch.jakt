@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "The left-hand side of an `is None` statement must be an optional type\n"
+/// - error: "The left-hand side of an `is None` statement must have a None variant\n"
 
 fn main() {
     if 64 is None {
