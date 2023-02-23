@@ -819,10 +819,14 @@ enum UnaryOperator {
 
 struct EnumVariantPatternArgument {
     name: String?
+    name_span: Span?
     binding: String
     span: Span
     is_reference: bool
     is_mutable: bool
+
+    fn name_in_enum(this) -> String => .name ?? .binding
+    fn name_in_enum_span(this) -> Span => .name_span ?? .span
 
     fn equals(this, anon rhs_variant_pattern_argument: EnumVariantPatternArgument) -> bool {
         if .binding != rhs_variant_pattern_argument.binding {
@@ -5511,6 +5515,7 @@ struct Parser {
                         .index++
                     }
                     Identifier(name: arg_name) => {
+                        let arg_name_span = .current().span()
                         if .peek(1) is Colon {
                             .index += 2
                             if .current() is Identifier(name: arg_binding) {
@@ -5518,6 +5523,7 @@ struct Parser {
                                 .index++
                                 variant_arguments.push(EnumVariantPatternArgument(
                                     name: Some(arg_name)
+                                    name_span: Some(arg_name_span)
                                     binding: arg_binding
                                     span
                                     is_reference
@@ -5529,6 +5535,7 @@ struct Parser {
                         } else {
                             variant_arguments.push(EnumVariantPatternArgument(
                                 name: None
+                                name_span: None
                                 binding: arg_name
                                 span: .current().span()
                                 is_reference

@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Enum variant ‘A’ doesn't have field with name ‘foo’"
+
+enum E {
+    A(x: i64)
+}
+
+fn main() {
+    let e = E::A(x: 5)
+    if e is A(foo: bar) {
+    }
+}
