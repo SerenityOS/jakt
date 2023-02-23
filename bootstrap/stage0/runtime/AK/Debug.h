@@ -238,8 +238,8 @@
 #define JOB_DEBUG 0
 #endif
 
-#ifndef JPG_DEBUG
-#define JPG_DEBUG 0
+#ifndef JPEG_DEBUG
+#define JPEG_DEBUG 0
 #endif
 
 #ifndef JS_BYTECODE_DEBUG

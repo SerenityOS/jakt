@@ -152,6 +152,22 @@ public:
         return *this;
     }
 
+    template<typename U>
+    ALWAYS_INLINE Optional& operator=(Optional<U> const& other)
+    requires(!IsSpecializationOf<T, Optional> && !IsSame<T, U> && IsConstructible<T, U &&>
+#ifdef AK_HAS_CONDITIONALLY_TRIVIAL
+        && (!IsTriviallyCopyConstructible<T> || !IsTriviallyDestructible<T>)
+#endif
+    )
+    {
+        clear();
+        m_has_value = other.has_value();
+        if (other.has_value()) {
+            new (&m_storage) T(other.value());
+        }
+        return *this;
+    }
+
     ALWAYS_INLINE Optional& operator=(Optional&& other)
     {
         if (this != &other) {
@@ -160,6 +176,18 @@ public:
             if (other.has_value()) {
                 new (&m_storage) T(other.release_value());
             }
+        }
+        return *this;
+    }
+
+    template<typename U>
+    requires(!IsSpecializationOf<T, Optional> && !IsSame<T, U> && IsConstructible<T, U &&>)
+    ALWAYS_INLINE Optional& operator=(Optional<U>&& other)
+    {
+        clear();
+        m_has_value = other.has_value();
+        if (other.has_value()) {
+            new (&m_storage) T(other.release_value());
         }
         return *this;
     }

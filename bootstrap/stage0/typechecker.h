@@ -205,8 +205,8 @@ ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_call(parser:
 ErrorOr<JaktInternal::DynamicArray<types::FunctionId>> resolve_call(parser::ParsedCall const call, JaktInternal::DynamicArray<types::ResolvedNamespace> namespaces, utility::Span const span, types::ScopeId const scope_id, bool const must_be_enum_constructor);
 ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_if(NonnullRefPtr<typename parser::ParsedExpression> const condition, parser::ParsedBlock const then_block, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const else_statement, types::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
 ErrorOr<void> check_implicit_constructor_argument_access(types::ScopeId const caller_scope_id, parser::ParsedCall const call, types::CheckedStruct const struct_);
-ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_expression_and_dereference_if_needed(NonnullRefPtr<typename parser::ParsedExpression> const expr, types::ScopeId const scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<types::TypeId> const type_hint, utility::Span const span);
 ErrorOr<void> typecheck_enum(parser::ParsedRecord const record, types::EnumId const enum_id, types::ScopeId const parent_scope_id);
+ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_expression_and_dereference_if_needed(NonnullRefPtr<typename parser::ParsedExpression> const expr, types::ScopeId const scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<types::TypeId> const type_hint, utility::Span const span);
 ErrorOr<JaktInternal::Optional<types::TypeId>> find_type_in_scope(types::ScopeId const scope_id, DeprecatedString const name) const;
 ErrorOr<JaktInternal::Optional<types::CheckedEnumVariant>> get_enum_variant(types::CheckedEnum const enum_, DeprecatedString const variant_name);
 ErrorOr<bool> scope_can_access(types::ScopeId const accessor, types::ScopeId const accessee) const;
@@ -222,12 +222,13 @@ ErrorOr<JaktInternal::Optional<types::FunctionId>> typecheck_method(parser::Pars
 ErrorOr<void> typecheck_extern_import(parser::ParsedExternImport const import_, types::ScopeId const scope_id);
 types::BlockControlFlow statement_control_flow(NonnullRefPtr<typename types::CheckedStatement> const statement) const;
 ErrorOr<JaktInternal::Optional<types::StructId>> find_struct_in_scope(types::ScopeId const scope_id, DeprecatedString const name) const;
-ErrorOr<JaktInternal::Optional<parser::ParsedNamespace>> lex_and_parse_file_contents(utility::FileId const file_id);
+ErrorOr<void> typecheck_override(parser::ParsedMethod const method, types::ScopeId const parent_scope_id, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>>> const all_virtuals);
 ErrorOr<void> check_that_type_doesnt_contain_reference(types::TypeId const type_id, utility::Span const span);
+ErrorOr<JaktInternal::Optional<parser::ParsedNamespace>> lex_and_parse_file_contents(utility::FileId const file_id);
 ErrorOr<bool> find_and_import_name_from_scope(DeprecatedString const from_name, utility::Span const from_span, DeprecatedString const to_name, utility::Span const to_span, types::ScopeId const from_scope_id, types::ScopeId const into_scope_id, typechecker::ImportRestrictions const allow);
 ErrorOr<bool> validate_argument_label(types::CheckedParameter const param, DeprecatedString const label, utility::Span const span, NonnullRefPtr<typename parser::ParsedExpression> const expr, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const default_value);
 ErrorOr<bool> add_enum_to_scope(types::ScopeId const scope_id, DeprecatedString const name, types::EnumId const enum_id, utility::Span const span);
-ErrorOr<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>>> expand_context_for_bindings(NonnullRefPtr<typename parser::ParsedExpression> const condition, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const acc, JaktInternal::Optional<parser::ParsedBlock> const then_block, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const else_statement, utility::Span const span);
+ErrorOr<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>>> expand_context_for_bindings(NonnullRefPtr<typename parser::ParsedExpression> const condition, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const acc, JaktInternal::Optional<parser::ParsedBlock> const then_block, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const else_statement, types::ScopeId const scope_id, utility::Span const span);
 ErrorOr<JaktInternal::Optional<types::TraitId>> find_trait_in_scope(types::ScopeId const scope_id, DeprecatedString const name) const;
 NonnullRefPtr<types::Module> current_module() const;
 types::ScopeId root_scope_id() const;
@@ -253,7 +254,6 @@ ErrorOr<JaktInternal::Optional<typechecker::TraitImplementationDescriptor>> find
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_try(NonnullRefPtr<typename parser::ParsedExpression> const expr, JaktInternal::Optional<parser::ParsedBlock> const catch_block, JaktInternal::Optional<DeprecatedString> const catch_name, types::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span, JaktInternal::Optional<types::TypeId> const type_hint);
 ErrorOr<types::TypeId> typecheck_typename(NonnullRefPtr<typename parser::ParsedType> const parsed_type, types::ScopeId const scope_id, JaktInternal::Optional<DeprecatedString> const name);
 types::TypeId infer_function_return_type(types::CheckedBlock const block) const;
-ErrorOr<bool> scope_lifetime_subsumes(JaktInternal::Optional<types::ScopeId> const larger, JaktInternal::Optional<types::ScopeId> const smaller, JaktInternal::Set<DeprecatedString>& checked) const;
 ErrorOr<bool> scope_lifetime_subsumes(JaktInternal::Optional<types::ScopeId> const larger, JaktInternal::Optional<types::ScopeId> const smaller) const;
 ErrorOr<DeprecatedString> debug_description() const;
 };struct ImportRestrictions {

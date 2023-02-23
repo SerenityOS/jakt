@@ -90,6 +90,7 @@ public:
     u16 const* data() const { return m_code_units.data(); }
     u16 code_unit_at(size_t index) const;
     u32 code_point_at(size_t index) const;
+    u32 code_point_at(size_t index, size_t& external_iterator) const;
 
     size_t code_point_offset_of(size_t code_unit_offset) const;
     size_t code_unit_offset_of(size_t code_point_offset) const;

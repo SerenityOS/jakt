@@ -587,6 +587,8 @@ struct BitwiseNot;
 struct TypeCast;
 struct Is;
 struct IsEnumVariant;
+struct IsSome;
+struct IsNone;
 struct Sizeof;
 }
 struct CheckedUnaryOperator;

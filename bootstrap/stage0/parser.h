@@ -591,7 +591,9 @@ bool equals(parser::UnaryOperator const rhs_op) const;
 };
 struct EnumVariantPatternArgument {
   public:
-JaktInternal::Optional<DeprecatedString> name;DeprecatedString binding;utility::Span span;bool is_reference;bool is_mutable;EnumVariantPatternArgument(JaktInternal::Optional<DeprecatedString> a_name, DeprecatedString a_binding, utility::Span a_span, bool a_is_reference, bool a_is_mutable);
+JaktInternal::Optional<DeprecatedString> name;JaktInternal::Optional<utility::Span> name_span;DeprecatedString binding;utility::Span span;bool is_reference;bool is_mutable;utility::Span name_in_enum_span() const;
+DeprecatedString name_in_enum() const;
+EnumVariantPatternArgument(JaktInternal::Optional<DeprecatedString> a_name, JaktInternal::Optional<utility::Span> a_name_span, DeprecatedString a_binding, utility::Span a_span, bool a_is_reference, bool a_is_mutable);
 
 bool equals(parser::EnumVariantPatternArgument const rhs_variant_pattern_argument) const;
 ErrorOr<DeprecatedString> debug_description() const;
@@ -1097,7 +1099,7 @@ ErrorOr<DeprecatedString> debug_description() const;
 };
 struct ParsedFunction {
   public:
-DeprecatedString name;utility::Span name_span;parser::Visibility visibility;JaktInternal::DynamicArray<parser::ParsedParameter> params;JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;parser::ParsedBlock block;NonnullRefPtr<typename parser::ParsedType> return_type;utility::Span return_type_span;bool can_throw;parser::FunctionType type;parser::FunctionLinkage linkage;bool must_instantiate;bool is_comptime;bool is_fat_arrow;JaktInternal::Optional<DeprecatedString> external_name;JaktInternal::Optional<DeprecatedString> deprecated_message;JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> stores_arguments;ParsedFunction(DeprecatedString a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::DynamicArray<parser::ParsedParameter> a_params, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<typename parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow, JaktInternal::Optional<DeprecatedString> a_external_name, JaktInternal::Optional<DeprecatedString> a_deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> a_stores_arguments);
+DeprecatedString name;utility::Span name_span;parser::Visibility visibility;JaktInternal::DynamicArray<parser::ParsedParameter> params;JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;parser::ParsedBlock block;NonnullRefPtr<typename parser::ParsedType> return_type;utility::Span return_type_span;bool can_throw;parser::FunctionType type;parser::FunctionLinkage linkage;bool must_instantiate;bool is_comptime;bool is_fat_arrow;bool is_unsafe;JaktInternal::Optional<DeprecatedString> external_name;JaktInternal::Optional<DeprecatedString> deprecated_message;JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> stores_arguments;ParsedFunction(DeprecatedString a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::DynamicArray<parser::ParsedParameter> a_params, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<typename parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow, bool a_is_unsafe, JaktInternal::Optional<DeprecatedString> a_external_name, JaktInternal::Optional<DeprecatedString> a_deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> a_stores_arguments);
 
 bool equals(parser::ParsedFunction const other) const;
 ErrorOr<DeprecatedString> debug_description() const;
@@ -1124,7 +1126,7 @@ ErrorOr<parser::ParsedAlias> parse_using();
 ErrorOr<JaktInternal::DynamicArray<parser::ParsedParameter>> parse_function_parameters();
 ErrorOr<JaktInternal::DynamicArray<parser::ParsedMatchCase>> parse_match_cases();
 ErrorOr<JaktInternal::Optional<parser::ParsedAttribute>> parse_attribute();
-ErrorOr<parser::ParsedMethod> parse_method(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_virtual, bool const is_override, bool const is_comptime, bool const is_destructor);
+ErrorOr<parser::ParsedMethod> parse_method(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_virtual, bool const is_override, bool const is_comptime, bool const is_destructor, bool const is_unsafe);
 ErrorOr<parser::ParsedNamespace> parse_namespace();
 ErrorOr<parser::ParsedVarDecl> parse_variable_declaration(bool const is_mutable);
 ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_type_shorthand_set();
@@ -1134,7 +1136,7 @@ ErrorOr<void> inject_token(lexer::Token const token);
 ErrorOr<parser::ParsedRecord> parse_class(parser::DefinitionLinkage const definition_linkage);
 ErrorOr<parser::ParsedExternalTraitImplementation> parse_external_trait_implementation();
 ErrorOr<parser::ParsedMatchPattern> parse_match_pattern();
-ErrorOr<parser::ParsedFunction> parse_function(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_comptime, bool const is_destructor, bool const allow_missing_body);
+ErrorOr<parser::ParsedFunction> parse_function(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_comptime, bool const is_destructor, bool const is_unsafe, bool const allow_missing_body);
 ErrorOr<parser::ParsedExternImport> parse_extern_import(parser::ParsedNamespace& parent);
 ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_typename();
 ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>> parse_struct_class_body(parser::DefinitionLinkage const definition_linkage, parser::Visibility const default_visibility, bool const is_class);
