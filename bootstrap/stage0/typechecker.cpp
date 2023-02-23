@@ -346,7 +346,7 @@ JaktInternal::Optional<types::TypeId> type_hint = JaktInternal::OptionalNone();
 if (((((*this).current_function_id)).has_value())){
 (type_hint = static_cast<JaktInternal::Optional<types::TypeId>>(((((*this).get_function((((*this).current_function_id).value()))))->return_type_id)));
 }
-JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const new_condition_new_then_block_new_else_statement_ = TRY((((*this).expand_context_for_bindings((expr.value()),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),span))));
+JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const new_condition_new_then_block_new_else_statement_ = TRY((((*this).expand_context_for_bindings((expr.value()),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),scope_id,span))));
 NonnullRefPtr<typename parser::ParsedExpression> const new_condition = ((new_condition_new_then_block_new_else_statement_).template get<0>());
 JaktInternal::Optional<parser::ParsedBlock> const new_then_block = ((new_condition_new_then_block_new_else_statement_).template get<1>());
 JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const new_else_statement = ((new_condition_new_then_block_new_else_statement_).template get<2>());
@@ -906,7 +906,7 @@ if ((!(((maybe_enum_variant_constructor).has_value())))){
 bool const can_function_throw = is_boxed;
 types::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope_id,can_function_throw,TRY((__jakt_format(Jakt::DeprecatedString("enum-variant-constructor({}::{})"sv),((enum_).name),((variant).name)))),true))));
 types::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,can_function_throw,TRY((__jakt_format(Jakt::DeprecatedString("enum-variant-constructor-block({}::{})"sv),((enum_).name),((variant).name)))),true))));
-NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(((variant).name),((variant).span), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,TRY((((*this).find_or_add_type_id(TRY((types::Type::template __jakt_create<typename types::Type::Enum>(enum_id))))))),JaktInternal::OptionalNone(),params,TRY((types::FunctionGenerics::__jakt_create(function_scope_id,params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ,types::TypeId::none(),false),can_function_throw, parser::FunctionType { typename parser::FunctionType::ImplicitEnumConstructor() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,function_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
+NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(((variant).name),((variant).span), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,TRY((((*this).find_or_add_type_id(TRY((types::Type::template __jakt_create<typename types::Type::Enum>(enum_id))))))),JaktInternal::OptionalNone(),params,TRY((types::FunctionGenerics::__jakt_create(function_scope_id,params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ,types::TypeId::none(),false),can_function_throw, parser::FunctionType { typename parser::FunctionType::ImplicitEnumConstructor() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,function_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
 types::FunctionId const function_id = TRY((((module)->add_function(checked_function))));
 TRY((((*this).add_function_to_scope(((enum_).scope_id),((variant).name),(TRY((DynamicArray<types::FunctionId>::create_with({function_id})))),((variant).span)))));
 }
@@ -938,7 +938,7 @@ types::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope
 types::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,can_function_throw,TRY((__jakt_format(Jakt::DeprecatedString("enum-variant-constructor-block({}::{})"sv),((enum_).name),((variant).name)))),true))));
 NonnullRefPtr<types::CheckedVariable> const variable = TRY((types::CheckedVariable::__jakt_create(Jakt::DeprecatedString("value"sv),type_id,false,((param).span),JaktInternal::OptionalNone(), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,JaktInternal::OptionalNone())));
 TRY((((params).push(types::CheckedParameter(false,variable,JaktInternal::OptionalNone())))));
-NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(((variant).name),((variant).span), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,TRY((((*this).find_or_add_type_id(TRY((types::Type::template __jakt_create<typename types::Type::Enum>(enum_id))))))),JaktInternal::OptionalNone(),params,TRY((types::FunctionGenerics::__jakt_create(function_scope_id,params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::AlwaysReturns() } ,types::TypeId::none(),false),can_function_throw, parser::FunctionType { typename parser::FunctionType::ImplicitEnumConstructor() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,function_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
+NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(((variant).name),((variant).span), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,TRY((((*this).find_or_add_type_id(TRY((types::Type::template __jakt_create<typename types::Type::Enum>(enum_id))))))),JaktInternal::OptionalNone(),params,TRY((types::FunctionGenerics::__jakt_create(function_scope_id,params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::AlwaysReturns() } ,types::TypeId::none(),false),can_function_throw, parser::FunctionType { typename parser::FunctionType::ImplicitEnumConstructor() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,function_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
 types::FunctionId const function_id = TRY((((module)->add_function(checked_function))));
 TRY((((*this).add_function_to_scope(((enum_).scope_id),((variant).name),(TRY((DynamicArray<types::FunctionId>::create_with({function_id})))),((variant).span)))));
 }
@@ -966,7 +966,7 @@ if ((!(((maybe_enum_variant_constructor).has_value())))){
 bool const can_function_throw = is_boxed;
 types::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope_id,can_function_throw,TRY((__jakt_format(Jakt::DeprecatedString("enum-variant-constructor({}::{})"sv),((enum_).name),((variant).name)))),true))));
 types::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,can_function_throw,TRY((__jakt_format(Jakt::DeprecatedString("enum-variant-constructor-block({}::{})"sv),((enum_).name),((variant).name)))),true))));
-NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(((variant).name),((variant).span), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,TRY((((*this).find_or_add_type_id(TRY((types::Type::template __jakt_create<typename types::Type::Enum>(enum_id))))))),JaktInternal::OptionalNone(),params,TRY((types::FunctionGenerics::__jakt_create(function_scope_id,params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::AlwaysReturns() } ,types::TypeId::none(),false),can_function_throw, parser::FunctionType { typename parser::FunctionType::ImplicitEnumConstructor() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,function_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
+NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(((variant).name),((variant).span), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,TRY((((*this).find_or_add_type_id(TRY((types::Type::template __jakt_create<typename types::Type::Enum>(enum_id))))))),JaktInternal::OptionalNone(),params,TRY((types::FunctionGenerics::__jakt_create(function_scope_id,params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::AlwaysReturns() } ,types::TypeId::none(),false),can_function_throw, parser::FunctionType { typename parser::FunctionType::ImplicitEnumConstructor() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,function_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
 types::FunctionId const function_id = TRY((((module)->add_function(checked_function))));
 TRY((((*this).add_function_to_scope(((enum_).scope_id),((variant).name),(TRY((DynamicArray<types::FunctionId>::create_with({function_id})))),((variant).span)))));
 }
@@ -1824,7 +1824,7 @@ else if ((!(((((parsed_record).definition_linkage)).index() == 1 /* External */)
 bool const constructor_can_throw = ((((parsed_record).record_type)).index() == 1 /* Class */);
 types::ScopeId const function_scope_id = TRY((((*this).create_scope(((struct_).scope_id),constructor_can_throw,TRY((__jakt_format(Jakt::DeprecatedString("generated-constructor({})"sv),((parsed_record).name)))),true))));
 types::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,constructor_can_throw,TRY((__jakt_format(Jakt::DeprecatedString("generated-constructor-block({})"sv),((parsed_record).name)))),true))));
-NonnullRefPtr<types::CheckedFunction> checked_constructor = TRY((types::CheckedFunction::__jakt_create(((parsed_record).name),((parsed_record).name_span), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,struct_type_id,JaktInternal::OptionalNone(),(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),TRY((types::FunctionGenerics::__jakt_create(function_scope_id,(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ,types::TypeId::none(),false),constructor_can_throw, parser::FunctionType { typename parser::FunctionType::ImplicitConstructor() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,function_scope_id,struct_id,true,JaktInternal::OptionalNone(),false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),((parsed_record).external_name),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
+NonnullRefPtr<types::CheckedFunction> checked_constructor = TRY((types::CheckedFunction::__jakt_create(((parsed_record).name),((parsed_record).name_span), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,struct_type_id,JaktInternal::OptionalNone(),(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),TRY((types::FunctionGenerics::__jakt_create(function_scope_id,(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ,types::TypeId::none(),false),constructor_can_throw, parser::FunctionType { typename parser::FunctionType::ImplicitConstructor() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,function_scope_id,struct_id,true,JaktInternal::OptionalNone(),false,false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),((parsed_record).external_name),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
 NonnullRefPtr<types::Module> module = ((*this).current_module());
 types::FunctionId const function_id = TRY((((module)->add_function(checked_constructor))));
 JaktInternal::DynamicArray<types::StructId> const inheritance_chain = TRY((((*this).struct_inheritance_chain(struct_id))));
@@ -2927,7 +2927,7 @@ if (is_enum_match){
 TRY((((*this).error(Jakt::DeprecatedString("Cannot have a value match case in a match expression containing enum matches"sv),((case_).marker_span)))));
 }
 (is_value_match = true);
-JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const new_condition_new_then_block_new_else_statement_ = TRY((((*this).expand_context_for_bindings(expr,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),span))));
+JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const new_condition_new_then_block_new_else_statement_ = TRY((((*this).expand_context_for_bindings(expr,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),scope_id,span))));
 NonnullRefPtr<typename parser::ParsedExpression> const new_condition = ((new_condition_new_then_block_new_else_statement_).template get<0>());
 JaktInternal::Optional<parser::ParsedBlock> const new_then_block = ((new_condition_new_then_block_new_else_statement_).template get<1>());
 JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const new_else_statement = ((new_condition_new_then_block_new_else_statement_).template get<2>());
@@ -5293,6 +5293,18 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 14: {
 {
+return (TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::UnaryOp>(checked_expr,checked_op,span,types::builtin( types::BuiltinType { typename types::BuiltinType::Bool() } )))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 15: {
+{
+return (TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::UnaryOp>(checked_expr,checked_op,span,types::builtin( types::BuiltinType { typename types::BuiltinType::Bool() } )))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 16: {
+{
 return (TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::UnaryOp>(checked_expr,checked_op,span,types::builtin( types::BuiltinType { typename types::BuiltinType::Usize() } )))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6456,7 +6468,7 @@ parser::ParsedFunction const func = ((method).parsed_function);
 types::ScopeId const method_scope_id = TRY((((*this).create_scope(enum_scope_id,((func).can_throw),TRY((__jakt_format(Jakt::DeprecatedString("method({}::{})"sv),((parsed_record).name),((func).name)))),true))));
 types::ScopeId const block_scope_id = TRY((((*this).create_scope(method_scope_id,((func).can_throw),TRY((__jakt_format(Jakt::DeprecatedString("method-block({}::{})"sv),((parsed_record).name),((func).name)))),true))));
 bool const is_generic = ((!(((((parsed_record).generic_parameters)).is_empty()))) || (!(((((func).generic_parameters)).is_empty()))));
-NonnullRefPtr<types::CheckedFunction> checked_function = TRY((types::CheckedFunction::__jakt_create(((func).name),((func).name_span),TRY((((*this).typecheck_visibility(((method).visibility),enum_scope_id)))),types::unknown_type_id(),JaktInternal::OptionalNone(),(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),TRY((types::FunctionGenerics::__jakt_create(method_scope_id,(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ,types::TypeId::none(),false),((func).can_throw),((func).type),((func).linkage),method_scope_id,JaktInternal::OptionalNone(),((!(is_generic)) || is_extern),func,((func).is_comptime),false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
+NonnullRefPtr<types::CheckedFunction> checked_function = TRY((types::CheckedFunction::__jakt_create(((func).name),((func).name_span),TRY((((*this).typecheck_visibility(((method).visibility),enum_scope_id)))),types::unknown_type_id(),JaktInternal::OptionalNone(),(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),TRY((types::FunctionGenerics::__jakt_create(method_scope_id,(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ,types::TypeId::none(),false),((func).can_throw),((func).type),((func).linkage),method_scope_id,JaktInternal::OptionalNone(),((!(is_generic)) || is_extern),func,((func).is_comptime),false,false,((func).is_unsafe),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
 types::FunctionId const function_id = TRY((((module)->add_function(checked_function))));
 JaktInternal::DynamicArray<types::FunctionGenericParameter> generic_parameters = (TRY((DynamicArray<types::FunctionGenericParameter>::create_with({}))));
 {
@@ -6762,7 +6774,7 @@ types::CheckedBlock const checked_else_block = TRY((((*this).typecheck_block(els
 if (((!(seen_scope_exit)) && ((((checked_else_block).control_flow)).may_return()))){
 TRY((((*this).error(Jakt::DeprecatedString("Else block of guard must either `return`, `break`, `continue`, or `throw`"sv),span))));
 }
-JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const new_condition_new_then_block_new_else_statement_ = TRY((((*this).expand_context_for_bindings(expr,JaktInternal::OptionalNone(),remaining_code,TRY((parser::ParsedStatement::template __jakt_create<typename parser::ParsedStatement::Block>(else_block,span))),span))));
+JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const new_condition_new_then_block_new_else_statement_ = TRY((((*this).expand_context_for_bindings(expr,JaktInternal::OptionalNone(),remaining_code,TRY((parser::ParsedStatement::template __jakt_create<typename parser::ParsedStatement::Block>(else_block,span))),scope_id,span))));
 NonnullRefPtr<typename parser::ParsedExpression> const new_condition = ((new_condition_new_then_block_new_else_statement_).template get<0>());
 JaktInternal::Optional<parser::ParsedBlock> const new_then_block = ((new_condition_new_then_block_new_else_statement_).template get<1>());
 JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const new_else_statement = ((new_condition_new_then_block_new_else_statement_).template get<2>());
@@ -7075,7 +7087,7 @@ if ((!(((generics).has_value())))){
 }
 bool const is_generic_function = (!(((((parsed_function).generic_parameters)).is_empty())));
 bool const is_generic = (is_generic_function || (((this_arg_type_id).has_value()) && ((((*this).get_type((this_arg_type_id.value()))))->index() == 19 /* GenericInstance */)));
-NonnullRefPtr<types::CheckedFunction> checked_function = TRY((types::CheckedFunction::__jakt_create(((parsed_function).name),((parsed_function).name_span),TRY((((*this).typecheck_visibility(((parsed_function).visibility),parent_scope_id)))),types::unknown_type_id(),((parsed_function).return_type_span),(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),(generics.value()),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ,types::TypeId::none(),false),((parsed_function).can_throw),((parsed_function).type),((parsed_function).linkage),function_scope_id,JaktInternal::OptionalNone(),((!(is_generic)) || (!(base_definition))),parsed_function,((parsed_function).is_comptime),false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),((parsed_function).external_name),((parsed_function).deprecated_message),JaktInternal::OptionalNone())));
+NonnullRefPtr<types::CheckedFunction> checked_function = TRY((types::CheckedFunction::__jakt_create(((parsed_function).name),((parsed_function).name_span),TRY((((*this).typecheck_visibility(((parsed_function).visibility),parent_scope_id)))),types::unknown_type_id(),((parsed_function).return_type_span),(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),(generics.value()),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id, types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ,types::TypeId::none(),false),((parsed_function).can_throw),((parsed_function).type),((parsed_function).linkage),function_scope_id,JaktInternal::OptionalNone(),((!(is_generic)) || (!(base_definition))),parsed_function,((parsed_function).is_comptime),false,false,((parsed_function).is_unsafe),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),((parsed_function).external_name),((parsed_function).deprecated_message),JaktInternal::OptionalNone())));
 NonnullRefPtr<types::Module> current_module = ((*this).current_module());
 types::FunctionId const function_id = TRY((((current_module)->add_function(checked_function))));
 types::ScopeId const checked_function_scope_id = ((checked_function)->function_scope_id);
@@ -7310,6 +7322,7 @@ break;
 }
 parser::EnumVariantPatternArgument binding = (_magic_value.value());
 {
+bool found = false;
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<types::CheckedVariable>> _magic = ((checked_vars).iterator());
 for (;;){
@@ -7323,6 +7336,7 @@ DeprecatedString const binding_name = ((binding).name).value_or_lazy_evaluated([
 types::TypeId const type_id = ((var)->type_id);
 if ((binding_name == ((var)->name))){
 TRY((((checked_enum_variant_bindings).push(types::CheckedEnumVariantBinding(((binding).name),((binding).binding),type_id,span)))));
+(found = true);
 break;
 }
 }
@@ -7330,6 +7344,9 @@ break;
 }
 }
 
+if ((!(found))){
+TRY((((*this).error(TRY((__jakt_format(Jakt::DeprecatedString("Enum variant ‘{}’ doesn't have field with name ‘{}’"sv),((variant).name()),((binding).name_in_enum())))),((binding).name_in_enum_span())))));
+}
 }
 
 }
@@ -7439,14 +7456,7 @@ break;
 }
 parser::ParsedMethod method = (_magic_value.value());
 {
-if (((method).is_override)){
-if ((!(((all_virtuals).contains(((((method).parsed_function)).name)))))){
-TRY((((*this).error(Jakt::DeprecatedString("Missing virtual for override"sv),((((method).parsed_function)).name_span)))));
-}
-}
-else if (((all_virtuals).contains(((((method).parsed_function)).name)))){
-TRY((((*this).error(Jakt::DeprecatedString("Missing override keyword on function that is virtual"sv),((((method).parsed_function)).name_span)))));
-}
+TRY((((*this).typecheck_override(method,((((*this).get_struct(struct_id))).scope_id),all_virtuals))));
 TRY((((*this).typecheck_method(((method).parsed_function), types::StructLikeId { typename types::StructLikeId::Struct(JaktInternal::OptionalNone(),struct_id) } ))));
 }
 
@@ -8464,6 +8474,9 @@ TRY((((((*this).generic_inferences)).set_from(generic_inferences_from_parent))))
 NonnullRefPtr<types::CheckedFunction> const callee = ((*this).get_function((resolved_function_id.value())));
 (callee_throws = ((callee)->can_throw));
 (return_type = ((callee)->return_type_id));
+if ((((callee)->is_unsafe) && ((safety_mode).index() == 0 /* Safe */))){
+TRY((((*this).error(Jakt::DeprecatedString("Cannot call unsafe function in safe context"sv),span))));
+}
 if ((((type_hint).has_value()) && (!(((((type_hint).value())).equals(types::unknown_type_id())))))){
 bool const old_ignore_errors = ((*this).ignore_errors);
 (((*this).ignore_errors) = true);
@@ -8948,7 +8961,7 @@ return ((TRY((DynamicArray<types::FunctionId>::create_with({})))));
 
 ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typechecker::Typechecker::typecheck_if(NonnullRefPtr<typename parser::ParsedExpression> const condition,parser::ParsedBlock const then_block,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const else_statement,types::ScopeId const scope_id,types::SafetyMode const safety_mode,utility::Span const span) {
 {
-JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const new_condition_new_then_block_new_else_statement_ = TRY((((*this).expand_context_for_bindings(condition,JaktInternal::OptionalNone(),then_block,else_statement,span))));
+JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const new_condition_new_then_block_new_else_statement_ = TRY((((*this).expand_context_for_bindings(condition,JaktInternal::OptionalNone(),then_block,else_statement,scope_id,span))));
 NonnullRefPtr<typename parser::ParsedExpression> const new_condition = ((new_condition_new_then_block_new_else_statement_).template get<0>());
 JaktInternal::Optional<parser::ParsedBlock> const new_then_block = ((new_condition_new_then_block_new_else_statement_).template get<1>());
 JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const new_else_statement = ((new_condition_new_then_block_new_else_statement_).template get<2>());
@@ -9011,13 +9024,6 @@ return {};
 return {};
 }
 
-ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typechecker::typecheck_expression_and_dereference_if_needed(NonnullRefPtr<typename parser::ParsedExpression> const expr,types::ScopeId const scope_id,types::SafetyMode const safety_mode,JaktInternal::Optional<types::TypeId> const type_hint,utility::Span const span) {
-{
-NonnullRefPtr<typename types::CheckedExpression> checked_expr = TRY((((*this).typecheck_expression(expr,scope_id,safety_mode,type_hint))));
-return (TRY((((*this).dereference_if_needed(checked_expr,span)))));
-}
-}
-
 ErrorOr<void> typechecker::Typechecker::typecheck_enum(parser::ParsedRecord const record,types::EnumId const enum_id,types::ScopeId const parent_scope_id) {
 {
 JaktInternal::Optional<types::TypeId> const old_self_type_id = ((*this).self_type_id);
@@ -9042,6 +9048,13 @@ TRY((((*this).typecheck_method(((method).parsed_function), types::StructLikeId {
 
 }
 return {};
+}
+
+ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typechecker::typecheck_expression_and_dereference_if_needed(NonnullRefPtr<typename parser::ParsedExpression> const expr,types::ScopeId const scope_id,types::SafetyMode const safety_mode,JaktInternal::Optional<types::TypeId> const type_hint,utility::Span const span) {
+{
+NonnullRefPtr<typename types::CheckedExpression> checked_expr = TRY((((*this).typecheck_expression(expr,scope_id,safety_mode,type_hint))));
+return (TRY((((*this).dereference_if_needed(checked_expr,span)))));
+}
 }
 
 ErrorOr<JaktInternal::Optional<types::TypeId>> typechecker::Typechecker::find_type_in_scope(types::ScopeId const scope_id,DeprecatedString const name) const {
@@ -10108,6 +10121,83 @@ return (TRY((((((*this).program))->find_struct_in_scope(scope_id,name)))));
 }
 }
 
+ErrorOr<void> typechecker::Typechecker::typecheck_override(parser::ParsedMethod const method,types::ScopeId const parent_scope_id,JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>>> const all_virtuals) {
+{
+if (((method).is_override)){
+JaktInternal::Optional<JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>>> overrides = ((all_virtuals).get(((((method).parsed_function)).name)));
+if (((overrides).has_value())){
+JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const override_target = (((overrides.value())).pop());
+if (((override_target).has_value())){
+JaktInternal::Optional<types::FunctionId> const method_id = TRY((((*this).find_function_matching_signature_in_scope(parent_scope_id,((method).parsed_function)))));
+NonnullRefPtr<types::CheckedFunction> const method_function = ((*this).get_function((method_id.value())));
+if ((!(((((method_function)->return_type_id)).equals((((override_target.value()))->return_type_id)))))){
+TRY((((*this).error(Jakt::DeprecatedString("Override function return type does not match virtual function"sv),((method_function)->return_type_span).value_or_lazy_evaluated([&] { return ((method_function)->name_span); })))));
+}
+if ((((method_function)->can_throw) != (((override_target.value()))->can_throw))){
+TRY((((*this).error(Jakt::DeprecatedString("Override function throwability does not match virtual function"sv),((method_function)->name_span)))));
+}
+if ((((((method_function)->params)).size()) != (((((override_target.value()))->params)).size()))){
+TRY((((*this).error(Jakt::DeprecatedString("Override function parameters do not match virtual function"sv),((method_function)->name_span)))));
+return {};
+}
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((method_function)->params)).size()))});
+for (;;){
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t param_index = (_magic_value.value());
+{
+types::CheckedParameter const method_param = ((((method_function)->params))[param_index]);
+types::CheckedParameter const virtual_param = (((((override_target.value()))->params))[param_index]);
+if ((((((virtual_param).variable))->is_mutable) != ((((method_param).variable))->is_mutable))){
+TRY((((*this).error(Jakt::DeprecatedString("Override function parameter mutability does not match virtual function"sv),((((method_param).variable))->definition_span)))));
+}
+if (((param_index == static_cast<size_t>(0ULL)) && (((((method_param).variable))->name) == Jakt::DeprecatedString("this"sv)))){
+continue;
+}
+if ((!(((((((method_param).variable))->type_id)).equals(((((virtual_param).variable))->type_id)))))){
+TRY((((*this).error(Jakt::DeprecatedString("Override function parameter type does not match virtual function"sv),((((method_param).variable))->type_span).value_or_lazy_evaluated([&] { return ((((method_param).variable))->definition_span); })))));
+}
+}
+
+}
+}
+
+}
+else {
+TRY((((*this).error(Jakt::DeprecatedString("Missing virtual for override"sv),((((method).parsed_function)).name_span)))));
+return {};
+}
+
+}
+else {
+TRY((((*this).error(Jakt::DeprecatedString("Missing virtual for override"sv),((((method).parsed_function)).name_span)))));
+return {};
+}
+
+}
+else {
+if (((all_virtuals).contains(((((method).parsed_function)).name)))){
+TRY((((*this).error(Jakt::DeprecatedString("Missing override keyword on function that is virtual"sv),((((method).parsed_function)).name_span)))));
+}
+return {};
+}
+
+}
+return {};
+}
+
+ErrorOr<void> typechecker::Typechecker::check_that_type_doesnt_contain_reference(types::TypeId const type_id,utility::Span const span) {
+{
+if (TRY((((*this).type_contains_reference(type_id))))){
+TRY((((*this).error(TRY((__jakt_format(Jakt::DeprecatedString("Reference type ‘{}’ not usable in this context"sv),TRY((((*this).type_name(type_id,false))))))),span))));
+}
+}
+return {};
+}
+
 ErrorOr<JaktInternal::Optional<parser::ParsedNamespace>> typechecker::Typechecker::lex_and_parse_file_contents(utility::FileId const file_id) {
 {
 JaktInternal::Tuple<JaktInternal::Optional<utility::FileId>,JaktInternal::DynamicArray<u8>> const old_file_state = ((((*this).compiler))->current_file_state());
@@ -10141,15 +10231,6 @@ outln(Jakt::DeprecatedString("{:#}"sv),parsed_namespace);
 }
 return (parsed_namespace);
 }
-}
-
-ErrorOr<void> typechecker::Typechecker::check_that_type_doesnt_contain_reference(types::TypeId const type_id,utility::Span const span) {
-{
-if (TRY((((*this).type_contains_reference(type_id))))){
-TRY((((*this).error(TRY((__jakt_format(Jakt::DeprecatedString("Reference type ‘{}’ not usable in this context"sv),TRY((((*this).type_name(type_id,false))))))),span))));
-}
-}
-return {};
 }
 
 ErrorOr<bool> typechecker::Typechecker::find_and_import_name_from_scope(DeprecatedString const from_name,utility::Span const from_span,DeprecatedString const to_name,utility::Span const to_span,types::ScopeId const from_scope_id,types::ScopeId const into_scope_id,typechecker::ImportRestrictions const allow) {
@@ -10236,7 +10317,7 @@ return (true);
 }
 }
 
-ErrorOr<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>>> typechecker::Typechecker::expand_context_for_bindings(NonnullRefPtr<typename parser::ParsedExpression> const condition,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const acc,JaktInternal::Optional<parser::ParsedBlock> const then_block,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const else_statement,utility::Span const span) {
+ErrorOr<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>>> typechecker::Typechecker::expand_context_for_bindings(NonnullRefPtr<typename parser::ParsedExpression> const condition,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const acc,JaktInternal::Optional<parser::ParsedBlock> const then_block,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const else_statement,types::ScopeId const scope_id,utility::Span const span) {
 {
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>>>>{
 auto&& __jakt_match_variant = *condition;
@@ -10247,13 +10328,13 @@ parser::BinaryOperator const& op = __jakt_match_value.op;
 NonnullRefPtr<typename parser::ParsedExpression> const& rhs = __jakt_match_value.rhs;
 {
 if (((op).index() == 18 /* LogicalAnd */)){
-JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const rhs_condition_rhs_then_block_rhs_else_statement_ = TRY((((*this).expand_context_for_bindings(rhs,acc,then_block,else_statement,span))));
+JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const rhs_condition_rhs_then_block_rhs_else_statement_ = TRY((((*this).expand_context_for_bindings(rhs,acc,then_block,else_statement,scope_id,span))));
 NonnullRefPtr<typename parser::ParsedExpression> const rhs_condition = ((rhs_condition_rhs_then_block_rhs_else_statement_).template get<0>());
 JaktInternal::Optional<parser::ParsedBlock> const rhs_then_block = ((rhs_condition_rhs_then_block_rhs_else_statement_).template get<1>());
 JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const rhs_else_statement = ((rhs_condition_rhs_then_block_rhs_else_statement_).template get<2>());
 
 NonnullRefPtr<typename parser::ParsedExpression> accumulated_condition = rhs_condition;
-return (TRY((((*this).expand_context_for_bindings(lhs,accumulated_condition,rhs_then_block,rhs_else_statement,span)))));
+return (TRY((((*this).expand_context_for_bindings(lhs,accumulated_condition,rhs_then_block,rhs_else_statement,scope_id,span)))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -10262,15 +10343,15 @@ case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedExpression::UnaryOp>();NonnullRefPtr<typename parser::ParsedExpression> const& expr = __jakt_match_value.expr;
 parser::UnaryOperator const& op = __jakt_match_value.op;
 {
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>>>>{
-auto&& __jakt_match_variant = op;
-switch(__jakt_match_variant.index()) {
-case 13: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::UnaryOperator::IsEnumVariant>();NonnullRefPtr<typename parser::ParsedType> const& inner = __jakt_match_value.inner;
-JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> const& bindings = __jakt_match_value.bindings;
-{
+if (((op).index() == 13 /* IsEnumVariant */)){
+NonnullRefPtr<typename parser::ParsedType> const inner = ((op).get<parser::UnaryOperator::IsEnumVariant>()).inner;
+JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> const bindings = ((op).get<parser::UnaryOperator::IsEnumVariant>()).bindings;
 NonnullRefPtr<typename parser::ParsedExpression> const unary_op_single_condition = TRY((parser::ParsedExpression::template __jakt_create<typename parser::ParsedExpression::UnaryOp>(expr, parser::UnaryOperator { typename parser::UnaryOperator::Is(inner) } ,span)));
 JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>> outer_if_stmts = (TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({}))));
+bool const ignore_errors_state = ((*this).ignore_errors);
+(((*this).ignore_errors) = true);
+NonnullRefPtr<typename types::CheckedExpression> const pre_checked_unary_op = TRY((((*this).typecheck_expression(unary_op_single_condition,scope_id, types::SafetyMode { typename types::SafetyMode::Safe() } ,JaktInternal::OptionalNone()))));
+(((*this).ignore_errors) = ignore_errors_state);
 {
 JaktInternal::ArrayIterator<parser::EnumVariantPatternArgument> _magic = ((bindings).iterator());
 for (;;){
@@ -10281,8 +10362,23 @@ break;
 parser::EnumVariantPatternArgument binding = (_magic_value.value());
 {
 parser::ParsedVarDecl const var = parser::ParsedVarDecl(((binding).binding),TRY((parser::ParsedType::template __jakt_create<typename parser::ParsedType::Empty>())),false,JaktInternal::OptionalNone(),((binding).span));
+if (((pre_checked_unary_op)->index() == 6 /* UnaryOp */)){
+types::CheckedUnaryOperator const op = ((pre_checked_unary_op)->get<types::CheckedExpression::UnaryOp>()).op;
+if (((op).index() == 14 /* IsSome */)){
+NonnullRefPtr<typename parser::ParsedExpression> const init = TRY((parser::ParsedExpression::template __jakt_create<typename parser::ParsedExpression::ForcedUnwrap>(expr,span)));
+TRY((((outer_if_stmts).push(TRY((parser::ParsedStatement::template __jakt_create<typename parser::ParsedStatement::VarDecl>(var,init,span)))))));
+}
+else {
 NonnullRefPtr<typename parser::ParsedExpression> const enum_variant_arg = TRY((parser::ParsedExpression::template __jakt_create<typename parser::ParsedExpression::EnumVariantArg>(expr,binding,inner,span)));
 TRY((((outer_if_stmts).push(TRY((parser::ParsedStatement::template __jakt_create<typename parser::ParsedStatement::VarDecl>(var,enum_variant_arg,span)))))));
+}
+
+}
+else {
+NonnullRefPtr<typename parser::ParsedExpression> const enum_variant_arg = TRY((parser::ParsedExpression::template __jakt_create<typename parser::ParsedExpression::EnumVariantArg>(expr,binding,inner,span)));
+TRY((((outer_if_stmts).push(TRY((parser::ParsedStatement::template __jakt_create<typename parser::ParsedStatement::VarDecl>(var,enum_variant_arg,span)))))));
+}
+
 }
 
 }
@@ -10300,18 +10396,8 @@ TRY((((outer_if_stmts).push_values((((((then_block.value())).stmts)))))));
 
 }
 parser::ParsedBlock const new_then_block = parser::ParsedBlock(outer_if_stmts);
-return (TRY((((*this).expand_context_for_bindings(unary_op_single_condition,JaktInternal::OptionalNone(),new_then_block,else_statement,span)))));
+return (TRY((((*this).expand_context_for_bindings(unary_op_single_condition,JaktInternal::OptionalNone(),new_then_block,else_statement,scope_id,span)))));
 }
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-default: {
-{
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-}/*switch end*/
-}()
-));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -11880,6 +11966,28 @@ if (((!(exists)) && ((type_id).equals(types::unknown_type_id())))){
 TRY((((*this).error(TRY((__jakt_format(Jakt::DeprecatedString("Enum variant {} does not exist on {}"sv),name,TRY((((*this).type_name(expr_type_id,false))))))),span))));
 }
 }
+else if (((name == Jakt::DeprecatedString("Some"sv)) || (name == Jakt::DeprecatedString("None"sv)))){
+types::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(Jakt::DeprecatedString("Optional"sv)))));
+NonnullRefPtr<typename types::Type> const checked_expr_type = ((*this).get_type(((checked_expr)->type())));
+if ((!(((checked_expr_type)->index() == 19 /* GenericInstance */)))){
+TRY((((*this).error(TRY((__jakt_format(Jakt::DeprecatedString("The left-hand side of an `is {}` statement must have a {} variant"sv),name,name))),((checked_expr)->span())))));
+}
+(operator_is = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::CheckedUnaryOperator,ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
+auto __jakt_enum_value = (name);
+if (__jakt_enum_value == Jakt::DeprecatedString("Some"sv)) {
+return JaktInternal::ExplicitValue( types::CheckedUnaryOperator { typename types::CheckedUnaryOperator::IsSome() } );
+}
+else if (__jakt_enum_value == Jakt::DeprecatedString("None"sv)) {
+return JaktInternal::ExplicitValue( types::CheckedUnaryOperator { typename types::CheckedUnaryOperator::IsNone() } );
+}
+else {
+{
+utility::panic(Jakt::DeprecatedString("unreachable"sv));
+}
+}
+}()))
+);
+}
 else if (((type_id).equals(types::unknown_type_id()))){
 TRY((((*this).error(TRY((__jakt_format(Jakt::DeprecatedString("Unknown type or invalid type name: {}"sv),name))),span))));
 }
@@ -13093,7 +13201,7 @@ TRY((((checked_params).push(TRY((((*this).typecheck_parameter(param,scope_id,fir
 }
 }
 
-NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(function_name,span, types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,TRY((((*this).typecheck_typename(return_type,scope_id,JaktInternal::OptionalNone())))),((return_type)->span()),checked_params,TRY((types::FunctionGenerics::__jakt_create(scope_id,checked_params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),scope_id, types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ,JaktInternal::OptionalNone(),false),can_throw, parser::FunctionType { typename parser::FunctionType::Expression() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
+NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(function_name,span, types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,TRY((((*this).typecheck_typename(return_type,scope_id,JaktInternal::OptionalNone())))),((return_type)->span()),checked_params,TRY((types::FunctionGenerics::__jakt_create(scope_id,checked_params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<types::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),scope_id, types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ,JaktInternal::OptionalNone(),false),can_throw, parser::FunctionType { typename parser::FunctionType::Expression() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
 NonnullRefPtr<types::Module> module = ((*this).current_module());
 types::FunctionId const function_id = TRY((((module)->add_function(checked_function))));
 JaktInternal::DynamicArray<types::TypeId> param_type_ids = (TRY((DynamicArray<types::TypeId>::create_with({}))));
@@ -13138,7 +13246,7 @@ return (types::void_type_id());
 }
 }
 
-ErrorOr<bool> typechecker::Typechecker::scope_lifetime_subsumes(JaktInternal::Optional<types::ScopeId> const larger,JaktInternal::Optional<types::ScopeId> const smaller,JaktInternal::Set<DeprecatedString>& checked) const {
+ErrorOr<bool> typechecker::Typechecker::scope_lifetime_subsumes(JaktInternal::Optional<types::ScopeId> const larger,JaktInternal::Optional<types::ScopeId> const smaller) const {
 {
 if ((!(((larger).has_value())))){
 return (false);
@@ -13148,17 +13256,14 @@ return (true);
 }
 types::ScopeId const larger_id = (larger.value());
 types::ScopeId const smaller_id = (smaller.value());
-if (((((checked))).contains(TRY((((larger_id).to_string())))))){
+if (((larger_id).equals(smaller_id))){
 return (false);
 }
-TRY((((((checked))).add(TRY((((larger_id).to_string())))))));
-JaktInternal::Optional<types::ScopeId> scope_id = static_cast<JaktInternal::Optional<types::ScopeId>>(larger_id);
-bool first = true;
+JaktInternal::Optional<types::ScopeId> scope_id = ((TRY((((((*this).program))->get_scope(smaller_id)))))->parent);
 while (((scope_id).has_value())){
-if (((!(first)) && (((scope_id.value())).equals(smaller_id)))){
+if ((((scope_id.value())).equals(larger_id))){
 return (true);
 }
-(first = false);
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope((scope_id.value())))));
 {
 JaktInternal::ArrayIterator<types::ScopeId> _magic = ((((scope)->children)).iterator());
@@ -13169,7 +13274,7 @@ break;
 }
 types::ScopeId child_scope_id = (_magic_value.value());
 {
-if (TRY((((*this).scope_lifetime_subsumes(child_scope_id,smaller_id,checked))))){
+if (((child_scope_id).equals(larger_id))){
 return (true);
 }
 }
@@ -13180,13 +13285,6 @@ return (true);
 (scope_id = ((scope)->parent));
 }
 return (false);
-}
-}
-
-ErrorOr<bool> typechecker::Typechecker::scope_lifetime_subsumes(JaktInternal::Optional<types::ScopeId> const larger,JaktInternal::Optional<types::ScopeId> const smaller) const {
-{
-JaktInternal::Set<DeprecatedString> checked = (TRY((Set<DeprecatedString>::create_with_values({}))));
-return (TRY((((*this).scope_lifetime_subsumes(larger,smaller,((checked)))))));
 }
 }
 

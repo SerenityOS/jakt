@@ -107,12 +107,13 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("must_instantiate: {}, ", must_instantiate));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_comptime: {}, ", is_comptime));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_fat_arrow: {}, ", is_fat_arrow));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_unsafe: {}, ", is_unsafe));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("external_name: {}, ", external_name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("deprecated_message: {}, ", deprecated_message));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("stores_arguments: {}", stores_arguments));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-parser::ParsedFunction::ParsedFunction(DeprecatedString a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::DynamicArray<parser::ParsedParameter> a_params, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<typename parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow, JaktInternal::Optional<DeprecatedString> a_external_name, JaktInternal::Optional<DeprecatedString> a_deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> a_stores_arguments) :name(move(a_name)), name_span(move(a_name_span)), visibility(move(a_visibility)), params(move(a_params)), generic_parameters(move(a_generic_parameters)), block(move(a_block)), return_type(move(a_return_type)), return_type_span(move(a_return_type_span)), can_throw(move(a_can_throw)), type(move(a_type)), linkage(move(a_linkage)), must_instantiate(move(a_must_instantiate)), is_comptime(move(a_is_comptime)), is_fat_arrow(move(a_is_fat_arrow)), external_name(move(a_external_name)), deprecated_message(move(a_deprecated_message)), stores_arguments(move(a_stores_arguments)){}
+parser::ParsedFunction::ParsedFunction(DeprecatedString a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::DynamicArray<parser::ParsedParameter> a_params, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<typename parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow, bool a_is_unsafe, JaktInternal::Optional<DeprecatedString> a_external_name, JaktInternal::Optional<DeprecatedString> a_deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> a_stores_arguments) :name(move(a_name)), name_span(move(a_name_span)), visibility(move(a_visibility)), params(move(a_params)), generic_parameters(move(a_generic_parameters)), block(move(a_block)), return_type(move(a_return_type)), return_type_span(move(a_return_type_span)), can_throw(move(a_can_throw)), type(move(a_type)), linkage(move(a_linkage)), must_instantiate(move(a_must_instantiate)), is_comptime(move(a_is_comptime)), is_fat_arrow(move(a_is_fat_arrow)), is_unsafe(move(a_is_unsafe)), external_name(move(a_external_name)), deprecated_message(move(a_deprecated_message)), stores_arguments(move(a_stores_arguments)){}
 
 bool parser::ParsedFunction::equals(parser::ParsedFunction const other) const {
 {
@@ -3643,6 +3644,7 @@ __jakt_label_33:; __jakt_var_35.release_value(); }));
 default: {
 {
 TRY((((*this).error(Jakt::DeprecatedString("Expected identifier"sv),((((*this).current())).span())))));
+((((*this).index)++));
 return (JaktInternal::OptionalNone());
 }
 };/*case end*/
@@ -3799,9 +3801,9 @@ return (parser::ParsedAttribute(name,span,assigned_value,arguments));
 }
 }
 
-ErrorOr<parser::ParsedMethod> parser::Parser::parse_method(parser::FunctionLinkage const linkage,parser::Visibility const visibility,bool const is_virtual,bool const is_override,bool const is_comptime,bool const is_destructor) {
+ErrorOr<parser::ParsedMethod> parser::Parser::parse_method(parser::FunctionLinkage const linkage,parser::Visibility const visibility,bool const is_virtual,bool const is_override,bool const is_comptime,bool const is_destructor,bool const is_unsafe) {
 {
-parser::ParsedFunction parsed_function = TRY((((*this).parse_function(linkage,visibility,is_comptime,is_destructor,false))));
+parser::ParsedFunction parsed_function = TRY((((*this).parse_function(linkage,visibility,is_comptime,is_destructor,is_unsafe,false))));
 if (((linkage).index() == 1 /* External */)){
 (((parsed_function).must_instantiate) = true);
 }
@@ -3891,9 +3893,25 @@ TRY((((*this).error(Jakt::DeprecatedString("Unexpected token (expected ‘[[’)
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
+case 102: {
+{
+((((*this).index)++));
+if (((((*this).current())).index() == 75 /* Fn */)){
+parser::ParsedFunction parsed_function = TRY((((*this).parse_function( parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } , parser::Visibility { typename parser::Visibility::Public() } ,((((*this).current())).index() == 76 /* Comptime */),false,true,false))));
+TRY((((*this).apply_attributes(((parsed_function)),((active_attributes))))));
+(active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
+TRY((((((parsed_namespace).functions)).push(parsed_function))));
+}
+else {
+TRY((((*this).error(Jakt::DeprecatedString("Expected 'fn' after 'unsafe'"sv),((((*this).current())).span())))));
+}
+
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
 case 75: {
 {
-parser::ParsedFunction parsed_function = TRY((((*this).parse_function( parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } , parser::Visibility { typename parser::Visibility::Public() } ,((((*this).current())).index() == 76 /* Comptime */),false,false))));
+parser::ParsedFunction parsed_function = TRY((((*this).parse_function( parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } , parser::Visibility { typename parser::Visibility::Public() } ,((((*this).current())).index() == 76 /* Comptime */),false,false,false))));
 TRY((((*this).apply_attributes(((parsed_function)),((active_attributes))))));
 (active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
 TRY((((((parsed_namespace).functions)).push(parsed_function))));
@@ -3902,7 +3920,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 76: {
 {
-parser::ParsedFunction parsed_function = TRY((((*this).parse_function( parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } , parser::Visibility { typename parser::Visibility::Public() } ,((((*this).current())).index() == 76 /* Comptime */),false,false))));
+parser::ParsedFunction parsed_function = TRY((((*this).parse_function( parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } , parser::Visibility { typename parser::Visibility::Public() } ,((((*this).current())).index() == 76 /* Comptime */),false,false,false))));
 TRY((((*this).apply_attributes(((parsed_function)),((active_attributes))))));
 (active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
 TRY((((((parsed_namespace).functions)).push(parsed_function))));
@@ -4001,9 +4019,25 @@ case 72: {
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<parser::ParsedNamespace>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
+case 102: {
+{
+((((*this).index)++));
+if (((((*this).current())).index() == 75 /* Fn */)){
+parser::ParsedFunction parsed_function = TRY((((*this).parse_function( parser::FunctionLinkage { typename parser::FunctionLinkage::External() } , parser::Visibility { typename parser::Visibility::Public() } ,false,false,true,false))));
+TRY((((*this).apply_attributes(((parsed_function)),((active_attributes))))));
+(active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
+TRY((((((parsed_namespace).functions)).push(parsed_function))));
+}
+else {
+TRY((((*this).error(Jakt::DeprecatedString("Expected 'fn' after 'unsafe'"sv),((((*this).current())).span())))));
+}
+
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
 case 75: {
 {
-parser::ParsedFunction parsed_function = TRY((((*this).parse_function( parser::FunctionLinkage { typename parser::FunctionLinkage::External() } , parser::Visibility { typename parser::Visibility::Public() } ,false,false,false))));
+parser::ParsedFunction parsed_function = TRY((((*this).parse_function( parser::FunctionLinkage { typename parser::FunctionLinkage::External() } , parser::Visibility { typename parser::Visibility::Public() } ,false,false,false,false))));
 TRY((((*this).apply_attributes(((parsed_function)),((active_attributes))))));
 (active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
 TRY((((((parsed_namespace).functions)).push(parsed_function))));
@@ -4482,9 +4516,9 @@ __jakt_label_47:; __jakt_var_49.release_value(); }));
 }
 }
 
-ErrorOr<parser::ParsedFunction> parser::Parser::parse_function(parser::FunctionLinkage const linkage,parser::Visibility const visibility,bool const is_comptime,bool const is_destructor,bool const allow_missing_body) {
+ErrorOr<parser::ParsedFunction> parser::Parser::parse_function(parser::FunctionLinkage const linkage,parser::Visibility const visibility,bool const is_comptime,bool const is_destructor,bool const is_unsafe,bool const allow_missing_body) {
 {
-parser::ParsedFunction parsed_function = parser::ParsedFunction(Jakt::DeprecatedString(""sv),((*this).empty_span()),visibility,(TRY((DynamicArray<parser::ParsedParameter>::create_with({})))),(TRY((DynamicArray<parser::ParsedGenericParameter>::create_with({})))),parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({}))))),TRY((parser::ParsedType::template __jakt_create<typename parser::ParsedType::Empty>())),((*this).span(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL))),false, parser::FunctionType { typename parser::FunctionType::Normal() } ,linkage,false,is_comptime,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
+parser::ParsedFunction parsed_function = parser::ParsedFunction(Jakt::DeprecatedString(""sv),((*this).empty_span()),visibility,(TRY((DynamicArray<parser::ParsedParameter>::create_with({})))),(TRY((DynamicArray<parser::ParsedGenericParameter>::create_with({})))),parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({}))))),TRY((parser::ParsedType::template __jakt_create<typename parser::ParsedType::Empty>())),((*this).span(static_cast<size_t>(0ULL),static_cast<size_t>(0ULL))),false, parser::FunctionType { typename parser::FunctionType::Normal() } ,linkage,false,is_comptime,false,is_unsafe,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
 if (is_destructor){
 (((parsed_function).type) =  parser::FunctionType { typename parser::FunctionType::Destructor() } );
 TRY((((((parsed_function).params)).push(parser::ParsedParameter(false,parser::ParsedVariable(Jakt::DeprecatedString("this"sv),TRY((parser::ParsedType::template __jakt_create<typename parser::ParsedType::Empty>())),true,((((*this).current())).span())),JaktInternal::OptionalNone(),((((*this).current())).span()))))));
@@ -4861,7 +4895,7 @@ bool const is_virtual = last_virtual;
 bool const is_override = last_override;
 (last_virtual = false);
 (last_override = false);
-parser::ParsedMethod parsed_method = TRY((((*this).parse_method(function_linkage,visibility,is_virtual,is_override,is_comptime,is_destructor))));
+parser::ParsedMethod parsed_method = TRY((((*this).parse_method(function_linkage,visibility,is_virtual,is_override,is_comptime,is_destructor,false))));
 TRY((((*this).apply_attributes(((parsed_method)),((active_attributes))))));
 (active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
 TRY((((methods).push(parsed_method))));
@@ -4894,7 +4928,7 @@ bool const is_virtual = last_virtual;
 bool const is_override = last_override;
 (last_virtual = false);
 (last_override = false);
-parser::ParsedMethod parsed_method = TRY((((*this).parse_method(function_linkage,visibility,is_virtual,is_override,is_comptime,is_destructor))));
+parser::ParsedMethod parsed_method = TRY((((*this).parse_method(function_linkage,visibility,is_virtual,is_override,is_comptime,is_destructor,false))));
 TRY((((*this).apply_attributes(((parsed_method)),((active_attributes))))));
 (active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
 TRY((((methods).push(parsed_method))));
@@ -4927,7 +4961,7 @@ bool const is_virtual = last_virtual;
 bool const is_override = last_override;
 (last_virtual = false);
 (last_override = false);
-parser::ParsedMethod parsed_method = TRY((((*this).parse_method(function_linkage,visibility,is_virtual,is_override,is_comptime,is_destructor))));
+parser::ParsedMethod parsed_method = TRY((((*this).parse_method(function_linkage,visibility,is_virtual,is_override,is_comptime,is_destructor,false))));
 TRY((((*this).apply_attributes(((parsed_method)),((active_attributes))))));
 (active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
 TRY((((methods).push(parsed_method))));
@@ -5173,7 +5207,7 @@ TRY((((*this).error(Jakt::DeprecatedString("External functions cannot be comptim
 parser::Visibility const visibility = last_visibility.value_or_lazy_evaluated([&] { return  parser::Visibility { typename parser::Visibility::Public() } ; });
 (last_visibility = JaktInternal::OptionalNone());
 (last_visibility_span = JaktInternal::OptionalNone());
-parser::ParsedMethod const parsed_method = TRY((((*this).parse_method(function_linkage,visibility,false,false,is_comptime,false))));
+parser::ParsedMethod const parsed_method = TRY((((*this).parse_method(function_linkage,visibility,false,false,is_comptime,false,false))));
 TRY((((methods).push(parsed_method))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -5199,7 +5233,7 @@ TRY((((*this).error(Jakt::DeprecatedString("External functions cannot be comptim
 parser::Visibility const visibility = last_visibility.value_or_lazy_evaluated([&] { return  parser::Visibility { typename parser::Visibility::Public() } ; });
 (last_visibility = JaktInternal::OptionalNone());
 (last_visibility_span = JaktInternal::OptionalNone());
-parser::ParsedMethod const parsed_method = TRY((((*this).parse_method(function_linkage,visibility,false,false,is_comptime,false))));
+parser::ParsedMethod const parsed_method = TRY((((*this).parse_method(function_linkage,visibility,false,false,is_comptime,false,false))));
 TRY((((methods).push(parsed_method))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -5311,13 +5345,14 @@ return JaktInternal::ExplicitValue<void>();
 case 3: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();DeprecatedString const& arg_name = __jakt_match_value.name;
 {
+utility::Span const arg_name_span = ((((*this).current())).span());
 if (((((*this).peek(static_cast<size_t>(1ULL)))).index() == 5 /* Colon */)){
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(2ULL));});
 if (((((*this).current())).index() == 3 /* Identifier */)){
 DeprecatedString const arg_binding = ((((*this).current())).get<lexer::Token::Identifier>()).name;
 utility::Span const span = ((((*this).current())).span());
 ((((*this).index)++));
-TRY((((variant_arguments).push(parser::EnumVariantPatternArgument(static_cast<JaktInternal::Optional<DeprecatedString>>(arg_name),arg_binding,span,is_reference,is_mutable)))));
+TRY((((variant_arguments).push(parser::EnumVariantPatternArgument(static_cast<JaktInternal::Optional<DeprecatedString>>(arg_name),static_cast<JaktInternal::Optional<utility::Span>>(arg_name_span),arg_binding,span,is_reference,is_mutable)))));
 }
 else {
 TRY((((*this).error(Jakt::DeprecatedString("Expected binding after ‘:’"sv),((((*this).current())).span())))));
@@ -5325,7 +5360,7 @@ TRY((((*this).error(Jakt::DeprecatedString("Expected binding after ‘:’"sv),(
 
 }
 else {
-TRY((((variant_arguments).push(parser::EnumVariantPatternArgument(JaktInternal::OptionalNone(),arg_name,((((*this).current())).span()),is_reference,is_mutable)))));
+TRY((((variant_arguments).push(parser::EnumVariantPatternArgument(JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),arg_name,((((*this).current())).span()),is_reference,is_mutable)))));
 ((((*this).index)++));
 }
 
@@ -5910,7 +5945,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 75: {
 {
-parser::ParsedFunction method = TRY((((*this).parse_function( parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } , parser::Visibility { typename parser::Visibility::Public() } ,false,false,true))));
+parser::ParsedFunction method = TRY((((*this).parse_function( parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } , parser::Visibility { typename parser::Visibility::Public() } ,false,false,false,true))));
 if (((((((method).block)).stmts)).is_empty())){
 (((method).linkage) =  parser::FunctionLinkage { typename parser::FunctionLinkage::External() } );
 }
@@ -8051,7 +8086,7 @@ TRY((((*this).error(Jakt::DeprecatedString("External functions cannot be comptim
 parser::Visibility const visibility = last_visibility.value_or_lazy_evaluated([&] { return  parser::Visibility { typename parser::Visibility::Public() } ; });
 (last_visibility = JaktInternal::OptionalNone());
 (last_visibility_span = JaktInternal::OptionalNone());
-parser::ParsedMethod const parsed_method = TRY((((*this).parse_method(function_linkage,visibility,false,false,is_comptime,false))));
+parser::ParsedMethod const parsed_method = TRY((((*this).parse_method(function_linkage,visibility,false,false,is_comptime,false,false))));
 TRY((((methods).push(parsed_method))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -8077,7 +8112,7 @@ TRY((((*this).error(Jakt::DeprecatedString("External functions cannot be comptim
 parser::Visibility const visibility = last_visibility.value_or_lazy_evaluated([&] { return  parser::Visibility { typename parser::Visibility::Public() } ; });
 (last_visibility = JaktInternal::OptionalNone());
 (last_visibility_span = JaktInternal::OptionalNone());
-parser::ParsedMethod const parsed_method = TRY((((*this).parse_method(function_linkage,visibility,false,false,is_comptime,false))));
+parser::ParsedMethod const parsed_method = TRY((((*this).parse_method(function_linkage,visibility,false,false,is_comptime,false,false))));
 TRY((((methods).push(parsed_method))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -10591,13 +10626,26 @@ return (JaktInternal::OptionalNone());
 ErrorOr<DeprecatedString> parser::EnumVariantPatternArgument::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("EnumVariantPatternArgument("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: {}, ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("binding: \"{}\", ", binding));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_reference: {}, ", is_reference));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_mutable: {}", is_mutable));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-parser::EnumVariantPatternArgument::EnumVariantPatternArgument(JaktInternal::Optional<DeprecatedString> a_name, DeprecatedString a_binding, utility::Span a_span, bool a_is_reference, bool a_is_mutable) :name(move(a_name)), binding(move(a_binding)), span(move(a_span)), is_reference(move(a_is_reference)), is_mutable(move(a_is_mutable)){}
+utility::Span parser::EnumVariantPatternArgument::name_in_enum_span() const {
+{
+return (((*this).name_span).value_or_lazy_evaluated([&] { return ((*this).span); }));
+}
+}
+
+DeprecatedString parser::EnumVariantPatternArgument::name_in_enum() const {
+{
+return (((*this).name).value_or_lazy_evaluated([&] { return ((*this).binding); }));
+}
+}
+
+parser::EnumVariantPatternArgument::EnumVariantPatternArgument(JaktInternal::Optional<DeprecatedString> a_name, JaktInternal::Optional<utility::Span> a_name_span, DeprecatedString a_binding, utility::Span a_span, bool a_is_reference, bool a_is_mutable) :name(move(a_name)), name_span(move(a_name_span)), binding(move(a_binding)), span(move(a_span)), is_reference(move(a_is_reference)), is_mutable(move(a_is_mutable)){}
 
 bool parser::EnumVariantPatternArgument::equals(parser::EnumVariantPatternArgument const rhs_variant_pattern_argument) const {
 {

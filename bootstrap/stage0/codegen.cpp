@@ -3864,7 +3864,7 @@ return JaktInternal::ExplicitValue(Jakt::DeprecatedString("!"sv));
 case 10: {
 return JaktInternal::ExplicitValue(Jakt::DeprecatedString("~"sv));
 };/*case end*/
-case 14: {
+case 16: {
 return JaktInternal::ExplicitValue(Jakt::DeprecatedString("sizeof"sv));
 };/*case end*/
 case 12: {
@@ -3894,6 +3894,9 @@ __jakt_var_563 = ((Jakt::DeprecatedString("is<"sv) + is_type) + Jakt::Deprecated
 
 }
 __jakt_label_496:; __jakt_var_563.release_value(); }));
+};/*case end*/
+case 15: {
+return JaktInternal::ExplicitValue(Jakt::DeprecatedString("!"sv));
 };/*case end*/
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedUnaryOperator::TypeCast>();
@@ -3980,7 +3983,7 @@ return JaktInternal::ExplicitValue(Jakt::DeprecatedString(""sv));
 DeprecatedString const object = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.index()) {
-case 14: {
+case 16: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::CheckedUnaryOperator::Sizeof>();
 types::TypeId const& type_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_type(type_id)))));
@@ -4088,6 +4091,12 @@ __jakt_var_568 = suffix; goto __jakt_label_501;
 
 }
 __jakt_label_501:; __jakt_var_568.release_value(); }));
+};/*case end*/
+case 14: {
+return JaktInternal::ExplicitValue(Jakt::DeprecatedString(").has_value()"sv));
+};/*case end*/
+case 15: {
+return JaktInternal::ExplicitValue(Jakt::DeprecatedString(").has_value()"sv));
 };/*case end*/
 case 6: {
 return JaktInternal::ExplicitValue(Jakt::DeprecatedString("))"sv));

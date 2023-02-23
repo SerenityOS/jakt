@@ -405,12 +405,21 @@ public:
         return has_removed_anything;
     }
 
-    T pop()
+    T take_last()
     requires(IsOrdered)
     {
         VERIFY(!is_empty());
-        T element = *m_collection_data.tail->slot();
-        remove(element);
+        T element = move(*m_collection_data.tail->slot());
+        delete_bucket(*m_collection_data.tail);
+        return element;
+    }
+
+    T take_first()
+    requires(IsOrdered)
+    {
+        VERIFY(!is_empty());
+        T element = move(*m_collection_data.head->slot());
+        delete_bucket(*m_collection_data.head);
         return element;
     }
 
@@ -654,8 +663,12 @@ private:
             if constexpr (IsOrdered) {
                 if (bucket->previous)
                     bucket->previous->next = bucket;
+                else
+                    m_collection_data.head = bucket;
                 if (bucket->next)
                     bucket->next->previous = bucket;
+                else
+                    m_collection_data.tail = bucket;
             }
         };
 
