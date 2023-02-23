@@ -6913,13 +6913,25 @@ struct Typechecker {
             checked_vars.push(.get_variable(field))
         }
         for binding in bindings {
+            mut found = false
             for var in checked_vars {
                 let binding_name = binding.name ?? binding.binding
                 let type_id = var.type_id
                 if binding_name == var.name {
                     checked_enum_variant_bindings.push(CheckedEnumVariantBinding(name: binding.name, binding: binding.binding, type_id, span))
+                    found = true
                     break
                 }
+            }
+            if not found {
+                .error(
+                    format(
+                        "Enum variant ‘{}’ doesn't have field with name ‘{}’"
+                        variant.name()
+                        binding.name_in_enum()
+                    )
+                    binding.name_in_enum_span()
+                )
             }
         }
         if checked_enum_variant_bindings.size() > 0 {
