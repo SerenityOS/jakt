@@ -2796,6 +2796,10 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
+bool const is_boolean_match = ((type_to_match_on)->index() == 1 /* Bool */);
+bool seen_true = false;
+bool seen_false = false;
+JaktInternal::Optional<utility::Span> catch_all_span = JaktInternal::OptionalNone();
 bool is_enum_match = false;
 bool is_value_match = false;
 bool seen_catch_all = false;
@@ -2873,6 +2877,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedMatc
 if ((current_case_index != (JaktInternal::checked_sub<size_t>(case_count,static_cast<size_t>(1ULL))))){
 TRY((((*this).error(Jakt::DeprecatedString("Match else case is only allowed as the last case"sv),((case_).marker_span)))));
 }
+(catch_all_span = ((case_).marker_span));
 if (seen_catch_all){
 TRY((((*this).error(Jakt::DeprecatedString("Multiple catch-all cases in match are not allowed"sv),((case_).marker_span)))));
 }
@@ -2933,6 +2938,16 @@ JaktInternal::Optional<parser::ParsedBlock> const new_then_block = ((new_conditi
 JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const new_else_statement = ((new_condition_new_then_block_new_else_statement_).template get<2>());
 
 NonnullRefPtr<typename types::CheckedExpression> const checked_expression = TRY((((*this).typecheck_expression_and_dereference_if_needed(new_condition,scope_id,safety_mode,static_cast<JaktInternal::Optional<types::TypeId>>(subject_type_id),span))));
+if ((is_boolean_match && ((checked_expression)->index() == 0 /* Boolean */))){
+bool const val = ((checked_expression)->get<types::CheckedExpression::Boolean>()).val;
+if (val){
+(seen_true = true);
+}
+else {
+(seen_false = true);
+}
+
+}
 if ((!(((((checked_expression)->to_number_constant(((*this).program)))).has_value())))){
 (all_variants_constant = false);
 }
@@ -2988,8 +3003,11 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 
-if ((is_value_match && (!(seen_catch_all)))){
-TRY((((*this).error(Jakt::DeprecatedString("match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"sv),span))));
+if ((is_value_match && (!((seen_catch_all || ((is_boolean_match && seen_true) && seen_false)))))){
+TRY((((*this).error(Jakt::DeprecatedString("Match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"sv),span))));
+}
+if ((is_value_match && (seen_catch_all && (is_boolean_match && (seen_true && seen_false))))){
+TRY((((*this).error(Jakt::DeprecatedString("All cases are covered, but an irrefutable pattern is also present"sv),(catch_all_span.value())))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
