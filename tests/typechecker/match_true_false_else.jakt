@@ -1,0 +1,11 @@
+/// Expect:
+/// - error: "All cases are covered, but an irrefutable pattern is also present"
+
+fn main() {
+    let var = true
+    match var {
+        true => { println("FAIL") }
+        false => { println("FAIL") }
+        else => { println("FAIL") }
+    }
+}
