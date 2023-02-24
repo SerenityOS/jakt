@@ -1588,7 +1588,7 @@ boxed enum CheckedExpression {
         }
         MethodCall(type_id) | Call(type_id) => match type_id.equals(never_type_id()) {
             true => BlockControlFlow::NeverReturns
-            else => BlockControlFlow::MayReturn
+            false => BlockControlFlow::MayReturn
         }
         TryBlock(stmt, catch_block) => {
             guard stmt is Block(block) else {

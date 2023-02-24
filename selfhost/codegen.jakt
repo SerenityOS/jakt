@@ -671,14 +671,14 @@ struct CodeGenerator {
 
             output += match function.can_throw {
                 true => format("ErrorOr<{}>", .codegen_type(function.return_type_id))
-                else => .codegen_type(function.return_type_id)
+                false => .codegen_type(function.return_type_id)
             }
 
             output += " "
 
             let qualifier = match containing_struct.has_value() {
                 true => .codegen_type_possibly_as_namespace(type_id: containing_struct!, as_namespace: true)
-                else => ""
+                false => ""
             }
             if not qualifier.is_empty() {
                 output += qualifier
@@ -1213,7 +1213,7 @@ struct CodeGenerator {
             let naked_return_type = .codegen_type(function.return_type_id)
             let return_type = match function.can_throw {
                 true => format("ErrorOr<{}>", naked_return_type)
-                else => naked_return_type
+                false => naked_return_type
             }
             output += return_type
         }
@@ -1877,7 +1877,7 @@ struct CodeGenerator {
             let escaped_value = original_string.replace(replace: "\n", with: "\\n")
             yield match val.type_id.equals(builtin(BuiltinType::JaktString)) {
                 true => "Jakt::DeprecatedString(\"" + escaped_value + "\"sv)"
-                else => {
+                false => {
                     let error_handler = match val.may_throw { true => "TRY", else => "" }
                     yield format("{}({}::from_string_literal(\"{}\"sv))", error_handler, .codegen_type(val.type_id), escaped_value)
                 }
@@ -1894,7 +1894,7 @@ struct CodeGenerator {
         IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedTuple(expr, index, is_optional) => match is_optional {
             true => format("(({}).map([](auto& _value) {{ return _value.template get<{}>(); }}))", .codegen_expression(expr), index)
-            else => format("(({}).template get<{}>())", .codegen_expression(expr), index)
+            false => format("(({}).template get<{}>())", .codegen_expression(expr), index)
         }
         IndexedStruct(expr, index, is_optional) => {
             mut output = ""
@@ -2269,7 +2269,7 @@ struct CodeGenerator {
             }
             let return_type = match can_throw {
                 true => format("ErrorOr<{}>", .codegen_type(return_type_id))
-                else => .codegen_type(return_type_id)
+                false => .codegen_type(return_type_id)
             }
 
             mut block_output = ""
@@ -3350,11 +3350,11 @@ struct CodeGenerator {
             Throw(expr) => "return " + .codegen_expression(expr) + ";"
             Continue => match .control_flow_state.passes_through_match {
                 true => "return JaktInternal::LoopContinue{};"
-                else => "continue;"
+                false => "continue;"
             }
             Break => match .control_flow_state.passes_through_match {
                 true => "return JaktInternal::LoopBreak{};"
-                else => "break;"
+                false => "break;"
             }
             Expression(expr) => .codegen_expression(expr) + ";"
             Defer(statement) => {
@@ -3377,10 +3377,10 @@ struct CodeGenerator {
             }
             Return(val) => match val.has_value() {
                 true => "return (" + .codegen_expression(val!) + ");"
-                else => {
+                false => {
                     yield match .current_function!.can_throw {
                         true => "return {};"
-                        else => "return;"
+                        false => "return;"
                     }
                 }
             }
@@ -3470,7 +3470,7 @@ struct CodeGenerator {
 
                 output += match else_statement.has_value() {
                     true => "else " + .codegen_statement(statement: else_statement!)
-                    else => ""
+                    false => ""
                 }
 
                 add_newline = false
@@ -3670,7 +3670,7 @@ struct CodeGenerator {
         mut output = ""
         mut current_scope_id = match skip_current {
             true => .program.get_scope(scope_id).parent
-            else => scope_id
+            false => scope_id
         }
 
         mut first = true
@@ -3981,7 +3981,7 @@ struct CodeGenerator {
 
             let qualified_namespace = match is_inline {
                 true => ""
-                else => qualified_name + "::"
+                false => qualified_name + "::"
             }
             output += format("ErrorOr<NonnullRefPtr<{}>> {}__jakt_create", class_name_with_generics, qualified_namespace)
             output += "("
@@ -4098,7 +4098,7 @@ struct CodeGenerator {
             if not function.type is Destructor {
                 output += match function.can_throw {
                     true => format("ErrorOr<{}>", .codegen_type(function.return_type_id))
-                    else => .codegen_type(function.return_type_id)
+                    false => .codegen_type(function.return_type_id)
                 }
             }
         }
@@ -4110,7 +4110,7 @@ struct CodeGenerator {
         } else {
             let qualifier = match containing_struct.has_value() {
                 true => .codegen_type_possibly_as_namespace(type_id: containing_struct!, as_namespace: true)
-                else => ""
+                false => ""
             }
             if not qualifier.is_empty() {
                 output += qualifier

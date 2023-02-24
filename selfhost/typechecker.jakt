@@ -916,7 +916,7 @@ struct Typechecker {
                 let maybe_file_name = .compiler.search_for_path(name_and_span.0)
                 let file_name = match maybe_file_name.has_value() {
                     true => maybe_file_name!
-                    else => .get_root_path().parent().join(name_and_span.0).replace_extension("jakt")
+                    false => .get_root_path().parent().join(name_and_span.0).replace_extension("jakt")
                 }
                 if File::exists(file_name.to_string()) {
                     module_name_and_span = name_and_span
@@ -946,7 +946,7 @@ struct Typechecker {
             let maybe_file_name = .compiler.search_for_path(module_name)
             let file_name = match maybe_file_name.has_value() {
                 true => maybe_file_name!
-                else => .get_root_path().parent().join(module_name).replace_extension("jakt")
+                false => .get_root_path().parent().join(module_name).replace_extension("jakt")
             }
 
             let file_id = .compiler.get_file_id_or_register(file_name)
@@ -1313,7 +1313,7 @@ struct Typechecker {
         mut scope = .get_scope(scope_id)
         let alias_scope_id = match scope.alias_scope.has_value() {
             true => scope.alias_scope!
-            else => {
+            false => {
                 let new_scope_id = .create_scope(
                     parent_scope_id: scope_id
                     can_throw: false
@@ -2302,7 +2302,7 @@ struct Typechecker {
                         .error("Class can only inherit from another class", super_parsed_type!.span())
                     }
                 }
-                else => {}
+                false => {}
             }
             Struct(super_type: super_parsed_type) => match super_parsed_type.has_value() {
                 true => {
@@ -2315,7 +2315,7 @@ struct Typechecker {
                         .error("Struct can only inherit from another struct", super_parsed_type!.span())
                     }
                 }
-                else => {}
+                false => {}
             }
             else => {
                 panic("Expected Struct or Class in typecheck_struct_predecl")
@@ -2578,7 +2578,7 @@ struct Typechecker {
                                 }
                                 yield value_expression
                             }
-                            else => .cast_to_underlying(
+                            false => .cast_to_underlying(
                                 expr: ParsedExpression::NumericConstant(val: NumericConstant::U64(next_constant_value++), span: variant.span)
                                 scope_id: parent_scope_id
                                 parsed_type: underlying_type
@@ -3337,7 +3337,7 @@ struct Typechecker {
 
             let return_type_id = match function_return_type_id.equals(unknown_type_id()) {
                 true => .infer_function_return_type(block)
-                else => .resolve_type_var(type_var_type_id: function_return_type_id, scope_id: parent_scope_id)
+                false => .resolve_type_var(type_var_type_id: function_return_type_id, scope_id: parent_scope_id)
             }
 
             checked_function.block = block
@@ -3647,9 +3647,9 @@ struct Typechecker {
         If(condition, then_block, else_statement) => match condition {
             Boolean(val) => match val {
                 true => then_block.control_flow
-                else => match else_statement.has_value() {
+                false => match else_statement.has_value() {
                     true => .statement_control_flow(else_statement!)
-                    else => BlockControlFlow::MayReturn
+                    false => BlockControlFlow::MayReturn
                 }
             }
             // Note that a missing 'else' branch produces a partial result.
@@ -3674,7 +3674,7 @@ struct Typechecker {
         Loop(block) => match block.control_flow {
             AlwaysTransfersControl(might_break) => match might_break {
                 false => BlockControlFlow::AlwaysTransfersControl(might_break)
-                else => BlockControlFlow::MayReturn
+                true => BlockControlFlow::MayReturn
             }
             NeverReturns => BlockControlFlow::NeverReturns
             AlwaysReturns => BlockControlFlow::AlwaysReturns
@@ -3682,7 +3682,7 @@ struct Typechecker {
             else => match block.control_flow.may_break() {
                 true => BlockControlFlow::MayReturn
                 // Loop will always continue, so upgrade partial results to full ones
-                else => match block.control_flow {
+                false => match block.control_flow {
                     PartialAlwaysReturns => BlockControlFlow::AlwaysReturns
                     PartialNeverReturns => BlockControlFlow::NeverReturns
                     PartialAlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
@@ -3696,7 +3696,7 @@ struct Typechecker {
 
     fn maybe_statement_control_flow(this, anon statement: CheckedStatement?, anon other_branch: BlockControlFlow) -> BlockControlFlow => match statement.has_value() {
         true => .statement_control_flow(statement!)
-        else => other_branch.partial()
+        false => other_branch.partial()
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
@@ -3834,7 +3834,7 @@ struct Typechecker {
 
                     let rhs_throw = match rhs_can_throw {
                         true => "Yes"
-                        else => "No"
+                        false => "No"
                     }
 
                     .error(
@@ -5043,7 +5043,7 @@ struct Typechecker {
                                         // No need for a type hint on the tuple as a whole when destructuring,
                                         // as each of its constituents already gets one.
                                         true => None
-                                        else => name_span
+                                        false => name_span
                                     },
                                     span: name_span
                                 ),
@@ -6385,7 +6385,7 @@ struct Typechecker {
 
                             yield Some(struct_id ?? StructLikeId::Struct(optional_struct_id))
                         }
-                        else => Some(StructLikeId::Struct(generic_arguments: args, id))
+                        false => Some(StructLikeId::Struct(generic_arguments: args, id))
                     }
                 }
                 GenericEnumInstance(id, args) => Some(StructLikeId::Enum(generic_arguments: args, id))
@@ -8671,7 +8671,7 @@ struct Typechecker {
                 }
                 yield function.external_name
             }
-            else => None
+            false => None
         }
 
         if resolved_function_id.has_value() {

@@ -12,7 +12,7 @@ fn init<T>(anon xs: [T]) throws -> [T] => xs[..(xs.size() - 1)].to_array()
 
 fn collapse<T>(anon x: Optional<T>?) -> T? => match x.has_value() {
     true => x!
-    else => None
+    false => None
 }
 
 enum Entity {

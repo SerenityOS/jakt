@@ -414,7 +414,7 @@ fn main(args: [String]) -> c_int {
                     span: call_span
                 )]
             }
-            else => []
+            false => []
         }
 
         let main_result = interpreter.execute(
