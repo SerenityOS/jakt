@@ -4879,7 +4879,7 @@ struct Typechecker {
         // failing that, if it implements the IntoIterator (or IntoThrowingIterable) trait, we will automatically call the `.iterator()` method
         // and use the result as our iterable.
 
-        mut iterable_expr = .typecheck_expression(range, scope_id, safety_mode, type_hint: None)
+        mut iterable_expr = .typecheck_expression_and_dereference_if_needed(range, scope_id, safety_mode, type_hint: None, span)
         mut resolved_iterable_result_type = unknown_type_id()
 
         mut expression_to_iterate = range

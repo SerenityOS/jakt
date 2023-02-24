@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "PASS\n"
+
+fn test(values: &[String]) {
+    for v in values {
+        print("{}", v)
+    }
+    println("")
+}
+
+fn main() {
+    let values = ["P", "A", "S", "S"]
+    test(&values)
+}
