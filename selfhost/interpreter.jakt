@@ -574,7 +574,7 @@ fn cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter:
             USize(value) => Value(impl: ValueImpl::U8(value as! u8), span: this_value.span)
             else => match is_optional {
                 true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
-                else => this_value
+                false => this_value
             }
         }
         U16 => match this_value.impl {
@@ -584,7 +584,7 @@ fn cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter:
             USize(value) => Value(impl: ValueImpl::U16(value as! u16), span: this_value.span)
             else => match is_optional {
                 true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
-                else => this_value
+                false => this_value
             }
         }
         U32 => match this_value.impl {
@@ -594,7 +594,7 @@ fn cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter:
             USize(value) => Value(impl: ValueImpl::U32(value as! u32), span: this_value.span)
             else => match is_optional {
                 true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
-                else => this_value
+                false => this_value
             }
         }
         U64 => match this_value.impl {
@@ -604,7 +604,7 @@ fn cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter:
             USize(value) => Value(impl: ValueImpl::U64(value as! u64), span: this_value.span)
             else => match is_optional {
                 true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
-                else => this_value
+                false => this_value
             }
         }
         I8 => match this_value.impl {
@@ -613,7 +613,7 @@ fn cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter:
             I64(value) => Value(impl: ValueImpl::I8(value as! i8), span: this_value.span)
             else => match is_optional {
                 true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
-                else => this_value
+                false => this_value
             }
         }
         I16 => match this_value.impl {
@@ -622,7 +622,7 @@ fn cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter:
             I64(value) => Value(impl: ValueImpl::I16(value as! i16), span: this_value.span)
             else => match is_optional {
                 true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
-                else => this_value
+                false => this_value
             }
         }
         I32 => match this_value.impl {
@@ -631,7 +631,7 @@ fn cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter:
             I64(value) => Value(impl: ValueImpl::I32(value as! i32), span: this_value.span)
             else => match is_optional {
                 true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
-                else => this_value
+                false => this_value
             }
         }
         I64 => match this_value.impl {
@@ -640,14 +640,14 @@ fn cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter:
             I32(value) => Value(impl: ValueImpl::I64(value as! i64), span: this_value.span)
             else => match is_optional {
                 true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
-                else => this_value
+                false => this_value
             }
         }
         Usize => match this_value.impl {
             U64(value) => Value(impl: ValueImpl::USize(value as! usize), span: this_value.span)
             else => match is_optional {
                 true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
-                else => this_value
+                false => this_value
             }
         }
         else => match is_optional {
@@ -1278,7 +1278,7 @@ class Interpreter {
         }
         Return(val, span) => match val.has_value() {
             true => CheckedStatement::Return(val: .perform_final_interpretation_expr_pass(expr: val!, scope), span)
-            else => statement
+            false => statement
         }
         Break | Continue | InlineCpp | Garbage => statement
         Throw(expr, span) => CheckedStatement::Throw(expr: .perform_final_interpretation_expr_pass(expr, scope), span)
@@ -2611,7 +2611,7 @@ class Interpreter {
                         let value = mutable_values.pop()
                         yield match value.has_value() {
                             true => StatementResult::JustValue(value!)
-                            else => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
+                            false => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
                         }
                     }
                     else => {
@@ -2624,7 +2624,7 @@ class Interpreter {
                         let value = mutable_values.first()
                         yield match value.has_value() {
                             true => StatementResult::JustValue(value!)
-                            else => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
+                            false => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
                         }
                     }
                     else => {
@@ -2637,7 +2637,7 @@ class Interpreter {
                         let value = mutable_values.last()
                         yield match value.has_value() {
                             true => StatementResult::JustValue(value!)
-                            else => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
+                            false => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
                         }
                     }
                     else => {
@@ -2966,7 +2966,7 @@ class Interpreter {
                         yield StatementResult::JustValue(Value(
                             impl: match result.has_value() {
                                 true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::I32(result!), span: call_span))
-                                else => ValueImpl::OptionalNone()
+                                false => ValueImpl::OptionalNone()
                             }
                             span: call_span
                         ))
@@ -3350,7 +3350,7 @@ class Interpreter {
                                         span: call_span
                                     )
                                 }
-                                else => Value(impl: ValueImpl::OptionalNone, span: call_span)
+                                false => Value(impl: ValueImpl::OptionalNone, span: call_span)
                             }
                             else => {
                                 panic("Invalid DictionaryIterator configuration")
@@ -3775,7 +3775,7 @@ class Interpreter {
 
                 let block = match cond {
                     true => Some(then_block)
-                    else => match else_statement.has_value() {
+                    false => match else_statement.has_value() {
                         true => Some(CheckedBlock(
                             statements: [else_statement!]
                             scope_id: then_block.scope_id
@@ -3783,7 +3783,7 @@ class Interpreter {
                             yielded_type: None
                             yielded_none: false
                         ))
-                        else => None
+                        false => None
                     }
                 }
 
@@ -6067,7 +6067,7 @@ class Interpreter {
                         panic("Invalid control flow")
                     }
                 }
-                else => {
+                false => {
                     .error("Partial ranges are not implemented", span)
                     throw Error::from_errno(InterpretError::Unimplemented as! i32)
                 }
@@ -6091,7 +6091,7 @@ class Interpreter {
                         panic("Invalid control flow")
                     }
                 }
-                else => {
+                false => {
                     .error("Partial ranges are not implemented", span)
                     throw Error::from_errno(InterpretError::Unimplemented as! i32)
                 }
@@ -6605,7 +6605,7 @@ class Interpreter {
         })
         QuotedString(val, span) => match val.type_id.equals(builtin(BuiltinType::JaktString)) {
             true => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(interpret_escapes(val.to_string())), span: span))
-            else => {
+            false => {
                 let function_id = match .program.get_type(val.type_id) {
                     Struct(struct_id) | GenericInstance(id: struct_id) => {
                         let scope = .program.get_scope(.program.get_struct(struct_id).scope_id)

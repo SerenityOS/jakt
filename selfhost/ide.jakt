@@ -590,7 +590,7 @@ fn find_span_in_statement(program: CheckedProgram, statement: CheckedStatement, 
             if checked_var.definition_span.contains(span) {
                 let mutability = match checked_var.is_mutable {
                     true => Mutability::Mutable
-                    else => Mutability::Immutable
+                    false => Mutability::Immutable
                 }
 
                 return Some(Usage::Variable(
@@ -790,7 +790,7 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
                                     }
                                     yield Some(Usage::NameSet(cases_array))
                                 }
-                                else => None
+                                true => None
                             }
                         }
                         else => match body {
@@ -874,7 +874,7 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
             }
             yield match catch_block.has_value() {
                 true => find_span_in_block(program, block: catch_block!, span),
-                else => none
+                false => none
             }
         }
         Range(from, to) => {
@@ -919,7 +919,7 @@ fn get_function_signature(program: CheckedProgram, function_id: FunctionId) thro
 
             let separator = match is_first_param {
                 true => ""
-                else => ", "
+                false => ", "
             }
 
             generic_parameters += format("{}{}", separator, generic_type)
@@ -935,12 +935,12 @@ fn get_function_signature(program: CheckedProgram, function_id: FunctionId) thro
     for param in checked_function.params {
         let anon_value = match param.requires_label {
             true => ""
-            else => "anon "
+            false => "anon "
         }
 
         let is_mutable = match param.variable.is_mutable {
             true => "mut "
-            else => ""
+            false => ""
         }
 
         mut variable_type = program.type_name(type_id: param.variable.type_id)
@@ -952,7 +952,7 @@ fn get_function_signature(program: CheckedProgram, function_id: FunctionId) thro
 
         let separator = match is_first_param {
             true => ""
-            else => ", "
+            false => ", "
         }
 
         parameters += format("{}{}{}{}{}", separator, anon_value, is_mutable, param.variable.name, variable_type)
@@ -961,7 +961,7 @@ fn get_function_signature(program: CheckedProgram, function_id: FunctionId) thro
 
     let throws_str = match checked_function.can_throw {
         true => " throws"
-        else => ""
+        false => ""
     }
 
     mut returns = program.type_name(type_id: checked_function.return_type_id)
