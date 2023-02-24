@@ -2175,13 +2175,16 @@ class Interpreter {
                     mut builder = StringBuilder::create()
                     builder.append_string(current_string)
                     match prelude_function {
-                        "append" => builder.append(match arguments[0].impl {
-                            U8(value) => value
+                        "append" => match arguments[0].impl {
+                            U8(value) => builder.append(value)
+                            StringView(value) => builder.append(value)
+                            JaktString(value) => builder.append(value)
+                            // FIXME: When we can represent raw pointers in the interpreter, implement the 2 arg overload
                             else => {
                                 .error(format("Invalid use of StringBuilder::append({})", arguments[0].impl), call_span)
                                 throw Error::from_errno(InterpretError::InvalidType as! i32)
                             }
-                        })
+                        }
                         "append_string" => builder.append_string(match arguments[0].impl {
                             JaktString(value) => value
                             else => {
