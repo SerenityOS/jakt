@@ -1757,13 +1757,14 @@ struct CodeGenerator {
                         output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));\n"
                         let var = .program.get_variable(field)
                         if .program.is_string(var.type_id){
-                            output += format("TRY(builder.appendff(\"{}: \\\"{{}}\\\"\", that.{}));\n", var.name, var.name)
+                            output += format("TRY(builder.appendff(\"{}: \\\"{{}}\\\"", var.name)
                         } else {
-                            output += format("TRY(builder.appendff(\"{}: {{}}\", that.{}));\n", var.name, var.name)
+                            output += format("TRY(builder.appendff(\"{}: {{}}", var.name)
                         }
                         if i != fields.size() - 1 {
-                            output += "TRY(builder.append(\", \"sv));\n"
+                            output += "\", \""
                         }
+                        output += format("\", that.{}));\n", var.name)
                         i++
                     }
                     output += "}\n"
