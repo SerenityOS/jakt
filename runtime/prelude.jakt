@@ -73,8 +73,9 @@ extern struct String {
 [[name=DeprecatedStringBuilder]]
 extern struct StringBuilder {
     fn append(mut this, anon b: u8) throws
+    fn append(mut this, anon s: StringView) throws
     fn append(mut this, anon s: String) throws
-    fn append(mut this, anon s: raw c_char) throws
+    fn append(mut this, string: raw c_char, size: usize) throws
     [[name=append_code_point]]
     fn append(mut this, anon code_point: u32) throws
     fn append_escaped_for_json(mut this, anon s: String) throws
