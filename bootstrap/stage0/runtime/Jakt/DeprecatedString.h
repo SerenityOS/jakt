@@ -19,7 +19,7 @@ inline DeprecatedString operator+(DeprecatedString const& a, DeprecatedString co
 inline DeprecatedString& operator+=(DeprecatedString& a, DeprecatedString const& b)
 {
     auto result = DeprecatedString::formatted("{}{}", a, b);
-    *bit_cast<RefPtr<StringImpl>*>(&a) = result.impl(); // I'm sorry.
+    *bit_cast<RefPtr<StringImpl const>*>(&a) = result.impl(); // I'm sorry.
     return a;
 }
 }

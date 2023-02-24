@@ -2032,7 +2032,7 @@ JaktInternal::DynamicArray<DeprecatedString> field_names = (TRY((DynamicArray<De
 TRY((((builder).append(((structure).name)))));
 if (((constructor).has_value())){
 NonnullRefPtr<types::CheckedFunction> const function = ((((interpreter)->program))->get_function((constructor.value())));
-TRY((((builder).append(Jakt::DeprecatedString("::"sv)))));
+TRY((((builder).append((StringView::from_string_literal("::"sv))))));
 TRY((((builder).append(((function)->name)))));
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((function)->params)).iterator());
@@ -2080,10 +2080,10 @@ break;
 types::Value field = (_magic_value.value());
 {
 if ((index > static_cast<size_t>(0ULL))){
-TRY((((builder).append(Jakt::DeprecatedString(", "sv)))));
+TRY((((builder).append((StringView::from_string_literal(", "sv))))));
 }
 TRY((((builder).append(((field_names)[index])))));
-TRY((((builder).append(Jakt::DeprecatedString(": "sv)))));
+TRY((((builder).append((StringView::from_string_literal(": "sv))))));
 TRY((((builder).append(TRY((interpreter::format_value_impl(format_string,field,interpreter)))))));
 ({auto& _jakt_ref = index;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 }
@@ -2108,7 +2108,7 @@ JaktInternal::DynamicArray<DeprecatedString> field_names = (TRY((DynamicArray<De
 TRY((((builder).append(((structure).name)))));
 if (((constructor).has_value())){
 NonnullRefPtr<types::CheckedFunction> const function = ((((interpreter)->program))->get_function((constructor.value())));
-TRY((((builder).append(Jakt::DeprecatedString("::"sv)))));
+TRY((((builder).append((StringView::from_string_literal("::"sv))))));
 TRY((((builder).append(((function)->name)))));
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((function)->params)).iterator());
@@ -2156,10 +2156,10 @@ break;
 types::Value field = (_magic_value.value());
 {
 if ((index > static_cast<size_t>(0ULL))){
-TRY((((builder).append(Jakt::DeprecatedString(", "sv)))));
+TRY((((builder).append((StringView::from_string_literal(", "sv))))));
 }
 TRY((((builder).append(((field_names)[index])))));
-TRY((((builder).append(Jakt::DeprecatedString(": "sv)))));
+TRY((((builder).append((StringView::from_string_literal(": "sv))))));
 TRY((((builder).append(TRY((interpreter::format_value_impl(format_string,field,interpreter)))))));
 ({auto& _jakt_ref = index;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 }
@@ -2183,7 +2183,7 @@ NonnullRefPtr<types::CheckedFunction> const function = ((((interpreter)->program
 DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
 JaktInternal::DynamicArray<DeprecatedString> field_names = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
 TRY((((builder).append(((enum_).name)))));
-TRY((((builder).append(Jakt::DeprecatedString("::"sv)))));
+TRY((((builder).append((StringView::from_string_literal("::"sv))))));
 TRY((((builder).append(((function)->name)))));
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((function)->params)).iterator());
@@ -2212,10 +2212,10 @@ break;
 types::Value field = (_magic_value.value());
 {
 if ((index > static_cast<size_t>(0ULL))){
-TRY((((builder).append(Jakt::DeprecatedString(", "sv)))));
+TRY((((builder).append((StringView::from_string_literal(", "sv))))));
 }
 TRY((((builder).append(((field_names)[index])))));
-TRY((((builder).append(Jakt::DeprecatedString(": "sv)))));
+TRY((((builder).append((StringView::from_string_literal(": "sv))))));
 TRY((((builder).append(TRY((interpreter::format_value_impl(format_string,field,interpreter)))))));
 ({auto& _jakt_ref = index;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 }
@@ -2272,7 +2272,7 @@ break;
 types::Value field = (_magic_value.value());
 {
 if ((index > static_cast<size_t>(0ULL))){
-TRY((((builder).append(Jakt::DeprecatedString(", "sv)))));
+TRY((((builder).append((StringView::from_string_literal(", "sv))))));
 }
 TRY((((builder).append(TRY((interpreter::format_value_impl(format_string,field,interpreter)))))));
 ({auto& _jakt_ref = index;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
@@ -2323,7 +2323,7 @@ break;
 types::Value field = (_magic_value.value());
 {
 if ((index > static_cast<size_t>(0ULL))){
-TRY((((builder).append(Jakt::DeprecatedString(", "sv)))));
+TRY((((builder).append((StringView::from_string_literal(", "sv))))));
 }
 TRY((((builder).append(TRY((interpreter::format_value_impl(format_string,field,interpreter)))))));
 ({auto& _jakt_ref = index;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
@@ -2374,7 +2374,7 @@ break;
 types::Value field = (_magic_value.value());
 {
 if ((index > static_cast<size_t>(0ULL))){
-TRY((((builder).append(Jakt::DeprecatedString(", "sv)))));
+TRY((((builder).append((StringView::from_string_literal(", "sv))))));
 }
 TRY((((builder).append(TRY((interpreter::format_value_impl(format_string,field,interpreter)))))));
 ({auto& _jakt_ref = index;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
@@ -2406,10 +2406,10 @@ break;
 types::Value key = (_magic_value.value());
 {
 if ((index > static_cast<size_t>(0ULL))){
-TRY((((builder).append(Jakt::DeprecatedString(", "sv)))));
+TRY((((builder).append((StringView::from_string_literal(", "sv))))));
 }
 TRY((((builder).append(TRY((interpreter::format_value_impl(format_string,key,interpreter)))))));
-TRY((((builder).append(Jakt::DeprecatedString(": "sv)))));
+TRY((((builder).append((StringView::from_string_literal(": "sv))))));
 TRY((((builder).append(TRY((interpreter::format_value_impl(format_string,((values)[index]),interpreter)))))));
 ({auto& _jakt_ref = index;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 }
@@ -9047,23 +9047,34 @@ TRY((((builder).append_string(current_string))));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == Jakt::DeprecatedString("append"sv)) {
-return (TRY((((builder).append(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u8, ErrorOr<interpreter::StatementResult>>{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::U8>();
 u8 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(value);
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 14: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::StringView>();
+DeprecatedString const& value = __jakt_match_value.value;
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 13: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::JaktString>();
+DeprecatedString const& value = __jakt_match_value.value;
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
 TRY((((*this).error(TRY((__jakt_format(Jakt::DeprecatedString("Invalid use of StringBuilder::append({})"sv),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
 }
+return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 }/*switch end*/
 }()
-))))))), JaktInternal::ExplicitValue<void>();
+))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == Jakt::DeprecatedString("append_string"sv)) {
 return (TRY((((builder).append_string(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<interpreter::StatementResult>>{
@@ -9178,23 +9189,34 @@ TRY((((builder).append_string(current_string))));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == Jakt::DeprecatedString("append"sv)) {
-return (TRY((((builder).append(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u8, ErrorOr<interpreter::StatementResult>>{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::U8>();
 u8 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(value);
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 14: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::StringView>();
+DeprecatedString const& value = __jakt_match_value.value;
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 13: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::JaktString>();
+DeprecatedString const& value = __jakt_match_value.value;
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
 TRY((((*this).error(TRY((__jakt_format(Jakt::DeprecatedString("Invalid use of StringBuilder::append({})"sv),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
 }
+return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 }/*switch end*/
 }()
-))))))), JaktInternal::ExplicitValue<void>();
+))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == Jakt::DeprecatedString("append_string"sv)) {
 return (TRY((((builder).append_string(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<interpreter::StatementResult>>{
@@ -9309,23 +9331,34 @@ TRY((((builder).append_string(current_string))));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == Jakt::DeprecatedString("append"sv)) {
-return (TRY((((builder).append(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u8, ErrorOr<interpreter::StatementResult>>{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::U8>();
 u8 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(value);
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 14: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::StringView>();
+DeprecatedString const& value = __jakt_match_value.value;
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 13: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::JaktString>();
+DeprecatedString const& value = __jakt_match_value.value;
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
 TRY((((*this).error(TRY((__jakt_format(Jakt::DeprecatedString("Invalid use of StringBuilder::append({})"sv),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
 }
+return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 }/*switch end*/
 }()
-))))))), JaktInternal::ExplicitValue<void>();
+))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == Jakt::DeprecatedString("append_string"sv)) {
 return (TRY((((builder).append_string(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<interpreter::StatementResult>>{
@@ -9440,23 +9473,34 @@ TRY((((builder).append_string(current_string))));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == Jakt::DeprecatedString("append"sv)) {
-return (TRY((((builder).append(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<u8, ErrorOr<interpreter::StatementResult>>{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.index()) {
 case 2: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::U8>();
 u8 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(value);
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 14: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::StringView>();
+DeprecatedString const& value = __jakt_match_value.value;
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 13: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::JaktString>();
+DeprecatedString const& value = __jakt_match_value.value;
+return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
 TRY((((*this).error(TRY((__jakt_format(Jakt::DeprecatedString("Invalid use of StringBuilder::append({})"sv),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
 }
+return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 }/*switch end*/
 }()
-))))))), JaktInternal::ExplicitValue<void>();
+))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == Jakt::DeprecatedString("append_string"sv)) {
 return (TRY((((builder).append_string(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<interpreter::StatementResult>>{

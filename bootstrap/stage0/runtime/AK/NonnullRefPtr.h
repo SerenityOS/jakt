@@ -256,27 +256,10 @@ struct Formatter<NonnullRefPtr<T>> : Formatter<T> {
     }
 };
 
-template<Formattable T>
-struct Formatter<NonnullRefPtr<T const>> : Formatter<T> {
-    ErrorOr<void> format(FormatBuilder& builder, NonnullRefPtr<T const> const& value)
-    {
-        return Formatter<T>::format(builder, *value);
-    }
-};
-
 template<typename T>
 requires(!HasFormatter<T>)
 struct Formatter<NonnullRefPtr<T>> : Formatter<T const*> {
     ErrorOr<void> format(FormatBuilder& builder, NonnullRefPtr<T> const& value)
-    {
-        return Formatter<T const*>::format(builder, value.ptr());
-    }
-};
-
-template<typename T>
-requires(!HasFormatter<T>)
-struct Formatter<NonnullRefPtr<T const>> : Formatter<T const*> {
-    ErrorOr<void> format(FormatBuilder& builder, NonnullRefPtr<T const> const& value)
     {
         return Formatter<T const*>::format(builder, value.ptr());
     }
