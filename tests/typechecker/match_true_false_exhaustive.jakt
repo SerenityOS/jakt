@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "PASS\n"
+
+fn main() {
+    let var = true
+    match var {
+        true => { println("PASS") }
+        false => { println("FAIL") }
+    }
+}

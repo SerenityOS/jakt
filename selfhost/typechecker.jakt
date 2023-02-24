@@ -7751,6 +7751,11 @@ struct Typechecker {
                 .error("Can't match on 'void' type", checked_expr.span())
             }
             else => {
+                let is_boolean_match = type_to_match_on is Bool
+                mut seen_true = false
+                mut seen_false = false
+                mut catch_all_span: Span? = None
+
                 mut is_enum_match = false
                 mut is_value_match = false
                 mut seen_catch_all = false
@@ -7818,6 +7823,8 @@ struct Typechecker {
                                     .error("Match else case is only allowed as the last case", case_.marker_span)
                                 }
 
+                                catch_all_span = case_.marker_span
+
                                 if seen_catch_all {
                                     .error("Multiple catch-all cases in match are not allowed", case_.marker_span)
                                 } else {
@@ -7883,6 +7890,14 @@ struct Typechecker {
                                 )
                                 let checked_expression = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: Some(subject_type_id), span)
 
+                                if is_boolean_match and checked_expression is Boolean(val) {
+                                    if val {
+                                        seen_true = true
+                                    } else {
+                                        seen_false = true
+                                    }
+                                }
+
                                 if not checked_expression.to_number_constant(program: .program).has_value() {
                                     all_variants_constant = false
                                 }
@@ -7943,11 +7958,15 @@ struct Typechecker {
                     current_case_index++
                 }
 
-                if is_value_match and not seen_catch_all {
+                if is_value_match and not (seen_catch_all or (is_boolean_match and seen_true and seen_false)) {
                     .error(
-                        "match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"
+                        "Match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"
                         span
                     )
+                }
+
+                if is_value_match and seen_catch_all and is_boolean_match and seen_true and seen_false {
+                    .error("All cases are covered, but an irrefutable pattern is also present", catch_all_span!)
                 }
             }
         }
