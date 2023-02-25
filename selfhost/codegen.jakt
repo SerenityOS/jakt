@@ -2089,7 +2089,7 @@ struct CodeGenerator {
                             suffix += format("index() == {} /* {} */", variant_index, name)
                         }
                         ValueEnum => {
-                            suffix += format("== {}::{}", enum_.name, name)
+                            suffix += format("== {}{}::{}", .codegen_namespace_qualifier(scope_id: enum_.scope_id), enum_.name, name)
                         }
                         else => {
                             panic(format("Unexpected enum record type in IsEnumVariant: {}", enum_.record_type))

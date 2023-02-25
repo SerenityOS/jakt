@@ -1,0 +1,12 @@
+/// Expect:
+/// - output: "PASS\n"
+
+import simple_enum_with_underlying_type
+
+fn main() {
+    let e = E::A
+
+    if e is A {
+        println("PASS")
+    }
+}
