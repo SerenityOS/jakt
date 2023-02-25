@@ -1166,7 +1166,7 @@ fn get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> String
                 if args.is_empty() {
                     return ""
                 }
-                return format("weak {}?", get_type_signature(program, type_id: args[0]))
+                return format("weak {}", get_type_signature(program, type_id: args[0]))
             }
 
             let record = program.get_struct(id)

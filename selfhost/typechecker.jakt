@@ -3887,7 +3887,7 @@ struct Typechecker {
                 let lhs_struct_id = id
                 let lhs_args = args
 
-                // If lhs is T? or weak T? and rhs is T, skip type compat check
+                // If lhs is T? or weak T and rhs is T, skip type compat check
                 if (lhs_struct_id.equals(optional_struct_id)) or
                     (lhs_struct_id.equals(weakptr_struct_id)) {
                     if lhs_args.size() > 0 {
@@ -4702,7 +4702,7 @@ struct Typechecker {
                     and .program.get_struct(id).name == "WeakPtr"
                     and not lhs_type_id.equals(rhs_type_id)
                 {
-                    // Try to handle assignment to `weak T?` from `T`
+                    // Try to handle assignment to `weak T` from `T`
                     let unified_type = .unify(lhs: args[0], lhs_span, rhs: checked_rhs.type(), rhs_span)
                     if unified_type.has_value() {
                         return unified_type!

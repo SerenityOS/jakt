@@ -37,12 +37,10 @@ The following strategies are employed to achieve memory safety:
 In **Jakt**, there are three pointer types:
 
 - [x] **T** (Strong pointer to reference-counted class `T`.)
-- [x] **weak T?** (Weak pointer to reference-counted class `T`. Becomes empty on pointee destruction.)
+- [x] **weak T** (Weak pointer to reference-counted class `T`. Becomes empty on pointee destruction.)
 - [x] **raw T** (Raw pointer to arbitrary type `T`. Only usable in `unsafe` blocks.)
 
 Null pointers are not possible in safe mode, but pointers can be wrapped in `Optional`, i.e `Optional<T>` or `T?` for short.
-
-Note that **weak** pointers must always be wrapped in `Optional`. There is no **weak T**, only **weak T?**.
 
 ## Math safety
 
