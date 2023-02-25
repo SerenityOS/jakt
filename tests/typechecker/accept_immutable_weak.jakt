@@ -1,9 +1,10 @@
 /// Expect:
-/// - error: "Weak reference must be mutable\n"
+/// - output: "PASS\n"
 
 class Foo {
 }
 
 fn main() {
     let foo: weak Foo = None
+    println("PASS")
 }
