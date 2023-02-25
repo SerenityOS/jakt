@@ -1,10 +1,10 @@
 /// Expect:
-/// - error: "Assignment between incompatible types (‘weak Foo?’ and ‘i64’)\n"
+/// - error: "Assignment between incompatible types (‘weak Foo’ and ‘i64’)\n"
 
 class Foo {
 }
 
 fn main() {
-    mut x: weak Foo? = None
+    mut x: weak Foo = None
     x = 5
 }

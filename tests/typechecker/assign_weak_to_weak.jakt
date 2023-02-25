@@ -6,8 +6,8 @@ class Foo {
 
 fn main() {
     let foo = Foo()
-    mut w1: weak Foo? = foo
-    mut w2: weak Foo? = foo
+    mut w1: weak Foo = foo
+    mut w2: weak Foo = foo
     w1 = w2
     println("OK")
 }

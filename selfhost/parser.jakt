@@ -3694,14 +3694,7 @@ struct Parser {
             .index++
             let inner = .parse_typename()
             let span = merge_spans(start, .current().span())
-            // NOTE: We rewrite `weak T?` from `WeakPtr<Optional<T>>` to `WeakPtr<T>`
-            yield match inner {
-                Optional(inner) => ParsedType::WeakPtr(inner, span)
-                else => {
-                    .error("missing `?` after weak pointer type name", span)
-                    yield ParsedType::WeakPtr(inner, span)
-                }
-            }
+            yield ParsedType::WeakPtr(inner, span)
         }
         Identifier(name) => {
             let span = .current().span()

@@ -2161,7 +2161,7 @@ class CheckedProgram {
                     }
                     output += ")"
                 } else if id.equals(weak_ptr_struct_id) {
-                    output = format("weak {}?", .type_name(args[0], debug_mode))
+                    output = format("weak {}", .type_name(args[0], debug_mode))
                 } else {
                     let structure = .get_struct(id)
                     output = structure.name

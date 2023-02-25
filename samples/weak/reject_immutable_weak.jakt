@@ -5,5 +5,5 @@ class Foo {
 }
 
 fn main() {
-    let foo: weak Foo? = None
+    let foo: weak Foo = None
 }
