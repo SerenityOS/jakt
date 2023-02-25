@@ -5449,9 +5449,6 @@ struct Typechecker {
 
         if lhs_type is GenericInstance(id, args) {
             if id.equals(weak_ptr_struct_id) {
-                if not var.is_mutable {
-                    .error("Weak reference must be mutable", var.span)
-                }
                 if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
                     .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
                 }
