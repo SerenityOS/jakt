@@ -1,0 +1,6 @@
+/// Expect: Skip
+
+enum E : u8 {
+    A
+    B
+}
