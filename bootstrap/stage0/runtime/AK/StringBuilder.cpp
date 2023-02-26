@@ -160,10 +160,11 @@ void StringBuilder::append_code_point(u32 code_point)
 ErrorOr<void> StringBuilder::try_append(Utf16View const& utf16_view)
 {
     for (size_t i = 0; i < utf16_view.length_in_code_units();) {
-        auto code_point = utf16_view.code_point_at(i);
+        auto j = i;
+        auto code_point = utf16_view.code_point_at(i, j);
         TRY(try_append_code_point(code_point));
-
         i += (code_point > 0xffff ? 2 : 1);
+        VERIFY(i == j);
     }
     return {};
 }

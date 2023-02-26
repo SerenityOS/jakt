@@ -54,21 +54,37 @@ size_t point() const;
 };
 struct Stage0 {
   public:
-JaktInternal::DynamicArray<lexer::Token> tokens;size_t index;JaktInternal::DynamicArray<formatter::State> states;size_t indent;bool already_seen_enclosure_in_current_line;JaktInternal::DynamicArray<size_t> dedents_to_skip;bool debug;ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_impl(bool const reconsume);
+JaktInternal::DynamicArray<lexer::Token> tokens;size_t index;JaktInternal::DynamicArray<formatter::State> states;size_t indent;bool already_seen_enclosure_in_current_line;JaktInternal::DynamicArray<size_t> dedents_to_skip;bool debug;ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
+ErrorOr<void> push_state(formatter::State const state);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_import_context(bool const is_extern, lexer::Token const token);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_toplevel_context(size_t const open_parens, size_t const open_curlies, size_t const open_squares, bool const is_extern, lexer::Token const token);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_entity_declaration_context(formatter::Entity const entity, bool const accept_generics, bool const has_generics, size_t const generic_nesting, bool const is_extern, lexer::Token const token);
 lexer::Token consume();
+bool line_has_indent() const;
+static ErrorOr<JaktInternal::DynamicArray<u8>> to_array(DeprecatedString const x);
+static ErrorOr<formatter::Stage0> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::DynamicArray<u8> const source, bool const debug);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_parameter_list_context(size_t const open_parens, lexer::Token const token);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_impl(bool const reconsume);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_statement_context(size_t const open_parens, size_t const open_curlies, size_t const open_squares, size_t const arrow_indents, JaktInternal::Optional<size_t> const allow_eol, bool const inserted_comma, formatter::ExpressionMode const expression_mode, size_t const dedents_on_open_curly, i64& indent_change, lexer::Token const token);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_restriction_list_context(lexer::Token const token);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_generic_call_type_params_context(size_t const open_angles, lexer::Token const token);
+ErrorOr<formatter::FormattedToken> formatted_token(lexer::Token const token) const;
+ErrorOr<formatter::FormattedToken> formatted_token(lexer::Token const token, JaktInternal::DynamicArray<u8> const trailing_trivia, JaktInternal::DynamicArray<u8> const preceding_trivia) const;
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> formatted_peek();
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_type_context(size_t const open_parens, size_t const open_curlies, size_t const open_squares, size_t const open_angles, bool const seen_start, lexer::Token const token);
 Stage0(JaktInternal::DynamicArray<lexer::Token> a_tokens, size_t a_index, JaktInternal::DynamicArray<formatter::State> a_states, size_t a_indent, bool a_already_seen_enclosure_in_current_line, JaktInternal::DynamicArray<size_t> a_dedents_to_skip, bool a_debug);
 
 formatter::State state() const;
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> formatted_peek();
-static ErrorOr<formatter::Stage0> for_tokens(JaktInternal::DynamicArray<lexer::Token> const tokens, bool const debug);
-ErrorOr<void> push_state(formatter::State const state);
-static ErrorOr<formatter::Stage0> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::DynamicArray<u8> const source, bool const debug);
-static ErrorOr<JaktInternal::DynamicArray<u8>> to_array(DeprecatedString const x);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
-ErrorOr<void> replace_state(formatter::State const state);
-bool line_has_indent() const;
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_entity_definition_context(formatter::Entity const entity, bool const is_extern, i64& indent_change, lexer::Token const token);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_extern_context(lexer::Token const token);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_function_type_context(bool const seen_final_type, lexer::Token const token);
 void pop_state();
 lexer::Token peek(i64 const offset) const;
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_match_pattern_context(size_t const open_parens, bool const allow_multiple, lexer::Token const token);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_import_list_context(bool const emitted_comma, lexer::Token const token);
+ErrorOr<void> replace_state(formatter::State const state);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_variable_declaration_context(size_t const open_parens, lexer::Token const token);
+static ErrorOr<formatter::Stage0> for_tokens(JaktInternal::DynamicArray<lexer::Token> const tokens, bool const debug);
 ErrorOr<DeprecatedString> debug_description() const;
 };struct Formatter {
   public:
@@ -140,12 +156,16 @@ struct Toplevel {
 size_t open_parens;
 size_t open_curlies;
 size_t open_squares;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-Toplevel(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+bool is_extern;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
+Toplevel(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
 open_parens{ forward<_MemberT0>(member_0)},
 open_curlies{ forward<_MemberT1>(member_1)},
-open_squares{ forward<_MemberT2>(member_2)}
+open_squares{ forward<_MemberT2>(member_2)},
+is_extern{ forward<_MemberT3>(member_3)}
 {}
+};
+struct Extern {
 };
 struct Import {
 bool is_extern;
@@ -166,12 +186,14 @@ formatter::Entity entity;
 bool accept_generics;
 bool has_generics;
 size_t generic_nesting;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
-EntityDeclaration(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+bool is_extern;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4>
+EntityDeclaration(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4):
 entity{ forward<_MemberT0>(member_0)},
 accept_generics{ forward<_MemberT1>(member_1)},
 has_generics{ forward<_MemberT2>(member_2)},
-generic_nesting{ forward<_MemberT3>(member_3)}
+generic_nesting{ forward<_MemberT3>(member_3)},
+is_extern{ forward<_MemberT4>(member_4)}
 {}
 };
 struct ParameterList {
@@ -185,9 +207,11 @@ struct RestrictionList {
 };
 struct EntityDefinition {
 formatter::Entity entity;
-template<typename _MemberT0>
-EntityDefinition(_MemberT0&& member_0):
-entity{ forward<_MemberT0>(member_0)}
+bool is_extern;
+template<typename _MemberT0, typename _MemberT1>
+EntityDefinition(_MemberT0&& member_0, _MemberT1&& member_1):
+entity{ forward<_MemberT0>(member_0)},
+is_extern{ forward<_MemberT1>(member_1)}
 {}
 };
 struct StatementContext {
@@ -257,9 +281,10 @@ seen_final_type{ forward<_MemberT0>(member_0)}
 {}
 };
 }
-struct State : public Variant<State_Details::Toplevel, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext> {
-using Variant<State_Details::Toplevel, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext>::Variant;
+struct State : public Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext> {
+using Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext>::Variant;
     using Toplevel = State_Details::Toplevel;
+    using Extern = State_Details::Extern;
     using Import = State_Details::Import;
     using ImportList = State_Details::ImportList;
     using EntityDeclaration = State_Details::EntityDeclaration;

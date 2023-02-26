@@ -39,9 +39,10 @@ auto __jakt_enum_value = (((x).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue((x.value()));
 }
-else {
+else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
 }
+VERIFY_NOT_REACHED();
 }()))
 );
 }

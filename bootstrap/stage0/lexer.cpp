@@ -994,11 +994,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("quote: \"{}\"", that.quote));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("quote: \"{}\"", "", that.quote));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("prefix: {}", that.prefix));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("prefix: {}", "", that.prefix));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -1011,8 +1009,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("quote: \"{}\"", that.quote));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("quote: \"{}\"", "", that.quote));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -1025,14 +1022,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("prefix: {}", that.prefix));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("prefix: {}", "", that.prefix));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("number: \"{}\"", that.number));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("number: \"{}\"", "", that.number));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("suffix: {}", that.suffix));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("suffix: {}", "", that.suffix));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -1045,8 +1039,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("name: \"{}\"", "", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -1314,8 +1307,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("comment: {}", that.comment));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("comment: {}", "", that.comment));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -1603,8 +1595,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("consumed: {}", that.consumed));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("consumed: {}", "", that.consumed));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }

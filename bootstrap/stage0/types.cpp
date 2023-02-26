@@ -1044,7 +1044,7 @@ return JaktInternal::ExplicitValue(Jakt::DeprecatedString("Self"sv));
 case 29: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::Function>();JaktInternal::DynamicArray<types::TypeId> const& params = __jakt_match_value.params;
 types::TypeId const& return_type_id = __jakt_match_value.return_type_id;
-return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_128; {
+return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_127; {
 JaktInternal::DynamicArray<DeprecatedString> param_names = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
 {
 JaktInternal::ArrayIterator<types::TypeId> _magic = ((params).iterator());
@@ -1062,10 +1062,10 @@ TRY((((param_names).push(TRY((((*this).type_name(x,debug_mode))))))));
 }
 
 DeprecatedString const return_type = TRY((((*this).type_name(return_type_id,debug_mode))));
-__jakt_var_128 = TRY((__jakt_format(Jakt::DeprecatedString("fn({}) -> {}"sv),utility::join(param_names,Jakt::DeprecatedString(", "sv)),return_type))); goto __jakt_label_124;
+__jakt_var_127 = TRY((__jakt_format(Jakt::DeprecatedString("fn({}) -> {}"sv),utility::join(param_names,Jakt::DeprecatedString(", "sv)),return_type))); goto __jakt_label_123;
 
 }
-__jakt_label_124:; __jakt_var_128.release_value(); }));
+__jakt_label_123:; __jakt_var_127.release_value(); }));
 };/*case end*/
 case 24: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::Type::Enum>();
@@ -1080,8 +1080,43 @@ return JaktInternal::ExplicitValue(((((*this).get_struct(id))).name));
 case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericEnumInstance>();types::EnumId const& id = __jakt_match_value.id;
 JaktInternal::DynamicArray<types::TypeId> const& args = __jakt_match_value.args;
-return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_129; {
+return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_128; {
 DeprecatedString output = TRY((__jakt_format(Jakt::DeprecatedString("enum {}"sv),((((*this).get_enum(id))).name))));
+(output += Jakt::DeprecatedString("<"sv));
+bool first = true;
+{
+JaktInternal::ArrayIterator<types::TypeId> _magic = ((args).iterator());
+for (;;){
+JaktInternal::Optional<types::TypeId> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::TypeId arg = (_magic_value.value());
+{
+if ((!(first))){
+(output += Jakt::DeprecatedString(", "sv));
+}
+else {
+(first = false);
+}
+
+(output += TRY((((*this).type_name(arg,debug_mode)))));
+}
+
+}
+}
+
+(output += Jakt::DeprecatedString(">"sv));
+__jakt_var_128 = output; goto __jakt_label_124;
+
+}
+__jakt_label_124:; __jakt_var_128.release_value(); }));
+};/*case end*/
+case 21: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericTraitInstance>();types::TraitId const& id = __jakt_match_value.id;
+JaktInternal::DynamicArray<types::TypeId> const& args = __jakt_match_value.args;
+return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_129; {
+DeprecatedString output = TRY((__jakt_format(Jakt::DeprecatedString("trait {}"sv),((((*this).get_trait(id)))->name))));
 (output += Jakt::DeprecatedString("<"sv));
 bool first = true;
 {
@@ -1112,45 +1147,10 @@ __jakt_var_129 = output; goto __jakt_label_125;
 }
 __jakt_label_125:; __jakt_var_129.release_value(); }));
 };/*case end*/
-case 21: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericTraitInstance>();types::TraitId const& id = __jakt_match_value.id;
-JaktInternal::DynamicArray<types::TypeId> const& args = __jakt_match_value.args;
-return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_130; {
-DeprecatedString output = TRY((__jakt_format(Jakt::DeprecatedString("trait {}"sv),((((*this).get_trait(id)))->name))));
-(output += Jakt::DeprecatedString("<"sv));
-bool first = true;
-{
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((args).iterator());
-for (;;){
-JaktInternal::Optional<types::TypeId> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-types::TypeId arg = (_magic_value.value());
-{
-if ((!(first))){
-(output += Jakt::DeprecatedString(", "sv));
-}
-else {
-(first = false);
-}
-
-(output += TRY((((*this).type_name(arg,debug_mode)))));
-}
-
-}
-}
-
-(output += Jakt::DeprecatedString(">"sv));
-__jakt_var_130 = output; goto __jakt_label_126;
-
-}
-__jakt_label_126:; __jakt_var_130.release_value(); }));
-};/*case end*/
 case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericInstance>();types::StructId const& id = __jakt_match_value.id;
 JaktInternal::DynamicArray<types::TypeId> const& args = __jakt_match_value.args;
-return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_131; {
+return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_130; {
 types::StructId const array_struct_id = TRY((((*this).find_struct_in_prelude(Jakt::DeprecatedString("Array"sv)))));
 types::StructId const dictionary_struct_id = TRY((((*this).find_struct_in_prelude(Jakt::DeprecatedString("Dictionary"sv)))));
 types::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(Jakt::DeprecatedString("Optional"sv)))));
@@ -1202,7 +1202,7 @@ else {
 (output += Jakt::DeprecatedString(")"sv));
 }
 else if (((id).equals(weak_ptr_struct_id))){
-(output = TRY((__jakt_format(Jakt::DeprecatedString("weak {}?"sv),TRY((((*this).type_name(((args)[static_cast<i64>(0LL)]),debug_mode))))))));
+(output = TRY((__jakt_format(Jakt::DeprecatedString("weak {}"sv),TRY((((*this).type_name(((args)[static_cast<i64>(0LL)]),debug_mode))))))));
 }
 else {
 types::CheckedStruct const structure = ((*this).get_struct(id));
@@ -1234,15 +1234,15 @@ else {
 (output += Jakt::DeprecatedString(">"sv));
 }
 
-__jakt_var_131 = output; goto __jakt_label_127;
+__jakt_var_130 = output; goto __jakt_label_126;
 
 }
-__jakt_label_127:; __jakt_var_131.release_value(); }));
+__jakt_label_126:; __jakt_var_130.release_value(); }));
 };/*case end*/
 case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericResolvedType>();types::StructId const& id = __jakt_match_value.id;
 JaktInternal::DynamicArray<types::TypeId> const& args = __jakt_match_value.args;
-return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_132; {
+return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_131; {
 DeprecatedString output = ((((*this).get_struct(id))).name);
 bool first = true;
 (output += Jakt::DeprecatedString("<"sv));
@@ -1269,10 +1269,10 @@ else {
 }
 
 (output += Jakt::DeprecatedString(">"sv));
-__jakt_var_132 = output; goto __jakt_label_128;
+__jakt_var_131 = output; goto __jakt_label_127;
 
 }
-__jakt_label_128:; __jakt_var_132.release_value(); }));
+__jakt_label_127:; __jakt_var_131.release_value(); }));
 };/*case end*/
 case 18: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::TypeVariable>();DeprecatedString const& name = __jakt_match_value.name;
@@ -2446,11 +2446,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("enum_variant: {}", that.enum_variant));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("enum_variant: {}", "", that.enum_variant));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("bindings: {}", that.bindings));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("bindings: {}", "", that.bindings));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -2564,8 +2562,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("name: \"{}\"", "", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("trait_implementations: {}", that.trait_implementations));
 }
@@ -2578,8 +2575,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("id: {}", that.id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("id: {}", "", that.id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("args: {}", that.args));
 }
@@ -2592,8 +2588,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("id: {}", that.id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("id: {}", "", that.id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("args: {}", that.args));
 }
@@ -2606,8 +2601,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("id: {}", that.id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("id: {}", "", that.id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("args: {}", that.args));
 }
@@ -2620,8 +2614,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("id: {}", that.id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("id: {}", "", that.id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("args: {}", that.args));
 }
@@ -2664,14 +2657,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("params: {}", that.params));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("params: {}", "", that.params));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("can_throw: {}", that.can_throw));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("can_throw: {}", "", that.can_throw));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("return_type_id: {}", that.return_type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("return_type_id: {}", "", that.return_type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("pseudo_function_id: {}", that.pseudo_function_id));
 }
@@ -3223,6 +3213,31 @@ return JaktInternal::ExplicitValue(static_cast<i64>(0LL));
 };/*case end*/
 case 19: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericInstance>();JaktInternal::DynamicArray<types::TypeId> const& args = __jakt_match_value.args;
+return JaktInternal::ExplicitValue(({ Optional<i64> __jakt_var_132; {
+i64 specificity = (JaktInternal::checked_div<i64>(base_specificity,static_cast<i64>(2LL)));
+{
+JaktInternal::ArrayIterator<types::TypeId> _magic = ((args).iterator());
+for (;;){
+JaktInternal::Optional<types::TypeId> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::TypeId subtype_id = (_magic_value.value());
+{
+NonnullRefPtr<typename types::Type> const subtype = ((program)->get_type(subtype_id));
+({auto& _jakt_ref = specificity;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, ((subtype)->specificity(program,(JaktInternal::checked_div<i64>(base_specificity,static_cast<i64>(4LL))))));});
+}
+
+}
+}
+
+__jakt_var_132 = specificity; goto __jakt_label_128;
+
+}
+__jakt_label_128:; __jakt_var_132.release_value(); }));
+};/*case end*/
+case 20: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericEnumInstance>();JaktInternal::DynamicArray<types::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(({ Optional<i64> __jakt_var_133; {
 i64 specificity = (JaktInternal::checked_div<i64>(base_specificity,static_cast<i64>(2LL)));
 {
@@ -3246,8 +3261,8 @@ __jakt_var_133 = specificity; goto __jakt_label_129;
 }
 __jakt_label_129:; __jakt_var_133.release_value(); }));
 };/*case end*/
-case 20: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericEnumInstance>();JaktInternal::DynamicArray<types::TypeId> const& args = __jakt_match_value.args;
+case 22: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericResolvedType>();JaktInternal::DynamicArray<types::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(({ Optional<i64> __jakt_var_134; {
 i64 specificity = (JaktInternal::checked_div<i64>(base_specificity,static_cast<i64>(2LL)));
 {
@@ -3271,12 +3286,12 @@ __jakt_var_134 = specificity; goto __jakt_label_130;
 }
 __jakt_label_130:; __jakt_var_134.release_value(); }));
 };/*case end*/
-case 22: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::GenericResolvedType>();JaktInternal::DynamicArray<types::TypeId> const& args = __jakt_match_value.args;
+case 29: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::Function>();JaktInternal::DynamicArray<types::TypeId> const& params = __jakt_match_value.params;
 return JaktInternal::ExplicitValue(({ Optional<i64> __jakt_var_135; {
 i64 specificity = (JaktInternal::checked_div<i64>(base_specificity,static_cast<i64>(2LL)));
 {
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((args).iterator());
+JaktInternal::ArrayIterator<types::TypeId> _magic = ((params).iterator());
 for (;;){
 JaktInternal::Optional<types::TypeId> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -3295,31 +3310,6 @@ __jakt_var_135 = specificity; goto __jakt_label_131;
 
 }
 __jakt_label_131:; __jakt_var_135.release_value(); }));
-};/*case end*/
-case 29: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<types::Type::Function>();JaktInternal::DynamicArray<types::TypeId> const& params = __jakt_match_value.params;
-return JaktInternal::ExplicitValue(({ Optional<i64> __jakt_var_136; {
-i64 specificity = (JaktInternal::checked_div<i64>(base_specificity,static_cast<i64>(2LL)));
-{
-JaktInternal::ArrayIterator<types::TypeId> _magic = ((params).iterator());
-for (;;){
-JaktInternal::Optional<types::TypeId> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-types::TypeId subtype_id = (_magic_value.value());
-{
-NonnullRefPtr<typename types::Type> const subtype = ((program)->get_type(subtype_id));
-({auto& _jakt_ref = specificity;_jakt_ref = JaktInternal::checked_add<i64>(_jakt_ref, ((subtype)->specificity(program,(JaktInternal::checked_div<i64>(base_specificity,static_cast<i64>(4LL))))));});
-}
-
-}
-}
-
-__jakt_var_136 = specificity; goto __jakt_label_132;
-
-}
-__jakt_label_132:; __jakt_var_136.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(base_specificity);
@@ -3654,11 +3644,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("fields: {}", that.fields));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("fields: {}", "", that.fields));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("struct_id: {}", that.struct_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("struct_id: {}", "", that.struct_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("constructor: {}", that.constructor));
 }
@@ -3671,11 +3659,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("fields: {}", that.fields));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("fields: {}", "", that.fields));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("struct_id: {}", that.struct_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("struct_id: {}", "", that.struct_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("constructor: {}", that.constructor));
 }
@@ -3688,11 +3674,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("fields: {}", that.fields));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("fields: {}", "", that.fields));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("enum_id: {}", that.enum_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("enum_id: {}", "", that.enum_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("constructor: {}", that.constructor));
 }
@@ -3705,8 +3689,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("values: {}", that.values));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("values: {}", "", that.values));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -3719,11 +3702,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("keys: {}", that.keys));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("keys: {}", "", that.keys));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("values: {}", that.values));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("values: {}", "", that.values));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -3736,8 +3717,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("values: {}", that.values));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("values: {}", "", that.values));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -3769,8 +3749,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("fields: {}", that.fields));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("fields: {}", "", that.fields));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -3783,26 +3762,19 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("captures: {}", that.captures));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("captures: {}", "", that.captures));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("params: {}", that.params));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("params: {}", "", that.params));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("return_type_id: {}", that.return_type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("return_type_id: {}", "", that.return_type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("type_id: {}", that.type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("type_id: {}", "", that.type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}", that.block));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("block: {}", "", that.block));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("can_throw: {}", that.can_throw));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("can_throw: {}", "", that.can_throw));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("checked_params: {}", that.checked_params));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("checked_params: {}", "", that.checked_params));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("scope_id: {}", that.scope_id));
 }
@@ -4208,6 +4180,38 @@ case 17: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Struct>();JaktInternal::DynamicArray<types::Value> const& fields = __jakt_match_value.fields;
 types::StructId const& struct_id = __jakt_match_value.struct_id;
 JaktInternal::Optional<types::FunctionId> const& constructor = __jakt_match_value.constructor;
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::ValueImpl>> __jakt_var_136; {
+JaktInternal::DynamicArray<types::Value> fields_copy = (TRY((DynamicArray<types::Value>::create_with({}))));
+{
+JaktInternal::ArrayIterator<types::Value> _magic = ((fields).iterator());
+for (;;){
+JaktInternal::Optional<types::Value> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+types::Value field = (_magic_value.value());
+{
+TRY((((fields_copy).push(TRY((((field).copy())))))));
+}
+
+}
+}
+
+__jakt_var_136 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::Struct>(fields_copy,struct_id,constructor))); goto __jakt_label_132;
+
+}
+__jakt_label_132:; __jakt_var_136.release_value(); }));
+};/*case end*/
+case 18: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Class>();JaktInternal::DynamicArray<types::Value> const& fields = __jakt_match_value.fields;
+types::StructId const& struct_id = __jakt_match_value.struct_id;
+JaktInternal::Optional<types::FunctionId> const& constructor = __jakt_match_value.constructor;
+return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::Class>(fields,struct_id,constructor))));
+};/*case end*/
+case 19: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Enum>();JaktInternal::DynamicArray<types::Value> const& fields = __jakt_match_value.fields;
+types::EnumId const& enum_id = __jakt_match_value.enum_id;
+types::FunctionId const& constructor = __jakt_match_value.constructor;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::ValueImpl>> __jakt_var_137; {
 JaktInternal::DynamicArray<types::Value> fields_copy = (TRY((DynamicArray<types::Value>::create_with({}))));
 {
@@ -4225,47 +4229,15 @@ TRY((((fields_copy).push(TRY((((field).copy())))))));
 }
 }
 
-__jakt_var_137 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::Struct>(fields_copy,struct_id,constructor))); goto __jakt_label_133;
+__jakt_var_137 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::Enum>(fields_copy,enum_id,constructor))); goto __jakt_label_133;
 
 }
 __jakt_label_133:; __jakt_var_137.release_value(); }));
 };/*case end*/
-case 18: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Class>();JaktInternal::DynamicArray<types::Value> const& fields = __jakt_match_value.fields;
-types::StructId const& struct_id = __jakt_match_value.struct_id;
-JaktInternal::Optional<types::FunctionId> const& constructor = __jakt_match_value.constructor;
-return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::Class>(fields,struct_id,constructor))));
-};/*case end*/
-case 19: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Enum>();JaktInternal::DynamicArray<types::Value> const& fields = __jakt_match_value.fields;
-types::EnumId const& enum_id = __jakt_match_value.enum_id;
-types::FunctionId const& constructor = __jakt_match_value.constructor;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::ValueImpl>> __jakt_var_138; {
-JaktInternal::DynamicArray<types::Value> fields_copy = (TRY((DynamicArray<types::Value>::create_with({}))));
-{
-JaktInternal::ArrayIterator<types::Value> _magic = ((fields).iterator());
-for (;;){
-JaktInternal::Optional<types::Value> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-types::Value field = (_magic_value.value());
-{
-TRY((((fields_copy).push(TRY((((field).copy())))))));
-}
-
-}
-}
-
-__jakt_var_138 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::Enum>(fields_copy,enum_id,constructor))); goto __jakt_label_134;
-
-}
-__jakt_label_134:; __jakt_var_138.release_value(); }));
-};/*case end*/
 case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::DynamicArray<types::Value> const& values = __jakt_match_value.values;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::ValueImpl>> __jakt_var_139; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::ValueImpl>> __jakt_var_138; {
 JaktInternal::DynamicArray<types::Value> values_copy = (TRY((DynamicArray<types::Value>::create_with({}))));
 {
 JaktInternal::ArrayIterator<types::Value> _magic = ((values).iterator());
@@ -4282,16 +4254,16 @@ TRY((((values_copy).push(TRY((((value).copy())))))));
 }
 }
 
-__jakt_var_139 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::JaktArray>(values_copy,type_id))); goto __jakt_label_135;
+__jakt_var_138 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::JaktArray>(values_copy,type_id))); goto __jakt_label_134;
 
 }
-__jakt_label_135:; __jakt_var_139.release_value(); }));
+__jakt_label_134:; __jakt_var_138.release_value(); }));
 };/*case end*/
 case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::DynamicArray<types::Value> const& keys = __jakt_match_value.keys;
 JaktInternal::DynamicArray<types::Value> const& values = __jakt_match_value.values;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::ValueImpl>> __jakt_var_140; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::ValueImpl>> __jakt_var_139; {
 JaktInternal::DynamicArray<types::Value> values_copy = (TRY((DynamicArray<types::Value>::create_with({}))));
 {
 JaktInternal::ArrayIterator<types::Value> _magic = ((values).iterator());
@@ -4324,15 +4296,15 @@ TRY((((keys_copy).push(TRY((((key).copy())))))));
 }
 }
 
-__jakt_var_140 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::JaktDictionary>(keys_copy,values_copy,type_id))); goto __jakt_label_136;
+__jakt_var_139 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::JaktDictionary>(keys_copy,values_copy,type_id))); goto __jakt_label_135;
 
 }
-__jakt_label_136:; __jakt_var_140.release_value(); }));
+__jakt_label_135:; __jakt_var_139.release_value(); }));
 };/*case end*/
 case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::DynamicArray<types::Value> const& values = __jakt_match_value.values;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::ValueImpl>> __jakt_var_141; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::ValueImpl>> __jakt_var_140; {
 JaktInternal::DynamicArray<types::Value> values_copy = (TRY((DynamicArray<types::Value>::create_with({}))));
 {
 JaktInternal::ArrayIterator<types::Value> _magic = ((values).iterator());
@@ -4349,10 +4321,10 @@ TRY((((values_copy).push(TRY((((value).copy())))))));
 }
 }
 
-__jakt_var_141 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::JaktSet>(values_copy,type_id))); goto __jakt_label_137;
+__jakt_var_140 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::JaktSet>(values_copy,type_id))); goto __jakt_label_136;
 
 }
-__jakt_label_137:; __jakt_var_141.release_value(); }));
+__jakt_label_136:; __jakt_var_140.release_value(); }));
 };/*case end*/
 case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename types::ValueImpl::RawPtr>();
@@ -4369,7 +4341,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::template __jakt_create
 case 26: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktTuple>();JaktInternal::DynamicArray<types::Value> const& fields = __jakt_match_value.fields;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::ValueImpl>> __jakt_var_142; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::ValueImpl>> __jakt_var_141; {
 JaktInternal::DynamicArray<types::Value> values_copy = (TRY((DynamicArray<types::Value>::create_with({}))));
 {
 JaktInternal::ArrayIterator<types::Value> _magic = ((fields).iterator());
@@ -4386,10 +4358,10 @@ TRY((((values_copy).push(TRY((((value).copy())))))));
 }
 }
 
-__jakt_var_142 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::JaktTuple>(values_copy,type_id))); goto __jakt_label_138;
+__jakt_var_141 = TRY((types::ValueImpl::template __jakt_create<typename types::ValueImpl::JaktTuple>(values_copy,type_id))); goto __jakt_label_137;
 
 }
-__jakt_label_138:; __jakt_var_142.release_value(); }));
+__jakt_label_137:; __jakt_var_141.release_value(); }));
 };/*case end*/
 case 27: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::Function>();JaktInternal::Dictionary<DeprecatedString,types::Value> const& captures = __jakt_match_value.captures;
@@ -5135,8 +5107,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5149,8 +5120,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("statement: {}", that.statement));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("statement: {}", "", that.statement));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5163,11 +5133,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("vars: {}", that.vars));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("vars: {}", "", that.vars));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("var_decl: {}", that.var_decl));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("var_decl: {}", "", that.var_decl));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5180,11 +5148,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("var_id: {}", that.var_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("var_id: {}", "", that.var_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("init: {}", that.init));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("init: {}", "", that.init));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5197,14 +5163,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("condition: {}", that.condition));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("condition: {}", "", that.condition));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("then_block: {}", that.then_block));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("then_block: {}", "", that.then_block));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("else_statement: {}", that.else_statement));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("else_statement: {}", "", that.else_statement));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5217,8 +5180,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}", that.block));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("block: {}", "", that.block));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5231,8 +5193,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}", that.block));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("block: {}", "", that.block));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5245,11 +5206,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("condition: {}", that.condition));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("condition: {}", "", that.condition));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}", that.block));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("block: {}", "", that.block));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5262,8 +5221,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("val: {}", that.val));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("val: {}", "", that.val));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5286,8 +5244,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5300,8 +5257,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5314,8 +5270,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("lines: {}", that.lines));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("lines: {}", "", that.lines));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5418,11 +5373,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("enum_id: {}", that.enum_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("enum_id: {}", "", that.enum_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("name: \"{}\"", "", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5435,14 +5388,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("enum_id: {}", that.enum_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("enum_id: {}", "", that.enum_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("name: \"{}\"", "", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("type_id: {}", that.type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("type_id: {}", "", that.type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5455,14 +5405,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("enum_id: {}", that.enum_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("enum_id: {}", "", that.enum_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("name: \"{}\"", "", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5475,14 +5422,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("enum_id: {}", that.enum_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("enum_id: {}", "", that.enum_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("name: \"{}\"", "", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("fields: {}", that.fields));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("fields: {}", "", that.fields));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -5611,26 +5555,19 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("defaults: {}", that.defaults));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("defaults: {}", "", that.defaults));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("name: \"{}\"", "", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("args: {}", that.args));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("args: {}", "", that.args));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("subject_type_id: {}", that.subject_type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("subject_type_id: {}", "", that.subject_type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("index: {}", that.index));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("index: {}", "", that.index));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("scope_id: {}", that.scope_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("scope_id: {}", "", that.scope_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("body: {}", that.body));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("body: {}", "", that.body));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("marker_span: {}", that.marker_span));
 }
@@ -5643,14 +5580,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("defaults: {}", that.defaults));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("defaults: {}", "", that.defaults));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expression: {}", that.expression));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expression: {}", "", that.expression));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("body: {}", that.body));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("body: {}", "", that.body));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("marker_span: {}", that.marker_span));
 }
@@ -5663,14 +5597,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("defaults: {}", that.defaults));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("defaults: {}", "", that.defaults));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("has_arguments: {}", that.has_arguments));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("has_arguments: {}", "", that.has_arguments));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("body: {}", that.body));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("body: {}", "", that.body));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("marker_span: {}", that.marker_span));
 }
@@ -5789,12 +5720,12 @@ return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_R
 auto&& __jakt_match_variant = *type_;
 switch(__jakt_match_variant.index()) {
 case 10: {
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_143; {
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_142; {
 utility::todo(Jakt::DeprecatedString("Implement casting f32 to f64"sv));
-__jakt_var_143 = false; goto __jakt_label_139;
+__jakt_var_142 = false; goto __jakt_label_138;
 
 }
-__jakt_label_139:; __jakt_var_143.release_value(); }));
+__jakt_label_138:; __jakt_var_142.release_value(); }));
 };/*case end*/
 case 11: {
 return JaktInternal::ExplicitValue(true);
@@ -5855,8 +5786,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("scopes: {}", that.scopes));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("scopes: {}", "", that.scopes));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -6049,8 +5979,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("parent_scope: {}", that.parent_scope));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("parent_scope: {}", "", that.parent_scope));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("relative_name: \"{}\"", that.relative_name));
 }
@@ -6072,7 +6001,7 @@ return JaktInternal::ExplicitValue(TRY((types::MaybeResolvedScope::template __ja
 case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::MaybeResolvedScope::Unresolved>();NonnullRefPtr<typename types::MaybeResolvedScope> const& parent_scope = __jakt_match_value.parent_scope;
 DeprecatedString const& relative_name = __jakt_match_value.relative_name;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::MaybeResolvedScope>> __jakt_var_144; {
+return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::MaybeResolvedScope>> __jakt_var_143; {
 NonnullRefPtr<typename types::MaybeResolvedScope> parent = TRY((((parent_scope)->try_resolve(program))));
 if (((parent)->index() == 0 /* Resolved */)){
 types::ScopeId const parent_scope_id = ((parent)->get<types::MaybeResolvedScope::Resolved>()).value;
@@ -6106,10 +6035,10 @@ if (((scope_id).has_value())){
 return (TRY((types::MaybeResolvedScope::template __jakt_create<typename types::MaybeResolvedScope::Resolved>((scope_id.value())))));
 }
 }
-__jakt_var_144 = TRY((types::MaybeResolvedScope::template __jakt_create<typename types::MaybeResolvedScope::Unresolved>(parent,relative_name))); goto __jakt_label_140;
+__jakt_var_143 = TRY((types::MaybeResolvedScope::template __jakt_create<typename types::MaybeResolvedScope::Unresolved>(parent,relative_name))); goto __jakt_label_139;
 
 }
-__jakt_label_140:; __jakt_var_144.release_value(); }));
+__jakt_label_139:; __jakt_var_143.release_value(); }));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -6215,8 +6144,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("val: {}", that.val));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("val: {}", "", that.val));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -6229,11 +6157,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("val: {}", that.val));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("val: {}", "", that.val));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6246,8 +6172,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("val: {}", that.val));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("val: {}", "", that.val));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -6260,8 +6185,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("val: \"{}\"", that.val));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("val: \"{}\"", "", that.val));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -6274,8 +6198,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("val: \"{}\"", that.val));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("val: \"{}\"", "", that.val));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -6288,8 +6211,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("val: \"{}\"", that.val));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("val: \"{}\"", "", that.val));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -6302,14 +6224,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("op: {}", that.op));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("op: {}", "", that.op));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6322,17 +6241,13 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("lhs: {}", that.lhs));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("lhs: {}", "", that.lhs));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("op: {}", that.op));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("op: {}", "", that.op));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("rhs: {}", that.rhs));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("rhs: {}", "", that.rhs));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6345,11 +6260,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("vals: {}", that.vals));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("vals: {}", "", that.vals));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6362,14 +6275,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("from: {}", that.from));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("from: {}", "", that.from));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("to: {}", that.to));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("to: {}", "", that.to));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6382,17 +6292,13 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("vals: {}", that.vals));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("vals: {}", "", that.vals));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("repeat: {}", that.repeat));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("repeat: {}", "", that.repeat));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("type_id: {}", that.type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("type_id: {}", "", that.type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("inner_type_id: {}", that.inner_type_id));
 }
@@ -6405,14 +6311,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("vals: {}", that.vals));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("vals: {}", "", that.vals));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("type_id: {}", that.type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("type_id: {}", "", that.type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("inner_type_id: {}", that.inner_type_id));
 }
@@ -6425,17 +6328,13 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("vals: {}", that.vals));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("vals: {}", "", that.vals));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("type_id: {}", that.type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("type_id: {}", "", that.type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("key_type_id: {}", that.key_type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("key_type_id: {}", "", that.key_type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("value_type_id: {}", that.value_type_id));
 }
@@ -6448,14 +6347,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("index: {}", that.index));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("index: {}", "", that.index));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6468,14 +6364,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("index: {}", that.index));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("index: {}", "", that.index));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6488,17 +6381,13 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("index: {}", that.index));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("index: {}", "", that.index));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_optional: {}", that.is_optional));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("is_optional: {}", "", that.is_optional));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6511,17 +6400,13 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("index: \"{}\"", that.index));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("index: \"{}\"", "", that.index));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_optional: {}", that.is_optional));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("is_optional: {}", "", that.is_optional));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6534,17 +6419,13 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("index: \"{}\"", that.index));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("index: \"{}\"", "", that.index));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_optional: {}", that.is_optional));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("is_optional: {}", "", that.is_optional));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6557,14 +6438,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("index: {}", that.index));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("index: {}", "", that.index));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_optional: {}", that.is_optional));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("is_optional: {}", "", that.is_optional));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -6577,17 +6455,13 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("match_cases: {}", that.match_cases));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("match_cases: {}", "", that.match_cases));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("type_id: {}", that.type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("type_id: {}", "", that.type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("all_variants_constant: {}", that.all_variants_constant));
 }
@@ -6600,14 +6474,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("arg: {}", that.arg));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("arg: {}", "", that.arg));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("enum_variant: {}", that.enum_variant));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("enum_variant: {}", "", that.enum_variant));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -6620,11 +6491,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("call: {}", that.call));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("call: {}", "", that.call));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6637,17 +6506,13 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("call: {}", that.call));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("call: {}", "", that.call));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_optional: {}", that.is_optional));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("is_optional: {}", "", that.is_optional));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6660,11 +6525,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("namespaces: {}", that.namespaces));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("namespaces: {}", "", that.namespaces));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("var: {}", that.var));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("var: {}", "", that.var));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -6677,8 +6540,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("var: {}", that.var));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("var: {}", "", that.var));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -6691,8 +6553,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6705,11 +6566,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6722,11 +6581,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6739,11 +6596,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}", that.block));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("block: {}", "", that.block));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6756,29 +6611,21 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("captures: {}", that.captures));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("captures: {}", "", that.captures));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("params: {}", that.params));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("params: {}", "", that.params));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("can_throw: {}", that.can_throw));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("can_throw: {}", "", that.can_throw));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("return_type_id: {}", that.return_type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("return_type_id: {}", "", that.return_type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}", that.block));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("block: {}", "", that.block));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("type_id: {}", that.type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("type_id: {}", "", that.type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("pseudo_function_id: {}", that.pseudo_function_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("pseudo_function_id: {}", "", that.pseudo_function_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("scope_id: {}", that.scope_id));
 }
@@ -6791,29 +6638,21 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("captures: {}", that.captures));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("captures: {}", "", that.captures));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("params: {}", that.params));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("params: {}", "", that.params));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("can_throw: {}", that.can_throw));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("can_throw: {}", "", that.can_throw));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("return_type_id: {}", that.return_type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("return_type_id: {}", "", that.return_type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}", that.block));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("block: {}", "", that.block));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("type_id: {}", that.type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("type_id: {}", "", that.type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("pseudo_function_id: {}", that.pseudo_function_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("pseudo_function_id: {}", "", that.pseudo_function_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("scope_id: {}", that.scope_id));
 }
@@ -6826,20 +6665,15 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}", that.expr));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("expr: {}", "", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("catch_block: {}", that.catch_block));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("catch_block: {}", "", that.catch_block));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("catch_name: {}", that.catch_name));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("catch_name: {}", "", that.catch_name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("type_id: {}", that.type_id));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("type_id: {}", "", that.type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("inner_type_id: {}", that.inner_type_id));
 }
@@ -6852,20 +6686,15 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("stmt: {}", that.stmt));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("stmt: {}", "", that.stmt));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("catch_block: {}", that.catch_block));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("catch_block: {}", "", that.catch_block));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("error_name: \"{}\"", that.error_name));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("error_name: \"{}\"", "", that.error_name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("error_span: {}", that.error_span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("error_span: {}", "", that.error_span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6878,11 +6707,9 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("type: {}", that.type));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("type: {}", "", that.type));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type_id: {}", that.type_id));
 }
@@ -6934,12 +6761,12 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpr
 types::CheckedUnaryOperator const& op = __jakt_match_value.op;
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<types::NumberConstant>> __jakt_var_145; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<types::NumberConstant>> __jakt_var_144; {
 JaktInternal::Optional<types::NumberConstant> result = JaktInternal::OptionalNone();
-__jakt_var_145 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<types::NumberConstant>,JaktInternal::Optional<types::NumberConstant>>{
+__jakt_var_144 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<types::NumberConstant>,JaktInternal::Optional<types::NumberConstant>>{
 auto __jakt_enum_value = (((op).index() == 11 /* TypeCast */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<types::NumberConstant>> __jakt_var_146; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<types::NumberConstant>> __jakt_var_145; {
 types::CheckedTypeCast const cast = ((op).get<types::CheckedUnaryOperator::TypeCast>()).value;
 if ((!(((cast).index() == 1 /* Infallible */)))){
 (result = JaktInternal::OptionalNone());
@@ -6951,10 +6778,10 @@ if (((expr)->index() == 1 /* NumericConstant */)){
 types::CheckedNumericConstant const val = ((expr)->get<types::CheckedExpression::NumericConstant>()).val;
 (result = ((val).number_constant()));
 }
-__jakt_var_146 = result; goto __jakt_label_142;
+__jakt_var_145 = result; goto __jakt_label_141;
 
 }
-__jakt_label_142:; __jakt_var_146.release_value(); }));
+__jakt_label_141:; __jakt_var_145.release_value(); }));
 }
 else {
 {
@@ -6962,10 +6789,10 @@ return (JaktInternal::OptionalNone());
 }
 }
 }()))
-; goto __jakt_label_141;
+; goto __jakt_label_140;
 
 }
-__jakt_label_141:; __jakt_var_145.release_value(); }));
+__jakt_label_140:; __jakt_var_144.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
@@ -7284,7 +7111,7 @@ JaktInternal::DynamicArray<types::CheckedMatchCase> const& match_cases = __jakt_
 utility::Span const& span = __jakt_match_value.span;
 types::TypeId const& type_id = __jakt_match_value.type_id;
 bool const& all_variants_constant = __jakt_match_value.all_variants_constant;
-return JaktInternal::ExplicitValue(({ Optional<types::BlockControlFlow> __jakt_var_147; {
+return JaktInternal::ExplicitValue(({ Optional<types::BlockControlFlow> __jakt_var_146; {
 JaktInternal::Optional<types::BlockControlFlow> control_flow = JaktInternal::OptionalNone();
 {
 JaktInternal::ArrayIterator<types::CheckedMatchCase> _magic = ((match_cases).iterator());
@@ -7370,10 +7197,10 @@ else {
 }
 }
 
-__jakt_var_147 = control_flow.value_or_lazy_evaluated([&] { return  types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ; }); goto __jakt_label_143;
+__jakt_var_146 = control_flow.value_or_lazy_evaluated([&] { return  types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } ; }); goto __jakt_label_142;
 
 }
-__jakt_label_143:; __jakt_var_147.release_value(); }));
+__jakt_label_142:; __jakt_var_146.release_value(); }));
 };/*case end*/
 case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::MethodCall>();types::TypeId const& type_id = __jakt_match_value.type_id;
@@ -7382,9 +7209,10 @@ auto __jakt_enum_value = (((type_id).equals(types::never_type_id())));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue( types::BlockControlFlow { typename types::BlockControlFlow::NeverReturns() } );
 }
-else {
+else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue( types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } );
 }
+VERIFY_NOT_REACHED();
 }()))
 );
 };/*case end*/
@@ -7395,25 +7223,26 @@ auto __jakt_enum_value = (((type_id).equals(types::never_type_id())));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue( types::BlockControlFlow { typename types::BlockControlFlow::NeverReturns() } );
 }
-else {
+else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue( types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } );
 }
+VERIFY_NOT_REACHED();
 }()))
 );
 };/*case end*/
 case 32: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::TryBlock>();NonnullRefPtr<typename types::CheckedStatement> const& stmt = __jakt_match_value.stmt;
 types::CheckedBlock const& catch_block = __jakt_match_value.catch_block;
-return JaktInternal::ExplicitValue(({ Optional<types::BlockControlFlow> __jakt_var_148; {
-__jakt_var_148 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::BlockControlFlow,types::BlockControlFlow>{
+return JaktInternal::ExplicitValue(({ Optional<types::BlockControlFlow> __jakt_var_147; {
+__jakt_var_147 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::BlockControlFlow,types::BlockControlFlow>{
 auto __jakt_enum_value = (((stmt)->index() == 5 /* Block */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<types::BlockControlFlow> __jakt_var_149; {
+return JaktInternal::ExplicitValue(({ Optional<types::BlockControlFlow> __jakt_var_148; {
 types::CheckedBlock const block = ((stmt)->get<types::CheckedStatement::Block>()).block;
-__jakt_var_149 = ((((block).control_flow)).branch_unify_with(((catch_block).control_flow))); goto __jakt_label_145;
+__jakt_var_148 = ((((block).control_flow)).branch_unify_with(((catch_block).control_flow))); goto __jakt_label_144;
 
 }
-__jakt_label_145:; __jakt_var_149.release_value(); }));
+__jakt_label_144:; __jakt_var_148.release_value(); }));
 }
 else {
 {
@@ -7421,10 +7250,10 @@ utility::panic(Jakt::DeprecatedString("Try block doesn't have a block"sv));
 }
 }
 }()))
-; goto __jakt_label_144;
+; goto __jakt_label_143;
 
 }
-__jakt_label_144:; __jakt_var_148.release_value(); }));
+__jakt_label_143:; __jakt_var_147.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue( types::BlockControlFlow { typename types::BlockControlFlow::MayReturn() } );
@@ -7488,6 +7317,33 @@ return JaktInternal::ExplicitValue(((expr)->is_mutable(program)));
 };/*case end*/
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktArray>();JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> const& vals = __jakt_match_value.vals;
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_149; {
+bool result = false;
+{
+JaktInternal::ArrayIterator<NonnullRefPtr<typename types::CheckedExpression>> _magic = ((vals).iterator());
+for (;;){
+JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+NonnullRefPtr<typename types::CheckedExpression> val = (_magic_value.value());
+{
+if (((val)->is_mutable(program))){
+(result = true);
+break;
+}
+}
+
+}
+}
+
+__jakt_var_149 = result; goto __jakt_label_145;
+
+}
+__jakt_label_145:; __jakt_var_149.release_value(); }));
+};/*case end*/
+case 11: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktSet>();JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> const& vals = __jakt_match_value.vals;
 return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_150; {
 bool result = false;
 {
@@ -7513,36 +7369,9 @@ __jakt_var_150 = result; goto __jakt_label_146;
 }
 __jakt_label_146:; __jakt_var_150.release_value(); }));
 };/*case end*/
-case 11: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktSet>();JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> const& vals = __jakt_match_value.vals;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_151; {
-bool result = false;
-{
-JaktInternal::ArrayIterator<NonnullRefPtr<typename types::CheckedExpression>> _magic = ((vals).iterator());
-for (;;){
-JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-NonnullRefPtr<typename types::CheckedExpression> val = (_magic_value.value());
-{
-if (((val)->is_mutable(program))){
-(result = true);
-break;
-}
-}
-
-}
-}
-
-__jakt_var_151 = result; goto __jakt_label_147;
-
-}
-__jakt_label_147:; __jakt_var_151.release_value(); }));
-};/*case end*/
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktDictionary>();JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename types::CheckedExpression>,NonnullRefPtr<typename types::CheckedExpression>>> const& vals = __jakt_match_value.vals;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_152; {
+return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_151; {
 bool result = false;
 {
 JaktInternal::ArrayIterator<JaktInternal::Tuple<NonnullRefPtr<typename types::CheckedExpression>,NonnullRefPtr<typename types::CheckedExpression>>> _magic = ((vals).iterator());
@@ -7566,10 +7395,10 @@ break;
 }
 }
 
-__jakt_var_152 = result; goto __jakt_label_148;
+__jakt_var_151 = result; goto __jakt_label_147;
 
 }
-__jakt_label_148:; __jakt_var_152.release_value(); }));
+__jakt_label_147:; __jakt_var_151.release_value(); }));
 };/*case end*/
 case 6: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::UnaryOp>();NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;

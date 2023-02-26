@@ -344,8 +344,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("message: \"{}\"", that.message));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("message: \"{}\"", "", that.message));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
 }
@@ -358,14 +357,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("message: \"{}\"", that.message));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("message: \"{}\"", "", that.message));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("span: {}", "", that.span));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("hint: \"{}\"", that.hint));
-TRY(builder.append(", "sv));
+TRY(builder.appendff("hint: \"{}\"", "", that.hint));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("hint_span: {}", that.hint_span));
 }
