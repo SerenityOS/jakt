@@ -5124,7 +5124,7 @@ struct Parser {
                 LSquare => {
                     // Indexing operation
                     .index++
-                    let index_expr = .parse_expression(allow_assignments: false, allow_newlines: false)
+                    let index_expr = .parse_expression(allow_assignments: false, allow_newlines: true)
                     if .current() is RSquare {
                         .index++
                     } else {
