@@ -1598,7 +1598,11 @@ struct Typechecker {
                         guard trait_id.has_value() else { continue }
 
                         let trait_ = .get_trait(trait_id!)
-                        for (name, function_id) in trait_.methods {
+                        guard trait_.requirements is Methods(methods) else {
+                            continue
+                        }
+
+                        for (name, function_id) in methods {
                             if .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: name).has_value() {
                                 continue
                             }
@@ -1724,7 +1728,11 @@ struct Typechecker {
             guard trait_id.has_value() else { continue }
 
             let trait_ = .get_trait(trait_id!)
-            for (name, function_id) in trait_.methods {
+            guard trait_.requirements is Methods(methods) else {
+                continue
+            }
+
+            for (name, function_id) in methods {
                 if .find_functions_with_name_in_scope(parent_scope_id: struct_.scope_id, function_name: name).has_value() {
                     continue
                 }
@@ -1765,7 +1773,10 @@ struct Typechecker {
         mut checked_trait = CheckedTrait(
             name: parsed_trait.name
             name_span: parsed_trait.name_span
-            methods: [:]
+            requirements: match parsed_trait.requirements {
+                Methods => CheckedTraitRequirements::Methods([:])
+                else => CheckedTraitRequirements::Nothing
+            }
             generic_parameters: []
             scope_id: trait_scope_id
         )
@@ -1848,7 +1859,17 @@ struct Typechecker {
         ))
         let struct_type_id = .find_or_add_type_id(Type::Struct(synthetic_struct_id))
 
-        for parsed_function in parsed_trait.methods {
+        guard parsed_trait.requirements is Methods(methods) else {
+            return
+        }
+
+        guard checked_trait.requirements is Methods(&mut checked_methods) else {
+            // unreachable
+            abort()
+        }
+        mut mutable_checked_methods = checked_methods
+
+        for parsed_function in methods {
             let method_scope_id = .create_scope(
                 parent_scope_id: trait_scope_id
                 can_throw: parsed_function.can_throw
@@ -1870,28 +1891,43 @@ struct Typechecker {
                 this_arg_type_id
             )
 
-            checked_trait.methods.set(parsed_function.name, function_id)
+            mutable_checked_methods.set(parsed_function.name, function_id)
         }
     }
 
     fn typecheck_trait(mut this, parsed_trait: ParsedTrait, trait_id: TraitId, scope_id: ScopeId) throws {
-        let checked_trait = .program.modules[trait_id.module.id].traits[trait_id.id]
+        mut checked_trait = .program.modules[trait_id.module.id].traits[trait_id.id]
 
         let old_self_type_id = .self_type_id
         .self_type_id = .find_or_add_type_id(Type::Trait(trait_id))
         defer .self_type_id = old_self_type_id
 
-        for parsed_function in parsed_trait.methods {
-            if parsed_function.block.stmts.is_empty() {
-                continue
-            }
+        match parsed_trait.requirements {
+            Methods(methods) => {
+                for parsed_function in methods {
+                    if parsed_function.block.stmts.is_empty() {
+                        continue
+                    }
 
-            // even though traits aren't types per-se, they act like a generic variable, since
-            // they represent the type that implements said trait
-            .typecheck_function(
-                parsed_function
-                parent_scope_id: checked_trait.scope_id
-            )
+                    // even though traits aren't types per-se, they act like a generic variable, since
+                    // they represent the type that implements said trait
+                    .typecheck_function(
+                        parsed_function
+                        parent_scope_id: checked_trait.scope_id
+                    )
+                }
+            }
+            ComptimeExpression(expression) => {
+                let checked_expression = .typecheck_expression(
+                    expr: expression
+                    scope_id: checked_trait.scope_id
+                    safety_mode: SafetyMode::Safe
+                    type_hint: builtin(BuiltinType::Bool)
+                )
+
+                checked_trait.requirements = CheckedTraitRequirements::ComptimeExpression(checked_expression)
+            }
+            else => {}
         }
     }
 
@@ -2555,7 +2591,11 @@ struct Typechecker {
                 let trait_id = .find_trait_in_scope(scope_id, name: implements_entry.name)
                 guard trait_id.has_value() else { continue }
                 let trait_ = .program.modules[trait_id!.module.id].traits[trait_id!.id]
-                for (name, function_id) in trait_.methods {
+                guard trait_.requirements is Methods(methods) else {
+                    continue
+                }
+
+                for (name, function_id) in methods {
                     if .find_functions_with_name_in_scope(parent_scope_id: struct_scope_id, function_name: name).has_value() {
                         continue
                     }
@@ -3053,7 +3093,7 @@ struct Typechecker {
                 checks.register_trait(
                     trait_id: trait_id_and_generic_params.0
                     trait_name
-                    trait_methods: .program.get_trait(trait_id_and_generic_params.0).methods
+                    requirements: .program.get_trait(trait_id_and_generic_params.0).requirements
                 )
             }
         }
@@ -3591,15 +3631,71 @@ struct Typechecker {
         }
 
         for constraint in constraints {
-            let trait_name = .program.get_trait(constraint).name
-            let implemented_trait: (TraitId, [TypeId])? = implemented_traits.get(trait_name)
-            if not implemented_trait.has_value() or not implemented_trait!.0.equals(constraint) {
-                .error_with_hint(
-                    format("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’",
-                            .type_name(generic_argument), trait_name)
-                    arg_span,
-                    "Consider implementing the required trait for this type",
-                    decl_span)
+            let trait_ = .program.get_trait(constraint)
+            match trait_.requirements {
+                Nothing => { }
+                Methods => {
+                    let trait_name = trait_.name
+                    let implemented_trait: (TraitId, [TypeId])? = implemented_traits.get(trait_name)
+                    if not implemented_trait.has_value() or not implemented_trait!.0.equals(constraint) {
+                        .error_with_hint(
+                            format("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’",
+                                .type_name(generic_argument), trait_name)
+                            arg_span,
+                            "Consider implementing the required trait for this type",
+                        decl_span)
+                    }
+                }
+                ComptimeExpression(expr) => {
+                    mut interpreter = .interpreter()
+                    mut scope = InterpreterScope::create(
+                        type_bindings: [
+                            .find_or_add_type_id(Type::Self).to_string(): generic_argument
+                        ]
+                    )
+                    let result = try interpreter.execute_expression(expr, scope)
+                    mut meets_requirement = false
+                    if result.has_value() {
+                        meets_requirement = match result! {
+                            JustValue(value) => match value.impl {
+                                Bool(x) => x
+                                else => {
+                                    .error(
+                                        format(
+                                            "Invalid result type for comptime requirements in trait ‘{}’, expected ‘bool’ but got ‘{}’"
+                                            trait_.name
+                                            value.impl
+                                        )
+                                        arg_span
+                                    )
+                                    yield false
+                                }
+                            }
+                            else => {
+                                .error(
+                                    format(
+                                        "Invalid result type for comptime requirements in trait ‘{}’, expected ‘bool’ but got ‘{}’"
+                                        trait_.name
+                                        result
+                                    )
+                                    arg_span
+                                )
+                                yield false
+                            }
+                        }
+                    }
+
+                    if not meets_requirement {
+                        .error(
+                            format(
+                                "Cannot use ‘{}’ here as it doesn't meet the comptime requirements for ‘{}’"
+                                .type_name(generic_argument)
+                                trait_.name
+                            )
+                            arg_span
+                        )
+                    }
+                }
             }
         }
     }
@@ -9440,7 +9536,11 @@ struct TraitImplCheck {
         .already_implemented_for.ensure_capacity(count)
     }
 
-    fn register_trait(mut this, trait_id: TraitId, trait_name: String, trait_methods: [String: FunctionId]) throws {
+    fn register_trait(mut this, trait_id: TraitId, trait_name: String, requirements: CheckedTraitRequirements) throws {
+        guard requirements is Methods(trait_methods) else {
+            return
+        }
+
         .unmatched_signatures[trait_name] = [:]
         .private_matching_methods[trait_name] = [:]
 

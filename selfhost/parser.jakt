@@ -444,12 +444,18 @@ struct ParsedGenericParameter {
     requires_list: [ParsedNameWithGenericParameters]?
 }
 
+enum ParsedTraitRequirements {
+    Nothing
+    Methods([ParsedFunction])
+    ComptimeExpression(ParsedExpression)
+}
+
 struct ParsedTrait {
     name: String
     name_span: Span
     generic_parameters: [ParsedGenericParameter]
 
-    methods: [ParsedFunction]
+    requirements: ParsedTraitRequirements
 }
 
 struct ParsedExternalTraitImplementation {
@@ -2283,7 +2289,7 @@ struct Parser {
             name: ""
             name_span: .empty_span()
             generic_parameters: []
-            methods: []
+            requirements: ParsedTraitRequirements::Nothing
         )
 
         guard .current() is Identifier(name, span: name_span) else {
@@ -2299,50 +2305,62 @@ struct Parser {
             parsed_trait.generic_parameters = .parse_generic_parameters()
         }
 
-        guard .current() is LCurly else {
-            .error("Expected '{' to enter the body of the trait",
-                .current().span())
-            return parsed_trait
-        }
+        match .current() {
+            LCurly => {
+                .index++
+                mut methods: [ParsedFunction] = []
+                loop {
+                    match .current() {
+                        RCurly => {
+                            .index++
+                            break
+                        }
+                        Eof(span) => {
+                            .error("Expected '}' to close the trait body", span)
+                        }
 
+                        Eol => {
+                            .index++
+                            continue
+                        }
+                        Fn => {
+                            // pretend it's external so that we only parse the signature
+                            mut method = .parse_function(
+                                FunctionLinkage::Internal
+                                Visibility::Public
+                                is_comptime: false
+                                is_destructor: false
+                                is_unsafe: false // FIXME: Parse unsafe trait methods(?)
+                                allow_missing_body: true
+                            )
+                            if method.block.stmts.is_empty() {
+                                method.linkage = FunctionLinkage::External
+                            }
 
-        .index++
-
-        loop {
-            match .current() {
-                RCurly => {
-                    .index++
-                    break
-                }
-                Eof(span) => {
-                    .error("Expected '}' to close the trait body", span)
-                }
-
-                Eol => {
-                    .index++
-                    continue
-                }
-                Fn => {
-                    // pretend it's external so that we only parse the signature
-                    mut method = .parse_function(
-                        FunctionLinkage::Internal
-                        Visibility::Public
-                        is_comptime: false
-                        is_destructor: false
-                        is_unsafe: false // FIXME: Parse unsafe trait methods(?)
-                        allow_missing_body: true
-                    )
-                    if method.block.stmts.is_empty() {
-                        method.linkage = FunctionLinkage::External
+                            methods.push(method)
+                        }
+                        else(span) => {
+                            .error_with_hint("Expected 'function' keyword inside trait definition", span,
+                                format(
+                                    "Inside '{}' trait's definition only function declarations can appear"
+                                    parsed_trait.name
+                                ), parsed_trait.name_span)
+                            return parsed_trait
+                        }
                     }
 
-                    parsed_trait.methods.push(method)
+                    parsed_trait.requirements = ParsedTraitRequirements::Methods(methods)
                 }
-                else(span) => {
-                    .error_with_hint("Expected 'function' keyword inside trait definition", span,
-                                     format("Inside '{}' trait's definition only function declarations can appear", parsed_trait.name), parsed_trait.name_span)
-                    return parsed_trait
-                }
+            }
+            Equal => {
+                .index += 1
+                let expression = .parse_expression(allow_assignments: false, allow_newlines: true)
+                parsed_trait.requirements = ParsedTraitRequirements::ComptimeExpression(expression)
+            }
+            else => {
+                .error("Expected '{' to enter the body of the trait, or '=' to specify trait requirements",
+                    .current().span())
+                return parsed_trait
             }
         }
 

@@ -706,10 +706,16 @@ class Module {
     }
 }
 
+enum CheckedTraitRequirements {
+    Nothing
+    Methods([String:FunctionId])
+    ComptimeExpression(CheckedExpression)
+}
+
 class CheckedTrait {
     public name: String
     public name_span: Span
-    public methods: [String: FunctionId]
+    public requirements: CheckedTraitRequirements
     public generic_parameters: [CheckedGenericParameter]
     public scope_id: ScopeId
 }
