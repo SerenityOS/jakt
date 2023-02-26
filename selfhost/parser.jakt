@@ -3085,6 +3085,7 @@ struct Parser {
         mut last_visibility_span: Span? = None
         mut last_virtual = false
         mut last_override = false
+        mut last_extern = false
 
         // Have we already found an error?
         mut error = false;
@@ -3107,6 +3108,10 @@ struct Parser {
                 }
                 Comma | Eol => {
                     // Treat comma as whitespace? Might require them in the future
+                    .index++
+                }
+                Extern => {
+                    last_extern = true
                     .index++
                 }
                 Public(span) => {
@@ -3153,6 +3158,11 @@ struct Parser {
                     last_virtual = false
                     last_override = false
 
+                    if last_extern {
+                        .error("Fields cannot be ‘extern’", .current().span())
+                    }
+                    last_extern = false
+
                     mut field = .parse_field(visibility)
                     .apply_attributes(&mut field, &active_attributes)
                     active_attributes = []
@@ -3165,9 +3175,13 @@ struct Parser {
                     let is_destructor = .current() is Destructor
 
                     let function_linkage = match definition_linkage {
-                        Internal => FunctionLinkage::Internal
+                        Internal => match last_extern {
+                            true => FunctionLinkage::External
+                            false => FunctionLinkage::Internal
+                        }
                         External => FunctionLinkage::External
                     }
+                    last_extern = false
 
                     if function_linkage is External and is_comptime {
                         .error("External functions cannot be comptime", .current().span())
