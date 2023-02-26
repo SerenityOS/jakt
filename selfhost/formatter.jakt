@@ -488,6 +488,19 @@ struct Stage0 {
             yield .formatted_token(token)
         }
         Comma => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Equal => {
+            .push_state(State::StatementContext(
+                open_parens: 0
+                open_curlies: 0
+                open_squares: 0
+                arrow_indents: 0
+                allow_eol: 0uz
+                inserted_comma: false
+                expression_mode: ExpressionMode::AtExpressionStart
+                dedents_on_open_curly: 0
+            ))
+            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [b' '])
+        }
         else => .formatted_token(token)
     }
 
