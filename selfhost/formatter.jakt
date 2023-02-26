@@ -482,7 +482,7 @@ struct Stage0 {
             ))
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         }
-        Public | Private | Virtual | Override | Extern | Boxed => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Public | Private | Virtual | Override | Extern | Boxed | Unsafe => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         Restricted => {
             .push_state(State::RestrictionList)
             yield .formatted_token(token)
