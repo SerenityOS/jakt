@@ -11,9 +11,10 @@ import lexer { Lexer }
 import parser {
     BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, FunctionLinkage, FunctionType, ImportList, ImportName
     NumericConstant, ParsedAlias, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport
-    ParsedField, ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedMethod, ParsedModuleImport, ParsedName
-    ParsedNameWithGenericParameters, ParsedNamespace, ParsedParameter, ParsedPatternDefault, ParsedRecord
-    ParsedStatement, ParsedTrait, ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator, Visibility
+    ParsedExternalTraitImplementation, ParsedField, ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedMethod
+    ParsedModuleImport, ParsedName, ParsedNameWithGenericParameters, ParsedNamespace, ParsedParameter
+    ParsedPatternDefault, ParsedRecord, ParsedStatement, ParsedTrait, ParsedType, ParsedVarDecl, Parser, RecordType
+    TypeCast, UnaryOperator, Visibility
 }
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant
@@ -286,6 +287,7 @@ struct Typechecker {
             variables: [],
             imports: [],
             resolved_import_path: path ?? .compiler.current_file_path()!.to_string(),
+            builtin_implementation_structs: [:]
             is_root: is_root,
         )
         .program.modules.push(module)
@@ -1561,62 +1563,14 @@ struct Typechecker {
                 .self_type_id = old_self_type_id
             }
 
-            match .get_type(for_type) {
-                Struct(struct_id) | GenericInstance(id: struct_id) => {
-                    mut struct_ = .get_struct(struct_id)
-                    for method in implementation.methods {
-                        mut this_arg_type_id: TypeId? = None
-                        if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
-                            this_arg_type_id = for_type
-                        }
-
-                        .typecheck_function_predecl(
-                            parsed_function: method.parsed_function
-                            parent_scope_id: struct_.scope_id
-                            this_arg_type_id
-                        )
-                    }
-
-                    .fill_trait_implementation_list(
-                        implementation.traits
-                        &mut struct_.trait_implementations
-                        scope_id: struct_.scope_id
-                        trait_name_scope_id_override: scope_id
-                    )
-
-                    for trait_name in implementation.traits {
-                        let trait_id = .find_trait_in_scope(scope_id, name: trait_name.name)
-                        guard trait_id.has_value() else { continue }
-
-                        let trait_ = .get_trait(trait_id!)
-                        for (name, function_id) in trait_.methods {
-                            if .find_functions_with_name_in_scope(parent_scope_id: struct_.scope_id, function_name: name).has_value() {
-                                continue
-                            }
-
-                            let function = .get_function(function_id)
-                            if function.block.statements.is_empty() {
-                                continue
-                            }
-
-                            mut replaced_function = function.copy()
-                            let inferences = .generic_inferences
-                            replaced_function.map_types(&fn[inferences](anon type_id: TypeId) throws -> TypeId {
-                                return inferences.map(type_id)
-                            })
-
-                            mut module = .current_module()
-                            let new_function_id = module.add_function(checked_function: replaced_function)
-
-                            .add_function_to_scope(
-                                parent_scope_id: struct_.scope_id
-                                name: name
-                                overload_set: [new_function_id]
-                                span: trait_name.name_span
-                            )
-                        }
-                    }
-                }
+            let type = .get_type(for_type)
+            match type {
+                Struct(struct_id) | GenericInstance(id: struct_id) => .resolve_external_trait_implementations(
+                    implementation
+                    struct_id
+                    for_type
+                    scope_id
+                )
                 Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
                     mut enum_ = .get_enum(enum_id)
                     for method in implementation.methods {
@@ -1673,10 +1627,24 @@ struct Typechecker {
                     }
                 }
                 else => {
-                    .error(
-                        format("Cannot implement traits for type '{}'", .type_name(for_type)),
-                        implementation.for_type.span()
-                    )
+                    if type.is_builtin() {
+                        let substitute_struct_id = .program.builtin_implementation_struct(
+                            builtin: type.as_builtin_type()
+                            for_module: for_type.module
+                        )
+
+                        .resolve_external_trait_implementations(
+                            implementation
+                            struct_id: substitute_struct_id
+                            for_type
+                            scope_id
+                        )
+                    } else {
+                        .error(
+                            format("Cannot implement traits for type '{}'", .type_name(for_type)),
+                            implementation.for_type.span()
+                        )
+                    }
                 }
             }
         }
@@ -1719,6 +1687,68 @@ struct Typechecker {
                     )
                 }
                 Garbage => {}
+            }
+        }
+    }
+
+    fn resolve_external_trait_implementations(
+        mut this
+        implementation: ParsedExternalTraitImplementation
+        struct_id: StructId
+        for_type: TypeId
+        scope_id: ScopeId
+    ) throws {
+        mut struct_ = .get_struct(struct_id)
+        for method in implementation.methods {
+            mut this_arg_type_id: TypeId? = None
+            if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
+                this_arg_type_id = for_type
+            }
+
+            .typecheck_function_predecl(
+                parsed_function: method.parsed_function
+                parent_scope_id: struct_.scope_id
+                this_arg_type_id
+            )
+        }
+
+        .fill_trait_implementation_list(
+            implementation.traits
+            &mut struct_.trait_implementations
+            scope_id: struct_.scope_id
+            trait_name_scope_id_override: scope_id
+        )
+
+        for trait_name in implementation.traits {
+            let trait_id = .find_trait_in_scope(scope_id, name: trait_name.name)
+            guard trait_id.has_value() else { continue }
+
+            let trait_ = .get_trait(trait_id!)
+            for (name, function_id) in trait_.methods {
+                if .find_functions_with_name_in_scope(parent_scope_id: struct_.scope_id, function_name: name).has_value() {
+                    continue
+                }
+
+                let function = .get_function(function_id)
+                if function.block.statements.is_empty() {
+                    continue
+                }
+
+                mut replaced_function = function.copy()
+                let inferences = .generic_inferences
+                replaced_function.map_types(&fn[inferences](anon type_id: TypeId) throws -> TypeId {
+                    return inferences.map(type_id)
+                })
+
+                mut module = .current_module()
+                let new_function_id = module.add_function(checked_function: replaced_function)
+
+                .add_function_to_scope(
+                    parent_scope_id: struct_.scope_id
+                    name: name
+                    overload_set: [new_function_id]
+                    span: trait_name.name_span
+                )
             }
         }
     }
@@ -3529,24 +3559,34 @@ struct Typechecker {
         }
 
         // only structs or enums can implement traits
-        let (implemented_traits, decl_span) = match .get_type(generic_argument) {
+        let type = .get_type(generic_argument)
+        let (implemented_traits, decl_span) = match type {
             GenericEnumInstance(id) | Enum(id) => (.get_enum(id).trait_implementations, .get_enum(id).name_span)
             GenericInstance(id) | Struct(id) => (.get_struct(id).trait_implementations, .get_struct(id).name_span)
-            else => {
-                .error(
-                    format(
-                        "Cannot use ‘{}’ here as only enums, structs and classes can implement the required traits",
-                        .type_name(generic_argument)
+            else => match type.is_builtin() {
+                true => {
+                    let struct_id = .program.builtin_implementation_struct(
+                        builtin: type.as_builtin_type()
+                        for_module: generic_argument.module
                     )
-                    arg_span
-                )
-                // NOTE: C++ rejects the 'return {}' because it cannot get a matching constructor
-                unsafe { cpp {
-                    "return ErrorOr<void>{};"
-                } }
+                    yield (.get_struct(struct_id).trait_implementations, .get_struct(struct_id).name_span)
+                }
+                false => {
+                    .error(
+                        format(
+                            "Cannot use ‘{}’ here as only enums, structs and classes can implement the required traits",
+                            .type_name(generic_argument)
+                        )
+                        arg_span
+                    )
+                    // NOTE: C++ rejects the 'return {}' because it cannot get a matching constructor
+                    unsafe { cpp {
+                        "return ErrorOr<void>{};"
+                    } }
 
-                // unreachable
-                abort()
+                    // unreachable
+                    abort()
+                }
             }
         }
 
@@ -6548,7 +6588,9 @@ struct Typechecker {
             let checked_expr_type_id = checked_expr.type()
             mut found_optional = false
 
-            let parent_id: StructLikeId? = match .get_type(.final_type_resolution_form(checked_expr_type_id, scope_id)) {
+            let final_type_id = .final_type_resolution_form(checked_expr_type_id, scope_id)
+            let type = .get_type(final_type_id)
+            let parent_id: StructLikeId? = match type {
                 Struct(id) => Some(StructLikeId::Struct(id))
                 Enum(id) => Some(StructLikeId::Enum(id))
                 JaktString => Some(StructLikeId::Struct(.find_struct_in_prelude("String")))
@@ -6589,17 +6631,23 @@ struct Typechecker {
                         else => None
                     }
                 }
-                else => {
-                    .error(
-                        message: format(
-                            "no methods available on value (type: {} {})"
-                            .get_type(checked_expr_type_id).constructor_name()
-                            .type_name(type_id: checked_expr_type_id)
+                else => match type.is_builtin() {
+                    true => StructLikeId::Struct(.program.builtin_implementation_struct(
+                        builtin: type.as_builtin_type()
+                        for_module: final_type_id.module
+                    ))
+                    else => {
+                        .error(
+                            message: format(
+                                "no methods available on value (type: {} {})"
+                                .get_type(checked_expr_type_id).constructor_name()
+                                .type_name(type_id: checked_expr_type_id)
+                            )
+                            span: checked_expr.span()
                         )
-                        span: checked_expr.span()
-                    )
 
-                    yield None
+                        yield None
+                    }
                 }
             }
 

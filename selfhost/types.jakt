@@ -250,6 +250,27 @@ enum BuiltinType {
         Unknown => 16uz
         Never => 17uz
     }
+
+    fn constructor_name(this) throws -> String => match this {
+        Void => "Void"
+        Bool => "Bool"
+        U8 => "U8"
+        U16 => "U16"
+        U32 => "U32"
+        U64 => "U64"
+        I8 => "I8"
+        I16 => "I16"
+        I32 => "I32"
+        I64 => "I64"
+        F32 => "F32"
+        F64 => "F64"
+        Usize => "Usize"
+        JaktString => "JaktString"
+        CChar => "CChar"
+        CInt => "CInt"
+        Unknown => "Unknown"
+        Never => "Never"
+    }
 }
 
 boxed enum Type {
@@ -529,6 +550,29 @@ boxed enum Type {
         else => false
     }
 
+    fn as_builtin_type(this) -> BuiltinType => match this {
+        Void => BuiltinType::Void
+        Bool => BuiltinType::Bool
+        U8 => BuiltinType::U8
+        U16 => BuiltinType::U16
+        U32 => BuiltinType::U32
+        U64 => BuiltinType::U64
+        I8 => BuiltinType::I8
+        I16 => BuiltinType::I16
+        I32 => BuiltinType::I32
+        I64 => BuiltinType::I64
+        F32 => BuiltinType::F32
+        F64 => BuiltinType::F64
+        Usize => BuiltinType::Usize
+        JaktString => BuiltinType::JaktString
+        CChar => BuiltinType::CChar
+        CInt => BuiltinType::CInt
+        else => {
+            eprintln("Type.as_builtin_type: Not a builtin type: {}", this)
+            abort()
+        }
+    }
+
     fn get_bits(this) -> i64 => match this {
         U8 | I8 | CChar => 8
         U16 | I16 => 16
@@ -626,6 +670,7 @@ class Module {
     public variables: [CheckedVariable]
     public imports: [ModuleId]
     public resolved_import_path: String
+    public builtin_implementation_structs: [usize:StructId]
 
     public is_root: bool
     public fn is_prelude(this) -> bool => .id.id == 0
@@ -1693,6 +1738,57 @@ class CheckedProgram {
         .modules[module_id.id].scopes.push(scope)
 
         return ScopeId(module_id, id: .modules[module_id.id].scopes.size() - 1)
+    }
+
+    public fn builtin_implementation_struct(mut this, builtin: BuiltinType, for_module: ModuleId) throws -> StructId {
+        if builtin is JaktString {
+            return .find_struct_in_prelude(name: "String")
+        }
+
+        let id = builtin.id()
+        mut module = .modules[for_module.id]
+        if module.builtin_implementation_structs.contains(id) {
+            return module.builtin_implementation_structs[id]
+        }
+
+        let scope_id = .create_scope(
+            parent_scope_id: None
+            can_throw: false
+            debug_name: format("builtin({})", builtin.constructor_name())
+            module_id: for_module
+            for_block: false
+        )
+
+        let trait_implementations: [String:(TraitId, [TypeId])] = [:]
+        let name_span = Span(
+            file_id: FileId(id: 0)
+            start: 0
+            end: 0
+        )
+
+        let struct_id = StructId(
+            module: for_module
+            id: module.structures.size()
+        )
+        let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id), module_id: for_module)
+
+        let struct_ = CheckedStruct(
+            name: format("Builtin_{}", builtin.constructor_name())
+            name_span
+            generic_parameters: []
+            fields: []
+            scope_id
+            definition_linkage: DefinitionLinkage::Internal
+            trait_implementations
+            record_type: RecordType::Struct(fields: [], super_type: None)
+            type_id: struct_type_id
+            super_struct_id: None
+        )
+
+        module.structures.push(struct_)
+        module.builtin_implementation_structs[id] = struct_id
+
+        return struct_id
     }
 
     public fn get_module(this, anon id: ModuleId) -> Module => .modules[id.id]
