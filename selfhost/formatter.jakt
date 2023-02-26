@@ -1201,6 +1201,9 @@ struct Stage0 {
 
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         }
+        Sizeof => {
+            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        }
         Colon => {
             .replace_state(State::StatementContext(
                 open_parens
