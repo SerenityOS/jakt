@@ -4007,7 +4007,7 @@ struct Typechecker {
                 }
             }
             Struct(lhs_struct_id) => {
-                if lhs_type_id.equals(rhs_type_id) {
+                if lhs_type_id.equals(rhs_type_id) or .is_subclass_of(ancestor_type_id: rhs_type_id, child_type_id: lhs_type_id) {
                     return true
                 }
 
@@ -5449,11 +5449,13 @@ struct Typechecker {
 
         if lhs_type is GenericInstance(id, args) {
             if id.equals(weak_ptr_struct_id) {
-                if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
+                if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id())
+                   and not .is_subclass_of(ancestor_type_id: args[0], child_type_id: rhs_type_id) {
                     .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
                 }
             } else if id.equals(optional_struct_id) {
-                if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
+                if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id())
+                   and not .is_subclass_of(ancestor_type_id: args[0], child_type_id: rhs_type_id) {
                     .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
                 }
             } else {
@@ -5478,7 +5480,8 @@ struct Typechecker {
                 return CheckedStatement::Garbage(span)
             }
         } else {
-            if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
+            if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id())
+               and not .is_subclass_of(ancestor_type_id: lhs_type_id, child_type_id: rhs_type_id) {
                 .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
             }
         }
