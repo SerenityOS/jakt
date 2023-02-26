@@ -3063,37 +3063,55 @@ struct CodeGenerator {
 
         let object = .codegen_expression_and_deref_if_generic_and_needed(expr)
 
-        output += "(("
-        output += object
-        output += ")"
-
         let expression_type = .program.get_type(expr.type())
-        match expression_type {
-            RawPtr => {
-                output += "->"
+        let field_accessor = match expression_type {
+            RawPtr => "->"
+            Struct(id) | GenericInstance(id) => match .program.get_struct(id).record_type is Class and object != "*this" {
+                true => "->"
+                false => "."
             }
-            Struct(id) | GenericInstance(id) => {
-                let struct_ = .program.get_struct(id)
-                if struct_.record_type is Class and object != "*this" {
-                    output += "->"
-                } else {
-                    output += "."
-                }
+            Enum(id) => match .program.get_enum(id).is_boxed and object != "*this" {
+                true => "->"
+                false => "."
             }
-            Enum(id) => {
-                let enum_ = .program.get_enum(id)
-                if enum_.is_boxed and object != "*this" {
-                    output += "->"
-                } else {
-                    output += "."
-                }
-            }
-            else => {
-                output += "."
+            else => match expression_type.is_builtin() {
+                true => ""
+                false => "."
             }
         }
 
+        let generate_method_name = fn[this, &call, &output]() throws {
+            let generic_parameters = call.type_args
+            if not generic_parameters.is_empty() {
+                output += "template "
+            }
+
+            output += call.name_for_codegen()
+
+            if not generic_parameters.is_empty() {
+                mut types: [String] = []
+                for gen_param in generic_parameters {
+                    types.push(.codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: false))
+                }
+                output += format("<{}>", join(types, separator: ", "))
+            }
+        }
+
+        let is_called_as_method = not field_accessor.is_empty()
+
+        if is_called_as_method {
+            output += "(("
+            output += object
+            output += ")"
+        } else {
+            // object.method(...) -> method(object, ...)
+            generate_method_name()
+            output += "("
+            output += object
+        }
+
         if is_optional {
+            // Note: `object' cannot be a builtin here as its type is Optional<T>.
             output += "map([&](auto& _value) { return _value"
             mut access_operator = "."
             if expression_type is GenericInstance(args) and args.size() > 0 {
@@ -3109,24 +3127,12 @@ struct CodeGenerator {
             output += access_operator
         }
 
-        let generic_parameters = call.type_args
-        if not generic_parameters.is_empty() {
-            output += "template "
+        if is_called_as_method {
+            generate_method_name()
+            output += "("
         }
 
-        output += call.name_for_codegen()
-
-        if not generic_parameters.is_empty() {
-            mut types: [String] = []
-            for gen_param in generic_parameters {
-                types.push(.codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: false))
-            }
-            output += format("<{}>", join(types, separator: ", "))
-        }
-
-        output += "("
-
-        mut first = true
+        mut first = is_called_as_method
         for (_, expr) in call.args {
             if first {
                 first = false
@@ -3136,7 +3142,9 @@ struct CodeGenerator {
             output += .codegen_expression(expr)
         }
 
-        output += ")"
+        if is_called_as_method {
+            output += ")"
+        }
 
         if is_optional {
             output += "; })"
