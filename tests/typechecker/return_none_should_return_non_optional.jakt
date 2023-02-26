@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Cannot assign None to a non-optional type"
+
+class A { }
+
+fn test() -> A {
+    return None
+}
+
+fn main() {
+    let a = test()
+}

@@ -5699,6 +5699,16 @@ struct Typechecker {
         let checked_expr = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint, span)
 
         if type_hint.has_value() {
+            if checked_expr is OptionalNone(span) {
+                if .get_type(type_hint!) is GenericInstance(id, args) {
+                    if not id.equals(.find_struct_in_prelude("Optional")) and not id.equals(.find_struct_in_prelude("WeakPtr")) {
+                        .error("Cannot assign None to a non-optional type", span)
+                    }
+                } else {
+                    .error("Cannot assign None to a non-optional type", span)
+                }
+            }
+
             .unify_with_type(found_type: checked_expr.type(), expected_type: type_hint!, span)
         }
 
