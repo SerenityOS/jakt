@@ -4062,7 +4062,6 @@ struct Typechecker {
                         }
                     }
                     else => {
-                        let rhs_type = .get_type(rhs_type_id)
                         if .is_subclass_of(ancestor_type_id: lhs_type_id, child_type_id: rhs_type_id) {
                             return true
                         }
