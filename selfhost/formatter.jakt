@@ -42,7 +42,9 @@ enum State {
         open_parens: usize
         open_curlies: usize
         open_squares: usize
+        is_extern: bool
     )
+    Extern
     Import(is_extern: bool)
     ImportList(emitted_comma: bool)
     EntityDeclaration(
@@ -50,10 +52,14 @@ enum State {
         accept_generics: bool
         has_generics: bool
         generic_nesting: usize
+        is_extern: bool
     )
     ParameterList(open_parens: usize)
     RestrictionList
-    EntityDefinition(entity: Entity)
+    EntityDefinition(
+        entity: Entity
+        is_extern: bool
+    )
     StatementContext(
         open_parens: usize
         open_curlies: usize
@@ -83,6 +89,7 @@ enum State {
 
     fn name(this) throws -> String => match this {
         Toplevel => "toplevel"
+        Extern => "extern"
         Import => "import"
         ImportList => "import list"
         EntityDeclaration => "entity declaration"
@@ -251,6 +258,7 @@ struct Stage0 {
                 open_parens: 0
                 open_curlies: 0
                 open_squares: 0
+                is_extern: false
             )]
             indent: 0uz
             already_seen_enclosure_in_current_line: false
@@ -267,6 +275,7 @@ struct Stage0 {
                 open_parens: 0
                 open_curlies: 0
                 open_squares: 0
+                is_extern: false
             )]
             indent: 0uz
             already_seen_enclosure_in_current_line: false
@@ -373,19 +382,56 @@ struct Stage0 {
         // )
     }
 
+    private fn next_in_extern_context(
+        mut this
+        token: Token
+    ) throws -> FormattedToken? => match token {
+        Struct | Class => {
+            .push_state(State::EntityDeclaration(
+                entity: Entity::from_token(&token)
+                accept_generics: not token is Namespace
+                has_generics: false
+                generic_nesting: 0uz
+                is_extern: true
+            ))
+
+            mut trailing_trivia: [u8] = []
+            if token is Namespace or not .peek() is LessThan {
+                trailing_trivia.push(b' ')
+            }
+
+            yield .formatted_token(token, trailing_trivia, preceding_trivia: [])
+        }
+        else => {
+            .pop_state()
+            yield .formatted_token(token)
+        }
+    }
+
     private fn next_in_toplevel_context(
         mut this
         open_parens: usize
         open_curlies: usize
         open_squares: usize
+        is_extern: bool
         token: Token
     ) throws -> FormattedToken? => match token {
+        Extern => {
+            match .peek() {
+                Class | Struct => {
+                    .push_state(State::Extern)
+                }
+                else => {}
+            }
+            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        }
         Enum | Class | Struct | Fn | Comptime | Namespace => {
             .push_state(State::EntityDeclaration(
                 entity: Entity::from_token(&token)
                 accept_generics: not token is Namespace
                 has_generics: false
                 generic_nesting: 0uz
+                is_extern
             ))
 
             mut trailing_trivia: [u8] = []
@@ -400,6 +446,7 @@ struct Stage0 {
                 open_parens
                 open_curlies
                 open_squares: open_squares + 1
+                is_extern
             ))
             yield .formatted_token(token)
         }
@@ -414,6 +461,7 @@ struct Stage0 {
                 open_parens
                 open_curlies
                 open_squares: open_squares - 1
+                is_extern
             ))
 
             yield .formatted_token(token)
@@ -423,6 +471,7 @@ struct Stage0 {
                 open_parens: open_parens + 1
                 open_curlies
                 open_squares
+                is_extern
             ))
 
             yield .formatted_token(token)
@@ -438,6 +487,7 @@ struct Stage0 {
                 open_parens: open_parens - 1
                 open_curlies
                 open_squares
+                is_extern
             ))
 
             yield .formatted_token(token)
@@ -447,6 +497,7 @@ struct Stage0 {
                 open_parens
                 open_curlies: open_curlies + 1
                 open_squares
+                is_extern
             ))
             yield .formatted_token(token, trailing_trivia: [], preceding_trivia: [b' '])
         }
@@ -461,6 +512,7 @@ struct Stage0 {
                 open_parens
                 open_curlies: open_curlies - 1
                 open_squares
+                is_extern
             ))
 
             yield .formatted_token(token)
@@ -482,7 +534,7 @@ struct Stage0 {
             ))
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         }
-        Public | Private | Virtual | Override | Extern | Boxed | Unsafe => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Public | Private | Virtual | Override | Boxed | Unsafe => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         Restricted => {
             .push_state(State::RestrictionList)
             yield .formatted_token(token)
@@ -536,6 +588,7 @@ struct Stage0 {
                     open_parens: 0
                     open_curlies: 0
                     open_squares: 0
+                    is_extern
                 ))
             } else {
                 .push_state(State::ImportList(emitted_comma: true))
@@ -635,6 +688,7 @@ struct Stage0 {
         accept_generics: bool
         has_generics: bool
         generic_nesting: usize
+        is_extern: bool
         token: Token
     ) throws -> FormattedToken? => match token {
         LessThan => {
@@ -644,6 +698,7 @@ struct Stage0 {
                     accept_generics
                     has_generics: true
                     generic_nesting: generic_nesting + 1
+                    is_extern
                 ))
             }
 
@@ -657,9 +712,10 @@ struct Stage0 {
                         accept_generics
                         has_generics
                         generic_nesting: generic_nesting - 1
+                        is_extern
                     ))
                 } else {
-                    .replace_state(State::EntityDefinition(entity))
+                    .replace_state(State::EntityDefinition(entity, is_extern))
                 }
             }
 
@@ -667,7 +723,7 @@ struct Stage0 {
         }
         Identifier => {
             if generic_nesting == 0 and not .peek() is LessThan and not has_generics {
-                .replace_state(State::EntityDefinition(entity))
+                .replace_state(State::EntityDefinition(entity, is_extern))
             }
 
             yield .formatted_token(token)
@@ -692,6 +748,7 @@ struct Stage0 {
     private fn next_in_entity_definition_context(
         mut this
         entity: Entity
+        is_extern: bool
         indent_change: &mut i64
         token: Token
     ) throws -> FormattedToken? => match entity {
@@ -713,6 +770,7 @@ struct Stage0 {
                     open_parens: 0
                     open_curlies: 0
                     open_squares: 0
+                    is_extern
                 ))
                 yield .formatted_token(
                     token
@@ -734,6 +792,7 @@ struct Stage0 {
 
                 .replace_state(State::EntityDefinition(
                     entity: Entity::Function(arrow: true, indented: next_is_eol)
+                    is_extern
                 ))
 
                 if next_is_eol {
@@ -805,6 +864,11 @@ struct Stage0 {
                 yield .formatted_token(token)
             }
             Eol => {
+                if is_extern {
+                    .pop_state()
+                    return .formatted_token(token)
+                }
+
                 if not arrow {
                     // Ignore Eols if not arrow function
                     return .next()
@@ -2028,11 +2092,12 @@ struct Stage0 {
         }
 
         return match .state() {
-            Toplevel(open_parens, open_curlies, open_squares) => .next_in_toplevel_context(open_parens, open_curlies, open_squares, token)
+            Toplevel(open_parens, open_curlies, open_squares, is_extern) => .next_in_toplevel_context(open_parens, open_curlies, open_squares, is_extern, token)
+            Extern => .next_in_extern_context(token)
             Import(is_extern) => .next_in_import_context(is_extern, token)
             ImportList(emitted_comma) => .next_in_import_list_context(emitted_comma, token)
-            EntityDeclaration(entity, accept_generics, has_generics, generic_nesting) => .next_in_entity_declaration_context(entity, accept_generics, has_generics, generic_nesting, token)
-            EntityDefinition(entity) => .next_in_entity_definition_context(entity, &mut indent_change, token)
+            EntityDeclaration(entity, accept_generics, has_generics, generic_nesting, is_extern) => .next_in_entity_declaration_context(entity, accept_generics, has_generics, generic_nesting, is_extern, token)
+            EntityDefinition(entity, is_extern) => .next_in_entity_definition_context(entity, is_extern, &mut indent_change, token)
             StatementContext(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, dedents_on_open_curly) => .next_in_statement_context(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, dedents_on_open_curly, &mut indent_change, token)
             GenericCallTypeParams(open_angles) => .next_in_generic_call_type_params_context(open_angles, token)
             VariableDeclaration(open_parens) => .next_in_variable_declaration_context(open_parens, token)
