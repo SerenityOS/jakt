@@ -3103,6 +3103,7 @@ struct CodeGenerator {
             output += "(("
             output += object
             output += ")"
+            output += field_accessor
         } else {
             // object.method(...) -> method(object, ...)
             generate_method_name()
