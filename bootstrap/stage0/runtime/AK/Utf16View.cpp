@@ -128,7 +128,15 @@ u16 Utf16View::code_unit_at(size_t index) const
 
 u32 Utf16View::code_point_at(size_t index) const
 {
+    size_t dummy;
+    return code_point_at(index, dummy);
+}
+
+u32 Utf16View::code_point_at(size_t index, size_t& external_iterator) const
+{
     VERIFY(index < length_in_code_units());
+
+    external_iterator++;
 
     u32 code_point = code_unit_at(index);
     if (!is_high_surrogate(code_point) && !is_low_surrogate(code_point))
@@ -139,6 +147,8 @@ u32 Utf16View::code_point_at(size_t index) const
     auto second = code_unit_at(index + 1);
     if (!is_low_surrogate(second))
         return code_point;
+
+    external_iterator ++;
 
     return decode_surrogate_pair(code_point, second);
 }

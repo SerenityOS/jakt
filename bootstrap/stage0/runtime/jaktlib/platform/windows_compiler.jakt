@@ -28,7 +28,7 @@ fn run_compiler(
         "/permissive-"
         "/utf-8"
         "-Wa,-mbig-obj"
-        match optimize { true => "/MT", else => "/MTd" }
+        match optimize { true => "/MT", false => "/MTd" }
         "-Wno-unknown-warning-option"
         "-Wno-trigraphs"
         "-Wno-parentheses-equality"

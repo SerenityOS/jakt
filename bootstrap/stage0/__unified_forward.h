@@ -951,6 +951,7 @@ struct Formatter;
 struct Stage0;
 namespace State_Details {
 struct Toplevel;
+struct Extern;
 struct Import;
 struct ImportList;
 struct EntityDeclaration;
