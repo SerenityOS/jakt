@@ -54,6 +54,7 @@ enum State {
         generic_nesting: usize
         is_extern: bool
     )
+    CaptureList
     ParameterList(open_parens: usize)
     RestrictionList
     EntityDefinition(
@@ -93,6 +94,7 @@ enum State {
         Import => "import"
         ImportList => "import list"
         EntityDeclaration => "entity declaration"
+        CaptureList => "capture list"
         ParameterList => "parameter list"
         RestrictionList => "restriction list"
         EntityDefinition => "entity definition"
@@ -1898,6 +1900,22 @@ struct Stage0 {
         else => .formatted_token(token)
     }
 
+    private fn next_in_capture_list_context(
+        mut this
+        token: Token
+    ) throws -> FormattedToken? => match token {
+        RSquare => {
+            .pop_state()
+            yield .formatted_token(token)
+        }
+        Comma | Mut => {
+            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        }
+        else => {
+            yield .formatted_token(token)
+        }
+    }
+
     private fn next_in_function_type_context(
         mut this
         seen_final_type: bool
@@ -1926,6 +1944,10 @@ struct Stage0 {
                 seen_start: false
             ))
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [b' '])
+        }
+        LSquare => {
+            .push_state(State::CaptureList)
+            yield .formatted_token(token)
         }
         LParen => {
             if seen_final_type {
@@ -2102,6 +2124,7 @@ struct Stage0 {
             GenericCallTypeParams(open_angles) => .next_in_generic_call_type_params_context(open_angles, token)
             VariableDeclaration(open_parens) => .next_in_variable_declaration_context(open_parens, token)
             RestrictionList => .next_in_restriction_list_context(token)
+            CaptureList => .next_in_capture_list_context(token)
             ParameterList(open_parens) => .next_in_parameter_list_context(open_parens, token)
             TypeContext(open_parens, open_curlies, open_squares, open_angles, seen_start) => .next_in_type_context(open_parens, open_curlies, open_squares, open_angles, seen_start, token)
             FunctionTypeContext(seen_final_type) => .next_in_function_type_context(seen_final_type, token)
