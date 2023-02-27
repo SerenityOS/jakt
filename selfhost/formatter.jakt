@@ -881,14 +881,9 @@ struct Stage0 {
                 yield .formatted_token(token)
             }
             Eol => {
-                if is_extern {
+                if not arrow {
                     .pop_state()
                     return .formatted_token(token)
-                }
-
-                if not arrow {
-                    // Ignore Eols if not arrow function
-                    return .next()
                 }
 
                 .pop_state()
