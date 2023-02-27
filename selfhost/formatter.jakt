@@ -566,16 +566,6 @@ struct Stage0 {
         Extern | As => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         Identifier => {
             if not is_extern and .peek() is LParen {
-                .push_state(State::StatementContext(
-                    open_parens: 0
-                    open_curlies: 0
-                    open_squares: 0
-                    arrow_indents: 0
-                    allow_eol: None
-                    inserted_comma: false
-                    expression_mode: ExpressionMode::AtExpressionStart
-                    dedents_on_open_curly: 0
-                ))
                 return .formatted_token(token)
             }
 
@@ -589,6 +579,7 @@ struct Stage0 {
 
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         }
+        LParen => .formatted_token(token)
         LCurly => {
             if is_extern {
                 .push_state(State::Toplevel(
