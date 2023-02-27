@@ -429,6 +429,19 @@ struct Stage0 {
             }
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         }
+        Identifier(name) => {
+            if name == "type" and .peek() is Identifier {
+                .push_state(State::EntityDeclaration(
+                    entity: Entity::from_token(&token)
+                    accept_generics: true
+                    has_generics: false
+                    generic_nesting: 0uz
+                    is_extern
+                ))
+                return .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            }
+            yield .formatted_token(token)
+        }
         Enum | Class | Struct | Trait | Fn | Comptime | Namespace => {
             .push_state(State::EntityDeclaration(
                 entity: Entity::from_token(&token)
