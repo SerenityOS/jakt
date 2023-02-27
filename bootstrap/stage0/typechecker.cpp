@@ -13359,11 +13359,11 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("args: {}", "", that.args));
+TRY(builder.appendff("args: {}, ", that.args));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("maybe_this_type_id: {}", "", that.maybe_this_type_id));
+TRY(builder.appendff("maybe_this_type_id: {}, ", that.maybe_this_type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("used_generic_inferences: {}", "", that.used_generic_inferences));
+TRY(builder.appendff("used_generic_inferences: {}, ", that.used_generic_inferences));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("specificity: {}", that.specificity));
 }

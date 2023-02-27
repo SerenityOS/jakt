@@ -955,6 +955,7 @@ struct Extern;
 struct Import;
 struct ImportList;
 struct EntityDeclaration;
+struct CaptureList;
 struct ParameterList;
 struct RestrictionList;
 struct EntityDefinition;
