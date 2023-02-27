@@ -578,6 +578,11 @@ struct Stage0 {
                 ))
                 return .formatted_token(token)
             }
+
+            if .peek() is ColonColon {
+                return .formatted_token(token)
+            }
+
             if not is_extern and not .peek() is LCurly and not .peek() is As {
                 .pop_state()
             }
@@ -612,6 +617,7 @@ struct Stage0 {
                 preceding_trivia: []
             )
         }
+        ColonColon => .formatted_token(token)
         else => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
     }
 
