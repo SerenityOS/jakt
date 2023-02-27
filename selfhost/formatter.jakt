@@ -22,7 +22,7 @@ enum Entity {
     Function(arrow: bool, indented: bool)
 
     fn from_token(token: &Token) -> Entity => match token {
-        Struct | Class => Entity::Struct
+        Struct | Class | Trait => Entity::Struct
         Enum => Entity::Enum
         Namespace => Entity::Namespace
         Comptime | Fn => Entity::Function(arrow: false, indented: false)
@@ -429,7 +429,7 @@ struct Stage0 {
             }
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         }
-        Enum | Class | Struct | Fn | Comptime | Namespace => {
+        Enum | Class | Struct | Trait | Fn | Comptime | Namespace => {
             .push_state(State::EntityDeclaration(
                 entity: Entity::from_token(&token)
                 accept_generics: not token is Namespace
