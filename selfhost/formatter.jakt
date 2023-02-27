@@ -54,6 +54,7 @@ enum State {
         generic_nesting: usize
         is_extern: bool
     )
+    Implements
     CaptureList
     ParameterList(open_parens: usize)
     RestrictionList
@@ -93,6 +94,7 @@ enum State {
         Extern => "extern"
         Import => "import"
         ImportList => "import list"
+        Implements => "implements"
         EntityDeclaration => "entity declaration"
         CaptureList => "capture list"
         ParameterList => "parameter list"
@@ -612,6 +614,17 @@ struct Stage0 {
         else => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
     }
 
+    private fn next_in_implements_context(
+        mut this
+        token: Token
+    ) throws -> FormattedToken? => match token {
+        RParen => {
+            .pop_state()
+            yield .formatted_token(token)
+        }
+        else => .formatted_token(token)
+    }
+
     private fn next_in_import_list_context(
         mut this
         emitted_comma: bool
@@ -723,6 +736,11 @@ struct Stage0 {
         Identifier => {
             if generic_nesting == 0 and not .peek() is LessThan and not has_generics {
                 .replace_state(State::EntityDefinition(entity, is_extern))
+            }
+
+            if .peek() is Implements {
+                .push_state(State::Implements)
+                return .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
             }
 
             yield .formatted_token(token)
@@ -2115,6 +2133,7 @@ struct Stage0 {
             Extern => .next_in_extern_context(token)
             Import(is_extern) => .next_in_import_context(is_extern, token)
             ImportList(emitted_comma) => .next_in_import_list_context(emitted_comma, token)
+            Implements => .next_in_implements_context(token)
             EntityDeclaration(entity, accept_generics, has_generics, generic_nesting, is_extern) => .next_in_entity_declaration_context(entity, accept_generics, has_generics, generic_nesting, is_extern, token)
             EntityDefinition(entity, is_extern) => .next_in_entity_definition_context(entity, is_extern, &mut indent_change, token)
             StatementContext(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, dedents_on_open_curly) => .next_in_statement_context(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, dedents_on_open_curly, &mut indent_change, token)
