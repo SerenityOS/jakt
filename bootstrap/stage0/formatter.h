@@ -64,10 +64,11 @@ bool line_has_indent() const;
 static ErrorOr<JaktInternal::DynamicArray<u8>> to_array(DeprecatedString const x);
 static ErrorOr<formatter::Stage0> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::DynamicArray<u8> const source, bool const debug);
 ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_parameter_list_context(size_t const open_parens, lexer::Token const token);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_capture_list_context(lexer::Token const token);
 ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_impl(bool const reconsume);
 ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_statement_context(size_t const open_parens, size_t const open_curlies, size_t const open_squares, size_t const arrow_indents, JaktInternal::Optional<size_t> const allow_eol, bool const inserted_comma, formatter::ExpressionMode const expression_mode, size_t const dedents_on_open_curly, i64& indent_change, lexer::Token const token);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_restriction_list_context(lexer::Token const token);
 ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_generic_call_type_params_context(size_t const open_angles, lexer::Token const token);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_restriction_list_context(lexer::Token const token);
 ErrorOr<formatter::FormattedToken> formatted_token(lexer::Token const token) const;
 ErrorOr<formatter::FormattedToken> formatted_token(lexer::Token const token, JaktInternal::DynamicArray<u8> const trailing_trivia, JaktInternal::DynamicArray<u8> const preceding_trivia) const;
 ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> formatted_peek();
@@ -196,6 +197,8 @@ generic_nesting{ forward<_MemberT3>(member_3)},
 is_extern{ forward<_MemberT4>(member_4)}
 {}
 };
+struct CaptureList {
+};
 struct ParameterList {
 size_t open_parens;
 template<typename _MemberT0>
@@ -281,13 +284,14 @@ seen_final_type{ forward<_MemberT0>(member_0)}
 {}
 };
 }
-struct State : public Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext> {
-using Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext>::Variant;
+struct State : public Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::CaptureList, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext> {
+using Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::CaptureList, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext>::Variant;
     using Toplevel = State_Details::Toplevel;
     using Extern = State_Details::Extern;
     using Import = State_Details::Import;
     using ImportList = State_Details::ImportList;
     using EntityDeclaration = State_Details::EntityDeclaration;
+    using CaptureList = State_Details::CaptureList;
     using ParameterList = State_Details::ParameterList;
     using RestrictionList = State_Details::RestrictionList;
     using EntityDefinition = State_Details::EntityDefinition;

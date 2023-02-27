@@ -3395,7 +3395,7 @@ else {
 }
 
 if ((i != (JaktInternal::checked_sub<size_t>(((fields).size()),static_cast<size_t>(1ULL))))){
-(output += Jakt::DeprecatedString("\", \""sv));
+(output += Jakt::DeprecatedString(", "sv));
 }
 (output += TRY((__jakt_format(Jakt::DeprecatedString("\", that.{}));\n"sv),((var)->name)))));
 ((i++));
