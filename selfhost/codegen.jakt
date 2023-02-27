@@ -1762,7 +1762,7 @@ struct CodeGenerator {
                             output += format("TRY(builder.appendff(\"{}: {{}}", var.name)
                         }
                         if i != fields.size() - 1 {
-                            output += "\", \""
+                            output += ", "
                         }
                         output += format("\", that.{}));\n", var.name)
                         i++
