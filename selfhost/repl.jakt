@@ -10,7 +10,7 @@ import error { JaktError }
 import interpreter { value_to_checked_expression }
 import jakt::path { Path }
 
-import jakt::libc::io { fopen, fclose, fgets, FILE }
+import jakt::libc::io { FILE, fclose, fgets, fopen }
 
 enum LineResult {
     Line(String)
@@ -276,7 +276,7 @@ struct REPL {
         )
 
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
-        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: true,  debug_name: "root")
+        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: true, debug_name: "root")
 
         let root_interpreter_scope = InterpreterScope::create()
 
@@ -380,7 +380,11 @@ struct REPL {
                 continue
             }
 
-            let checked_statement = try .typechecker.typecheck_statement(statement: parsed_statement, scope_id: .root_scope_id, safety_mode: SafetyMode::Safe) catch {
+            let checked_statement = try .typechecker.typecheck_statement(
+                statement: parsed_statement
+                scope_id: .root_scope_id
+                safety_mode: SafetyMode::Safe
+            ) catch {
                 .handle_possible_error()
                 continue
             }

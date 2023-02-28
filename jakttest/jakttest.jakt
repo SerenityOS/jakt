@@ -137,7 +137,7 @@ import extern "os.h" {
     }
 }
 
-fn print_usage()  {
+fn print_usage() {
     eprintln("usage: jakttest [OPTIONS...] <temp-dir> [<path> ...]")
     eprintln("OPTIONS:")
     eprintln("\t-h\t\tShow this message and exit.")
@@ -196,7 +196,7 @@ fn compare_error(bytes: [u8], expected: String) throws -> bool {
 }
 
 fn strip_line_breaks(anon input: String) throws -> String {
-    mut builder = StringBuilder::create();
+    mut builder = StringBuilder::create()
     for i in 0..input.length() {
         let b = input.byte_at(i)
         if b == b'\n' {
@@ -231,7 +231,6 @@ fn usize_from_ascii_digits(anon digits: String) -> usize? {
         // FIXME: overflow check
         value = value * 10 + digit!
     }
-
 
     return value
 }
@@ -344,8 +343,8 @@ struct Options {
 
         if options.files.is_empty() {
             // find files under samples and tests
-            get_jakt_files_under(directory: "samples",  results: &mut options.files)
-            get_jakt_files_under(directory: "tests",    results: &mut options.files)
+            get_jakt_files_under(directory: "samples", results: &mut options.files)
+            get_jakt_files_under(directory: "tests", results: &mut options.files)
             // compile selfhost to check it can compile itself
             options.files.push("selfhost/main.jakt")
         }
@@ -512,17 +511,17 @@ struct TestScheduler {
             } else if .failed_reasons.has_value() {
                 .failed_reasons![test.file_name] = match test.result.kind {
                     Okay => TestFailedReason::StdoutUnmatched(
-                                had: bytes_to_string(result_output)
-                                expected: test.result
-                            )
+                        had: bytes_to_string(result_output)
+                        expected: test.result
+                    )
                     RuntimeError => TestFailedReason::StderrUnmatched(
-                                had: bytes_to_string(error_output)
-                                expected: test.result
-                            )
+                        had: bytes_to_string(error_output)
+                        expected: test.result
+                    )
                     CompileError => TestFailedReason::CompilerErrorUnmatched(
-                                had: bytes_to_string(error_output)
-                                expected: test.result
-                            )
+                        had: bytes_to_string(error_output)
+                        expected: test.result
+                    )
                 }
             }
 
@@ -581,7 +580,7 @@ struct TestScheduler {
         unsafe {
             cpp { "#ifndef _WIN32" }
             cpp { "sigset_t set;" }
-            cpp { "int signal;"   }
+            cpp { "int signal;" }
             cpp { "sigemptyset(&set);" }
             cpp { "sigaddset(&set, SIGCHLD);" }
             cpp { "#endif" }
@@ -618,11 +617,11 @@ struct TestScheduler {
         }
 
         return TestScheduler(running_tests
-                            free_directories
-                            directories
-                            passed_count: 0
-                            failed_count: 0
-                            failed_reasons)
+            free_directories
+            directories
+            passed_count: 0
+            failed_count: 0
+        failed_reasons)
     }
 
     public fn run_tests(
@@ -670,22 +669,22 @@ struct TestScheduler {
             let pid = process::start_background_process(args: command_buffer)
             scheduler.running_tests[pid] = test
             eprint("\r\x1b[2K[ \x1b[1;31m{}\x1b[m/\x1b[1;32m{}\x1b[m/{} ] Testing {}"
-                    scheduler.failed_count
-                    scheduler.passed_count
-                    total_test_count
-                    test.file_name)
-            unsafe { cpp { "fflush(stderr);" }}
+                scheduler.failed_count
+                scheduler.passed_count
+                total_test_count
+                test.file_name)
+            unsafe { cpp { "fflush(stderr);" } }
         }
 
         while not scheduler.running_tests.is_empty() {
             scheduler.poll_running_tests()
         }
         eprint("\r\x1b[2K")
-        unsafe { cpp { "fflush(stderr);" }}
+        unsafe { cpp { "fflush(stderr);" } }
 
         return TestsRunResult(passed_count: scheduler.passed_count
-                              failed_count: scheduler.failed_count
-                              failed_reasons: scheduler.failed_reasons)
+            failed_count: scheduler.failed_count
+            failed_reasons: scheduler.failed_reasons)
     }
 }
 
@@ -719,21 +718,21 @@ fn main(args: [String]) -> c_int {
         match result {
             SuccessTest(output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::Okay, output)
-                                file_name
-                                directory_index: 0
-                                cppincludes))
+                    file_name
+                    directory_index: 0
+                cppincludes))
             }
             CompileErrorTest(output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::CompileError, output)
-                                file_name
-                                directory_index: 0
-                                cppincludes))
+                    file_name
+                    directory_index: 0
+                cppincludes))
             }
             RuntimeErrorTest(output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::RuntimeError, output)
-                                file_name
-                                directory_index: 0
-                                cppincludes))
+                    file_name
+                    directory_index: 0
+                cppincludes))
             }
             SkipTest => {
                 eprintln("[ \x1b[33;1mSKIP\x1b[m ] {}", file_name)
@@ -751,7 +750,7 @@ fn main(args: [String]) -> c_int {
     directories.ensure_capacity(parsed_options.job_count as! usize)
     mkdir_if_not_present(path: parsed_options.temp_dir)
     for i in 0..parsed_options.job_count {
-        let path = format("{}/jakttest-tmp-{}",  parsed_options.temp_dir, i)
+        let path = format("{}/jakttest-tmp-{}", parsed_options.temp_dir, i)
         mkdir_if_not_present(path)
         directories.push(path)
     }
@@ -778,8 +777,8 @@ fn main(args: [String]) -> c_int {
     fs::rmdir(path: parsed_options.temp_dir)
 
     println("==============================")
-    println("{} passed" , run_result.passed_count)
-    println("{} failed" run_result.failed_count + bad_formatted_tests.size())
+    println("{} passed", run_result.passed_count)
+    println("{} failed"run_result.failed_count + bad_formatted_tests.size())
     println("{} skipped", skipped_count)
     println("==============================")
 
@@ -830,7 +829,7 @@ fn main(args: [String]) -> c_int {
                     }
 
                     output += "Test failed at an earlier stage than expected:\n"
-                    output +=  failed_stage + " failed with output:\n"
+                    output += failed_stage + " failed with output:\n"
                     output += had + "\n"
                     output += expected.kind.to_stage().to_string() + " expected with " + output_type + " output:\n"
                     output += expected.output
@@ -842,7 +841,7 @@ fn main(args: [String]) -> c_int {
                     }
 
                     output += "Test failed at a later stage than expected:\n"
-                    output +=  failed_stage + " failed with output:\n"
+                    output += failed_stage + " failed with output:\n"
                     output += had + "\n"
                     output += expected.kind.to_stage().to_string() + " expected with " + output_type + " output:\n"
                     output += expected.output

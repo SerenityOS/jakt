@@ -25,15 +25,15 @@ struct ArgsParser {
         for i in 1...args.size() {
             for name in names {
                 if .args[i] == name {
-                    if .args.size() <= i+1 {
+                    if .args.size() <= i + 1 {
                         eprintln("The option '{}' requires a value, but none was supplied", name)
                         throw Error::from_errno(200)
                     }
 
                     .removed_indices.push(i)
-                    .removed_indices.push(i+1)
+                    .removed_indices.push(i + 1)
 
-                    return .args[i+1]
+                    return .args[i + 1]
                 }
                 if .args[i].starts_with(name) {
                     .removed_indices.push(i)
@@ -45,8 +45,7 @@ struct ArgsParser {
         return None
     }
 
-    fn option_multiple(mut this, anon names: [String]) throws -> [String]
-    {
+    fn option_multiple(mut this, anon names: [String]) throws -> [String] {
         mut result: [String] = []
         for i in 1...args.size() {
             for name in names {
@@ -75,7 +74,7 @@ struct ArgsParser {
         mut i = 0uz
         for arg in parser.args {
             if arg == "--" {
-                parser.definitely_positional_args = parser.args[(i+1)..parser.args.size()].to_array()
+                parser.definitely_positional_args = parser.args[(i + 1)..parser.args.size()].to_array()
                 parser.args = parser.args[0..i].to_array()
                 break
             }
@@ -86,7 +85,7 @@ struct ArgsParser {
     }
 
     fn remaining_arguments(this) throws -> [String] {
-        mut remaining : [String] = []
+        mut remaining: [String] = []
 
         for i in 0...args.size() {
             if not .removed_indices.contains(i) {

@@ -1,12 +1,8 @@
 import jakt::platform { platform_process }
 import jakt::path { Path }
 import platform_process() {
-    Process
-    ExitPollResult
-    start_background_process
+    ExitPollResult, Process, forcefully_kill_process, poll_process_exit, start_background_process
     wait_for_some_set_of_processes_that_at_least_includes
-    poll_process_exit
-    forcefully_kill_process
 }
 
 struct ParallelExecutionPool {
