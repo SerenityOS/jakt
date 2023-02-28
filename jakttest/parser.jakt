@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 import error { JaktError }
-import utility { panic, todo, Span }
+import utility { Span, panic, todo }
 
 enum ParsedTest {
     SuccessTest(output: String, cppincludes: String)
@@ -126,7 +126,7 @@ struct Parser {
             let expect_output = success_test or compile_error or runtime_error
 
             if not has_cppincludes {
-                has_cppincludes =  .lex_literal("cppincludes")
+                has_cppincludes = .lex_literal("cppincludes")
             }
 
             guard success_test or compile_error or runtime_error or has_cppincludes else {
