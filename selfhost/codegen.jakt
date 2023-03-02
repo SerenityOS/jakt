@@ -78,14 +78,46 @@ struct ControlFlowState {
         )
     }
     fn is_match_nested(this) -> bool => .match_nest_level != 0
-    fn choose_control_flow_macro(this) -> String {
+    fn apply_control_flow_macro(this, anon x: String) throws -> String {
         if are_loop_exits_allowed(.allowed_exits) {
             if .is_match_nested() {
-                return "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH"
+                return format(
+                    "({{
+    auto&& _jakt_value = {};
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    if (_jakt_value.is_loop_break())
+        return JaktInternal::LoopBreak {{}};
+    if (_jakt_value.is_loop_continue())
+        return JaktInternal::LoopContinue {{}};
+    _jakt_value.release_value();
+}})",
+                    x
+                )
             }
-            return "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP"
+            return format(
+                "({{
+    auto&& _jakt_value = {};
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    if (_jakt_value.is_loop_break())
+        break;
+    if (_jakt_value.is_loop_continue())
+        continue;
+    _jakt_value.release_value();
+}})",
+                x
+            )
         }
-        return "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY"
+        return format(
+            "({{
+    auto&& _jakt_value = {};
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+}})",
+            x
+        )
     }
 }
 
@@ -2444,11 +2476,9 @@ struct CodeGenerator {
         }
         let match_values_all_constant = all_variants_constant and not is_generic_enum
 
-        output += .control_flow_state.choose_control_flow_macro()
-
         // TODO: Use switch statement if all values are constant
         output += format(
-            "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<{},{}>"
+            "([&]() -> JaktInternal::ExplicitValueOrControlFlow<{},{}>"
             .codegen_type(return_type_id)
             .codegen_function_return_type(function: .current_function!)
         ) + "{\n"
@@ -2573,20 +2603,19 @@ struct CodeGenerator {
             output += "VERIFY_NOT_REACHED();\n"
         }
 
-        output += "}()))\n"
+        output += "}())"
 
-        return output
+        return .control_flow_state.apply_control_flow_macro(output)
     }
 
     fn codegen_enum_match(mut this, enum_: CheckedEnum, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
         mut output = ""
-        output += .control_flow_state.choose_control_flow_macro()
 
         let subject = .codegen_expression(expr)
         let needs_deref = enum_.is_boxed and subject != "*this"
 
         if enum_.underlying_type_id.equals(void_type_id()) {
-            output += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
+            output += "([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
             output += .codegen_type(type_id)
             output += ", "
             output += .codegen_function_return_type(function: .current_function!)
@@ -2693,9 +2722,9 @@ struct CodeGenerator {
                 output += "default: VERIFY_NOT_REACHED();"
             }
             output += "}/*switch end*/\n"
-            output += "}()\n))"
+            output += "}()\n)"
         } else {
-            output += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
+            output += "([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
             output += .codegen_type(type_id)
             output += ", "
             output += .codegen_function_return_type(function: .current_function!)
@@ -2720,10 +2749,10 @@ struct CodeGenerator {
                 }
             }
             output += "}/*switch end*/\n"
-            output += "}()\n))"
+            output += "}()\n)"
         }
 
-        return output
+        return .control_flow_state.apply_control_flow_macro(output)
     }
 
     fn codegen_match_body(mut this, body: CheckedMatchBody, return_type_id: TypeId) throws -> String {
