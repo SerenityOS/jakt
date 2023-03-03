@@ -5,10 +5,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 import error { JaktError }
-import utility {
-    Span, is_ascii_alpha, is_ascii_alphanumeric, is_ascii_binary, is_ascii_digit, is_ascii_hexdigit, is_ascii_octdigit
-    is_whitespace
-}
+import utility { Span, is_ascii_digit, is_ascii_alpha, is_ascii_alphanumeric, is_ascii_hexdigit, is_ascii_octdigit, is_ascii_binary, is_whitespace }
 import compiler { Compiler }
 
 enum Token {
@@ -313,7 +310,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         let start = .index
         .index++
 
-        mut escaped = false
+        mut escaped = false;
 
         while not .eof() and (escaped or .peek() != b'\'') {
             if escaped and (.index - start > 3) {
@@ -524,7 +521,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
             // Ignore a standalone carriage return
             if .peek() == b'\r' or .peek() == b'\n' {
                 ++.index
-                continue
+                continue;
             }
 
             if not escaped and .peek() == b'\\' {

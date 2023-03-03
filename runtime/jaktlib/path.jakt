@@ -1,6 +1,8 @@
 import jakt::platform { platform_module }
 
-import platform_module("jakt::platform::path" ) { get_path_separator, get_valid_path_separators }
+import platform_module("jakt::platform::path") {
+    get_path_separator, get_valid_path_separators
+}
 
 struct Path {
     private path: String

@@ -25,18 +25,12 @@ enum MessageSeverity {
         Error => "Error"
     }
     public fn ansi_color_code(this) throws -> String => match this {
-        Hint => "94" // Bright Blue
+        Hint => "94"  // Bright Blue
         Error => "31" // Red
     }
 }
 
-fn display_message_with_span(
-    anon severity: MessageSeverity
-    file_name: String
-    file_contents: [u8]
-    message: String
-    span: Span
-) throws {
+fn display_message_with_span(anon severity: MessageSeverity, file_name: String, file_contents: [u8], message: String, span: Span) throws {
     println("{}: {}", severity.name(), message)
 
     let line_spans = gather_line_spans(file_contents)
@@ -53,24 +47,10 @@ fn display_message_with_span(
             println("----- \u001b[33m{}:{}:{}\u001b[0m", file_name, line_index + 1, column_index + 1)
 
             if line_index > 0 {
-                print_source_line(
-                    severity
-                    file_contents
-                    file_span: line_spans[line_index - 1]
-                    error_span: span
-                    line_number: line_index
-                    largest_line_number
-                )
+                print_source_line(severity, file_contents, file_span: line_spans[line_index - 1], error_span: span, line_number: line_index, largest_line_number)
             }
 
-            print_source_line(
-                severity
-                file_contents
-                file_span: line_spans[line_index]
-                error_span: span
-                line_number: line_index + 1
-                largest_line_number
-            )
+            print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
 
             for x in 0..(span.start - line_spans[line_index].0 + width + 4) {
                 print(" ")
@@ -84,14 +64,7 @@ fn display_message_with_span(
                     break
                 }
 
-                print_source_line(
-                    severity
-                    file_contents
-                    file_span: line_spans[line_index]
-                    error_span: span
-                    line_number: line_index + 1
-                    largest_line_number
-                )
+                print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
 
                 break
             }
@@ -103,14 +76,7 @@ fn display_message_with_span(
     println("\u001b[0m-----")
 }
 
-fn print_source_line(
-    severity: MessageSeverity
-    file_contents: [u8]
-    file_span: (usize, usize)
-    error_span: Span
-    line_number: usize
-    largest_line_number: usize
-) throws {
+fn print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: (usize, usize), error_span: Span, line_number: usize, largest_line_number: usize) throws {
     mut index = file_span.0
 
     let width = format("{}", largest_line_number).length()
@@ -125,9 +91,7 @@ fn print_source_line(
             c = b'_'
         }
 
-        if (
-            index >= error_span.start and index < error_span.end
-        ) or (error_span.start == error_span.end and index == error_span.start) {
+        if (index >= error_span.start and index < error_span.end) or (error_span.start == error_span.end and index == error_span.start) {
             print("\u001b[{}m{:c}", severity.ansi_color_code(), c)
         } else {
             print("\u001b[0m{:c}", c)

@@ -9,9 +9,7 @@ import utility { Span }
 // FIXME: These should not need explicit "-> bool" return types.
 fn is_ascii_alpha(anon c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
 fn is_ascii_digit(anon c: u8) -> bool => (c >= b'0' and c <= b'9')
-fn is_ascii_hexdigit(
-    anon c: u8
-) -> bool => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
+fn is_ascii_hexdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
 fn is_ascii_octdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'8')
 fn is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
 
@@ -291,7 +289,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         let start = .index
         .index++
 
-        mut escaped = false
+        mut escaped = false;
 
         while not .eof() and (escaped or .peek() != b'\'') {
             if not escaped and .peek() == b'\\' {
@@ -360,14 +358,14 @@ struct Lexer implements(ThrowingIterable<Token>) {
                 // Hexadecimal number
                 b'x' => {
                     .index += 2
-                    while (is_ascii_hexdigit(.peek())) {
+                    while(is_ascii_hexdigit(.peek())) {
                         mut offset: u8 = 0
                         if (.peek() >= b'a' and .peek() <= b'z') {
                             offset = 39
                         } else if (.peek() >= b'A' and .peek() <= b'Z') {
                             offset = 7
                         }
-                        let value = .input[.index]-offset
+                        let value = .input[.index] - offset
                         ++.index
                         let digit: u64 = as_saturated(value - b'0')
                         total = total * 16 + digit
@@ -383,7 +381,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
                 // Octal Number
                 b'o' => {
                     .index += 2
-                    while (is_ascii_octdigit(.peek())) {
+                    while(is_ascii_octdigit(.peek())) {
                         let value = .input[.index]
                         ++.index
                         let digit: u64 = as_saturated(value - b'0')
@@ -396,7 +394,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
                 // Binary Number
                 b'b' => {
                     .index += 2
-                    while (.peek() == b'0' or .peek() == b'1') {
+                    while(.peek() == b'0' or .peek() == b'1') {
                         let value = .input[.index]
                         ++.index
                         let digit: u64 = as_saturated(value - b'0')

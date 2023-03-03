@@ -5,7 +5,7 @@ import jakt::path { Path, get_path_separator }
 
 class Compiler {
     public files: [Path]
-    public file_ids: [String:FileId]
+    public file_ids: [String: FileId]
     public errors: [JaktError]
     public current_file: FileId?
     public current_file_contents: [u8]
@@ -162,10 +162,7 @@ class Compiler {
         }
 
         if module_name.starts_with(standard_module_name) {
-            let std_module_name_path = module_name.substring(
-                start: standard_module_name.length() + 1
-                length: module_name.length() - (standard_module_name.length() + 1)
-            )
+            let std_module_name_path = module_name.substring(start: standard_module_name.length() + 1, length: module_name.length() - (standard_module_name.length() + 1))
             let candidate_path = Path::from_parts([.std_include_path.to_string(), std_module_name_path + ".jakt"])
             if candidate_path.exists() {
                 return candidate_path
