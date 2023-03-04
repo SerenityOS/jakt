@@ -685,7 +685,7 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
             }
             yield none
         }
-        IndexedStruct(expr, index, span: index_span, type_id: known_type_id) => {
+        IndexedStruct(expr, name, span: index_span, type_id: known_type_id) => {
             let found = find_span_in_expression(program, expr, span)
             if found.has_value() {
                 return found
@@ -700,12 +700,12 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
                 if program.get_type(type_id) is Struct(struct_id) {
                     for field in program.get_struct(struct_id).fields {
                         let var = program.get_variable(field.variable_id)
-                        if index != var.name {
+                        if name != var.name {
                             continue
                         }
                         return Usage::Variable(
                             span: var.definition_span
-                            name: index
+                            name
                             type_id: result_type ?? var.type_id
                             mutability: Mutability::DoesNotApply
                             var_type: VarType::Field

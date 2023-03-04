@@ -757,6 +757,7 @@ struct Typechecker {
                 definition_span: parsed_var_decl.span
                 type_span: None
                 visibility: .typecheck_visibility(visibility: unchecked_member.visibility, scope_id: checked_struct_scope_id)
+                external_name: parsed_var_decl.external_name
             ))
 
             structure.fields.push(
@@ -1866,6 +1867,7 @@ struct Typechecker {
                     definition_span: var_decl.span
                     type_span: var_decl.parsed_type.span()
                     visibility: .typecheck_visibility(visibility: field.visibility, scope_id: enum_scope_id)
+                    external_name: var_decl.external_name
                 )
                 mut default_value: CheckedExpression? = None
                 if field.default_value.has_value() {
@@ -5784,7 +5786,8 @@ struct Typechecker {
                         .error("Optional chaining is only allowed on optional types", span)
                         return CheckedExpression::IndexedStruct(
                             expr: checked_expr
-                            index: field_name
+                            name: field_name
+                            index: None
                             span
                             is_optional
                             type_id: unknown_type_id())
@@ -5814,7 +5817,8 @@ struct Typechecker {
                                 .check_member_access(accessor: scope_id, accessee: structure.scope_id, member, span)
                                 return CheckedExpression::IndexedStruct(
                                     expr: checked_expr
-                                    index: field_name
+                                    name: field_name
+                                    index: field.variable_id
                                     span
                                     is_optional
                                     type_id: resolved_type_id)
@@ -5864,7 +5868,8 @@ struct Typechecker {
                     .check_member_access(accessor: scope_id, accessee: .get_struct(field_record!.struct_id).scope_id, member, span)
                     return CheckedExpression::IndexedStruct(
                         expr: checked_expr
-                        index: field_name
+                        name: field_name
+                        index: field_record!.field_id
                         span
                         is_optional
                         type_id: resolved_type_id)
@@ -5909,7 +5914,8 @@ struct Typechecker {
         // FIXME: Unify with type
         return CheckedExpression::IndexedStruct(
             expr: checked_expr
-            index: field_name
+            name: field_name
+            index: None
             span
             is_optional
             type_id: unknown_type_id())

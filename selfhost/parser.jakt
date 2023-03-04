@@ -1358,6 +1358,7 @@ struct ParsedVarDecl {
     is_mutable: bool
     inlay_span: Span?
     span: Span
+    external_name: String? = None
 
     fn equals(this, anon rhs_var_decl: ParsedVarDecl) -> bool {
         return .name == rhs_var_decl.name and .is_mutable == rhs_var_decl.is_mutable
@@ -1852,6 +1853,38 @@ struct Parser {
         }
 
         return parsed_namespace
+    }
+
+    fn apply_attributes(mut this, anon field: &mut ParsedField, active_attributes: &[ParsedAttribute]) throws {
+        for attribute in *active_attributes {
+            match attribute.name {
+                "name" => {
+                    guard attribute.assigned_value.has_value() else {
+                        .error(
+                            format("The attribute '{}' requires a value", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    if field.var_decl.external_name.has_value() {
+                        .error(
+                            format("The attribute '{}' cannot be applied more than once", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    field.var_decl.external_name = attribute.assigned_value
+                }
+                else => {
+                    .error(
+                        format("The attribute '{}' does not apply to fields", attribute.name)
+                        attribute.span
+                    )
+                }
+            }
+        }
     }
 
     fn apply_attributes(mut this, anon parsed_function: &mut ParsedFunction, active_attributes: &[ParsedAttribute]) throws {
@@ -3109,10 +3142,6 @@ struct Parser {
                     }
                 }
                 Identifier => {
-                    if not active_attributes.is_empty() {
-                        .error("Attributes cannot be applied to fields", .current().span())
-                        active_attributes = []
-                    }
                     // Parse a field
                     let visibility = last_visibility ?? default_visibility
                     last_visibility = None
@@ -3124,7 +3153,9 @@ struct Parser {
                     last_virtual = false
                     last_override = false
 
-                    let field = .parse_field(visibility)
+                    mut field = .parse_field(visibility)
+                    .apply_attributes(&mut field, &active_attributes)
+                    active_attributes = []
 
                     fields.push(field)
                 }
