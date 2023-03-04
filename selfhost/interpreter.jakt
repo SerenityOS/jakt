@@ -7314,16 +7314,33 @@ class Interpreter {
         )
     }
 
+    public fn bool_value(mut this, anon value: bool, span: Span) throws -> Value => Value(
+        impl: ValueImpl::Bool(value)
+        span
+    )
+
     public fn string_value(mut this, anon string: String, span: Span) throws -> Value => Value(
         impl: ValueImpl::JaktString(string)
         span
     )
 
-    public fn reflect_methods(mut this, span: Span) throws -> Value {
+    public fn reflect_methods(
+        mut this
+        anon scope_id: ScopeId
+        span: Span
+        anon interpreter_scope: InterpreterScope
+    ) throws -> Value {
         let method_struct_id = match .program.find_reflected_primitive("Method") {
             Struct(id) => id
             else => {
                 panic("Expected Method to be a struct")
+            }
+        }
+
+        let function_struct_id = match .program.find_reflected_primitive("Function") {
+            Struct(id) => id
+            else => {
+                panic("Expected Function to be a struct")
             }
         }
 
@@ -7332,8 +7349,63 @@ class Interpreter {
             function_name: "Method"
         )!
 
-        // FIXME: Fill this in.
+        let function_struct_constructor = .program.find_function_in_scope(
+            parent_scope_id: .program.get_struct(function_struct_id).scope_id
+            function_name: "Function"
+        )!
+
+        let type_type_id = match .program.find_reflected_primitive("Type") {
+            Enum(id) => .program.get_enum(id).type_id
+            else => {
+                panic("Expected Type to be an enum")
+            }
+        }
+
         mut method_values: [Value] = []
+        let scope = .program.get_scope(scope_id)
+        for (name, ids) in scope.functions {
+            for id in ids {
+                let function = .program.get_function(id)
+                let value = Value(
+                    impl: ValueImpl::Struct(
+                        fields: [
+                            // name:
+                            .string_value(name, span)
+                            // generic_parameters:
+                            .array_value_of_type(
+                                values: []
+                                type: type_type_id
+                                span
+                            )
+                            // return_type:
+                            .reflect_type(type_id: function.return_type_id, span, scope: interpreter_scope)
+                            // can_throw:
+                            .bool_value(function.can_throw, span)
+                            // is_comptime:
+                            .bool_value(function.is_comptime, span)
+                        ]
+                        struct_id: function_struct_id
+                        constructor: function_struct_constructor
+                    )
+                    span
+                )
+
+                method_values.push(Value(
+                    impl: ValueImpl::Struct(
+                        fields: [
+                            // function:
+                            value
+                            // visibility:
+                            // FIXME.
+                        ]
+                        struct_id: method_struct_id
+                        constructor: method_struct_constructor
+                    )
+                    span
+                ))
+            }
+        }
+
         return Value(
             impl: ValueImpl::JaktArray(
                 values: method_values
@@ -7524,11 +7596,6 @@ class Interpreter {
         let mapped_type_id = scope.map_type(type_id)
         let mapped_type_key = mapped_type_id.to_string()
 
-        if .seen_reflected_types.contains(mapped_type_key) {
-            .error("Recursive type definition not currently supported with reflection", span)
-            throw Error::from_errno(InterpretError::Unimplemented as! i32)
-        }
-
         if .reflected_type_cache.contains(mapped_type_key) {
             return .reflected_type_cache.get(mapped_type_key)!
         }
@@ -7544,8 +7611,18 @@ class Interpreter {
             }
         }
         let reflected_enum = .program.get_enum(reflected_enum_id)
+        mut result = Value(
+            impl: ValueImpl::Enum(
+                fields: []
+                enum_id: reflected_enum_id
+                constructor: FunctionId(module: type_id.module, id: 0)
+            )
+            span
+        )
+        .reflected_type_cache.set(mapped_type_key, result)
+
         mut fields: [Value] = []
-        let constructor = match type {
+        let found_constructor = match type {
             Void | I8 | I16 | I32 | I64 | U8 | U16 | U32 | U64 | Usize | JaktString | CChar | CInt | Bool | Unknown | Never => {
                 let constructor = .program.find_function_in_scope(
                     parent_scope_id: .program.get_enum(reflected_enum_id).scope_id
@@ -7611,7 +7688,7 @@ class Interpreter {
                     parent_scope_id: .program.get_enum(record_type_enum_id).scope_id
                     function_name: "Struct")!
 
-                let methods = .reflect_methods(span)
+                let methods = .reflect_methods(subject_struct.scope_id, span, scope)
                 let tuple_type = .tuple_type([builtin(BuiltinType::JaktString), reflected_enum.type_id])
                 let generic_parameters = .array_value_of_type(
                     values: match type {
@@ -7730,7 +7807,7 @@ class Interpreter {
                         function_name: "SumEnum")!
                 }
 
-                let methods = .reflect_methods(span)
+                let methods = .reflect_methods(subject_enum.scope_id, span, scope)
                 let tuple_type = .tuple_type([builtin(BuiltinType::JaktString), reflected_enum.type_id])
                 let generic_parameters = .array_value_of_type(
                     values: match type {
@@ -7787,6 +7864,9 @@ class Interpreter {
                                 Value(
                                     impl: ValueImpl::Enum(
                                         fields: [
+                                            // is_boxed:
+                                            .bool_value(subject_enum.is_boxed, span)
+                                            // variants:
                                             Value(
                                                 impl: ValueImpl::JaktArray(
                                                     values: record_type_fields
@@ -7810,22 +7890,34 @@ class Interpreter {
 
                 yield constructor!
             }
+            Function => {
+                // FIXME: Actually fill the contents.
+                let constructor = .program.find_function_in_scope(
+                    parent_scope_id: .program.get_enum(reflected_enum_id).scope_id
+                    function_name: "Function")
+
+                if not constructor.has_value() {
+                    .error("Attempted to access a variant that does not exist", span)
+                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                }
+
+                fields = []
+                yield constructor!
+            }
             else => {
                 .error(format("Type reflection not implemented: {}", type), span)
                 throw Error::from_errno(InterpretError::Unimplemented as! i32)
             }
         }
 
-        let result = Value(
-            impl: ValueImpl::Enum(
-                fields
-                enum_id: reflected_enum_id
-                constructor
-            )
-            span
-        )
+        match result.impl {
+            Enum(&mut fields: x, &mut constructor) => {
+                constructor = found_constructor
+                x = fields
+            }
+            else => {}
+        }
 
-        .reflected_type_cache.set(mapped_type_key, result)
         return result
     }
 }
