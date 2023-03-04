@@ -221,7 +221,6 @@ namespace Reflect {
         // block: Reflect::Block
         return_type: Reflect::Type
         can_throw: bool
-        type: Reflect::Type
         is_comptime: bool
     }
     enum SumEnumVariant {
