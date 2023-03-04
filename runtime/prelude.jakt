@@ -264,6 +264,7 @@ namespace Reflect {
         RawPtr(Reflect::Type)
         Reference(Reflect::Type)
         MutableReference(Reflect::Type)
+        Function
 
         fn name(this) throws => match this {
             Void => "void"
@@ -289,6 +290,7 @@ namespace Reflect {
             RawPtr(type) => format("raw {}", type.name())
             Reference(type) => format("& {}", type.name())
             MutableReference(type) => format("&mut {}", type.name())
+            Function => "fn"
         }
     }
 }
