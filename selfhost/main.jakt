@@ -627,7 +627,7 @@ fn main(args: [String]) -> c_int {
                 return 1
             }
         } else {
-            mut extra_arguments: [String] = []
+            mut extra_arguments: [String] = ["-g"]
 
             let runtime_lib_path = Path::from_string(runtime_library_path)
             extra_arguments.push(runtime_lib_path.join(library_name("main")).to_string())
