@@ -1,5 +1,5 @@
 /// Expect:
-/// - output: "Foo(a: 1, b: \"hello friends\", c: true)\n"
+/// - output: "Test::AFoo(Foo(a: 1, b: \"hello friends\", c: true))\n"
 
 import json { to_json, JsonParser }
 
@@ -7,18 +7,69 @@ struct Foo {
     a: i64
     b: String
     c: bool
+
+    fn make_default() throws -> Foo => Foo(
+        a: 0
+        b: ""
+        c: false
+    )
 }
 
 struct Bar {
     a: i64
     c: bool
     b: String
+
+    fn make_default() throws -> Bar => Bar(
+        a: 0
+        c: false
+        b: ""
+    )
+}
+
+enum Test {
+    AFoo(Foo)
+    ABar(Bar)
+
+    fn discriminator_name() throws -> String => "type"
+    fn discriminator_mapping() throws -> [String:String] => [
+        "foo": "AFoo"
+        "bar": "ABar"
+    ]
+
+    fn make_default() throws -> Test => Test::AFoo(Foo::make_default())
+
+    // FIXME: We should be able to generate this function automatically.
+    comptime make_parser() -> fn(anon name: String, anon parser: &mut JsonParser) throws -> Test {
+        return fn(anon name: String, anon parser: &mut JsonParser) throws -> Test {
+            match name {
+                "AFoo" => {
+                    mut foo = Foo::make_default()
+                    parser.to_object(&mut foo)
+                    return Test::AFoo(foo)
+                }
+                "ABar" => {
+                    mut bar = Bar::make_default()
+                    parser.to_object(&mut bar)
+                    return Test::ABar(bar)
+                }
+                else => {
+                    throw Error::from_string_literal("unknown type")
+                }
+            }
+        }
+    }
+}
+
+fn chop_ends(anon x: String) throws -> String {
+    return x.substring(start: 1, length: x.length() - 2)
 }
 
 fn main() {
-    let json = to_json(&Bar(a: 1, c: true, b: "hello friends"))
-    mut foo = Foo(a: 0, b: "", c: false)
+    let json = format("{{\"type\": \"foo\", {}}}", chop_ends(to_json(&Bar(a: 1, c: true, b: "hello friends"))))
+    eprintln("Json = {}", json)
     mut parser = JsonParser::create(json)
-    parser.to_object(&mut foo)
-    println("{}", foo)
+    mut test = Test::make_default()
+    parser.to_object(&mut test)
+    println("{}", test)
 }
