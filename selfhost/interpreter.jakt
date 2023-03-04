@@ -7010,6 +7010,9 @@ class Interpreter {
                         }
                     }
 
+                    if found_body is None and catch_all_case is None {
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
                     found_body = found_body ?? catch_all_case!
                     mut new_scope = InterpreterScope::create(parent: scope)
                     defer new_scope.perform_defers(interpreter: this, span: span!)
