@@ -2310,6 +2310,10 @@ struct CodeGenerator {
                 false => .codegen_type(return_type_id)
             }
 
+            let last_control_flow = .control_flow_state
+            .control_flow_state = last_control_flow.enter_function()
+            defer .control_flow_state = last_control_flow
+
             mut block_output = ""
             if pseudo_function_id.has_value() {
                 let function = .program.get_function(pseudo_function_id!)
