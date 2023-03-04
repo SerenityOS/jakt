@@ -55,6 +55,17 @@ struct GenericInferences {
         return TypeId::from_string(.map_name(type_id.to_string()))
     }
 
+    fn find_and_map(this, anon name: String, anon program: &CheckedProgram) throws -> TypeId? {
+        for (k, v) in .values {
+            let type_id = TypeId::from_string(k)
+            if program.get_type(type_id) is TypeVariable(name: var_name) and var_name == name {
+                return TypeId::from_string(.map_name(v))
+            }
+        }
+
+        return None
+    }
+
     fn iterator(this) -> [String:String] => .values
 
     fn perform_checkpoint(mut this, reset: bool = true) throws -> [String:String] {

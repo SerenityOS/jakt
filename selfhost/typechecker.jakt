@@ -671,13 +671,23 @@ struct Typechecker {
     fn typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         .typecheck_namespace_imports(parsed_namespace, scope_id)
         .typecheck_namespace_predecl(parsed_namespace, scope_id)
+        .typecheck_namespace_methods_predecl(parsed_namespace, scope_id, comptime_pass: true, generic_pass: false)
+        .typecheck_namespace_methods_predecl(parsed_namespace, scope_id, comptime_pass: false, generic_pass: false)
+        .typecheck_namespace_methods_predecl(parsed_namespace, scope_id, comptime_pass: true, generic_pass: true)
+        .typecheck_namespace_methods_predecl(parsed_namespace, scope_id, comptime_pass: false, generic_pass: true)
         .typecheck_namespace_aliases(parsed_namespace, scope_id, allow: ImportRestrictions(structs: true, enums: true, types: true, traits: true, namespaces: true))
         .typecheck_namespace_fields(parsed_namespace, scope_id)
         .typecheck_namespace_constructors(parsed_namespace, scope_id)
-        .typecheck_namespace_function_predecl(parsed_namespace, scope_id)
+        .typecheck_namespace_function_predecl(parsed_namespace, scope_id, comptime_pass: true, generic_pass: false)
+        .typecheck_namespace_function_predecl(parsed_namespace, scope_id, comptime_pass: false, generic_pass: false)
+        .typecheck_namespace_function_predecl(parsed_namespace, scope_id, comptime_pass: true, generic_pass: true)
+        .typecheck_namespace_function_predecl(parsed_namespace, scope_id, comptime_pass: false, generic_pass: true)
         .typecheck_namespace_aliases(parsed_namespace, scope_id, allow: ImportRestrictions(functions: true))
         .typecheck_namespace_default_fields(parsed_namespace, scope_id)
-        .typecheck_namespace_declarations(parsed_namespace, scope_id)
+        .typecheck_namespace_declarations(parsed_namespace, scope_id, comptime_pass: true, generic_pass: false)
+        .typecheck_namespace_declarations(parsed_namespace, scope_id, comptime_pass: true, generic_pass: true)
+        .typecheck_namespace_declarations(parsed_namespace, scope_id, comptime_pass: false, generic_pass: false)
+        .typecheck_namespace_declarations(parsed_namespace, scope_id, comptime_pass: false, generic_pass: true)
     }
 
     fn typecheck_visibility(mut this, visibility: Visibility, scope_id: ScopeId) throws -> CheckedVisibility {
@@ -1340,16 +1350,24 @@ struct Typechecker {
         )
     }
 
-    fn typecheck_namespace_function_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
+    fn typecheck_namespace_function_predecl(
+        mut this
+        parsed_namespace: ParsedNamespace
+        scope_id: ScopeId
+        comptime_pass: bool
+        generic_pass: bool
+    ) throws {
         let children = .get_scope(id: scope_id).children
         for i in 0..parsed_namespace.namespaces.size() {
             let child_namespace = parsed_namespace.namespaces[i]
             let child_namespace_scope_id = children[i]
-            .typecheck_namespace_function_predecl(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id)
+            .typecheck_namespace_function_predecl(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id, comptime_pass, generic_pass)
         }
 
         for fun in parsed_namespace.functions {
-            .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id, this_arg_type_id: None)
+            if fun.is_comptime == comptime_pass and generic_pass == not fun.generic_parameters.is_empty() {
+                .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id, this_arg_type_id: None)
+            }
         }
 
         mut module = .current_module()
@@ -1372,6 +1390,14 @@ struct Typechecker {
                 }
             }
             for method in record.methods {
+                if method.parsed_function.is_comptime != comptime_pass {
+                    continue
+                }
+
+                if generic_pass == not method.parsed_function.generic_parameters.is_empty() {
+                    continue
+                }
+
                 if not record.generic_parameters.is_empty() or not method.parsed_function.generic_parameters.is_empty() {
                     mut func = .get_function(
                         .find_function_matching_signature_in_scope(parent_scope_id: record_scope_id, prototype: method.parsed_function)!
@@ -1646,6 +1672,47 @@ struct Typechecker {
                         implementation.for_type.span()
                     )
                 }
+            }
+        }
+    }
+
+    fn typecheck_namespace_methods_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId, comptime_pass: bool, generic_pass: bool) throws {
+        let children = .get_scope(id: scope_id).children
+        for i in 0..parsed_namespace.namespaces.size() {
+            let child_namespace = parsed_namespace.namespaces[i]
+            let child_namespace_scope_id = children[i]
+            .typecheck_namespace_methods_predecl(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id, comptime_pass, generic_pass)
+        }
+
+        for parsed_record in parsed_namespace.records {
+            match parsed_record.record_type {
+                Struct | Class => {
+                    let struct_id = .find_struct_in_scope(scope_id, name: parsed_record.name)
+                    if not struct_id.has_value() {
+                        continue
+                    }
+                    .typecheck_struct_methods_predecl(
+                        parsed_record
+                        struct_id: struct_id!
+                        scope_id: .get_struct(struct_id!).scope_id
+                        comptime_pass
+                        generic_pass
+                    )
+                }
+                SumEnum | ValueEnum => {
+                    let enum_id = .program.find_enum_in_scope(scope_id, name: parsed_record.name)
+                    if not enum_id.has_value() {
+                        continue
+                    }
+                    .typecheck_enum_methods_predecl(
+                        parsed_record
+                        enum_id: enum_id!
+                        scope_id: .get_enum(enum_id!).scope_id
+                        comptime_pass
+                        generic_pass
+                    )
+                }
+                Garbage => {}
             }
         }
     }
@@ -1940,12 +2007,30 @@ struct Typechecker {
                 scope_id: enum_scope_id
             )
         }
+    }
 
+    fn typecheck_enum_methods_predecl(
+        mut this
+        parsed_record: ParsedRecord
+        enum_id: EnumId
+        scope_id: ScopeId
+        comptime_pass: bool
+        generic_pass: bool
+    ) throws {
+        mut module = .current_module()
+        let enum_type_id = .get_enum(enum_id).type_id
         let is_extern = parsed_record.definition_linkage is External
         for method in parsed_record.methods {
             let func = method.parsed_function
+            if func.is_comptime != comptime_pass {
+                continue
+            }
+            if generic_pass != not func.generic_parameters.is_empty() {
+                continue
+            }
+
             let method_scope_id = .create_scope(
-                parent_scope_id: enum_scope_id
+                parent_scope_id: scope_id
                 can_throw: func.can_throw
                 debug_name: format("method({}::{})", parsed_record.name, func.name)
             )
@@ -1960,7 +2045,7 @@ struct Typechecker {
             mut checked_function = CheckedFunction(
                 name: func.name
                 name_span: func.name_span
-                visibility: .typecheck_visibility(visibility: method.visibility, scope_id: enum_scope_id)
+                visibility: .typecheck_visibility(visibility: method.visibility, scope_id: scope_id)
                 return_type_id: unknown_type_id()
                 return_type_span: None
                 params: []
@@ -2070,7 +2155,7 @@ struct Typechecker {
             }
 
             .add_function_to_scope(
-                parent_scope_id: enum_scope_id
+                parent_scope_id: scope_id
                 name: func.name
                 overload_set: [function_id]
                 span: parsed_record.name_span
@@ -2368,7 +2453,45 @@ struct Typechecker {
         }
 
         let is_extern = parsed_record.definition_linkage is External
+
+        module.structures[struct_id.id].generic_parameters = generic_parameters
+
+        .current_struct_type_id = None
+    }
+
+    fn typecheck_struct_methods_predecl(
+        mut this
+        parsed_record: ParsedRecord
+        struct_id: StructId
+        scope_id: ScopeId
+        comptime_pass: bool
+        generic_pass: bool
+    ) throws {
+        let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: true)
+        defer {
+            .generic_inferences.restore(old_generic_inferences)
+        }
+
+        let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
+        .current_struct_type_id = struct_type_id
+
+        let old_self_type_id = .self_type_id
+        .self_type_id = struct_type_id
+        defer .self_type_id = old_self_type_id
+
+        let struct_scope_id = .current_module().structures[struct_id.id].scope_id
+
+        mut module = .current_module()
+
         for method in parsed_record.methods {
+            if method.parsed_function.is_comptime != comptime_pass {
+                continue
+            }
+
+            if generic_pass != not method.parsed_function.generic_parameters.is_empty() {
+                continue
+            }
+
             let function_id = .typecheck_function_predecl(parsed_function: method.parsed_function, parent_scope_id: struct_scope_id, this_arg_type_id: struct_type_id)
             mut checked_function = .get_function(function_id)
 
@@ -2385,7 +2508,7 @@ struct Typechecker {
             }
         }
 
-        if parsed_record.implements_list.has_value() {
+        if not comptime_pass and parsed_record.implements_list.has_value() {
             .fill_trait_implementation_list(
                 parsed_record.implements_list!
                 &mut module.structures[struct_id.id].trait_implementations
@@ -2416,10 +2539,6 @@ struct Typechecker {
                 }
             }
         }
-
-        module.structures[struct_id.id].generic_parameters = generic_parameters
-
-        .current_struct_type_id = None
     }
 
     fn typecheck_struct_predecl_initial(mut this, parsed_record: ParsedRecord, struct_index: usize, module_struct_len: usize, scope_id: ScopeId) throws {
@@ -2453,74 +2572,80 @@ struct Typechecker {
         ))
     }
 
-    fn typecheck_namespace_declarations(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
+    fn typecheck_namespace_declarations(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId, comptime_pass: bool, generic_pass: bool) throws {
         let children = .get_scope(id: scope_id).children
         for i in 0..parsed_namespace.namespaces.size() {
             let child_namespace = parsed_namespace.namespaces[i]
             let child_namespace_scope_id = children[i]
-            .typecheck_namespace_declarations(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id)
+            .typecheck_namespace_declarations(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id, comptime_pass, generic_pass)
         }
 
-        for record in parsed_namespace.records {
-            match record.record_type {
-                Struct | Class => {
-                    let struct_id = .find_struct_in_scope(scope_id, name: record.name)
-                    if not struct_id.has_value() {
-                        .compiler.panic("can't find struct that has been previous added")
+        if not comptime_pass and not generic_pass {
+            for record in parsed_namespace.records {
+                match record.record_type {
+                    Struct | Class => {
+                        let struct_id = .find_struct_in_scope(scope_id, name: record.name)
+                        if not struct_id.has_value() {
+                            .compiler.panic("can't find struct that has been previous added")
+                        }
+                        .typecheck_struct(record, struct_id: struct_id!, parent_scope_id: scope_id)
                     }
-                    .typecheck_struct(record, struct_id: struct_id!, parent_scope_id: scope_id)
-                }
-                SumEnum | ValueEnum => {
-                    let enum_id = .program.find_enum_in_scope(scope_id, name: record.name)
-                    if not enum_id.has_value() {
-                        .compiler.panic("can't find enum that has been previous added")
+                    SumEnum | ValueEnum => {
+                        let enum_id = .program.find_enum_in_scope(scope_id, name: record.name)
+                        if not enum_id.has_value() {
+                            .compiler.panic("can't find enum that has been previous added")
+                        }
+                        .typecheck_enum(record, enum_id: enum_id!, parent_scope_id: scope_id)
                     }
-                    .typecheck_enum(record, enum_id: enum_id!, parent_scope_id: scope_id)
+                    else => {}
                 }
-                else => {}
             }
         }
 
         for fun in parsed_namespace.functions.iterator() {
-            .typecheck_function(parsed_function: fun, parent_scope_id: scope_id)
+            if fun.is_comptime == comptime_pass and generic_pass == not fun.generic_parameters.is_empty() {
+                .typecheck_function(parsed_function: fun, parent_scope_id: scope_id)
+            }
         }
 
-        for implementation in parsed_namespace.external_trait_implementations {
-            let for_type = .typecheck_typename(parsed_type: implementation.for_type, scope_id, name: None)
-            match .get_type(for_type) {
-                Struct(struct_id) | GenericInstance(id: struct_id) => {
-                    mut struct_ = .get_struct(struct_id)
-                    for method in implementation.methods {
-                        if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
-                            .typecheck_method(
-                                func: method.parsed_function
-                                parent_id: StructLikeId::Struct(struct_id)
-                            )
-                        } else {
-                            .typecheck_function(
-                                parsed_function: method.parsed_function
-                                parent_scope_id: struct_.scope_id
-                            )
+        if not comptime_pass and not generic_pass {
+            for implementation in parsed_namespace.external_trait_implementations {
+                let for_type = .typecheck_typename(parsed_type: implementation.for_type, scope_id, name: None)
+                match .get_type(for_type) {
+                    Struct(struct_id) | GenericInstance(id: struct_id) => {
+                        mut struct_ = .get_struct(struct_id)
+                        for method in implementation.methods {
+                            if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
+                                .typecheck_method(
+                                    func: method.parsed_function
+                                    parent_id: StructLikeId::Struct(struct_id)
+                                )
+                            } else {
+                                .typecheck_function(
+                                    parsed_function: method.parsed_function
+                                    parent_scope_id: struct_.scope_id
+                                )
+                            }
                         }
                     }
-                }
-                Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
-                    mut enum_ = .get_enum(enum_id)
-                    for method in implementation.methods {
-                        if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
-                            .typecheck_method(
-                                func: method.parsed_function
-                                parent_id: StructLikeId::Enum(enum_id)
-                            )
-                        } else {
-                            .typecheck_function(
-                                parsed_function: method.parsed_function
-                                parent_scope_id: enum_.scope_id
-                            )
+                    Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
+                        mut enum_ = .get_enum(enum_id)
+                        for method in implementation.methods {
+                            if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
+                                .typecheck_method(
+                                    func: method.parsed_function
+                                    parent_id: StructLikeId::Enum(enum_id)
+                                )
+                            } else {
+                                .typecheck_function(
+                                    parsed_function: method.parsed_function
+                                    parent_scope_id: enum_.scope_id
+                                )
+                            }
                         }
                     }
+                    else => { }
                 }
-                else => { }
             }
         }
     }
@@ -8191,6 +8316,20 @@ struct Typechecker {
                 continue
             }
 
+            if .generic_inferences.find_and_map(scope_name, &.program) is Some(type_id) {
+                match .get_type(type_id) {
+                    Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
+                        current_scope_id = .get_enum(enum_id).scope_id
+                        continue
+                    }
+                    Struct(struct_id) | GenericInstance(id: struct_id) => {
+                        current_scope_id = .get_struct(struct_id).scope_id
+                        continue
+                    }
+                    else => {}
+                }
+            }
+
             .error(format("Not a namespace, enum, class, or struct: ‘{}’", join(call.namespace_, separator: "::")), span)
         }
 
@@ -8841,7 +8980,7 @@ struct Typechecker {
                 Throw(x) => {
                     .error(
                         format("Compiletime call failed: {}", x)
-                        span
+                        x.span
                     )
                     yield checked_call
                 }
