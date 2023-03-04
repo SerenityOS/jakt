@@ -232,7 +232,7 @@ namespace Reflect {
         Struct(fields: [Reflect::Field])
         Class(fields: [Reflect::Field])
         // ValueEnum(underlying_type: Reflect::Type, variants: [Reflect::ValueEnumVariant])
-        SumEnum(is_boxed: bool, variants: Reflect::SumEnumVariant)
+        SumEnum(is_boxed: bool, variants: [Reflect::SumEnumVariant])
     }
     struct Record {
         name: String
