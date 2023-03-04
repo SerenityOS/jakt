@@ -1,0 +1,19 @@
+import jakt::prelude::builtin_traits { Integral }
+
+trait Add<Rhs, Output> {
+    fn add(this, anon rhs: Rhs) -> Output
+}
+
+trait ThrowingAdd<Rhs, Output> {
+    fn add(this, anon rhs: Rhs) throws -> Output
+}
+
+forall<T requires(Integral)> type T implements(Add<T, T>) {
+    [[name="JaktInternal::Operators::add"]]
+    extern fn add(this, anon rhs: T) -> T
+}
+
+type String implements(ThrowingAdd<String, String>) {
+    [[name="JaktInternal::Operators::add"]]
+    extern fn add(this, anon rhs: String) throws -> String
+}

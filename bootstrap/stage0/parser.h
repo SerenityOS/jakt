@@ -351,8 +351,8 @@ NonnullRefPtr<typename parser::ParsedType> parsed_type() const;
 };
 struct ParsedVarDecl {
   public:
-DeprecatedString name;NonnullRefPtr<typename parser::ParsedType> parsed_type;bool is_mutable;JaktInternal::Optional<utility::Span> inlay_span;utility::Span span;bool equals(parser::ParsedVarDecl const rhs_var_decl) const;
-ParsedVarDecl(DeprecatedString a_name, NonnullRefPtr<typename parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span);
+DeprecatedString name;NonnullRefPtr<typename parser::ParsedType> parsed_type;bool is_mutable;JaktInternal::Optional<utility::Span> inlay_span;utility::Span span;JaktInternal::Optional<DeprecatedString> external_name;bool equals(parser::ParsedVarDecl const rhs_var_decl) const;
+ParsedVarDecl(DeprecatedString a_name, NonnullRefPtr<typename parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span, JaktInternal::Optional<DeprecatedString> a_external_name);
 
 ErrorOr<DeprecatedString> debug_description() const;
 };namespace ImportName_Details {
@@ -1153,6 +1153,7 @@ ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parse_guard_statement()
 bool eof() const;
 ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_asterisk();
 ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_match_expression();
+ErrorOr<void> apply_attributes(parser::ParsedField& field, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
 ErrorOr<void> apply_attributes(parser::ParsedFunction& parsed_function, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
 ErrorOr<void> apply_attributes(parser::ParsedMethod& parsed_method, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
 ErrorOr<void> apply_attributes(parser::ParsedRecord& parsed_record, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);

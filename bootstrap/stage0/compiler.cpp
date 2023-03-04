@@ -226,7 +226,8 @@ NonnullRefPtr<File> file = TRY((File::open_for_reading(((((((*this).files))[((fi
 
 ;return {};}();
 if (__jakt_var_1.is_error()) {auto error = __jakt_var_1.release_error();{
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,bool>{
+({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,bool>{
 auto __jakt_enum_value = (((error).code()));
 if (__jakt_enum_value == ErrNOENT) {
 return (warnln(Jakt::DeprecatedString("\u001b[31;1mError\u001b[0m Could not access {}: File not found"sv),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
@@ -247,8 +248,11 @@ utility::panic(Jakt::DeprecatedString("Incurred unrecognized error while trying 
 return JaktInternal::ExplicitValue<void>();
 }
 return JaktInternal::ExplicitValue<void>();
-}()))
-;
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+});
 (((*this).current_file) = old_file_id);
 return (false);
 }

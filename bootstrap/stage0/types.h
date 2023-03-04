@@ -495,11 +495,12 @@ size_t id() const;
 class CheckedVariable : public RefCounted<CheckedVariable>, public Weakable<CheckedVariable> {
   public:
 virtual ~CheckedVariable() = default;
-DeprecatedString name;types::TypeId type_id;bool is_mutable;utility::Span definition_span;JaktInternal::Optional<utility::Span> type_span;types::CheckedVisibility visibility;JaktInternal::Optional<types::ScopeId> owner_scope;ErrorOr<NonnullRefPtr<types::CheckedVariable>> map_types(Function<ErrorOr<types::TypeId>(types::TypeId)> const& map) const;
+DeprecatedString name;types::TypeId type_id;bool is_mutable;utility::Span definition_span;JaktInternal::Optional<utility::Span> type_span;types::CheckedVisibility visibility;JaktInternal::Optional<types::ScopeId> owner_scope;JaktInternal::Optional<DeprecatedString> external_name;ErrorOr<NonnullRefPtr<types::CheckedVariable>> map_types(Function<ErrorOr<types::TypeId>(types::TypeId)> const& map) const;
+DeprecatedString name_for_codegen() const;
 protected:
-explicit CheckedVariable(DeprecatedString a_name, types::TypeId a_type_id, bool a_is_mutable, utility::Span a_definition_span, JaktInternal::Optional<utility::Span> a_type_span, types::CheckedVisibility a_visibility, JaktInternal::Optional<types::ScopeId> a_owner_scope);
+explicit CheckedVariable(DeprecatedString a_name, types::TypeId a_type_id, bool a_is_mutable, utility::Span a_definition_span, JaktInternal::Optional<utility::Span> a_type_span, types::CheckedVisibility a_visibility, JaktInternal::Optional<types::ScopeId> a_owner_scope, JaktInternal::Optional<DeprecatedString> a_external_name);
 public:
-static ErrorOr<NonnullRefPtr<CheckedVariable>> __jakt_create(DeprecatedString name, types::TypeId type_id, bool is_mutable, utility::Span definition_span, JaktInternal::Optional<utility::Span> type_span, types::CheckedVisibility visibility, JaktInternal::Optional<types::ScopeId> owner_scope);
+static ErrorOr<NonnullRefPtr<CheckedVariable>> __jakt_create(DeprecatedString name, types::TypeId type_id, bool is_mutable, utility::Span definition_span, JaktInternal::Optional<utility::Span> type_span, types::CheckedVisibility visibility, JaktInternal::Optional<types::ScopeId> owner_scope, JaktInternal::Optional<DeprecatedString> external_name);
 
 ErrorOr<DeprecatedString> debug_description() const;
 };struct TraitId {
@@ -537,7 +538,7 @@ ErrorOr<DeprecatedString> debug_description() const;
 };class CheckedProgram : public RefCounted<CheckedProgram>, public Weakable<CheckedProgram> {
   public:
 virtual ~CheckedProgram() = default;
-NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::DynamicArray<NonnullRefPtr<types::Module>> modules;JaktInternal::Dictionary<DeprecatedString,types::LoadedModule> loaded_modules;ErrorOr<types::TypeId> substitute_typevars_in_type(types::TypeId const type_id, types::GenericInferences const generic_inferences, types::ModuleId const module_id);
+NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::DynamicArray<NonnullRefPtr<types::Module>> modules;JaktInternal::Dictionary<DeprecatedString,types::LoadedModule> loaded_modules;ErrorOr<types::StructOrEnumId> find_reflected_primitive(DeprecatedString const primitive) const;
 ErrorOr<NonnullRefPtr<types::Scope>> get_scope(types::ScopeId const id) const;
 ErrorOr<types::StructId> find_struct_in_prelude(DeprecatedString const name) const;
 bool is_floating(types::TypeId const type_id) const;
@@ -550,8 +551,8 @@ ErrorOr<DeprecatedString> type_name(types::TypeId const type_id, bool const debu
 ErrorOr<JaktInternal::Optional<bool>> for_each_scope_accessible_unqualified_from_scope_impl(types::ScopeId const scope_id, Function<ErrorOr<typename utility::IterationDecision<bool>>(types::ScopeId, JaktInternal::Optional<DeprecatedString>, bool)> const& callback) const;
 ErrorOr<bool> is_scope_directly_accessible_from(types::ScopeId const check_scope_id, types::ScopeId const scope_id) const;
 bool is_string(types::TypeId const type_id) const;
-NonnullRefPtr<types::CheckedTrait> get_trait(types::TraitId const id) const;
 types::ScopeId prelude_scope_id() const;
+NonnullRefPtr<types::CheckedTrait> get_trait(types::TraitId const id) const;
 NonnullRefPtr<types::CheckedVariable> get_variable(types::VarId const id) const;
 protected:
 explicit CheckedProgram(NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::DynamicArray<NonnullRefPtr<types::Module>> a_modules, JaktInternal::Dictionary<DeprecatedString,types::LoadedModule> a_loaded_modules);
@@ -579,7 +580,7 @@ bool is_signed(types::TypeId const type_id) const;
 bool is_numeric(types::TypeId const type_id) const;
 template <typename T>
 ErrorOr<JaktInternal::Optional<T>> for_each_scope_accessible_unqualified_from_scope(types::ScopeId const scope_id, Function<ErrorOr<typename utility::IterationDecision<T>>(types::ScopeId, JaktInternal::Optional<DeprecatedString>, bool)> const& callback) const;
-ErrorOr<types::StructOrEnumId> find_reflected_primitive(DeprecatedString const primitive) const;
+ErrorOr<types::TypeId> substitute_typevars_in_type(types::TypeId const type_id, types::GenericInferences const generic_inferences, types::ModuleId const module_id);
 ErrorOr<DeprecatedString> debug_description() const;
 };struct StructId {
   public:
@@ -1031,17 +1032,19 @@ type_id{ forward<_MemberT4>(member_4)}
 };
 struct IndexedStruct {
 NonnullRefPtr<typename types::CheckedExpression> expr;
-DeprecatedString index;
+DeprecatedString name;
+JaktInternal::Optional<types::VarId> index;
 utility::Span span;
 bool is_optional;
 types::TypeId type_id;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4>
-IndexedStruct(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4):
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5>
+IndexedStruct(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5):
 expr{ forward<_MemberT0>(member_0)},
-index{ forward<_MemberT1>(member_1)},
-span{ forward<_MemberT2>(member_2)},
-is_optional{ forward<_MemberT3>(member_3)},
-type_id{ forward<_MemberT4>(member_4)}
+name{ forward<_MemberT1>(member_1)},
+index{ forward<_MemberT2>(member_2)},
+span{ forward<_MemberT3>(member_3)},
+is_optional{ forward<_MemberT4>(member_4)},
+type_id{ forward<_MemberT5>(member_5)}
 {}
 };
 struct IndexedCommonEnumMember {
@@ -1608,10 +1611,10 @@ size_t to_usize() const;
 class TypecheckFunctions : public RefCounted<TypecheckFunctions>, public Weakable<TypecheckFunctions> {
   public:
 virtual ~TypecheckFunctions() = default;
-Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, types::ScopeId, types::SafetyMode, JaktInternal::Optional<types::TypeId>)> block;protected:
-explicit TypecheckFunctions(Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, types::ScopeId, types::SafetyMode, JaktInternal::Optional<types::TypeId>)> a_block);
+Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, types::ScopeId, types::SafetyMode, JaktInternal::Optional<types::TypeId>)> block;Function<ErrorOr<types::FunctionId>(NonnullRefPtr<types::CheckedFunction>)> register_function;protected:
+explicit TypecheckFunctions(Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, types::ScopeId, types::SafetyMode, JaktInternal::Optional<types::TypeId>)> a_block, Function<ErrorOr<types::FunctionId>(NonnullRefPtr<types::CheckedFunction>)> a_register_function);
 public:
-static ErrorOr<NonnullRefPtr<TypecheckFunctions>> __jakt_create(Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, types::ScopeId, types::SafetyMode, JaktInternal::Optional<types::TypeId>)> block);
+static ErrorOr<NonnullRefPtr<TypecheckFunctions>> __jakt_create(Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, types::ScopeId, types::SafetyMode, JaktInternal::Optional<types::TypeId>)> block, Function<ErrorOr<types::FunctionId>(NonnullRefPtr<types::CheckedFunction>)> register_function);
 
 ErrorOr<DeprecatedString> debug_description() const;
 };namespace FunctionGenericParameterKind_Details {
@@ -1844,8 +1847,9 @@ types::CheckedBlock block;
 bool can_throw;
 JaktInternal::DynamicArray<types::CheckedParameter> checked_params;
 types::ScopeId scope_id;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6, typename _MemberT7>
-Function(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6, _MemberT7&& member_7):
+JaktInternal::Optional<types::FunctionId> pseudo_function_id;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6, typename _MemberT7, typename _MemberT8>
+Function(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6, _MemberT7&& member_7, _MemberT8&& member_8):
 captures{ forward<_MemberT0>(member_0)},
 params{ forward<_MemberT1>(member_1)},
 return_type_id{ forward<_MemberT2>(member_2)},
@@ -1853,7 +1857,8 @@ type_id{ forward<_MemberT3>(member_3)},
 block{ forward<_MemberT4>(member_4)},
 can_throw{ forward<_MemberT5>(member_5)},
 checked_params{ forward<_MemberT6>(member_6)},
-scope_id{ forward<_MemberT7>(member_7)}
+scope_id{ forward<_MemberT7>(member_7)},
+pseudo_function_id{ forward<_MemberT8>(member_8)}
 {}
 };
 }
@@ -1924,6 +1929,7 @@ ErrorOr<DeprecatedString> debug_description() const;
 JaktInternal::Dictionary<DeprecatedString,DeprecatedString> values;ErrorOr<void> set_all(JaktInternal::DynamicArray<types::CheckedGenericParameter> const keys, JaktInternal::DynamicArray<types::TypeId> const values);
 DeprecatedString map_name(DeprecatedString const type) const;
 ErrorOr<void> set_from(JaktInternal::Dictionary<DeprecatedString,DeprecatedString> const checkpoint);
+ErrorOr<JaktInternal::Optional<types::TypeId>> find_and_map(DeprecatedString const name, NonnullRefPtr<types::CheckedProgram> const& program) const;
 GenericInferences(JaktInternal::Dictionary<DeprecatedString,DeprecatedString> a_values);
 
 void restore(JaktInternal::Dictionary<DeprecatedString,DeprecatedString> const checkpoint);

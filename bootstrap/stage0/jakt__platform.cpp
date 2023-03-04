@@ -39,10 +39,12 @@ return (output);
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> platform_import_names() {
 {
 jakt__platform::Target const target = TRY((jakt__platform::Target::active()));
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<DeprecatedString>,ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>>{
+return (({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<DeprecatedString>,ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>>{
 auto __jakt_enum_value = (((target).os));
 if (__jakt_enum_value == Jakt::DeprecatedString("windows"sv)) {
-return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<DeprecatedString>,ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>>{
+return JaktInternal::ExplicitValue(({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<DeprecatedString>,ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>>{
 auto __jakt_enum_value = (((target).arch));
 if (__jakt_enum_value == Jakt::DeprecatedString("x86_64"sv)) {
 return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("win64"sv), Jakt::DeprecatedString("windows"sv)})))));
@@ -53,8 +55,11 @@ return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_
 else {
 return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("windows"sv)})))));
 }
-}()))
-);
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+}));
 }
 else if (__jakt_enum_value == Jakt::DeprecatedString("darwin"sv)) {
 return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("darwin"sv), Jakt::DeprecatedString("posix"sv)})))));
@@ -71,8 +76,11 @@ return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_
 else {
 return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), Jakt::DeprecatedString("unknown"sv)})))));
 }
-}()))
-);
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+}));
 }
 }
 
@@ -94,7 +102,8 @@ return (TRY((((*this).int_size()))));
 
 ErrorOr<size_t> jakt__platform::Target::pointer_size() const {
 {
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+return (({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
 auto __jakt_enum_value = (((*this).arch));
 if (__jakt_enum_value == Jakt::DeprecatedString("x86_64"sv)) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(8ULL));
@@ -107,8 +116,11 @@ else {
 return Error::__jakt_from_string_literal((StringView::from_string_literal("pointer size is unknown for this architecture"sv)));
 }
 }
-}()))
-);
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+}));
 }
 }
 
@@ -132,7 +144,8 @@ return (TRY((((*this).size_t_size()))));
 
 ErrorOr<size_t> jakt__platform::Target::size_t_size() const {
 {
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+return (({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
 auto __jakt_enum_value = (((*this).arch));
 if (__jakt_enum_value == Jakt::DeprecatedString("x86_64"sv)) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(8ULL));
@@ -145,14 +158,18 @@ else {
 return Error::__jakt_from_string_literal((StringView::from_string_literal("size_t size is unknown for this architecture"sv)));
 }
 }
-}()))
-);
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+}));
 }
 }
 
 ErrorOr<size_t> jakt__platform::Target::int_size() const {
 {
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+return (({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
 auto __jakt_enum_value = (((*this).arch));
 if (__jakt_enum_value == Jakt::DeprecatedString("x86_64"sv)) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
@@ -165,8 +182,11 @@ else {
 return Error::__jakt_from_string_literal((StringView::from_string_literal("int size is unknown for this architecture"sv)));
 }
 }
-}()))
-);
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+}));
 }
 }
 

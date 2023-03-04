@@ -34,7 +34,8 @@ template<> JaktInternal::Optional<lexer::Token> collapse<lexer::Token>(JaktInter
 template<>
 JaktInternal::Optional<lexer::Token> collapse<lexer::Token>(JaktInternal::Optional<JaktInternal::Optional<lexer::Token>> const x) {
 {
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<lexer::Token>,JaktInternal::Optional<lexer::Token>>{
+return (({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<lexer::Token>,JaktInternal::Optional<lexer::Token>>{
 auto __jakt_enum_value = (((x).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue((x.value()));
@@ -43,8 +44,11 @@ else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
 }
 VERIFY_NOT_REACHED();
-}()))
-);
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+}));
 }
 }
 }
