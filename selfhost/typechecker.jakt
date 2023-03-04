@@ -3613,7 +3613,19 @@ struct Typechecker {
         let span = parsed_function.name_span
         for substitution in generic_substitutions.iterator() {
             if .get_type(TypeId::from_string(substitution.0)) is TypeVariable(name: type_name) {
-                .add_type_to_scope(scope_id, type_name, type_id: TypeId::from_string(substitution.1), span)
+                let type_id = TypeId::from_string(substitution.1)
+                let dependent_scope_id: ScopeId? = match .get_type(type_id) {
+                    GenericInstance(id: struct_id) | Struct(struct_id) => .get_struct(struct_id).scope_id
+                    GenericEnumInstance(id: enum_id) | Enum(enum_id) => .get_enum(enum_id).scope_id
+                    GenericTraitInstance(id: trait_id) | Trait(trait_id) => .get_trait(trait_id).scope_id
+                    else => None
+                }
+                .add_type_to_scope(scope_id, type_name, type_id, span)
+
+                if dependent_scope_id.has_value() {
+                    mut scope = .get_scope(scope_id)
+                    scope.aliases.set(type_name, dependent_scope_id!)
+                }
             }
         }
 
