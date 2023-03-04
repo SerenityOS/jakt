@@ -98,16 +98,16 @@ TRY((((outfile)->write(bytes))));
 return {};
 }
 
+bool is_ascii_octdigit(u8 const c) {
+{
+return (((c >= '0') && (c <= '7')));
+}
+}
+
 void todo(DeprecatedString const message) {
 {
 warnln(Jakt::DeprecatedString("TODO: {}"sv),message);
 abort();
-}
-}
-
-bool is_ascii_octdigit(u8 const c) {
-{
-return (((c >= '0') && (c <= '7')));
 }
 }
 
@@ -123,7 +123,8 @@ break;
 }
 u32 cp = (_magic_value.value());
 {
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<DeprecatedString>>{
+({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<DeprecatedString>>{
 auto __jakt_enum_value = (cp);
 if (__jakt_enum_value == (infallible_integer_cast<u32>(('"')))) {
 {
@@ -150,8 +151,15 @@ TRY((((builder).append_code_point(cp))));
 return JaktInternal::ExplicitValue<void>();
 }
 return JaktInternal::ExplicitValue<void>();
-}()))
-;
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    if (_jakt_value.is_loop_break())
+        break;
+    if (_jakt_value.is_loop_continue())
+        continue;
+    _jakt_value.release_value();
+});
 }
 
 }
@@ -180,7 +188,8 @@ break;
 }
 u32 cp = (_magic_value.value());
 {
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<DeprecatedString>>{
+({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<DeprecatedString>>{
 auto __jakt_enum_value = (cp);
 if (__jakt_enum_value == (infallible_integer_cast<u32>(('\\')))) {
 {
@@ -230,8 +239,15 @@ TRY((((builder).append_code_point(cp))));
 return JaktInternal::ExplicitValue<void>();
 }
 return JaktInternal::ExplicitValue<void>();
-}()))
-;
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    if (_jakt_value.is_loop_break())
+        break;
+    if (_jakt_value.is_loop_continue())
+        continue;
+    _jakt_value.release_value();
+});
 }
 
 }

@@ -208,15 +208,15 @@ JaktInternal::Tuple<size_t,jakt__platform__unknown_process::Process> const jakt_
 size_t const index = ((jakt__index__process__).template get<0>());
 jakt__platform__unknown_process::Process const process = ((jakt__index__process__).template get<1>());
 
-JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> __jakt_var_869;
-auto __jakt_var_870 = [&]() -> ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> { return TRY((jakt__platform__unknown_process::poll_process_exit(((process))))); }();
-if (__jakt_var_870.is_error()) {{
+JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> __jakt_var_879;
+auto __jakt_var_880 = [&]() -> ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> { return TRY((jakt__platform__unknown_process::poll_process_exit(((process))))); }();
+if (__jakt_var_880.is_error()) {{
 TRY((((pids_to_remove).set(index,finished_status))));
 continue;
 }
-} else {__jakt_var_869 = __jakt_var_870.release_value();
+} else {__jakt_var_879 = __jakt_var_880.release_value();
 }
-__jakt_var_869.release_value(); });
+__jakt_var_879.release_value(); });
 if (((status).has_value())){
 TRY((((pids_to_remove).set(index,(status.value())))));
 }

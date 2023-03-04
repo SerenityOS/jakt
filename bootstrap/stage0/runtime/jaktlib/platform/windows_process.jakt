@@ -91,17 +91,6 @@ fn default_constructed<T>() -> T {
     abort()
 }
 
-fn size_of<T>() -> usize {
-    mut x = null<T>()
-    unsafe {
-        cpp {
-            "return sizeof(*x);"
-        }
-    }
-
-    abort()
-}
-
 fn join_arguments(args: [String]) throws -> String {
     // Join the arguments, but properly quote each argument so that the command line is parsed correctly.
     // All this because there's no way to pass arguments to CreateProcess separately.
@@ -131,7 +120,7 @@ fn join_arguments(args: [String]) throws -> String {
 
 fn start_background_process(args: [String]) throws -> Process {
     mut si = default_constructed<STARTUPINFO>()
-    si.cb = size_of<STARTUPINFO>() as! u32
+    si.cb = sizeof STARTUPINFO as! u32
 
     mut pi = default_constructed<PROCESS_INFORMATION>()
 

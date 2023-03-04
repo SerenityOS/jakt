@@ -23,11 +23,11 @@ JaktInternal::Optional<size_t> last_namespace_separator(DeprecatedString const n
 
 
 
+
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> add_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const prefix, DeprecatedString const suffix);
 
-
-
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> platform_import_names();
+
 
 }
 namespace jakt__platform__unknown_path {
@@ -73,9 +73,9 @@ DeprecatedString join(JaktInternal::DynamicArray<DeprecatedString> const strings
 
 ErrorOr<void> write_to_file(DeprecatedString const data, DeprecatedString const output_filename);
 
-void todo(DeprecatedString const message);
-
 bool is_ascii_octdigit(u8 const c);
+
+void todo(DeprecatedString const message);
 
 ErrorOr<DeprecatedString> escape_for_quotes(DeprecatedString const s);
 
@@ -955,6 +955,7 @@ struct Extern;
 struct Import;
 struct ImportList;
 struct EntityDeclaration;
+struct Implements;
 struct CaptureList;
 struct ParameterList;
 struct RestrictionList;

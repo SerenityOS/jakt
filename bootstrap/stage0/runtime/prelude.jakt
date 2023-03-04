@@ -221,7 +221,6 @@ namespace Reflect {
         // block: Reflect::Block
         return_type: Reflect::Type
         can_throw: bool
-        type: Reflect::Type
         is_comptime: bool
     }
     enum SumEnumVariant {
@@ -233,7 +232,7 @@ namespace Reflect {
         Struct(fields: [Reflect::Field])
         Class(fields: [Reflect::Field])
         // ValueEnum(underlying_type: Reflect::Type, variants: [Reflect::ValueEnumVariant])
-        SumEnum(is_boxed: bool, variants: Reflect::SumEnumVariant)
+        SumEnum(is_boxed: bool, variants: [Reflect::SumEnumVariant])
     }
     struct Record {
         name: String
@@ -241,7 +240,7 @@ namespace Reflect {
         generic_mappings: [(String, Reflect::Type)]
         record_type: Reflect::RecordType
     }
-    enum Type {
+    boxed enum Type {
         Void
         Bool
         U8
@@ -265,6 +264,7 @@ namespace Reflect {
         RawPtr(Reflect::Type)
         Reference(Reflect::Type)
         MutableReference(Reflect::Type)
+        Function
 
         fn name(this) throws => match this {
             Void => "void"
@@ -290,6 +290,7 @@ namespace Reflect {
             RawPtr(type) => format("raw {}", type.name())
             Reference(type) => format("& {}", type.name())
             MutableReference(type) => format("&mut {}", type.name())
+            Function => "fn"
         }
     }
 }

@@ -54,7 +54,8 @@ size_t point() const;
 };
 struct Stage0 {
   public:
-JaktInternal::DynamicArray<lexer::Token> tokens;size_t index;JaktInternal::DynamicArray<formatter::State> states;size_t indent;bool already_seen_enclosure_in_current_line;JaktInternal::DynamicArray<size_t> dedents_to_skip;bool debug;ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
+JaktInternal::DynamicArray<lexer::Token> tokens;size_t index;JaktInternal::DynamicArray<formatter::State> states;size_t indent;bool already_seen_enclosure_in_current_line;JaktInternal::DynamicArray<size_t> dedents_to_skip;bool debug;ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_implements_context(lexer::Token const token);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
 ErrorOr<void> push_state(formatter::State const state);
 ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_import_context(bool const is_extern, lexer::Token const token);
 ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_toplevel_context(size_t const open_parens, size_t const open_curlies, size_t const open_squares, bool const is_extern, lexer::Token const token);
@@ -197,6 +198,8 @@ generic_nesting{ forward<_MemberT3>(member_3)},
 is_extern{ forward<_MemberT4>(member_4)}
 {}
 };
+struct Implements {
+};
 struct CaptureList {
 };
 struct ParameterList {
@@ -284,13 +287,14 @@ seen_final_type{ forward<_MemberT0>(member_0)}
 {}
 };
 }
-struct State : public Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::CaptureList, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext> {
-using Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::CaptureList, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext>::Variant;
+struct State : public Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::Implements, State_Details::CaptureList, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext> {
+using Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::Implements, State_Details::CaptureList, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext>::Variant;
     using Toplevel = State_Details::Toplevel;
     using Extern = State_Details::Extern;
     using Import = State_Details::Import;
     using ImportList = State_Details::ImportList;
     using EntityDeclaration = State_Details::EntityDeclaration;
+    using Implements = State_Details::Implements;
     using CaptureList = State_Details::CaptureList;
     using ParameterList = State_Details::ParameterList;
     using RestrictionList = State_Details::RestrictionList;

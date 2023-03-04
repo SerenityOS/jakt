@@ -87,7 +87,8 @@ ErrorOr<jakt__path::Path> jakt__path::Path::replace_extension(DeprecatedString c
 {
 JaktInternal::Tuple<DeprecatedString,DeprecatedString> const parts = TRY((((*this).split_at_last_slash())));
 DeprecatedString const basename = TRY((((*this).basename(true))));
-DeprecatedString const extension = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<jakt__path::Path>>{
+DeprecatedString const extension = ({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<jakt__path::Path>>{
 auto __jakt_enum_value = (new_extension);
 if (__jakt_enum_value == Jakt::DeprecatedString(""sv)) {
 return JaktInternal::ExplicitValue(Jakt::DeprecatedString(""sv));
@@ -95,8 +96,11 @@ return JaktInternal::ExplicitValue(Jakt::DeprecatedString(""sv));
 else {
 return JaktInternal::ExplicitValue((Jakt::DeprecatedString("."sv) + new_extension));
 }
-}()))
-;
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+});
 return (TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((parts).template get<0>()), (basename + extension)}))))))));
 }
 }

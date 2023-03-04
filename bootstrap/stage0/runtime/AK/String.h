@@ -109,6 +109,9 @@ public:
     // Compare this String against another string with caseless matching. Using this method requires linking LibUnicode into your application.
     ErrorOr<bool> equals_ignoring_case(String const&) const;
 
+    bool starts_with(u32 code_point) const;
+    bool starts_with_bytes(StringView) const;
+
     // Creates a substring with a deep copy of the specified data window.
     ErrorOr<String> substring_from_byte_offset(size_t start, size_t byte_count) const;
     ErrorOr<String> substring_from_byte_offset(size_t start) const;
@@ -258,4 +261,14 @@ struct Formatter<String> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder&, String const&);
 };
 
+}
+
+[[nodiscard]] ALWAYS_INLINE AK::ErrorOr<AK::String> operator""_string(char const* cstring, size_t length)
+{
+    return AK::String::from_utf8(AK::StringView(cstring, length));
+}
+
+[[nodiscard]] ALWAYS_INLINE AK_SHORT_STRING_CONSTEVAL AK::String operator""_short_string(char const* cstring, size_t length)
+{
+    return AK::String::from_utf8_short_string(AK::StringView(cstring, length));
 }

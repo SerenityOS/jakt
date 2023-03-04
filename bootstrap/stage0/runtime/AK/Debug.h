@@ -522,6 +522,10 @@
 #define WEB_WORKER_DEBUG 0
 #endif
 
+#ifndef WEBP_DEBUG
+#define WEBP_DEBUG 0
+#endif
+
 #ifndef WINDOWMANAGER_DEBUG
 #define WINDOWMANAGER_DEBUG 0
 #endif

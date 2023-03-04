@@ -26,10 +26,10 @@ codegen::AllowedControlExits allow_return() const;
 struct ControlFlowState {
   public:
 codegen::AllowedControlExits allowed_exits;bool passes_through_match;bool passes_through_try;size_t match_nest_level;codegen::ControlFlowState enter_function() const;
+ErrorOr<DeprecatedString> apply_control_flow_macro(DeprecatedString const x) const;
 codegen::ControlFlowState enter_loop() const;
 static codegen::ControlFlowState no_control_flow();
 bool is_match_nested() const;
-DeprecatedString choose_control_flow_macro() const;
 codegen::ControlFlowState enter_match() const;
 ControlFlowState(codegen::AllowedControlExits a_allowed_exits, bool a_passes_through_match, bool a_passes_through_try, size_t a_match_nest_level);
 
