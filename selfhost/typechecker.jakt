@@ -5241,6 +5241,15 @@ struct Typechecker {
             ) throws -> CheckedBlock {
                 return .typecheck_block(parsed_block, parent_scope_id, safety_mode, yield_type_hint)
             }
+
+            register_function: fn[this](
+                function: CheckedFunction
+            ) throws -> FunctionId {
+                mut module = .current_module()
+                let id = module.next_function_id()
+                module.functions.push(function)
+                return id
+            }
         )
         spans: []
     )

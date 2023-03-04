@@ -1,13 +1,12 @@
 import types {
     BinaryOperator, BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedEnum, CheckedEnumVariant
-    CheckedExpression, CheckedField, CheckedMatchBody, CheckedNumericConstant, CheckedParameter, CheckedProgram
-    CheckedStatement, CheckedStringLiteral, CheckedVariable, CheckedVisibility, EnumId, EnumVariantPatternArgument
-    FunctionId, GenericInferences, ModuleId, NumericOrStringValue, ParsedStatement, ResolvedNamespace, SafetyMode
-    Scope, ScopeId, Span, StringLiteral, StructId, Type, TypeId, TypecheckFunctions, Value, ValueImpl, VarId,
-    CheckedUnaryOperator, CheckedTypeCast,
-    builtin, unknown_type_id, void_type_id,
+    CheckedExpression, CheckedField, CheckedFunction, CheckedMatchBody, CheckedNumericConstant, CheckedParameter
+    CheckedProgram, CheckedStatement, CheckedStringLiteral, CheckedTypeCast, CheckedUnaryOperator, CheckedVariable
+    CheckedVisibility, EnumId, EnumVariantPatternArgument, FunctionGenerics, FunctionId, GenericInferences, ModuleId
+    NumericOrStringValue, ParsedStatement, ResolvedNamespace, SafetyMode, Scope, ScopeId, Span, StringLiteral
+    StructId, Type, TypeId, TypecheckFunctions, Value, ValueImpl, VarId, builtin, unknown_type_id, void_type_id
 }
-import parser { ParsedBlock }
+import parser { FunctionLinkage, FunctionType, ParsedBlock }
 import utility { escape_for_quotes, interpret_escapes, panic }
 import error { JaktError }
 import compiler { Compiler }
@@ -926,6 +925,36 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
             yielded_none: block.yielded_none
         )
 
+        let checked_function = CheckedFunction(
+            name: "synthetic_lambda"
+            name_span: this_value.span
+            visibility: CheckedVisibility::Public
+            return_type_id
+            return_type_span: None
+            params: checked_params
+            generics: FunctionGenerics(
+                base_scope_id: inherited_scope_id
+                base_params: checked_params
+                params: []
+                specializations: []
+            )
+            block: new_block
+            can_throw
+            type: FunctionType::Expression
+            linkage: FunctionLinkage::Internal
+            function_scope_id: inherited_scope_id
+            struct_id: None
+            is_instantiated: true
+            parsed_function: None
+            is_comptime: false
+            is_virtual: false
+            is_override: false
+            is_unsafe: false
+        )
+
+        let register_function = &interpreter.typecheck_functions.register_function
+        let pseudo_function_id = register_function(checked_function)
+
         yield CheckedExpression::Function(
             captures: []
             params: checked_params
@@ -934,7 +963,7 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
             block: new_block
             span: this_value.span
             type_id
-            pseudo_function_id: None
+            pseudo_function_id
             scope_id
         )
     }
@@ -1125,7 +1154,7 @@ class Interpreter {
         compiler: Compiler
         program: CheckedProgram
         typecheck_functions: TypecheckFunctions
-        spans:[Span]
+        spans: [Span]
     ) throws -> Interpreter {
         return Interpreter(
             compiler
@@ -3583,6 +3612,39 @@ class Interpreter {
                     scope.bindings.set("this", this_argument!)
                 }
 
+                let blk = .execute_block(block: function_to_run.block, scope, call_span)
+                if blk is JustValue(x) and x.impl is Void {
+                    eprintln("Comptime function returned void, scope: {}", .program.get_scope(function_to_run.function_scope_id).debug_name)
+                    abort()
+                }
+
+                return match blk {
+                    Return(value) | JustValue(value) => ExecutionResult::Return(cast_value_to_type(value, function_to_run.return_type_id, interpreter: this))
+                    Throw(value) => ExecutionResult::Throw(value)
+                    Continue | Break | Yield => {
+                        panic("Invalid control flow")
+                    }
+                }
+            }
+            Closure | Expression => {
+                mut scope = InterpreterScope::create(parent: invocation_scope)
+                defer {
+                    scope.perform_defers(interpreter: this, span: call_span)
+                }
+
+                for i in 0..function_to_run.params.size() {
+                    if this_offset != 0 and i == 0 {
+                        continue
+                    }
+                    let param_name = function_to_run.params[i].variable.name
+                    let param_value = arguments[i - this_offset]
+                    scope.bindings[param_name] = param_value
+                }
+
+                if this_argument.has_value() {
+                    scope.bindings.set("this", this_argument!)
+                }
+
                 return match .execute_block(block: function_to_run.block, scope, call_span) {
                     Return(value) | JustValue(value) => ExecutionResult::Return(cast_value_to_type(value, function_to_run.return_type_id, interpreter: this))
                     Throw(value) => ExecutionResult::Throw(value)
@@ -3734,6 +3796,9 @@ class Interpreter {
                     }
                     JustValue(var_value) => {
                         scope.bindings[.program.get_variable(id: var_id).name] = var_value
+                        if var_value.impl is Function(block, pseudo_function_id) and pseudo_function_id is Some(id) {
+                            .program.get_function(id).block = block
+                        }
                     }
                     Continue => {
                         return StatementResult::Continue
@@ -5517,10 +5582,19 @@ class Interpreter {
         }
     }
 
-    public fn update_binding(mut this, anon binding: CheckedExpression, mut scope: InterpreterScope, anon value: Value, span: Span) throws {
+    public fn update_binding(
+        mut this
+        anon binding: CheckedExpression
+        mut scope: InterpreterScope
+        anon value: Value
+        span: Span
+    ) throws {
         match binding {
             Var(var) => {
                 scope.set(var.name, value)
+                if value.impl is Function(block, pseudo_function_id) and pseudo_function_id is Some(id) {
+                    .program.get_function(id).block = block
+                }
             }
             IndexedStruct(expr, name) => {
                 // FIXME: This should not be evaluated twice.
@@ -6845,10 +6919,12 @@ class Interpreter {
                             Untyped => {}
                             WithValue => {}
                             Typed => {
-                                new_scope.bindings.set(
-                                    found_args![0].binding
-                                    fields[0]
-                                )
+                                if found_args!.size() > 0 {
+                                    new_scope.bindings.set(
+                                        found_args![0].binding
+                                        fields[0]
+                                    )
+                                }
                             }
                             StructLike(fields: variant_fields) => {
                                 mut i = 0
@@ -7069,8 +7145,8 @@ class Interpreter {
                 span: span
             ))
         }
-        DependentFunction(captures, params, return_type_id, type_id, block, span, can_throw, scope_id)
-        | Function(captures, params, return_type_id, type_id, block, span, can_throw, scope_id) => {
+        DependentFunction(captures, params, return_type_id, type_id, block, span, can_throw, scope_id, pseudo_function_id)
+        | Function(captures, params, return_type_id, type_id, block, span, can_throw, scope_id, pseudo_function_id) => {
             // First, resolve the captures
             mut resolved_captures: [String:Value] = [:]
             for capture in captures {
@@ -7139,6 +7215,7 @@ class Interpreter {
                     can_throw
                     checked_params
                     scope_id
+                    pseudo_function_id
                 )
                 span
             ))

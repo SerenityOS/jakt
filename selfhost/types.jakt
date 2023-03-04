@@ -2423,6 +2423,7 @@ boxed enum ValueImpl {
         can_throw: bool
         checked_params: [CheckedParameter]
         scope_id: ScopeId
+        pseudo_function_id: FunctionId?
     )
 
     fn copy(this) throws -> ValueImpl => match this {
@@ -2502,6 +2503,7 @@ boxed enum ValueImpl {
             block
             checked_params
             scope_id
+            pseudo_function_id
         ) => ValueImpl::Function(
             captures
             params
@@ -2511,6 +2513,7 @@ boxed enum ValueImpl {
             can_throw
             checked_params
             scope_id
+            pseudo_function_id
         )
     }
 
@@ -2641,4 +2644,8 @@ class TypecheckFunctions {
         safety_mode: SafetyMode
         yield_type_hint: TypeId? = None
     ) throws -> CheckedBlock
+
+    public register_function: fn(
+        checked_function: CheckedFunction
+    ) throws -> FunctionId
 }
