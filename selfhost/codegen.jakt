@@ -748,7 +748,7 @@ struct CodeGenerator {
                 if not variable.is_mutable and not (variable_type is Reference or variable_type is MutableReference) {
                     output += "const "
                 }
-                output += variable.name
+                output += variable.name_for_codegen()
             }
 
             output += ")"
@@ -1272,7 +1272,7 @@ struct CodeGenerator {
             if not param.variable.is_mutable and not (param_type is Reference or param_type is MutableReference) {
                 output += "const "
             }
-            output += param.variable.name
+            output += param.variable.name_for_codegen()
         }
         output += ")"
 
@@ -1398,7 +1398,7 @@ struct CodeGenerator {
             let variable = .program.get_variable(field.variable_id)
             output += .codegen_type(variable.type_id)
             output += " "
-            output += variable.name
+            output += variable.name_for_codegen()
             output += ";"
         }
 
@@ -1522,7 +1522,7 @@ struct CodeGenerator {
         mut common_fields: [(String, String)] = []
         for field in enum_.fields {
             let variable = .program.get_variable(field.variable_id)
-            common_fields.push((variable.name, .codegen_type(variable.type_id)))
+            common_fields.push((variable.name_for_codegen(), .codegen_type(variable.type_id)))
         }
 
         output += "namespace " + enum_.name + "_Details {\n"
@@ -1539,7 +1539,7 @@ struct CodeGenerator {
                     mut fields: [(String, String)] = []
                     for field in own_fields {
                         let variable = .program.get_variable(field)
-                        fields.push((variable.name, .codegen_type(variable.type_id)))
+                        fields.push((variable.name_for_codegen(), .codegen_type(variable.type_id)))
                     }
 
                     if is_generic {
@@ -1717,7 +1717,7 @@ struct CodeGenerator {
         for field in struct_.fields {
             let field_var = .program.get_variable(field.variable_id)
             output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));"
-            output += format("TRY(builder.appendff(\"{}: ", field_var.name)
+            output += format("TRY(builder.appendff(\"{}: ", field_var.name_for_codegen())
             if .program.is_string(field_var.type_id) {
                 output += "\\\"{}\\\""
             } else {
@@ -1735,7 +1735,7 @@ struct CodeGenerator {
                 }
                 else => ""
             }
-            output += field_var.name + "));\n"
+            output += field_var.name_for_codegen() + "));\n"
             i++
         }
 
@@ -1789,14 +1789,14 @@ struct CodeGenerator {
                         output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));\n"
                         let var = .program.get_variable(field)
                         if .program.is_string(var.type_id){
-                            output += format("TRY(builder.appendff(\"{}: \\\"{{}}\\\"", var.name)
+                            output += format("TRY(builder.appendff(\"{}: \\\"{{}}\\\"", var.name_for_codegen())
                         } else {
-                            output += format("TRY(builder.appendff(\"{}: {{}}", var.name)
+                            output += format("TRY(builder.appendff(\"{}: {{}}", var.name_for_codegen())
                         }
                         if i != fields.size() - 1 {
                             output += ", "
                         }
-                        output += format("\", that.{}));\n", var.name)
+                        output += format("\", that.{}));\n", var.name_for_codegen())
                         i++
                     }
                     output += "}\n"
@@ -1929,12 +1929,17 @@ struct CodeGenerator {
             true => format("(({}).map([](auto& _value) {{ return _value.template get<{}>(); }}))", .codegen_expression(expr), index)
             false => format("(({}).template get<{}>())", .codegen_expression(expr), index)
         }
-        IndexedStruct(expr, index, is_optional) => {
+        IndexedStruct(expr, name, index, is_optional) => {
             mut output = ""
             let object = .codegen_expression(expression: expr)
             output += "(("
             output += object
             output += ")"
+
+            let var_name = match index.has_value() {
+                true => .program.get_variable(index!).name_for_codegen()
+                false => name
+            }
 
             let expression_type = .program.get_type(expr.type())
             match expression_type {
@@ -1967,10 +1972,10 @@ struct CodeGenerator {
                     }
                 }
                 output += access_operator
-                output += index
+                output += var_name
                 output += "; })"
             } else {
-                output += index
+                output += var_name
             }
             output += ")"
             yield output
@@ -2298,7 +2303,7 @@ struct CodeGenerator {
             }
             mut generated_params: [String] = []
             for param in params {
-                generated_params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name))
+                generated_params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name_for_codegen()))
             }
             let return_type = match can_throw {
                 true => format("ErrorOr<{}>", .codegen_type(return_type_id))
@@ -3470,7 +3475,7 @@ struct CodeGenerator {
                 if not var.is_mutable and not (var_type is Reference or var_type is MutableReference) {
                     output += "const "
                 }
-                output += var.name
+                output += var.name_for_codegen()
                 output += " = "
                 output += .codegen_expression(init)
                 output += ";"
@@ -3843,7 +3848,7 @@ struct CodeGenerator {
                 let param_type_id = param.variable.type_id
                 output += .codegen_type(param_type_id)
                 output += " a_"
-                output += param.variable.name
+                output += param.variable.name_for_codegen()
             }
             output += ");\n"
 
@@ -3879,7 +3884,7 @@ struct CodeGenerator {
 
                 output += .codegen_type(param.variable.type_id)
                 output += " "
-                output += param.variable.name
+                output += param.variable.name_for_codegen()
             }
 
             output += ");\n"
@@ -3900,7 +3905,7 @@ struct CodeGenerator {
 
             output += .codegen_type(param.variable.type_id)
             output += " a_"
-            output += param.variable.name
+            output += param.variable.name_for_codegen()
         }
         output += ");\n"
 
@@ -3953,7 +3958,7 @@ struct CodeGenerator {
                 let param_type_id = param.variable.type_id
                 output += .codegen_type(param_type_id)
                 output += " a_"
-                output += param.variable.name
+                output += param.variable.name_for_codegen()
             }
             output += ")"
 
@@ -3970,7 +3975,7 @@ struct CodeGenerator {
 
                     mut strings: [String] = []
                     for param in function.params[0..parent_constructor_parameter_count] {
-                        strings.push("move(a_" + param.variable.name + ")")
+                        strings.push("move(a_" + param.variable.name_for_codegen() + ")")
                     }
                     parent_initializer += join(strings, separator: ", ")
 
@@ -3980,7 +3985,7 @@ struct CodeGenerator {
 
                 for i in parent_constructor_parameter_count..function.params.size() {
                     let param = function.params[i]
-                    initializers.push(param.variable.name + "(move(a_" + param.variable.name + "))")
+                    initializers.push(param.variable.name_for_codegen() + "(move(a_" + param.variable.name_for_codegen() + "))")
                 }
                 output += join(initializers, separator: ", ")
             }
@@ -4026,7 +4031,7 @@ struct CodeGenerator {
 
                 output += .codegen_type(param.variable.type_id)
                 output += " "
-                output += param.variable.name
+                output += param.variable.name_for_codegen()
             }
 
             output += format(") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", .current_error_handler(), class_name_with_generics)
@@ -4040,7 +4045,7 @@ struct CodeGenerator {
                 }
 
                 output += "move("
-                output += param.variable.name
+                output += param.variable.name_for_codegen()
                 output += ")"
             }
 
@@ -4066,7 +4071,7 @@ struct CodeGenerator {
 
             output += .codegen_type(param.variable.type_id)
             output += " a_"
-            output += param.variable.name
+            output += param.variable.name_for_codegen()
         }
         output += ") "
 
@@ -4082,9 +4087,9 @@ struct CodeGenerator {
                 first = false
             }
 
-            output += param.variable.name
+            output += param.variable.name_for_codegen()
             output += "(move(a_"
-            output += param.variable.name
+            output += param.variable.name_for_codegen()
             output += "))"
         }
 
@@ -4193,7 +4198,7 @@ struct CodeGenerator {
             if not variable.is_mutable and not (variable_type is Reference or variable_type is MutableReference) {
                 output += "const "
             }
-            output += variable.name
+            output += variable.name_for_codegen()
         }
 
         output += ")"

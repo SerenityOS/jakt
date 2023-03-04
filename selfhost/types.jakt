@@ -963,6 +963,7 @@ class CheckedVariable {
     public type_span: Span?
     public visibility: CheckedVisibility
     public owner_scope: ScopeId? = None
+    public external_name: String? = None
 
     public fn map_types(this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws -> CheckedVariable {
         return CheckedVariable(
@@ -973,8 +974,11 @@ class CheckedVariable {
             type_span: .type_span
             visibility: .visibility
             owner_scope: .owner_scope
+            external_name: .external_name
         )
     }
+
+    public fn name_for_codegen(this) -> String => .external_name ?? .name
 }
 
 struct CheckedVarDecl {
@@ -1431,7 +1435,7 @@ boxed enum CheckedExpression {
     IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
     IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, is_optional: bool, type_id: TypeId)
-    IndexedStruct(expr: CheckedExpression, index: String, span: Span, is_optional: bool, type_id: TypeId)
+    IndexedStruct(expr: CheckedExpression, name: String, index: VarId?, span: Span, is_optional: bool, type_id: TypeId)
     IndexedCommonEnumMember(expr: CheckedExpression, index: String, span: Span, is_optional: bool, type_id: TypeId)
     ComptimeIndex(expr: CheckedExpression, index: CheckedExpression, is_optional: bool, span: Span)
     Match(expr: CheckedExpression, match_cases: [CheckedMatchCase], span: Span, type_id: TypeId, all_variants_constant: bool)

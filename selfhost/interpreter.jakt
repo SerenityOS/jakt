@@ -1341,7 +1341,8 @@ class Interpreter {
                                             // FIXME: Check access perms
                                             return CheckedExpression::IndexedStruct(
                                                 expr
-                                                index: field
+                                                name: field
+                                                index: member_id.variable_id
                                                 span
                                                 is_optional
                                                 type_id: resolved_type_id)
@@ -1372,7 +1373,8 @@ class Interpreter {
                                     // FIXME: Check access perms
                                     return CheckedExpression::IndexedStruct(
                                         expr
-                                        index: field
+                                        name: field
+                                        index: member_id.variable_id
                                         span
                                         is_optional
                                         type_id: resolved_type_id)
@@ -5520,7 +5522,7 @@ class Interpreter {
             Var(var) => {
                 scope.set(var.name, value)
             }
-            IndexedStruct(expr, index) => {
+            IndexedStruct(expr, name) => {
                 // FIXME: This should not be evaluated twice.
                 mut (fields, struct_id) = match .execute_expression(expr, scope) {
                     JustValue(value) => match value.impl {
@@ -5537,7 +5539,7 @@ class Interpreter {
                 let field_decls = .program.get_struct(struct_id).fields
                 mut field_index = 0uz
                 for i in 0..field_decls.size() {
-                    if .program.get_variable(field_decls[i].variable_id).name == index {
+                    if .program.get_variable(field_decls[i].variable_id).name == name {
                         field_index = i
                         break
                     }
@@ -6446,7 +6448,7 @@ class Interpreter {
             }
         }
         Boolean(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(val), span: span))
-        IndexedStruct(expr, index) => {
+        IndexedStruct(expr, name) => {
             let value = match .execute_expression(expr, scope) {
                 Return(value) => {
                     return StatementResult::Return(value)
@@ -6472,7 +6474,7 @@ class Interpreter {
                     mut idx = 0
                     mut found_index: i64? = None
                     for field in struct_.fields {
-                        if .program.get_variable(field.variable_id).name == index {
+                        if .program.get_variable(field.variable_id).name == name {
                             found_index = idx
                             break
                         }
