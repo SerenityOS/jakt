@@ -12,30 +12,60 @@ enum JsonToken {
     Colon
     Comma
     JsonString(String)
-    Number(String)
+    Number(text: String, negative: bool)
     True
     False
     Null
 }
 
+trait Discriminable<Via> {
+    fn discriminator_name() throws -> String
+    fn discriminator_mapping() throws -> [Via:String]
+}
+
 struct JsonParser {
     data: String
     index: usize
+    injected: [JsonToken]
 
-    fn create(anon data: String) -> JsonParser => JsonParser(data: data, index: 0)
+    fn create(anon data: String) throws -> JsonParser => JsonParser(data: data, index: 0, injected: [])
 
     fn to_object<U>(mut this, anon x: &mut U) throws {
         from_json(&mut this, x)
     }
 
     fn peek(mut this) throws -> JsonToken? {
+        if not .injected.is_empty() {
+            return .injected.last()
+        }
+
         let start = .index + 0
-        let value = .next()
+        let value = .next(peeking: true)
         .index = start
         return value
     }
 
-    fn next(mut this) throws -> JsonToken? {
+    fn inject(mut this, anon token: JsonToken) throws {
+        .injected.insert(before_index: 0, value: token)
+    }
+
+    fn next(mut this, peeking: bool = false) throws -> JsonToken? {
+        if not .injected.is_empty() {
+            return .injected.pop()
+        }
+
+        defer {
+            // Skip whitespace
+            while .index < .data.length() {
+                let c = .data.byte_at(.index)
+                if c == b' ' or c == b'\n' or c == b'\r' or c == b'\t' {
+                    .index += 1
+                } else {
+                    break
+                }
+            }
+        }
+
         loop {
             if .index >= .data.length() { break }
             let c = .data.byte_at(.index)
@@ -86,10 +116,22 @@ struct JsonParser {
 
                     yield JsonToken::JsonString(position, builder.to_string())
                 }
-                b'0'..b'9' => {
+                b'-' | b'+' | b'0'..b'9' | b'9' => { // FIXME: Make it possible to make this inclusive.
                     let position = .index
                     mut builder = StringBuilder::create()
                     mut seen_dot = false
+                    mut negative = false
+                    match .data.byte_at(.index) {
+                        b'-' => {
+                            .index += 1
+                            negative = true
+                        }
+                        b'+' => {
+                            .index += 1
+                        }
+                        else => {}
+                    }
+
                     while .index < .data.length() {
                         let c = .data.byte_at(.index)
                         if c >= b'0' and c <= b'9' {
@@ -103,7 +145,7 @@ struct JsonParser {
                         }
                     }
 
-                    yield JsonToken::Number(position, builder.to_string())
+                    yield JsonToken::Number(position, text: builder.to_string(), negative)
                 }
                 b't' => {
                     guard .index + 3 < .data.length() and
@@ -143,6 +185,7 @@ struct JsonParser {
                 }
 
                 else => {
+                    eprintln("Invalid JSON: Unexpected character: {:c}", c)
                     throw error("Invalid JSON: Unexpected character")
                 }
             }
@@ -154,6 +197,87 @@ struct JsonParser {
 
 fn force_to<T, U>(anon v: U) -> T {
     return v as! T
+}
+
+// FIXME: This forces the function to typechecked first, which is silly.
+struct Impl {
+    comptime default_constructor<V>() throws -> fn() throws -> V {
+        mut dep = true
+        return match reflect V {
+            StructureOrEnum(record) => match record.name {
+                "Array" => fn[comptime dep]() throws -> V {
+                    let x: V = []
+                    return x
+                }
+                "Dictionary" => fn[comptime dep]() throws -> V {
+                    let x: V = [:]
+                    return x
+                }
+                else => fn[comptime dep]() throws -> V {
+                    return V::make_default()
+                }
+            }
+            JaktString => fn[comptime dep]() throws -> V {
+                return ""
+            }
+            Bool => fn[comptime dep]() throws -> V {
+                return false
+            }
+            I8 | I16 | I32 | I64 | U8 | U16 | U32 | U64 | Usize | CChar | CInt | F32 | F64 => fn[comptime dep]() throws -> V {
+                return 0
+            }
+            else => fn[comptime dep]() throws -> V {
+                return V::make_default()
+            }
+        }
+    }
+}
+
+fn default_constructed_like<R>(anon x: &R) throws -> R {
+    let ctor = Impl::default_constructor<R>()
+    return ctor()
+}
+
+fn default_constructed_like_element_of<X>(anon x: &[X]) throws -> X {
+    let ctor = Impl::default_constructor<X>()
+    return ctor()
+}
+
+fn default_constructed_like_element_of<R, S>(anon x: &[R:S]) throws -> S {
+    let ctor = Impl::default_constructor<S>()
+    return ctor()
+}
+
+fn parse_as_key_of<R, S>(anon x: &[R:S], anon parser: &mut JsonParser) throws -> R {
+    let ctor = Impl::default_constructor<R>()
+    mut key = ctor()
+    parser.to_object(&mut key)
+    return key
+}
+
+comptime discriminator_name<U>() throws -> fn() throws -> String {
+    guard reflect U is StructureOrEnum(record) else {
+        return fn() throws -> String {
+            throw error("Must be a structure or enum")
+        }
+    }
+
+    for method in record.methods {
+        if method.function.name == "discriminator_name" {
+            if not method.function.is_comptime {
+                continue
+            }
+
+            let dep = true
+            return fn[comptime dep]() throws -> String {
+                return U::discriminator_name()
+            }
+        }
+    }
+
+    return fn() throws -> String {
+        throw error("Must implement discriminator_name")
+    }
 }
 
 comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
@@ -182,8 +306,11 @@ comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut J
         Usize | U8 | U16 | U32 | U64 => fn[comptime dep](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
             let token = parser.next()
             if token.has_value() {
-                if token! is Number(json) {
-                    let parsed = json.to_uint()
+                if token! is Number(text, negative) {
+                    if negative {
+                        throw error("Invalid uint")
+                    }
+                    let parsed = text.to_uint()
                     if parsed.has_value() {
                         x = force_to<T>(parsed!)
                         return
@@ -196,10 +323,13 @@ comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut J
         CChar | CInt | I8 | I16 | I32 | I64 => fn[comptime dep](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
             let token = parser.next()
             if token.has_value() {
-                if token! is Number(json) {
-                    let parsed = json.to_int()
+                if token! is Number(text, negative) {
+                    let parsed = text.to_int()
                     if parsed.has_value() {
                         x = force_to<T>(parsed!)
+                        if negative {
+                            x = -x
+                        }
                         return
                     }
                 }
@@ -211,7 +341,7 @@ comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut J
             let token = parser.next()
             if token.has_value() {
                 match token! {
-                    Number(json) => {
+                    Number => {
                         throw error("Not implemented")
                     }
                     else => {}
@@ -231,27 +361,70 @@ comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut J
 
             throw error("Invalid string")
         }
-        StructureOrEnum(record) => match record.record_type {
-            Struct(fields) | Class(fields) => {
-                mut field_decoders: [fn(anon x: &mut T, anon parser: &mut JsonParser) throws -> void] = []
-                mut field_indices: [String:usize] = [:]
-
-                for field in fields {
-                    let name = field.variable.name
-                    field_indices.set(name, field_decoders.size())
-                    field_decoders.push(fn[comptime name](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
-                        from_json(parser, &mut x.[name])
-                        return
-                    })
+        StructureOrEnum(record) => match record.name {
+            "Array" => {
+                let inner_decoder = fn[comptime dep](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+                    mut y = default_constructed_like_element_of(&x)
+                    from_json(parser, &mut y)
+                    x.push(y)
+                    return
                 }
 
-                yield fn[comptime field_decoders, comptime field_indices](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+                yield fn[comptime inner_decoder](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+                    let token = parser.next()
+                    guard token.has_value() and token! is OpenBracket else {
+                        throw error("Invalid JSON: expected '['")
+                    }
+
+                    mut first = true
+
+                    loop {
+                        let token = parser.peek()
+                        if token.has_value() {
+                            match token! {
+                                CloseBracket => {
+                                    let _ = parser.next()
+                                    break
+                                }
+                                Comma => {
+                                    if first {
+                                        throw error("Invalid JSON: A Unexpected comma")
+                                    }
+                                    first = false
+                                    let _ = parser.next()
+                                    inner_decoder(x, parser)
+                                }
+                                else => {
+                                    if first {
+                                        first = false
+                                        inner_decoder(x, parser)
+                                    } else {
+                                        throw error("Invalid JSON: expected ','")
+                                    }
+                                }
+                            }
+                        } else {
+                            throw error("Invalid JSON: expected ']'")
+                        }
+                    }
+                    return
+                }
+            }
+            "Dictionary" => {
+                // Basically a struct, but now we have to work twice as hard :P
+                let decode_value = fn[comptime dep](anon name: String, anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+                    mut y = default_constructed_like_element_of(&x)
+                    from_json(parser, &mut y)
+                    x.set(name, y)
+                    return
+                }
+
+                yield fn[comptime decode_value](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
                     let token = parser.next()
                     guard token.has_value() and token! is OpenBrace else {
                         throw error("Invalid JSON: Expected '{'")
                     }
 
-                    mut seen_fields: {String} = {}
                     mut first = true
                     mut seen_comma = false
 
@@ -265,7 +438,7 @@ comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut J
                             CloseBrace => true
                             Comma => {
                                 if first or seen_comma {
-                                    throw error("Invalid JSON: Unexpected comma")
+                                    throw error("Invalid JSON: B Unexpected comma")
                                 }
                                 first = false
                                 seen_comma = true
@@ -278,21 +451,9 @@ comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut J
                                     throw error("Invalid JSON: Expected ':'")
                                 }
 
-                                if not field_indices.contains(field_name) {
-                                    throw error("Unexpected unknown field in object")
-                                }
-
-                                if seen_fields.contains(field_name) {
-                                    throw error("Duplicate field in object")
-                                }
-
-                                seen_fields.add(field_name)
-
-                                let decoder = &field_decoders[field_indices[field_name]]
-                                decoder(x, parser)
+                                decode_value(field_name, x, parser)
 
                                 first = false
-
                                 yield false
                             }
                             else => {
@@ -305,17 +466,235 @@ comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut J
                         }
                     }
 
-                    for field in field_indices.keys() {
-                        if not seen_fields.contains(field) {
-                            throw error("Missing field in object")
-                        }
-                    }
-
                     return
                 }
             }
-            else => {
-                throw error("NYI")
+            else => match record.record_type {
+                Struct(fields) | Class(fields) => {
+                    mut field_decoders: [fn(anon x: &mut T, anon parser: &mut JsonParser) throws -> void] = []
+                    mut field_indices: [String:usize] = [:]
+
+                    for field in fields {
+                        let name = field.variable.name
+                        field_indices.set(name, field_decoders.size())
+                        field_decoders.push(fn[comptime name](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+                            from_json(parser, &mut x.[name])
+                            return
+                        })
+                    }
+
+                    yield fn[comptime field_decoders, comptime field_indices](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+                        let token = parser.next()
+                        guard token.has_value() and token! is OpenBrace else {
+                            throw error("Invalid JSON: Expected '{'")
+                        }
+
+                        mut seen_fields: {String} = {}
+                        mut first = true
+                        mut seen_comma = false
+
+                        loop {
+                            let token = parser.next()
+                            guard token.has_value() else {
+                                throw error("Invalid JSON: Expected a token")
+                            }
+
+                            let done = match token! {
+                                CloseBrace => true
+                                Comma => {
+                                    if first or seen_comma {
+                                        throw error("Invalid JSON: C Unexpected comma")
+                                    }
+                                    first = false
+                                    seen_comma = true
+                                    yield false
+                                }
+                                JsonString(field_name) => {
+                                    seen_comma = false
+                                    let token = parser.next()
+                                    guard token.has_value() and token! is Colon else {
+                                        throw error("Invalid JSON: Expected ':'")
+                                    }
+
+                                    if not field_indices.contains(field_name) {
+                                        eprintln("Unknown field: {}, expected any of {}", field_name, field_indices.keys())
+                                        throw error("Unexpected unknown field in object")
+                                    }
+
+                                    if seen_fields.contains(field_name) {
+                                        throw error("Duplicate field in object")
+                                    }
+
+                                    seen_fields.add(field_name)
+
+                                    let decoder = &field_decoders[field_indices[field_name]]
+                                    decoder(x, parser)
+
+                                    first = false
+
+                                    yield false
+                                }
+                                else => {
+                                    throw error("Invalid JSON: Expected a field name")
+                                }
+                            }
+
+                            guard not done else {
+                                break
+                            }
+                        }
+
+                        for field in field_indices.keys() {
+                            if not seen_fields.contains(field) {
+                                eprintln("Missing field {}", field)
+                                throw error("Missing field in object")
+                            }
+                        }
+
+                        return
+                    }
+                }
+                SumEnum(variants) => {
+                    mut get_name = fn[comptime dep]() throws -> String {
+                        throw error("Not implemented")
+                    }
+                    mut map_descriptor = fn[comptime dep](anon parser: &mut JsonParser) throws -> String {
+                        throw error("Not implemented")
+                    }
+                    for method in record.methods {
+                        if method.function.name == "discriminator_name" {
+                            get_name = fn[comptime dep]() throws -> String {
+                                return T::discriminator_name()
+                            }
+                        }
+                        if method.function.name == "discriminator_mapping" {
+                            map_descriptor = fn[comptime dep](anon parser: &mut JsonParser) throws -> String {
+                                let mappings = T::discriminator_mapping()
+                                let key = parse_as_key_of(&mappings, parser)
+                                if not mappings.contains(key) {
+                                    eprintln("Unknown discriminator value: {}, expected any of {}", key, mappings.keys())
+                                    throw error("Invalid JSON: Unknown discriminator value")
+                                }
+                                return mappings[key]
+                            }
+                        }
+                    }
+
+                    let discriminator_name = get_name()
+
+                    yield fn[comptime discriminator_name, comptime map_descriptor](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+                        let token = parser.next()
+                        guard token.has_value() and token! is OpenBrace else {
+                            throw error("Invalid JSON: Expected '{'")
+                        }
+
+                        mut seen_fields: {String} = {}
+                        loop {
+                            let token = parser.next()
+                            guard token.has_value() else {
+                                throw error("Invalid JSON: Expected a token")
+                            }
+
+                            let done = match token! {
+                                CloseBrace => true
+                                Comma => false
+                                JsonString(field_name) => {
+                                    mut mapped_name: String? = None
+                                    if field_name == discriminator_name {
+                                        let token = parser.next()
+                                        guard token.has_value() and token! is Colon else {
+                                            throw error("Invalid JSON: Expected ':'")
+                                        }
+
+                                        mapped_name = map_descriptor(parser)
+                                    } else {
+                                        mut injected = parser.injected[..].to_array()
+                                        parser.inject(token!)
+                                        mut open_contexts = 0uz
+
+                                        loop {
+                                            let next = parser.next()
+                                            guard next.has_value() else {
+                                                break
+                                            }
+
+                                            let next_token = next!
+
+                                            guard open_contexts == 0 and next_token is JsonString(field_name) and field_name == discriminator_name else {
+                                                match next_token {
+                                                    OpenBrace | OpenBracket => {
+                                                        open_contexts += 1
+                                                    }
+                                                    CloseBrace | CloseBracket => {
+                                                        if open_contexts > 0 {
+                                                            open_contexts -= 1
+                                                        }
+                                                    }
+                                                    else => {}
+                                                }
+                                                injected.insert(before_index: 0, value: next_token)
+                                                continue
+                                            }
+
+                                            let colon = parser.next()
+                                            guard colon.has_value() and colon! is Colon else {
+                                                injected.insert(before_index: 0, value: next_token)
+                                                if colon.has_value() {
+                                                    injected.insert(before_index: 0, value: colon!)
+                                                }
+                                                continue
+                                            }
+
+                                            // Found the discriminator field, parse it now.
+                                            mapped_name = map_descriptor(parser)
+
+                                            // If a comma follows, drop it
+                                            if parser.peek() is Some(token) and token is Comma {
+                                                let _ = parser.next()
+                                            }
+
+                                            // Special case, if the discriminator field is the last field in the object,
+                                            // we need to remove the preceding comma.
+                                            if injected.size() >= 1 and parser.peek() is Some(token) and token is CloseBrace {
+                                                injected = injected[1..].to_array()
+                                            }
+
+                                            parser.injected = injected
+                                            break
+                                        }
+
+                                        if mapped_name is None {
+                                            throw error("Invalid JSON: Missing discriminator field in enum")
+                                        }
+                                    }
+
+                                    let name = mapped_name!
+
+                                    if parser.peek() is Some(token) {
+                                        match token {
+                                            Comma => {
+                                                let _ = parser.next()
+                                            }
+                                            else => {}
+                                        }
+                                        parser.injected.push(JsonToken::OpenBrace(position: token.position))
+                                        let parse = T::make_parser()
+                                        x = parse(name, parser)
+                                    }
+
+                                    yield true
+                                }
+                                else => {
+                                    throw error("Invalid JSON: Expected a field name")
+                                }
+                            }
+
+                            guard not done else {
+                                break
+                            }
+                        }
+                    }
+                }
             }
         }
         else => {
