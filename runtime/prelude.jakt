@@ -240,7 +240,7 @@ namespace Reflect {
         generic_mappings: [(String, Reflect::Type)]
         record_type: Reflect::RecordType
     }
-    enum Type {
+    boxed enum Type {
         Void
         Bool
         U8
