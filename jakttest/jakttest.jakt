@@ -705,6 +705,14 @@ fn main(args: [String]) -> c_int {
         return 1
     }
 
+
+    // Check if jakttest is run from the source root, we use the Python script
+    // for that but any file would be ok.
+    guard fs::stat_silencing_enoent(path: "jakttest/run_one.py") is Some(_) else {
+        eprintln("'jakttest' must be run from the root of the Jakt source directory")
+        return 1
+    }
+
     mut skipped_count = 0uz
 
     mut tests: [Test] = []
