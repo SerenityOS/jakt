@@ -555,7 +555,20 @@ struct TestScheduler {
         return (result_output, error_output)
     }
 
+
     fn poll_running_tests(mut this) throws {
+        unsafe {
+            cpp { "#ifndef _WIN32" }
+            cpp { "sigset_t set;" }
+            cpp { "int signal;" }
+            cpp { "sigemptyset(&set);" }
+            cpp { "sigaddset(&set, SIGCHLD);" }
+            cpp { "int const sigwait_errno = sigwait(&set, &signal);" }
+            cpp { "if (sigwait_errno != 0)" }
+            cpp { "    return Error::from_errno(sigwait_errno);" }
+            cpp { "#endif" }
+        }
+        // Blocking on any exiting child is handled within the poll_process_exit method
         mut exited = process::poll_process_exit(pid: -1i32)
         while exited.has_value() {
             match .on_test_exited(pid: exited!.pid(), exit_code: exited!.exit_code()) {
@@ -572,32 +585,8 @@ struct TestScheduler {
     }
 
     fn wait_for_free_directory(mut this) throws -> usize {
-        // NOTE: `unsafe` creates its own scope (because variables *can* be
-        // created inside an unsafe block) but in turn the C++ generated is not
-        // inline, it's inside a block. Since we're using `set` to initialize it
-        // once, we can't separate initialization to a separate `unsafe` block.
-        // Maybe `unsafe inline` blocks that have the same scope as its parent
-        // scope could be a solution to this?
-        unsafe {
-            cpp { "#ifndef _WIN32" }
-            cpp { "sigset_t set;" }
-            cpp { "int signal;"   }
-            cpp { "sigemptyset(&set);" }
-            cpp { "sigaddset(&set, SIGCHLD);" }
-            cpp { "#endif" }
-
-            while .free_directories.is_empty() {
-                // wait for sigchld
-                unsafe {
-                    // Blocking on any exiting child is handled within the poll_process_exit method  on win32
-                    cpp { "#ifndef _WIN32" }
-                    cpp { "if (sigwait(&set, &signal) > 0)" }
-                    cpp { "    return Error::from_errno(errno);" }
-                    cpp { "#endif" }
-                }
-                // check if any test has exited
-                .poll_running_tests()
-            }
+        while .free_directories.is_empty() {
+            .poll_running_tests()
         }
         return .free_directories.pop()!
     }

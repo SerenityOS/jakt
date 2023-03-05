@@ -5,10 +5,10 @@
 // SPDX-License-Identifier: BSD-2-Clause
 #include "process.h"
 
-#include <Jakt/DeprecatedString.h>
 #include <AK/Assertions.h>
 #include <AK/HashMap.h>
 #include <AK/RefPtr.h>
+#include <Jakt/DeprecatedString.h>
 #include <time.h>
 #ifndef _WIN32
 #include <signal.h>
@@ -110,6 +110,8 @@ ErrorOr<Optional<ExitPollResult>> poll_process_exit(i32 pid)
         }
         return Error::from_errno(errno);
     }
+
+
     // not exited.
     if (result == 0) {
         return JaktInternal::OptionalNone {};
@@ -190,6 +192,7 @@ static ErrorOr<Optional<DWORD>> get_process_status(PROCESS_INFORMATION process)
     return Optional<DWORD> { exit_code };
 }
 
+
 static ErrorOr<Optional<ExitPollResult>> poll_any_process(DWORD timeout = 0)
 {
     if (s_process_handles.is_empty())
@@ -241,7 +244,7 @@ ErrorOr<Optional<ExitPollResult>> poll_process_exit(i32 pid)
 
     DWORD ret = WaitForSingleObject(process_handle.hProcess, 0);
     if (ret == WAIT_FAILED)
-         return Error::from_errno(last_error_to_errno(GetLastError()));
+        return Error::from_errno(last_error_to_errno(GetLastError()));
     if (ret == WAIT_TIMEOUT)
         return Optional<ExitPollResult> {};
 
