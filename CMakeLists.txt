@@ -76,6 +76,9 @@ target_include_directories(jakt_stage0
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
 )
 apply_output_rules(jakt_stage0)
+if (MSVC)
+    target_link_options(jakt_stage0 PRIVATE LINKER:/STACK:0x800000)
+endif()
 
 set(SELFHOST_SOURCES
   selfhost/build.jakt
@@ -148,6 +151,9 @@ target_include_directories(jakt_stage1
 )
 add_executable(Jakt::jakt_stage1 ALIAS jakt_stage1)
 apply_output_rules(jakt_stage1)
+if (MSVC)
+    target_link_options(jakt_stage1 PRIVATE LINKER:/STACK:0x800000)
+endif()
 
 if (FINAL_STAGE GREATER_EQUAL 2)
   add_jakt_executable(jakt_stage2
@@ -165,6 +171,9 @@ if (FINAL_STAGE GREATER_EQUAL 2)
   )
   add_executable(Jakt::jakt_stage2 ALIAS jakt_stage2)
   apply_output_rules(jakt_stage2)
+  if (MSVC)
+    target_link_options(jakt_stage2 PRIVATE LINKER:/STACK:0x800000)
+  endif()
 endif()
 
 # Link runtime into build directory(ies) for relative pathing usage
