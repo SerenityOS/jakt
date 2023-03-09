@@ -22,12 +22,10 @@ JaktInternal::Optional<size_t> last_namespace_separator(DeprecatedString const n
 
 
 
-
-
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> add_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const prefix, DeprecatedString const suffix);
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> platform_import_names();
 
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> platform_import_names();
 
 }
 namespace jakt__platform__unknown_path {
@@ -46,6 +44,24 @@ ErrorOr<void> make_directory(DeprecatedString const path);
 }
 namespace jakt__file_iterator {
 class RecursiveFileIterator;
+}
+namespace jakt__platform__unknown_process {
+struct Process;
+struct ExitPollResult;
+ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<size_t>,jakt__platform__unknown_process::ExitPollResult>> wait_for_some_set_of_processes_that_at_least_includes(JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::Process> const& processes);
+
+ErrorOr<jakt__platform__unknown_process::ExitPollResult> wait_for_process(jakt__platform__unknown_process::Process const& process);
+
+ErrorOr<jakt__platform__unknown_process::Process> start_background_process(JaktInternal::DynamicArray<DeprecatedString> const args);
+
+ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> poll_process_exit(jakt__platform__unknown_process::Process const& process);
+
+ErrorOr<void> forcefully_kill_process(jakt__platform__unknown_process::Process const& process);
+
+}
+namespace build {
+struct Builder;
+struct ParallelExecutionPool;
 }
 namespace utility {
 struct Span;
@@ -996,25 +1012,6 @@ struct Entity;
 void bubble_sort(JaktInternal::DynamicArray<DeprecatedString> values);
 
 }
-namespace jakt__libc__io {
-}
-namespace repl {
-struct REPL;
-struct Editor;
-namespace LineResult_Details {
-struct Line;
-struct Eof;
-}
-struct LineResult;
-
-DeprecatedString serialize_unary_operation(types::CheckedUnaryOperator const op, DeprecatedString const expr);
-
-ErrorOr<DeprecatedString> serialize_ast_node(NonnullRefPtr<typename types::CheckedExpression> const node);
-
-}
-namespace project {
-struct Project;
-}
 namespace ide {
 struct JaktSymbol;
 namespace Mutability_Details {
@@ -1100,25 +1097,30 @@ ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_struct(NonnullRefPtr<ty
 ErrorOr<DeprecatedString> get_function_signature(NonnullRefPtr<types::CheckedProgram> const program, types::FunctionId const function_id);
 
 }
-namespace jakt__platform__unknown_process {
-struct Process;
-struct ExitPollResult;
-ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<size_t>,jakt__platform__unknown_process::ExitPollResult>> wait_for_some_set_of_processes_that_at_least_includes(JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::Process> const& processes);
+namespace platform {
 
-ErrorOr<jakt__platform__unknown_process::ExitPollResult> wait_for_process(jakt__platform__unknown_process::Process const& process);
-
-ErrorOr<jakt__platform__unknown_process::Process> start_background_process(JaktInternal::DynamicArray<DeprecatedString> const args);
-
-ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> poll_process_exit(jakt__platform__unknown_process::Process const& process);
-
-ErrorOr<void> forcefully_kill_process(jakt__platform__unknown_process::Process const& process);
 
 }
-namespace build {
-struct Builder;
-struct ParallelExecutionPool;
+namespace project {
+struct Project;
 }
-namespace jakt__platform__unknown_compiler {
+namespace jakt__libc__io {
+}
+namespace repl {
+struct REPL;
+struct Editor;
+namespace LineResult_Details {
+struct Line;
+struct Eof;
+}
+struct LineResult;
+
+DeprecatedString serialize_unary_operation(types::CheckedUnaryOperator const op, DeprecatedString const expr);
+
+ErrorOr<DeprecatedString> serialize_ast_node(NonnullRefPtr<typename types::CheckedExpression> const node);
+
+}
+namespace platform__unknown_compiler {
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> run_compiler(DeprecatedString const cxx_compiler_path, DeprecatedString const cpp_filename, DeprecatedString const output_filename, DeprecatedString const runtime_path, JaktInternal::DynamicArray<DeprecatedString> const extra_include_paths, JaktInternal::DynamicArray<DeprecatedString> const extra_lib_paths, JaktInternal::DynamicArray<DeprecatedString> const extra_link_libs, bool const optimize, JaktInternal::DynamicArray<DeprecatedString> const extra_compiler_flags);
 
 }

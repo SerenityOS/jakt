@@ -19,6 +19,14 @@ REPL(NonnullRefPtr<compiler::Compiler> a_compiler, typechecker::Typechecker a_ty
 
 ErrorOr<bool> handle_possible_error();
 ErrorOr<DeprecatedString> debug_description() const;
+};struct Editor {
+  public:
+FILE* standard_input_file;char* line_pointer;DeprecatedString prompt;static ErrorOr<repl::Editor> create(DeprecatedString const prompt);
+Editor(FILE* a_standard_input_file, char* a_line_pointer, DeprecatedString a_prompt);
+
+ErrorOr<repl::LineResult> get_line();
+void destroy();
+ErrorOr<DeprecatedString> debug_description() const;
 };namespace LineResult_Details {
 struct Line{
 DeprecatedString value;
@@ -36,15 +44,7 @@ using Variant<LineResult_Details::Line, LineResult_Details::Eof>::Variant;
     using Eof = LineResult_Details::Eof;
 ErrorOr<DeprecatedString> debug_description() const;
 };
-struct Editor {
-  public:
-FILE* standard_input_file;char* line_pointer;DeprecatedString prompt;static ErrorOr<repl::Editor> create(DeprecatedString const prompt);
-Editor(FILE* a_standard_input_file, char* a_line_pointer, DeprecatedString a_prompt);
-
-ErrorOr<repl::LineResult> get_line();
-void destroy();
-ErrorOr<DeprecatedString> debug_description() const;
-};}
+}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::repl::REPL> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl::REPL const& value) {
@@ -52,14 +52,14 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::repl::LineResult> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl::LineResult const& value) {
+template<>struct Jakt::Formatter<Jakt::repl::Editor> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl::Editor const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::repl::Editor> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl::Editor const& value) {
+template<>struct Jakt::Formatter<Jakt::repl::LineResult> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl::LineResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

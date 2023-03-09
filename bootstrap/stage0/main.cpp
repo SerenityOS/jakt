@@ -753,7 +753,7 @@ TRY((((extra_compiler_flags).push(Jakt::DeprecatedString("-DJAKT_USING_AK_AS_STA
 }
 auto __jakt_var_888 = [&]() -> ErrorOr<void> { return TRY((((builder).build_all(binary_dir,(([cxx_compiler_path, runtime_path, extra_include_paths, optimize, extra_compiler_flags](DeprecatedString input_filename, DeprecatedString output_filename) -> ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> {
 {
-return (TRY((jakt__platform__unknown_compiler::run_compiler(cxx_compiler_path,input_filename,output_filename,runtime_path,extra_include_paths,(TRY((DynamicArray<DeprecatedString>::create_with({})))),(TRY((DynamicArray<DeprecatedString>::create_with({})))),optimize,extra_compiler_flags))));
+return (TRY((platform__unknown_compiler::run_compiler(cxx_compiler_path,input_filename,output_filename,runtime_path,extra_include_paths,(TRY((DynamicArray<DeprecatedString>::create_with({})))),(TRY((DynamicArray<DeprecatedString>::create_with({})))),optimize,extra_compiler_flags))));
 }
 }
 )))))), ErrorOr<void>{}; }();

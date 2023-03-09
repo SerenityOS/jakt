@@ -72,12 +72,6 @@ comptime platform_module(anon mut name: String) throws -> [String] {
 
 comptime platform_process() throws -> [String] => platform_module("jakt::platform::process")
 comptime platform_fs() throws -> [String] => platform_module("jakt::platform::fs")
-comptime platform_compiler() throws -> [String] => platform_module("jakt::platform::compiler")
 comptime platform_errno() throws -> [String] => platform_module("jakt::platform::errno")
 
 comptime is_windows() throws -> bool => Target::active().os == "windows"
-
-comptime library_name(anon name: String) throws -> String => match Target::active().os {
-    "windows" => format("jakt_{}.lib", name)
-    else => format("libjakt_{}.a", name)
-}

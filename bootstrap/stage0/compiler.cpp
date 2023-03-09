@@ -143,13 +143,13 @@ TRY((error::print_error_json(file_name,error)));
 }
 else {
 if ((!(((file_contents).has_value())))){
-auto __jakt_var_0 = [&]() -> ErrorOr<void> {{
+auto __jakt_var_2 = [&]() -> ErrorOr<void> {{
 NonnullRefPtr<File> file = TRY((File::open_for_reading(file_name)));
 (file_contents = TRY((((file)->read_all()))));
 }
 
 ;return {};}();
-if (__jakt_var_0.is_error()) {auto error = __jakt_var_0.release_error();{
+if (__jakt_var_2.is_error()) {auto error = __jakt_var_2.release_error();{
 }
 };
 }
@@ -219,13 +219,13 @@ i32 const ErrFBIG = static_cast<i32>(27);
 i32 const ErrNAMETOOLONG = static_cast<i32>(36);
 JaktInternal::Optional<utility::FileId> const old_file_id = ((*this).current_file);
 (((*this).current_file) = file_id);
-auto __jakt_var_1 = [&]() -> ErrorOr<void> {{
+auto __jakt_var_3 = [&]() -> ErrorOr<void> {{
 NonnullRefPtr<File> file = TRY((File::open_for_reading(((((((*this).files))[((file_id).id)])).to_string()))));
 (((*this).current_file_contents) = TRY((((file)->read_all()))));
 }
 
 ;return {};}();
-if (__jakt_var_1.is_error()) {auto error = __jakt_var_1.release_error();{
+if (__jakt_var_3.is_error()) {auto error = __jakt_var_3.release_error();{
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,bool>{
 auto __jakt_enum_value = (((error).code()));

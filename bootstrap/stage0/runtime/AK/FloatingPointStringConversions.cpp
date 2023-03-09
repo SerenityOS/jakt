@@ -10,6 +10,7 @@
 #include <AK/ScopeGuard.h>
 #include <AK/StringView.h>
 #include <AK/UFixedBigInt.h>
+#include <AK/UFixedBigIntDivision.h>
 
 namespace AK {
 
@@ -433,8 +434,7 @@ constexpr static u128 compute_power_of_five(i64 exponent)
             base *= 5u;
         }
 
-        auto z = u4096::my_size() * 8
-            - base.clz();
+        auto z = 4096 - base.clz();
 
         auto b = z + 127;
         u4096 base2 { 1u };
@@ -456,8 +456,7 @@ constexpr static u128 compute_power_of_five(i64 exponent)
         base *= 5u;
     }
 
-    auto z = u4096::my_size() * 8
-        - base.clz();
+    auto z = 4096 - base.clz();
 
     auto b = 2 * z + 128;
 
@@ -1227,14 +1226,7 @@ static i32 decimal_exponent_to_binary_exponent(i32 exponent)
 
 static u128 multiply(u64 a, u64 b)
 {
-#ifdef __SIZEOF_INT128__
-    unsigned __int128 result = (unsigned __int128)a * b;
-    u64 low = result;
-    u64 high = result >> 64;
-    return u128 { low, high };
-#else
-    return u128 { a }.wide_multiply(u128 { b }).low;
-#endif
+    return UFixedBigInt<64>(a).wide_multiply(b);
 }
 
 template<unsigned Precision>
@@ -1249,10 +1241,7 @@ u128 multiplication_approximation(u64 value, i32 exponent)
 
     if ((lower_result.high() & mask) == mask) {
         auto upper_result = multiply(z.low(), value);
-        lower_result.low() += upper_result.high();
-        if (upper_result.high() > lower_result.low()) {
-            ++lower_result.high();
-        }
+        lower_result += upper_result.high();
     }
 
     return lower_result;

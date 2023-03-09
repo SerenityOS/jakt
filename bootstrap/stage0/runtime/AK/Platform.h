@@ -13,14 +13,23 @@
 
 #ifdef __x86_64__
 #    define AK_ARCH_X86_64 1
+#    define AK_IS_ARCH_X86_64() 1
+#else
+#    define AK_IS_ARCH_X86_64() 0
 #endif
 
 #ifdef __aarch64__
 #    define AK_ARCH_AARCH64 1
+#    define AK_IS_ARCH_AARCH64() 1
+#else
+#    define AK_IS_ARCH_AARCH64() 0
 #endif
 
 #ifdef __wasm32__
 #    define AK_ARCH_WASM32 1
+#    define AK_IS_ARCH_WASM32() 1
+#else
+#    define AK_IS_ARCH_WASM32() 0
 #endif
 
 #if (defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 8) || defined(_WIN64)
@@ -68,6 +77,11 @@
 #    define AK_OS_DRAGONFLY
 #endif
 
+#if defined(__sun)
+#    define AK_OS_BSD_GENERIC
+#    define AK_OS_SOLARIS
+#endif
+
 #if defined(_WIN32) || defined(_WIN64)
 #    define AK_OS_WINDOWS
 #endif
@@ -88,7 +102,7 @@
 #    define AK_OS_EMSCRIPTEN
 #endif
 
-#define ARCH(arch) (defined(AK_ARCH_##arch) && AK_ARCH_##arch)
+#define ARCH(arch) (AK_IS_ARCH_##arch())
 
 #if ARCH(X86_64)
 #    define VALIDATE_IS_X86()
@@ -192,7 +206,7 @@ extern "C" {
 #endif
 
 #ifndef AK_SYSTEM_CACHE_ALIGNMENT_SIZE
-#    if ARCH(AARCH64) || ARCH(x86_64)
+#    if ARCH(AARCH64) || ARCH(X86_64)
 #        define AK_SYSTEM_CACHE_ALIGNMENT_SIZE 64
 #    else
 #        define AK_SYSTEM_CACHE_ALIGNMENT_SIZE 128

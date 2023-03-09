@@ -11,7 +11,6 @@
 #include <AK/MemMem.h>
 #include <AK/Stream.h>
 #include <AK/String.h>
-#include <AK/Utf8View.h>
 #include <AK/Vector.h>
 #include <stdlib.h>
 
@@ -132,15 +131,21 @@ ErrorOr<NonnullRefPtr<StringData>> StringData::from_utf8(char const* utf8_data, 
     // Strings of MAX_SHORT_STRING_BYTE_COUNT bytes or less should be handled by the String short string optimization.
     VERIFY(byte_count > String::MAX_SHORT_STRING_BYTE_COUNT);
 
-    Utf8View view(StringView(utf8_data, byte_count));
-    if (!view.validate())
-        return Error::from_string_literal("StringData::from_utf8: Input was not valid UTF-8");
-
     VERIFY(utf8_data);
     u8* buffer = nullptr;
     auto new_string_data = TRY(create_uninitialized(byte_count, buffer));
     memcpy(buffer, utf8_data, byte_count * sizeof(char));
     return new_string_data;
+}
+
+static ErrorOr<void> read_stream_into_buffer(Stream& stream, Bytes buffer)
+{
+    TRY(stream.read_entire_buffer(buffer));
+
+    if (!Utf8View { StringView { buffer } }.validate())
+        return Error::from_string_literal("String::from_stream: Input was not valid UTF-8");
+
+    return {};
 }
 
 ErrorOr<NonnullRefPtr<StringData>> StringData::from_stream(Stream& stream, size_t byte_count)
@@ -150,12 +155,7 @@ ErrorOr<NonnullRefPtr<StringData>> StringData::from_stream(Stream& stream, size_
 
     u8* buffer = nullptr;
     auto new_string_data = TRY(create_uninitialized(byte_count, buffer));
-    Bytes new_string_bytes = { buffer, byte_count };
-    TRY(stream.read_entire_buffer(new_string_bytes));
-
-    Utf8View view(StringView { new_string_bytes });
-    if (!view.validate())
-        return Error::from_string_literal("StringData::from_stream: Input was not valid UTF-8");
+    TRY(read_stream_into_buffer(stream, { buffer, byte_count }));
 
     return new_string_data;
 }
@@ -230,6 +230,9 @@ void String::destroy_string()
 
 ErrorOr<String> String::from_utf8(StringView view)
 {
+    if (!Utf8View { view }.validate())
+        return Error::from_string_literal("String::from_utf8: Input was not valid UTF-8");
+
     if (view.length() <= MAX_SHORT_STRING_BYTE_COUNT) {
         ShortString short_string;
         if (!view.is_empty())
@@ -246,7 +249,7 @@ ErrorOr<String> String::from_stream(Stream& stream, size_t byte_count)
     if (byte_count <= MAX_SHORT_STRING_BYTE_COUNT) {
         ShortString short_string;
         if (byte_count > 0)
-            TRY(stream.read_entire_buffer({ short_string.storage, byte_count }));
+            TRY(Detail::read_stream_into_buffer(stream, { short_string.storage, byte_count }));
         short_string.byte_count_and_short_string_flag = (byte_count << 1) | SHORT_STRING_FLAG;
         return String { short_string };
     }
@@ -486,9 +489,18 @@ bool String::contains(StringView needle, CaseSensitivity case_sensitivity) const
     return StringUtils::contains(bytes_as_string_view(), needle, case_sensitivity);
 }
 
-bool String::contains(char needle, CaseSensitivity case_sensitivity) const
+bool String::contains(u32 needle, CaseSensitivity case_sensitivity) const
 {
-    return contains(StringView { &needle, 1 }, case_sensitivity);
+    auto needle_as_string = String::from_code_point(needle);
+    return contains(needle_as_string.bytes_as_string_view(), case_sensitivity);
+}
+
+bool String::starts_with(u32 code_point) const
+{
+    if (is_empty())
+        return false;
+
+    return *code_points().begin() == code_point;
 }
 
 bool String::starts_with_bytes(StringView bytes) const
@@ -496,9 +508,21 @@ bool String::starts_with_bytes(StringView bytes) const
     return bytes_as_string_view().starts_with(bytes);
 }
 
-bool String::starts_with(u32 code_point) const
+bool String::ends_with(u32 code_point) const
 {
-    return bytes_as_string_view().starts_with(code_point);
+    if (is_empty())
+        return false;
+
+    u32 last_code_point = 0;
+    for (auto it = code_points().begin(); it != code_points().end(); ++it)
+        last_code_point = *it;
+
+    return last_code_point == code_point;
+}
+
+bool String::ends_with_bytes(StringView bytes) const
+{
+    return bytes_as_string_view().ends_with(bytes);
 }
 
 bool String::is_short_string() const
@@ -577,9 +601,6 @@ DeprecatedString String::to_deprecated_string() const
 
 ErrorOr<String> String::from_deprecated_string(DeprecatedString const& deprecated_string)
 {
-    Utf8View view(deprecated_string);
-    if (!view.validate())
-        return Error::from_string_literal("String::from_deprecated_string: Input was not valid UTF-8");
     return String::from_utf8(deprecated_string.view());
 }
 
