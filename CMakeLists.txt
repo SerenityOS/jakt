@@ -95,6 +95,7 @@ set(SELFHOST_SOURCES
   selfhost/typechecker.jakt
   selfhost/types.jakt
   selfhost/utility.jakt
+  selfhost/platform.jakt
 )
 
 # FIXME: STDLIB target needed
@@ -111,28 +112,28 @@ if(CMAKE_HOST_WIN32)
     jakt__platform__windows_fs.cpp
     jakt__platform__windows_errno.cpp
     jakt__platform__windows_process.cpp
-    jakt__platform__windows_compiler.cpp
   )
+  list(APPEND SELFHOST_STDLIB_SOURCES platform__windows_compiler.cpp)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   list(APPEND SELFHOST_STDLIB_SOURCES
     jakt__platform__posix_fs.cpp
     jakt__platform__darwin_errno.cpp
     jakt__platform__posix_process.cpp
-    jakt__platform__posix_compiler.cpp
   )
+  list(APPEND SELFHOST_STDLIB_SOURCES platform__posix_compiler.cpp)
 elseif(CMAKE_HOST_UNIX)
   list(APPEND SELFHOST_STDLIB_SOURCES
     jakt__platform__posix_fs.cpp
     jakt__platform__posix_errno.cpp
     jakt__platform__posix_process.cpp
-    jakt__platform__posix_compiler.cpp
   )
+  list(APPEND SELFHOST_STDLIB_SOURCES platform__posix_compiler.cpp)
 else()
   list(APPEND SELFHOST_STDLIB_SOURCES
     jakt__platform__unknown_fs.cpp
     jakt__platform__unknown_process.cpp
-    jakt__platform__unknown_compiler.cpp
   )
+  list(APPEND SELFHOST_STDLIB_SOURCES platform__unknown_compiler.cpp)
 endif()
 
 add_jakt_executable(jakt_stage1

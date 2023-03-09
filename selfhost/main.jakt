@@ -9,24 +9,24 @@
 import jakt::libc::io { system }
 import jakt::arguments { ArgsParser }
 import jakt::file_iterator { RecursiveFileIterator }
+import jakt::path { Path, get_path_separator }
+import jakt::platform { platform_fs, is_windows }
 
+import build { Builder }
 import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
 import formatter { Formatter }
-import utility { Span, escape_for_quotes, join, write_to_file}
+import ide
+import interpreter { Interpreter, InterpreterScope, value_to_checked_expression }
 import lexer { Lexer, Token }
 import parser { Parser }
-import interpreter { Interpreter, InterpreterScope, value_to_checked_expression }
+import platform { library_name, platform_compiler }
+import project { Project }
+import repl { REPL, serialize_ast_node }
 import typechecker { Typechecker }
 import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImpl }
-import repl { REPL, serialize_ast_node }
-import project { Project }
-import ide
-import jakt::path { Path, get_path_separator }
-import jakt::platform { platform_fs, platform_module, platform_compiler, is_windows, library_name }
-
-import build { Builder }
+import utility { Span, escape_for_quotes, join, write_to_file}
 
 import platform_fs() {
     make_directory
