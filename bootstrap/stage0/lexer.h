@@ -41,26 +41,7 @@ lexer::Token lex_caret();
 ErrorOr<lexer::Token> lex_number();
 static ErrorOr<JaktInternal::DynamicArray<lexer::Token>> lex(NonnullRefPtr<compiler::Compiler> const compiler);
 ErrorOr<DeprecatedString> debug_description() const;
-};namespace LiteralPrefix_Details {
-struct None {
-};
-struct Hexadecimal {
-};
-struct Octal {
-};
-struct Binary {
-};
-}
-struct LiteralPrefix : public Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary> {
-using Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary>::Variant;
-    using None = LiteralPrefix_Details::None;
-    using Hexadecimal = LiteralPrefix_Details::Hexadecimal;
-    using Octal = LiteralPrefix_Details::Octal;
-    using Binary = LiteralPrefix_Details::Binary;
-ErrorOr<DeprecatedString> debug_description() const;
-DeprecatedString to_string() const;
-};
-namespace LiteralSuffix_Details {
+};namespace LiteralSuffix_Details {
 struct None {
 };
 struct UZ {
@@ -100,6 +81,25 @@ using Variant<LiteralSuffix_Details::None, LiteralSuffix_Details::UZ, LiteralSuf
     using I64 = LiteralSuffix_Details::I64;
     using F32 = LiteralSuffix_Details::F32;
     using F64 = LiteralSuffix_Details::F64;
+ErrorOr<DeprecatedString> debug_description() const;
+DeprecatedString to_string() const;
+};
+namespace LiteralPrefix_Details {
+struct None {
+};
+struct Hexadecimal {
+};
+struct Octal {
+};
+struct Binary {
+};
+}
+struct LiteralPrefix : public Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary> {
+using Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary>::Variant;
+    using None = LiteralPrefix_Details::None;
+    using Hexadecimal = LiteralPrefix_Details::Hexadecimal;
+    using Octal = LiteralPrefix_Details::Octal;
+    using Binary = LiteralPrefix_Details::Binary;
 ErrorOr<DeprecatedString> debug_description() const;
 DeprecatedString to_string() const;
 };
@@ -1033,14 +1033,14 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::lexer::LiteralPrefix> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralPrefix const& value) {
+template<>struct Jakt::Formatter<Jakt::lexer::LiteralSuffix> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralSuffix const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::lexer::LiteralSuffix> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralSuffix const& value) {
+template<>struct Jakt::Formatter<Jakt::lexer::LiteralPrefix> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralPrefix const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

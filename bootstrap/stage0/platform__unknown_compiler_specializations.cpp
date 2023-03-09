@@ -1,12 +1,11 @@
-#include "jakt__platform__unknown_compiler.h"
+#include "platform__unknown_compiler.h"
 #include "main.h"
-#include "jakt__platform__unknown_compiler.h"
-#include "build.h"
-#include "jakt__platform__unknown_process.h"
-#include "ide.h"
-#include "project.h"
+#include "platform__unknown_compiler.h"
 #include "repl.h"
 #include "jakt__libc__io.h"
+#include "project.h"
+#include "platform.h"
+#include "ide.h"
 #include "formatter.h"
 #include "codegen.h"
 #include "typechecker.h"
@@ -17,6 +16,8 @@
 #include "compiler.h"
 #include "error.h"
 #include "utility.h"
+#include "build.h"
+#include "jakt__platform__unknown_process.h"
 #include "jakt__file_iterator.h"
 #include "jakt__platform__unknown_fs.h"
 #include "jakt__path.h"
@@ -27,6 +28,6 @@
 #include "jakt__prelude__string.h"
 #include "jakt__prelude__iteration.h"
 namespace Jakt {
-namespace jakt__platform__unknown_compiler {
+namespace platform__unknown_compiler {
 }
 } // namespace Jakt

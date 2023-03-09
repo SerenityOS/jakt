@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <AK/DeprecatedFlyString.h>
 #include <AK/FlyString.h>
 #include <AK/HashMap.h>
 #include <AK/Singleton.h>
@@ -162,6 +163,11 @@ size_t FlyString::number_of_fly_strings()
     return all_fly_strings().size();
 }
 
+DeprecatedFlyString FlyString::to_deprecated_fly_string() const
+{
+    return DeprecatedFlyString(bytes_as_string_view());
+}
+
 unsigned Traits<FlyString>::hash(FlyString const& fly_string)
 {
     return fly_string.bytes_as_string_view().hash();
@@ -170,6 +176,14 @@ unsigned Traits<FlyString>::hash(FlyString const& fly_string)
 ErrorOr<void> Formatter<FlyString>::format(FormatBuilder& builder, FlyString const& fly_string)
 {
     return Formatter<StringView>::format(builder, fly_string.bytes_as_string_view());
+}
+
+bool FlyString::equals_ignoring_ascii_case(FlyString const& other) const
+{
+    if (*this == other)
+        return true;
+    // FIXME: Rename StringUtils::equals_ignoring_case to equals_ignoring_ascii_case.
+    return StringUtils::equals_ignoring_case(bytes_as_string_view(), other.bytes_as_string_view());
 }
 
 }

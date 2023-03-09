@@ -16,6 +16,11 @@
 #    include <AK/Math.h>
 #endif
 
+// Solaris' definition of signbit in math_c99.h conflicts with our implementation.
+#ifdef AK_OS_SOLARIS
+#    undef signbit
+#endif
+
 namespace AK {
 
 // FIXME: this always uses round to nearest break-tie to even
@@ -36,11 +41,13 @@ public:
     {
     }
 
+#ifndef KERNEL
     template<FloatingPoint F>
-    constexpr FixedPoint(F value)
-        : m_value(static_cast<Underlying>(value * (static_cast<Underlying>(1) << precision)))
+    FixedPoint(F value)
+        : m_value(round_to<Underlying>(value * (static_cast<Underlying>(1) << precision)))
     {
     }
+#endif
 
     template<size_t P, typename U>
     explicit constexpr FixedPoint(FixedPoint<P, U> const& other)

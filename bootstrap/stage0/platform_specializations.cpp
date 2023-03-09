@@ -1,4 +1,4 @@
-#include "jakt__arguments.h"
+#include "platform.h"
 #include "main.h"
 #include "platform__unknown_compiler.h"
 #include "repl.h"
@@ -28,6 +28,6 @@
 #include "jakt__prelude__string.h"
 #include "jakt__prelude__iteration.h"
 namespace Jakt {
-namespace jakt__arguments {
+namespace platform {
 }
 } // namespace Jakt
