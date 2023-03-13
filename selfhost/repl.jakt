@@ -316,6 +316,10 @@ struct REPL {
                 break
             }
 
+            if line == "\n" {
+              continue
+            }
+
             if line == ".exit\n" {
                 break
             }
