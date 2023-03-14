@@ -1,0 +1,9 @@
+/// Expect:
+/// - output: "false\ntrue\n"
+
+fn main() {
+    let x = "Well, hello friends"
+
+    println("{}", x.contains("goodbye"))
+    println("{}", x.contains("hello"))
+}
