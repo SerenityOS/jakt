@@ -21,6 +21,8 @@ struct Editor {
     standard_input_file: raw FILE
     line_pointer: raw c_char
     prompt: String
+    multiline_input_start_indicator: String = "{-"
+    multiline_input_end_indicator: String = "-}"
 
     fn create(prompt: String) throws -> Editor {
         mut std_in = fopen(str: "/dev/stdin".c_string(), mode: "r".c_string())
@@ -37,10 +39,11 @@ struct Editor {
         return editor
     }
 
-    fn get_line(mut this) throws -> LineResult {
-        eprint("{}", .prompt)
+    fn get_line(mut this, prompt: String? = None) throws -> LineResult {
+        eprint("{}", prompt ?? .prompt)
 
         mut builder = StringBuilder::create()
+
         unsafe {
             let c_string = fgets(
                 s: .line_pointer
@@ -52,6 +55,32 @@ struct Editor {
             }
 
             builder.append_c_string(c_string)
+        }
+
+        let line = builder.to_string()
+
+        if line == format("{}\n", .multiline_input_start_indicator) {
+          return .read_lines_until_separator(.multiline_input_end_indicator)
+        }
+
+        return LineResult::Line(line)
+    }
+
+    fn read_lines_until_separator(mut this, anon sep: String) throws -> LineResult {
+        mut builder = StringBuilder::create()
+
+        loop {
+            match .get_line(prompt: ".. ") {
+                LineResult::Line(line) => {
+                    if line == format("{}\n", sep) {
+                      break
+                    }
+                    builder.append_string(line)
+                }
+                LineResult::Eof => {
+                    return LineResult::Eof
+                }
+            }
         }
 
         return LineResult::Line(builder.to_string())
@@ -277,7 +306,6 @@ struct REPL {
 
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
         let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: true,  debug_name: "root")
-
         let root_interpreter_scope = InterpreterScope::create()
 
         return REPL(
@@ -302,11 +330,7 @@ struct REPL {
         defer editor.destroy()
 
         loop {
-            if not .compiler.errors.is_empty() {
-                .compiler.print_errors()
-                let arr: [JaktError] = []
-                .compiler.errors = arr
-            }
+            .handle_possible_error()
 
             let line_result = try editor.get_line() catch error {
                 return
