@@ -23,16 +23,16 @@ public:
     /// The amount of bytes read can be smaller than the size of the buffer.
     /// Returns either the bytes that were read, or an errno in the case of
     /// failure.
-    virtual ErrorOr<Bytes> read(Bytes) = 0;
+    virtual ErrorOr<Bytes> read_some(Bytes) = 0;
     /// Tries to fill the entire buffer through reading. Returns whether the
     /// buffer was filled without an error.
-    virtual ErrorOr<void> read_entire_buffer(Bytes);
+    virtual ErrorOr<void> read_until_filled(Bytes);
     /// Reads the stream until EOF, storing the contents into a ByteBuffer which
     /// is returned once EOF is encountered. The block size determines the size
     /// of newly allocated chunks while reading.
     virtual ErrorOr<ByteBuffer> read_until_eof(size_t block_size = 4096);
     /// Discards the given number of bytes from the stream. As this is usually used
-    /// as an efficient version of `read_entire_buffer`, it returns an error
+    /// as an efficient version of `read_until_filled`, it returns an error
     /// if reading failed or if not all bytes could be discarded.
     /// Unless specifically overwritten, this just uses read() to read into an
     /// internal stack-based buffer.
@@ -41,10 +41,10 @@ public:
     /// Tries to write the entire contents of the buffer. It is possible for
     /// less than the full buffer to be written. Returns either the amount of
     /// bytes written into the stream, or an errno in the case of failure.
-    virtual ErrorOr<size_t> write(ReadonlyBytes) = 0;
+    virtual ErrorOr<size_t> write_some(ReadonlyBytes) = 0;
     /// Same as write, but does not return until either the entire buffer
     /// contents are written or an error occurs.
-    virtual ErrorOr<void> write_entire_buffer(ReadonlyBytes);
+    virtual ErrorOr<void> write_until_depleted(ReadonlyBytes);
 
     template<typename T>
     requires(requires(Stream& stream) { { T::read_from_stream(stream) } -> SameAs<ErrorOr<T>>; })
@@ -58,7 +58,7 @@ public:
     ErrorOr<T> read_value()
     {
         alignas(T) u8 buffer[sizeof(T)] = {};
-        TRY(read_entire_buffer({ &buffer, sizeof(buffer) }));
+        TRY(read_until_filled({ &buffer, sizeof(buffer) }));
         return bit_cast<T>(buffer);
     }
 
@@ -73,7 +73,7 @@ public:
     requires(Traits<T>::is_trivially_serializable())
     ErrorOr<void> write_value(T const& value)
     {
-        return write_entire_buffer({ &value, sizeof(value) });
+        return write_until_depleted({ &value, sizeof(value) });
     }
 
     /// Returns whether the stream has reached the end of file. For sockets,

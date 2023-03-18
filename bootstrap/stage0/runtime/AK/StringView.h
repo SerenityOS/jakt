@@ -26,13 +26,13 @@ public:
         , m_length(length)
     {
         if (!is_constant_evaluated())
-            VERIFY(!Checked<uintptr_t>::addition_would_overflow((uintptr_t)characters, length));
+            VERIFY(!Checked<uintptr_t>::addition_would_overflow(reinterpret_cast<uintptr_t>(characters), length));
     }
     ALWAYS_INLINE StringView(unsigned char const* characters, size_t length)
-        : m_characters((char const*)characters)
+        : m_characters(reinterpret_cast<char const*>(characters))
         , m_length(length)
     {
-        VERIFY(!Checked<uintptr_t>::addition_would_overflow((uintptr_t)characters, length));
+        VERIFY(!Checked<uintptr_t>::addition_would_overflow(reinterpret_cast<uintptr_t>(characters), length));
     }
     ALWAYS_INLINE StringView(ReadonlyBytes bytes)
         : m_characters(reinterpret_cast<char const*>(bytes.data()))
@@ -104,7 +104,7 @@ public:
     [[nodiscard]] bool contains(char) const;
     [[nodiscard]] bool contains(u32) const;
     [[nodiscard]] bool contains(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
-    [[nodiscard]] bool equals_ignoring_case(StringView other) const;
+    [[nodiscard]] bool equals_ignoring_ascii_case(StringView) const;
 
     [[nodiscard]] StringView trim(StringView characters, TrimMode mode = TrimMode::Both) const { return StringUtils::trim(*this, characters, mode); }
     [[nodiscard]] StringView trim_whitespace(TrimMode mode = TrimMode::Both) const { return StringUtils::trim_whitespace(*this, mode); }
@@ -337,14 +337,14 @@ public:
     }
 
     template<typename... Ts>
-    [[nodiscard]] ALWAYS_INLINE constexpr bool is_one_of_ignoring_case(Ts&&... strings) const
+    [[nodiscard]] ALWAYS_INLINE constexpr bool is_one_of_ignoring_ascii_case(Ts&&... strings) const
     {
         return (... ||
                 [this, &strings]() -> bool {
             if constexpr (requires(Ts a) { a.view()->StringView; })
-                return this->equals_ignoring_case(forward<Ts>(strings.view()));
+                return this->equals_ignoring_ascii_case(forward<Ts>(strings.view()));
             else
-                return this->equals_ignoring_case(forward<Ts>(strings));
+                return this->equals_ignoring_ascii_case(forward<Ts>(strings));
         }());
     }
 
@@ -359,14 +359,14 @@ struct Traits<StringView> : public GenericTraits<StringView> {
     static unsigned hash(StringView s) { return s.hash(); }
 };
 
-struct CaseInsensitiveStringViewTraits : public Traits<StringView> {
+struct CaseInsensitiveASCIIStringViewTraits : public Traits<StringView> {
     static unsigned hash(StringView s)
     {
         if (s.is_empty())
             return 0;
         return case_insensitive_string_hash(s.characters_without_null_termination(), s.length());
     }
-    static bool equals(StringView const& a, StringView const& b) { return a.equals_ignoring_case(b); }
+    static bool equals(StringView const& a, StringView const& b) { return a.equals_ignoring_ascii_case(b); }
 };
 
 }
@@ -385,6 +385,6 @@ struct CaseInsensitiveStringViewTraits : public Traits<StringView> {
 }
 
 #if USING_AK_GLOBALLY
-using AK::CaseInsensitiveStringViewTraits;
+using AK::CaseInsensitiveASCIIStringViewTraits;
 using AK::StringView;
 #endif

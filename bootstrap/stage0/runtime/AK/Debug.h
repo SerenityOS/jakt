@@ -334,6 +334,10 @@
 #    define OCCLUSIONS_DEBUG 0
 #endif
 
+#ifndef OPENTYPE_GPOS_DEBUG
+#    define OPENTYPE_GPOS_DEBUG 0
+#endif
+
 #ifndef HTML_PARSER_DEBUG
 #    define HTML_PARSER_DEBUG 0
 #endif

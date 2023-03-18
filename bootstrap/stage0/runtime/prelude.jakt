@@ -68,6 +68,7 @@ extern struct String {
     fn replace(this, replace: String, with: String) -> String
     fn starts_with(this, anon needle: String) -> bool
     fn ends_with(this, anon needle: String) -> bool
+    fn contains(this, anon needle: StringView) -> bool
 }
 
 [[name=DeprecatedStringBuilder]]
