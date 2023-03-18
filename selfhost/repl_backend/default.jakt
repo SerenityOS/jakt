@@ -1,17 +1,16 @@
 import utility { Span, allocate, null }
 import jakt::libc::io { FILE, fgets, fclose, fopen }
-
-enum LineResult {
-    Line(String)
-    Eof
-}
+import repl_backend::common { LineResult, Style, Color, XTermColor }
 
 struct Editor {
     standard_input_file: raw FILE
     line_pointer: raw c_char
     prompt: String
 
-    fn create(prompt: String) throws -> Editor {
+    fn create(
+        prompt: String
+        syntax_highlight_handler: &fn(anon editor: &mut Editor) throws -> void
+    ) throws -> Editor {
         mut std_in = fopen(str: "/dev/stdin".c_string(), mode: "r".c_string())
         if std_in == null<FILE>() {
             eprintln("Could not open /dev/stdin for reading")
@@ -44,6 +43,14 @@ struct Editor {
         }
 
         return LineResult::Line(builder.to_string())
+    }
+
+    fn get_active_buffer(mut this) throws -> String {
+        throw Error::from_string_literal("Active buffer not supported")
+    }
+
+    fn highlight(mut this, anon span: Span, anon style: Style) throws -> void {
+        throw Error::from_string_literal("Highlighting not supported")
     }
 
     fn destroy(mut this) {

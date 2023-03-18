@@ -48,3 +48,21 @@ Jakt is known to compile with clang >=13 on Linux, macOS and Windows. g++ also w
 MSVC is not supported, however clang-cl.exe and clang.exe do work and clang-cl is used in CI.
 
 On MSYS2, g++ may error out with a "string table overflow" error. In that case, re-configure the build directory with -DCMAKE_BUILD_TYPE=MinSizeRel to get the -Os flag. Do note that using WSL2 or clang directly on windows is a more supported build platform. Maintainers will be reluctant to merge runtime or jakttest patches for MSYS2 quirks to keep the number of supported platfoms under control.
+
+## Building with LibLine as the REPL backend
+
+To build `jakt` with [LibLine](https://github.com/SerenityOS/serenity/blob/master/Userland/Libraries/LibLine) as the line editor, you need a bootstrap build of Jakt, plus a local build of Lagom (if not available, build lagom using the option described [here](https://github.com/SerenityOS/serenity/blob/master/Documentation/AdvancedBuildInstructions.md#cmake-build-options), or simply invoke `Meta/serenity.sh build lagom` in a serenity checkout). Once available, the binary can be
+built by specifying the backend as `libline` and setting the appropriate linker options:
+```console
+$ path/to/bootstrap/jakt \
+    selfhost/main.jakt \
+    --ak-is-my-only-stdlib \
+    --config jakt.repl_backend=libline \
+    -I path/to/serenity \
+    -I path/to/serenity/Userland/Libraries \
+    -L path/to/serenity/Build/lagom/Userland/Libraries/LibLine \
+    -l lagom-line \
+    -Wl-rpath,path/to/serenity/Build/lagom/Userland/Libraries/LibLine
+```
+
+The produced binary can be used to launch a REPL using LibLine as its line editor.

@@ -11,7 +11,7 @@ import interpreter { value_to_checked_expression }
 import jakt::path { Path }
 
 import platform { repl_backend }
-import repl_backend() { Editor, LineResult }
+import repl_backend() { Editor, LineResult, Style, Color, XTermColor }
 
 fn serialize_unary_operation(anon op: CheckedUnaryOperator, anon expr: String) -> String => match op {
     PreIncrement => "++" + expr
@@ -245,7 +245,94 @@ struct REPL {
     }
 
     fn run(mut this) throws {
-        mut editor = Editor::create(prompt: "> ")
+        let syntax_highlight_handler = fn[this](anon editor: &mut Editor) throws -> void {
+            let line = editor.get_active_buffer()
+            mut pos: usize = 0
+            mut bytes_: [u8] = []
+            bytes_.ensure_capacity(line.length())
+            while pos < line.length() {
+                bytes_.push(line.byte_at(pos))
+                ++pos
+            }
+            .compiler.current_file = .file_id
+            .compiler.current_file_contents = bytes_
+            defer {
+                let arr: [JaktError] = []
+                .compiler.errors = arr
+            }
+
+            for token in try Lexer::lex(compiler: .compiler) catch { return } {
+                match token {
+                    SingleQuotedString(span)
+                    | QuotedString(span)
+                    => editor.highlight(span, Style(foreground: Color::XTerm(XTermColor::Green)))
+                    Number(span) => editor.highlight(span, Style(foreground: Color::XTerm(XTermColor::Blue)))
+                    And(span)
+                    | Anon(span)
+                    | As(span)
+                    | Boxed(span)
+                    | Break(span)
+                    | Catch(span)
+                    | Class(span)
+                    | Continue(span)
+                    | Cpp(span)
+                    | Defer(span)
+                    | Destructor(span)
+                    | Else(span)
+                    | Enum(span)
+                    | Extern(span)
+                    | False(span)
+                    | For(span)
+                    | Fn(span)
+                    | Comptime(span)
+                    | If(span)
+                    | Import(span)
+                    | In(span)
+                    | Is(span)
+                    | Let(span)
+                    | Loop(span)
+                    | Match(span)
+                    | Mut(span)
+                    | Namespace(span)
+                    | Not(span)
+                    | Or(span)
+                    | Override(span)
+                    | Private(span)
+                    | Public(span)
+                    | Raw(span)
+                    | Reflect(span)
+                    | Return(span)
+                    | Restricted(span)
+                    | Sizeof(span)
+                    | Struct(span)
+                    | This(span) | Dot(span)
+                    | Throw(span)
+                    | Throws(span)
+                    | True(span)
+                    | Try(span)
+                    | Unsafe(span)
+                    | Virtual(span)
+                    | Weak(span)
+                    | While(span)
+                    | Yield(span)
+                    | Guard(span)
+                    | Implements(span)
+                    | Requires(span)
+                    | Trait(span)
+                    => editor.highlight(span, Style(foreground: Color::XTerm(XTermColor::Yellow)))
+                    DotDot(span) => editor.highlight(span, Style(foreground: Color::XTerm(XTermColor::Cyan)))
+                    Eol(span, comment) => {
+                        if comment.has_value() { editor.highlight(span, Style(foreground: Color::Components(red: 128, green: 128, blue: 128))) }
+                    }
+                    else => {}
+                }
+            }
+        }
+
+        mut editor = Editor::create(
+            prompt: "> "
+            &syntax_highlight_handler
+        )
         defer editor.destroy()
 
         loop {
