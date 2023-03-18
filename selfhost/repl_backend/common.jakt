@@ -1,0 +1,31 @@
+enum LineResult {
+    Line(String)
+    Eof
+}
+
+enum XTermColor {
+    Default
+    Black
+    Red
+    Green
+    Yellow
+    Blue
+    Magenta
+    Cyan
+    White
+    Unchanged
+}
+
+enum Color {
+    Components(
+        red: u8
+        green: u8
+        blue: u8
+    )
+    XTerm(XTermColor)
+}
+
+struct Style {
+    foreground: Color? = None
+    background: Color? = None
+}

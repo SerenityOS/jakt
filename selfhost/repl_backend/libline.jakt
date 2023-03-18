@@ -1,0 +1,144 @@
+import repl_backend::common { LineResult, Style, Color, XTermColor }
+import utility { Span }
+
+import extern "LibLine/Editor.h" {
+    namespace AK {
+        extern struct Result<T, E> {
+            fn release_value(mut this) -> T
+            fn release_error(mut this) -> E
+            fn is_error(this) -> bool
+        }
+    }
+    namespace Core {
+        extern struct Object {} // HACK!
+    }
+    namespace Line {
+        namespace Editor {
+            enum Error : u8 {
+                ReadFailure
+                Empty
+                Eof
+            }
+        }
+        namespace Style {
+            enum XtermColor : u8 {
+                Default
+                Black
+                Red
+                Green
+                Yellow
+                Blue
+                Magenta
+                Cyan
+                White
+                Unchanged
+            }
+            extern struct Background {
+                fn Background(anon r: u8, anon g: u8, anon b: u8) -> Background
+                fn Background(anon x: XtermColor) -> Background
+            }
+            extern struct Foreground {
+                fn Foreground(anon r: u8, anon g: u8, anon b: u8) -> Foreground
+                fn Foreground(anon x: XtermColor) -> Foreground
+            }
+        }
+        extern struct Style {
+            fn Style() -> Style
+            fn Style(anon c: Style::Background) -> Style
+            fn Style(anon c: Style::Foreground) -> Style
+            fn unify_with(mut this, anon other: Style) -> void
+        }
+        extern struct Span {
+            fn Span(anon start: usize, anon end: usize) -> Span
+        }
+        extern class Editor {
+            public on_display_refresh: fn(anon _: &mut Core::Object) -> void
+
+            [[name=try_create]]
+            public fn Editor() throws -> Editor
+            public fn initialize(mut this) -> void
+            public fn get_line(mut this, prompt: String) -> AK::Result<String, Editor::Error>
+            public fn line(mut this) -> String
+
+            public fn add_to_history(mut this, anon line: String) -> void
+
+            public fn stylize(mut this, span: Span, style: Style) -> void
+            public fn strip_styles(mut this) -> void
+        }
+    }
+}
+
+struct Editor {
+    editor: Line::Editor
+    prompt: String
+
+    fn create(
+        prompt: String
+        syntax_highlight_handler: &fn(anon editor: &mut Editor) throws -> void
+    ) throws -> Editor {
+        mut editor = Line::Editor()
+        editor.initialize()
+        mut e = Editor(editor, prompt)
+        editor.on_display_refresh = fn[e, &syntax_highlight_handler](anon _: &mut Core::Object) -> void {
+            mut v = e
+            v.editor.strip_styles()
+            try {
+                syntax_highlight_handler(&mut v)
+            } catch {
+                // nothing
+            }
+        }
+        return e
+    }
+
+    fn get_line(mut this) throws -> LineResult {
+        mut result = .editor.get_line(prompt: .prompt)
+        if result.is_error() {
+            return LineResult::Eof
+        }
+
+        let line = result.release_value()
+        .editor.add_to_history(line)
+        return LineResult::Line(line)
+    }
+
+    fn get_active_buffer(mut this) throws -> String {
+        return .editor.line()
+    }
+
+    fn highlight(mut this, anon span: Span, anon style: Style) throws -> void {
+        mut line_style = Line::Style()
+        if style.background.has_value() {
+            line_style.unify_with(convert_color(style.background!))
+        }
+        if style.foreground.has_value() {
+            line_style.unify_with(convert_color(style.foreground!))
+        }
+
+        .editor.stylize(
+            span: Line::Span(start: span.start, end: span.end)
+            style: line_style
+        )
+    }
+
+    private fn convert_color(anon x: Color) -> Line::Style {
+        return Line::Style(match x {
+            Components(red, green, blue) => Line::Style::Foreground(red, green, blue)
+            XTerm(color) => Line::Style::Foreground(match color {
+                Default => Line::Style::XtermColor::Default
+                Black => Line::Style::XtermColor::Black
+                Red => Line::Style::XtermColor::Red
+                Green => Line::Style::XtermColor::Green
+                Yellow => Line::Style::XtermColor::Yellow
+                Blue => Line::Style::XtermColor::Blue
+                Magenta => Line::Style::XtermColor::Magenta
+                Cyan => Line::Style::XtermColor::Cyan
+                White => Line::Style::XtermColor::White
+                Unchanged => Line::Style::XtermColor::Unchanged
+            })
+        })
+    }
+
+    fn destroy(mut this) {
+    }
+}

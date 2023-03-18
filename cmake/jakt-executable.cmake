@@ -67,6 +67,7 @@ function(add_jakt_executable executable)
     cmake_path(RELATIVE_PATH module_source_real BASE_DIRECTORY "${main_directory}" OUTPUT_VARIABLE module_base_relative)
 
     string(REPLACE "${_separator}" "__" module_source "${module_base_relative}")
+    string(REPLACE "/" "__" module_source "${module_source}") # Slashes are technically valid on windows
     get_filename_component(module_base "${module_source}" NAME_WE)
     list(APPEND cpp_files "${module_base}.cpp")
   endforeach()
