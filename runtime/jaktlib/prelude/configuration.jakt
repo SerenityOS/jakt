@@ -1,0 +1,5 @@
+extern fn ___jakt_get_user_configuration_value(anon name: StringView) -> StringView?
+
+struct UserConfiguration {
+    comptime value_of(anon name: StringView) -> StringView? => ___jakt_get_user_configuration_value(name)
+}

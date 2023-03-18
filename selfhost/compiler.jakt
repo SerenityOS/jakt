@@ -20,6 +20,7 @@ class Compiler {
     public dump_try_hints: bool
     public optimize: bool
     public target_triple: String?
+    public user_configuration: [String:String]
 
     public fn panic(this, anon message: String) throws -> never {
         .print_errors()
