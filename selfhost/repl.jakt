@@ -31,12 +31,54 @@ struct Editor {
             throw Error::from_errno(42)
         }
 
-        let editor = Editor(
+        return Editor(
             standard_input_file: std_in
             line_pointer: allocate<c_char>(count: 4096)
             prompt
         )
-        return editor
+    }
+
+    fn check_parens(anon input: String) -> bool {
+        mut unmatched_parens   = 0
+        mut unmatched_brackets = 0
+        mut unmatched_curlies  = 0
+
+        mut pos: usize = 0
+
+        while pos < input.length() {
+            match input.byte_at(pos) {
+                b'(' => { unmatched_parens += 1   }
+                b')' => { unmatched_parens -= 1   }
+                b'[' => { unmatched_brackets += 1 }
+                b']' => { unmatched_brackets -= 1 }
+                b'{' => { unmatched_curlies += 1  }
+                b'}' => { unmatched_curlies -= 1  }
+                else => {}
+            }
+
+            pos += 1
+        }
+
+        return unmatched_parens == 0 and unmatched_brackets == 0 and unmatched_curlies == 0
+    }
+
+    fn read_next_statement(mut this) throws -> LineResult {
+        mut builder = StringBuilder::create()
+        mut prompt  = .prompt
+
+        loop {
+            match .get_line(prompt) {
+                LineResult::Line(line) => { builder.append_string(line) }
+                LineResult::Eof        => { return LineResult::Eof      }
+            }
+
+            prompt = ".."
+
+            let result = builder.to_string()
+            if check_parens(result) {
+                return LineResult::Line(result)
+            }
+        }
     }
 
     fn get_line(mut this, prompt: String? = None) throws -> LineResult {
@@ -332,7 +374,7 @@ struct REPL {
         loop {
             .handle_possible_error()
 
-            let line_result = try editor.get_line() catch error {
+            let line_result = try editor.read_next_statement() catch error {
                 return
             }
 
