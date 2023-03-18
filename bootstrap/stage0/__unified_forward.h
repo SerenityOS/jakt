@@ -1097,24 +1097,55 @@ ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_struct(NonnullRefPtr<ty
 ErrorOr<DeprecatedString> get_function_signature(NonnullRefPtr<types::CheckedProgram> const program, types::FunctionId const function_id);
 
 }
-namespace platform {
-
-
-}
 namespace project {
 struct Project;
 }
+namespace jakt__prelude__configuration {
+struct UserConfiguration;
+extern JaktInternal::Optional<StringView> ___jakt_get_user_configuration_value(StringView const name);
+
+}
+namespace platform {
+
+
+
+}
 namespace jakt__libc__io {
 }
-namespace repl {
-struct REPL;
-struct Editor;
+namespace repl_backend__common {
+struct Style;
 namespace LineResult_Details {
 struct Line;
 struct Eof;
 }
 struct LineResult;
 
+namespace XTermColor_Details {
+struct Default;
+struct Black;
+struct Red;
+struct Green;
+struct Yellow;
+struct Blue;
+struct Magenta;
+struct Cyan;
+struct White;
+struct Unchanged;
+}
+struct XTermColor;
+
+namespace Color_Details {
+struct RGB;
+struct XTerm;
+}
+struct Color;
+
+}
+namespace repl_backend__default {
+struct Editor;
+}
+namespace repl {
+struct REPL;
 DeprecatedString serialize_unary_operation(types::CheckedUnaryOperator const op, DeprecatedString const expr);
 
 ErrorOr<DeprecatedString> serialize_ast_node(NonnullRefPtr<typename types::CheckedExpression> const node);

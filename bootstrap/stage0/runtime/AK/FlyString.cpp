@@ -97,7 +97,7 @@ bool FlyString::is_empty() const
 
 unsigned FlyString::hash() const
 {
-    return bytes_as_string_view().hash();
+    return String::fly_string_data_to_hash({}, m_data);
 }
 
 FlyString::operator String() const
@@ -168,9 +168,14 @@ DeprecatedFlyString FlyString::to_deprecated_fly_string() const
     return DeprecatedFlyString(bytes_as_string_view());
 }
 
+ErrorOr<FlyString> FlyString::from_deprecated_fly_string(DeprecatedFlyString const& deprecated_fly_string)
+{
+    return FlyString::from_utf8(deprecated_fly_string.view());
+}
+
 unsigned Traits<FlyString>::hash(FlyString const& fly_string)
 {
-    return fly_string.bytes_as_string_view().hash();
+    return fly_string.hash();
 }
 
 ErrorOr<void> Formatter<FlyString>::format(FormatBuilder& builder, FlyString const& fly_string)
@@ -182,8 +187,7 @@ bool FlyString::equals_ignoring_ascii_case(FlyString const& other) const
 {
     if (*this == other)
         return true;
-    // FIXME: Rename StringUtils::equals_ignoring_case to equals_ignoring_ascii_case.
-    return StringUtils::equals_ignoring_case(bytes_as_string_view(), other.bytes_as_string_view());
+    return StringUtils::equals_ignoring_ascii_case(bytes_as_string_view(), other.bytes_as_string_view());
 }
 
 }

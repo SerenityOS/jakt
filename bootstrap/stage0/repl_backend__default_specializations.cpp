@@ -1,4 +1,4 @@
-#include "platform.h"
+#include "repl_backend__default.h"
 #include "main.h"
 #include "platform__unknown_compiler.h"
 #include "repl.h"
@@ -31,6 +31,6 @@
 #include "jakt__prelude__string.h"
 #include "jakt__prelude__iteration.h"
 namespace Jakt {
-namespace platform {
+namespace repl_backend__default {
 }
 } // namespace Jakt

@@ -134,6 +134,7 @@ NonnullRefPtr<compiler::Compiler> compiler;NonnullRefPtr<types::CheckedProgram> 
 ErrorOr<types::Value> tuple_value(JaktInternal::DynamicArray<types::Value> const members, types::TypeId const type, utility::Span const span);
 ErrorOr<types::Value> bool_value(bool const value, utility::Span const span);
 static ErrorOr<NonnullRefPtr<interpreter::Interpreter>> create(NonnullRefPtr<compiler::Compiler> const compiler, NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::TypecheckFunctions> const typecheck_functions, JaktInternal::DynamicArray<utility::Span> const spans);
+ErrorOr<DeprecatedString> string_from_value(types::Value const value);
 void leave_span();
 ErrorOr<void> enter_span(utility::Span const span);
 ErrorOr<types::TypeId> tuple_type(JaktInternal::DynamicArray<types::TypeId> const members);
