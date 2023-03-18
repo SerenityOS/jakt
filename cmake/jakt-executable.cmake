@@ -60,7 +60,13 @@ function(add_jakt_executable executable)
     ${JAKT_EXECUTABLE_STDLIB_SOURCES}
   )
 
+  file(TO_NATIVE_PATH "/" _separator)
+
   foreach(module_source IN LISTS JAKT_EXECUTABLE_MODULE_SOURCES)
+    set(module_source_real "${CMAKE_CURRENT_LIST_DIR}/${module_source}")
+    cmake_path(RELATIVE_PATH module_source_real BASE_DIRECTORY "${main_directory}" OUTPUT_VARIABLE module_base_relative)
+
+    string(REPLACE "${_separator}" "__" module_source "${module_base_relative}")
     get_filename_component(module_base "${module_source}" NAME_WE)
     list(APPEND cpp_files "${module_base}.cpp")
   endforeach()

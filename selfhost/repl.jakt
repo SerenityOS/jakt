@@ -10,62 +10,8 @@ import error { JaktError }
 import interpreter { value_to_checked_expression }
 import jakt::path { Path }
 
-import jakt::libc::io { fopen, fclose, fgets, FILE }
-
-enum LineResult {
-    Line(String)
-    Eof
-}
-
-struct Editor {
-    standard_input_file: raw FILE
-    line_pointer: raw c_char
-    prompt: String
-
-    fn create(prompt: String) throws -> Editor {
-        mut std_in = fopen(str: "/dev/stdin".c_string(), mode: "r".c_string())
-        if std_in == null<FILE>() {
-            eprintln("Could not open /dev/stdin for reading")
-            throw Error::from_errno(42)
-        }
-
-        let editor = Editor(
-            standard_input_file: std_in
-            line_pointer: allocate<c_char>(count: 4096)
-            prompt
-        )
-        return editor
-    }
-
-    fn get_line(mut this) throws -> LineResult {
-        eprint("{}", .prompt)
-
-        mut builder = StringBuilder::create()
-        unsafe {
-            let c_string = fgets(
-                s: .line_pointer
-                n: 4096
-                stream: .standard_input_file)
-
-            if c_string == null<c_char>() {
-                return LineResult::Eof
-            }
-
-            builder.append_c_string(c_string)
-        }
-
-        return LineResult::Line(builder.to_string())
-    }
-
-    fn destroy(mut this) {
-        fclose(file: .standard_input_file)
-        unsafe {
-            cpp {
-                "free(line_pointer);"
-            }
-        }
-    }
-}
+import platform { repl_backend }
+import repl_backend() { Editor, LineResult }
 
 fn serialize_unary_operation(anon op: CheckedUnaryOperator, anon expr: String) -> String => match op {
     PreIncrement => "++" + expr

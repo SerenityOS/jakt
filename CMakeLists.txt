@@ -92,6 +92,7 @@ set(SELFHOST_SOURCES
   selfhost/parser.jakt
   selfhost/project.jakt
   selfhost/repl.jakt
+  selfhost/repl_backend/default.jakt
   selfhost/typechecker.jakt
   selfhost/types.jakt
   selfhost/utility.jakt

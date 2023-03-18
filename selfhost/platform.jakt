@@ -1,8 +1,17 @@
 import jakt::platform { platform_module, Target }
+import jakt::prelude::configuration { UserConfiguration }
 
 comptime platform_compiler() throws -> [String] => platform_module("platform::compiler")
 
 comptime library_name(anon name: String) throws -> String => match Target::active().os {
     "windows" => format("jakt_{}.lib", name)
     else => format("libjakt_{}.a", name)
+}
+
+comptime repl_backend() throws -> String => match UserConfiguration::value_of("jakt.repl_backend") ?? "default" {
+    "default" => "repl_backend::default"
+    "libline" => "repl_backend::libline"
+    else => {
+        throw Error::from_string_literal("Invalid value for jakt.repl_backend")
+    }
 }
