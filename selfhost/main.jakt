@@ -201,6 +201,7 @@ fn main(args: [String]) -> c_int {
     let extra_include_paths = args_parser.option_multiple(["-I"])
     let extra_lib_paths = args_parser.option_multiple(["-L"])
     let extra_link_libs = args_parser.option_multiple(["-l"])
+    let extra_linker_args = args_parser.option_multiple(["-Wl"])
     let set_output_filename = args_parser.option(["-o", "--output-filename"])
     let goto_def = args_parser.option(["-g", "--goto-def"])
     let goto_type_def = args_parser.option(["-t", "--goto-type-def"])
@@ -665,6 +666,10 @@ fn main(args: [String]) -> c_int {
             if is_windows() and Path::from_string(cxx_compiler_path).basename() == "clang-cl" {
                 extra_arguments.push("/link")
                 extra_arguments.push("/subsystem:console")
+            }
+
+            for arg in extra_linker_args {
+                extra_arguments.push(format("-Wl,{}", arg))
             }
 
             try builder.link_into_executable(
