@@ -1777,6 +1777,18 @@ class Interpreter {
                     impl: ValueImpl::JaktString(.compiler.target_triple ?? ___jakt_get_target_triple_string())
                     span: call_span
                 ))
+                "___jakt_get_user_configuration_value" => {
+                    mut impl = ValueImpl::OptionalNone
+                    let value = .compiler.user_configuration.get(.string_from_value(arguments[0]))
+                    if value.has_value() {
+                        impl = ValueImpl::OptionalSome(value: .string_value(value!, span: call_span))
+                    }
+
+                    yield StatementResult::JustValue(Value(
+                        impl
+                        span: call_span
+                    ))
+                }
                 "abort" => {abort()}
                 "Set" => {
                     if type_bindings.size() != 1 {
@@ -7323,6 +7335,13 @@ class Interpreter {
         impl: ValueImpl::JaktString(string)
         span
     )
+
+    public fn string_from_value(mut this, anon value: Value) throws -> String => match value.impl {
+        JaktString(x) => x
+        else => {
+            throw Error::from_errno(InterpretError::InvalidType as! i32)
+        }
+    }
 
     public fn reflect_methods(
         mut this

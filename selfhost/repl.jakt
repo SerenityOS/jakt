@@ -220,7 +220,7 @@ struct REPL {
     root_interpreter_scope: InterpreterScope
     file_id: FileId
 
-    fn create(runtime_path: Path, target_triple: String? = None) throws -> REPL {
+    fn create(runtime_path: Path, target_triple: String? = None, user_configuration: [String:String]) throws -> REPL {
         mut compiler = Compiler(
             files: []
             file_ids: [:]
@@ -238,6 +238,7 @@ struct REPL {
             dump_try_hints: false
             optimize: false
             target_triple
+            user_configuration
         )
 
         compiler.load_prelude()

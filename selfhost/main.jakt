@@ -208,6 +208,24 @@ fn main(args: [String]) -> c_int {
     let completions = args_parser.option(["-m", "--completions"])
     let print_symbols = args_parser.flag(["--print-symbols"])
     let project_name = args_parser.option(["--create"])
+    let user_configuration_specs = args_parser.option_multiple(["--config"])
+
+    mut user_configuration: [String:String] = [:]
+    for spec in user_configuration_specs {
+        let parts = spec.split(c'=')
+        match parts.size() {
+            1 => {
+                user_configuration[parts[0]] = "true"
+            }
+            2 => {
+                user_configuration[parts[0]] = parts[1]
+            }
+            else => {
+                eprintln("error: invalid configuration specification: {}", spec)
+                return 1
+            }
+        }
+    }
 
     let interpret_run = args_parser.flag(["-r", "--run"])
 
@@ -224,7 +242,7 @@ fn main(args: [String]) -> c_int {
     } as! usize
 
     if args_parser.flag(["--repl"]) {
-        mut repl = REPL::create(runtime_path: Path::from_parts([runtime_path, "jaktlib"]), target_triple)
+        mut repl = REPL::create(runtime_path: Path::from_parts([runtime_path, "jaktlib"]), target_triple, user_configuration)
         repl.run()
         return 0
     }
@@ -300,6 +318,7 @@ fn main(args: [String]) -> c_int {
         dump_try_hints
         optimize
         target_triple
+        user_configuration
     )
 
     compiler.load_prelude()
