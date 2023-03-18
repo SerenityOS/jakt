@@ -230,7 +230,7 @@ ALWAYS_INLINE constexpr OutputType infallible_integer_cast(InputType input)
     }
 }
 
-template<AK::SpecializationOf<AK::NonnullRefPtr> T, AK::SpecializationOf<AK::NonnullRefPtr> U>
+template<AK::Concepts::SpecializationOf<AK::NonnullRefPtr> T, AK::Concepts::SpecializationOf<AK::NonnullRefPtr> U>
 inline Optional<T> fallible_class_cast(U const& ptr)
 {
     if (!is<typename T::ElementType>(*ptr))
@@ -238,7 +238,7 @@ inline Optional<T> fallible_class_cast(U const& ptr)
     return T(static_cast<typename T::ElementType const&>(*ptr));
 }
 
-template<AK::SpecializationOf<AK::NonnullRefPtr> T, AK::SpecializationOf<AK::NonnullRefPtr> U>
+template<AK::Concepts::SpecializationOf<AK::NonnullRefPtr> T, AK::Concepts::SpecializationOf<AK::NonnullRefPtr> U>
 inline T infallible_class_cast(U const& ptr)
 {
     VERIFY(is<typename T::ElementType>(*ptr));
