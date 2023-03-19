@@ -3,7 +3,7 @@ import typechecker {
     InterpreterScope, LoadedModule, ModuleId, SafetyMode, ScopeId, TypeId, Typechecker, builtin
 }
 import compiler { Compiler, FileId }
-import lexer { Lexer }
+import lexer { Lexer, Token }
 import parser { Parser }
 import utility { Span, allocate, null }
 import error { JaktError }
@@ -23,8 +23,9 @@ struct Editor {
     prompt: String
     multiline_input_start_indicator: String = "{-"
     multiline_input_end_indicator: String = "-}"
+    compiler: Compiler
 
-    fn create(prompt: String) throws -> Editor {
+    fn create(compiler: Compiler, prompt: String) throws -> Editor {
         mut std_in = fopen(str: "/dev/stdin".c_string(), mode: "r".c_string())
         if std_in == null<FILE>() {
             eprintln("Could not open /dev/stdin for reading")
@@ -34,26 +35,40 @@ struct Editor {
         return Editor(
             standard_input_file: std_in
             line_pointer: allocate<c_char>(count: 4096)
-            prompt
+            prompt,
+            compiler
         )
     }
 
-    fn check_parens(anon input: String) -> bool {
+    fn check_parens(mut this, anon input: String) throws -> bool {
+        mut pos: usize   = 0
+        mut buffer: [u8] = []
+        buffer.ensure_capacity(input.length())
+
+        while pos < input.length() {
+            buffer.push(input.byte_at(pos))
+            ++pos
+        }
+
+        .compiler.current_file_contents = buffer
+
+        let tokens = Lexer::lex(compiler: .compiler)
+
         mut unmatched_parens   = 0
         mut unmatched_brackets = 0
         mut unmatched_curlies  = 0
 
-        mut pos: usize = 0
+        pos = 0
 
-        while pos < input.length() {
-            match input.byte_at(pos) {
-                b'(' => { unmatched_parens += 1   }
-                b')' => { unmatched_parens -= 1   }
-                b'[' => { unmatched_brackets += 1 }
-                b']' => { unmatched_brackets -= 1 }
-                b'{' => { unmatched_curlies += 1  }
-                b'}' => { unmatched_curlies -= 1  }
-                else => {}
+        while pos < tokens.size() {
+            match tokens[pos] {
+                LParen  => { unmatched_parens   += 1 }
+                RParen  => { unmatched_parens   -= 1 }
+                LSquare => { unmatched_brackets += 1 }
+                RSquare => { unmatched_brackets -= 1 }
+                LCurly  => { unmatched_curlies  += 1 }
+                RCurly  => { unmatched_curlies  -= 1 }
+                else    => {}
             }
 
             pos += 1
@@ -75,7 +90,7 @@ struct Editor {
             prompt = ".."
 
             let result = builder.to_string()
-            if check_parens(result) {
+            if .check_parens(result) {
                 return LineResult::Line(result)
             }
         }
@@ -368,7 +383,7 @@ struct REPL {
     }
 
     fn run(mut this) throws {
-        mut editor = Editor::create(prompt: "> ")
+        mut editor = Editor::create(compiler: .compiler, prompt: "> ")
         defer editor.destroy()
 
         loop {
