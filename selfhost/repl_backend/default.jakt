@@ -25,8 +25,8 @@ struct Editor {
         return editor
     }
 
-    fn get_line(mut this) throws -> LineResult {
-        eprint("{}", .prompt)
+    fn get_line(mut this, prompt: String? = None) throws -> LineResult {
+        eprint("{}", prompt ?? .prompt)
 
         mut builder = StringBuilder::create()
         unsafe {

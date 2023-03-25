@@ -3,7 +3,7 @@ import typechecker {
     InterpreterScope, LoadedModule, ModuleId, SafetyMode, ScopeId, TypeId, Typechecker, builtin
 }
 import compiler { Compiler, FileId }
-import lexer { Lexer }
+import lexer { Lexer, Token }
 import parser { Parser }
 import utility { Span, allocate, null }
 import error { JaktError }
@@ -244,6 +244,40 @@ struct REPL {
         return has_error
     }
 
+    fn line_to_bytes(anon line: String) throws -> [u8] {
+      mut pos: usize   = 0
+      mut bytes_: [u8] = []
+
+      bytes_.ensure_capacity(line.length())
+
+      while pos < line.length() {
+          bytes_.push(line.byte_at(pos))
+          ++pos
+      }
+      
+      return bytes_
+    }
+
+    fn check_parens(tokens: [Token]) -> bool {
+        mut unmatched_parens   = 0
+        mut unmatched_brackets = 0
+        mut unmatched_curlies  = 0
+
+        for token in tokens {
+            match token {
+                LParen  => { unmatched_parens   += 1 }
+                RParen  => { unmatched_parens   -= 1 }
+                LSquare => { unmatched_brackets += 1 }
+                RSquare => { unmatched_brackets -= 1 }
+                LCurly  => { unmatched_curlies  += 1 }
+                RCurly  => { unmatched_curlies  -= 1 }
+                else    => {}
+            }
+        }
+
+        return unmatched_parens == 0 and unmatched_brackets == 0 and unmatched_curlies == 0
+    }
+
     fn run(mut this) throws {
         let syntax_highlight_handler = fn[this](anon editor: &mut Editor) throws -> void {
             let line = editor.get_active_buffer()
@@ -358,23 +392,35 @@ struct REPL {
                 break
             }
 
-            mut pos: usize = 0
-            mut bytes_: [u8] = []
-            bytes_.ensure_capacity(line.length())
-            while pos < line.length() {
-                bytes_.push(line.byte_at(pos))
-                ++pos
-            }
-
             .compiler.current_file = .file_id
-            .compiler.current_file_contents = bytes_
+            .compiler.current_file_contents = line_to_bytes(line)
 
-            let tokens = try Lexer::lex(compiler: .compiler) catch {
+            mut tokens = try Lexer::lex(compiler: .compiler) catch {
                 continue
             }
 
             if tokens.is_empty() {
                 continue
+            }
+
+            if not check_parens(tokens) {
+                mut sb = StringBuilder::create()
+                sb.append_string(line)
+
+                while not check_parens(tokens) {
+                    let line_result = try editor.get_line(prompt: "..") catch error { return }
+
+                    guard line_result is Line(line) else {
+                        return
+                    }
+
+                    sb.append_string(line)
+
+                    .compiler.current_file = .file_id
+                    .compiler.current_file_contents = line_to_bytes(sb.to_string())
+
+                    tokens = try Lexer::lex(compiler: .compiler) catch { continue }
+                }
             }
 
             mut parser = Parser(index: 0, tokens, compiler: .compiler)
