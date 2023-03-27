@@ -1,9 +1,9 @@
 /// Expect:
 /// - output: "Well, hello friends.\n5\nGoodbye friends.\n"
 
-fn greet() => println("Well, hello friends.")
+fn greet() throws => println("Well, hello friends.")
 fn num() -> i64 => 5
-fn str() => "Hello friends."
+fn str() throws => "Hello friends."
 
 fn main() {
     greet()

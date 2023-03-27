@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\n"
 
-fn test(anon mut argument: i64) -> String {
+fn test(anon mut argument: i64) throws -> String {
     while argument > 0 {
         abort() // This should be reachable (in case argument > 0)
     }

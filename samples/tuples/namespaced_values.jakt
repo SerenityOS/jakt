@@ -3,7 +3,7 @@
 
 namespace Kingdom {
     namespace Dragons {
-        fn most_majestic() => "Trogdor"
+        fn most_majestic() throws => "Trogdor"
     }
 
     fn peasant_population() => 1337

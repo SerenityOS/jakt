@@ -2,7 +2,7 @@
 /// - output: "PASS\n"
 namespace Test
 {
-    fn foo() => "PASS" 
+    fn foo() throws => "PASS"
 }
 
 fn main() {

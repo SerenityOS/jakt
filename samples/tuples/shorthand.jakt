@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "1 hello\n"
 
-fn foo() -> (i64, String) {
+fn foo() throws -> (i64, String) {
     return (1, "hello")
 }
 

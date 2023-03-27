@@ -7,7 +7,7 @@ fn to_representation(anon x: i8) throws => format("{}i8", x)
 fn to_representation<K, V>(anon x: [K:V]) throws => "Somedict[K:V]"
 fn to_representation<K>(anon x: [K:String]) throws => "Somedict[K:String]"
 fn to_representation(anon x: [String:String]) throws => "Somedict[String:String]"
-fn to_representation<T>(anon x: T) => "unimplemented"
+fn to_representation<T>(anon x: T) throws => "unimplemented"
 
 fn main() {
     mut pass = true

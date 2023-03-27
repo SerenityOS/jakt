@@ -5,8 +5,8 @@ struct Foo {
     string: String
 }
 
-fn overwrite(foo: &mut Foo) {
-    (*foo).string = "PASS"    
+fn overwrite(foo: &mut Foo) throws {
+    (*foo).string = "PASS"
 }
 
 fn main() {

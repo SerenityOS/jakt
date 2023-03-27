@@ -6484,7 +6484,6 @@ struct Typechecker {
                                 span
                             )
                             if not trait_implementation.has_value() {
-                                eprintln("Type {} cannot be used as an overloaded string literal type", .type_name(type_id, debug_mode: true))
                                 .error_with_hint(
                                     format("Type {} cannot be used as an overloaded string literal type", .type_name(type_id, debug_mode: true)),
                                     span,

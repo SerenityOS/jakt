@@ -5,7 +5,7 @@ class S {
     public fn get_answer() -> i32 => 42
 }
 
-fn greeting() -> String => "Hello"
+fn greeting() throws -> String => "Hello"
 
 fn main() {
     println("{} friends! The answer is {}", greeting(), S::get_answer())

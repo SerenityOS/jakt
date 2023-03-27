@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\n"
 
-fn test(first: i64, second: i64) -> String {
+fn test(first: i64, second: i64) throws -> String {
     match first {
         1 => {
             // Partially never return
