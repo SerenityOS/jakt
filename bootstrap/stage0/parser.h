@@ -986,7 +986,7 @@ using Variant<ImportName_Details::Literal, ImportName_Details::Comptime>::Varian
     using Literal = ImportName_Details::Literal;
     using Comptime = ImportName_Details::Comptime;
 ErrorOr<DeprecatedString> debug_description() const;
-DeprecatedString literal_name() const;
+ErrorOr<DeprecatedString> literal_name() const;
 bool equals(parser::ImportName const other) const;
 utility::Span span() const;
 };
@@ -1052,7 +1052,7 @@ using Variant<RecordType_Details::Struct, RecordType_Details::Class, RecordType_
     using SumEnum = RecordType_Details::SumEnum;
     using Garbage = RecordType_Details::Garbage;
 ErrorOr<DeprecatedString> debug_description() const;
-DeprecatedString record_type_name() const;
+ErrorOr<DeprecatedString> record_type_name() const;
 };
 struct ParsedRecord {
   public:

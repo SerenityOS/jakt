@@ -10,7 +10,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator>> jakt__file_iterator::RecursiveFileIterator::make(jakt__path::Path const directory,DeprecatedString const extension) {
 {
-return (TRY((jakt__file_iterator::RecursiveFileIterator::__jakt_create(extension,(TRY((DynamicArray<jakt__path::Path>::create_with({directory})))),JaktInternal::OptionalNone()))));
+return TRY((jakt__file_iterator::RecursiveFileIterator::__jakt_create(extension,(TRY((DynamicArray<jakt__path::Path>::create_with({directory})))),JaktInternal::OptionalNone())));
 }
 }
 
@@ -21,11 +21,11 @@ if ((((((*this).directory_list)).size()) > static_cast<size_t>(0ULL))){
 jakt__path::Path const path = (((((*this).directory_list)).pop()).value());
 (((*this).current_directory) = TRY((jakt__platform__unknown_fs::DirectoryIterator::from_path(path))));
 if ((!(((((*this).current_directory)).has_value())))){
-return (path);
+return path;
 }
 }
 else {
-return (JaktInternal::OptionalNone());
+return JaktInternal::OptionalNone();
 }
 
 }
@@ -34,21 +34,21 @@ if (((next).has_value())){
 jakt__path::Path new_path = TRY((((TRY(((((((*this).current_directory).value()))->get_path())))).join((((((next.value())).template get<0>())).to_string())))));
 if ((((next.value())).template get<1>())){
 TRY((((((*this).directory_list)).push(new_path))));
-return (TRY((((*this).next()))));
+return TRY((((*this).next())));
 }
 if ((TRY((((new_path).extension()))) == ((*this).extension))){
-return (new_path);
+return new_path;
 }
 else {
-return (TRY((((*this).next()))));
+return TRY((((*this).next())));
 }
 
 }
 else if ((!(((((*this).directory_list)).is_empty())))){
 (((*this).current_directory) = TRY((jakt__platform__unknown_fs::DirectoryIterator::from_path((((((*this).directory_list)).pop()).value())))));
-return (TRY((((*this).next()))));
+return TRY((((*this).next())));
 }
-return (JaktInternal::OptionalNone());
+return JaktInternal::OptionalNone();
 }
 }
 

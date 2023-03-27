@@ -20,13 +20,13 @@ free(line_pointer);
 
 ErrorOr<repl_backend__default::Editor> repl_backend__default::Editor::create(DeprecatedString const prompt,Function<ErrorOr<void>(repl_backend__default::Editor&)> const& syntax_highlight_handler) {
 {
-FILE* std_in = fopen(((Jakt::DeprecatedString("/dev/stdin"sv)).characters()),((Jakt::DeprecatedString("r"sv)).characters()));
+FILE* std_in = fopen(((TRY(DeprecatedString::from_utf8("/dev/stdin"sv))).characters()),((TRY(DeprecatedString::from_utf8("r"sv))).characters()));
 if ((std_in == utility::null<FILE>())){
-warnln(Jakt::DeprecatedString("Could not open /dev/stdin for reading"sv));
+warnln((StringView::from_string_literal("Could not open /dev/stdin for reading"sv)));
 return Error::from_errno(static_cast<i32>(42));
 }
 repl_backend__default::Editor const editor = repl_backend__default::Editor(std_in,utility::allocate<char>(static_cast<size_t>(4096ULL)),prompt);
-return (editor);
+return editor;
 }
 }
 
@@ -40,17 +40,17 @@ repl_backend__default::Editor::Editor(FILE* a_standard_input_file, char* a_line_
 
 ErrorOr<repl_backend__common::LineResult> repl_backend__default::Editor::get_line() {
 {
-warn(Jakt::DeprecatedString("{}"sv),((*this).prompt));
+warn((StringView::from_string_literal("{}"sv)),((*this).prompt));
 DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
 {
 char* const c_string = fgets(((*this).line_pointer),static_cast<size_t>(4096ULL),((*this).standard_input_file));
 if ((c_string == utility::null<char>())){
-return ( repl_backend__common::LineResult { typename repl_backend__common::LineResult::Eof() } );
+return  repl_backend__common::LineResult { typename repl_backend__common::LineResult::Eof() } ;
 }
 TRY((((builder).append_c_string(c_string))));
 }
 
-return ( repl_backend__common::LineResult { typename repl_backend__common::LineResult::Line(TRY((((builder).to_string())))) } );
+return  repl_backend__common::LineResult { typename repl_backend__common::LineResult::Line(TRY((((builder).to_string())))) } ;
 }
 }
 

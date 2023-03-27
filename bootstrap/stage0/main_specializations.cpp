@@ -38,7 +38,7 @@ template<>
 ErrorOr<u32> value_or_throw<u32>(JaktInternal::Optional<u32> const maybe) {
 {
 if (((maybe).has_value())){
-return ((maybe.value()));
+return (maybe.value());
 }
 return Error::from_errno(static_cast<i32>(1));
 }

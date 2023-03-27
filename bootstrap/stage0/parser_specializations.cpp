@@ -43,7 +43,7 @@ f64 float_value = static_cast<i64>(0LL);
 float_value = number;
 }
 
-return (float_value);
+return float_value;
 }
 }
 }

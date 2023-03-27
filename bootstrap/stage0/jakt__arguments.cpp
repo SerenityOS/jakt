@@ -21,7 +21,7 @@ break;
 }
 DeprecatedString arg = (_magic_value.value());
 {
-if ((arg == Jakt::DeprecatedString("--"sv))){
+if ((arg == TRY(DeprecatedString::from_utf8("--"sv)))){
 (((parser).definitely_positional_args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))),static_cast<size_t>(((((parser).args)).size()))})])).to_array()))));
 (((parser).args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(i)})])).to_array()))));
 break;
@@ -32,7 +32,7 @@ break;
 }
 }
 
-return (parser);
+return parser;
 }
 }
 
@@ -59,7 +59,7 @@ DeprecatedString name = (_magic_value.value());
 {
 if ((((((*this).args))[i]) == name)){
 if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
-warnln(Jakt::DeprecatedString("The option '{}' requires a value, but none was supplied"sv),name);
+warnln((StringView::from_string_literal("The option '{}' requires a value, but none was supplied"sv)),name);
 return Error::from_errno(static_cast<i32>(200));
 }
 TRY((((((*this).removed_indices)).push(i))));
@@ -81,7 +81,7 @@ TRY((((result).push(((((((*this).args))[i])).substring(((name).length()),(JaktIn
 }
 }
 
-return (result);
+return result;
 }
 }
 
@@ -120,7 +120,7 @@ TRY((((remaining).push(arg))));
 }
 }
 
-return (remaining);
+return remaining;
 }
 }
 
@@ -146,7 +146,7 @@ DeprecatedString name = (_magic_value.value());
 {
 if ((((((*this).args))[i]) == name)){
 TRY((((((*this).removed_indices)).push(i))));
-return (true);
+return true;
 }
 }
 
@@ -158,7 +158,7 @@ return (true);
 }
 }
 
-return (false);
+return false;
 }
 }
 
@@ -184,16 +184,16 @@ DeprecatedString name = (_magic_value.value());
 {
 if ((((((*this).args))[i]) == name)){
 if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
-warnln(Jakt::DeprecatedString("The option '{}' requires a value, but none was supplied"sv),name);
+warnln((StringView::from_string_literal("The option '{}' requires a value, but none was supplied"sv)),name);
 return Error::from_errno(static_cast<i32>(200));
 }
 TRY((((((*this).removed_indices)).push(i))));
 TRY((((((*this).removed_indices)).push((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))))));
-return (((((*this).args))[(JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))]));
+return ((((*this).args))[(JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))]);
 }
 if (((((((*this).args))[i])).starts_with(name))){
 TRY((((((*this).removed_indices)).push(i))));
-return (((((((*this).args))[i])).substring(((name).length()),(JaktInternal::checked_sub<size_t>(((((((*this).args))[i])).length()),((name).length()))))));
+return ((((((*this).args))[i])).substring(((name).length()),(JaktInternal::checked_sub<size_t>(((((((*this).args))[i])).length()),((name).length())))));
 }
 }
 
@@ -205,7 +205,7 @@ return (((((((*this).args))[i])).substring(((name).length()),(JaktInternal::chec
 }
 }
 
-return (JaktInternal::OptionalNone());
+return JaktInternal::OptionalNone();
 }
 }
 

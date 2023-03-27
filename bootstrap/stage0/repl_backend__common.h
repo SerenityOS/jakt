@@ -56,12 +56,12 @@ using Variant<LineResult_Details::Line, LineResult_Details::Eof>::Variant;
 ErrorOr<DeprecatedString> debug_description() const;
 };
 namespace Color_Details {
-struct RGB {
+struct Components {
 u8 red;
 u8 green;
 u8 blue;
 template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-RGB(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+Components(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
 red{ forward<_MemberT0>(member_0)},
 green{ forward<_MemberT1>(member_1)},
 blue{ forward<_MemberT2>(member_2)}
@@ -75,9 +75,9 @@ value{ forward<_MemberT0>(member_0)}
 {}
 };
 }
-struct Color : public Variant<Color_Details::RGB, Color_Details::XTerm> {
-using Variant<Color_Details::RGB, Color_Details::XTerm>::Variant;
-    using RGB = Color_Details::RGB;
+struct Color : public Variant<Color_Details::Components, Color_Details::XTerm> {
+using Variant<Color_Details::Components, Color_Details::XTerm>::Variant;
+    using Components = Color_Details::Components;
     using XTerm = Color_Details::XTerm;
 ErrorOr<DeprecatedString> debug_description() const;
 };

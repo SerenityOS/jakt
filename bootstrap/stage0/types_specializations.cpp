@@ -73,13 +73,13 @@ auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal:
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
 {
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -92,7 +92,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 ))))));
-return (result);
+return result;
 }
 }
 template<>
@@ -109,13 +109,13 @@ auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal:
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
 {
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -128,7 +128,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 ))))));
-return (result);
+return result;
 }
 }
 template<>
@@ -145,13 +145,13 @@ auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal:
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
 {
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -164,7 +164,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 ))))));
-return (result);
+return result;
 }
 }
 template<>
@@ -181,13 +181,13 @@ auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal:
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
 {
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -200,7 +200,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 ))))));
-return (result);
+return result;
 }
 }
 template<>
@@ -217,13 +217,13 @@ auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal:
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
 {
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -236,7 +236,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 ))))));
-return (result);
+return result;
 }
 }
 template<>
@@ -253,13 +253,13 @@ auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal:
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
 {
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -272,7 +272,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 ))))));
-return (result);
+return result;
 }
 }
 template<>
@@ -289,13 +289,13 @@ auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal:
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
 {
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -308,7 +308,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 ))))));
-return (result);
+return result;
 }
 }
 template<>
@@ -325,13 +325,13 @@ auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal:
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
 {
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -344,7 +344,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 ))))));
-return (result);
+return result;
 }
 }
 template<>
@@ -361,13 +361,13 @@ auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal:
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
 if (__jakt_enum_value.index() == 1 /* Continue */) {
 {
-return ( typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } );
+return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -380,7 +380,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 ))))));
-return (result);
+return result;
 }
 }
 }
