@@ -8,7 +8,7 @@ fn panic(anon message: String) -> never {
     abort()
 }
 
-fn todo(anon message: String) {
+fn todo(anon message: String) -> never {
     eprintln("TODO: {}", message)
     abort()
 }

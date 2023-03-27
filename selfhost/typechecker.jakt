@@ -2695,7 +2695,6 @@ struct Typechecker {
                                             Unsigned(val) => val + 1
                                             Floating(val) => {
                                                 todo("Implement floats")
-                                                yield 0u64
                                             }
                                         }
                                     }

@@ -1500,7 +1500,6 @@ struct CodeGenerator {
                         WithValue(name, expr) => name + " = " + .codegen_expression(expr) + ",\n"
                         else => {
                             todo(format("codegen_enum can't generate variant: {}", variant))
-                            yield ""
                         }
                     }
                 }
@@ -1563,7 +1562,6 @@ struct CodeGenerator {
                 }
                 else => {
                     todo(format("codegen enum variant: {}", variant))
-                    yield []
                 }
             }
 
@@ -2443,7 +2441,6 @@ struct CodeGenerator {
         }
         Garbage(span) => {
             todo(format("codegen_expression of bad AST node in {} at {}..{}", this.compiler.get_file_path(span.file_id), span.start, span.end))
-            yield ""
         }
     }
 
@@ -2932,7 +2929,6 @@ struct CodeGenerator {
             BitwiseRightShift => " >> "
             else => {
                 todo(format("codegen_binary_expression {}", op))
-                yield ""
             }
         }
         output += .codegen_expression(rhs)

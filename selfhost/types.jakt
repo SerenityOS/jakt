@@ -1322,7 +1322,6 @@ enum NumberConstant {
             Floating(value) => match type_ {
                 F32 => {
                     todo("Implement casting f32 to f64")
-                    yield false
                 }
                 F64 => true
                 else => false
