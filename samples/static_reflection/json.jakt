@@ -213,6 +213,9 @@ struct Impl {
                     let x: V = [:]
                     return x
                 }
+                "String" | "StringView" => fn[comptime dep]() throws -> V {
+                    return ""
+                }
                 else => fn[comptime dep]() throws -> V {
                     return V::make_default()
                 }
@@ -468,6 +471,17 @@ comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut J
 
                     return
                 }
+            }
+            "String" => fn[comptime dep](anon x: &mut T, anon parser: &mut JsonParser) throws -> void {
+                let token = parser.next()
+                if token.has_value() {
+                    if token! is JsonString(json) {
+                        x = json
+                        return
+                    }
+                }
+
+                throw error("Invalid string")
             }
             else => match record.record_type {
                 Struct(fields) | Class(fields) => {
@@ -737,32 +751,37 @@ fn quote_for_json(anon s: String) throws -> String {
 
 comptime make_json_encoder<T>() throws -> fn(anon x: &T) throws -> String => match reflect T {
     StructureOrEnum(record) => match record.record_type {
-        Struct(fields) | Class(fields) => {
-            mut field_converters: [fn(anon x: &T) throws -> String] = []
-
-            for field in fields {
-                let name = field.variable.name
-                field_converters.push(fn[comptime name](anon x: &T) throws -> String {
-                    let value = x.[name]
-                    return quote_for_json(name) + ":" + to_json(&value)
-                })
+        Struct(fields) | Class(fields) => match record.name {
+            "String" => fn(anon x: &T) throws -> String {
+                return convert(x)
             }
+            else => {
+                mut field_converters: [fn(anon x: &T) throws -> String] = []
 
-            yield fn[comptime field_converters](anon x: &T) throws -> String {
-                mut builder = StringBuilder::create()
-                builder.append(b'{')
-                mut first = true
-                for i in 0..field_converters.size() {
-                    let converter = &field_converters[i]
-                    if not first {
-                        builder.append(b',')
-                    }
-                    first = false
-                    let value = converter(x)
-                    builder.append(value)
+                for field in fields {
+                    let name = field.variable.name
+                    field_converters.push(fn[comptime name](anon x: &T) throws -> String {
+                        let value = x.[name]
+                        return quote_for_json(name) + ":" + to_json(&value)
+                    })
                 }
-                builder.append(b'}')
-                return builder.to_string()
+
+                yield fn[comptime field_converters](anon x: &T) throws -> String {
+                    mut builder = StringBuilder::create()
+                    builder.append(b'{')
+                    mut first = true
+                    for i in 0..field_converters.size() {
+                        let converter = &field_converters[i]
+                        if not first {
+                            builder.append(b',')
+                        }
+                        first = false
+                        let value = converter(x)
+                        builder.append(value)
+                    }
+                    builder.append(b'}')
+                    return builder.to_string()
+                }
             }
         }
         else => {

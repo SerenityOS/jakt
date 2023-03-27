@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\n"
 
-fn test() -> i64 {
+fn test() throws -> i64 {
     let x = 2
 
     loop {

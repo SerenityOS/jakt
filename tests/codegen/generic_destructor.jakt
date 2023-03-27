@@ -5,7 +5,11 @@ struct Foo<T> {
     public value: T
 
     destructor {
-       println("~Foo: {}", .value)
+        try {
+            println("~Foo: {}", .value)
+        } catch {
+            abort()
+        }
     }
 }
 

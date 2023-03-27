@@ -2,7 +2,7 @@
 /// - output: "Foo\n"
 
 class Foo {
-    public fn call(this) => "Foo"
+    public fn call(this) throws => "Foo"
 }
 
 fn main() {

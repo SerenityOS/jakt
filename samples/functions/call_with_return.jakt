@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "Well, hello friends.\n"
 
-fn greet() -> String {
+fn greet() throws -> String {
     return "Well, hello friends."
 }
 

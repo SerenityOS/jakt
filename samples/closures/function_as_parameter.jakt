@@ -1,10 +1,10 @@
 /// Expect:
 /// - output: "well, hello friends.\n"
 
-fn hello(anon who: fn() -> String) {
+fn hello(anon who: fn() throws -> String) throws {
     println("well, hello {}", who())
 }
 
 fn main() {
-    hello(fn() => "friends.")
+    hello(fn() throws => "friends.")
 }

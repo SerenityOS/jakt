@@ -2,12 +2,12 @@
 /// - output: "The secret is: Shhhh! Don't tell anyone!\nOpen sesame!\n"
 
 class Limited {
-    restricted(A) fn get_secret() => "Shhhh! Don't tell anyone!"
-    restricted(A,B) fn open_the_bank_vault() => "Open sesame!"
+    restricted(A) fn get_secret() throws => "Shhhh! Don't tell anyone!"
+    restricted(A,B) fn open_the_bank_vault() throws => "Open sesame!"
 }
 
 class A {
-    public fn do_things() {
+    public fn do_things() throws {
         println("The secret is: {}", Limited::get_secret())
         println("{}", Limited::open_the_bank_vault())
     }

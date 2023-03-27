@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\n0\n2\n4\n6\n8\n"
 
-fn test1(anon x: i64) -> String {
+fn test1(anon x: i64) throws -> String {
     guard x == 1 else {
         return "FAIL"
     }
@@ -9,7 +9,7 @@ fn test1(anon x: i64) -> String {
     return "PASS"
 }
 
-fn test2() {
+fn test2() throws {
     mut i = 0
     loop {
         guard i % 2 == 0 else {
