@@ -59,9 +59,9 @@ return builder.to_string();
 }
 ErrorOr<DeprecatedString> repl_backend__common::Color::debug_description() const {
 auto builder = TRY(DeprecatedStringBuilder::create());
-switch (this->index()) {case 0 /* RGB */: {
-TRY(builder.append("Color::RGB"sv));
-[[maybe_unused]] auto const& that = this->template get<Color::RGB>();
+switch (this->index()) {case 0 /* Components */: {
+TRY(builder.append("Color::Components"sv));
+[[maybe_unused]] auto const& that = this->template get<Color::Components>();
 TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};

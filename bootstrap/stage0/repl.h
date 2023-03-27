@@ -1,9 +1,9 @@
 #pragma once
 #include "__unified_forward.h"
 #include "typechecker.h"
+#include "parser.h"
 #include "compiler.h"
 #include "lexer.h"
-#include "parser.h"
 #include "utility.h"
 #include "error.h"
 #include "interpreter.h"

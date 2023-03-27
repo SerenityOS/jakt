@@ -85,13 +85,13 @@ bool is_ascii_digit(u8 const c);
 
 bool is_ascii_alphanumeric(u8 const c);
 
-DeprecatedString join(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const separator);
+ErrorOr<DeprecatedString> join(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const separator);
 
 ErrorOr<void> write_to_file(DeprecatedString const data, DeprecatedString const output_filename);
 
 bool is_ascii_octdigit(u8 const c);
 
-void todo(DeprecatedString const message);
+[[noreturn]] void todo(DeprecatedString const message);
 
 ErrorOr<DeprecatedString> escape_for_quotes(DeprecatedString const s);
 
@@ -1135,7 +1135,7 @@ struct Unchanged;
 struct XTermColor;
 
 namespace Color_Details {
-struct RGB;
+struct Components;
 struct XTerm;
 }
 struct Color;
@@ -1146,7 +1146,7 @@ struct Editor;
 }
 namespace repl {
 struct REPL;
-DeprecatedString serialize_unary_operation(types::CheckedUnaryOperator const op, DeprecatedString const expr);
+ErrorOr<DeprecatedString> serialize_unary_operation(types::CheckedUnaryOperator const op, DeprecatedString const expr);
 
 ErrorOr<DeprecatedString> serialize_ast_node(NonnullRefPtr<typename types::CheckedExpression> const node);
 
@@ -1158,9 +1158,9 @@ ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> run_compiler(DeprecatedStr
 struct FormatRange;
 ErrorOr<void> format_output(jakt__path::Path const file_path, JaktInternal::DynamicArray<lexer::Token> const tokens, JaktInternal::Optional<FormatRange> const format_range, bool const format_debug, bool const format_inplace);
 
-DeprecatedString usage();
+ErrorOr<DeprecatedString> usage();
 
-DeprecatedString help();
+ErrorOr<DeprecatedString> help();
 
 ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(DeprecatedString const range, size_t const input_file_length);
 

@@ -55,7 +55,7 @@ ptr = static_cast<RemoveReference<decltype(ptr)>>(calloc(count, sizeof(*ptr)));
 ;
 char* ptr = utility::null<char>();
 alloc_impl(((ptr)));
-return (ptr);
+return ptr;
 }
 }
 template<>

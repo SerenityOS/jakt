@@ -75,7 +75,7 @@ return {};
 
 ErrorOr<void> display_message_with_span(error::MessageSeverity const severity,DeprecatedString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents,DeprecatedString const message,utility::Span const span) {
 {
-warnln(Jakt::DeprecatedString("{}: {}"sv),TRY((((severity).name()))),message);
+warnln((StringView::from_string_literal("{}: {}"sv)),TRY((((severity).name()))),message);
 if ((!(((contents).has_value())))){
 return {};
 }
@@ -93,7 +93,7 @@ if (((((span).end) >= ((((line_spans)[line_index])).template get<0>())) && (((sp
 }
 (++(line_index));
 }
-size_t const width = ((TRY((__jakt_format(Jakt::DeprecatedString("{}"sv),largest_line_number)))).length());
+size_t const width = ((TRY((__jakt_format((StringView::from_string_literal("{}"sv)),largest_line_number)))).length());
 (line_index = error_start_index);
 size_t const column_index = (JaktInternal::checked_sub<size_t>(((span).start),((((line_spans)[line_index])).template get<0>())));
 {
@@ -105,13 +105,13 @@ break;
 }
 size_t x = (_magic_value.value());
 {
-warn(Jakt::DeprecatedString("─"sv));
+warn((StringView::from_string_literal("─"sv)));
 }
 
 }
 }
 
-warnln(Jakt::DeprecatedString("┬─ \u001b[33m{}:{}:{}\u001b[0m"sv),file_name,(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),(JaktInternal::checked_add<size_t>(column_index,static_cast<size_t>(1ULL))));
+warnln((StringView::from_string_literal("┬─ \u001b[33m{}:{}:{}\u001b[0m"sv)),file_name,(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),(JaktInternal::checked_add<size_t>(column_index,static_cast<size_t>(1ULL))));
 if ((line_index > static_cast<size_t>(0ULL))){
 TRY((error::print_source_line(severity,file_contents,((line_spans)[(JaktInternal::checked_sub<size_t>(line_index,static_cast<size_t>(1ULL)))]),span,line_index,largest_line_number)));
 }
@@ -132,13 +132,13 @@ break;
 }
 size_t x = (_magic_value.value());
 {
-warn(Jakt::DeprecatedString(" "sv));
+warn((StringView::from_string_literal(" "sv)));
 }
 
 }
 }
 
-warn(Jakt::DeprecatedString("│"sv));
+warn((StringView::from_string_literal("│"sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_sub<size_t>(((span).end),((((line_spans)[line_index])).template get<0>()))))});
 for (;;){
@@ -148,18 +148,18 @@ break;
 }
 size_t x = (_magic_value.value());
 {
-warn(Jakt::DeprecatedString(" "sv));
+warn((StringView::from_string_literal(" "sv)));
 }
 
 }
 }
 
-warnln(Jakt::DeprecatedString("\u001b[{}m╰─ {}\u001b[0m"sv),TRY((((severity).ansi_color_code()))),message);
+warnln((StringView::from_string_literal("\u001b[{}m╰─ {}\u001b[0m"sv)),TRY((((severity).ansi_color_code()))),message);
 (++(line_index));
 if ((line_index < ((line_spans).size()))){
 TRY((error::print_source_line(severity,file_contents,((line_spans)[line_index]),span,(JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(1ULL))),largest_line_number)));
 }
-warn(Jakt::DeprecatedString("\u001b[0m"sv));
+warn((StringView::from_string_literal("\u001b[0m"sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_add<size_t>(width,static_cast<size_t>(2ULL))))});
 for (;;){
@@ -169,13 +169,13 @@ break;
 }
 size_t x = (_magic_value.value());
 {
-warn(Jakt::DeprecatedString("─"sv));
+warn((StringView::from_string_literal("─"sv)));
 }
 
 }
 }
 
-warnln(Jakt::DeprecatedString("┴─"sv));
+warnln((StringView::from_string_literal("┴─"sv)));
 }
 return {};
 }
@@ -195,7 +195,7 @@ TRY((((output).push((Tuple{start, idx})))));
 if ((start <= idx)){
 TRY((((output).push((Tuple{start, idx})))));
 }
-return (output);
+return output;
 }
 }
 
@@ -210,13 +210,13 @@ break;
 }
 size_t x = (_magic_value.value());
 {
-warn(Jakt::DeprecatedString(" "sv));
+warn((StringView::from_string_literal(" "sv)));
 }
 
 }
 }
 
-warn(Jakt::DeprecatedString("│ "sv));
+warn((StringView::from_string_literal("│ "sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(((file_span).template get<0>())),static_cast<size_t>(((file_span).template get<1>()))});
 for (;;){
@@ -227,16 +227,16 @@ break;
 size_t index = (_magic_value.value());
 {
 if ((index == ((error_span).start))){
-warn(Jakt::DeprecatedString("\u001b[{}m"sv),TRY((((severity).ansi_color_code()))));
+warn((StringView::from_string_literal("\u001b[{}m"sv)),TRY((((severity).ansi_color_code()))));
 }
 if ((index == (JaktInternal::checked_sub<size_t>(((error_span).end),static_cast<size_t>(1ULL))))){
-warn(Jakt::DeprecatedString("┬\u001b[0m"sv));
+warn((StringView::from_string_literal("┬\u001b[0m"sv)));
 }
 else if (((index >= ((error_span).start)) && (index < ((error_span).end)))){
-warn(Jakt::DeprecatedString("─"sv));
+warn((StringView::from_string_literal("─"sv)));
 }
 else {
-warn(Jakt::DeprecatedString(" "sv));
+warn((StringView::from_string_literal(" "sv)));
 }
 
 }
@@ -244,7 +244,7 @@ warn(Jakt::DeprecatedString(" "sv));
 }
 }
 
-warnln(Jakt::DeprecatedString(""sv));
+warnln((StringView::from_string_literal(""sv)));
 }
 return {};
 }
@@ -252,9 +252,9 @@ return {};
 ErrorOr<void> print_source_line(error::MessageSeverity const severity,JaktInternal::DynamicArray<u8> const file_contents,JaktInternal::Tuple<size_t,size_t> const file_span,utility::Span const error_span,size_t const line_number,size_t const largest_line_number) {
 {
 size_t index = ((file_span).template get<0>());
-size_t const largest_width = ((TRY((__jakt_format(Jakt::DeprecatedString("{}"sv),largest_line_number)))).length());
-size_t const current_width = ((TRY((__jakt_format(Jakt::DeprecatedString("{}"sv),line_number)))).length());
-warn(Jakt::DeprecatedString(" {}"sv),line_number);
+size_t const largest_width = ((TRY((__jakt_format((StringView::from_string_literal("{}"sv)),largest_line_number)))).length());
+size_t const current_width = ((TRY((__jakt_format((StringView::from_string_literal("{}"sv)),line_number)))).length());
+warn((StringView::from_string_literal(" {}"sv)),line_number);
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_sub<size_t>(largest_width,current_width)))});
 for (;;){
@@ -264,13 +264,13 @@ break;
 }
 size_t _ = (_magic_value.value());
 {
-warn(Jakt::DeprecatedString(" "sv));
+warn((StringView::from_string_literal(" "sv)));
 }
 
 }
 }
 
-warn(Jakt::DeprecatedString(" │ "sv));
+warn((StringView::from_string_literal(" │ "sv)));
 while ((index <= ((file_span).template get<1>()))){
 u8 c = ' ';
 if ((index < ((file_span).template get<1>()))){
@@ -280,22 +280,22 @@ else if (((((error_span).start) == ((error_span).end)) && (index == ((error_span
 (c = '_');
 }
 if ((index == ((error_span).start))){
-warn(Jakt::DeprecatedString("\u001b[{}m"sv),TRY((((severity).ansi_color_code()))));
+warn((StringView::from_string_literal("\u001b[{}m"sv)),TRY((((severity).ansi_color_code()))));
 }
 if ((index == ((error_span).end))){
-warn(Jakt::DeprecatedString("\u001b[0m"sv));
+warn((StringView::from_string_literal("\u001b[0m"sv)));
 }
-warn(Jakt::DeprecatedString("{:c}"sv),c);
+warn((StringView::from_string_literal("{:c}"sv)),c);
 (++(index));
 }
-warnln(Jakt::DeprecatedString(""sv));
+warnln((StringView::from_string_literal(""sv)));
 }
 return {};
 }
 
 ErrorOr<void> display_message_with_span_json(error::MessageSeverity const severity,DeprecatedString const file_name,DeprecatedString const message,utility::Span const span) {
 {
-outln(Jakt::DeprecatedString("{{\"type\":\"diagnostic\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"sv),message,TRY((((severity).name()))),((((span).file_id)).id),((span).start),((span).end));
+outln((StringView::from_string_literal("{{\"type\":\"diagnostic\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"sv)),message,TRY((((severity).name()))),((((span).file_id)).id),((span).start),((span).end));
 }
 return {};
 }
@@ -313,15 +313,15 @@ return builder.to_string();
 }
 ErrorOr<DeprecatedString> error::MessageSeverity::ansi_color_code() const {
 {
-return (({
+return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
-return JaktInternal::ExplicitValue(Jakt::DeprecatedString("94"sv));
+return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("94"sv)));
 };/*case end*/
 case 1: {
-return JaktInternal::ExplicitValue(Jakt::DeprecatedString("31"sv));
+return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("31"sv)));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -329,21 +329,21 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}));
+});
 }
 }
 
 ErrorOr<DeprecatedString> error::MessageSeverity::name() const {
 {
-return (({
+return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
-return JaktInternal::ExplicitValue(Jakt::DeprecatedString("Hint"sv));
+return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("Hint"sv)));
 };/*case end*/
 case 1: {
-return JaktInternal::ExplicitValue(Jakt::DeprecatedString("Error"sv));
+return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("Error"sv)));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -351,7 +351,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}));
+});
 }
 }
 
@@ -392,7 +392,7 @@ return builder.to_string();
 }
 utility::Span error::JaktError::span() const {
 {
-return (({
+return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<utility::Span, utility::Span>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
@@ -410,7 +410,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}));
+});
 }
 }
 

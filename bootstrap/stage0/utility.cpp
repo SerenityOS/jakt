@@ -19,37 +19,37 @@ TRY((((output).push((str + suffix)))));
 }
 }
 
-return (output);
+return output;
 }
 }
 
 bool is_ascii_alpha(u8 const c) {
 {
-return ((((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))));
+return (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')));
 }
 }
 
 bool is_whitespace(u8 const byte) {
 {
-return ((((byte == ' ') || (byte == '\t')) || (byte == '\r')));
+return (((byte == ' ') || (byte == '\t')) || (byte == '\r'));
 }
 }
 
 bool is_ascii_digit(u8 const c) {
 {
-return (((c >= '0') && (c <= '9')));
+return ((c >= '0') && (c <= '9'));
 }
 }
 
 bool is_ascii_alphanumeric(u8 const c) {
 {
-return ((utility::is_ascii_alpha(c) || utility::is_ascii_digit(c)));
+return (utility::is_ascii_alpha(c) || utility::is_ascii_digit(c));
 }
 }
 
-DeprecatedString join(JaktInternal::DynamicArray<DeprecatedString> const strings,DeprecatedString const separator) {
+ErrorOr<DeprecatedString> join(JaktInternal::DynamicArray<DeprecatedString> const strings,DeprecatedString const separator) {
 {
-DeprecatedString output = Jakt::DeprecatedString(""sv);
+DeprecatedString output = TRY(DeprecatedString::from_utf8(""sv));
 size_t i = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((strings).iterator());
@@ -70,7 +70,7 @@ if ((i < (JaktInternal::checked_sub<size_t>(((strings).size()),static_cast<size_
 }
 }
 
-return (output);
+return output;
 }
 }
 
@@ -100,13 +100,13 @@ return {};
 
 bool is_ascii_octdigit(u8 const c) {
 {
-return (((c >= '0') && (c <= '7')));
+return ((c >= '0') && (c <= '7'));
 }
 }
 
-void todo(DeprecatedString const message) {
+[[noreturn]] void todo(DeprecatedString const message) {
 {
-warnln(Jakt::DeprecatedString("TODO: {}"sv),message);
+warnln((StringView::from_string_literal("TODO: {}"sv)),message);
 abort();
 }
 }
@@ -128,19 +128,19 @@ u32 cp = (_magic_value.value());
 auto __jakt_enum_value = (cp);
 if (__jakt_enum_value == (infallible_integer_cast<u32>(('"')))) {
 {
-TRY((((builder).append_string(Jakt::DeprecatedString("\\\""sv)))));
+TRY((((builder).append_string(TRY(DeprecatedString::from_utf8("\\\""sv))))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>(('\\')))) {
 {
-TRY((((builder).append_string(Jakt::DeprecatedString("\\\\"sv)))));
+TRY((((builder).append_string(TRY(DeprecatedString::from_utf8("\\\\"sv))))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>(('\n')))) {
 {
-TRY((((builder).append_string(Jakt::DeprecatedString("\\n"sv)))));
+TRY((((builder).append_string(TRY(DeprecatedString::from_utf8("\\n"sv))))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -165,13 +165,13 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 
-return (TRY((((builder).to_string()))));
+return TRY((((builder).to_string())));
 }
 }
 
 bool is_ascii_hexdigit(u8 const c) {
 {
-return (((((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f'))) || ((c >= 'A') && (c <= 'F'))));
+return ((((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f'))) || ((c >= 'A') && (c <= 'F')));
 }
 }
 
@@ -253,13 +253,13 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 
-return (TRY((((builder).to_string()))));
+return TRY((((builder).to_string())));
 }
 }
 
 [[noreturn]] void panic(DeprecatedString const message) {
 {
-warnln(Jakt::DeprecatedString("internal error: {}"sv),message);
+warnln((StringView::from_string_literal("internal error: {}"sv)),message);
 abort();
 }
 }
@@ -282,13 +282,13 @@ TRY((((output).push((prefix + str)))));
 }
 }
 
-return (output);
+return output;
 }
 }
 
 bool is_ascii_binary(u8 const c) {
 {
-return (((c == '0') || (c == '1')));
+return ((c == '0') || (c == '1'));
 }
 }
 
@@ -301,7 +301,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 bool utility::Span::contains(utility::Span const span) const {
 {
-return ((((((*this).file_id)).equals(((span).file_id))) && ((((span).start) >= ((*this).start)) && (((span).end) <= ((*this).end)))));
+return (((((*this).file_id)).equals(((span).file_id))) && ((((span).start) >= ((*this).start)) && (((span).end) <= ((*this).end))));
 }
 }
 
@@ -309,7 +309,7 @@ utility::Span::Span(utility::FileId a_file_id, size_t a_start, size_t a_end) :fi
 
 bool utility::Span::is_in_offset_range(size_t const start,size_t const end) const {
 {
-return (((start <= ((*this).start)) && (end >= ((*this).end))));
+return ((start <= ((*this).start)) && (end >= ((*this).end)));
 }
 }
 
@@ -322,7 +322,7 @@ utility::FileId::FileId(size_t a_id) :id(move(a_id)){}
 
 bool utility::FileId::equals(utility::FileId const rhs) const {
 {
-return ((((*this).id) == ((rhs).id)));
+return (((*this).id) == ((rhs).id));
 }
 }
 

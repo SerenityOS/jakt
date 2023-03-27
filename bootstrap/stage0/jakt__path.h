@@ -20,7 +20,7 @@ static ErrorOr<jakt__path::Path> from_parts(JaktInternal::DynamicArray<Deprecate
 ErrorOr<JaktInternal::Tuple<DeprecatedString,DeprecatedString>> split_at_last_slash() const;
 ErrorOr<jakt__path::Path> parent() const;
 ErrorOr<void> normalize_separators();
-bool is_dot() const;
+ErrorOr<bool> is_dot() const;
 ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt

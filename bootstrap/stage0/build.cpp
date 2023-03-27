@@ -10,7 +10,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<void> build::Builder::link_into_executable(DeprecatedString const cxx_compiler_path,DeprecatedString const output_filename,JaktInternal::DynamicArray<DeprecatedString> const extra_arguments) {
 {
-JaktInternal::DynamicArray<DeprecatedString> args = (TRY((DynamicArray<DeprecatedString>::create_with({cxx_compiler_path, Jakt::DeprecatedString("-o"sv), output_filename}))));
+JaktInternal::DynamicArray<DeprecatedString> args = (TRY((DynamicArray<DeprecatedString>::create_with({cxx_compiler_path, TRY(DeprecatedString::from_utf8("-o"sv)), output_filename}))));
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).linked_files)).iterator());
 for (;;){
@@ -44,7 +44,7 @@ TRY((((args).push(arg))));
 size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
 if (((((((((*this).pool)).status(id)).value())).exit_code) != static_cast<i32>(0))){
-warnln(Jakt::DeprecatedString("Error: Linking failed"sv));
+warnln((StringView::from_string_literal("Error: Linking failed"sv)));
 return Error::from_errno(static_cast<i32>(1));
 }
 }
@@ -53,13 +53,13 @@ return {};
 
 ErrorOr<build::Builder> build::Builder::for_building(JaktInternal::DynamicArray<DeprecatedString> const files,size_t const max_concurrent) {
 {
-return (build::Builder((TRY((DynamicArray<DeprecatedString>::create_with({})))),files,TRY((build::ParallelExecutionPool::create(max_concurrent)))));
+return build::Builder((TRY((DynamicArray<DeprecatedString>::create_with({})))),files,TRY((build::ParallelExecutionPool::create(max_concurrent))));
 }
 }
 
 ErrorOr<void> build::Builder::link_into_archive(DeprecatedString const archiver,DeprecatedString const archive_filename) {
 {
-JaktInternal::DynamicArray<DeprecatedString> args = (TRY((DynamicArray<DeprecatedString>::create_with({archiver, Jakt::DeprecatedString("cr"sv), archive_filename}))));
+JaktInternal::DynamicArray<DeprecatedString> args = (TRY((DynamicArray<DeprecatedString>::create_with({archiver, TRY(DeprecatedString::from_utf8("cr"sv)), archive_filename}))));
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).linked_files)).iterator());
 for (;;){
@@ -78,7 +78,7 @@ TRY((((args).push(file))));
 size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
 if (((((((((*this).pool)).status(id)).value())).exit_code) != static_cast<i32>(0))){
-warnln(Jakt::DeprecatedString("Error: Linking failed"sv));
+warnln((StringView::from_string_literal("Error: Linking failed"sv)));
 return Error::from_errno(static_cast<i32>(1));
 }
 }
@@ -113,7 +113,7 @@ size_t const id = ((jakt__id__exit_result__).template get<0>());
 jakt__platform__unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
 
 if ((((exit_result).exit_code) != static_cast<i32>(0))){
-warnln(Jakt::DeprecatedString("Error: Compilation failed"sv));
+warnln((StringView::from_string_literal("Error: Compilation failed"sv)));
 TRY((((((*this).pool)).kill_all())));
 return Error::from_errno(static_cast<i32>(1));
 }
@@ -122,11 +122,11 @@ return Error::from_errno(static_cast<i32>(1));
 }
 }
 
-DeprecatedString const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((jakt__path::Path::from_string(file_name)))).replace_extension(Jakt::DeprecatedString("o"sv)))))).to_string())))))).to_string());
+DeprecatedString const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((jakt__path::Path::from_string(file_name)))).replace_extension(TRY(DeprecatedString::from_utf8("o"sv))))))).to_string())))))).to_string());
 TRY((((((*this).linked_files)).push(built_object))));
 size_t const id = TRY((((((*this).pool)).run(TRY((compiler_invocation(((TRY((((binary_dir).join(file_name))))).to_string()),built_object)))))));
 TRY((((ids).add(id))));
-warnln(Jakt::DeprecatedString("{:c}[2LBuilding: {}/{} ({})"sv),static_cast<i64>(27LL),((ids).size()),((((*this).files_to_compile)).size()),file_name);
+warnln((StringView::from_string_literal("{:c}[2LBuilding: {}/{} ({})"sv)),static_cast<i64>(27LL),((ids).size()),((((*this).files_to_compile)).size()),file_name);
 }
 
 }
@@ -147,7 +147,7 @@ size_t const id = ((jakt__id__exit_result__).template get<0>());
 jakt__platform__unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
 
 if ((((exit_result).exit_code) != static_cast<i32>(0))){
-warnln(Jakt::DeprecatedString("Error: Compilation failed"sv));
+warnln((StringView::from_string_literal("Error: Compilation failed"sv)));
 return Error::from_errno(static_cast<i32>(1));
 }
 }
@@ -170,16 +170,16 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<build::ParallelExecutionPool> build::ParallelExecutionPool::create(size_t const max_concurrent) {
 {
-return (build::ParallelExecutionPool((TRY((Dictionary<size_t, jakt__platform__unknown_process::Process>::create_with_entries({})))),(TRY((Dictionary<size_t, jakt__platform__unknown_process::ExitPollResult>::create_with_entries({})))),static_cast<size_t>(0ULL),max_concurrent));
+return build::ParallelExecutionPool((TRY((Dictionary<size_t, jakt__platform__unknown_process::Process>::create_with_entries({})))),(TRY((Dictionary<size_t, jakt__platform__unknown_process::ExitPollResult>::create_with_entries({})))),static_cast<size_t>(0ULL),max_concurrent);
 }
 }
 
 JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult> build::ParallelExecutionPool::status(size_t const id) const {
 {
 if (((((*this).completed)).contains(id))){
-return (((((*this).completed))[id]));
+return ((((*this).completed))[id]);
 }
-return (JaktInternal::OptionalNone());
+return JaktInternal::OptionalNone();
 }
 }
 
@@ -257,7 +257,7 @@ TRY((((*this).wait_for_any_job_to_complete())));
 jakt__platform__unknown_process::Process const process = TRY((jakt__platform__unknown_process::start_background_process(args)));
 size_t const id = ((((*this).pid_index)++));
 TRY((((((*this).pids)).set(id,process))));
-return (id);
+return id;
 }
 }
 

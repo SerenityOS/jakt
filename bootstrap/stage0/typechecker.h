@@ -51,6 +51,7 @@ ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_loop(parser::
 ErrorOr<NonnullRefPtr<types::Scope>> get_scope(types::ScopeId const id) const;
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_indexed_tuple(NonnullRefPtr<typename parser::ParsedExpression> const expr, size_t const index, types::ScopeId const scope_id, bool const is_optional, types::SafetyMode const safety_mode, utility::Span const span);
 ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_while(NonnullRefPtr<typename parser::ParsedExpression> const condition, parser::ParsedBlock const block, types::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
+ErrorOr<types::TypeId> prelude_struct_type_named(DeprecatedString const name);
 ErrorOr<void> typecheck_alias(parser::ParsedAlias const alias, types::ScopeId const scope_id, typechecker::ImportRestrictions const allow);
 ErrorOr<types::CheckedUnaryOperator> typecheck_is_enum_variant(NonnullRefPtr<typename types::CheckedExpression> const checked_expr, NonnullRefPtr<typename parser::ParsedType> const inner, JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> const bindings, types::ScopeId const scope_id);
 ErrorOr<bool> add_var_to_scope(types::ScopeId const scope_id, DeprecatedString const name, types::VarId const var_id, utility::Span const span);
@@ -72,7 +73,7 @@ Typechecker(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::C
 
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> cast_to_underlying(NonnullRefPtr<typename parser::ParsedExpression> const expr, types::ScopeId const scope_id, NonnullRefPtr<typename parser::ParsedType> const parsed_type);
 ErrorOr<types::TypeId> substitute_typevars_in_type(types::TypeId const type_id, types::GenericInferences const generic_inferences);
-DeprecatedString get_argument_name(JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>> const arg) const;
+ErrorOr<DeprecatedString> get_argument_name(JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>> const arg) const;
 ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<types::TypeId,types::ScopeId>>> find_type_scope(types::ScopeId const scope_id, DeprecatedString const name) const;
 ErrorOr<types::FunctionId> typecheck_and_specialize_generic_function(types::FunctionId const function_id, JaktInternal::DynamicArray<types::TypeId> const generic_arguments, types::ScopeId const parent_scope_id, JaktInternal::Optional<types::TypeId> const this_type_id, types::GenericInferences const generic_substitutions, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> const type_args, utility::Span const call_span, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,NonnullRefPtr<typename types::CheckedExpression>>>> const args);
 ErrorOr<JaktInternal::Optional<types::ScopeId>> required_scope_id_in_hierarchy_for(NonnullRefPtr<typename types::CheckedExpression> const expr, types::ScopeId const current_scope_id);
@@ -91,7 +92,7 @@ ErrorOr<types::TypeId> strip_optional_from_type(types::TypeId const type_id);
 ErrorOr<JaktInternal::Optional<types::FieldRecord>> lookup_struct_field(types::StructId const struct_id, DeprecatedString const name) const;
 ErrorOr<types::CheckedParameter> typecheck_parameter(parser::ParsedParameter const parameter, types::ScopeId const scope_id, bool const first, JaktInternal::Optional<types::TypeId> const this_arg_type_id, JaktInternal::Optional<types::ScopeId> const check_scope);
 ErrorOr<JaktInternal::Optional<types::TypeId>> unify(types::TypeId const lhs, utility::Span const lhs_span, types::TypeId const rhs, utility::Span const rhs_span);
-types::BlockControlFlow maybe_statement_control_flow(JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> const statement, types::BlockControlFlow const other_branch) const;
+ErrorOr<types::BlockControlFlow> maybe_statement_control_flow(JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> const statement, types::BlockControlFlow const other_branch) const;
 bool is_floating(types::TypeId const type_id) const;
 ErrorOr<JaktInternal::Optional<NonnullRefPtr<types::CheckedVariable>>> find_var_in_scope(types::ScopeId const scope_id, DeprecatedString const var) const;
 ErrorOr<void> set_owner_scope_if_needed(types::ScopeId const parent_scope_id, JaktInternal::DynamicArray<types::FunctionId> const overload_set);
@@ -148,7 +149,7 @@ ErrorOr<bool> implements_trait(types::TypeId const type_id, types::TraitId const
 ErrorOr<void> typecheck_module_import(parser::ParsedModuleImport const import_, types::ScopeId const scope_id);
 ErrorOr<JaktInternal::Optional<types::FunctionId>> typecheck_method(parser::ParsedFunction const func, types::StructLikeId const parent_id);
 ErrorOr<void> typecheck_extern_import(parser::ParsedExternImport const import_, types::ScopeId const scope_id);
-types::BlockControlFlow statement_control_flow(NonnullRefPtr<typename types::CheckedStatement> const statement) const;
+ErrorOr<types::BlockControlFlow> statement_control_flow(NonnullRefPtr<typename types::CheckedStatement> const statement) const;
 ErrorOr<JaktInternal::Optional<types::StructId>> find_struct_in_scope(types::ScopeId const scope_id, DeprecatedString const name) const;
 ErrorOr<void> typecheck_override(parser::ParsedMethod const method, types::ScopeId const parent_scope_id, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>>> const all_virtuals);
 ErrorOr<void> check_that_type_doesnt_contain_reference(types::TypeId const type_id, utility::Span const span);

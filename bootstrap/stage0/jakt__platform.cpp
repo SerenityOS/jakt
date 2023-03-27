@@ -6,11 +6,11 @@ JaktInternal::Optional<size_t> last_namespace_separator(DeprecatedString const n
 size_t i = (JaktInternal::checked_sub<size_t>(((name).length()),static_cast<size_t>(1ULL)));
 while ((i >= static_cast<size_t>(2ULL))){
 if (((((name).byte_at(i)) == ':') && (((name).byte_at((JaktInternal::checked_sub<size_t>(i,static_cast<size_t>(1ULL))))) == ':'))){
-return ((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))));
+return (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)));
 }
 ((i--));
 }
-return (JaktInternal::OptionalNone());
+return JaktInternal::OptionalNone();
 }
 }
 
@@ -32,28 +32,28 @@ TRY((((output).push(((prefix + str) + suffix)))));
 }
 }
 
-return (output);
+return output;
 }
 }
 
 ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> platform_import_names() {
 {
 jakt__platform::Target const target = TRY((jakt__platform::Target::active()));
-return (({
+return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<DeprecatedString>,ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>>{
 auto __jakt_enum_value = (((target).os));
-if (__jakt_enum_value == Jakt::DeprecatedString("windows"sv)) {
+if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("windows"sv))) {
 return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<DeprecatedString>,ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>>{
 auto __jakt_enum_value = (((target).arch));
-if (__jakt_enum_value == Jakt::DeprecatedString("x86_64"sv)) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("win64"sv), Jakt::DeprecatedString("windows"sv)})))));
+if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86_64"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({TRY(DeprecatedString::from_utf8("win64"sv)), TRY(DeprecatedString::from_utf8("windows"sv))})))));
 }
-else if (__jakt_enum_value == Jakt::DeprecatedString("i686"sv)) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("win32"sv), Jakt::DeprecatedString("windows"sv)})))));
+else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("i686"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({TRY(DeprecatedString::from_utf8("win32"sv)), TRY(DeprecatedString::from_utf8("windows"sv))})))));
 }
 else {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("windows"sv)})))));
+return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({TRY(DeprecatedString::from_utf8("windows"sv))})))));
 }
 }());
     if (_jakt_value.is_return())
@@ -61,26 +61,26 @@ return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_
     _jakt_value.release_value();
 }));
 }
-else if (__jakt_enum_value == Jakt::DeprecatedString("darwin"sv)) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({Jakt::DeprecatedString("darwin"sv), Jakt::DeprecatedString("posix"sv)})))));
+else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("darwin"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({TRY(DeprecatedString::from_utf8("darwin"sv)), TRY(DeprecatedString::from_utf8("posix"sv))})))));
 }
-else if (__jakt_enum_value == Jakt::DeprecatedString("linux"sv)) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), Jakt::DeprecatedString("posix"sv)})))));
+else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("linux"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("posix"sv))})))));
 }
-else if (__jakt_enum_value == Jakt::DeprecatedString("openbsd"sv)) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), Jakt::DeprecatedString("posix"sv)})))));
+else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("openbsd"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("posix"sv))})))));
 }
-else if (__jakt_enum_value == Jakt::DeprecatedString("serenity"sv)) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), Jakt::DeprecatedString("posix"sv)})))));
+else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("serenity"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("posix"sv))})))));
 }
 else {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), Jakt::DeprecatedString("unknown"sv)})))));
+return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("unknown"sv))})))));
 }
 }());
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}));
+});
 }
 }
 
@@ -96,19 +96,19 @@ jakt__platform::Target::Target(DeprecatedString a_arch, DeprecatedString a_platf
 
 ErrorOr<size_t> jakt__platform::Target::int_alignment() const {
 {
-return (TRY((((*this).int_size()))));
+return TRY((((*this).int_size())));
 }
 }
 
 ErrorOr<size_t> jakt__platform::Target::pointer_size() const {
 {
-return (({
+return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
 auto __jakt_enum_value = (((*this).arch));
-if (__jakt_enum_value == Jakt::DeprecatedString("x86_64"sv)) {
+if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86_64"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(8ULL));
 }
-else if (__jakt_enum_value == Jakt::DeprecatedString("x86"sv)) {
+else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
 }
 else {
@@ -120,7 +120,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("point
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}));
+});
 }
 }
 
@@ -129,28 +129,28 @@ ErrorOr<jakt__platform::Target> jakt__platform::Target::active() {
 DeprecatedString const triple = TRY((___jakt_get_target_triple_string()));
 JaktInternal::DynamicArray<DeprecatedString> const parts = ((triple).split('-'));
 if ((((parts).size()) != static_cast<size_t>(4ULL))){
-warnln(Jakt::DeprecatedString("Invalid target triple '{}'"sv),triple);
+warnln((StringView::from_string_literal("Invalid target triple '{}'"sv)),triple);
 return Error::from_errno(static_cast<i32>(22));
 }
-return (jakt__platform::Target(((parts)[static_cast<i64>(0LL)]),((parts)[static_cast<i64>(1LL)]),((parts)[static_cast<i64>(2LL)]),((parts)[static_cast<i64>(3LL)])));
+return jakt__platform::Target(((parts)[static_cast<i64>(0LL)]),((parts)[static_cast<i64>(1LL)]),((parts)[static_cast<i64>(2LL)]),((parts)[static_cast<i64>(3LL)]));
 }
 }
 
 ErrorOr<size_t> jakt__platform::Target::size_t_alignment() const {
 {
-return (TRY((((*this).size_t_size()))));
+return TRY((((*this).size_t_size())));
 }
 }
 
 ErrorOr<size_t> jakt__platform::Target::size_t_size() const {
 {
-return (({
+return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
 auto __jakt_enum_value = (((*this).arch));
-if (__jakt_enum_value == Jakt::DeprecatedString("x86_64"sv)) {
+if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86_64"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(8ULL));
 }
-else if (__jakt_enum_value == Jakt::DeprecatedString("x86"sv)) {
+else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
 }
 else {
@@ -162,19 +162,19 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("size_
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}));
+});
 }
 }
 
 ErrorOr<size_t> jakt__platform::Target::int_size() const {
 {
-return (({
+return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
 auto __jakt_enum_value = (((*this).arch));
-if (__jakt_enum_value == Jakt::DeprecatedString("x86_64"sv)) {
+if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86_64"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
 }
-else if (__jakt_enum_value == Jakt::DeprecatedString("x86"sv)) {
+else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
 }
 else {
@@ -186,13 +186,13 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("int s
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}));
+});
 }
 }
 
 ErrorOr<size_t> jakt__platform::Target::pointer_alignment() const {
 {
-return (TRY((((*this).pointer_size()))));
+return TRY((((*this).pointer_size())));
 }
 }
 

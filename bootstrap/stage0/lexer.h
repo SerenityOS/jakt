@@ -82,7 +82,7 @@ using Variant<LiteralSuffix_Details::None, LiteralSuffix_Details::UZ, LiteralSuf
     using F32 = LiteralSuffix_Details::F32;
     using F64 = LiteralSuffix_Details::F64;
 ErrorOr<DeprecatedString> debug_description() const;
-DeprecatedString to_string() const;
+ErrorOr<DeprecatedString> to_string() const;
 };
 namespace LiteralPrefix_Details {
 struct None {
@@ -101,7 +101,7 @@ using Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, L
     using Octal = LiteralPrefix_Details::Octal;
     using Binary = LiteralPrefix_Details::Binary;
 ErrorOr<DeprecatedString> debug_description() const;
-DeprecatedString to_string() const;
+ErrorOr<DeprecatedString> to_string() const;
 };
 namespace Token_Details {
 struct SingleQuotedString {
@@ -1022,7 +1022,7 @@ using Variant<Token_Details::SingleQuotedString, Token_Details::QuotedString, To
     using Trait = Token_Details::Trait;
     using Garbage = Token_Details::Garbage;
 ErrorOr<DeprecatedString> debug_description() const;
-static lexer::Token from_keyword_or_identifier(DeprecatedString const string, utility::Span const span);
+static ErrorOr<lexer::Token> from_keyword_or_identifier(DeprecatedString const string, utility::Span const span);
 utility::Span span() const;
 };
 }

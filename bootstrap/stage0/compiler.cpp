@@ -24,7 +24,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<void> compiler::Compiler::load_prelude() {
 {
-DeprecatedString const module_name = Jakt::DeprecatedString("__prelude__"sv);
+DeprecatedString const module_name = TRY(DeprecatedString::from_utf8("__prelude__"sv));
 jakt__path::Path const file_name = TRY((jakt__path::Path::from_string(module_name)));
 TRY((((*this).get_file_id_or_register(file_name))));
 }
@@ -36,8 +36,8 @@ ErrorOr<JaktInternal::Optional<jakt__path::Path>> compiler::Compiler::search_for
 DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
 TRY((((builder).append(static_cast<u8>(47)))));
 DeprecatedString const separator = TRY((((builder).to_string())));
-DeprecatedString const module_name = ((input_module_name).replace(Jakt::DeprecatedString("::"sv),separator));
-DeprecatedString const standard_module_name = Jakt::DeprecatedString("jakt"sv);
+DeprecatedString const module_name = ((input_module_name).replace(TRY(DeprecatedString::from_utf8("::"sv)),separator));
+DeprecatedString const standard_module_name = TRY(DeprecatedString::from_utf8("jakt"sv));
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).include_paths)).iterator());
 for (;;){
@@ -47,9 +47,9 @@ break;
 }
 DeprecatedString include_path = (_magic_value.value());
 {
-jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({include_path, (module_name + Jakt::DeprecatedString(".jakt"sv))})))))));
+jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({include_path, (module_name + TRY(DeprecatedString::from_utf8(".jakt"sv)))})))))));
 if (((candidate_path).exists())){
-return (candidate_path);
+return candidate_path;
 }
 }
 
@@ -58,9 +58,9 @@ return (candidate_path);
 
 if (((module_name).starts_with(standard_module_name))){
 DeprecatedString const std_module_name_path = ((module_name).substring((JaktInternal::checked_add<size_t>(((standard_module_name).length()),static_cast<size_t>(1ULL))),(JaktInternal::checked_sub<size_t>(((module_name).length()),(JaktInternal::checked_add<size_t>(((standard_module_name).length()),static_cast<size_t>(1ULL)))))));
-jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((((*this).std_include_path)).to_string()), (std_module_name_path + Jakt::DeprecatedString(".jakt"sv))})))))));
+jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((((*this).std_include_path)).to_string()), (std_module_name_path + TRY(DeprecatedString::from_utf8(".jakt"sv)))})))))));
 if (((candidate_path).exists())){
-return (candidate_path);
+return candidate_path;
 }
 }
 {
@@ -72,9 +72,9 @@ break;
 }
 DeprecatedString include_path = (_magic_value.value());
 {
-jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({include_path, (module_name + Jakt::DeprecatedString(".jakt"sv))})))))));
+jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({include_path, (module_name + TRY(DeprecatedString::from_utf8(".jakt"sv)))})))))));
 if (((candidate_path).exists())){
-return (candidate_path);
+return candidate_path;
 }
 }
 
@@ -83,12 +83,12 @@ return (candidate_path);
 
 JaktInternal::Optional<jakt__path::Path> const current_file_path = ((*this).current_file_path());
 if (((current_file_path).has_value())){
-jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((TRY(((((current_file_path.value())).parent())))).to_string()), (module_name + Jakt::DeprecatedString(".jakt"sv))})))))));
+jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((TRY(((((current_file_path.value())).parent())))).to_string()), (module_name + TRY(DeprecatedString::from_utf8(".jakt"sv)))})))))));
 if (((candidate_path).exists())){
-return (candidate_path);
+return candidate_path;
 }
 }
-return (JaktInternal::OptionalNone());
+return JaktInternal::OptionalNone();
 }
 }
 
@@ -102,15 +102,15 @@ void compiler::Compiler::restore_file_state(JaktInternal::Tuple<JaktInternal::Op
 JaktInternal::Optional<jakt__path::Path> compiler::Compiler::current_file_path() const {
 {
 if (((((*this).current_file)).has_value())){
-return (((((*this).files))[(((((*this).current_file).value())).id)]));
+return ((((*this).files))[(((((*this).current_file).value())).id)]);
 }
-return (JaktInternal::OptionalNone());
+return JaktInternal::OptionalNone();
 }
 }
 
 JaktInternal::Tuple<JaktInternal::Optional<utility::FileId>,JaktInternal::DynamicArray<u8>> compiler::Compiler::current_file_state() const {
 {
-return ((Tuple{((*this).current_file), ((*this).current_file_contents)}));
+return (Tuple{((*this).current_file), ((*this).current_file_contents)});
 }
 }
 
@@ -173,28 +173,29 @@ TRY((error::print_error(file_name,file_contents,error)));
 return {};
 }
 
-void compiler::Compiler::dbg_println(DeprecatedString const message) const {
+ErrorOr<void> compiler::Compiler::dbg_println(DeprecatedString const message) const {
 {
 if (((*this).debug_print)){
-outln(Jakt::DeprecatedString("{}"sv),message);
+outln((StringView::from_string_literal("{}"sv)),message);
 }
 }
+return {};
 }
 
 compiler::Compiler::Compiler(JaktInternal::DynamicArray<jakt__path::Path> a_files, JaktInternal::Dictionary<DeprecatedString,utility::FileId> a_file_ids, JaktInternal::DynamicArray<error::JaktError> a_errors, JaktInternal::Optional<utility::FileId> a_current_file, JaktInternal::DynamicArray<u8> a_current_file_contents, bool a_dump_lexer, bool a_dump_parser, bool a_ignore_parser_errors, bool a_debug_print, jakt__path::Path a_std_include_path, JaktInternal::DynamicArray<DeprecatedString> a_include_paths, bool a_json_errors, bool a_dump_type_hints, bool a_dump_try_hints, bool a_optimize, JaktInternal::Optional<DeprecatedString> a_target_triple, JaktInternal::Dictionary<DeprecatedString,DeprecatedString> a_user_configuration): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), std_include_path(move(a_std_include_path)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)), optimize(move(a_optimize)), target_triple(move(a_target_triple)), user_configuration(move(a_user_configuration)){}
 ErrorOr<NonnullRefPtr<Compiler>> compiler::Compiler::__jakt_create(JaktInternal::DynamicArray<jakt__path::Path> files, JaktInternal::Dictionary<DeprecatedString,utility::FileId> file_ids, JaktInternal::DynamicArray<error::JaktError> errors, JaktInternal::Optional<utility::FileId> current_file, JaktInternal::DynamicArray<u8> current_file_contents, bool dump_lexer, bool dump_parser, bool ignore_parser_errors, bool debug_print, jakt__path::Path std_include_path, JaktInternal::DynamicArray<DeprecatedString> include_paths, bool json_errors, bool dump_type_hints, bool dump_try_hints, bool optimize, JaktInternal::Optional<DeprecatedString> target_triple, JaktInternal::Dictionary<DeprecatedString,DeprecatedString> user_configuration) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Compiler (move(files), move(file_ids), move(errors), move(current_file), move(current_file_contents), move(dump_lexer), move(dump_parser), move(ignore_parser_errors), move(debug_print), move(std_include_path), move(include_paths), move(json_errors), move(dump_type_hints), move(dump_try_hints), move(optimize), move(target_triple), move(user_configuration)))); return o; }
 JaktInternal::Optional<utility::FileId> compiler::Compiler::current_file_id() const {
 {
-return (((*this).current_file));
+return ((*this).current_file);
 }
 }
 
 ErrorOr<JaktInternal::Optional<jakt__path::Path>> compiler::Compiler::get_file_path(utility::FileId const file_id) const {
 {
 if ((((file_id).id) >= ((((*this).files)).size()))){
-return (JaktInternal::OptionalNone());
+return JaktInternal::OptionalNone();
 }
-return (((((*this).files))[((file_id).id)]));
+return ((((*this).files))[((file_id).id)]);
 }
 }
 
@@ -203,16 +204,16 @@ ErrorOr<utility::FileId> compiler::Compiler::get_file_id_or_register(jakt__path:
 DeprecatedString const path = ((file).to_string());
 JaktInternal::Optional<utility::FileId> file_id = ((((*this).file_ids)).get(path));
 if (((file_id).has_value())){
-return ((file_id.value()));
+return (file_id.value());
 }
 TRY((((((*this).files)).push(file))));
 (file_id = utility::FileId((JaktInternal::checked_sub<size_t>(((((*this).files)).size()),static_cast<size_t>(1ULL)))));
 TRY((((((*this).file_ids)).set(path,(file_id.value())))));
-return ((file_id.value()));
+return (file_id.value());
 }
 }
 
-bool compiler::Compiler::set_current_file(utility::FileId const file_id) {
+ErrorOr<bool> compiler::Compiler::set_current_file(utility::FileId const file_id) {
 {
 i32 const ErrNOENT = static_cast<i32>(2);
 i32 const ErrACCES = static_cast<i32>(13);
@@ -228,23 +229,23 @@ NonnullRefPtr<File> file = TRY((File::open_for_reading(((((((*this).files))[((fi
 ;return {};}();
 if (__jakt_var_3.is_error()) {auto error = __jakt_var_3.release_error();{
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,bool>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<bool>>{
 auto __jakt_enum_value = (((error).code()));
 if (__jakt_enum_value == ErrNOENT) {
-return (warnln(Jakt::DeprecatedString("\u001b[31;1mError\u001b[0m Could not access {}: File not found"sv),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return (warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: File not found"sv)),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrACCES) {
-return (warnln(Jakt::DeprecatedString("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied"sv),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return (warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied"sv)),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrFBIG) {
-return (warnln(Jakt::DeprecatedString("\u001b[31;1mError\u001b[0m Could not access {}: File too big"sv),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return (warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: File too big"sv)),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrNAMETOOLONG) {
-return (warnln(Jakt::DeprecatedString("\u001b[31;1mError\u001b[0m Could not access {}: Name too long"sv),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return (warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: Name too long"sv)),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-utility::panic(Jakt::DeprecatedString("Incurred unrecognized error while trying to open file"sv));
+utility::panic(TRY(DeprecatedString::from_utf8("Incurred unrecognized error while trying to open file"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -255,10 +256,10 @@ return JaktInternal::ExplicitValue<void>();
     _jakt_value.release_value();
 });
 (((*this).current_file) = old_file_id);
-return (false);
+return false;
 }
 };
-return (true);
+return true;
 }
 }
 
