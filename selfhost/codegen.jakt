@@ -2862,11 +2862,13 @@ struct CodeGenerator {
         }
 
         if op is NoneCoalescingAssign {
-            mut output = .codegen_expression(lhs)
-            output += ".lazy_emplace([&] { return "
-            output += .codegen_expression(rhs)
-            output += "; })"
-            return output
+            let var = .fresh_var()
+            return format(
+                "({{ auto&& {0} = {1}; if (!{0}.has_value()) {0} = {2}; }})"
+                var
+                .codegen_expression(lhs)
+                .codegen_expression(rhs)
+            )
         }
 
         if op is ArithmeticRightShift {

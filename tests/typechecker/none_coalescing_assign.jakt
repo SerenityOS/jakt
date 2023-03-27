@@ -4,5 +4,6 @@
 fn main() {
     mut i: String? = None
     i ??= "mayb"
-    println(i ?? "hello")
+    i ??= "not"
+    println("{}", i ?? "hello")
 }
