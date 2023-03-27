@@ -123,7 +123,7 @@ enum Token {
         else(span) => span
     }
 
-    fn from_keyword_or_identifier(string: String, span: Span) -> Token => match string {
+    fn from_keyword_or_identifier(string: String, span: Span) throws -> Token => match string {
         "and" => Token::And(span)
         "anon" => Token::Anon(span)
         "as" => Token::As(span)

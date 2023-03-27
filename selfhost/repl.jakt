@@ -13,7 +13,7 @@ import jakt::path { Path }
 import platform { repl_backend }
 import repl_backend() { Editor, LineResult, Style, Color, XTermColor }
 
-fn serialize_unary_operation(anon op: CheckedUnaryOperator, anon expr: String) -> String => match op {
+fn serialize_unary_operation(anon op: CheckedUnaryOperator, anon expr: String) throws -> String => match op {
     PreIncrement => "++" + expr
     PostIncrement => expr + "++"
     PreDecrement => "--" + expr

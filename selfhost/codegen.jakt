@@ -1909,8 +1909,24 @@ struct CodeGenerator {
             yield match val.type_id.equals(builtin(BuiltinType::JaktString)) {
                 true => "Jakt::DeprecatedString(\"" + escaped_value + "\"sv)"
                 false => {
-                    let error_handler = match val.may_throw { true => "TRY", else => "" }
-                    yield format("{}({}::from_string_literal(\"{}\"sv))", error_handler, .codegen_type(val.type_id), escaped_value)
+                    let ids = .program.find_functions_with_name_in_scope(
+                        parent_scope_id: .program.find_type_scope_id(val.type_id)
+                        function_name: "from_string_literal"
+                    )
+                    if not ids.has_value() or ids!.is_empty() {
+                        panic("Internal error: couldn't find a 'from_string_literal' function despite passing typecheck")
+                    }
+
+                    let name = .program.get_function(ids![0]).name_for_codegen()
+
+                    let error_handler = match val.may_throw { true => .current_error_handler(), else => "" }
+                    yield format(
+                        "{}({}::{}(\"{}\"sv))"
+                        error_handler
+                        .codegen_type(val.type_id)
+                        name
+                        escaped_value
+                    )
                 }
             }
         }

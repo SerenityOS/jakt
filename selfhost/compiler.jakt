@@ -94,7 +94,7 @@ class Compiler {
         return file_id!
     }
 
-    public fn set_current_file(mut this, anon file_id: FileId) -> bool {
+    public fn set_current_file(mut this, anon file_id: FileId) throws -> bool {
         // FIXME: Make use of builtin types in lib.h
         let ErrNOENT = 2i32
         let ErrACCES = 13i32
@@ -132,7 +132,7 @@ class Compiler {
         .current_file_contents = state.1
     }
 
-    public fn dbg_println(this, anon message: String) {
+    public fn dbg_println(this, anon message: String) throws {
         if .debug_print {
             println("{}", message)
         }

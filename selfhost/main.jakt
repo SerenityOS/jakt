@@ -37,8 +37,8 @@ import platform_compiler() {
     run_compiler
 }
 
-fn usage() => "usage: jakt [-h] [OPTIONS] <filename>"
-fn help() -> String {
+fn usage() throws => "usage: jakt [-h] [OPTIONS] <filename>"
+fn help() throws -> String {
     mut output = "Flags:\n"
     output += "  -h,--help\t\t\t\tPrint this help and exit.\n"
     output += "  -O\t\t\t\t\tBuild an optimized executable.\n"
