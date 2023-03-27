@@ -8671,8 +8671,17 @@ struct Typechecker {
 
         match call.name {
             "print" | "println" | "eprintln" | "eprint" | "format" => {
+                mut first = true
                 for arg in call.args {
-                    let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
+                    let type_hint = match first {
+                        true => {
+                            first = false
+                            yield Some(.prelude_struct_type_named("StringView"))
+                        }
+                        false => None
+                    }
+
+                    let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint)
 
                     args.push((call.name, checked_arg))
                 }
