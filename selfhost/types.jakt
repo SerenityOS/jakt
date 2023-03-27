@@ -334,7 +334,7 @@ boxed enum Type {
         else => base_specificity
     }
 
-    fn constructor_name(this) -> String => match this {
+    fn constructor_name(this) throws -> String => match this {
         Void => "Void"
         Bool => "Bool"
         U8 => "U8"
@@ -848,7 +848,7 @@ class CheckedFunction {
         return true
     }
 
-    public fn is_static(this) -> bool {
+    public fn is_static(this) throws -> bool {
         if .params.size() < 1 {
             return true
         }
@@ -856,7 +856,7 @@ class CheckedFunction {
         return .params[0].variable.name != "this"
     }
 
-    public fn is_mutating(this) -> bool {
+    public fn is_mutating(this) throws -> bool {
         if .params.size() < 1 {
             return false
         }
@@ -880,7 +880,7 @@ class CheckedFunction {
         return .generics.is_specialized_for_types(types)
     }
 
-    public fn to_parsed_function(this) -> ParsedFunction {
+    public fn to_parsed_function(this) throws -> ParsedFunction {
         if not .parsed_function.has_value() {
             panic("to_parsed_function() called on a synthetic function")
         }
@@ -1306,7 +1306,7 @@ enum NumberConstant {
     Unsigned(u64)
     Floating(f64)
 
-    fn can_fit_number(this, type_id: TypeId, program: CheckedProgram) -> bool {
+    fn can_fit_number(this, type_id: TypeId, program: CheckedProgram) throws -> bool {
         let type_ = program.get_type(type_id)
 
         return match this {
@@ -1329,7 +1329,7 @@ enum NumberConstant {
         }
     }
 
-    fn to_usize(this) -> usize => match this {
+    fn to_usize(this) throws -> usize => match this {
         Signed(value) => value as! usize
         Unsigned(value) => value as! usize
         Floating(value) => {
@@ -1564,7 +1564,9 @@ boxed enum CheckedExpression {
 
     fn can_throw(this) -> bool => match this {
         Call(call) | MethodCall(call) => call.callee_throws
-
+        // FIXME: This could be a 'StringView' or something that implements FromStringLiteral, which does not throw.
+        //        For now, we have to assume the worst.
+        QuotedString => true
         else => false
     }
 
@@ -1582,7 +1584,7 @@ boxed enum CheckedExpression {
         else(type_id) => type_id
     }
 
-    fn control_flow(this) -> BlockControlFlow => match this {
+    fn control_flow(this) throws -> BlockControlFlow => match this {
         Match(expr, match_cases, span, type_id, all_variants_constant) => {
             mut control_flow: BlockControlFlow? = None
             for case_ in match_cases {
@@ -1711,6 +1713,7 @@ class CheckedProgram {
     public fn get_trait(this, anon id: TraitId) -> CheckedTrait => .modules[id.module.id].traits[id.id]
 
     public fn prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
+    public fn prelude_module_id(this) -> ModuleId => ModuleId(id: 0)
 
     public fn set_loaded_module(mut this, module_name: String, loaded_module: LoadedModule) throws {
         .loaded_modules.set(
@@ -1800,7 +1803,11 @@ class CheckedProgram {
         return .is_integer(type_id) or .is_floating(type_id)
     }
 
-    public fn is_string(this, anon type_id: TypeId) -> bool => .get_type(type_id) is JaktString
+    public fn is_string(this, anon type_id: TypeId) throws -> bool => match .get_type(type_id) {
+        JaktString => true
+        Struct(struct_id) => .find_struct_in_prelude("String").equals(struct_id)
+        else => false
+    }
 
     public fn get_bits(this, anon type_id: TypeId) -> i64 => .get_type(type_id).get_bits()
 
@@ -1975,6 +1982,16 @@ class CheckedProgram {
         .compiler.panic(format("internal error: definition for reflect builtin '{}' not found", primitive))
     }
 
+    public fn find_type_scope_id(mut this, anon type_id: TypeId) throws -> ScopeId {
+        let type = .get_type(type_id)
+        return match type {
+            Struct(struct_id) | GenericInstance(id: struct_id) => .get_struct(struct_id).scope_id
+            Enum(enum_id) | GenericEnumInstance(id: enum_id) => .get_enum(enum_id).scope_id
+            Trait(trait_id) | GenericTraitInstance(id: trait_id) => .get_trait(trait_id).scope_id
+            else => .prelude_scope_id()
+        }
+    }
+
     public fn find_namespace_in_scope(
         this
         scope_id: ScopeId
@@ -2087,7 +2104,7 @@ class CheckedProgram {
             Bool => "bool"
             Void => "void"
             Unknown => "unknown"
-            JaktString => "String"
+            JaktString => "builtin(String)"
             Trait(id) => .get_trait(id).name
             Self => "Self"
             Function(params, return_type_id) => {
@@ -2554,7 +2571,7 @@ struct Value {
     span: Span
 
     fn copy(this) throws -> Value => Value(impl: .impl.copy(), span: .span)
-    fn type_name(this) -> String => match .impl {
+    fn type_name(this) throws -> String => match .impl {
         Void => "void"
         Bool => "bool"
         U8 => "u8"

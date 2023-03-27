@@ -679,7 +679,10 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
     JaktString(x) => CheckedExpression::QuotedString(
         val: CheckedStringLiteral(
             value: StringLiteral::Static(escape_for_quotes(x))
-            type_id: builtin(BuiltinType::JaktString)
+            type_id: interpreter.program.find_or_add_type_id(
+                type: Type::Struct(interpreter.program.find_struct_in_prelude("String"))
+                module_id: interpreter.program.prelude_module_id()
+            )
             may_throw: true
         )
         span: this_value.span
@@ -688,7 +691,10 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
     StringView(x) => CheckedExpression::QuotedString(
         val: CheckedStringLiteral(
             value: StringLiteral::Static(escape_for_quotes(x))
-            type_id: builtin(BuiltinType::JaktString)
+            type_id: interpreter.program.find_or_add_type_id(
+                type: Type::Struct(interpreter.program.find_struct_in_prelude("StringView"))
+                module_id: interpreter.program.prelude_module_id()
+            )
             may_throw: true
         )
         span: this_value.span
@@ -1818,6 +1824,9 @@ class Interpreter {
                         impl: ValueImpl::JaktDictionary(keys: [], values: [], type_id)
                         span: call_span
                     ))
+                }
+                "from_string_literal" => {
+                    yield StatementResult::JustValue(arguments[0])
                 }
                 else => {
                     .error(
@@ -3083,7 +3092,9 @@ class Interpreter {
                             yield StatementResult::JustValue(Value(
                                 impl: ValueImpl::JaktArray(
                                     values: result
-                                    type_id: .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [builtin(BuiltinType::JaktString)]))
+                                    type_id: .find_or_add_type_id(
+                                        Type::GenericInstance(id: array_struct_id, args: [.string_type()])
+                                    )
                                 )
                                 span: call_span
                             ))
@@ -7331,6 +7342,12 @@ class Interpreter {
         span
     )
 
+    public fn string_type(mut this) throws -> TypeId {
+        let string_struct_id = .program.find_struct_in_prelude("String")
+        let type = Type::Struct(string_struct_id)
+        return .find_or_add_type_id(type)
+    }
+
     public fn string_value(mut this, anon string: String, span: Span) throws -> Value => Value(
         impl: ValueImpl::JaktString(string)
         span
@@ -7708,7 +7725,7 @@ class Interpreter {
                     function_name: "Struct")!
 
                 let methods = .reflect_methods(subject_struct.scope_id, span, scope)
-                let tuple_type = .tuple_type([builtin(BuiltinType::JaktString), reflected_enum.type_id])
+                let tuple_type = .tuple_type([.string_type(), reflected_enum.type_id])
                 let generic_parameters = .array_value_of_type(
                     values: match type {
                         GenericInstance(args) => {
@@ -7827,7 +7844,7 @@ class Interpreter {
                 }
 
                 let methods = .reflect_methods(subject_enum.scope_id, span, scope)
-                let tuple_type = .tuple_type([builtin(BuiltinType::JaktString), reflected_enum.type_id])
+                let tuple_type = .tuple_type([.string_type(), reflected_enum.type_id])
                 let generic_parameters = .array_value_of_type(
                     values: match type {
                         GenericInstance(args) => {

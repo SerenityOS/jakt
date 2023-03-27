@@ -106,7 +106,7 @@ enum ImportName {
         }
     }
 
-    fn literal_name(this) -> String {
+    fn literal_name(this) throws -> String {
         guard this is Literal(name) else {
             panic("Cannot get literal name of non-literal import name")
         }
@@ -320,7 +320,7 @@ enum RecordType {
     SumEnum(is_boxed: bool, fields: [ParsedField], variants: [SumEnumVariant])
     Garbage
 
-    public fn record_type_name(this) -> String => match this {
+    public fn record_type_name(this) throws -> String => match this {
         Struct => "struct"
         Class => "class"
         ValueEnum => "value enum"

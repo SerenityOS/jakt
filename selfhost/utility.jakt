@@ -51,7 +51,7 @@ fn add_arrays<T>(anon a: [T], anon b: [T]) throws -> [T] {
     return result
 }
 
-fn join(anon strings: [String], separator: String) -> String {
+fn join(anon strings: [String], separator: String) throws -> String {
     mut output = ""
 
     mut i = 0uz

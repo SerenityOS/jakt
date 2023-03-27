@@ -385,6 +385,12 @@ struct Typechecker {
     fn find_struct_in_prelude(this, anon name: String) throws -> StructId =>
         .program.find_struct_in_prelude(name)
 
+    fn prelude_struct_type_named(mut this, anon name: String) throws -> TypeId {
+        let struct_id = .find_struct_in_prelude(name)
+        let type = Type::Struct(struct_id)
+        return .find_or_add_type_id(type)
+    }
+
     fn find_type_in_prelude(this, anon name: String) throws -> TypeId {
         // start at the prelude scope id
         let scope_id = .prelude_scope_id()
@@ -3776,7 +3782,7 @@ struct Typechecker {
         .current_function_id = None
     }
 
-    fn statement_control_flow(this, anon statement: CheckedStatement) -> BlockControlFlow => match statement {
+    fn statement_control_flow(this, anon statement: CheckedStatement) throws -> BlockControlFlow => match statement {
         Return => BlockControlFlow::AlwaysReturns
         Throw => BlockControlFlow::AlwaysReturns
         Break => BlockControlFlow::AlwaysTransfersControl(might_break: true)
@@ -3832,7 +3838,7 @@ struct Typechecker {
         else => BlockControlFlow::MayReturn
     }
 
-    fn maybe_statement_control_flow(this, anon statement: CheckedStatement?, anon other_branch: BlockControlFlow) -> BlockControlFlow => match statement.has_value() {
+    fn maybe_statement_control_flow(this, anon statement: CheckedStatement?, anon other_branch: BlockControlFlow) throws -> BlockControlFlow => match statement.has_value() {
         true => .statement_control_flow(statement!)
         false => other_branch.partial()
     }
@@ -4450,7 +4456,6 @@ struct Typechecker {
                 "c_char" => builtin(BuiltinType::CChar)
                 "c_int" => builtin(BuiltinType::CInt)
                 "usize" => builtin(BuiltinType::Usize)
-                "String" => builtin(BuiltinType::JaktString)
                 "bool" => builtin(BuiltinType::Bool)
                 "void" => builtin(BuiltinType::Void)
                 "never" => builtin(BuiltinType::Never)
@@ -6467,22 +6472,33 @@ struct Typechecker {
             yield match type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
                 true => {
                     mut type_id = .strip_optional_from_type(.generic_inferences.map(type_hint!))
-                    mut may_throw = true
-                    if not type_id.equals(builtin(BuiltinType::JaktString)) and .get_type(type_id).is_concrete() {
-                        let trait_implementation = .find_any_singular_trait_implementation(type_id, trait_names: ["FromStringLiteral", "ThrowingFromStringLiteral"], scope_id, span)
-                        if not trait_implementation.has_value() {
-                            .error_with_hint(
-                                format("Type {} cannot be used as an overloaded string literal type", .type_name(type_id)),
-                                span,
-                                format("Consider implementing the FromStringLiteral trait for {}", .type_name(type_id)),
+                    let prelude_string_type_id = .prelude_struct_type_named("String")
+                    let prelude_string_view_type_id = .prelude_struct_type_named("StringView")
+                    mut may_throw = type_id.equals(prelude_string_type_id)
+                    if not type_id.equals(prelude_string_type_id) and not type_id.equals(prelude_string_view_type_id) {
+                        if .get_type(type_id).is_concrete() {
+                            let trait_implementation = .find_any_singular_trait_implementation(
+                                type_id
+                                trait_names: ["FromStringLiteral", "ThrowingFromStringLiteral"]
+                                scope_id
                                 span
                             )
-                            type_id = builtin(BuiltinType::JaktString)
-                        } else {
-                            may_throw = trait_implementation!.trait_name == "ThrowingFromStringLiteral"
+                            if not trait_implementation.has_value() {
+                                eprintln("Type {} cannot be used as an overloaded string literal type", .type_name(type_id, debug_mode: true))
+                                .error_with_hint(
+                                    format("Type {} cannot be used as an overloaded string literal type", .type_name(type_id, debug_mode: true)),
+                                    span,
+                                    format("Consider implementing the FromStringLiteral trait for {}", .type_name(type_id)),
+                                    span
+                                )
+                                type_id = prelude_string_type_id
+                            } else {
+                                may_throw = trait_implementation!.trait_name == "ThrowingFromStringLiteral"
+                            }
+                        } else if not .get_type(type_id).is_concrete() {
+                            type_id = .prelude_struct_type_named("String")
+                            may_throw = true
                         }
-                    } else if not .get_type(type_id).is_concrete() {
-                        type_id = builtin(BuiltinType::JaktString)
                     }
 
                     .unify(
@@ -6504,7 +6520,7 @@ struct Typechecker {
                 else => CheckedExpression::QuotedString(
                     val: CheckedStringLiteral(
                         value: StringLiteral::Static(val)
-                        type_id: builtin(BuiltinType::JaktString)
+                        type_id: .prelude_struct_type_named("String")
                         may_throw: true
                     )
                     span
@@ -8663,7 +8679,7 @@ struct Typechecker {
                 }
 
                 if call.name == "format" {
-                    return_type = builtin(BuiltinType::JaktString)
+                    return_type = .prelude_struct_type_named("String")
                     callee_throws = true
                 }
             }
@@ -8853,7 +8869,7 @@ struct Typechecker {
             if function.stores_arguments.has_value() {
                 let argument_behaviour = function.stores_arguments!
                 for (index, level) in argument_behaviour {
-                    let resolve_arg = fn[&args, &this_expr, &function](anon index: usize) -> CheckedExpression {
+                    let resolve_arg = fn[&args, &this_expr, &function](anon index: usize) throws -> CheckedExpression {
                         if function.is_static() {
                             return args[index].1
                         }
@@ -9127,7 +9143,7 @@ struct Typechecker {
         return false
     }
 
-    fn get_argument_name(this, arg: (String, Span, ParsedExpression)) -> String {
+    fn get_argument_name(this, arg: (String, Span, ParsedExpression)) throws -> String {
         if not arg.0.is_empty() {
             return arg.0
         }
