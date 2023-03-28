@@ -1,6 +1,9 @@
 import typechecker {
-    BuiltinType, CheckedExpression, CheckedProgram, CheckedUnaryOperator, GenericInferences, Interpreter
-    InterpreterScope, LoadedModule, ModuleId, SafetyMode, ScopeId, TypeId, Typechecker, builtin
+    BuiltinType, CheckedExpression, CheckedProgram, CheckedUnaryOperator, GenericInferences, ImportList, ImportName
+    Interpreter, InterpreterScope, LoadedModule, ModuleId, SafetyMode, ScopeId, TypeId, Typechecker, builtin
+}
+import parser {
+    ParsedModuleImport
 }
 import compiler { Compiler, FileId }
 import lexer { Lexer, Token }
@@ -224,6 +227,17 @@ struct REPL {
 
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
         let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: true,  debug_name: "root")
+        typechecker.typecheck_module_import(
+            import_: ParsedModuleImport(
+                module_name: ImportName::Literal(
+                    name: "jakt::prelude::prelude"
+                    span: Span(file_id: FileId(id: 0), start: 0, end: 0)
+                ),
+                alias_name: None
+                import_list: ImportList::All
+            )
+            scope_id: root_scope_id
+        )
 
         let root_interpreter_scope = InterpreterScope::create()
 
