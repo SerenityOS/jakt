@@ -3411,7 +3411,20 @@ struct CodeGenerator {
                 yield output
             }
             Return(val) => match val.has_value() {
-                true => "return (" + .codegen_expression(val!) + ");"
+                true => match .current_function!.can_throw {
+                    true => {
+                        let type = .program.get_type(val!.type())
+                        mut result = ""
+                        if type is Void or type is Never {
+                            result = .codegen_expression(val!) + "; return {}"
+                        } else {
+                            result = "return " + .codegen_expression(val!)
+                        }
+
+                        yield result + ";"
+                    }
+                    false => "return " + .codegen_expression(val!) + ";"
+                }
                 false => {
                     yield match .current_function!.can_throw {
                         true => "return {};"
