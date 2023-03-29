@@ -9,6 +9,9 @@ STRING(TOLOWER ${JAKT_TARGET_IN} JAKT_TARGET)
 
 function(add_jakt_compiler_flags target)
   target_compile_options("${target}" PRIVATE
+    -Wall
+    -Wextra
+    -Werror
     -Wno-unused-local-typedefs
     -Wno-unused-function
     -Wno-unused-variable
@@ -25,6 +28,8 @@ function(add_jakt_compiler_flags target)
     -Wno-deprecated-declarations
     -Wno-unknown-warning-option
     -Wno-unused-command-line-argument
+    -Wno-unused-lambda-capture
+    -Wno-reorder-ctor
     # Silence warning about `no_unique_address`;
     # It does not apply on windows, and clang-cl just warns about it.
     -Wno-unknown-attributes
