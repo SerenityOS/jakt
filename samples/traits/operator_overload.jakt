@@ -1,0 +1,21 @@
+/// Expect:
+/// - output: "r = (4, 6)\n"
+
+struct Point {
+    x: i64
+    y: i64
+}
+
+type Point implements(Add<Point, Point>) {
+    fn add(this, anon rhs: Point) -> Point {
+        return Point(x: .x + rhs.x, y: .y + rhs.y)
+    }
+}
+
+fn main() {
+    let p = Point(x: 1, y: 2)
+    let q = Point(x: 3, y: 4)
+    let r = p + q
+
+    println("r = ({}, {})", r.x, r.y)
+}

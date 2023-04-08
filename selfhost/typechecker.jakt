@@ -14,7 +14,7 @@ import parser {
     ParsedExternalTraitImplementation, ParsedField, ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedMethod
     ParsedModuleImport, ParsedName, ParsedNameWithGenericParameters, ParsedNamespace, ParsedParameter
     ParsedPatternDefault, ParsedRecord, ParsedStatement, ParsedTrait, ParsedType, ParsedVarDecl, Parser, RecordType
-    TypeCast, UnaryOperator, Visibility
+    TypeCast, UnaryOperator, Visibility, ParsedGenericParameter
 }
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant
@@ -23,8 +23,8 @@ import types {
     CheckedStatement, CheckedStringLiteral, CheckedStruct, CheckedTrait, CheckedTypeCast, CheckedUnaryOperator
     CheckedVariable, CheckedVisibility, EnumId, FieldRecord, FunctionGenericParameter, FunctionGenerics, FunctionId
     GenericInferences, IterationDecision, LoadedModule, MaybeResolvedScope, Module, ModuleId, NumberConstant
-    ResolvedNamespace, SafetyMode, Scope, ScopeId, StringLiteral, StructId, StructLikeId, TraitId, Type, TypeId
-    Value, VarId, builtin, never_type_id, unknown_type_id, void_type_id
+    OperatorTraitImplementation, ResolvedNamespace, SafetyMode, Scope, ScopeId, StringLiteral, StructId
+    StructLikeId, TraitId, Type, TypeId, Value, VarId, builtin, never_type_id, unknown_type_id, void_type_id
 }
 import types
 import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo }
@@ -67,6 +67,54 @@ enum NumericOrStringValue {
     UnsignedNumericValue(u64)
 }
 
+// [foo:[1,2], bar:[4,5]] -> [foo:1,bar:4], [foo:1,bar:5], [foo:2,bar:4], [foo:2,bar:5]
+// [K:[V]] -> [K:V]
+struct InternalDictionaryProduct<K, V> implements(ThrowingIterable<[K:V]>) {
+    dict: [K:[V]]
+    current: [K:V]
+    current_index: [K:usize]
+    done: bool = false
+
+    fn next(mut this) throws -> [K:V]? {
+        if .done {
+            return None
+        }
+
+        mut next: [K:V] = [:]
+        for key in .dict.keys() {
+            let value = .dict[key][.current_index[key]]
+            next[key] = value
+        }
+
+        .current = next
+
+        for (key, values) in .dict {
+            let index = .current_index[key]
+            if index + 1 < values.size() {
+                .current_index[key] = index + 1
+                return next
+            }
+            .current_index[key] = 0
+        }
+
+        .done = true
+        return next
+    }
+}
+
+// FIXME: Can't put this inside the struct, this function being generic causes
+//        the compiler to emit no generic parameters for the struct, which makes C++ angry
+//        and making it *not* generic makes the compiler emit no generic parameters at all.
+//        This is a compiler bug.
+fn create_internal_dictionary_product<R, S>(dict: [R:[S]]) throws -> InternalDictionaryProduct<R, S> {
+    mut current_index: [R:usize] = [:]
+    for (key, _) in dict {
+        current_index[key] = 0
+    }
+    let current: [R:S] = [:]
+    return InternalDictionaryProduct(dict, current, current_index)
+}
+
 struct Typechecker {
     compiler: Compiler
     program: CheckedProgram
@@ -84,6 +132,14 @@ struct Typechecker {
     root_module_name: String
     in_comptime_function_call: bool = false
     had_an_error: bool = false
+
+    fn set_self_type_id(mut this, anon type_id: TypeId) throws {
+        if .get_type(type_id) is Struct(struct_id) and .get_struct(struct_id).implements_type is Some(replacement_type_id) {
+            .self_type_id = replacement_type_id
+        } else {
+            .self_type_id = type_id
+        }
+    }
 
     fn type_name(this, anon type_id: TypeId, debug_mode: bool = false) throws -> String {
         mut id = type_id
@@ -162,6 +218,28 @@ struct Typechecker {
             scope_id: root_scope_id
         )
 
+        for (_, struct_id) in typechecker.program.modules[0].builtin_implementation_structs {
+            let struct_ = typechecker.get_struct(struct_id)
+            typechecker.typecheck_entity_trait_implementations_predecl(
+                scope_id: struct_.scope_id
+                type_id: struct_.type_id
+                trait_implementations: struct_.trait_implementations
+                name: struct_.name
+                name_span: struct_.name_span
+            )
+        }
+
+        for (_, struct_id) in typechecker.program.modules[0].builtin_implementation_structs {
+            let struct_ = typechecker.get_struct(struct_id)
+            typechecker.typecheck_entity_trait_implementations(
+                scope_id: struct_.scope_id
+                type_id: struct_.type_id
+                trait_implementations: struct_.trait_implementations
+                name: struct_.name
+                name_span: struct_.name_span
+            )
+        }
+
         typechecker.typecheck_module(parsed_namespace, scope_id: root_scope_id)
 
         return typechecker
@@ -234,6 +312,7 @@ struct Typechecker {
     }
 
     fn error(mut this, anon message: String, anon span: Span) throws {
+        .had_an_error = true
         if not .ignore_errors {
             .compiler.errors.push(JaktError::Message(message, span))
         } else {
@@ -244,6 +323,8 @@ struct Typechecker {
     fn error_with_hint(mut this, anon message: String, anon span: Span, anon hint: String, anon hint_span: Span) throws {
         if not .ignore_errors {
             .compiler.errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
+        } else {
+            .had_an_error = true
         }
     }
 
@@ -435,13 +516,20 @@ struct Typechecker {
         return .program.find_trait_in_scope(scope_id, name)
     }
 
-    fn find_singular_trait_implementation(mut this, type_id: TypeId, trait_name: String, scope_id: ScopeId, span: Span) throws -> TraitImplementationDescriptor? {
+    fn find_singular_trait_implementation(
+        mut this
+        type_id: TypeId
+        trait_name: String
+        scope_id: ScopeId
+        span: Span
+        filter_for_generics: [TypeId]? = None
+    ) throws -> TraitImplementationDescriptor? {
         let trait_id = .find_trait_in_scope(scope_id, name: trait_name)
         if not trait_id.has_value() {
             return None
         }
 
-        let trait_impls = .find_all_implementations_of_trait(type_id, trait_id: trait_id!)
+        let trait_impls = .find_all_implementations_of_trait(type_id, trait_id: trait_id!, filter_for_generics)
         if trait_impls.is_empty() {
             return None
         }
@@ -460,9 +548,16 @@ struct Typechecker {
         )
     }
 
-    fn find_any_singular_trait_implementation(mut this, type_id: TypeId, trait_names: [String], scope_id: ScopeId, span: Span) throws -> TraitImplementationDescriptor? {
+    fn find_any_singular_trait_implementation(
+        mut this
+        type_id: TypeId
+        trait_names: [String]
+        scope_id: ScopeId
+        span: Span
+        filter_for_generics: [TypeId]? = None
+    ) throws -> TraitImplementationDescriptor? {
         for trait_name in trait_names {
-            let maybe_impl = .find_singular_trait_implementation(type_id, trait_name, scope_id, span)
+            let maybe_impl = .find_singular_trait_implementation(type_id, trait_name, scope_id, span, filter_for_generics)
             if maybe_impl.has_value() {
                 return maybe_impl
             }
@@ -534,11 +629,20 @@ struct Typechecker {
         if found_type_id.has_value() and not found_type_id!.equals(type_id) {
             // FIXME: Show hint of the original definition, once we store the name span.
             .error(
-                format("Redefinition of type ‘{}’", type_name)
+                format(
+                    "Redefinition of type ‘{}’ (duplicate: {} in {})",
+                    type_name
+                    .type_name(found_type_id!, debug_mode: true)
+                    .debug_description_of(scope_id)
+                )
                 span
             )
+
+            .generic_inferences.debug_description(program: &.program)
+
             return false
         }
+
         scope.types.set(key: type_name, value: type_id)
         return true
     }
@@ -651,6 +755,45 @@ struct Typechecker {
         return None
     }
 
+    fn find_function_matching_trait_implementation_in_scope(
+        mut this
+        self_type_id: TypeId
+        parent_scope_id: ScopeId
+        function_name: String
+        trait_descriptor: &TraitImplementationDescriptor
+    ) throws -> FunctionId? {
+        let trait_ = .get_trait(trait_descriptor.trait_id)
+        guard trait_.requirements is Methods(methods) else {
+            return None
+        }
+
+        guard methods.contains(function_name) else {
+            return None
+        }
+
+        guard .program.find_functions_with_name_in_scope(parent_scope_id, function_name) is Some(candidate_ids) else {
+            return None
+        }
+
+
+        let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+        defer {
+            .generic_inferences.restore(old_generic_inferences)
+        }
+
+        .generic_inferences.set_all(keys: trait_.generic_parameters, values: trait_descriptor.implemented_type_args)
+
+        let expected_function = .get_function(methods[function_name])
+        for candidate_id in candidate_ids {
+            let candidate = .get_function(candidate_id)
+            if .signatures_match(self_type_id, candidate, expected_function) {
+                return candidate_id
+            }
+        }
+
+        return None
+    }
+
     fn find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? =>
         .program.find_struct_in_scope(scope_id, name)
 
@@ -731,6 +874,23 @@ struct Typechecker {
             .typecheck_namespace_fields(parsed_namespace: child_namespace,
                 scope_id: child_namespace_scope_id)
         }
+
+        // Check the forall chunks
+        if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
+            for chunk in chunks {
+                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut i = 0uz
+                for stuff in all_types {
+                    defer i += 1
+
+                    .typecheck_namespace_fields(
+                        parsed_namespace: chunk.parsed_namespace
+                        scope_id: chunk.generated_scopes[i]
+                    )
+                }
+            }
+        }
+
         for record in parsed_namespace.records {
             if record.record_type is Struct or record.record_type is Class {
                 let struct_id = .find_struct_in_scope(scope_id, name: record.name)
@@ -750,7 +910,7 @@ struct Typechecker {
         .current_struct_type_id = struct_type_id
 
         let old_self_type_id = .self_type_id
-        .self_type_id = struct_type_id
+        .set_self_type_id(struct_type_id)
         defer .self_type_id = old_self_type_id
 
         let parsed_fields = match record.record_type {
@@ -792,6 +952,23 @@ struct Typechecker {
             .typecheck_namespace_default_fields(parsed_namespace: child_namespace,
                 scope_id: child_namespace_scope_id)
         }
+
+        // Check the forall chunks
+        if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
+            for chunk in chunks {
+                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut i = 0uz
+                for stuff in all_types {
+                    defer i += 1
+
+                    .typecheck_namespace_default_fields(
+                        parsed_namespace: chunk.parsed_namespace
+                        scope_id: chunk.generated_scopes[i]
+                    )
+                }
+            }
+        }
+
         for record in parsed_namespace.records {
             if record.record_type is Struct or record.record_type is Class {
                 let struct_id = .find_struct_in_scope(scope_id, name: record.name)
@@ -815,7 +992,7 @@ struct Typechecker {
         }
 
         let old_self_type_id = .self_type_id
-        .self_type_id = struct_type_id
+        .set_self_type_id(struct_type_id)
         defer .self_type_id = old_self_type_id
 
         let parsed_fields = match parsed_record.record_type {
@@ -1263,6 +1440,23 @@ struct Typechecker {
             let child_namespace_scope_id = children[i]
             .typecheck_namespace_constructors(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id)
         }
+
+        // Check the forall chunks
+        if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
+            for chunk in chunks {
+                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut i = 0uz
+                for stuff in all_types {
+                    defer i += 1
+
+                    .typecheck_namespace_constructors(
+                        parsed_namespace: chunk.parsed_namespace
+                        scope_id: chunk.generated_scopes[i]
+                    )
+                }
+            }
+        }
+
         for record in parsed_namespace.records {
             match record.record_type {
                 Struct | Class => {
@@ -1291,6 +1485,24 @@ struct Typechecker {
             let child_namespace_scope_id = children[i]
             .typecheck_namespace_aliases(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id, allow)
         }
+
+        // Check the forall chunks
+        if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
+            for chunk in chunks {
+                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut i = 0uz
+                for stuff in all_types {
+                    defer i += 1
+
+                    .typecheck_namespace_aliases(
+                        parsed_namespace: chunk.parsed_namespace
+                        scope_id: chunk.generated_scopes[i]
+                        allow
+                    )
+                }
+            }
+        }
+
         for alias in parsed_namespace.aliases {
             .typecheck_alias(alias, scope_id, allow)
         }
@@ -1455,6 +1667,24 @@ struct Typechecker {
                 }
             }
         }
+
+        // Check the forall chunks
+        if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
+            for chunk in chunks {
+                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut i = 0uz
+                for stuff in all_types {
+                    defer i += 1
+
+                    .typecheck_namespace_function_predecl(
+                        parsed_namespace: chunk.parsed_namespace
+                        scope_id: chunk.generated_scopes[i]
+                        comptime_pass
+                        generic_pass
+                    )
+                }
+            }
+        }
     }
 
     fn typecheck_namespace_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
@@ -1521,15 +1751,6 @@ struct Typechecker {
             .typecheck_trait_predecl(parsed_trait, scope_id)
         }
 
-        // 4. Resolve default trait implementations
-        for parsed_trait in parsed_namespace.traits {
-            let trait_id = .find_trait_in_scope(scope_id, name: parsed_trait.name)
-            guard trait_id.has_value() else {
-                .compiler.panic("can't find trait that has been previous added")
-            }
-            .typecheck_trait(parsed_trait, trait_id: trait_id!, scope_id)
-        }
-
         // 5. Typecheck struct predeclaration
         struct_index = 0
         enum_index = 0
@@ -1552,106 +1773,181 @@ struct Typechecker {
         }
 
         // 6. Resolve external trait implementations
-        for implementation in parsed_namespace.external_trait_implementations {
-            let for_type = .typecheck_typename(parsed_type: implementation.for_type, scope_id, name: None)
+        for default_pass in [false, true] {
+            for implementation in parsed_namespace.external_trait_implementations {
+                let for_type = .typecheck_typename(parsed_type: implementation.for_type, scope_id, name: None)
 
-            let old_self_type_id = .self_type_id
+                let old_self_type_id = .self_type_id
+                .set_self_type_id(for_type)
+                defer .self_type_id = old_self_type_id
 
-            .self_type_id = for_type
-
-            defer {
-                .self_type_id = old_self_type_id
-            }
-
-            let type = .get_type(for_type)
-            match type {
-                Struct(struct_id) | GenericInstance(id: struct_id) => .resolve_external_trait_implementations(
-                    implementation
-                    struct_id
-                    for_type
-                    scope_id
-                )
-                Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
-                    mut enum_ = .get_enum(enum_id)
-                    for method in implementation.methods {
-                        mut this_arg_type_id: TypeId? = None
-                        if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
-                            this_arg_type_id = for_type
-                        }
-
-                        .typecheck_function_predecl(
-                            parsed_function: method.parsed_function
-                            parent_scope_id: enum_.scope_id
-                            this_arg_type_id
+                mut type = .get_type(for_type)
+                if type.is_builtin() {
+                    type = .get_type(.get_struct(
+                        .program.builtin_implementation_struct(builtin: type.as_builtin_type(), for_module: .program.prelude_module_id())
+                    ).type_id)
+                }
+                match type {
+                    Struct(struct_id) | GenericInstance(id: struct_id) => {
+                        mut struct_ = .get_struct(struct_id)
+                        .resolve_external_trait_implementations(
+                            implementation
+                            entity_scope_id: struct_.scope_id
+                            trait_implementations: &mut struct_.trait_implementations
+                            for_type
+                            scope_id
+                            default_pass
                         )
                     }
-
-                    .fill_trait_implementation_list(
-                        implementation.traits
-                        &mut enum_.trait_implementations
-                        scope_id: enum_.scope_id
-                        trait_name_scope_id_override: scope_id
-                    )
-
-                    for trait_name in implementation.traits {
-                        let trait_id = .find_trait_in_scope(scope_id, name: trait_name.name)
-                        guard trait_id.has_value() else { continue }
-
-                        let trait_ = .get_trait(trait_id!)
-                        guard trait_.requirements is Methods(methods) else {
-                            continue
-                        }
-
-                        for (name, function_id) in methods {
-                            if .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: name).has_value() {
-                                continue
-                            }
-
-                            let function = .get_function(function_id)
-                            if function.block.statements.is_empty() {
-                                continue
-                            }
-
-                            mut replaced_function = function.copy()
-                            let inferences = .generic_inferences
-                            replaced_function.map_types(&fn[inferences](anon type_id: TypeId) throws -> TypeId {
-                                return inferences.map(type_id)
-                            })
-
-                            mut module = .current_module()
-                            let new_function_id = module.add_function(checked_function: replaced_function)
-
-                            .add_function_to_scope(
-                                parent_scope_id: enum_.scope_id
-                                name: name
-                                overload_set: [new_function_id]
-                                span: trait_name.name_span
+                    Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
+                        mut enum_ = .get_enum(enum_id)
+                        .resolve_external_trait_implementations(
+                            implementation
+                            entity_scope_id: enum_.scope_id
+                            trait_implementations: &mut enum_.trait_implementations
+                            for_type
+                            scope_id
+                            default_pass
+                        )
+                    }
+                    else => {
+                        if not default_pass {
+                            .error(
+                                format("Cannot implement traits for type '{}'", .type_name(for_type)),
+                                implementation.for_type.span()
                             )
                         }
                     }
                 }
-                else => {
-                    if type.is_builtin() {
-                        let substitute_struct_id = .program.builtin_implementation_struct(
-                            builtin: type.as_builtin_type()
-                            for_module: for_type.module
-                        )
+            }
+        }
 
-                        .resolve_external_trait_implementations(
-                            implementation
-                            struct_id: substitute_struct_id
-                            for_type
-                            scope_id
-                        )
-                    } else {
-                        .error(
-                            format("Cannot implement traits for type '{}'", .type_name(for_type)),
-                            implementation.for_type.span()
-                        )
-                    }
+        // 4. Resolve default trait implementations
+        for parsed_trait in parsed_namespace.traits {
+            let trait_id = .find_trait_in_scope(scope_id, name: parsed_trait.name)
+            guard trait_id.has_value() else {
+                .compiler.panic("can't find trait that has been previous added")
+            }
+            .typecheck_trait(parsed_trait, trait_id: trait_id!, scope_id, comptime_pass: true)
+        }
+
+        // 7. Resolve forall chunks
+        for (chunk_parameters, chunk_namespace) in parsed_namespace.forall_chunks {
+            let resolved_parameters = .typecheck_forall_chunk_parameters(chunk_parameters, scope_id)
+            mut resolved_chunk = ResolvedForallChunk(
+                parameters: resolved_parameters
+                parsed_namespace: chunk_namespace
+                generated_scopes: []
+            )
+
+            mut all_types = create_internal_dictionary_product(dict: resolved_parameters)
+            for parameters in all_types {
+                mut debug_name_builder = StringBuilder::create()
+                debug_name_builder.append("forall<")
+                mut first = true
+                for (name, value) in parameters {
+                    if first { first = false } else { debug_name_builder.append(", ") }
+                    debug_name_builder.append(name)
+                    debug_name_builder.append("=")
+                    debug_name_builder.append(.type_name(value.1))
+                }
+                debug_name_builder.append("> namespace")
+
+                let namespace_scope_id = .create_scope(
+                    parent_scope_id: scope_id
+                    can_throw: false
+                    debug_name: debug_name_builder.to_string()
+                    for_block: false
+                )
+
+                for (name, value) in parameters {
+                    .add_type_to_scope(
+                        scope_id: namespace_scope_id
+                        type_name: name
+                        type_id: value.1
+                        span: value.0
+                    )
+                }
+
+                mut parent_scope = .get_scope(scope_id)
+                parent_scope.children.push(namespace_scope_id)
+                parent_scope.resolution_mixins.push(namespace_scope_id)
+
+                .typecheck_namespace_predecl(parsed_namespace: chunk_namespace, scope_id: namespace_scope_id)
+                resolved_chunk.generated_scopes.push(namespace_scope_id)
+            }
+
+            mut scope = .get_scope(scope_id)
+            if scope.resolved_forall_chunks is None {
+                scope.resolved_forall_chunks = []
+            }
+            scope.resolved_forall_chunks!.push(resolved_chunk)
+        }
+    }
+
+    fn typecheck_forall_chunk_parameters(mut this, chunk_parameters: [ParsedGenericParameter], scope_id: ScopeId) throws -> [String:[(Span, TypeId)]] {
+        mut named_requirements: [(String, Span, [TraitId])] = []
+        for parameter in chunk_parameters {
+            guard parameter.requires_list is Some(requires_list) and not requires_list.is_empty() else {
+                .error_with_hint(
+                    format("forall type '{}' is not allowed to be unconditional", parameter.name),
+                    parameter.span
+                    "Try adding a 'requires' clause to the this type"
+                    parameter.span
+                )
+                continue
+            }
+
+            mut trait_implementations: [TypeId] = []
+            mut trait_requirements: [TraitId] = []
+
+            .fill_trait_requirements(
+                names: requires_list
+                &mut trait_requirements
+                &mut trait_implementations
+                scope_id
+            )
+
+            if trait_requirements.is_empty() {
+                // We've already reported an error for this
+                continue
+            }
+
+            named_requirements.push((parameter.name, parameter.span, trait_requirements))
+        }
+
+        let old_ignore_errors = .ignore_errors
+        defer .ignore_errors = old_ignore_errors
+
+        mut results: [String:[(Span, TypeId)]] = [:]
+        let module = .current_module()
+        for (name, span, traits) in named_requirements {
+            for type_index in 0..module.types.size() {
+                mut type_id = TypeId(module: module.id, id: type_index)
+                .ignore_errors = true
+                .check_type_argument_requirements(
+                    generic_argument: type_id
+                    constraints: traits
+                    arg_span: span
+                )
+                let matches = not .had_an_error
+                .had_an_error = false
+                .ignore_errors = false
+
+                if not matches { continue }
+
+                let type = .get_type(type_id)
+                if type.is_builtin() { type_id = builtin(type.as_builtin_type()) }
+
+                if results.contains(name) {
+                    results[name].push((span, type_id))
+                } else {
+                    results[name] = [(span, type_id)]
                 }
             }
         }
+
+        return results
     }
 
     fn typecheck_namespace_methods_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId, comptime_pass: bool, generic_pass: bool) throws {
@@ -1693,69 +1989,99 @@ struct Typechecker {
                 Garbage => {}
             }
         }
+
+        if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
+            for chunk in chunks {
+                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut i = 0uz
+                for stuff in all_types {
+                    defer i += 1
+
+                    .typecheck_namespace_methods_predecl(
+                        parsed_namespace: chunk.parsed_namespace
+                        scope_id: chunk.generated_scopes[i]
+                        comptime_pass
+                        generic_pass
+                    )
+                }
+            }
+        }
     }
 
     fn resolve_external_trait_implementations(
         mut this
         implementation: ParsedExternalTraitImplementation
-        struct_id: StructId
+        entity_scope_id: ScopeId
+        trait_implementations: &mut [String:[(TraitId, [TypeId])]]
         for_type: TypeId
         scope_id: ScopeId
+        default_pass: bool
     ) throws {
-        mut struct_ = .get_struct(struct_id)
-        for method in implementation.methods {
-            mut this_arg_type_id: TypeId? = None
-            if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
-                this_arg_type_id = for_type
-            }
-
-            .typecheck_function_predecl(
-                parsed_function: method.parsed_function
-                parent_scope_id: struct_.scope_id
-                this_arg_type_id
+        if default_pass {
+            let impls = .fill_trait_implementation_list(
+                implementation.traits
+                &mut trait_implementations
+                scope_id: entity_scope_id
+                trait_name_scope_id_override: scope_id
             )
-        }
 
-        .fill_trait_implementation_list(
-            implementation.traits
-            &mut struct_.trait_implementations
-            scope_id: struct_.scope_id
-            trait_name_scope_id_override: scope_id
-        )
+            mut index = 0uz
+            for trait_name in implementation.traits {
+                defer index += 1
 
-        for trait_name in implementation.traits {
-            let trait_id = .find_trait_in_scope(scope_id, name: trait_name.name)
-            guard trait_id.has_value() else { continue }
+                let trait_id = .find_trait_in_scope(scope_id, name: trait_name.name)
+                guard trait_id.has_value() else { continue }
 
-            let trait_ = .get_trait(trait_id!)
-            guard trait_.requirements is Methods(methods) else {
-                continue
+                let trait_ = .get_trait(trait_id!)
+                guard trait_.requirements is Methods(methods) else {
+                    continue
+                }
+
+                let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+                defer {
+                    .generic_inferences.restore(old_generic_inferences)
+                }
+
+                .generic_inferences.set_all(keys: trait_.generic_parameters, values: impls[index].1)
+
+                for (name, function_id) in methods {
+                    let function = &mut .program.modules[function_id.module.id].functions[function_id.id]
+                    if function.block.statements.is_empty() {
+                        continue
+                    }
+
+                    let inferences = .generic_inferences
+                    function.map_types(&fn[inferences](anon type_id: TypeId) throws -> TypeId {
+                        return inferences.map(type_id)
+                    })
+
+                    mut ids = .find_functions_with_name_in_scope(
+                        parent_scope_id: entity_scope_id
+                        function_name: name
+                    )
+
+                    if not ids.has_value() {
+                        .add_function_to_scope(
+                            parent_scope_id: entity_scope_id
+                            name: name
+                            overload_set: [function_id]
+                            span: trait_name.name_span
+                        )
+                    }
+                }
             }
-
-            for (name, function_id) in methods {
-                if .find_functions_with_name_in_scope(parent_scope_id: struct_.scope_id, function_name: name).has_value() {
-                    continue
+        } else {
+            for method in implementation.methods {
+                mut this_arg_type_id: TypeId? = None
+                if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
+                    this_arg_type_id = for_type
                 }
 
-                let function = .get_function(function_id)
-                if function.block.statements.is_empty() {
-                    continue
-                }
-
-                mut replaced_function = function.copy()
-                let inferences = .generic_inferences
-                replaced_function.map_types(&fn[inferences](anon type_id: TypeId) throws -> TypeId {
-                    return inferences.map(type_id)
-                })
-
-                mut module = .current_module()
-                let new_function_id = module.add_function(checked_function: replaced_function)
-
-                .add_function_to_scope(
-                    parent_scope_id: struct_.scope_id
-                    name: name
-                    overload_set: [new_function_id]
-                    span: trait_name.name_span
+                .typecheck_function_predecl(
+                    parsed_function: method.parsed_function
+                    parent_scope_id: entity_scope_id
+                    this_arg_type_id
+                    scope_mixin: scope_id
                 )
             }
         }
@@ -1791,7 +2117,7 @@ struct Typechecker {
 
 
         let old_self_type_id = .self_type_id
-        .self_type_id = trait_type_id
+        .set_self_type_id(trait_type_id)
         defer .self_type_id = old_self_type_id
 
         // register the trait
@@ -1895,37 +2221,25 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_trait(mut this, parsed_trait: ParsedTrait, trait_id: TraitId, scope_id: ScopeId) throws {
+    fn typecheck_trait(mut this, parsed_trait: ParsedTrait, trait_id: TraitId, scope_id: ScopeId, comptime_pass: bool = false) throws {
         mut checked_trait = .program.modules[trait_id.module.id].traits[trait_id.id]
 
         let old_self_type_id = .self_type_id
-        .self_type_id = .find_or_add_type_id(Type::Trait(trait_id))
+        .set_self_type_id(.find_or_add_type_id(Type::Trait(trait_id)))
         defer .self_type_id = old_self_type_id
 
         match parsed_trait.requirements {
-            Methods(methods) => {
-                for parsed_function in methods {
-                    if parsed_function.block.stmts.is_empty() {
-                        continue
-                    }
-
-                    // even though traits aren't types per-se, they act like a generic variable, since
-                    // they represent the type that implements said trait
-                    .typecheck_function(
-                        parsed_function
-                        parent_scope_id: checked_trait.scope_id
-                    )
-                }
-            }
             ComptimeExpression(expression) => {
-                let checked_expression = .typecheck_expression(
-                    expr: expression
-                    scope_id: checked_trait.scope_id
-                    safety_mode: SafetyMode::Safe
-                    type_hint: builtin(BuiltinType::Bool)
-                )
+                if comptime_pass {
+                    let checked_expression = .typecheck_expression(
+                        expr: expression
+                        scope_id: checked_trait.scope_id
+                        safety_mode: SafetyMode::Safe
+                        type_hint: builtin(BuiltinType::Bool)
+                    )
 
-                checked_trait.requirements = CheckedTraitRequirements::ComptimeExpression(checked_expression)
+                    checked_trait.requirements = CheckedTraitRequirements::ComptimeExpression(checked_expression)
+                }
             }
             else => {}
         }
@@ -1941,7 +2255,7 @@ struct Typechecker {
         .add_type_to_scope(scope_id, type_name: parsed_record.name, type_id: enum_type_id, span: parsed_record.name_span)
 
         let old_self_type_id = .self_type_id
-        .self_type_id = enum_type_id
+        .set_self_type_id(enum_type_id)
         defer .self_type_id = old_self_type_id
 
         let is_boxed = match parsed_record.record_type {
@@ -1969,7 +2283,7 @@ struct Typechecker {
         let enum_type_id = .find_or_add_type_id(type: Type::Enum(enum_id))
 
         let old_self_type_id = .self_type_id
-        .self_type_id = enum_type_id
+        .set_self_type_id(enum_type_id)
         defer .self_type_id = old_self_type_id
 
         let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("enum({})", parsed_record.name), for_block: false)
@@ -2264,7 +2578,7 @@ struct Typechecker {
         .current_struct_type_id = struct_type_id
 
         let old_self_type_id = .self_type_id
-        .self_type_id = struct_type_id
+        .set_self_type_id(struct_type_id)
         defer .self_type_id = old_self_type_id
 
         let struct_ = .get_struct(struct_id)
@@ -2378,10 +2692,27 @@ struct Typechecker {
     fn fill_trait_implementation_list(
         mut this
         anon parsed_impl_list: [ParsedNameWithGenericParameters]
-        anon trait_implementations: &mut [String:(TraitId, [TypeId])]
+        anon trait_implementations: &mut [String:[(TraitId, [TypeId])]]
         scope_id: ScopeId
         trait_name_scope_id_override: ScopeId? = None
-    ) throws {
+    ) throws -> [(TraitId, [TypeId])] {
+        mut result: [(TraitId, [TypeId])] = []
+        mut type_scope = scope_id
+
+        if trait_name_scope_id_override is Some(id) {
+            let aliased_scope_id = .create_scope(
+                parent_scope_id: id
+                can_throw: false
+                debug_name: format(
+                    "trait-alias-mixin({})"
+                    .get_scope(id).debug_name
+                )
+                for_block: false
+            )
+            mut scope = .get_scope(scope_id)
+            scope.resolution_mixins.push(aliased_scope_id)
+        }
+
         let trait_name_scope_id = trait_name_scope_id_override ?? scope_id
         // register the traits that this record is supposed to implement.
         for trait_name in parsed_impl_list {
@@ -2399,12 +2730,40 @@ struct Typechecker {
 
             mut generic_arguments: [TypeId] = []
             for argument in trait_name.generic_parameters {
-                let argument_type_id = .typecheck_typename(parsed_type: argument, scope_id, name: None)
+                let argument_type_id = .typecheck_typename(parsed_type: argument, scope_id: type_scope, name: None)
                 generic_arguments.push(argument_type_id)
             }
 
-            trait_implementations.set(trait_name.name, (trait_id, generic_arguments))
+            mut existing_list = trait_implementations.get(trait_name.name)
+            if existing_list.has_value() {
+                mut found = false
+                for (id, args) in existing_list! {
+                    guard id.equals(trait_id) else {
+                        continue
+                    }
+                    if args.size() != generic_arguments.size() {
+                        continue
+                    }
+                    for i in 0..args.size() {
+                        guard args[i].equals(generic_arguments[i]) else {
+                            continue
+                        }
+                    }
+
+                    found = true
+                    break
+                }
+                if not found {
+                    existing_list!.push((trait_id, generic_arguments))
+                }
+            } else {
+                trait_implementations.set(trait_name.name, [(trait_id, generic_arguments)])
+            }
+
+            result.push((trait_id, generic_arguments))
         }
+
+        return result
     }
 
     fn specialize_trait(mut this, trait_id: TraitId, generic_parameters: [TypeId]) throws {
@@ -2414,7 +2773,7 @@ struct Typechecker {
         }
 
         let old_self_type_id = .self_type_id
-        .self_type_id = .find_or_add_type_id(Type::GenericTraitInstance(id: trait_id, args: generic_parameters))
+        .set_self_type_id(.find_or_add_type_id(Type::GenericTraitInstance(id: trait_id, args: generic_parameters)))
         defer .self_type_id = old_self_type_id
 
 
@@ -2440,7 +2799,7 @@ struct Typechecker {
         .current_struct_type_id = struct_type_id
 
         let old_self_type_id = .self_type_id
-        .self_type_id = struct_type_id
+        .set_self_type_id(struct_type_id)
         defer .self_type_id = old_self_type_id
 
         let struct_scope_id = .current_module().structures[struct_id.id].scope_id
@@ -2548,7 +2907,7 @@ struct Typechecker {
         .current_struct_type_id = struct_type_id
 
         let old_self_type_id = .self_type_id
-        .self_type_id = struct_type_id
+        .set_self_type_id(struct_type_id)
         defer .self_type_id = old_self_type_id
 
         let struct_scope_id = .current_module().structures[struct_id.id].scope_id
@@ -2648,12 +3007,265 @@ struct Typechecker {
         ))
     }
 
+    fn typecheck_entity_trait_implementations_predecl(
+        mut this
+        scope_id: ScopeId
+        type_id: TypeId
+        trait_implementations: [String:[(TraitId, [TypeId])]]
+        name: String
+        name_span: Span
+    ) throws {
+        for (trait_name, trait_ids_and_generic_params) in trait_implementations {
+            for trait_id_and_generic_params in trait_ids_and_generic_params {
+                let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+                defer .generic_inferences.restore(old_generic_inferences)
+
+                let (trait_id, generic_params) = trait_id_and_generic_params
+                let trait_ = .get_trait(trait_id)
+                if trait_.generic_parameters.size() != generic_params.size() {
+                    .error(
+                        format(
+                            "Trait ‘{}’ expects {} generic parameters, but {} were given"
+                            trait_name
+                            trait_.generic_parameters.size()
+                            generic_params.size()
+                        )
+                        trait_.name_span
+                    )
+                    continue
+                }
+
+                .specialize_trait(trait_id, generic_parameters: generic_params)
+
+                guard trait_.requirements is Methods(methods) else {
+                    continue
+                }
+
+                .generic_inferences.set_all(keys: trait_.generic_parameters, values: generic_params)
+
+                for (method_name, method_function_id) in methods {
+                    let method = .get_function(method_function_id)
+                    if not method.parsed_function.has_value() or method.parsed_function!.block.stmts.is_empty() {
+                        continue
+                    }
+
+                    let f = .find_functions_with_name_in_scope(
+                        parent_scope_id: scope_id
+                        function_name: method_name
+                    )
+                    if f.has_value() {
+                        continue
+                    }
+
+                    mut mixin_scope_id: ScopeId? = None
+                    if not trait_.generic_parameters.is_empty() {
+                        let id = .program.create_scope(
+                            parent_scope_id: None
+                            can_throw: false
+                            debug_name: format("trait({}).generic-mixin", trait_.name)
+                            module_id: scope_id.module_id
+                            for_block: false
+                        )
+
+                        for i in 0..trait_.generic_parameters.size() {
+                            let generic_param = trait_.generic_parameters[i]
+                            let generic_param_type = generic_params[i]
+
+                            guard .get_type(generic_param.type_id) is TypeVariable(name) else {
+                                continue
+                            }
+
+                            .add_type_to_scope(
+                                scope_id: id
+                                type_name: name
+                                type_id: generic_param_type
+                                span: generic_param.span
+                            )
+
+                            mixin_scope_id = id
+                        }
+                    }
+
+                    .typecheck_function_predecl(
+                        parsed_function: method.parsed_function!
+                        parent_scope_id: scope_id
+                        this_arg_type_id: type_id
+                        scope_mixin: mixin_scope_id
+                    )
+                }
+            }
+        }
+    }
+
+    fn typecheck_entity_trait_implementations(
+        mut this
+        scope_id: ScopeId
+        type_id: TypeId
+        trait_implementations: [String:[(TraitId, [TypeId])]]
+        name: String
+        name_span: Span
+    ) throws {
+        mut checks = TraitImplCheck::make()
+
+        {
+            checks.ensure_capacity(trait_implementations.size())
+
+            for (trait_name, trait_ids_and_generic_params) in trait_implementations {
+                for trait_id_and_generic_params in trait_ids_and_generic_params {
+                    checks.register_trait(
+                        trait_type_id: .find_or_add_type_id(
+                            Type::GenericTraitInstance(id: trait_id_and_generic_params.0, args: trait_id_and_generic_params.1)
+                        )
+                        trait_name
+                        requirements: .program.get_trait(trait_id_and_generic_params.0).requirements
+                    )
+                }
+            }
+        }
+
+        {
+            for (trait_name, trait_ids_and_generic_params) in trait_implementations {
+                for trait_id_and_generic_params in trait_ids_and_generic_params {
+                    let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+                    defer .generic_inferences.restore(old_generic_inferences)
+
+                    let (trait_id, generic_params) = trait_id_and_generic_params
+                    let trait_ = .get_trait(trait_id)
+                    if trait_.generic_parameters.size() != generic_params.size() {
+                        .error(
+                            format(
+                                "Trait ‘{}’ expects {} generic parameters, but {} were given"
+                                trait_name
+                                trait_.generic_parameters.size()
+                                generic_params.size()
+                            )
+                            trait_.name_span
+                        )
+                        continue
+                    }
+
+                    .specialize_trait(trait_id, generic_parameters: generic_params)
+
+                    guard trait_.requirements is Methods(methods) else {
+                        continue
+                    }
+
+                    .generic_inferences.set_all(keys: trait_.generic_parameters, values: generic_params)
+
+                    for (method_name, method_function_id) in methods {
+                        let method = .get_function(method_function_id)
+                        if not method.parsed_function.has_value() or method.parsed_function!.block.stmts.is_empty() {
+                            continue
+                        }
+
+                        let ids = .find_functions_with_name_in_scope(
+                            parent_scope_id: scope_id
+                            function_name: method_name
+                        )
+
+                        mut this_function: FunctionId? = None
+                        if ids.has_value() {
+                            for id in ids! {
+                                if .get_function(id).parsed_function?.id == method.parsed_function?.id {
+                                    this_function = id
+                                    break
+                                }
+                            }
+                            if not this_function.has_value() {
+                                continue
+                            }
+                        }
+
+                        if this_function.has_value() and .get_function(this_function!).is_fully_checked {
+                            continue
+                        }
+
+                        .typecheck_function(
+                            parsed_function: method.parsed_function!
+                            parent_scope_id: scope_id
+                        )
+                    }
+                }
+            }
+
+            let scope = .get_scope(scope_id)
+            for (name, overload_set) in scope.functions {
+                for function_id in overload_set {
+                    checks.register_method(
+                        self_type_id: type_id,
+                        method_name: name,
+                        method_id: function_id,
+                        typechecker: &mut this
+                    )
+                }
+            }
+        }
+
+        checks.throw_errors(record_decl_span: name_span, typechecker: &mut this)
+    }
+
+    fn typecheck_namespace_trait_implementations_predecl(mut this, scope_id: ScopeId) throws {
+        let scope = .get_scope(scope_id)
+
+        for child in scope.children {
+            .typecheck_namespace_trait_implementations_predecl(scope_id: child)
+        }
+
+        for (_, struct_id) in scope.structs {
+            let struct_ = .get_struct(struct_id)
+            .typecheck_entity_trait_implementations_predecl(
+                scope_id: struct_.scope_id
+                type_id: struct_.type_id
+                trait_implementations: struct_.trait_implementations
+                name: struct_.name
+                name_span: struct_.name_span
+            )
+        }
+    }
+
+    fn typecheck_namespace_trait_implementations(mut this, scope_id: ScopeId) throws {
+        let scope = .get_scope(scope_id)
+
+        for child in scope.children {
+            .typecheck_namespace_trait_implementations(scope_id: child)
+        }
+
+        for (_, struct_id) in scope.structs {
+            let struct_ = .get_struct(struct_id)
+            .typecheck_entity_trait_implementations(
+                scope_id: struct_.scope_id
+                type_id: struct_.type_id
+                trait_implementations: struct_.trait_implementations
+                name: struct_.name
+                name_span: struct_.name_span
+            )
+        }
+    }
+
     fn typecheck_namespace_declarations(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId, comptime_pass: bool, generic_pass: bool) throws {
         let children = .get_scope(id: scope_id).children
         for i in 0..parsed_namespace.namespaces.size() {
             let child_namespace = parsed_namespace.namespaces[i]
             let child_namespace_scope_id = children[i]
             .typecheck_namespace_declarations(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id, comptime_pass, generic_pass)
+        }
+
+        // Check the forall chunks
+        if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
+            for chunk in chunks {
+                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut i = 0uz
+                for stuff in all_types {
+                    defer i += 1
+
+                    .typecheck_namespace_declarations(
+                        parsed_namespace: chunk.parsed_namespace
+                        scope_id: chunk.generated_scopes[i]
+                        comptime_pass
+                        generic_pass
+                    )
+                }
+            }
         }
 
         if not comptime_pass and not generic_pass {
@@ -2676,6 +3288,16 @@ struct Typechecker {
                     else => {}
                 }
             }
+
+            for parsed_trait in parsed_namespace.traits {
+                let trait_id = .find_trait_in_scope(scope_id, name: parsed_trait.name)
+                guard trait_id.has_value() else {
+                    .compiler.panic("can't find trait that has been previous added")
+                }
+                .typecheck_trait(parsed_trait, trait_id: trait_id!, scope_id)
+            }
+
+            .typecheck_namespace_trait_implementations_predecl(scope_id)
         }
 
         for fun in parsed_namespace.functions.iterator() {
@@ -2686,7 +3308,15 @@ struct Typechecker {
 
         if not comptime_pass and not generic_pass {
             for implementation in parsed_namespace.external_trait_implementations {
-                let for_type = .typecheck_typename(parsed_type: implementation.for_type, scope_id, name: None)
+                mut for_type = .typecheck_typename(parsed_type: implementation.for_type, scope_id, name: None)
+                let type = .get_type(for_type)
+                if type.is_builtin() {
+                    let struct_id = .program.builtin_implementation_struct(
+                        builtin: type.as_builtin_type()
+                        for_module: .program.prelude_module_id()
+                    )
+                    for_type = .find_or_add_type_id(Type::Struct(struct_id))
+                }
                 match .get_type(for_type) {
                     Struct(struct_id) | GenericInstance(id: struct_id) => {
                         mut struct_ = .get_struct(struct_id)
@@ -2724,6 +3354,10 @@ struct Typechecker {
                 }
             }
         }
+
+        if not comptime_pass and not generic_pass {
+            .typecheck_namespace_trait_implementations(scope_id)
+        }
     }
 
     fn typecheck_enum_constructor(mut this, parsed_record: ParsedRecord, enum_id: EnumId, parent_scope_id: ScopeId) throws {
@@ -2733,7 +3367,7 @@ struct Typechecker {
         mut enum_ = .get_enum(enum_id)
 
         let old_self_type_id = .self_type_id
-        .self_type_id = enum_.type_id
+        .set_self_type_id(enum_.type_id)
         defer .self_type_id = old_self_type_id
 
         mut common_seen_fields: {String} = {}
@@ -3038,7 +3672,7 @@ struct Typechecker {
 
     fn typecheck_enum(mut this, record: ParsedRecord, enum_id: EnumId, parent_scope_id: ScopeId) throws {
         let old_self_type_id = .self_type_id
-        .self_type_id = .get_enum(enum_id).type_id
+        .set_self_type_id(.get_enum(enum_id).type_id)
         defer .self_type_id = old_self_type_id
 
         for method in record.methods {
@@ -3060,7 +3694,7 @@ struct Typechecker {
         .current_struct_type_id = struct_type_id
 
         let old_self_type_id = .self_type_id
-        .self_type_id = struct_type_id
+        .set_self_type_id(struct_type_id)
         defer .self_type_id = old_self_type_id
 
         mut all_virtuals: [String: [CheckedFunction]] = [:]
@@ -3083,21 +3717,6 @@ struct Typechecker {
             super_struct_id = super_struct.super_struct_id
         }
 
-        mut checks = TraitImplCheck::make()
-
-        {
-            let trait_implementations = .get_struct(struct_id).trait_implementations
-            checks.ensure_capacity(trait_implementations.size())
-
-            for (trait_name, trait_id_and_generic_params) in trait_implementations {
-                checks.register_trait(
-                    trait_id: trait_id_and_generic_params.0
-                    trait_name
-                    requirements: .program.get_trait(trait_id_and_generic_params.0).requirements
-                )
-            }
-        }
-
         for method in record.methods {
             .typecheck_override(
                 method: method
@@ -3106,48 +3725,6 @@ struct Typechecker {
             )
             .typecheck_method(func: method.parsed_function, parent_id: StructLikeId::Struct(struct_id))
         }
-
-        {
-            let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: true)
-            defer {
-                .generic_inferences.restore(old_generic_inferences)
-            }
-
-            let trait_implementations = .get_struct(struct_id).trait_implementations
-            checks.ensure_capacity(trait_implementations.size())
-
-            for (trait_name, trait_id_and_generic_params) in trait_implementations {
-                let (trait_id, generic_params) = trait_id_and_generic_params
-                let trait_ = .get_trait(trait_id)
-                if trait_.generic_parameters.size() != generic_params.size() {
-                    .error(
-                        format(
-                            "Trait ‘{}’ expects {} generic parameters, but {} were given"
-                            trait_name
-                            trait_.generic_parameters.size()
-                            generic_params.size()
-                        )
-                        trait_.name_span
-                    )
-                    continue
-                }
-                .specialize_trait(trait_id, generic_parameters: generic_params)
-            }
-
-            let scope = .get_scope(.get_struct(struct_id).scope_id)
-            for (name, overload_set) in scope.functions {
-                for function_id in overload_set {
-                    checks.register_method(
-                        self_type_id: struct_type_id,
-                        method_name: name,
-                        method_id: function_id,
-                        typechecker: &mut this
-                    )
-                }
-            }
-        }
-
-        checks.throw_errors(record_decl_span: .get_struct(struct_id).name_span, typechecker: &mut this)
 
         .current_struct_type_id = None
     }
@@ -3359,8 +3936,20 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId, this_arg_type_id: TypeId?, mut generics: FunctionGenerics? = None) throws -> FunctionId {
+    fn typecheck_function_predecl(
+        mut this
+        parsed_function: ParsedFunction
+        parent_scope_id: ScopeId
+        this_arg_type_id: TypeId?
+        mut generics: FunctionGenerics? = None
+        scope_mixin: ScopeId? = None
+    ) throws -> FunctionId {
         let function_scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: format("fn({})", parsed_function.name))
+        if scope_mixin.has_value() {
+            mut function_scope = .get_scope(function_scope_id)
+            function_scope.resolution_mixins.push(scope_mixin!)
+        }
+
         let scope_debug_name = format("function-block({})", parsed_function.name)
         let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: parsed_function.can_throw, debug_name: scope_debug_name)
         let module_id = .current_module_id.id
@@ -3408,6 +3997,7 @@ struct Typechecker {
             is_unsafe: parsed_function.is_unsafe
             external_name: parsed_function.external_name
             deprecated_message: parsed_function.deprecated_message
+            force_inline: parsed_function.force_inline
         )
 
         // FIXME: We can't return a `mut Foo` from a function right now, but assigning anything to a `mut` variable makes it mutable.
@@ -3511,6 +4101,7 @@ struct Typechecker {
             if parsed_function.is_fat_arrow {
                 let old_ignore_errors = .ignore_errors
                 .ignore_errors = true
+                .had_an_error = false
                 let block = .typecheck_block(
                     parsed_block: parsed_function.block,
                     parent_scope_id: check_scope!,
@@ -3607,7 +4198,7 @@ struct Typechecker {
                 true => {
                     let struct_id = .program.builtin_implementation_struct(
                         builtin: type.as_builtin_type()
-                        for_module: generic_argument.module
+                        for_module: .program.prelude_module_id()
                     )
                     yield (.get_struct(struct_id).trait_implementations, .get_struct(struct_id).name_span)
                 }
@@ -3633,11 +4224,11 @@ struct Typechecker {
         for constraint in constraints {
             let trait_ = .program.get_trait(constraint)
             match trait_.requirements {
-                Nothing => { }
-                Methods => {
+                Nothing | Methods => {
                     let trait_name = trait_.name
-                    let implemented_trait: (TraitId, [TypeId])? = implemented_traits.get(trait_name)
-                    if not implemented_trait.has_value() or not implemented_trait!.0.equals(constraint) {
+                    let implemented_trait = implemented_traits.get(trait_name)
+                    // FIXME: Check generic arguments too.
+                    if not implemented_trait.has_value() or not (implemented_trait!.first()?.0?.equals(constraint) ?? false) {
                         .error_with_hint(
                             format("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’",
                                 .type_name(generic_argument), trait_name)
@@ -3729,10 +4320,17 @@ struct Typechecker {
 
         let new_function_id = module.next_function_id()
         mut parsed_function = checked_function.to_parsed_function()
+        mut arg_names = ""
+        for arg in generic_arguments {
+            if not arg_names.is_empty() {
+                arg_names += ", "
+            }
+            arg_names += .type_name(arg)
+        }
         let scope_id = .create_scope(
             parent_scope_id: checked_function.generics.base_scope_id
             can_throw: parsed_function.can_throw
-            debug_name: format("function-specialization({})", parsed_function.name)
+            debug_name: format("function-specialization({}<{}>)", parsed_function.name, arg_names)
         )
 
         if parsed_function.generic_parameters.size() != generic_arguments.size() {
@@ -3766,21 +4364,24 @@ struct Typechecker {
         }
 
         let span = parsed_function.name_span
-        for substitution in generic_substitutions.iterator() {
-            if .get_type(TypeId::from_string(substitution.0)) is TypeVariable(name: type_name) {
-                let type_id = TypeId::from_string(substitution.1)
-                let dependent_scope_id: ScopeId? = match .get_type(type_id) {
-                    GenericInstance(id: struct_id) | Struct(struct_id) => .get_struct(struct_id).scope_id
-                    GenericEnumInstance(id: enum_id) | Enum(enum_id) => .get_enum(enum_id).scope_id
-                    GenericTraitInstance(id: trait_id) | Trait(trait_id) => .get_trait(trait_id).scope_id
-                    else => None
-                }
-                .add_type_to_scope(scope_id, type_name, type_id, span)
+        for generic_parameter in checked_function.generics.params {
+            let parameter_type_id = generic_parameter.checked_parameter.type_id
+            let mapped = generic_substitutions.get(parameter_type_id.to_string())
+            guard mapped.has_value() else { continue }
+            let type_id = TypeId::from_string(mapped!)
+            guard .get_type(parameter_type_id) is TypeVariable(name: type_name) else { continue }
 
-                if dependent_scope_id.has_value() {
-                    mut scope = .get_scope(scope_id)
-                    scope.aliases.set(type_name, dependent_scope_id!)
-                }
+            let dependent_scope_id: ScopeId? = match .get_type(parameter_type_id) {
+                GenericInstance(id: struct_id) | Struct(struct_id) => .get_struct(struct_id).scope_id
+                GenericEnumInstance(id: enum_id) | Enum(enum_id) => .get_enum(enum_id).scope_id
+                GenericTraitInstance(id: trait_id) | Trait(trait_id) => .get_trait(trait_id).scope_id
+                else => None
+            }
+            .add_type_to_scope(scope_id, type_name, type_id, span)
+
+            if dependent_scope_id.has_value() {
+                mut scope = .get_scope(scope_id)
+                scope.aliases.set(type_name, dependent_scope_id!)
             }
         }
 
@@ -3875,6 +4476,12 @@ struct Typechecker {
         mut checked_function = .get_function(function_id!)
         let function_scope_id = checked_function.function_scope_id
         let function_linkage = checked_function.linkage
+
+        if checked_function.is_fully_checked {
+            panic(format("Internal error: function {} being checked twice", checked_function.name))
+        }
+
+        defer checked_function.is_fully_checked = true
 
         mut module = .current_module()
         for param in checked_function.params {
@@ -4011,6 +4618,13 @@ struct Typechecker {
         let lhs_type = .get_type(lhs_type_id)
         let rhs_type = .get_type(rhs_type_id)
 
+        if lhs_type.is_builtin() and
+            rhs_type.is_builtin() and
+            lhs_type.as_builtin_type().id() == rhs_type.as_builtin_type().id() {
+
+            return true
+        }
+
         if lhs_type is Self {
             guard not .self_type_id.has_value() else {
                 return .check_types_for_compat(
@@ -4037,6 +4651,16 @@ struct Typechecker {
             }
             .error(
                 "Invalid use of the 'Self' type"
+                span
+            )
+        }
+
+        if rhs_type is TypeVariable and not lhs_type is TypeVariable {
+            // Swap them around so that we can always assume that the LHS is a TypeVariable
+            return .check_types_for_compat(
+                lhs_type_id: rhs_type_id
+                rhs_type_id: lhs_type_id
+                generic_inferences
                 span
             )
         }
@@ -4542,6 +5166,23 @@ struct Typechecker {
         return checked_block
     }
 
+    fn debug_description_of(this, anon scope_id: ScopeId) throws -> String {
+        mut ss: [String] = []
+        mut current_scope_id = scope_id
+        loop {
+            let scope = .get_scope(current_scope_id)
+            let d = format("{} (named {})", scope.debug_name, scope.namespace_name)
+            ss.insert(before_index: 0, value: d)
+            if scope.parent.has_value() {
+                current_scope_id = scope.parent!
+            } else {
+                break
+            }
+        }
+
+        return join(ss, separator: " -> ")
+    }
+
     fn typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId, name: String?) throws -> TypeId => match parsed_type {
         Reference(inner) => {
             let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
@@ -4614,7 +5255,7 @@ struct Typechecker {
                         return maybe_type_and_scope!.0
                     }
 
-                    .error(format("Unknown type ‘{}’", name), span)
+                    .error(format("Unknown type ‘{}’ in scope {}", name, .debug_description_of(scope_id)), span)
                     yield unknown_type_id()
                 }
             }
@@ -4894,7 +5535,14 @@ struct Typechecker {
         return CheckedExpression::UnaryOp(expr: CheckedExpression::NumericConstant(val: new_constant, span, type_id), op: CheckedUnaryOperator::Negate, span, type_id: flipped_sign_type)
     }
 
-    fn typecheck_binary_operation(mut this, checked_lhs: CheckedExpression, op: BinaryOperator, checked_rhs: CheckedExpression, scope_id: ScopeId, span: Span) throws -> TypeId {
+    fn typecheck_binary_operation(
+        mut this
+        checked_lhs: CheckedExpression
+        op: BinaryOperator
+        checked_rhs: CheckedExpression
+        scope_id: ScopeId
+        span: Span
+    ) throws -> (CheckedBinaryOperator, TypeId) {
         let lhs_type_id = checked_lhs.type()
         let rhs_type_id = checked_rhs.type()
 
@@ -4902,6 +5550,13 @@ struct Typechecker {
         let rhs_span = checked_rhs.span()
 
         mut type_id = checked_lhs.type()
+
+        let scope = .get_scope(scope_id)
+
+        mut checked_operator = CheckedBinaryOperator(
+            op
+            trait_implementation: None
+        )
 
         match op {
             NoneCoalescing | NoneCoalescingAssign => {
@@ -4914,11 +5569,11 @@ struct Typechecker {
                     if checked_lhs is Var(var, span) {
                         if not var.is_mutable {
                             .error_with_hint(message: "left-hand side of ??= must be a mutable variable", span, hint: "This variable isn't marked as mutable", hint_span: var.definition_span)
-                            return unknown_type_id()
+                            return (checked_operator, unknown_type_id())
                         }
                     } else {
                         .error(message: "left-hand side of ??= must be a mutable variable", span)
-                        return unknown_type_id()
+                        return (checked_operator, unknown_type_id())
                     }
                 }
 
@@ -4926,7 +5581,7 @@ struct Typechecker {
                     and id.equals(.find_struct_in_prelude("Optional")) {
                     // Success: LHS is T? and RHS is T?.
                     if lhs_type_id.equals(rhs_type_id) {
-                        return lhs_type_id
+                        return (checked_operator, lhs_type_id)
                     }
 
                     // Extract T from Optional<T>.
@@ -4934,7 +5589,7 @@ struct Typechecker {
 
                     if inner_type_id.equals(rhs_type_id) {
                         // Success: LHS is T? and RHS is T.
-                        return inner_type_id
+                        return (checked_operator, inner_type_id)
                     }
                 } else {
                     .error_with_hint(format(
@@ -4952,14 +5607,7 @@ struct Typechecker {
                     .type_name(rhs_type_id),
                 ), span)
 
-                return lhs_type_id
-            }
-            LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual | Equal | NotEqual => {
-                if not lhs_type_id.equals(rhs_type_id) {
-                    .error(format("Binary comparison between incompatible types ({} vs {})", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
-                }
-
-                type_id = builtin(BuiltinType::Bool)
+                return (checked_operator, lhs_type_id)
             }
             LogicalAnd | LogicalOr => {
                 if not lhs_type_id.equals(builtin(BuiltinType::Bool)) {
@@ -4975,13 +5623,14 @@ struct Typechecker {
             Assign => {
                 if not checked_lhs.is_mutable(program: .program) {
                     .error("Assignment to immutable variable", checked_lhs.span())
-                    return lhs_type_id
+                    return (checked_operator, lhs_type_id)
                 }
                 if checked_rhs is OptionalNone(span, type_id) {
                     if .get_type(lhs_type_id) is GenericInstance(id, args) {
                         if id.equals(.find_struct_in_prelude("Optional")) {
-                            return lhs_type_id
-                        } else if not id.equals(.find_struct_in_prelude("WeakPtr")) {
+                            return (checked_operator, lhs_type_id)
+                        }
+                        if not id.equals(.find_struct_in_prelude("WeakPtr")) {
                             .error("Cannot assign None to a non-optional type", span)
                         }
                     } else {
@@ -4997,7 +5646,7 @@ struct Typechecker {
                     // Try to handle assignment to `weak T` from `T`
                     let unified_type = .unify(lhs: args[0], lhs_span, rhs: checked_rhs.type(), rhs_span)
                     if unified_type.has_value() {
-                        return unified_type!
+                        return (checked_operator, unified_type!)
                     }
                 }
 
@@ -5007,7 +5656,7 @@ struct Typechecker {
                 if not result.has_value() {
                     .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
                 }
-                return result.value_or(lhs_type_id)
+                return (checked_operator, result.value_or(lhs_type_id))
             }
             AddAssign | SubtractAssign | MultiplyAssign | DivideAssign | ModuloAssign | BitwiseAndAssign | BitwiseOrAssign | BitwiseXorAssign | BitwiseLeftShiftAssign | BitwiseRightShiftAssign => {
                 let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
@@ -5017,7 +5666,8 @@ struct Typechecker {
                     and .get_type(args[0]) is Struct(struct_id: lhs_struct_id)
                     and .get_type(rhs_type_id) is Struct(struct_id: rhs_struct_id)
                     and lhs_struct_id.equals(rhs_struct_id) {
-                    return lhs_type_id
+
+                    return (checked_operator, lhs_type_id)
                 }
                 let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
                 if not result.has_value() {
@@ -5031,23 +5681,135 @@ struct Typechecker {
                     .error("Assignment to immutable variable", checked_lhs.span())
                 }
             }
-            Add | Subtract | Multiply | Divide | Modulo => {
-                let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
-                if not result.has_value() {
-                    .error(format(
-                        "Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)",
-                        .type_name(lhs_type_id),
-                        .type_name(rhs_type_id),
-                    ),
-                    span)
+            Add | Subtract | Multiply | Divide | Modulo | LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual | Equal | NotEqual => {
+                let trait_names = match op {
+                    Add => ["Add", "ThrowingAdd"]
+                    Subtract => ["Subtract", "ThrowingSubtract"]
+                    Multiply => ["Multiply", "ThrowingMultiply"]
+                    Divide => ["Divide", "ThrowingDivide"]
+                    Modulo => ["Modulo", "ThrowingModulo"]
+                    LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual => ["Compare", "ThrowingCompare"]
+                    Equal | NotEqual => ["Equal", "ThrowingEqual"]
+                    else => []
+                }
+                let function_name = match op {
+                    Add => "add"
+                    Subtract => "subtract"
+                    Multiply => "multiply"
+                    Divide => "divide"
+                    Modulo => "modulo"
+                    LessThan => "less_than"
+                    LessThanOrEqual => "less_than_or_equal"
+                    GreaterThan => "greater_than"
+                    GreaterThanOrEqual => "greater_than_or_equal"
+                    Equal => "equals"
+                    NotEqual => "not_equals"
+                    else => ""
                 }
 
-                type_id = lhs_type_id
+                // Check for an implementation of trait 'Add<rhs_type_id, ...>' (or 'ThrowingAdd<rhs_type_id, ...>') on lhs_type_id.
+                let add_trait_implementation = .find_any_singular_trait_implementation(
+                    type_id: lhs_type_id
+                    trait_names
+                    scope_id
+                    span: lhs_span
+                    filter_for_generics: [rhs_type_id]
+                )
+
+                if add_trait_implementation is Some(implementation) {
+                    if implementation.trait_name.starts_with("Throwing") and not scope.can_throw {
+                        .error("Call to function that may throw needs to be in a try statement or a function marked as throws", span)
+                    }
+
+                    let (parent_id, _) = .struct_like_id_from_type_id(
+                        type_id: lhs_type_id
+                        scope_id
+                        span
+                        for_optional_chain: false
+                        treat_string_as_builtin: true
+                    )
+                    let implementation_function_id = .find_function_matching_trait_implementation_in_scope(
+                        self_type_id: lhs_type_id
+                        parent_scope_id: parent_id?.scope_id(&.program) ?? scope_id
+                        function_name
+                        trait_descriptor: &implementation
+                    )
+
+                    if implementation_function_id.has_value() {
+                        let implementation_function = .get_function(implementation_function_id!)
+                        type_id = implementation_function.return_type_id
+
+                        mut call_expression = CheckedCall(
+                            namespace_: []
+                            name: function_name
+                            args: [("", checked_rhs)]
+                            type_args: []
+                            function_id: implementation_function_id
+                            return_type: type_id
+                            callee_throws: implementation_function.can_throw
+                            external_name: implementation_function.external_name
+                            force_inline: implementation_function.force_inline
+                        )
+                        checked_operator.trait_implementation = OperatorTraitImplementation(
+                            trait_id: implementation.trait_id
+                            trait_generic_arguments: implementation.implemented_type_args
+                            call_expression
+                        )
+                    } else {
+                        .error(
+                            format(
+                                "Failed to find an implementation of '{}' (trait {}) in type {} ({})",
+                                function_name
+                                implementation.trait_name
+                                .type_name(lhs_type_id)
+                                .get_scope(parent_id!.scope_id(&.program)).debug_name
+                            ),
+                            lhs_span
+                        )
+                        type_id = unknown_type_id()
+                    }
+                // FIXME: We should be able to generically implement traits on e.g. `raw T`
+                //        but until we add that, let's add a small escape hatch here.
+                } else if .get_type(lhs_type_id) is RawPtr(lhs_deref_type_id) and
+                    .get_type(rhs_type_id) is RawPtr(rhs_deref_type_id) and
+                    lhs_deref_type_id.equals(rhs_deref_type_id) {
+
+                    type_id = builtin(BuiltinType::Bool)
+                } else {
+                    .error_with_hint(
+                        format(
+                            "Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)",
+                            .type_name(lhs_type_id),
+                            .type_name(rhs_type_id),
+                        )
+                        span
+                        format(
+                            "Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"
+                            trait_names[0]
+                            .type_name(rhs_type_id)
+                            .type_name(lhs_type_id)
+                        )
+                        lhs_span
+                    )
+                }
             }
+            // Subtract | Multiply | Divide | Modulo => {
+            //     let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
+            //     if not result.has_value() {
+            //         .error(format(
+            //             "Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)",
+            //             .type_name(lhs_type_id),
+            //             .type_name(rhs_type_id),
+            //         ),
+            //         span)
+            //     }
+
+            //     type_id = lhs_type_id
+            // }
             else => {}
         }
 
-        return type_id
+        return (checked_operator, type_id)
     }
 
     fn typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId? = None) throws -> CheckedStatement => match statement {
@@ -6568,6 +7330,89 @@ struct Typechecker {
         return mapped_type_id
     }
 
+    fn struct_like_id_from_type_id(
+        mut this
+        type_id: TypeId
+        scope_id: ScopeId
+        span: Span
+        for_optional_chain: bool = false
+        treat_string_as_builtin: bool = false
+    ) throws -> (StructLikeId?, bool) {
+        let type = .get_type(type_id)
+        mut found_optional = false
+        let parent_id: StructLikeId? = match type {
+            Struct(id) => Some(StructLikeId::Struct(id))
+            Enum(id) => Some(StructLikeId::Enum(id))
+            JaktString => match treat_string_as_builtin {
+                true => StructLikeId::Struct(.program.builtin_implementation_struct(
+                    builtin: type.as_builtin_type()
+                    for_module: .program.prelude_module_id()
+                ))
+                false => Some(StructLikeId::Struct(.find_struct_in_prelude("String")))
+            }
+            GenericInstance(id, args) => {
+                yield match for_optional_chain {
+                    true => {
+                        let optional_struct_id = .find_struct_in_prelude("Optional")
+                        mut struct_id: StructLikeId? = None
+                        if not id.equals(optional_struct_id) {
+                            .error(
+                                format("Can't use ‘{}’ as an optional type in optional chained call", .get_struct(id).name)
+                                span
+                            )
+                        } else {
+                            found_optional = true
+                            struct_id = match .get_type(args[0]) {
+                                Struct(struct_id) | GenericInstance(id: struct_id) => StructLikeId::Struct(struct_id)
+                                Enum(id) | GenericEnumInstance(id) => StructLikeId::Enum(id)
+                                else => {
+                                    .error("Can't use non-struct type as an optional type in optional chained call", span)
+                                    found_optional = false
+                                    yield StructLikeId::Struct(optional_struct_id)
+                                }
+                            }
+                        }
+
+                        yield Some(struct_id ?? StructLikeId::Struct(optional_struct_id))
+                    }
+                    false => Some(StructLikeId::Struct(generic_arguments: args, id))
+                }
+            }
+            GenericEnumInstance(id, args) => Some(StructLikeId::Enum(generic_arguments: args, id))
+            Trait(id) => Some(StructLikeId::Trait(id))
+            GenericTraitInstance(id, args) => Some(StructLikeId::Trait(generic_arguments: args, id))
+            TypeVariable(trait_implementations) => match trait_implementations.size() {
+                0 => None
+                // FIXME: Use all of the bounds instead of just the first one.
+                else => match .get_type(trait_implementations[0]) {
+                    Trait(id) => Some(StructLikeId::Trait(id))
+                    GenericTraitInstance(id, args) => Some(StructLikeId::Trait(generic_arguments: args, id))
+                    else => None
+                }
+            }
+            else => match type.is_builtin() {
+                true => StructLikeId::Struct(.program.builtin_implementation_struct(
+                    builtin: type.as_builtin_type()
+                    for_module: .program.prelude_module_id()
+                ))
+                else => {
+                    .error(
+                        message: format(
+                            "no methods available on value (type: {} {})"
+                            .get_type(type_id).constructor_name()
+                            .type_name(type_id)
+                        )
+                        span
+                    )
+
+                    yield None
+                }
+            }
+        }
+
+        return (parent_id, found_optional)
+    }
+
     fn typecheck_expression(
         mut this
         anon expr: ParsedExpression
@@ -6682,70 +7527,15 @@ struct Typechecker {
         MethodCall(expr, call, span, is_optional) => {
             let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
             let checked_expr_type_id = checked_expr.type()
-            mut found_optional = false
 
             let final_type_id = .final_type_resolution_form(checked_expr_type_id, scope_id)
             let type = .get_type(final_type_id)
-            let parent_id: StructLikeId? = match type {
-                Struct(id) => Some(StructLikeId::Struct(id))
-                Enum(id) => Some(StructLikeId::Enum(id))
-                JaktString => Some(StructLikeId::Struct(.find_struct_in_prelude("String")))
-                GenericInstance(id, args) => {
-                    yield match is_optional {
-                        true => {
-                            let optional_struct_id = .find_struct_in_prelude("Optional")
-                            mut struct_id: StructLikeId? = None
-                            if not id.equals(optional_struct_id) {
-                                .error(format("Can't use ‘{}’ as an optional type in optional chained call", .get_struct(id).name), span)
-                            } else {
-                                found_optional = true
-                                struct_id = match .get_type(args[0]) {
-                                    Struct(struct_id) | GenericInstance(id: struct_id) => StructLikeId::Struct(struct_id)
-                                    Enum(id) | GenericEnumInstance(id) => StructLikeId::Enum(id)
-                                    else => {
-                                        .error("Can't use non-struct type as an optional type in optional chained call", span)
-                                        found_optional = false
-                                        yield StructLikeId::Struct(optional_struct_id)
-                                    }
-                                }
-                            }
-
-                            yield Some(struct_id ?? StructLikeId::Struct(optional_struct_id))
-                        }
-                        false => Some(StructLikeId::Struct(generic_arguments: args, id))
-                    }
-                }
-                GenericEnumInstance(id, args) => Some(StructLikeId::Enum(generic_arguments: args, id))
-                Trait(id) => Some(StructLikeId::Trait(id))
-                GenericTraitInstance(id, args) => Some(StructLikeId::Trait(generic_arguments: args, id))
-                TypeVariable(trait_implementations) => match trait_implementations.size() {
-                    0 => None
-                    // FIXME: Use all of the bounds instead of just the first one.
-                    else => match .get_type(trait_implementations[0]) {
-                        Trait(id) => Some(StructLikeId::Trait(id))
-                        GenericTraitInstance(id, args) => Some(StructLikeId::Trait(generic_arguments: args, id))
-                        else => None
-                    }
-                }
-                else => match type.is_builtin() {
-                    true => StructLikeId::Struct(.program.builtin_implementation_struct(
-                        builtin: type.as_builtin_type()
-                        for_module: final_type_id.module
-                    ))
-                    else => {
-                        .error(
-                            message: format(
-                                "no methods available on value (type: {} {})"
-                                .get_type(checked_expr_type_id).constructor_name()
-                                .type_name(type_id: checked_expr_type_id)
-                            )
-                            span: checked_expr.span()
-                        )
-
-                        yield None
-                    }
-                }
-            }
+            let (parent_id, found_optional) = .struct_like_id_from_type_id(
+                type_id: final_type_id
+                scope_id
+                span
+                for_optional_chain: is_optional
+            )
 
             if is_optional and not found_optional {
                 .error(message: format("Optional chain mismatch: expected optional chain, found {}", .type_name(type_id: checked_expr_type_id)), span: checked_expr.span())
@@ -6945,7 +7735,7 @@ struct Typechecker {
             mut original_checked_rhs: CheckedExpression? = None
             mut checked_lhs: CheckedExpression? = None
             mut checked_rhs: CheckedExpression? = None
-            if lhs is NumericConstant(val: UnknownSigned) or lhs is NumericConstant(val: UnknownUnsigned) {
+            if lhs is NumericConstant(val) and (val is UnknownSigned or val is UnknownUnsigned) {
                 // If we have a constant on the lhs, infer starting the the right:
                 original_checked_rhs = .typecheck_expression(rhs, scope_id, safety_mode, type_hint: None)
                 checked_rhs = .dereference_if_needed(original_checked_rhs!, span)
@@ -6974,9 +7764,15 @@ struct Typechecker {
                 )
             }
 
-            let output_type = .typecheck_binary_operation(checked_lhs: checked_lhs!, op, checked_rhs: checked_rhs!, scope_id, span)
+            let (checked_operator, output_type) = .typecheck_binary_operation(
+                checked_lhs: checked_lhs!
+                op
+                checked_rhs: checked_rhs!
+                scope_id
+                span
+            )
 
-            yield CheckedExpression::BinaryOp(lhs: checked_lhs!, op, rhs: checked_rhs!, span, type_id: output_type)
+            yield CheckedExpression::BinaryOp(lhs: checked_lhs!, op: checked_operator, rhs: checked_rhs!, span, type_id: output_type)
         }
         OptionalNone(span) => {
             mut type_hint_unwrapped = type_hint
@@ -8759,11 +9555,9 @@ struct Typechecker {
         mut resolved_function_id: FunctionId? = None
         mut maybe_this_type_id: TypeId? = None
         mut generic_checked_function_to_instantiate: FunctionId? = None
-        let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
 
-        defer {
-            .generic_inferences.restore(old_generic_inferences)
-        }
+        let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+        defer .generic_inferences.restore(old_generic_inferences)
 
         for name in call.namespace_ {
             resolved_namespaces.push(ResolvedNamespace(name, external_name: None, generic_parameters: None))
@@ -8884,6 +9678,9 @@ struct Typechecker {
                         .error("No function with matching signature found.", span)
                         for match_error in errors_while_trying_to_find_matching_function.iterator() {
                             .compiler.errors.push(match_error)
+                            if .ignore_errors {
+                                .had_an_error = true
+                            }
                         }
                     }
 
@@ -9062,6 +9859,10 @@ struct Typechecker {
             }
         }
 
+        let force_inline = match resolved_function_id.has_value() {
+            true => .get_function(resolved_function_id!).force_inline
+            false => None
+        }
         let function_call = CheckedCall(
             namespace_: resolved_namespaces
             name: call.name
@@ -9071,6 +9872,7 @@ struct Typechecker {
             return_type
             callee_throws
             external_name
+            force_inline
         )
         let checked_call = CheckedExpression::Call(
             call: function_call
@@ -9332,14 +10134,67 @@ struct Typechecker {
         return ""
     }
 
-    fn find_all_implementations_of_trait(mut this, type_id: TypeId, trait_id: TraitId) throws -> [[TypeId]] {
-        return match .get_type(type_id) {
-            Struct(struct_id) | GenericInstance(id: struct_id) => {
+    fn find_all_implementations_of_trait(
+        mut this
+        type_id: TypeId
+        trait_id: TraitId
+        filter_for_generics: [TypeId]? = None
+    ) throws -> [[TypeId]] {
+        let generics_match = fn[this, &filter_for_generics, &trait_id](anon generics: [TypeId]) throws -> bool {
+            let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+            defer .generic_inferences.restore(old_generic_inferences)
+
+            guard filter_for_generics is Some(generics_to_match) else {
+                return true
+            }
+
+            guard generics.size() >= generics_to_match.size() else {
+                return false
+            }
+
+            let old_ignore_errors = .ignore_errors
+            .ignore_errors = true
+            defer {
+                .ignore_errors = old_ignore_errors
+                .had_an_error = false
+            }
+
+            for i in 0..generics_to_match.size() {
+                let generic = generics[i]
+                let generic_to_match = generics_to_match[i]
+
+
+                if not .check_types_for_compat(
+                    lhs_type_id: generic
+                    rhs_type_id: generic_to_match
+                    generic_inferences: &mut .generic_inferences
+                    span: Span(file_id: FileId(id: 0), start: 0, end: 0) // NOTE: This won't show up anywhere (as the errors are ignored)
+                ) {
+                    return false
+                }
+            }
+
+            return true
+        }
+
+        mut type = .get_type(type_id)
+        if type.is_builtin() {
+            type = .get_type(.get_struct(
+                .program.builtin_implementation_struct(builtin: type.as_builtin_type(), for_module: .program.prelude_module_id())
+            ).type_id)
+        }
+
+        return match type {
+            Struct(struct_id) default(args: [TypeId] = []) | GenericInstance(id: struct_id, args) => {
                 let struct_ = .get_struct(struct_id)
+                .generic_inferences.set_all(keys: struct_.generic_parameters, values: args)
+
                 mut implementations: [[TypeId]] = []
-                for (_, trait_descriptor) in struct_.trait_implementations {
-                    if trait_descriptor.0.equals(trait_id) {
-                        implementations.push(trait_descriptor.1)
+                for (_, trait_descriptors) in struct_.trait_implementations {
+                    for trait_descriptor in trait_descriptors {
+                        if trait_descriptor.0.equals(trait_id) and generics_match(trait_descriptor.1) {
+                            implementations.push(trait_descriptor.1)
+                        }
                     }
                 }
                 yield implementations
@@ -9347,21 +10202,23 @@ struct Typechecker {
             Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
                 let enum_ = .get_enum(enum_id)
                 mut implementations: [[TypeId]] = []
-                for (_, trait_descriptor) in enum_.trait_implementations {
-                    if trait_descriptor.0.equals(trait_id) {
-                        implementations.push(trait_descriptor.1)
+                for (_, trait_descriptors) in enum_.trait_implementations {
+                    for trait_descriptor in trait_descriptors {
+                        if trait_descriptor.0.equals(trait_id) and generics_match(trait_descriptor.1) {
+                            implementations.push(trait_descriptor.1)
+                        }
                     }
                 }
                 yield implementations
             }
             Trait(id) => {
-                if id.equals(trait_id) {
+                if id.equals(trait_id) and generics_match([]) {
                     return [[]]
                 }
                 yield []
             }
             GenericTraitInstance(id, args) => {
-                if not id.equals(trait_id) {
+                if not id.equals(trait_id) or not generics_match(args) {
                     return []
                 }
                 yield [args]
@@ -9421,7 +10278,12 @@ struct Typechecker {
     }
 
     // NOTE: function trait requirements aren't currently taken into account.
-    fn signatures_match(mut this, anon self_type_id: TypeId, anon first: CheckedFunction, anon second: CheckedFunction) throws -> bool {
+    fn signatures_match(
+        mut this
+        anon self_type_id: TypeId
+        anon first: CheckedFunction
+        anon second: CheckedFunction
+    ) throws -> bool {
         let types_match = fn[self_type_id](anon typechecker: &mut Typechecker, anon a: TypeId, anon b: TypeId) throws -> bool {
             let mapped_a = typechecker.generic_inferences.map(a)
             let mapped_b = typechecker.generic_inferences.map(b)
@@ -9514,13 +10376,13 @@ struct AlreadyImplementedFor {
 // helper struct to implement the checking of trait implementations
 struct TraitImplCheck {
     // methods that don't yet have a specified implementation.
-    missing_methods: [String: [String: FunctionId]]
+    missing_methods: [String:[String:FunctionId]] // typeid -> [method name -> function id]
     // same name, but signature doesn't match.
-    unmatched_signatures: [String: [String: Span]]
+    unmatched_signatures: [String:[String:Span]] // typeid -> [method name -> span]
     // same name, signature matches, but isn't marked public.
-    private_matching_methods: [String: [String: Span]]
+    private_matching_methods: [String:[String:Span]] // typeid -> [method name -> span]
     // 'Cannot implement method X for trait Y since it already implements Z'
-    already_implemented_for: [String: AlreadyImplementedFor]
+    already_implemented_for: [String:AlreadyImplementedFor] // trait name -> (type name, span)
 
     fn make() throws -> TraitImplCheck =>
         TraitImplCheck(
@@ -9536,15 +10398,21 @@ struct TraitImplCheck {
         .already_implemented_for.ensure_capacity(count)
     }
 
-    fn register_trait(mut this, trait_id: TraitId, trait_name: String, requirements: CheckedTraitRequirements) throws {
+    fn register_trait(
+        mut this
+        trait_type_id: TypeId
+        trait_name: String
+        requirements: CheckedTraitRequirements
+    ) throws {
         guard requirements is Methods(trait_methods) else {
             return
         }
 
-        .unmatched_signatures[trait_name] = [:]
-        .private_matching_methods[trait_name] = [:]
+        let type_name = trait_type_id.to_string()
+        .unmatched_signatures[type_name] = [:]
+        .private_matching_methods[type_name] = [:]
 
-        mut missing_methods: [String: FunctionId] = [:]
+        mut missing_methods: [String:FunctionId] = [:]
         missing_methods.ensure_capacity(trait_methods.size())
 
 
@@ -9552,13 +10420,23 @@ struct TraitImplCheck {
             missing_methods.set(method_name, method_id)
         }
 
-        .missing_methods.set(trait_name, missing_methods)
+        .missing_methods.set(type_name, missing_methods)
     }
 
     fn throw_errors(mut this, record_decl_span: Span, typechecker: &mut Typechecker) throws {
-        for (trait_name, missing_methods) in .missing_methods {
-            let unmatched_signatures = .unmatched_signatures[trait_name]
-            let private_matching_methods = .private_matching_methods[trait_name]
+        for (trait_type_name, missing_methods) in .missing_methods {
+            let (trait_id, trait_generic_arguments) = match typechecker.get_type(TypeId::from_string(trait_type_name)) {
+                GenericTraitInstance(id: trait_id, args) | Trait(trait_id) default(args: [TypeId] = []) => (trait_id, args)
+                else => {
+                    // unreachable
+                    abort()
+                }
+            }
+
+            let trait_name = typechecker.get_trait(trait_id).name
+
+            let unmatched_signatures = .unmatched_signatures[trait_type_name]
+            let private_matching_methods = .private_matching_methods[trait_type_name]
             for (method_name, trait_method_id) in missing_methods {
                 let already_implemented_for = .already_implemented_for.get(method_name)
                 let unmatched_signature = unmatched_signatures.get(method_name)
@@ -9615,7 +10493,7 @@ struct TraitImplCheck {
         let method = typechecker.get_function(method_id)
 
         // search for a matching method
-        for (trait_name, methods) in .missing_methods {
+        for (trait_type_name, methods) in .missing_methods {
             let trait_method_id = methods.get(method_name)
 
             guard trait_method_id.has_value() else {
@@ -9623,14 +10501,27 @@ struct TraitImplCheck {
             }
             let trait_method = typechecker.get_function(trait_method_id!)
 
+            let (trait_id, trait_generic_arguments) = match typechecker.get_type(TypeId::from_string(trait_type_name)) {
+                GenericTraitInstance(id: trait_id, args) | Trait(trait_id) default(args: [TypeId] = []) => (trait_id, args)
+                else => {
+                    // unreachable
+                    abort()
+                }
+            }
+            let trait_ = typechecker.get_trait(trait_id)
+
+            let old_generic_inferences = typechecker.generic_inferences.perform_checkpoint(reset: false)
+            defer typechecker.generic_inferences.restore(old_generic_inferences)
+
+            typechecker.generic_inferences.set_all(keys: trait_.generic_parameters, values: trait_generic_arguments)
 
             guard typechecker.signatures_match(self_type_id, trait_method, method) else {
-                .unmatched_signatures[trait_name].set(method_name, method.name_span)
+                .unmatched_signatures[trait_type_name].set(method_name, method.name_span)
                 continue
             }
 
             guard method.visibility is Public else {
-                .private_matching_methods[trait_name].set(method_name, method.name_span)
+                .private_matching_methods[trait_type_name].set(method_name, method.name_span)
                 continue
             }
 
@@ -9638,8 +10529,8 @@ struct TraitImplCheck {
             // Register it as already implemented so that the rest of the traits
             // that needed a similar method know that the method was already implementing
             // one trait.
-            .missing_methods[trait_name].remove(method_name)
-            .already_implemented_for[method_name] = AlreadyImplementedFor(trait_name, encounter_span: method.name_span)
+            .missing_methods[trait_type_name].remove(method_name)
+            .already_implemented_for[method_name] = AlreadyImplementedFor(trait_name: trait_.name, encounter_span: method.name_span)
             break
         }
     }

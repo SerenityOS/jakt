@@ -5711,7 +5711,7 @@ class Interpreter {
                     panic("Invalid control flow")
                 }
             }
-            let value = match op {
+            let value = match op.op {
                 NoneCoalescing | NoneCoalescingAssign => StatementResult::JustValue(match lhs_value.impl {
                     OptionalNone => match .execute_expression(rhs, scope) {
                         Return(value) => {
@@ -5738,7 +5738,7 @@ class Interpreter {
                 })
                 LogicalAnd | LogicalOr => StatementResult::JustValue(match lhs_value.impl {
                     Bool(x) => match x {
-                        (op is LogicalAnd) => match .execute_expression(rhs, scope) {
+                        (op.op is LogicalAnd) => match .execute_expression(rhs, scope) {
                             Return(value) => {
                                 return StatementResult::Return(value)
                             }
@@ -5782,12 +5782,12 @@ class Interpreter {
                             panic("Invalid control flow")
                         }
                     }.cast(lhs_value, span)
-                    yield .execute_binary_operator(lhs_value, rhs_value, op, span, scope)
+                    yield .execute_binary_operator(lhs_value, rhs_value, op.op, span, scope)
                 }
             }
 
             match value {
-                JustValue(value) => match op {
+                JustValue(value) => match op.op {
                     Assign
                     | BitwiseAndAssign
                     | BitwiseOrAssign
@@ -7659,7 +7659,7 @@ class Interpreter {
 
         mut fields: [Value] = []
         let found_constructor = match type {
-            Void | I8 | I16 | I32 | I64 | U8 | U16 | U32 | U64 | Usize | JaktString | CChar | CInt | Bool | Unknown | Never => {
+            Void | I8 | I16 | I32 | I64 | U8 | U16 | U32 | U64 | Usize | F32 | F64 | JaktString | CChar | CInt | Bool | Unknown | Never => {
                 let constructor = .program.find_function_in_scope(
                     parent_scope_id: .program.get_enum(reflected_enum_id).scope_id
                     function_name: type.constructor_name())

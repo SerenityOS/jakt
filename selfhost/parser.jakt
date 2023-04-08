@@ -239,6 +239,7 @@ struct ParsedNamespace {
     import_path_if_extern: String?
     generating_import_extern_before_include: [IncludeAction]
     generating_import_extern_after_include: [IncludeAction]
+    forall_chunks: [([ParsedGenericParameter], ParsedNamespace)]
 
     fn is_equivalent_to(this, anon other: ParsedNamespace) -> bool =>
         .name == other.name and .import_path_if_extern == other.import_path_if_extern
@@ -358,6 +359,7 @@ enum ArgumentStoreLevel {
 }
 
 struct ParsedFunction {
+    id: usize
     name: String
     name_span: Span
     visibility: Visibility
@@ -377,8 +379,9 @@ struct ParsedFunction {
     external_name: String? = None
     deprecated_message: String? = None // if not None, the function is deprecated
     stores_arguments: [(usize, ArgumentStoreLevel)]? = None // if not None, the function stores the given arguments, extending their lifetime requirements.
+    force_inline: bool? = None // true -> force inline, false -> force not inline, None -> don't care
 
-    fn equals(this, anon other: ParsedFunction) -> bool {
+    fn equals(this, anon other: ParsedFunction, ignore_block: bool = false) -> bool {
         if this.name != other.name or
         this.can_throw != other.can_throw or
         this.is_comptime != other.is_comptime or
@@ -386,13 +389,14 @@ struct ParsedFunction {
             return false
         }
 
-        if not this.block.equals(other.block) {
+        if not ignore_block and not this.block.equals(other.block) {
             return false
         }
 
         if this.params.size() != other.params.size() {
             return false
         }
+
         for param_index in 0..this.params.size() {
             if not this.params[param_index].equals(other.params[param_index])  {
                 return false
@@ -1615,6 +1619,7 @@ struct Parser {
     tokens: [Token]
     compiler: Compiler
     can_have_trailing_closure: bool = true
+    next_function_id: usize = 0
 
     fn parse(compiler: Compiler, tokens: [Token]) throws -> ParsedNamespace {
         mut parser = Parser(index: 0, tokens, compiler)
@@ -1665,7 +1670,14 @@ struct Parser {
         .tokens.insert(before_index: .index + 1, value: token)
     }
 
-    public fn parse_namespace(mut this) throws -> ParsedNamespace {
+    public fn parse_forall(mut this) throws -> ([ParsedGenericParameter], ParsedNamespace) {
+        // forall<T requires(Trait...), ...> namespace-contents
+        let parameters = .parse_generic_parameters()
+        let contents = .parse_namespace(process_only_one_entity: true)
+        return (parameters, contents)
+    }
+
+    public fn parse_namespace(mut this, process_only_one_entity: bool = false) throws -> ParsedNamespace {
         mut parsed_namespace = ParsedNamespace(
             name: None
             name_span: None
@@ -1680,11 +1692,15 @@ struct Parser {
             import_path_if_extern: None
             generating_import_extern_before_include: []
             generating_import_extern_after_include: []
+            forall_chunks: []
         )
 
         mut active_attributes: [ParsedAttribute] = []
+        mut saw_an_entity = false
 
         while not .eof() {
+            if process_only_one_entity and saw_an_entity { break }
+
             match .current() {
                 Trait => {
                     if not active_attributes.is_empty() {
@@ -1693,6 +1709,7 @@ struct Parser {
                     }
                     .index++
                     parsed_namespace.traits.push(.parse_trait())
+                    saw_an_entity = true
                 }
                 Identifier(name) => match name {
                     "type" => {
@@ -1702,6 +1719,7 @@ struct Parser {
                         }
                         .index++
                         parsed_namespace.external_trait_implementations.push(.parse_external_trait_implementation())
+                        saw_an_entity = true
                     }
                     "use" => {
                         if not active_attributes.is_empty() {
@@ -1710,6 +1728,16 @@ struct Parser {
                         }
                         .index++
                         parsed_namespace.aliases.push(.parse_using())
+                        saw_an_entity = true
+                    }
+                    "forall" => {
+                        if not active_attributes.is_empty() {
+                            .error("Cannot apply attributes to forall declarations", active_attributes[0].span)
+                            active_attributes = []
+                        }
+                        .index++
+                        parsed_namespace.forall_chunks.push(.parse_forall())
+                        saw_an_entity = true
                     }
                     else => {
                         active_attributes = []
@@ -1724,6 +1752,7 @@ struct Parser {
                     }
                     .index++
                     .parse_import(parent: &mut parsed_namespace)
+                    saw_an_entity = true
                 }
                 LSquare => {
                     if .peek(1) is LSquare {
@@ -1747,6 +1776,7 @@ struct Parser {
                         .apply_attributes(&mut parsed_function, &active_attributes)
                         active_attributes = []
                         parsed_namespace.functions.push(parsed_function)
+                        saw_an_entity = true
                     } else {
                         .error("Expected 'fn' after 'unsafe'", .current().span())
                     }
@@ -1762,12 +1792,14 @@ struct Parser {
                     .apply_attributes(&mut parsed_function, &active_attributes)
                     active_attributes = []
                     parsed_namespace.functions.push(parsed_function)
+                    saw_an_entity = true
                 }
                 Struct | Class | Enum | Boxed => {
                     mut parsed_record = .parse_record(DefinitionLinkage::Internal)
                     .apply_attributes(&mut parsed_record, &active_attributes)
                     active_attributes = []
                     parsed_namespace.records.push(parsed_record)
+                    saw_an_entity = true
                 }
                 Namespace => {
                     if not active_attributes.is_empty() {
@@ -1799,6 +1831,7 @@ struct Parser {
                         namespace_.name_span = name!.1
                     }
                     parsed_namespace.add_child_namespace(namespace_)
+                    saw_an_entity = true
                 }
                 Extern => {
                     .index++
@@ -1816,6 +1849,7 @@ struct Parser {
                                 .apply_attributes(&mut parsed_function, &active_attributes)
                                 active_attributes = []
                                 parsed_namespace.functions.push(parsed_function)
+                                saw_an_entity = true
                             } else {
                                 .error("Expected 'fn' after 'unsafe'", .current().span())
                             }
@@ -1831,18 +1865,21 @@ struct Parser {
                             .apply_attributes(&mut parsed_function, &active_attributes)
                             active_attributes = []
                             parsed_namespace.functions.push(parsed_function)
+                            saw_an_entity = true
                         }
                         Struct => {
                             mut parsed_struct = .parse_struct(DefinitionLinkage::External)
                             .apply_attributes(&mut parsed_struct, &active_attributes)
                             active_attributes = []
                             parsed_namespace.records.push(parsed_struct)
+                            saw_an_entity = true
                         }
                         Class => {
                             mut parsed_class = .parse_class(DefinitionLinkage::External)
                             .apply_attributes(&mut parsed_class, &active_attributes)
                             active_attributes = []
                             parsed_namespace.records.push(parsed_class)
+                            saw_an_entity = true
                         }
                         else => {
                             active_attributes = []
@@ -1932,6 +1969,18 @@ struct Parser {
 
                     let message = attribute.arguments.first()?.name ?? format("The function '{}' is marked as deprecated", parsed_function.name)
                     parsed_function.deprecated_message = message
+                }
+                "inline" => {
+                    if parsed_function.force_inline.has_value() {
+                        .error(
+                            format("The attribute '{}' cannot be applied more than once", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    let force_inline = (attribute.arguments.first()?.name ?? "") != "never"
+                    parsed_function.force_inline = force_inline
                 }
                 "stores_arguments" => {
                     // [[stores_arguments(foo: this, bar)]] -> [(foo, InObject("this")), (bar, InStaticStorage)]
@@ -2309,6 +2358,9 @@ struct Parser {
             LCurly => {
                 .index++
                 mut methods: [ParsedFunction] = []
+                // Attributes being parsed for the next entity
+                mut active_attributes: [ParsedAttribute] = []
+
                 loop {
                     match .current() {
                         RCurly => {
@@ -2318,7 +2370,15 @@ struct Parser {
                         Eof(span) => {
                             .error("Expected '}' to close the trait body", span)
                         }
-
+                        LSquare => {
+                            if .peek(1) is LSquare {
+                                .index += 2
+                                .parse_attribute_list(&mut active_attributes)
+                            } else {
+                                .error("Unexpected token (expected ‘[[’)", .current().span())
+                                .index += 1
+                            }
+                        }
                         Eol => {
                             .index++
                             continue
@@ -2336,6 +2396,9 @@ struct Parser {
                             if method.block.stmts.is_empty() {
                                 method.linkage = FunctionLinkage::External
                             }
+
+                            .apply_attributes(&mut method, &active_attributes)
+                            active_attributes = []
 
                             methods.push(method)
                         }
@@ -2417,6 +2480,7 @@ struct Parser {
                 import_path_if_extern: None
                 generating_import_extern_before_include: []
                 generating_import_extern_after_include: []
+                forall_chunks: []
             )
             before_include: []
             after_include: []
@@ -3528,6 +3592,7 @@ struct Parser {
         allow_missing_body: bool = false
     ) throws -> ParsedFunction {
         mut parsed_function = ParsedFunction(
+            id: .next_function_id++
             name: "",
             name_span: .empty_span(),
             visibility,

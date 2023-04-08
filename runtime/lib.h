@@ -66,6 +66,8 @@ class Set;
 
 #include <IO/File.h>
 
+#include <Jakt/Operators.h>
+
 namespace JaktInternal {
 
 #ifdef JAKT_CONTINUE_ON_PANIC
@@ -90,31 +92,31 @@ inline void panic(StringView message)
 }
 
 template<typename T>
-inline constexpr T unchecked_add(T value, T other)
+inline constexpr T unchecked_add(T value, IdentityType<T> other)
 {
     return value + other;
 }
 
 template<typename T>
-inline constexpr T unchecked_sub(T value, T other)
+inline constexpr T unchecked_sub(T value, IdentityType<T> other)
 {
     return value - other;
 }
 
 template<typename T>
-inline constexpr T unchecked_mul(T value, T other)
+inline constexpr T unchecked_mul(T value, IdentityType<T> other)
 {
     return value * other;
 }
 
 template<typename T>
-inline constexpr T unchecked_div(T value, T other)
+inline constexpr T unchecked_div(T value, IdentityType<T> other)
 {
     return value / other;
 }
 
 template<typename T>
-inline constexpr T checked_add(T value, T other)
+inline constexpr T checked_add(T value, IdentityType<T> other)
 {
     Checked<T> checked = value;
     checked += other;
@@ -124,7 +126,7 @@ inline constexpr T checked_add(T value, T other)
 }
 
 template<typename T>
-inline constexpr T checked_sub(T value, T other)
+inline constexpr T checked_sub(T value, IdentityType<T> other)
 {
     Checked<T> checked = value;
     checked -= other;
@@ -134,7 +136,7 @@ inline constexpr T checked_sub(T value, T other)
 }
 
 template<typename T>
-inline constexpr T checked_mul(T value, T other)
+inline constexpr T checked_mul(T value, IdentityType<T> other)
 {
     Checked<T> checked = value;
     checked *= other;
@@ -144,7 +146,7 @@ inline constexpr T checked_mul(T value, T other)
 }
 
 template<typename T>
-inline constexpr T checked_div(T value, T other)
+inline constexpr T checked_div(T value, IdentityType<T> other)
 {
     Checked<T> checked = value;
     checked /= other;
@@ -158,7 +160,7 @@ inline constexpr T checked_div(T value, T other)
 }
 
 template<typename T>
-inline constexpr T checked_mod(T value, T other)
+inline constexpr T checked_mod(T value, IdentityType<T> other)
 {
     Checked<T> checked = value;
     checked %= other;

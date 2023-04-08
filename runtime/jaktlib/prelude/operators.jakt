@@ -1,0 +1,217 @@
+trait Integral = match reflect Self {
+    U8 | U16 | U32 | U64
+    | I8 | I16 | I32 | I64
+    | Usize | CChar | CInt
+    => true
+    else => false
+}
+
+trait Floating = match reflect Self {
+    F32 | F64 => true
+    else => false
+}
+
+trait Add<Rhs, Output> {
+    fn add(this, anon rhs: Rhs) -> Output
+}
+trait ThrowingAdd<Rhs, Output> {
+    fn add(this, anon rhs: Rhs) throws -> Output
+}
+
+trait Subtract<Rhs, Output> {
+    fn subtract(this, anon rhs: Rhs) -> Output
+}
+trait ThrowingSubtract<Rhs, Output> {
+    fn subtract(this, anon rhs: Rhs) throws -> Output
+}
+
+trait Multiply<Rhs, Output> {
+    fn multiply(this, anon rhs: Rhs) -> Output
+}
+trait ThrowingMultiply<Rhs, Output> {
+    fn multiply(this, anon rhs: Rhs) throws -> Output
+}
+
+trait Divide<Rhs, Output> {
+    fn divide(this, anon rhs: Rhs) -> Output
+}
+trait ThrowingDivide<Rhs, Output> {
+    fn divide(this, anon rhs: Rhs) throws -> Output
+}
+
+trait Modulo<Rhs, Output> {
+    fn modulo(this, anon rhs: Rhs) -> Output
+}
+trait ThrowingModulo<Rhs, Output> {
+    fn modulo(this, anon rhs: Rhs) throws -> Output
+}
+
+trait Equal<Rhs> {
+    fn equals(this, anon rhs: Rhs) -> bool
+
+    [[inline()]]
+    fn not_equals(this, anon rhs: Rhs) -> bool => not .equals(rhs)
+}
+
+trait ThrowingEqual<Rhs> {
+    fn equals(this, anon rhs: Rhs) throws -> bool
+
+    [[inline()]]
+    fn not_equals(this, anon rhs: Rhs) throws -> bool => not .equals(rhs)
+}
+
+enum Ordering: u8 {
+    Less
+    Equal
+    Greater
+}
+
+trait Compare<Rhs> {
+    fn compare(this, anon rhs: Rhs) -> Ordering
+
+    [[inline(always)]]
+    fn greater_than(this, anon rhs: Rhs) -> bool => .compare(rhs) as! u8 == 2u8
+
+    [[inline(always)]]
+    fn less_than(this, anon rhs: Rhs) -> bool => .compare(rhs) as! u8 == 0u8
+
+    [[inline(always)]]
+    fn greater_than_or_equal(this, anon rhs: Rhs) -> bool => .compare(rhs) as! u8 != 0u8
+
+    [[inline(always)]]
+    fn less_than_or_equal(this, anon rhs: Rhs) -> bool => .compare(rhs) as! u8 != 2u8
+}
+
+trait ThrowingCompare<Rhs> {
+    fn compare(this, anon rhs: Rhs) throws -> Ordering
+}
+
+forall<T requires(Integral)>
+type T implements(Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modulo<T, T>, Equal<T>, Compare<T>) {
+    [[name="JaktInternal::checked_add"]]
+    extern fn add(this, anon rhs: T) -> T
+
+    [[name="JaktInternal::checked_sub"]]
+    extern fn subtract(this, anon rhs: T) -> T
+
+    [[name="JaktInternal::checked_mul"]]
+    extern fn multiply(this, anon rhs: T) -> T
+
+    [[name="JaktInternal::checked_div"]]
+    extern fn divide(this, anon rhs: T) -> T
+
+    [[name="JaktInternal::checked_mod"]]
+    extern fn modulo(this, anon rhs: T) -> T
+
+    [[name="JaktInternal::equal"]]
+    extern fn equals(this, anon rhs: T) -> bool
+
+    [[name="JaktInternal::not_equal"]]
+    extern fn not_equals(this, anon rhs: T) -> bool
+
+    [[name="JaktInternal::compare"]]
+    extern fn compare_impl(this, anon rhs: T) -> u8
+
+    [[inline()]]
+    fn compare(this, anon rhs: T) -> Ordering {
+        return .compare_impl(rhs) as! Ordering
+    }
+}
+
+// Checked<T> only allows Integral T, and checked floating arithmetic doesn't make much sense anyway
+// so Floating T gets unchecked arithmetic.
+forall<T requires(Floating)>
+type T implements(Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modulo<T, T>, Equal<T>, Compare<T>) {
+    [[name="JaktInternal::unchecked_add"]]
+    extern fn add(this, anon rhs: T) -> T
+
+    [[name="JaktInternal::unchecked_sub"]]
+    extern fn subtract(this, anon rhs: T) -> T
+
+    [[name="JaktInternal::unchecked_mul"]]
+    extern fn multiply(this, anon rhs: T) -> T
+
+    [[name="JaktInternal::unchecked_div"]]
+    extern fn divide(this, anon rhs: T) -> T
+
+    [[name="JaktInternal::unchecked_mod"]]
+    extern fn modulo(this, anon rhs: T) -> T
+
+    [[name="JaktInternal::equal"]]
+    extern fn equals(this, anon rhs: T) -> bool
+
+    [[name="JaktInternal::not_equal"]]
+    extern fn not_equals(this, anon rhs: T) -> bool
+
+    [[name="JaktInternal::compare"]]
+    extern fn compare_impl(this, anon rhs: T) -> u8
+
+    [[inline()]]
+    fn compare(this, anon rhs: T) -> Ordering {
+        return .compare_impl(rhs) as! Ordering
+    }
+}
+
+type bool implements(Equal<bool>) {
+    [[name="JaktInternal::equal"]]
+    extern fn equals(this, anon rhs: bool) -> bool
+
+    [[name="JaktInternal::not_equal"]]
+    extern fn not_equals(this, anon rhs: bool) -> bool
+}
+
+type String implements(Equal<String>) {
+    [[name="operator=="]]
+    extern fn equals(this, anon rhs: String) -> bool
+
+    [[inline()]]
+    fn not_equals(this, anon rhs: String) -> bool => not .equals(rhs)
+}
+
+type String implements(Compare<String>) {
+    [[name="operator<"]]
+    extern fn less_than(this, anon rhs: String) -> bool
+    [[name="operator>"]]
+    extern fn greater_than(this, anon rhs: String) -> bool
+    [[name="operator>="]]
+    extern fn greater_than_or_equal(this, anon rhs: String) -> bool
+    [[name="operator<="]]
+    extern fn less_than_or_equal(this, anon rhs: String) -> bool
+
+    [[inline()]]
+    fn compare(this, anon rhs: String) -> Ordering {
+        if .less_than(rhs) {
+            return Ordering::Less
+        }
+
+        return Ordering::Greater
+    }
+}
+
+import extern "Jakt/DeprecatedString.h" {
+    [[name="JaktInternal::operator+"]]
+    extern fn __concatenate_deprecated_strings(anon rhs: String, anon lhs: String) throws -> String
+}
+
+type String implements(ThrowingAdd<String, String>) {
+    [[inline(always)]]
+    fn add(this, anon rhs: String) throws -> String => __concatenate_deprecated_strings(this, rhs)
+}
+
+type Optional implements(Equal<Optional<T>>) {
+    [[name="operator=="]]
+    extern fn equals(this, anon rhs: Optional<T>) -> bool
+
+    [[name="operator!="]]
+    extern fn not_equals(this, anon rhs: Optional<T>) -> bool
+}
+
+type Array implements(Equal<Array<T>>) {
+    [[name="operator=="]]
+    extern fn equals(this, anon rhs: Array<T>) -> bool
+}
+
+type ArraySlice implements(Equal<ArraySlice<T>>) {
+    [[name="operator=="]]
+    extern fn equals(this, anon rhs: ArraySlice<T>) -> bool
+}
