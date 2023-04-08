@@ -13,7 +13,7 @@ inline ErrorOr<DeprecatedString> __jakt_format(CheckedFormatString<Ts...> fmt, T
     return DeprecatedString::formatted(fmt.view(), args...);
 }
 
-inline DeprecatedString operator+(DeprecatedString const& a, DeprecatedString const& b)
+inline ErrorOr<DeprecatedString> operator+(DeprecatedString const& a, DeprecatedString const& b)
 {
     return DeprecatedString::formatted("{}{}", a, b);
 }

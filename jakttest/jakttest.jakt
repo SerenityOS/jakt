@@ -629,6 +629,7 @@ struct TestScheduler {
         scheduler.failed_count = starting_failed_tests
         // pre-allocate the command buffer to avoid allocating inside a loop
         let run_once_script = os::get_script_execution_string()
+        let default_compiler_path = "clang++"
         mut command_buffer: [String] = [
             run_once_script
             "jakttest/run_one.py"
@@ -639,7 +640,7 @@ struct TestScheduler {
             "--target-triple"
             ___jakt_get_target_triple_string()
             "--cpp-compiler"
-            cpp_compiler_path ?? "clang++"
+            cpp_compiler_path ?? default_compiler_path
             "--cpp-include"
             "None" // A sentinel value is passed here because Windows shell does not allow empty arguments
             ""

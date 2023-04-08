@@ -87,7 +87,20 @@ struct GenericInferences {
 
     fn set_from(mut this, anon checkpoint: [String:String]) throws {
         for (key, value) in checkpoint {
-            .values[key] = value
+            .set(key, value)
+        }
+    }
+
+    fn debug_description(this, anon program: &CheckedProgram) throws {
+        eprintln("Generic inferences:")
+        for (key, value) in .values {
+            let key_type = TypeId::from_string(key)
+            let value_type = TypeId::from_string(value)
+            eprintln(
+                "  {} => {}"
+                program.type_name(key_type, debug_mode: true)
+                program.type_name(value_type, debug_mode: true)
+            )
         }
     }
 }
@@ -155,6 +168,12 @@ enum StructLikeId {
             result.push(parameter.type_id)
         }
         return result
+    }
+
+    fn scope_id(this, anon program: &CheckedProgram) throws -> ScopeId => match this {
+        Struct(id) => program.get_struct(id).scope_id
+        Enum(id) => program.get_enum(id).scope_id
+        Trait(id) => program.get_trait(id).scope_id
     }
 }
 
@@ -656,6 +675,14 @@ class Scope {
     public resolution_mixins: [ScopeId]
 
     public is_block_scope: bool = true
+
+    public resolved_forall_chunks: [ResolvedForallChunk]? = None
+}
+
+struct ResolvedForallChunk {
+    public parameters: [String:[(Span, TypeId)]]
+    public parsed_namespace: ParsedNamespace
+    public generated_scopes: [ScopeId]
 }
 
 class Module {
@@ -812,10 +839,12 @@ class CheckedFunction {
     public specialization_index: usize? = None
 
     public owner_scope: ScopeId? = None
+    public is_fully_checked: bool = false
 
     public external_name: String? = None
     public deprecated_message: String? = None
     public stores_arguments: [(usize, ArgumentStoreLevel)]? = None
+    public force_inline: bool? = None
 
     public fn name_for_codegen(this) -> String => .external_name ?? .name
 
@@ -850,12 +879,13 @@ class CheckedFunction {
         is_unsafe: .is_unsafe
         specialization_index: .specialization_index
         owner_scope: .owner_scope
+        is_fully_checked: .is_fully_checked
         external_name: .external_name
         deprecated_message: .deprecated_message
         stores_arguments: .stores_arguments
     )
 
-    public fn signature_matches(this, anon other: CheckedFunction) throws -> bool {
+    public fn signature_matches(this, anon other: CheckedFunction, ignore_this: bool = false) throws -> bool {
         if this.name != other.name or
         this.can_throw != other.can_throw or
         this.is_comptime != other.is_comptime {
@@ -1246,12 +1276,13 @@ struct CheckedStruct {
     fields: [CheckedField]
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
-    trait_implementations: [String:(TraitId, [TypeId])]
+    trait_implementations: [String:[(TraitId, [TypeId])]]
     record_type: RecordType
     type_id: TypeId
     super_struct_id: StructId?
 
     external_name: String? = None
+    implements_type: TypeId? = None
 
     fn name_for_codegen(this) -> String => .external_name ?? .name
 }
@@ -1264,7 +1295,7 @@ struct CheckedEnum {
     fields: [CheckedField]
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
-    trait_implementations: [String:(TraitId, [TypeId])]
+    trait_implementations: [String:[(TraitId, [TypeId])]]
     record_type: RecordType
     underlying_type_id: TypeId
     type_id: TypeId
@@ -1479,6 +1510,18 @@ enum CheckedMatchCase {
     CatchAll(has_arguments: bool, body: CheckedMatchBody, marker_span: Span)
 }
 
+struct OperatorTraitImplementation {
+    trait_id: TraitId
+    trait_generic_arguments: [TypeId]
+    call_expression: CheckedCall
+}
+
+struct CheckedBinaryOperator {
+    op: BinaryOperator
+    // FIXME: This is Optional<> because we haven't converted all operators to traits yet, do that.
+    trait_implementation: OperatorTraitImplementation?
+}
+
 boxed enum CheckedExpression {
     Boolean(val: bool, span: Span)
     NumericConstant(val: CheckedNumericConstant, span: Span, type_id: TypeId)
@@ -1487,7 +1530,7 @@ boxed enum CheckedExpression {
     CharacterConstant(val: String, span: Span)
     CCharacterConstant(val: String, span: Span)
     UnaryOp(expr: CheckedExpression, op: CheckedUnaryOperator, span: Span, type_id: TypeId)
-    BinaryOp(lhs: CheckedExpression, op: BinaryOperator, rhs: CheckedExpression, span: Span, type_id: TypeId)
+    BinaryOp(lhs: CheckedExpression, op: CheckedBinaryOperator, rhs: CheckedExpression, span: Span, type_id: TypeId)
     JaktTuple(vals: [CheckedExpression], span: Span, type_id: TypeId)
     Range(from: CheckedExpression?, to: CheckedExpression?, span: Span, type_id: TypeId)
     JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: Span, type_id: TypeId, inner_type_id: TypeId)
@@ -1684,6 +1727,7 @@ struct CheckedCall {
     callee_throws: bool
 
     external_name: String?
+    force_inline: bool? = None
 
     fn name_for_codegen(this) -> String => .external_name ?? .name
 }
@@ -1747,10 +1791,6 @@ class CheckedProgram {
     }
 
     public fn builtin_implementation_struct(mut this, builtin: BuiltinType, for_module: ModuleId) throws -> StructId {
-        if builtin is JaktString {
-            return .find_struct_in_prelude(name: "String")
-        }
-
         let id = builtin.id()
         mut module = .modules[for_module.id]
         if module.builtin_implementation_structs.contains(id) {
@@ -1765,7 +1805,7 @@ class CheckedProgram {
             for_block: false
         )
 
-        let trait_implementations: [String:(TraitId, [TypeId])] = [:]
+        let trait_implementations: [String:[(TraitId, [TypeId])]] = [:]
         let name_span = Span(
             file_id: FileId(id: 0)
             start: 0
@@ -1784,11 +1824,12 @@ class CheckedProgram {
             generic_parameters: []
             fields: []
             scope_id
-            definition_linkage: DefinitionLinkage::Internal
+            definition_linkage: DefinitionLinkage::External
             trait_implementations
             record_type: RecordType::Struct(fields: [], super_type: None)
             type_id: struct_type_id
             super_struct_id: None
+            implements_type: builtin(builtin)
         )
 
         module.structures.push(struct_)
@@ -1929,6 +1970,10 @@ class CheckedProgram {
 
         while not scopes_to_check.is_empty() {
             let scope_id = scopes_to_check.pop()!
+            if seen.contains(scope_id.to_string()) {
+                continue
+            }
+
             seen.add(scope_id.to_string())
 
             let res = callback(scope_id, name_override: None, is_alias: false)
@@ -2090,7 +2135,10 @@ class CheckedProgram {
             Struct(struct_id) | GenericInstance(id: struct_id) => .get_struct(struct_id).scope_id
             Enum(enum_id) | GenericEnumInstance(id: enum_id) => .get_enum(enum_id).scope_id
             Trait(trait_id) | GenericTraitInstance(id: trait_id) => .get_trait(trait_id).scope_id
-            else => .prelude_scope_id()
+            else => match type.is_builtin() {
+                true => .get_struct(.builtin_implementation_struct(builtin: type.as_builtin_type(), for_module: .prelude_module_id())).scope_id
+                false => .prelude_scope_id()
+            }
         }
     }
 
@@ -2138,18 +2186,33 @@ class CheckedProgram {
     }
 
     public fn find_scoped_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> ([FunctionId], ScopeId)? {
-        return .for_each_scope_accessible_unqualified_from_scope(
+        mut result_ids: [FunctionId] = []
+        mut result_scope: ScopeId? = None
+        .for_each_scope_accessible_unqualified_from_scope(
             scope_id: parent_scope_id
-            &fn[function_name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<([FunctionId], ScopeId)> {
+            &fn[function_name, &mut result_ids, &mut result_scope, this](
+                scope_id: ScopeId
+                name_override: String?
+                is_alias: bool
+            ) throws -> IterationDecision<([FunctionId], ScopeId)> {
                 let scope = .get_scope(scope_id)
                 let maybe_functions = scope.functions.get(function_name)
                 if maybe_functions.has_value() {
-                    return IterationDecision::Break(value: (maybe_functions!, scope_id))
+                    result_ids.push_values(&maybe_functions!)
+                    if not result_scope.has_value() {
+                        result_scope = scope_id
+                    }
                 }
 
                 return IterationDecision::Continue
             }
         )
+
+        if result_scope is None {
+            return None
+        }
+
+        return (result_ids, result_scope!)
     }
 
     // Checks given struct id is weak ptr and
@@ -2188,7 +2251,13 @@ class CheckedProgram {
     public fn type_name(this, anon type_id: TypeId, debug_mode: bool = false) throws -> String {
         let type = .get_type(type_id)
 
-        return match debug_mode { true => format("({}@{}) ", type_id.id, type_id.module.id), else => "" } + match type {
+        return match debug_mode {
+            true => format("({}@{}) ", type_id.id, type_id.module.id) + match type {
+                TypeVariable => "var "
+                else => ""
+            }
+            else => ""
+        } + match type {
             Never => "never"
             F32 => "f32"
             F64 => "f64"

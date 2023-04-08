@@ -7,12 +7,12 @@
 
 import parser { BinaryOperator, FunctionLinkage }
 import typechecker {
-    BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
-    CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
-    Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId,
-    CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id, never_type_id, builtin,
-    CheckedVariable, VarId }
-import types { StructLikeId }
+    BuiltinType, CheckedBinaryOperator, CheckedBlock, CheckedCall, CheckedEnum, CheckedExpression, CheckedFunction
+    CheckedMatchBody, CheckedMatchCase, CheckedProgram, CheckedStatement, CheckedStruct, CheckedVariable
+    CheckedVisibility, EnumId, FunctionId, Module, ModuleId, Scope, ScopeId, StructId, Type, TypeId, VarId, builtin
+    never_type_id, unknown_type_id, void_type_id
+}
+import types { CheckedParameter, StructLikeId }
 import utility { Span, interpret_escapes, join, panic, prepend_to_each, todo }
 import compiler { Compiler }
 
@@ -200,6 +200,7 @@ struct CodeGenerator {
     namespace_stack: [String]
     fresh_var_counter: usize
     fresh_label_counter: usize
+    this_replacement: String? = None
 
     // noreturn functions may not throw, so let them crash instead.
     fn current_error_handler(this) throws -> String {
@@ -1216,6 +1217,10 @@ struct CodeGenerator {
             return ""
         }
 
+        if function.force_inline ?? false {
+            return ""
+        }
+
         // FIXME: for now, just exit early if we're a constructor
         if function.type is ImplicitConstructor {
             return ""
@@ -1930,11 +1935,11 @@ struct CodeGenerator {
                 }
             }
         }
-        ByteConstant(val) => "'" + val + "'"
+        ByteConstant(val) => "static_cast<u8>(u8'" + val + "')"
         CCharacterConstant(val) => "'" + val + "'"
         CharacterConstant(val) => "static_cast<u32>(U'" + val + "')"
         Var(var) => match var.name {
-            "this" => "*this"
+            "this" => .this_replacement ?? "*this"
             else => var.name
         }
         IndexedExpression(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
@@ -2816,8 +2821,23 @@ struct CodeGenerator {
         return type_name
     }
 
-    fn codegen_binary_expression(mut this, expression: CheckedExpression, type_id: TypeId, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator) throws -> String {
-        if op is NoneCoalescing {
+    fn codegen_binary_expression(
+        mut this
+        expression: CheckedExpression
+        type_id: TypeId
+        lhs: CheckedExpression
+        rhs: CheckedExpression
+        op: CheckedBinaryOperator
+    ) throws -> String {
+        if op.trait_implementation is Some(implementation) {
+            return .codegen_method_call(
+                expr: lhs
+                call: implementation.call_expression
+                is_optional: false
+            )
+        }
+
+        if op.op is NoneCoalescing {
             let rhs_type_id = rhs.type()
             let rhs_type = .program.get_type(rhs_type_id)
             let rhs_can_throw = rhs.can_throw()
@@ -2863,7 +2883,7 @@ struct CodeGenerator {
             return output
         }
 
-        if op is NoneCoalescingAssign {
+        if op.op is NoneCoalescingAssign {
             let var = .fresh_var()
             return format(
                 "({{ auto&& {0} = {1}; if (!{0}.has_value()) {0} = {2}; }})"
@@ -2873,7 +2893,7 @@ struct CodeGenerator {
             )
         }
 
-        if op is ArithmeticRightShift {
+        if op.op is ArithmeticRightShift {
             mut output = "JaktInternal::arithmetic_shift_right("
             output += .codegen_expression(lhs)
             output += ","
@@ -2882,7 +2902,7 @@ struct CodeGenerator {
             return output
         }
 
-        if op is Assign and lhs is IndexedDictionary(expr, index) {
+        if op.op is Assign and lhs is IndexedDictionary(expr, index) {
             return format(
                 "{}({}.set({}, {}))"
                 .current_error_handler()
@@ -2894,19 +2914,19 @@ struct CodeGenerator {
 
         if .program.is_integer(type_id) {
             // Integer arithmetic is checked by default.
-            match op {
+            match op.op {
                 Add | Subtract | Multiply | Divide | Modulo => {
                     if .compiler.optimize {
-                        return "(" + .codegen_unchecked_binary_op(lhs, rhs, op, type_id) + ")"
+                        return "(" + .codegen_unchecked_binary_op(lhs, rhs, op.op, type_id) + ")"
                     } else {
-                        return "(" + .codegen_checked_binary_op(lhs, rhs, op, type_id) + ")"
+                        return "(" + .codegen_checked_binary_op(lhs, rhs, op.op, type_id) + ")"
                     }
                 }
                 AddAssign | SubtractAssign | MultiplyAssign | DivideAssign | ModuloAssign => {
                     if .compiler.optimize {
-                        return "(" + .codegen_unchecked_binary_op_assignment(lhs, rhs, op, type_id) + ")"
+                        return "(" + .codegen_unchecked_binary_op_assignment(lhs, rhs, op.op, type_id) + ")"
                     } else {
-                        return "(" + .codegen_checked_binary_op_assignment(lhs, rhs, op, type_id) + ")"
+                        return "(" + .codegen_checked_binary_op_assignment(lhs, rhs, op.op, type_id) + ")"
                     }
                 }
                 else => { }
@@ -2916,7 +2936,7 @@ struct CodeGenerator {
         mut output = "("
 
         output += .codegen_expression(lhs)
-        output += match op {
+        output += match op.op {
             Add => " + "
             Subtract => " - "
             Multiply => " * "
@@ -2957,7 +2977,7 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_unchecked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_unchecked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, anon op: BinaryOperator, type_id: TypeId) throws -> String {
         mut output = "static_cast<"
         output += .codegen_type(type_id)
         output += ">("
@@ -2977,7 +2997,7 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_checked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_checked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, anon op: BinaryOperator, type_id: TypeId) throws -> String {
         mut output = ""
         output += "JaktInternal::"
 
@@ -3003,7 +3023,7 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_unchecked_binary_op_assignment(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_unchecked_binary_op_assignment(mut this, lhs: CheckedExpression, rhs: CheckedExpression, anon op: BinaryOperator, type_id: TypeId) throws -> String {
         mut output = ""
 
         output += "{"
@@ -3029,7 +3049,7 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_checked_binary_op_assignment(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_checked_binary_op_assignment(mut this, lhs: CheckedExpression, rhs: CheckedExpression, anon op: BinaryOperator, type_id: TypeId) throws -> String {
         mut output = ""
 
         output += "{"
@@ -3065,6 +3085,66 @@ struct CodeGenerator {
 
         let object = .codegen_expression_and_deref_if_generic_and_needed(expr)
 
+        if call.function_id.has_value() and (call.force_inline ?? false) {
+            let function = .program.get_function(call.function_id!)
+            let var = CheckedVariable(
+                name: "self"
+                type_id: expr.type()
+                is_mutable: expr.is_mutable(program: .program)
+                definition_span: expr.span()
+                type_span: None
+                visibility: CheckedVisibility::Public
+            )
+
+            mut params: [CheckedParameter] = [
+                CheckedParameter(
+                    requires_label: false
+                    variable: var
+                    default_value: None
+                )
+            ]
+            for param in function.params[1..] {
+                params.push(param)
+            }
+
+            if function.block.statements.is_empty() {
+                eprintln("Shit, block is empty in function ({}): {}", call.function_id!, function)
+                abort()
+            }
+
+            let lambda = CheckedExpression::Function(
+                captures: [],
+                params,
+                can_throw: function.can_throw,
+                return_type_id: function.return_type_id,
+                block: function.block,
+                span: expr.span(),
+                type_id: unknown_type_id(),
+                pseudo_function_id: call.function_id,
+                scope_id: function.function_scope_id,
+            )
+
+            let old_this_replacement = .this_replacement
+            .this_replacement = "self"
+
+            output += .codegen_expression(lambda)
+
+            .this_replacement = old_this_replacement
+
+            output += "("
+            output += object
+            for (_, arg) in call.args {
+                output += ","
+                output += .codegen_expression(arg)
+            }
+            output += ")"
+            if call.callee_throws {
+                output += "))"
+            }
+
+            return output
+        }
+
         let expression_type = .program.get_type(expr.type())
         let field_accessor = match expression_type {
             RawPtr => "->"
@@ -3076,7 +3156,7 @@ struct CodeGenerator {
                 true => "->"
                 false => "."
             }
-            else => match expression_type.is_builtin() {
+            else => match expression_type.is_builtin() and not expression_type is JaktString {
                 true => ""
                 false => "."
             }
@@ -3608,7 +3688,13 @@ struct CodeGenerator {
         Reference(type_id) => .codegen_type(type_id) + " const&"
         MutableReference(type_id) => .codegen_type(type_id) + "&"
         GenericResolvedType(id, args) | GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
-        Struct(id) => .codegen_struct_type(id, as_namespace)
+        Struct(id) => {
+            let implements_type = .program.get_struct(id).implements_type
+            yield match implements_type.has_value() {
+                true => .codegen_type_possibly_as_namespace(type_id: implements_type!, as_namespace)
+                false => .codegen_struct_type(id, as_namespace)
+            }
+        }
         Enum(id) => .codegen_enum_type(id, as_namespace)
         GenericEnumInstance(id, args) => .codegen_generic_enum_instance(id, args, as_namespace)
         TypeVariable(name) => name
@@ -4153,6 +4239,10 @@ struct CodeGenerator {
             if function.linkage is External {
                 return ""
             }
+        }
+
+        if function.force_inline ?? false {
+            return ""
         }
 
         mut output = ""

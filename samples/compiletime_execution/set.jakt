@@ -34,7 +34,7 @@ comptime set_iterator() throws -> bool {
     }
     return output == "4567"
 }
-comptime set_constructor() throws => Set<u8>().is_empty()
+comptime set_constructor() throws -> bool => Set<u8>().is_empty()
 
 fn main() {
     mut success = is_empty()

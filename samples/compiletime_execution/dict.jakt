@@ -43,7 +43,7 @@ comptime iterator() throws -> bool {
     }
     return output == "m=>m\nn=>n\no=>o\n"
 }
-comptime dictionary_constructor() => Dictionary<String, c_char>().is_empty()
+comptime dictionary_constructor() -> bool => Dictionary<String, c_char>().is_empty()
 
 fn main() {
     mut success = is_empty()
