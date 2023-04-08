@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Jakt/AKIntegration.h>
 
 #include <AK/CheckedFormatString.h>
