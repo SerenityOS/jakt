@@ -6462,7 +6462,7 @@ struct Typechecker {
                 if val < 0 {
                     .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val as! u64), span, type_id: builtin(BuiltinType::CInt))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val as! i32), span, type_id: builtin(BuiltinType::CInt))
                 }
             } else if hint.equals(builtin(BuiltinType::CChar)) {
                 let builtin_typeid = builtin(BuiltinType::CChar)
