@@ -230,6 +230,12 @@ ALWAYS_INLINE constexpr OutputType infallible_integer_cast(InputType input)
     }
 }
 
+template<typename OutputType, typename InputType>
+ALWAYS_INLINE constexpr OutputType infallible_enum_cast(InputType input)
+{
+    return static_cast<OutputType>(infallible_integer_cast<UnderlyingType<OutputType>>(input));
+}
+
 template<AK::Concepts::SpecializationOf<AK::NonnullRefPtr> T, AK::Concepts::SpecializationOf<AK::NonnullRefPtr> U>
 inline Optional<T> fallible_class_cast(U const& ptr)
 {
@@ -348,6 +354,7 @@ using JaktInternal::fallible_class_cast;
 using JaktInternal::fallible_integer_cast;
 using JaktInternal::infallible_class_cast;
 using JaktInternal::infallible_integer_cast;
+using JaktInternal::infallible_enum_cast;
 using JaktInternal::Range;
 using JaktInternal::unchecked_add;
 using JaktInternal::unchecked_div;
