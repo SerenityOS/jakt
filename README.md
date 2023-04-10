@@ -59,7 +59,7 @@ Some of the features that encourage more readable programs:
 - [x] Argument labels in call expressions (`object.function(width: 10, height: 5)`)
 - [ ] Inferred `enum` scope. (You can say `Foo` instead of `MyEnum::Foo`).
 - [x] Pattern matching with `match`.
-- [ ] Optional chaining (`foo?.bar?.baz` (fallible) and `foo!.bar!.baz` (infallible))
+- [x] Optional chaining (`foo?.bar?.baz` (fallible) and `foo!.bar!.baz` (infallible))
 - [x] None coalescing for optionals (`foo ?? bar` yields `foo` if `foo` has a value, otherwise `bar`)
 - [x] `defer` statements.
 - [x] Pointers are always dereferenced with `.` (never `->`)
@@ -116,7 +116,7 @@ Struct members are *public* by default.
 
 - [x] basic class support
 - [x] private-by-default members
-- [ ] inheritance
+- [x] inheritance
 - [ ] class-based polymorphism (assign child instance to things requiring the parent type)
 - [ ] `Super` type
 - [ ] `Self` type
@@ -286,7 +286,7 @@ fn main() {
 
 - [x] Creating tuples
 - [x] Index tuples
-- [ ] Tuple types
+- [x] Tuple types
 
 ```
 fn main() {
@@ -486,6 +486,52 @@ trait IntoIterator<T> {
 }
 ```
 
+### Operator Overloading and Traits
+
+Operators are implemented as traits, and can be overloaded by implementing them on a given type:
+
+```jakt
+struct Foo implements(Add<Foo, Foo>) {
+    x: i32
+
+    fn add(this, anon rhs: Foo) -> Foo {
+        return Foo(x: .x + other.x)
+    }
+}
+```
+
+The relationship between operators and traits is as follows:
+
+| Operator | Trait | Method Name | Derived From Method |
+|----------|-------|-------------|---------------------|
+| `+` | `Add` | `add` | - |
+| `-` | `Subtract` | `subtract` | - |
+| `*` | `Multiply` | `multiply` | - |
+| `/` | `Divide` | `divide` | - |
+| `%` | `Modulo` | `modulo` | - |
+| `<` | `Compare` | `less_than` | `compare` |
+| `>` | `Compare` | `greater_than` | `compare` |
+| `<=` | `Compare` | `less_than_or_equal` | `compare` |
+| `>=` | `Compare` | `greater_than_or_equal` | `compare` |
+| `==` | `Equal` | `equals` | - |
+| `!=` | `Equal` | `not_equals` | `equals` |
+
+Other operators have not yet been converted to traits, decided on, or implemented (Note that `@` is used as a placeholder for any binary operator):
+
+| Operator | Description | Status |
+|----------|-------------|--------|
+| `&` | Bitwise And | Not Decided |
+| `|` | Bitwise Or | Not Decided |
+| `^` | Bitwise Xor | Not Decided |
+| `~` | Bitwise Not | Not Decided |
+| `<<` | Bitwise Shift Left | Not Decided |
+| `>>` | Bitwise Shift Right | Not Decided |
+| `and` | Logical And | Not Decided |
+| `or` | Logical Or | Not Decided |
+| `not` | Logical Not | Not Decided |
+| `=` | Assignment | Not Decided |
+| `@=` | Any Assignment | Not Decided |
+
 ## Safety analysis
 
 **(Not yet implemented)**
@@ -608,7 +654,7 @@ fn zero_out(foo: &mut Foo) {
 
 - [x] Reference types
 - [x] Reference function parameters
-- [x] No reference locals
+- [x] Local reference variables with basic lifetime analysis
 - [x] No references in structs
 - [x] No references in return types
 - [x] No mutable references to immutable values
@@ -643,7 +689,7 @@ Any regular Jakt function can be turned into a compiletime function by replacing
 
 Comptime functions may only be invoked by constant expressions; this restriction includes the `this` object of methods.
 
-### Throwing in a comptime context 
+### Throwing in a comptime context
 
 Throwing behaves the same way as normal error control flow does, if the error leaves the comptime context (by reaching the original callsite), it will be promoted to a compilation error.
 
@@ -651,6 +697,6 @@ Throwing behaves the same way as normal error control flow does, if the error le
 
 Currently all prelude functions with side effects behave the same as they would in runtime. This allows e.g. pulling in files into the binary; some functions may be changed later to perform more useful actions.
 
-### comptime TODO 
+### comptime TODO
 
 - [ ] Implement execution of all Jakt expressions
