@@ -467,7 +467,7 @@ function convertPosition(position: Position, text: string): number {
     const buffer = new TextEncoder().encode(text);
 
     let i = 0;
-    while (i < text.length) {
+    while (i < buffer.length) {
         if (line == position.line && character == position.character) {
             return i;
         }
