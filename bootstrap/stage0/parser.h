@@ -1680,7 +1680,7 @@ ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWith
 ErrorOr<DeprecatedString> debug_description() const;
 };struct SumEnumVariant {
   public:
-DeprecatedString name;utility::Span span;JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> params;SumEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> a_params);
+DeprecatedString name;utility::Span span;JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> params;JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>>> default_values;SumEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> a_params, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>>> a_default_values);
 
 ErrorOr<DeprecatedString> debug_description() const;
 };template <typename T>

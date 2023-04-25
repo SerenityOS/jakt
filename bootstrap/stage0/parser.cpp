@@ -634,10 +634,11 @@ ErrorOr<DeprecatedString> parser::SumEnumVariant::debug_description() const { au
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("params: {}", params));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("params: {}, ", params));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("default_values: {}", default_values));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-parser::SumEnumVariant::SumEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> a_params) :name(move(a_name)), span(move(a_span)), params(move(a_params)){}
+parser::SumEnumVariant::SumEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> a_params, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>>> a_default_values) :name(move(a_name)), span(move(a_span)), params(move(a_params)), default_values(move(a_default_values)){}
 
 ErrorOr<DeprecatedString> parser::VisibilityRestriction::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("VisibilityRestriction("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -8586,11 +8587,12 @@ return JaktInternal::LoopContinue{};
 (seen_a_variant = true);
 if ((!(((((*this).peek(static_cast<size_t>(1ULL)))).index() == 7 /* LParen */)))){
 ((((*this).index)++));
-TRY((((variants).push(parser::SumEnumVariant(name,span,JaktInternal::OptionalNone())))));
+TRY((((variants).push(parser::SumEnumVariant(name,span,JaktInternal::OptionalNone(),JaktInternal::OptionalNone())))));
 return JaktInternal::LoopContinue{};
 }
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(2ULL));});
 JaktInternal::DynamicArray<parser::ParsedVarDecl> var_decls = (TRY((DynamicArray<parser::ParsedVarDecl>::create_with({}))));
+JaktInternal::DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>> default_values = (TRY((DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>>::create_with({}))));
 while ((!(((*this).eof())))){
 if (((((*this).peek(static_cast<size_t>(1ULL)))).index() == 5 /* Colon */)){
 parser::ParsedVarDecl var_decl = TRY((((*this).parse_variable_declaration(false))));
@@ -8647,6 +8649,35 @@ return JaktInternal::ExplicitValue<void>();
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::SumEnumVariant>,JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
+case 16: {
+{
+((((*this).index)++));
+NonnullRefPtr<typename parser::ParsedExpression> const default_value = TRY((((*this).parse_expression(false,false))));
+TRY((((default_values).push(static_cast<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>>(default_value)))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+default: {
+{
+TRY((((default_values).push(JaktInternal::OptionalNone()))));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+}/*switch end*/
+}()
+);
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    if (_jakt_value.is_loop_break())
+        break;
+    if (_jakt_value.is_loop_continue())
+        continue;
+    _jakt_value.release_value();
+});
+({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::SumEnumVariant>,JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>>>{
+auto&& __jakt_match_variant = ((*this).current());
+switch(__jakt_match_variant.index()) {
 case 8: {
 {
 ((((*this).index)++));
@@ -8685,7 +8716,7 @@ return JaktInternal::ExplicitValue<void>();
     _jakt_value.release_value();
 });
 }
-TRY((((variants).push(parser::SumEnumVariant(name,span,var_decls)))));
+TRY((((variants).push(parser::SumEnumVariant(name,span,var_decls,default_values)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
