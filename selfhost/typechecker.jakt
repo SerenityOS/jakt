@@ -2756,31 +2756,45 @@ struct Typechecker {
                         for field in common_fields {
                             fields.push(field)
                         }
+                        
+                        if (variant.params is Some(variant_params) and variant.default_values is Some(variant_default_values)) {
+                            for i in 0..variant_params.size() {
+                                let param = variant_params[i]
+                                let default_value = variant_default_values[i]
 
-                        for param in variant.params! {
-                            if seen_fields.contains(param.name) {
-                                .error(format("Enum variant '{}' has a member named '{}' more than once", variant.name, param.name), param.span)
-                                continue
+                                if seen_fields.contains(param.name) {
+                                    .error(format("Enum variant '{}' has a member named '{}' more than once", variant.name, param.name), param.span)
+                                    continue
+                                }
+                                seen_fields.add(param.name)
+                                let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id, name: param.name)
+                                let checked_var = CheckedVariable(
+                                    name: param.name
+                                    type_id
+                                    is_mutable: param.is_mutable
+                                    definition_span: param.span
+                                    type_span: None
+                                    visibility: CheckedVisibility::Public
+                                )
+
+                                mut checked_default_value: CheckedExpression? = None
+
+                                if default_value is Some(expression) {
+                                    // FIXME: The typechecker can't find expressions that are outside the scope of the enum.
+                                    // FIXME: Get the real safety mode from somewhere, right now it assumes it is safe.
+                                    checked_default_value = .typecheck_expression(expression, scope_id: enum_.scope_id, safety_mode: SafetyMode::Safe, type_hint: type_id)
+                                } 
+
+                                params.push(CheckedParameter(requires_label: true, variable: checked_var, default_value: checked_default_value))
+
+                                if .dump_type_hints and param.parsed_type is Empty {
+                                    .dump_type_hint(type_id, span: param.span)
+                                }
+
+                                mut module = .current_module()
+                                let var_id = module.add_variable(checked_var)
+                                fields.push(var_id)
                             }
-                            seen_fields.add(param.name)
-                            let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id, name: param.name)
-                            let checked_var = CheckedVariable(
-                                name: param.name
-                                type_id
-                                is_mutable: param.is_mutable
-                                definition_span: param.span
-                                type_span: None
-                                visibility: CheckedVisibility::Public
-                            )
-                            params.push(CheckedParameter(requires_label: true, variable: checked_var, default_value: None))
-
-                            if .dump_type_hints and param.parsed_type is Empty {
-                                .dump_type_hint(type_id, span: param.span)
-                            }
-
-                            mut module = .current_module()
-                            let var_id = module.add_variable(checked_var)
-                            fields.push(var_id)
                         }
                         enum_.variants.push(CheckedEnumVariant::StructLike(enum_id, name: variant.name, fields, span: variant.span))
                         let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
