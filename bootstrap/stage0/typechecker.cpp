@@ -1041,15 +1041,21 @@ TRY((((fields).push(field))));
 }
 }
 
+if (((((variant).params)).has_value())){
+JaktInternal::DynamicArray<parser::ParsedVarDecl> const variant_params = (((variant).params).value());
+if (((((variant).default_values)).has_value())){
+JaktInternal::DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>> const variant_default_values = (((variant).default_values).value());
 {
-JaktInternal::ArrayIterator<parser::ParsedVarDecl> _magic = (((((variant).params).value())).iterator());
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((variant_params).size()))});
 for (;;){
-JaktInternal::Optional<parser::ParsedVarDecl> const _magic_value = ((_magic).next());
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-parser::ParsedVarDecl param = (_magic_value.value());
+size_t i = (_magic_value.value());
 {
+parser::ParsedVarDecl const param = ((variant_params)[i]);
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const default_value = ((variant_default_values)[i]);
 if (((seen_fields).contains(((param).name)))){
 TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant '{}' has a member named '{}' more than once"sv)),((variant).name),((param).name)))),((param).span)))));
 continue;
@@ -1057,7 +1063,12 @@ continue;
 TRY((((seen_fields).add(((param).name)))));
 types::TypeId const type_id = TRY((((*this).typecheck_typename(((param).parsed_type),((enum_).scope_id),((param).name)))));
 NonnullRefPtr<types::CheckedVariable> const checked_var = TRY((types::CheckedVariable::__jakt_create(((param).name),type_id,((param).is_mutable),((param).span),JaktInternal::OptionalNone(), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
-TRY((((params).push(types::CheckedParameter(true,checked_var,JaktInternal::OptionalNone())))));
+JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> checked_default_value = JaktInternal::OptionalNone();
+if (((default_value).has_value())){
+NonnullRefPtr<typename parser::ParsedExpression> const expression = (default_value.value());
+(checked_default_value = TRY((((*this).typecheck_expression(expression,((enum_).scope_id), types::SafetyMode { typename types::SafetyMode::Safe() } ,type_id)))));
+}
+TRY((((params).push(types::CheckedParameter(true,checked_var,checked_default_value)))));
 if ((((*this).dump_type_hints) && ((((param).parsed_type))->index() == 13 /* Empty */))){
 TRY((((*this).dump_type_hint(type_id,((param).span)))));
 }
@@ -1069,6 +1080,8 @@ TRY((((fields).push(var_id))));
 }
 }
 
+}
+}
 TRY((((((enum_).variants)).push( types::CheckedEnumVariant { typename types::CheckedEnumVariant::StructLike(enum_id,((variant).name),fields,((variant).span)) } ))));
 JaktInternal::Optional<JaktInternal::DynamicArray<types::FunctionId>> const maybe_enum_variant_constructor = TRY((((*this).find_functions_with_name_in_scope(((enum_).scope_id),((variant).name)))));
 if ((!(((maybe_enum_variant_constructor).has_value())))){
