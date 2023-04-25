@@ -1,8 +1,9 @@
 import parser {
-    ArgumentStoreLevel, BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, FunctionLinkage, FunctionType
-    IncludeAction, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport, ParsedField
-    ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedModuleImport, ParsedNamespace, ParsedParameter
-    ParsedRecord, ParsedStatement, ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator
+    ArgumentStoreLevel, BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, ExternalName, FunctionLinkage
+    FunctionType, IncludeAction, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport
+    ParsedField, ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedModuleImport, ParsedNamespace
+    ParsedParameter, ParsedRecord, ParsedStatement, ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast
+    UnaryOperator
 }
 import utility { panic, todo, join, FileId, Span, IterationDecision }
 import compiler { Compiler }
@@ -651,7 +652,7 @@ boxed enum Type {
 
 class Scope {
     public namespace_name: String?
-    public external_name: String?
+    public external_name: ExternalName?
 
     public vars: [String: VarId]
     public comptime_bindings: [String: Value]
@@ -677,6 +678,14 @@ class Scope {
     public is_block_scope: bool = true
 
     public resolved_forall_chunks: [ResolvedForallChunk]? = None
+
+    public fn namespace_name_for_codegen(this) -> ExternalName? {
+        if .external_name.has_value() { return .external_name }
+        if .namespace_name.has_value() {
+            return ExternalName::Plain(.namespace_name!)
+        }
+        return None
+    }
 }
 
 struct ResolvedForallChunk {
@@ -841,12 +850,12 @@ class CheckedFunction {
     public owner_scope: ScopeId? = None
     public is_fully_checked: bool = false
 
-    public external_name: String? = None
+    public external_name: ExternalName? = None
     public deprecated_message: String? = None
     public stores_arguments: [(usize, ArgumentStoreLevel)]? = None
     public force_inline: bool? = None
 
-    public fn name_for_codegen(this) -> String => .external_name ?? .name
+    public fn name_for_codegen(this) -> ExternalName => .external_name ?? ExternalName::Plain(.name)
 
     public fn map_types(mut this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws {
         .return_type_id = map(.return_type_id)
@@ -1055,7 +1064,7 @@ class CheckedVariable {
     public type_span: Span?
     public visibility: CheckedVisibility
     public owner_scope: ScopeId? = None
-    public external_name: String? = None
+    public external_name: ExternalName? = None
 
     public fn map_types(this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws -> CheckedVariable {
         return CheckedVariable(
@@ -1070,7 +1079,7 @@ class CheckedVariable {
         )
     }
 
-    public fn name_for_codegen(this) -> String => .external_name ?? .name
+    public fn name_for_codegen(this) -> ExternalName => .external_name ?? ExternalName::Plain(.name)
 }
 
 struct CheckedVarDecl {
@@ -1281,10 +1290,10 @@ struct CheckedStruct {
     type_id: TypeId
     super_struct_id: StructId?
 
-    external_name: String? = None
+    external_name: ExternalName? = None
     implements_type: TypeId? = None
 
-    fn name_for_codegen(this) -> String => .external_name ?? .name
+    fn name_for_codegen(this) -> ExternalName => .external_name ?? ExternalName::Plain(.name)
 }
 
 struct CheckedEnum {
@@ -1713,8 +1722,10 @@ boxed enum CheckedExpression {
 
 struct ResolvedNamespace {
     name: String
-    external_name: String? = None
+    external_name: ExternalName? = None
     generic_parameters: [TypeId]?
+
+    fn name_for_codegen(this) -> ExternalName => .external_name ?? ExternalName::Plain(.name)
 }
 
 struct CheckedCall {
@@ -1726,10 +1737,10 @@ struct CheckedCall {
     return_type: TypeId
     callee_throws: bool
 
-    external_name: String?
+    external_name: ExternalName?
     force_inline: bool? = None
 
-    fn name_for_codegen(this) -> String => .external_name ?? .name
+    fn name_for_codegen(this) -> ExternalName => .external_name ?? ExternalName::Plain(.name)
 }
 
 fn unknown_type_id() -> TypeId => builtin(BuiltinType::Unknown)
@@ -1764,7 +1775,7 @@ class CheckedProgram {
 
         let scope = Scope(
             namespace_name: none_string
-            external_name: none_string
+            external_name: None
             vars: [:]
             comptime_bindings: [:]
             structs: [:]

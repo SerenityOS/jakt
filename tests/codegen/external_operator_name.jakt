@@ -1,0 +1,20 @@
+/// Expect:
+/// - output: ""
+
+
+struct Test {
+    [[name="operator(+)"]]
+    fn add(this, other: Test) -> Test {
+        return Test()
+    }
+}
+
+fn main() {
+    let a = Test()
+    let b = Test()
+    unsafe {
+        cpp {
+            "a + b;"
+        }
+    }
+}
