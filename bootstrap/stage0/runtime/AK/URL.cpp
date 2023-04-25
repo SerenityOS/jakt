@@ -27,24 +27,56 @@ URL::URL(StringView string)
     }
 }
 
-DeprecatedString URL::path() const
-{
-    if (cannot_be_a_base_url())
-        return paths()[0];
-    StringBuilder builder;
-    for (auto& path : m_paths) {
-        builder.append('/');
-        builder.append(path);
-    }
-    return builder.to_deprecated_string();
-}
-
 URL URL::complete_url(StringView relative_url) const
 {
     if (!is_valid())
         return {};
 
-    return URLParser::parse(relative_url, this);
+    return URLParser::parse(relative_url, *this);
+}
+
+DeprecatedString URL::username(ApplyPercentDecoding apply_percent_decoding) const
+{
+    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(m_username) : m_username;
+}
+
+DeprecatedString URL::password(ApplyPercentDecoding apply_percent_decoding) const
+{
+    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(m_password) : m_password;
+}
+
+DeprecatedString URL::path_segment_at_index(size_t index, ApplyPercentDecoding apply_percent_decoding) const
+{
+    VERIFY(index < path_segment_count());
+    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(m_paths[index]) : m_paths[index];
+}
+
+DeprecatedString URL::basename(ApplyPercentDecoding apply_percent_decoding) const
+{
+    if (!m_valid)
+        return {};
+    if (m_paths.is_empty())
+        return {};
+    auto& last_segment = m_paths.last();
+    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(last_segment) : last_segment;
+}
+
+DeprecatedString URL::query(ApplyPercentDecoding apply_percent_decoding) const
+{
+    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(m_query) : m_query;
+}
+
+DeprecatedString URL::fragment(ApplyPercentDecoding apply_percent_decoding) const
+{
+    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(m_fragment) : m_fragment;
+}
+
+// NOTE: This only exists for compatibility with the existing URL tests which check for both .is_null() and .is_empty().
+static DeprecatedString deprecated_string_percent_encode(DeprecatedString const& input, URL::PercentEncodeSet set = URL::PercentEncodeSet::Userinfo, URL::SpaceAsPlus space_as_plus = URL::SpaceAsPlus::No)
+{
+    if (input.is_null() || input.is_empty())
+        return input;
+    return URL::percent_encode(input.view(), set, space_as_plus);
 }
 
 void URL::set_scheme(DeprecatedString scheme)
@@ -53,14 +85,18 @@ void URL::set_scheme(DeprecatedString scheme)
     m_valid = compute_validity();
 }
 
-void URL::set_username(DeprecatedString username)
+void URL::set_username(DeprecatedString username, ApplyPercentEncoding apply_percent_encoding)
 {
+    if (apply_percent_encoding == ApplyPercentEncoding::Yes)
+        username = deprecated_string_percent_encode(username, PercentEncodeSet::Userinfo);
     m_username = move(username);
     m_valid = compute_validity();
 }
 
-void URL::set_password(DeprecatedString password)
+void URL::set_password(DeprecatedString password, ApplyPercentEncoding apply_percent_encoding)
 {
+    if (apply_percent_encoding == ApplyPercentEncoding::Yes)
+        password = deprecated_string_percent_encode(password, PercentEncodeSet::Userinfo);
     m_password = move(password);
     m_valid = compute_validity();
 }
@@ -81,19 +117,38 @@ void URL::set_port(Optional<u16> port)
     m_valid = compute_validity();
 }
 
-void URL::set_paths(Vector<DeprecatedString> paths)
+void URL::set_paths(Vector<DeprecatedString> paths, ApplyPercentEncoding apply_percent_encoding)
 {
-    m_paths = move(paths);
+    if (apply_percent_encoding == ApplyPercentEncoding::Yes) {
+        Vector<DeprecatedString> encoded_paths;
+        encoded_paths.ensure_capacity(paths.size());
+        for (auto& segment : paths)
+            encoded_paths.unchecked_append(deprecated_string_percent_encode(segment, PercentEncodeSet::Path));
+        m_paths = move(encoded_paths);
+    } else {
+        m_paths = move(paths);
+    }
     m_valid = compute_validity();
 }
 
-void URL::set_query(DeprecatedString query)
+void URL::append_path(DeprecatedString path, ApplyPercentEncoding apply_percent_encoding)
 {
+    if (apply_percent_encoding == ApplyPercentEncoding::Yes)
+        path = deprecated_string_percent_encode(path, PercentEncodeSet::Path);
+    m_paths.append(path);
+}
+
+void URL::set_query(DeprecatedString query, ApplyPercentEncoding apply_percent_encoding)
+{
+    if (apply_percent_encoding == ApplyPercentEncoding::Yes)
+        query = deprecated_string_percent_encode(query, is_special() ? PercentEncodeSet::SpecialQuery : PercentEncodeSet::Query);
     m_query = move(query);
 }
 
-void URL::set_fragment(DeprecatedString fragment)
+void URL::set_fragment(DeprecatedString fragment, ApplyPercentEncoding apply_percent_encoding)
 {
+    if (apply_percent_encoding == ApplyPercentEncoding::Yes)
+        fragment = deprecated_string_percent_encode(fragment, PercentEncodeSet::Fragment);
     m_fragment = move(fragment);
 }
 
@@ -171,9 +226,8 @@ URL URL::create_with_file_scheme(DeprecatedString const& path, DeprecatedString 
     //       This is because a file URL always needs a non-null hostname.
     url.set_host(hostname.is_null() || hostname == "localhost" ? DeprecatedString::empty() : hostname);
     url.set_paths(lexical_path.parts());
-    // NOTE: To indicate that we want to end the path with a slash, we have to append an empty path segment.
     if (path.ends_with('/'))
-        url.append_path("");
+        url.append_slash();
     url.set_fragment(fragment);
     return url;
 }
@@ -188,9 +242,8 @@ URL URL::create_with_help_scheme(DeprecatedString const& path, DeprecatedString 
     //       This is because a file URL always needs a non-null hostname.
     url.set_host(hostname.is_null() || hostname == "localhost" ? DeprecatedString::empty() : hostname);
     url.set_paths(lexical_path.parts());
-    // NOTE: To indicate that we want to end the path with a slash, we have to append an empty path segment.
     if (path.ends_with('/'))
-        url.append_path("");
+        url.append_slash();
     url.set_fragment(fragment);
     return url;
 }
@@ -209,6 +262,18 @@ URL URL::create_with_url_or_path(DeprecatedString const& url_or_path)
 bool URL::is_special_scheme(StringView scheme)
 {
     return scheme.is_one_of("ftp", "file", "http", "https", "ws", "wss");
+}
+
+DeprecatedString URL::serialize_path(ApplyPercentDecoding apply_percent_decoding) const
+{
+    if (cannot_be_a_base_url())
+        return m_paths[0];
+    StringBuilder builder;
+    for (auto& path : m_paths) {
+        builder.append('/');
+        builder.append(apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(path) : path);
+    }
+    return builder.to_deprecated_string();
 }
 
 DeprecatedString URL::serialize_data_url() const
@@ -242,10 +307,10 @@ DeprecatedString URL::serialize(ExcludeFragment exclude_fragment) const
         builder.append("//"sv);
 
         if (includes_credentials()) {
-            builder.append(percent_encode(m_username, PercentEncodeSet::Userinfo));
+            builder.append(m_username);
             if (!m_password.is_empty()) {
                 builder.append(':');
-                builder.append(percent_encode(m_password, PercentEncodeSet::Userinfo));
+                builder.append(m_password);
             }
             builder.append('@');
         }
@@ -256,24 +321,24 @@ DeprecatedString URL::serialize(ExcludeFragment exclude_fragment) const
     }
 
     if (cannot_be_a_base_url()) {
-        builder.append(percent_encode(m_paths[0], PercentEncodeSet::Path));
+        builder.append(m_paths[0]);
     } else {
         if (m_host.is_null() && m_paths.size() > 1 && m_paths[0].is_empty())
             builder.append("/."sv);
         for (auto& segment : m_paths) {
             builder.append('/');
-            builder.append(percent_encode(segment, PercentEncodeSet::Path));
+            builder.append(segment);
         }
     }
 
     if (!m_query.is_null()) {
         builder.append('?');
-        builder.append(percent_encode(m_query, is_special() ? URL::PercentEncodeSet::SpecialQuery : URL::PercentEncodeSet::Query));
+        builder.append(m_query);
     }
 
     if (exclude_fragment == ExcludeFragment::No && !m_fragment.is_null()) {
         builder.append('#');
-        builder.append(percent_encode(m_fragment, PercentEncodeSet::Fragment));
+        builder.append(m_fragment);
     }
 
     return builder.to_deprecated_string();
@@ -300,24 +365,24 @@ DeprecatedString URL::serialize_for_display() const
     }
 
     if (cannot_be_a_base_url()) {
-        builder.append(percent_encode(m_paths[0], PercentEncodeSet::Path));
+        builder.append(m_paths[0]);
     } else {
         if (m_host.is_null() && m_paths.size() > 1 && m_paths[0].is_empty())
             builder.append("/."sv);
         for (auto& segment : m_paths) {
             builder.append('/');
-            builder.append(percent_encode(segment, PercentEncodeSet::Path));
+            builder.append(segment);
         }
     }
 
     if (!m_query.is_null()) {
         builder.append('?');
-        builder.append(percent_encode(m_query, is_special() ? URL::PercentEncodeSet::SpecialQuery : URL::PercentEncodeSet::Query));
+        builder.append(m_query);
     }
 
     if (!m_fragment.is_null()) {
         builder.append('#');
-        builder.append(percent_encode(m_fragment, PercentEncodeSet::Fragment));
+        builder.append(m_fragment);
     }
 
     return builder.to_deprecated_string();
@@ -358,15 +423,6 @@ bool URL::equals(URL const& other, ExcludeFragment exclude_fragments) const
     if (!m_valid || !other.m_valid)
         return false;
     return serialize(exclude_fragments) == other.serialize(exclude_fragments);
-}
-
-DeprecatedString URL::basename() const
-{
-    if (!m_valid)
-        return {};
-    if (m_paths.is_empty())
-        return {};
-    return m_paths.last();
 }
 
 void URL::append_percent_encoded(StringBuilder& builder, u32 code_point)

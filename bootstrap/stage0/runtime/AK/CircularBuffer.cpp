@@ -6,6 +6,7 @@
 
 #include <AK/CircularBuffer.h>
 #include <AK/MemMem.h>
+#include <AK/Stream.h>
 
 namespace AK {
 
@@ -109,7 +110,7 @@ ReadonlyBytes CircularBuffer::next_read_span_with_seekback(size_t distance) cons
     // Note: We are adding the capacity once here to ensure that we can wrap around the negative space by using modulo.
     auto read_offset = (capacity() + m_reading_head + m_used_space - distance) % capacity();
 
-    return m_buffer.span().slice(read_offset, min(capacity() - read_offset, m_seekback_limit));
+    return m_buffer.span().slice(read_offset, min(capacity() - read_offset, distance));
 }
 
 size_t CircularBuffer::write(ReadonlyBytes bytes)
@@ -187,6 +188,48 @@ ErrorOr<void> CircularBuffer::discard(size_t discarding_size)
     m_reading_head = (m_reading_head + discarding_size) % capacity();
 
     return {};
+}
+
+ErrorOr<size_t> CircularBuffer::fill_from_stream(Stream& stream)
+{
+    auto next_span = next_write_span();
+    if (next_span.size() == 0)
+        return 0;
+
+    auto bytes = TRY(stream.read_some(next_span));
+    m_used_space += bytes.size();
+
+    m_seekback_limit += bytes.size();
+    if (m_seekback_limit > capacity())
+        m_seekback_limit = capacity();
+
+    return bytes.size();
+}
+
+ErrorOr<size_t> CircularBuffer::copy_from_seekback(size_t distance, size_t length)
+{
+    if (distance > m_seekback_limit)
+        return Error::from_string_literal("Tried a seekback copy beyond the seekback limit");
+
+    auto remaining_length = length;
+    while (remaining_length > 0) {
+        if (empty_space() == 0)
+            break;
+
+        auto next_span = next_read_span_with_seekback(distance);
+        if (next_span.size() == 0)
+            break;
+
+        auto length_written = write(next_span.trim(remaining_length));
+        remaining_length -= length_written;
+
+        // If we copied right from the end of the seekback area (i.e. our length is larger than the distance)
+        // and the last copy was one complete "chunk", we can now double the distance to copy twice as much data in one go.
+        if (remaining_length > distance && length_written == distance)
+            distance *= 2;
+    }
+
+    return length - remaining_length;
 }
 
 }

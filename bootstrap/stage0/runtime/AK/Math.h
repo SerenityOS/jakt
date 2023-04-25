@@ -90,6 +90,10 @@ constexpr T fmod(T x, T y)
     } while (fpu_status & 0x400);
     return x;
 #else
+#    if defined(AK_OS_SERENITY)
+    // TODO: Add implementation for this function.
+    TODO();
+#    endif
     return __builtin_fmod(x, y);
 #endif
 }
@@ -109,6 +113,10 @@ constexpr T remainder(T x, T y)
     } while (fpu_status & 0x400);
     return x;
 #else
+#    if defined(AK_OS_SERENITY)
+    // TODO: Add implementation for this function.
+    TODO();
+#    endif
     return __builtin_fmod(x, y);
 #endif
 }
@@ -244,7 +252,13 @@ constexpr T sin(T angle)
         : "0"(angle));
     return ret;
 #else
+#    if defined(AK_OS_SERENITY)
+    // FIXME: This is a very naive implementation, and is only valid for small x.
+    //        Probably a good idea to use a better algorithm in the future, such as a taylor approximation.
+    return angle;
+#    else
     return __builtin_sin(angle);
+#    endif
 #endif
 }
 
@@ -261,7 +275,13 @@ constexpr T cos(T angle)
         : "0"(angle));
     return ret;
 #else
+#    if defined(AK_OS_SERENITY)
+    // FIXME: This is a very naive implementation, and is only valid for small x.
+    //        Probably a good idea to use a better algorithm in the future, such as a taylor approximation.
+    return 1 - ((angle * angle) / 2);
+#    else
     return __builtin_cos(angle);
+#    endif
 #endif
 }
 
@@ -298,7 +318,13 @@ constexpr T tan(T angle)
 
     return ret;
 #else
+#    if defined(AK_OS_SERENITY)
+    // FIXME: This is a very naive implementation, and is only valid for small x.
+    //        Probably a good idea to use a better algorithm in the future, such as a taylor approximation.
+    return angle;
+#    else
     return __builtin_tan(angle);
+#    endif
 #endif
 }
 
@@ -316,6 +342,10 @@ constexpr T atan(T value)
         : "0"(value));
     return ret;
 #else
+#    if defined(AK_OS_SERENITY)
+    // TODO: Add implementation for this function.
+    TODO();
+#    endif
     return __builtin_atan(value);
 #endif
 }
@@ -371,6 +401,10 @@ constexpr T atan2(T y, T x)
         : "st(1)");
     return ret;
 #else
+#    if defined(AK_OS_SERENITY)
+    // TODO: Add implementation for this function.
+    TODO();
+#    endif
     return __builtin_atan2(y, x);
 #endif
 }
@@ -404,6 +438,10 @@ constexpr T log(T x)
         : "0"(x));
     return ret;
 #else
+#    if defined(AK_OS_SERENITY)
+    // TODO: Add implementation for this function.
+    TODO();
+#    endif
     return __builtin_log(x);
 #endif
 }
@@ -423,6 +461,10 @@ constexpr T log2(T x)
         : "0"(x));
     return ret;
 #else
+#    if defined(AK_OS_SERENITY)
+    // TODO: Add implementation for this function.
+    TODO();
+#    endif
     return __builtin_log2(x);
 #endif
 }
@@ -442,6 +484,10 @@ constexpr T log10(T x)
         : "0"(x));
     return ret;
 #else
+#    if defined(AK_OS_SERENITY)
+    // TODO: Add implementation for this function.
+    TODO();
+#    endif
     return __builtin_log10(x);
 #endif
 }
@@ -466,6 +512,10 @@ constexpr T exp(T exponent)
         : "0"(exponent));
     return res;
 #else
+#    if defined(AK_OS_SERENITY)
+    // TODO: Add implementation for this function.
+    TODO();
+#    endif
     return __builtin_exp(exponent);
 #endif
 }
@@ -488,6 +538,10 @@ constexpr T exp2(T exponent)
         : "0"(exponent));
     return res;
 #else
+#    if defined(AK_OS_SERENITY)
+    // TODO: Add implementation for this function.
+    TODO();
+#    endif
     return __builtin_exp2(exponent);
 #endif
 }

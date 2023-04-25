@@ -12,7 +12,7 @@ static ErrorOr<repl_backend__default::Editor> create(DeprecatedString const prom
 ErrorOr<DeprecatedString> get_active_buffer();
 Editor(FILE* a_standard_input_file, char* a_line_pointer, DeprecatedString a_prompt);
 
-ErrorOr<repl_backend__common::LineResult> get_line();
+ErrorOr<repl_backend__common::LineResult> get_line(JaktInternal::Optional<DeprecatedString> const prompt);
 ErrorOr<void> highlight(utility::Span const span, repl_backend__common::Style const style);
 ErrorOr<DeprecatedString> debug_description() const;
 };}

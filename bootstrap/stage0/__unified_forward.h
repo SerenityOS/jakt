@@ -418,6 +418,7 @@ struct Try;
 struct TryBlock;
 struct Reflect;
 struct Garbage;
+struct Unsafe;
 }
 struct ParsedExpression;
 

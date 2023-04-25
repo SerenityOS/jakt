@@ -538,6 +538,10 @@
 #    define WINDOWMANAGER_DEBUG 0
 #endif
 
+#ifndef WORKER_THREAD_DEBUG
+#    define WORKER_THREAD_DEBUG 0
+#endif
+
 #ifndef WSMESSAGELOOP_DEBUG
 #    define WSMESSAGELOOP_DEBUG 0
 #endif
