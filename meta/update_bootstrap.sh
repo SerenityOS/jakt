@@ -4,9 +4,10 @@ set -e
 
 : "${CURRENT_JAKT_COMPILER:=Build/bin/jakt}"
 : "${JAKT_RUNTIME_DIR:=Build/lib}"
+: "${COMPILE_JOBS:=$(nproc)}"
 
 # First, get a working build of the compiler
-"$CURRENT_JAKT_COMPILER" --runtime-library-path "$JAKT_RUNTIME_DIR" selfhost/main.jakt
+"$CURRENT_JAKT_COMPILER" -J"$COMPILE_JOBS" --runtime-library-path "$JAKT_RUNTIME_DIR" selfhost/main.jakt
 
 # Next, use that to build the selfhost
 rm -fr selfhost_build
