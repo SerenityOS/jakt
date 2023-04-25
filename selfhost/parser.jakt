@@ -312,6 +312,7 @@ struct SumEnumVariant {
     name: String
     span: Span
     params: [ParsedVarDecl]?
+    default_values: [ParsedExpression?]?
 }
 enum RecordType {
     Struct(fields: [ParsedField], super_type: ParsedType?)
@@ -2866,13 +2867,14 @@ struct Parser {
 
                     if not (.peek(1) is LParen) {
                         .index++
-                        variants.push(SumEnumVariant(name, span, params: None))
+                        variants.push(SumEnumVariant(name, span, params: None, default_values: None))
                         continue
                     }
 
                     .index += 2
 
                     mut var_decls: [ParsedVarDecl] = []
+                    mut default_values: [ParsedExpression?] = []
 
                     while not .eof() {
                         if .peek(1) is Colon {
@@ -2901,6 +2903,17 @@ struct Parser {
                         }
 
                         match .current() {
+                            Equal => {
+                                .index++
+                                let default_value = .parse_expression(allow_assignments: false, allow_newlines: false)
+                                default_values.push(Some(default_value))
+                            }
+                            else => {
+                                default_values.push(None)
+                            }
+                        }
+
+                        match .current() {
                             RParen => {
                                 .index++
                                 break
@@ -2914,7 +2927,7 @@ struct Parser {
                             }
                         }
                     }
-                    variants.push(SumEnumVariant(name, span, params: var_decls))
+                    variants.push(SumEnumVariant(name, span, params: var_decls, default_values))
                 }
                 RCurly => {
                     break
