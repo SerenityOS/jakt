@@ -717,7 +717,7 @@ struct CodeGenerator {
                 output += qualifier
                 output += "::"
             }
-            output += function.name_for_codegen()
+            output += function.name_for_codegen().as_name_for_definition()
 
             output += "<"
             mut first = true
@@ -749,7 +749,7 @@ struct CodeGenerator {
                 if not variable.is_mutable and not (variable_type is Reference or variable_type is MutableReference) {
                     output += "const "
                 }
-                output += variable.name_for_codegen()
+                output += variable.name_for_codegen().as_name_for_definition()
             }
 
             output += ")"
@@ -1170,7 +1170,7 @@ struct CodeGenerator {
 
                 if not function.type is ImplicitConstructor and
                     not function.type is Destructor and
-                    function.name_for_codegen() != "main" and
+                    function.name_for_codegen().as_name_for_use() != "main" and
                     function.generics.params.is_empty() {
 
                     output += .codegen_function_predecl(function)
@@ -1236,7 +1236,7 @@ struct CodeGenerator {
             output += "[[noreturn]] "
         }
 
-        if function.name_for_codegen() == "main" {
+        if function.name_for_codegen().as_name_for_definition() == "main" {
             output += "ErrorOr<int>"
         } else {
             if as_method and function.is_static() {
@@ -1256,7 +1256,7 @@ struct CodeGenerator {
         }
 
         output += " "
-        output += function.name_for_codegen()
+        output += function.name_for_codegen().as_name_for_definition()
         output += "("
 
         mut first = true
@@ -1277,7 +1277,7 @@ struct CodeGenerator {
             if not param.variable.is_mutable and not (param_type is Reference or param_type is MutableReference) {
                 output += "const "
             }
-            output += param.variable.name_for_codegen()
+            output += param.variable.name_for_codegen().as_name_for_definition()
         }
         output += ")"
 
@@ -1322,7 +1322,7 @@ struct CodeGenerator {
             else => ""
         }
 
-        output += struct_.name_for_codegen()
+        output += struct_.name_for_codegen().as_name_for_definition()
         output += ";"
 
         return output
@@ -1349,7 +1349,7 @@ struct CodeGenerator {
         match struct_.record_type {
             Class => {
                 mut class_name_with_generics = ""
-                class_name_with_generics += struct_.name_for_codegen()
+                class_name_with_generics += struct_.name_for_codegen().as_name_for_definition()
                 mut first = true
                 for generic_parameter in struct_.generic_parameters {
                     if not first {
@@ -1365,9 +1365,9 @@ struct CodeGenerator {
                 }
 
                 if struct_.super_struct_id.has_value() {
-                    output += format("class {}: public {} {{\n", struct_.name_for_codegen(), .codegen_struct_type(id: struct_.super_struct_id!, as_namespace: true))
+                    output += format("class {}: public {} {{\n", struct_.name_for_codegen().as_name_for_definition(), .codegen_struct_type(id: struct_.super_struct_id!, as_namespace: true))
                 } else {
-                    output += format("class {} : public RefCounted<{}>, public Weakable<{}> {{\n", struct_.name_for_codegen(), class_name_with_generics, class_name_with_generics)
+                    output += format("class {} : public RefCounted<{}>, public Weakable<{}> {{\n", struct_.name_for_codegen().as_name_for_definition(), class_name_with_generics, class_name_with_generics)
                 }
 
                 let scope = .program.get_scope(struct_.scope_id)
@@ -1382,11 +1382,11 @@ struct CodeGenerator {
                 }
                 if not has_destructor {
                     output += "  public:\n"
-                    output += format("virtual ~{}() = default;\n", struct_.name_for_codegen())
+                    output += format("virtual ~{}() = default;\n", struct_.name_for_codegen().as_name_for_definition())
                 }
             }
             Struct => {
-                output += format("struct {}", struct_.name_for_codegen())
+                output += format("struct {}", struct_.name_for_codegen().as_name_for_definition())
                 output += " {\n"
                 output += "  public:\n"
             }
@@ -1403,7 +1403,7 @@ struct CodeGenerator {
             let variable = .program.get_variable(field.variable_id)
             output += .codegen_type(variable.type_id)
             output += " "
-            output += variable.name_for_codegen()
+            output += variable.name_for_codegen().as_name_for_definition()
             output += ";"
         }
 
@@ -1448,7 +1448,7 @@ struct CodeGenerator {
 
         output += "};"
 
-        .deferred_output += .codegen_ak_formatter(name: struct_.name_for_codegen(), generic_parameter_names)
+        .deferred_output += .codegen_ak_formatter(name: struct_.name_for_codegen().as_name_for_definition(), generic_parameter_names)
 
         return output
     }
@@ -1526,7 +1526,7 @@ struct CodeGenerator {
         mut common_fields: [(String, String)] = []
         for field in enum_.fields {
             let variable = .program.get_variable(field.variable_id)
-            common_fields.push((variable.name_for_codegen(), .codegen_type(variable.type_id)))
+            common_fields.push((variable.name_for_codegen().as_name_for_definition(), .codegen_type(variable.type_id)))
         }
 
         output += "namespace " + enum_.name + "_Details {\n"
@@ -1543,7 +1543,7 @@ struct CodeGenerator {
                     mut fields: [(String, String)] = []
                     for field in own_fields {
                         let variable = .program.get_variable(field)
-                        fields.push((variable.name_for_codegen(), .codegen_type(variable.type_id)))
+                        fields.push((variable.name_for_codegen().as_name_for_definition(), .codegen_type(variable.type_id)))
                     }
 
                     if is_generic {
@@ -1712,7 +1712,7 @@ struct CodeGenerator {
         }
         output += "debug_description() const { "
         output += "auto builder = DeprecatedStringBuilder::create();"
-        output += format("TRY(builder.append(\"{}(\"sv));", struct_.name_for_codegen())
+        output += format("TRY(builder.append(\"{}(\"sv));", struct_.name_for_codegen().as_name_for_use())
         output += "{\n"
         output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
 
@@ -1720,7 +1720,7 @@ struct CodeGenerator {
         for field in struct_.fields {
             let field_var = .program.get_variable(field.variable_id)
             output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));"
-            output += format("TRY(builder.appendff(\"{}: ", field_var.name_for_codegen())
+            output += format("TRY(builder.appendff(\"{}: ", field_var.name_for_codegen().as_name_for_use())
             if .program.is_string(field_var.type_id) {
                 output += "\\\"{}\\\""
             } else {
@@ -1738,7 +1738,7 @@ struct CodeGenerator {
                 }
                 else => ""
             }
-            output += field_var.name_for_codegen() + "));\n"
+            output += field_var.name_for_codegen().as_name_for_use() + "));\n"
             i++
         }
 
@@ -1792,14 +1792,14 @@ struct CodeGenerator {
                         output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));\n"
                         let var = .program.get_variable(field)
                         if .program.is_string(var.type_id){
-                            output += format("TRY(builder.appendff(\"{}: \\\"{{}}\\\"", var.name_for_codegen())
+                            output += format("TRY(builder.appendff(\"{}: \\\"{{}}\\\"", var.name_for_codegen().as_name_for_use())
                         } else {
-                            output += format("TRY(builder.appendff(\"{}: {{}}", var.name_for_codegen())
+                            output += format("TRY(builder.appendff(\"{}: {{}}", var.name_for_codegen().as_name_for_use())
                         }
                         if i != fields.size() - 1 {
                             output += ", "
                         }
-                        output += format("\", that.{}));\n", var.name_for_codegen())
+                        output += format("\", that.{}));\n", var.name_for_codegen().as_name_for_use())
                         i++
                     }
                     output += "}\n"
@@ -1922,7 +1922,7 @@ struct CodeGenerator {
                         panic("Internal error: couldn't find a 'from_string_literal' function despite passing typecheck")
                     }
 
-                    let name = .program.get_function(ids![0]).name_for_codegen()
+                    let name = .program.get_function(ids![0]).name_for_codegen().as_name_for_use()
 
                     let error_handler = match val.may_throw { true => .current_error_handler(), else => "" }
                     yield format(
@@ -1956,7 +1956,7 @@ struct CodeGenerator {
             output += ")"
 
             let var_name = match index.has_value() {
-                true => .program.get_variable(index!).name_for_codegen()
+                true => .program.get_variable(index!).name_for_codegen().as_name_for_use()
                 false => name
             }
 
@@ -2061,7 +2061,7 @@ struct CodeGenerator {
                     let is_type = match .program.get_type(type_id) {
                         Struct(id) => {
                             let struct_ = .program.get_struct(id)
-                            yield .codegen_namespace_qualifier(scope_id: struct_.scope_id) + struct_.name_for_codegen()
+                            yield .codegen_namespace_qualifier(scope_id: struct_.scope_id) + struct_.name_for_codegen().as_name_for_use()
                         }
                         else => .codegen_type(type_id)
                     }
@@ -2324,7 +2324,7 @@ struct CodeGenerator {
             }
             mut generated_params: [String] = []
             for param in params {
-                generated_params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name_for_codegen()))
+                generated_params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name_for_codegen().as_name_for_definition()))
             }
             let return_type = match can_throw {
                 true => format("ErrorOr<{}>", .codegen_type(return_type_id))
@@ -2811,7 +2811,7 @@ struct CodeGenerator {
     }
 
     fn codegen_function_return_type(mut this, function: CheckedFunction) throws -> String {
-        if function.is_static() and function.name_for_codegen() == "main" {
+        if function.is_static() and function.name_for_codegen().as_name_for_use() == "main" {
             return "ErrorOr<int>"
         }
         let type_name = .codegen_type(function.return_type_id)
@@ -2850,7 +2850,7 @@ struct CodeGenerator {
             }
 
             output += .codegen_expression(lhs)
-            if rhs_type is GenericInstance(id) and .program.get_struct(id).name_for_codegen() == "Optional" {
+            if rhs_type is GenericInstance(id) and .program.get_struct(id).name_for_codegen().as_name_for_definition() == "Optional" {
                 if rhs_can_throw {
                     output += ".try_value_or_lazy_evaluated_optional";
                 } else {
@@ -3146,29 +3146,39 @@ struct CodeGenerator {
         }
 
         let expression_type = .program.get_type(expr.type())
-        let field_accessor = match expression_type {
-            RawPtr => "->"
-            Struct(id) | GenericInstance(id) => match .program.get_struct(id).record_type is Class and object != "*this" {
-                true => "->"
-                false => "."
-            }
-            Enum(id) => match .program.get_enum(id).is_boxed and object != "*this" {
-                true => "->"
-                false => "."
-            }
-            else => match expression_type.is_builtin() and not expression_type is JaktString {
-                true => ""
-                false => "."
+        let name = call.name_for_codegen()
+
+        let field_accessor = match name {
+            Operator => ""
+            else => match expression_type {
+                RawPtr => "->"
+                Struct(id) | GenericInstance(id) => match .program.get_struct(id).record_type is Class and object != "*this" {
+                    true => "->"
+                    false => "."
+                }
+                Enum(id) => match .program.get_enum(id).is_boxed and object != "*this" {
+                    true => "->"
+                    false => "."
+                }
+                else => match expression_type.is_builtin() and not expression_type is JaktString {
+                    true => ""
+                    false => "."
+                }
             }
         }
 
-        let generate_method_name = fn[this, &call, &output]() throws {
+        let generate_method_name = fn[this, &call, &name, &output]() throws {
+            if name is Operator {
+                output += name.as_name_for_use()
+                return
+            }
+
             let generic_parameters = call.type_args
             if not generic_parameters.is_empty() {
                 output += "template "
             }
 
-            output += call.name_for_codegen()
+            output += name.as_name_for_use()
 
             if not generic_parameters.is_empty() {
                 mut types: [String] = []
@@ -3179,7 +3189,7 @@ struct CodeGenerator {
             }
         }
 
-        let is_called_as_method = not field_accessor.is_empty()
+        let is_called_as_method = not field_accessor.is_empty() or (not is_optional and name is Operator)
 
         if is_called_as_method {
             output += "(("
@@ -3292,17 +3302,17 @@ struct CodeGenerator {
                             Struct(struct_id) => {
                                 let struct_ = .program.get_struct(struct_id)
                                 if struct_.record_type is Class {
-                                    output += call.name_for_codegen()
+                                    output += call.name_for_codegen().as_name_for_use()
                                     output += "::__jakt_create"
                                 } else {
-                                    output += call.name_for_codegen()
+                                    output += call.name_for_codegen().as_name_for_use()
                                 }
                             }
                             GenericInstance(id, args) => {
                                 let struct_ = .program.get_struct(id)
                                 if struct_.record_type is Class {
                                     output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
-                                    output += struct_.name_for_codegen()
+                                    output += struct_.name_for_codegen().as_name_for_use()
                                     output += "<"
                                     mut first = true
                                     for arg in args {
@@ -3315,7 +3325,7 @@ struct CodeGenerator {
                                     }
                                     output += ">::__jakt_create"
                                 } else {
-                                    output += call.name_for_codegen()
+                                    output += call.name_for_codegen().as_name_for_use()
                                     output += "<"
                                     mut first = true
                                     for arg in args {
@@ -3342,14 +3352,14 @@ struct CodeGenerator {
                                     output += .codegen_namespace_path(call)
                                     output += "template __jakt_create<typename "
                                     output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
-                                    output += "::" + call.name_for_codegen() + ">"
+                                    output += "::" + call.name_for_codegen().as_name_for_use() + ">"
                                 } else {
                                     output += " " + .codegen_type(call.return_type)
                                     output += " { "
                                     output += "typename "
                                     output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
                                     output += "::"
-                                    output += call.name_for_codegen()
+                                    output += call.name_for_codegen().as_name_for_use()
 
                                     close_enum_type_wrapper = true
                                 }
@@ -3363,11 +3373,11 @@ struct CodeGenerator {
                         }
                     } else {
                         output += .codegen_namespace_path(call)
-                        output += call.name_for_codegen()
+                        output += call.name_for_codegen().as_name_for_use()
                     }
                 } else {
                     output += .codegen_namespace_path(call)
-                    output += call.name_for_codegen()
+                    output += call.name_for_codegen().as_name_for_use()
                 }
 
                 let generic_parameters = call.type_args
@@ -3407,7 +3417,7 @@ struct CodeGenerator {
                 return .codegen_namespace_qualifier(
                     scope_id: scope!
                     skip_current: false
-                    possible_constructor_name: call.name_for_codegen()
+                    possible_constructor_name: call.name_for_codegen().as_name_for_use()
                 )
             }
         }
@@ -3418,11 +3428,11 @@ struct CodeGenerator {
         for namespace_ in call.namespace_ {
             // hack warning: this is to get around C++'s limitation that a constructor
             // can't be called like other static methods
-            if index == call.namespace_.size() - 1 and namespace_.name == call.name_for_codegen() {
+            if index == call.namespace_.size() - 1 and namespace_.name == call.name_for_codegen().as_name_for_use() {
                 break
             }
 
-            output += namespace_.external_name ?? namespace_.name
+            output += namespace_.name_for_codegen().as_name_for_use()
             if namespace_.generic_parameters.has_value() {
                 output += "<"
                 mut i: usize = 0
@@ -3597,7 +3607,7 @@ struct CodeGenerator {
                 if not var.is_mutable and not (var_type is Reference or var_type is MutableReference) {
                     output += "const "
                 }
-                output += var.name_for_codegen()
+                output += var.name_for_codegen().as_name_for_use()
                 output += " = "
                 output += .codegen_expression(init)
                 output += ";"
@@ -3749,7 +3759,7 @@ struct CodeGenerator {
             let inner_struct_id = inner_weak_ptr_struct_id.value()
             let struct_ = .program.get_struct(inner_struct_id)
             output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
-            output += struct_.name_for_codegen()
+            output += struct_.name_for_codegen().as_name_for_use()
 
             output += ">"
         } else {
@@ -3761,7 +3771,7 @@ struct CodeGenerator {
             }
             output += namespace_
             output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
-            output += struct_.name_for_codegen()
+            output += struct_.name_for_codegen().as_name_for_use()
             output += "<"
             mut first = true
             for type_id in args {
@@ -3839,7 +3849,7 @@ struct CodeGenerator {
         mut first = true
         while current_scope_id.has_value() {
             let scope = .program.get_scope(current_scope_id!)
-            let name = scope.external_name ?? scope.namespace_name
+            let name = scope.namespace_name_for_codegen()?.as_name_for_use()
             let is_constructor_call = first and possible_constructor_name == name
 
             defer {
@@ -3877,11 +3887,11 @@ struct CodeGenerator {
         if not as_namespace and checked_struct.record_type is Class {
             output += "NonnullRefPtr<"
             output += .codegen_namespace_qualifier(scope_id: checked_struct.scope_id)
-            output += checked_struct.name_for_codegen()
+            output += checked_struct.name_for_codegen().as_name_for_use()
             output += ">"
         } else {
             output += .codegen_namespace_qualifier(scope_id: checked_struct.scope_id)
-            output += checked_struct.name_for_codegen()
+            output += checked_struct.name_for_codegen().as_name_for_use()
         }
 
         return output
@@ -3915,7 +3925,7 @@ struct CodeGenerator {
     fn codegen_destructor_predecl(mut this, anon struct_: &CheckedStruct) throws -> String {
         mut output = ""
         output += "public:\n"
-        output += "    ~" + struct_.name_for_codegen() + "();\n"
+        output += "    ~" + struct_.name_for_codegen().as_name_for_definition() + "();\n"
         return output
     }
 
@@ -3939,9 +3949,9 @@ struct CodeGenerator {
         }
 
         if is_inline {
-            output += format("~{}()", struct_.name_for_codegen())
+            output += format("~{}()", struct_.name_for_codegen().as_name_for_definition())
         } else {
-            output += format("{}::~{}()", qualified_name, struct_.name_for_codegen())
+            output += format("{}::~{}()", qualified_name, struct_.name_for_codegen().as_name_for_definition())
         }
 
         output += .codegen_block(block: function.block)
@@ -3964,7 +3974,7 @@ struct CodeGenerator {
 
             output += "protected:\n"
 
-            output += format("explicit {}(", function.name_for_codegen())
+            output += format("explicit {}(", function.name_for_codegen().as_name_for_definition())
             mut first = true
             for param in function.params {
                 if not first {
@@ -3976,12 +3986,12 @@ struct CodeGenerator {
                 let param_type_id = param.variable.type_id
                 output += .codegen_type(param_type_id)
                 output += " a_"
-                output += param.variable.name_for_codegen()
+                output += param.variable.name_for_codegen().as_name_for_definition()
             }
             output += ");\n"
 
             mut class_name_with_generics = ""
-            class_name_with_generics += structure.name_for_codegen()
+            class_name_with_generics += structure.name_for_codegen().as_name_for_definition()
 
             first = true
             for generic_parameter in structure.generic_parameters {
@@ -4012,7 +4022,7 @@ struct CodeGenerator {
 
                 output += .codegen_type(param.variable.type_id)
                 output += " "
-                output += param.variable.name_for_codegen()
+                output += param.variable.name_for_codegen().as_name_for_definition()
             }
 
             output += ");\n"
@@ -4020,7 +4030,7 @@ struct CodeGenerator {
         }
 
         mut output = ""
-        output += function.name_for_codegen()
+        output += function.name_for_codegen().as_name_for_definition()
         output += "("
 
         mut first = true
@@ -4033,7 +4043,7 @@ struct CodeGenerator {
 
             output += .codegen_type(param.variable.type_id)
             output += " a_"
-            output += param.variable.name_for_codegen()
+            output += param.variable.name_for_codegen().as_name_for_definition()
         }
         output += ");\n"
 
@@ -4069,10 +4079,10 @@ struct CodeGenerator {
 
         if structure.record_type is Class {
             if is_inline {
-                output += function.name_for_codegen()
+                output += function.name_for_codegen().as_name_for_definition()
                 output += "("
             } else {
-                output += format("{}::{}(", qualified_name, function.name_for_codegen())
+                output += format("{}::{}(", qualified_name, function.name_for_codegen().as_name_for_definition())
             }
 
             mut first = true
@@ -4086,7 +4096,7 @@ struct CodeGenerator {
                 let param_type_id = param.variable.type_id
                 output += .codegen_type(param_type_id)
                 output += " a_"
-                output += param.variable.name_for_codegen()
+                output += param.variable.name_for_codegen().as_name_for_definition()
             }
             output += ")"
 
@@ -4098,12 +4108,12 @@ struct CodeGenerator {
                 let parent_constructor_parameter_count = function.params.size() - structure.fields.size()
                 if parent_constructor_parameter_count > 0 {
                     mut parent_initializer = ""
-                    parent_initializer += .program.get_struct(structure.super_struct_id!).name_for_codegen()
+                    parent_initializer += .program.get_struct(structure.super_struct_id!).name_for_codegen().as_name_for_definition()
                     parent_initializer += "("
 
                     mut strings: [String] = []
                     for param in function.params[0..parent_constructor_parameter_count] {
-                        strings.push("move(a_" + param.variable.name_for_codegen() + ")")
+                        strings.push("move(a_" + param.variable.name_for_codegen().as_name_for_use() + ")")
                     }
                     parent_initializer += join(strings, separator: ", ")
 
@@ -4113,7 +4123,7 @@ struct CodeGenerator {
 
                 for i in parent_constructor_parameter_count..function.params.size() {
                     let param = function.params[i]
-                    initializers.push(param.variable.name_for_codegen() + "(move(a_" + param.variable.name_for_codegen() + "))")
+                    initializers.push(param.variable.name_for_codegen().as_name_for_use() + "(move(a_" + param.variable.name_for_codegen().as_name_for_use() + "))")
                 }
                 output += join(initializers, separator: ", ")
             }
@@ -4121,7 +4131,7 @@ struct CodeGenerator {
             output += "{}\n"
 
             mut class_name_with_generics = ""
-            class_name_with_generics += structure.name_for_codegen()
+            class_name_with_generics += structure.name_for_codegen().as_name_for_definition()
 
             first = true
             for generic_parameter in structure.generic_parameters {
@@ -4159,7 +4169,7 @@ struct CodeGenerator {
 
                 output += .codegen_type(param.variable.type_id)
                 output += " "
-                output += param.variable.name_for_codegen()
+                output += param.variable.name_for_codegen().as_name_for_definition()
             }
 
             output += format(") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", .current_error_handler(), class_name_with_generics)
@@ -4173,7 +4183,7 @@ struct CodeGenerator {
                 }
 
                 output += "move("
-                output += param.variable.name_for_codegen()
+                output += param.variable.name_for_codegen().as_name_for_use()
                 output += ")"
             }
 
@@ -4186,7 +4196,7 @@ struct CodeGenerator {
             output += qualified_name
             output += "::"
         }
-        output += function.name_for_codegen()
+        output += function.name_for_codegen().as_name_for_definition()
         output += "("
 
         mut first = true
@@ -4199,7 +4209,7 @@ struct CodeGenerator {
 
             output += .codegen_type(param.variable.type_id)
             output += " a_"
-            output += param.variable.name_for_codegen()
+            output += param.variable.name_for_codegen().as_name_for_definition()
         }
         output += ") "
 
@@ -4215,9 +4225,9 @@ struct CodeGenerator {
                 first = false
             }
 
-            output += param.variable.name_for_codegen()
+            output += param.variable.name_for_codegen().as_name_for_use()
             output += "(move(a_"
-            output += param.variable.name_for_codegen()
+            output += param.variable.name_for_codegen().as_name_for_use()
             output += "))"
         }
 
@@ -4251,7 +4261,7 @@ struct CodeGenerator {
             output += .codegen_function_generic_parameters(function)
         }
 
-        let is_main = function.name_for_codegen() == "main" and not containing_struct.has_value()
+        let is_main = function.name_for_codegen().as_name_for_use() == "main" and not containing_struct.has_value()
 
         if function.return_type_id.equals(never_type_id()) {
             output += "[[noreturn]] "
@@ -4287,9 +4297,9 @@ struct CodeGenerator {
                 guard .program.get_type(containing_struct!) is Struct(struct_id) else {
                     panic("Destructor doesn't have a containing struct")
                 }
-                output += "~" + .program.get_struct(struct_id).name_for_codegen()
+                output += "~" + .program.get_struct(struct_id).name_for_codegen().as_name_for_definition()
             } else {
-                output += function.name_for_codegen()
+                output += function.name_for_codegen().as_name_for_definition()
             }
         }
 
@@ -4330,7 +4340,7 @@ struct CodeGenerator {
             if not variable.is_mutable and not (variable_type is Reference or variable_type is MutableReference) {
                 output += "const "
             }
-            output += variable.name_for_codegen()
+            output += variable.name_for_codegen().as_name_for_definition()
         }
 
         output += ")"

@@ -12,6 +12,21 @@ import lexer { Token, LiteralPrefix, LiteralSuffix }
 import utility { panic, todo, FileId, Span, join }
 import compiler { Compiler }
 
+enum ExternalName {
+    Plain(String)
+    Operator(String)
+
+    fn as_name_for_definition(this) throws -> String => match this {
+        Plain(name) => name
+        Operator(name) => "operator" + name
+    }
+
+    fn as_name_for_use(this) throws -> String => match this {
+        Plain(name) => name
+        Operator(name) => format(" {} ", name)
+    }
+}
+
 enum NumericConstant {
     I8(i8)
     I16(i16)
@@ -340,7 +355,7 @@ struct ParsedRecord {
     methods: [ParsedMethod]
     record_type: RecordType
 
-    external_name: String? = None
+    external_name: ExternalName? = None
 }
 
 enum FunctionType {
@@ -376,7 +391,7 @@ struct ParsedFunction {
     is_fat_arrow: bool
     is_unsafe: bool
 
-    external_name: String? = None
+    external_name: ExternalName? = None
     deprecated_message: String? = None // if not None, the function is deprecated
     stores_arguments: [(usize, ArgumentStoreLevel)]? = None // if not None, the function stores the given arguments, extending their lifetime requirements.
     force_inline: bool? = None // true -> force inline, false -> force not inline, None -> don't care
@@ -1374,7 +1389,7 @@ struct ParsedVarDecl {
     is_mutable: bool
     inlay_span: Span?
     span: Span
-    external_name: String? = None
+    external_name: ExternalName? = None
 
     fn equals(this, anon rhs_var_decl: ParsedVarDecl) -> bool {
         return .name == rhs_var_decl.name and .is_mutable == rhs_var_decl.is_mutable
@@ -1908,6 +1923,7 @@ struct Parser {
         for attribute in *active_attributes {
             match attribute.name {
                 "name" => {
+                    // name=[Literal|String{"operator(@)"|Identifier}]
                     guard attribute.assigned_value.has_value() else {
                         .error(
                             format("The attribute '{}' requires a value", attribute.name)
@@ -1924,7 +1940,12 @@ struct Parser {
                         continue
                     }
 
-                    field.var_decl.external_name = attribute.assigned_value
+                    if attribute.assigned_value!.starts_with("operator(") and attribute.assigned_value!.ends_with(")") {
+                        let operator_name = attribute.assigned_value!.substring(start: 9, length: attribute.assigned_value!.length() - 10)
+                        field.var_decl.external_name = ExternalName::Operator(operator_name)
+                    } else {
+                        field.var_decl.external_name = ExternalName::Plain(attribute.assigned_value!)
+                    }
                 }
                 else => {
                     .error(
@@ -1956,7 +1977,12 @@ struct Parser {
                         continue
                     }
 
-                    parsed_function.external_name = attribute.assigned_value
+                    if attribute.assigned_value!.starts_with("operator(") and attribute.assigned_value!.ends_with(")") {
+                        let operator_name = attribute.assigned_value!.substring(start: 9, length: attribute.assigned_value!.length() - 10)
+                        parsed_function.external_name = ExternalName::Operator(operator_name)
+                    } else {
+                        parsed_function.external_name = ExternalName::Plain(attribute.assigned_value!)
+                    }
                 }
                 "deprecated" => {
                     if parsed_function.deprecated_message.has_value() {
@@ -2062,7 +2088,15 @@ struct Parser {
                         continue
                     }
 
-                    parsed_record.external_name = attribute.assigned_value
+                    if attribute.assigned_value!.starts_with("operator(") and attribute.assigned_value!.ends_with(")") {
+                        .error(
+                            "A record cannot be renamed to an operator"
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    parsed_record.external_name = ExternalName::Plain(attribute.assigned_value!)
                 }
                 else => {
                     .error(
