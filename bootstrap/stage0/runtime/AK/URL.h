@@ -19,8 +19,6 @@
 
 namespace AK {
 
-// NOTE: The member variables cannot contain any percent encoded sequences.
-//       The URL parser automatically decodes those sequences and the serialize() method will re-encode them as necessary.
 class URL {
     friend class URLParser;
 
@@ -55,14 +53,21 @@ public:
 
     bool is_valid() const { return m_valid; }
 
+    enum class ApplyPercentDecoding {
+        Yes,
+        No
+    };
     DeprecatedString const& scheme() const { return m_scheme; }
-    DeprecatedString const& username() const { return m_username; }
-    DeprecatedString const& password() const { return m_password; }
+    DeprecatedString username(ApplyPercentDecoding = ApplyPercentDecoding::Yes) const;
+    DeprecatedString password(ApplyPercentDecoding = ApplyPercentDecoding::Yes) const;
     DeprecatedString const& host() const { return m_host; }
-    Vector<DeprecatedString> const& paths() const { return m_paths; }
-    DeprecatedString const& query() const { return m_query; }
-    DeprecatedString const& fragment() const { return m_fragment; }
+    DeprecatedString basename(ApplyPercentDecoding = ApplyPercentDecoding::Yes) const;
+    DeprecatedString query(ApplyPercentDecoding = ApplyPercentDecoding::No) const;
+    DeprecatedString fragment(ApplyPercentDecoding = ApplyPercentDecoding::Yes) const;
     Optional<u16> port() const { return m_port; }
+    DeprecatedString path_segment_at_index(size_t index, ApplyPercentDecoding = ApplyPercentDecoding::Yes) const;
+    size_t path_segment_count() const { return m_paths.size(); }
+
     u16 port_or_default() const { return m_port.value_or(default_port_for_scheme(m_scheme)); }
     bool cannot_be_a_base_url() const { return m_cannot_be_a_base_url; }
     bool cannot_have_a_username_or_password_or_port() const { return m_host.is_null() || m_host.is_empty() || m_cannot_be_a_base_url || m_scheme == "file"sv; }
@@ -70,20 +75,27 @@ public:
     bool includes_credentials() const { return !m_username.is_empty() || !m_password.is_empty(); }
     bool is_special() const { return is_special_scheme(m_scheme); }
 
+    enum class ApplyPercentEncoding {
+        Yes,
+        No
+    };
     void set_scheme(DeprecatedString);
-    void set_username(DeprecatedString);
-    void set_password(DeprecatedString);
+    void set_username(DeprecatedString, ApplyPercentEncoding = ApplyPercentEncoding::Yes);
+    void set_password(DeprecatedString, ApplyPercentEncoding = ApplyPercentEncoding::Yes);
     void set_host(DeprecatedString);
     void set_port(Optional<u16>);
-    void set_paths(Vector<DeprecatedString>);
-    void set_query(DeprecatedString);
-    void set_fragment(DeprecatedString);
+    void set_paths(Vector<DeprecatedString>, ApplyPercentEncoding = ApplyPercentEncoding::Yes);
+    void set_query(DeprecatedString, ApplyPercentEncoding = ApplyPercentEncoding::Yes);
+    void set_fragment(DeprecatedString fragment, ApplyPercentEncoding = ApplyPercentEncoding::Yes);
     void set_cannot_be_a_base_url(bool value) { m_cannot_be_a_base_url = value; }
-    void append_path(DeprecatedString path) { m_paths.append(move(path)); }
+    void append_path(DeprecatedString, ApplyPercentEncoding = ApplyPercentEncoding::Yes);
+    void append_slash()
+    {
+        // NOTE: To indicate that we want to end the path with a slash, we have to append an empty path segment.
+        append_path("", ApplyPercentEncoding::No);
+    }
 
-    DeprecatedString path() const;
-    DeprecatedString basename() const;
-
+    DeprecatedString serialize_path(ApplyPercentDecoding = ApplyPercentDecoding::Yes) const;
     DeprecatedString serialize(ExcludeFragment = ExcludeFragment::No) const;
     DeprecatedString serialize_for_display() const;
     DeprecatedString to_deprecated_string() const { return serialize(); }

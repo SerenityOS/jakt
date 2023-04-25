@@ -67,7 +67,7 @@ public:
             return buffer;
 
         // Fill the internal buffer if it has run dry.
-        if (m_buffer.used_space() == 0)
+        if (m_buffer.used_space() < buffer.size())
             TRY(populate_read_buffer());
 
         // Let's try to take all we can from the buffer first.
@@ -193,7 +193,10 @@ public:
         if (stream().is_eof())
             return m_buffer.used_space() > 0;
 
-        return TRY(find_and_populate_until_any_of(Array<StringView, 1> { "\n"sv })).has_value();
+        auto maybe_match = TRY(find_and_populate_until_any_of(Array { "\n"sv }));
+        if (maybe_match.has_value())
+            return true;
+        return stream().is_eof() && m_buffer.used_space() > 0;
     }
 
     bool is_eof() const
@@ -231,12 +234,11 @@ private:
         if (m_buffer.empty_space() == 0)
             return 0;
 
-        // TODO: Figure out if we can do direct writes in a comfortable way.
-        Array<u8, 1024> temporary_buffer;
-        auto const fillable_slice = temporary_buffer.span().trim(min(temporary_buffer.size(), m_buffer.empty_space()));
         size_t nread = 0;
-        do {
-            auto result = stream().read_some(fillable_slice);
+
+        while (true) {
+            auto result = m_buffer.fill_from_stream(stream());
+
             if (result.is_error()) {
                 if (!result.error().is_errno())
                     return result.release_error();
@@ -246,11 +248,11 @@ private:
                     break;
                 return result.release_error();
             }
-            auto const filled_slice = result.value();
-            VERIFY(m_buffer.write(filled_slice) == filled_slice.size());
-            nread += filled_slice.size();
+
+            nread += result.value();
             break;
-        } while (true);
+        }
+
         return nread;
     }
 
