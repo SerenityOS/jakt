@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "I am unsafe\n"
+
+unsafe fn hello() {
+    println("I am unsafe")
+}
+
+fn main() {
+    unsafe hello()
+}
