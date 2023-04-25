@@ -1048,6 +1048,7 @@ boxed enum ParsedExpression {
     TryBlock(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, span: Span)
     Reflect(type: ParsedType, span: Span)
     Garbage(Span)
+    Unsafe(expr: ParsedExpression, span: Span)
 
     fn span(this) -> Span => match this {
         else(span) => span
@@ -1349,6 +1350,10 @@ boxed enum ParsedExpression {
             else => false
         }
         Garbage => rhs_expression is Garbage
+        Unsafe(expr) => match rhs_expression {
+            Unsafe(expr: rhs_expr) => expr.equals(rhs_expr)
+            else => false
+        }
     }
 }
 
@@ -4006,10 +4011,16 @@ struct Parser {
                 let statement = .parse_statement(inside_block: false)
                 yield ParsedStatement::Defer(statement, span: merge_spans(start, .previous().span()))
             }
-            Unsafe => {
-                .index++
-                let block = .parse_block()
-                yield ParsedStatement::UnsafeBlock(block, span: merge_spans(start, .previous().span()))
+            Unsafe => match .peek(1) {
+                LCurly => {
+                    .index++
+                    let block = .parse_block()
+                    yield ParsedStatement::UnsafeBlock(block, span: merge_spans(start, .previous().span()))
+                }
+                else => {
+                    let expr = .parse_expression(allow_assignments: true, allow_newlines: false)
+                    yield ParsedStatement::Expression(expr, span: merge_spans(start, .previous().span()))
+                }
             }
             Break => {
                 .index++
@@ -4557,6 +4568,7 @@ struct Parser {
         Asterisk => .parse_asterisk()
         Fn => .parse_lambda()
         DotDot => .parse_range()
+        Unsafe => .parse_unsafe_expr()
         else => {
             let span = .current().span()
             .index++
@@ -4948,6 +4960,16 @@ struct Parser {
         }
 
         return ParsedExpression::Range(from: None, to, span: merge_spans(start, .current().span()))
+    }
+
+    fn parse_unsafe_expr(mut this) throws -> ParsedExpression {
+        let start = .current().span()
+
+        .index++
+
+        let expr = .parse_operand()
+
+        return ParsedExpression::Unsafe(expr, span: merge_spans(start, expr.span()))
     }
 
     fn parse_set_literal(mut this) throws -> ParsedExpression {
