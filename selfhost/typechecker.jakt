@@ -7023,6 +7023,7 @@ struct Typechecker {
         Function(captures, params, can_throw, is_fat_arrow, return_type, block, span) => .typecheck_lambda(captures, params, can_throw, is_fat_arrow, return_type, block, span, scope_id, safety_mode)
         Try(expr, catch_block, catch_name, span) => .typecheck_try(expr, catch_block, catch_name, scope_id, safety_mode, span, type_hint)
         TryBlock(stmt, catch_block, error_name, error_span, span) => .typecheck_try_block(stmt, error_name, error_span, catch_block, scope_id, safety_mode, span)
+        Unsafe(expr) => .typecheck_expression(expr, scope_id, safety_mode: SafetyMode::Unsafe, type_hint)
         Operator => {
             .compiler.panic("idk how to handle this thing")
         }
