@@ -272,12 +272,21 @@ type T implements(
     extern fn divide_assign(mut this, anon rhs: T) -> void
 }
 
-type bool implements(Equal<bool>) {
+type bool implements(Equal<bool>, BitwiseAndAssign<bool>, BitwiseOrAssign<bool>, BitwiseXorAssign<bool>) {
     [[name="operator(==)"]]
     extern fn equals(this, anon rhs: bool) -> bool
 
     [[name="operator(!=)"]]
     extern fn not_equals(this, anon rhs: bool) -> bool
+
+    [[name="operator(&=)"]]
+    extern fn bitwise_and_assign(mut this, anon rhs: bool) -> void
+
+    [[name="operator(|=)"]]
+    extern fn bitwise_or_assign(mut this, anon rhs: bool) -> void
+
+    [[name="operator(^=)"]]
+    extern fn bitwise_xor_assign(mut this, anon rhs: bool) -> void
 }
 
 type String implements(Equal<String>, ThrowingAddAssign<String>) {
