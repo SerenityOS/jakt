@@ -103,10 +103,10 @@ type T implements(Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modul
     [[name="JaktInternal::checked_mod"]]
     extern fn modulo(this, anon rhs: T) -> T
 
-    [[name="JaktInternal::equal"]]
+    [[name="operator(==)"]]
     extern fn equals(this, anon rhs: T) -> bool
 
-    [[name="JaktInternal::not_equal"]]
+    [[name="operator(!=)"]]
     extern fn not_equals(this, anon rhs: T) -> bool
 
     [[name="JaktInternal::compare"]]
@@ -122,25 +122,25 @@ type T implements(Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modul
 // so Floating T gets unchecked arithmetic.
 forall<T requires(Floating)>
 type T implements(Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modulo<T, T>, Equal<T>, Compare<T>) {
-    [[name="JaktInternal::unchecked_add"]]
+    [[name="operator(+)"]]
     extern fn add(this, anon rhs: T) -> T
 
-    [[name="JaktInternal::unchecked_sub"]]
+    [[name="operator(-)"]]
     extern fn subtract(this, anon rhs: T) -> T
 
-    [[name="JaktInternal::unchecked_mul"]]
+    [[name="operator(*)"]]
     extern fn multiply(this, anon rhs: T) -> T
 
-    [[name="JaktInternal::unchecked_div"]]
+    [[name="operator(/)"]]
     extern fn divide(this, anon rhs: T) -> T
 
-    [[name="JaktInternal::unchecked_mod"]]
+    [[name="operator(%)"]]
     extern fn modulo(this, anon rhs: T) -> T
 
-    [[name="JaktInternal::equal"]]
+    [[name="operator(==)"]]
     extern fn equals(this, anon rhs: T) -> bool
 
-    [[name="JaktInternal::not_equal"]]
+    [[name="operator(!=)"]]
     extern fn not_equals(this, anon rhs: T) -> bool
 
     [[name="JaktInternal::compare"]]
@@ -153,15 +153,15 @@ type T implements(Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modul
 }
 
 type bool implements(Equal<bool>) {
-    [[name="JaktInternal::equal"]]
+    [[name="operator(==)"]]
     extern fn equals(this, anon rhs: bool) -> bool
 
-    [[name="JaktInternal::not_equal"]]
+    [[name="operator(!=)"]]
     extern fn not_equals(this, anon rhs: bool) -> bool
 }
 
 type String implements(Equal<String>) {
-    [[name="operator=="]]
+    [[name="operator(==)"]]
     extern fn equals(this, anon rhs: String) -> bool
 
     [[inline()]]
@@ -169,13 +169,13 @@ type String implements(Equal<String>) {
 }
 
 type String implements(Compare<String>) {
-    [[name="operator<"]]
+    [[name="operator(<)"]]
     extern fn less_than(this, anon rhs: String) -> bool
-    [[name="operator>"]]
+    [[name="operator(>)"]]
     extern fn greater_than(this, anon rhs: String) -> bool
-    [[name="operator>="]]
+    [[name="operator(>=)"]]
     extern fn greater_than_or_equal(this, anon rhs: String) -> bool
-    [[name="operator<="]]
+    [[name="operator(<=)"]]
     extern fn less_than_or_equal(this, anon rhs: String) -> bool
 
     [[inline()]]
@@ -188,30 +188,25 @@ type String implements(Compare<String>) {
     }
 }
 
-import extern "Jakt/DeprecatedString.h" {
-    [[name="JaktInternal::operator+"]]
-    extern fn __concatenate_deprecated_strings(anon rhs: String, anon lhs: String) throws -> String
-}
-
 type String implements(ThrowingAdd<String, String>) {
-    [[inline(always)]]
-    fn add(this, anon rhs: String) throws -> String => __concatenate_deprecated_strings(this, rhs)
+    [[name="operator(+)"]]
+    extern fn add(this, anon rhs: String) throws -> String
 }
 
 type Optional implements(Equal<Optional<T>>) {
-    [[name="operator=="]]
+    [[name="operator(==)"]]
     extern fn equals(this, anon rhs: Optional<T>) -> bool
 
-    [[name="operator!="]]
+    [[name="operator(!=)"]]
     extern fn not_equals(this, anon rhs: Optional<T>) -> bool
 }
 
 type Array implements(Equal<Array<T>>) {
-    [[name="operator=="]]
+    [[name="operator(==)"]]
     extern fn equals(this, anon rhs: Array<T>) -> bool
 }
 
 type ArraySlice implements(Equal<ArraySlice<T>>) {
-    [[name="operator=="]]
+    [[name="operator(==)"]]
     extern fn equals(this, anon rhs: ArraySlice<T>) -> bool
 }
