@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "I am cute\n"
+
+enum Animal {
+    Dog(name: String, cute: bool = true)
+}
+
+fn main() {
+    let animal = Animal::Dog(name: "John")
+
+    match animal {
+        Dog(cute) => {
+            if cute {
+                println("I am cute")
+            }
+        }
+    }
+}
