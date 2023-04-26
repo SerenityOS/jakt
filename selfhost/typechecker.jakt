@@ -10502,6 +10502,11 @@ struct TraitImplCheck {
             let old_generic_inferences = typechecker.generic_inferences.perform_checkpoint(reset: false)
             defer typechecker.generic_inferences.restore(old_generic_inferences)
 
+            guard trait_.generic_parameters.size() == trait_generic_arguments.size() else {
+                .unmatched_signatures[trait_type_name].set(method_name, method.name_span)
+                continue
+            }
+
             typechecker.generic_inferences.set_all(keys: trait_.generic_parameters, values: trait_generic_arguments)
 
             guard typechecker.signatures_match(self_type_id, trait_method, method) else {
