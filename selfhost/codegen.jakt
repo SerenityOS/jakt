@@ -3087,10 +3087,19 @@ struct CodeGenerator {
 
         if call.function_id.has_value() and (call.force_inline ?? false) {
             let function = .program.get_function(call.function_id!)
+            let is_mutable = expr.is_mutable(program: .program) and function.params.first()!.variable.is_mutable
+
+            let reference_type = match is_mutable {
+                true => Type::MutableReference(expr.type())
+                false => Type::Reference(expr.type())
+            }
             let var = CheckedVariable(
                 name: "self"
-                type_id: expr.type()
-                is_mutable: expr.is_mutable(program: .program)
+                type_id: .program.find_or_add_type_id(
+                    reference_type
+                    module_id: expr.type().module
+                )
+                is_mutable
                 definition_span: expr.span()
                 type_span: None
                 visibility: CheckedVisibility::Public
