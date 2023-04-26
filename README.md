@@ -500,7 +500,7 @@ struct Foo implements(Add<Foo, Foo>) {
 }
 ```
 
-The relationship between operators and traits is as follows:
+The relationship between operators and traits is as follows (Note that `@` is used as a placeholder for any binary operator's name or sigil):
 
 | Operator | Trait | Method Name | Derived From Method |
 |----------|-------|-------------|---------------------|
@@ -515,8 +515,9 @@ The relationship between operators and traits is as follows:
 | `>=` | `Compare` | `greater_than_or_equal` | `compare` |
 | `==` | `Equal` | `equals` | - |
 | `!=` | `Equal` | `not_equals` | `equals` |
+| `@=` | `@Assignment` | `@_assign` | - |
 
-Other operators have not yet been converted to traits, decided on, or implemented (Note that `@` is used as a placeholder for any binary operator):
+Other operators have not yet been converted to traits, decided on, or implemented:
 
 | Operator | Description | Status |
 |----------|-------------|--------|
@@ -530,7 +531,6 @@ Other operators have not yet been converted to traits, decided on, or implemente
 | `or` | Logical Or | Not Decided |
 | `not` | Logical Not | Not Decided |
 | `=` | Assignment | Not Decided |
-| `@=` | Any Assignment | Not Decided |
 
 ## Safety analysis
 
