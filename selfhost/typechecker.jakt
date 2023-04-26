@@ -5658,39 +5658,30 @@ struct Typechecker {
                 }
                 return (checked_operator, result.value_or(lhs_type_id))
             }
-            AddAssign | SubtractAssign | MultiplyAssign | DivideAssign | ModuloAssign | BitwiseAndAssign | BitwiseOrAssign | BitwiseXorAssign | BitwiseLeftShiftAssign | BitwiseRightShiftAssign => {
-                let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
-
-                if .get_type(lhs_type_id) is GenericInstance(id, args)
-                    and id.equals(weak_ptr_struct_id)
-                    and .get_type(args[0]) is Struct(struct_id: lhs_struct_id)
-                    and .get_type(rhs_type_id) is Struct(struct_id: rhs_struct_id)
-                    and lhs_struct_id.equals(rhs_struct_id) {
-
-                    return (checked_operator, lhs_type_id)
-                }
-                let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
-                if not result.has_value() {
-                    .error(format(
-                        "Assignment between incompatible types (‘{}’ and ‘{}’)",
-                        .type_name(lhs_type_id),
-                        .type_name(rhs_type_id),
-                    ), span)
-                }
-                if not checked_lhs.is_mutable(program: .program) {
-                    .error("Assignment to immutable variable", checked_lhs.span())
-                }
-            }
-            Add | Subtract | Multiply | Divide | Modulo | LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual | Equal | NotEqual => {
-                let trait_names = match op {
-                    Add => ["Add", "ThrowingAdd"]
-                    Subtract => ["Subtract", "ThrowingSubtract"]
-                    Multiply => ["Multiply", "ThrowingMultiply"]
-                    Divide => ["Divide", "ThrowingDivide"]
-                    Modulo => ["Modulo", "ThrowingModulo"]
-                    LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual => ["Compare", "ThrowingCompare"]
-                    Equal | NotEqual => ["Equal", "ThrowingEqual"]
-                    else => []
+            AddAssign | SubtractAssign | MultiplyAssign | DivideAssign | ModuloAssign | BitwiseAndAssign
+            | BitwiseOrAssign | BitwiseXorAssign | BitwiseLeftShiftAssign | BitwiseRightShiftAssign
+            | Add | Subtract | Multiply | Divide | Modulo | LessThan | LessThanOrEqual | GreaterThan
+            | GreaterThanOrEqual | Equal | NotEqual => {
+                let empty_array: [String] = []
+                let (trait_names, is_assignment) = match op {
+                    Add => (["Add", "ThrowingAdd"], false)
+                    Subtract => (["Subtract", "ThrowingSubtract"], false)
+                    Multiply => (["Multiply", "ThrowingMultiply"], false)
+                    Divide => (["Divide", "ThrowingDivide"], false)
+                    Modulo => (["Modulo", "ThrowingModulo"], false)
+                    LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual => (["Compare", "ThrowingCompare"], false)
+                    Equal | NotEqual => (["Equal", "ThrowingEqual"], false)
+                    AddAssign => (["AddAssign", "ThrowingAddAssign"], true)
+                    SubtractAssign => (["SubtractAssign", "ThrowingSubtractAssign"], true)
+                    MultiplyAssign => (["MultiplyAssign", "ThrowingMultiplyAssign"], true)
+                    DivideAssign => (["DivideAssign", "ThrowingDivideAssign"], true)
+                    ModuloAssign => (["ModuloAssign", "ThrowingModuloAssign"], true)
+                    BitwiseAndAssign => (["BitwiseAndAssign", "ThrowingBitwiseAndAssign"], true)
+                    BitwiseOrAssign => (["BitwiseOrAssign", "ThrowingBitwiseOrAssign"], true)
+                    BitwiseXorAssign => (["BitwiseXorAssign", "ThrowingBitwiseXorAssign"], true)
+                    BitwiseLeftShiftAssign => (["BitwiseLeftShiftAssign", "ThrowingBitwiseLeftShiftAssign"], true)
+                    BitwiseRightShiftAssign => (["BitwiseRightShiftAssign", "ThrowingBitwiseRightShiftAssign"], true)
+                    else => (empty_array, false)
                 }
                 let function_name = match op {
                     Add => "add"
@@ -5704,6 +5695,16 @@ struct Typechecker {
                     GreaterThanOrEqual => "greater_than_or_equal"
                     Equal => "equals"
                     NotEqual => "not_equals"
+                    AddAssign => "add_assign"
+                    SubtractAssign => "subtract_assign"
+                    MultiplyAssign => "multiply_assign"
+                    DivideAssign => "divide_assign"
+                    ModuloAssign => "modulo_assign"
+                    BitwiseAndAssign => "bitwise_and_assign"
+                    BitwiseOrAssign => "bitwise_or_assign"
+                    BitwiseXorAssign => "bitwise_xor_assign"
+                    BitwiseLeftShiftAssign => "bitwise_left_shift_assign"
+                    BitwiseRightShiftAssign => "bitwise_right_shift_assign"
                     else => ""
                 }
 
@@ -5770,7 +5771,8 @@ struct Typechecker {
                     }
                 // FIXME: We should be able to generically implement traits on e.g. `raw T`
                 //        but until we add that, let's add a small escape hatch here.
-                } else if .get_type(lhs_type_id) is RawPtr(lhs_deref_type_id) and
+                } else if not is_assignment and
+                    .get_type(lhs_type_id) is RawPtr(lhs_deref_type_id) and
                     .get_type(rhs_type_id) is RawPtr(rhs_deref_type_id) and
                     lhs_deref_type_id.equals(rhs_deref_type_id) {
 
@@ -5793,19 +5795,6 @@ struct Typechecker {
                     )
                 }
             }
-            // Subtract | Multiply | Divide | Modulo => {
-            //     let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
-            //     if not result.has_value() {
-            //         .error(format(
-            //             "Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)",
-            //             .type_name(lhs_type_id),
-            //             .type_name(rhs_type_id),
-            //         ),
-            //         span)
-            //     }
-
-            //     type_id = lhs_type_id
-            // }
             else => {}
         }
 

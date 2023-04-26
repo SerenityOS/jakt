@@ -86,8 +86,83 @@ trait ThrowingCompare<Rhs> {
     fn compare(this, anon rhs: Rhs) throws -> Ordering
 }
 
+trait AddAssign<Rhs> {
+    fn add_assign(mut this, anon rhs: Rhs) -> void
+}
+trait ThrowingAddAssign<Rhs> {
+    fn add_assign(mut this, anon rhs: Rhs) throws -> void
+}
+
+trait SubtractAssign<Rhs> {
+    fn subtract_assign(mut this, anon rhs: Rhs) -> void
+}
+trait ThrowingSubtractAssign<Rhs> {
+    fn subtract_assign(mut this, anon rhs: Rhs) throws -> void
+}
+
+trait MultiplyAssign<Rhs> {
+    fn multiply_assign(mut this, anon rhs: Rhs) -> void
+}
+trait ThrowingMultiplyAssign<Rhs> {
+    fn multiply_assign(mut this, anon rhs: Rhs) throws -> void
+}
+
+trait DivideAssign<Rhs> {
+    fn divide_assign(mut this, anon rhs: Rhs) -> void
+}
+trait ThrowingDivideAssign<Rhs> {
+    fn divide_assign(mut this, anon rhs: Rhs) throws -> void
+}
+
+trait ModuloAssign<Rhs> {
+    fn modulo_assign(mut this, anon rhs: Rhs) -> void
+}
+trait ThrowingModuloAssign<Rhs> {
+    fn modulo_assign(mut this, anon rhs: Rhs) throws -> void
+}
+
+trait BitwiseAndAssign<Rhs> {
+    fn bitwise_and_assign(mut this, anon rhs: Rhs) -> void
+}
+trait ThrowingBitwiseAndAssign<Rhs> {
+    fn bitwise_and_assign(mut this, anon rhs: Rhs) throws -> void
+}
+
+trait BitwiseOrAssign<Rhs> {
+    fn bitwise_or_assign(mut this, anon rhs: Rhs) -> void
+}
+trait ThrowingBitwiseOrAssign<Rhs> {
+    fn bitwise_or_assign(mut this, anon rhs: Rhs) throws -> void
+}
+
+trait BitwiseXorAssign<Rhs> {
+    fn bitwise_xor_assign(mut this, anon rhs: Rhs) -> void
+}
+trait ThrowingBitwiseXorAssign<Rhs> {
+    fn bitwise_xor_assign(mut this, anon rhs: Rhs) throws -> void
+}
+
+trait BitwiseLeftShiftAssign<Rhs> {
+    fn bitwise_left_shift_assign(mut this, anon rhs: Rhs) -> void
+}
+trait ThrowingBitwiseLeftShiftAssign<Rhs> {
+    fn bitwise_left_shift_assign(mut this, anon rhs: Rhs) throws -> void
+}
+
+trait BitwiseRightShiftAssign<Rhs> {
+    fn bitwise_right_shift_assign(mut this, anon rhs: Rhs) -> void
+}
+trait ThrowingBitwiseRightShiftAssign<Rhs> {
+    fn bitwise_right_shift_assign(mut this, anon rhs: Rhs) throws -> void
+}
+
 forall<T requires(Integral)>
-type T implements(Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modulo<T, T>, Equal<T>, Compare<T>) {
+type T implements(
+    Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modulo<T, T>, Equal<T>, Compare<T>,
+    AddAssign<T>, SubtractAssign<T>, MultiplyAssign<T>, DivideAssign<T>, ModuloAssign<T>,
+    BitwiseAndAssign<T>, BitwiseOrAssign<T>, BitwiseXorAssign<T>, BitwiseLeftShiftAssign<T>,
+    BitwiseRightShiftAssign<T>
+) {
     [[name="JaktInternal::checked_add"]]
     extern fn add(this, anon rhs: T) -> T
 
@@ -116,12 +191,45 @@ type T implements(Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modul
     fn compare(this, anon rhs: T) -> Ordering {
         return .compare_impl(rhs) as! Ordering
     }
+
+    [[name="operator(+=)"]]
+    extern fn add_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(-=)"]]
+    extern fn subtract_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(*=)"]]
+    extern fn multiply_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(/=)"]]
+    extern fn divide_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(%=)"]]
+    extern fn modulo_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(&=)"]]
+    extern fn bitwise_and_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(|=)"]]
+    extern fn bitwise_or_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(^=)"]]
+    extern fn bitwise_xor_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(<<=)"]]
+    extern fn bitwise_left_shift_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(>>=)"]]
+    extern fn bitwise_right_shift_assign(mut this, anon rhs: T) -> void
 }
 
 // Checked<T> only allows Integral T, and checked floating arithmetic doesn't make much sense anyway
 // so Floating T gets unchecked arithmetic.
 forall<T requires(Floating)>
-type T implements(Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modulo<T, T>, Equal<T>, Compare<T>) {
+type T implements(
+    Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modulo<T, T>, Equal<T>, Compare<T>,
+    AddAssign<T>, SubtractAssign<T>, MultiplyAssign<T>, DivideAssign<T>
+) {
     [[name="operator(+)"]]
     extern fn add(this, anon rhs: T) -> T
 
@@ -150,6 +258,18 @@ type T implements(Add<T, T>, Subtract<T, T>, Multiply<T, T>, Divide<T, T>, Modul
     fn compare(this, anon rhs: T) -> Ordering {
         return .compare_impl(rhs) as! Ordering
     }
+
+    [[name="operator(+=)"]]
+    extern fn add_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(-=)"]]
+    extern fn subtract_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(*=)"]]
+    extern fn multiply_assign(mut this, anon rhs: T) -> void
+
+    [[name="operator(/=)"]]
+    extern fn divide_assign(mut this, anon rhs: T) -> void
 }
 
 type bool implements(Equal<bool>) {
@@ -160,12 +280,17 @@ type bool implements(Equal<bool>) {
     extern fn not_equals(this, anon rhs: bool) -> bool
 }
 
-type String implements(Equal<String>) {
+type String implements(Equal<String>, ThrowingAddAssign<String>) {
     [[name="operator(==)"]]
     extern fn equals(this, anon rhs: String) -> bool
 
     [[inline()]]
     fn not_equals(this, anon rhs: String) -> bool => not .equals(rhs)
+
+    [[inline(always)]]
+    fn add_assign(mut this, anon rhs: String) throws -> void {
+        this = this + rhs
+    }
 }
 
 type String implements(Compare<String>) {
