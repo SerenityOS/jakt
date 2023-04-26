@@ -5738,6 +5738,14 @@ struct Typechecker {
 
                     if implementation_function_id.has_value() {
                         let implementation_function = .get_function(implementation_function_id!)
+                        // Make sure the mutability of the lhs matches `this' in the implementation.
+                        if implementation_function.is_mutating() and not checked_lhs.is_mutable(program: .program) {
+                            if is_assignment {
+                                .error("Assignment to immutable variable", span)
+                            } else {
+                                .error("Cannot call mutating function on an immutable object instance", span)
+                            }
+                        }
                         type_id = implementation_function.return_type_id
 
                         mut call_expression = CheckedCall(
