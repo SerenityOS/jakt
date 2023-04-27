@@ -14,10 +14,17 @@ import extern "Jakt/Forward.h" {
             extern fn hash(this, anon x: T) -> u32
         }
     }
+
+    extern fn pair_int_hash(anon a: u32, anon b: u32) -> u32
 }
 
 trait Hashable {
     fn hash(this) -> u32
+
+    [[inline(always)]]
+    fn pair_hash_with<T requires(Hashable)>(this, anon other: &T) -> u32 {
+        return pair_int_hash(.hash(), other.hash())
+    }
 }
 
 forall<T requires(DefaultHashable)>
