@@ -1,0 +1,79 @@
+/// Expect:
+/// - output: "PASS\n"
+
+
+struct Test {
+    x: i32
+}
+
+type Test implements(
+    Add<i32, Test>, Subtract<i32, Test>, Multiply<i32, Test>, Divide<i32, Test>, Modulo<i32, Test>, Equal<i32>,
+    AddAssign<i32>, SubtractAssign<i32>, MultiplyAssign<i32>, DivideAssign<i32>, ModuloAssign<i32>,
+    BitwiseAndAssign<i32>, BitwiseOrAssign<i32>, BitwiseXorAssign<i32>, BitwiseLeftShiftAssign<i32>, BitwiseRightShiftAssign<i32>
+) {
+    fn add(this, anon rhs: i32) -> Test { return Test(x: .x + rhs) }
+    fn subtract(this, anon rhs: i32) -> Test { return Test(x: .x - rhs) }
+    fn multiply(this, anon rhs: i32) -> Test { return Test(x: .x * rhs) }
+    fn divide(this, anon rhs: i32) -> Test { return Test(x: .x / rhs) }
+    fn modulo(this, anon rhs: i32) -> Test { return Test(x: .x % rhs) }
+
+    fn equals(this, anon rhs: i32) -> bool => .x == rhs
+
+    fn add_assign(mut this, anon rhs: i32) { .x += rhs }
+    fn subtract_assign(mut this, anon rhs: i32) { .x -= rhs }
+    fn multiply_assign(mut this, anon rhs: i32) { .x *= rhs }
+    fn divide_assign(mut this, anon rhs: i32) { .x /= rhs }
+    fn modulo_assign(mut this, anon rhs: i32) { .x %= rhs }
+    fn bitwise_and_assign(mut this, anon rhs: i32) { .x &= rhs }
+    fn bitwise_or_assign(mut this, anon rhs: i32) { .x |= rhs }
+    fn bitwise_xor_assign(mut this, anon rhs: i32) { .x ^= rhs }
+    fn bitwise_left_shift_assign(mut this, anon rhs: i32) { .x <<= rhs }
+    fn bitwise_right_shift_assign(mut this, anon rhs: i32) { .x >>= rhs }
+}
+
+fn main() {
+    mut okay = true
+
+    mut test = Test(x: 10)
+
+    okay &= test + 1i32 == 11i32
+    okay &= test - 1i32 == 9i32
+    okay &= test * 2i32 == 20i32
+    okay &= test / 2i32 == 5i32
+    okay &= test % 3i32 == 1i32
+
+    test += 10i32
+    okay &= test == 20i32
+
+    test -= 10i32
+    okay &= test == 10i32
+
+    test *= 2i32
+    okay &= test == 20i32
+
+    test /= 2i32
+    okay &= test == 10i32
+
+    test %= 3i32
+    okay &= test == 1i32
+
+    test &= 1i32
+    okay &= test == 1i32
+
+    test |= 2i32
+    okay &= test == 3i32
+
+    test ^= 1i32
+    okay &= test == 2i32
+
+    test <<= 1i32
+    okay &= test == 4i32
+
+    test >>= 1i32
+    okay &= test == 2i32
+
+    println("{}", match okay {
+        true => "PASS"
+        false => "FAIL"
+    })
+}

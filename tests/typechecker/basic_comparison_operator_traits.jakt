@@ -1,0 +1,30 @@
+/// Expect:
+/// - output: "PASS\n"
+
+
+struct Test implements(Compare<i32>, Equal<i32>) {
+    x: i32
+
+    fn compare(this, anon rhs: i32) -> Ordering {
+        return .x.compare(rhs)
+    }
+
+    fn equals(this, anon rhs: i32) -> bool => .x == rhs
+}
+
+fn main() {
+    mut okay = true
+
+    let test = Test(x: 10)
+    okay &= (test <= 10i32)
+    okay &= (test >= 10i32)
+    okay &= (test == 10i32)
+    okay &= (test != 11i32)
+    okay &= (test < 11i32)
+    okay &= (test > 9i32)
+
+    println("{}", match okay {
+        true => "PASS"
+        false => "FAIL"
+    })
+}
