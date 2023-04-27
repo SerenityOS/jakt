@@ -5302,12 +5302,42 @@ struct Typechecker {
 
             let dict_struct_id = .find_struct_in_prelude("Dictionary")
 
+            // Make sure the key implements Hashable and Equal<itself>
+            .ensure_type_implements_trait(
+                type_id: key_type_id
+                trait_name: "Hashable"
+                scope_id
+                span
+            )
+            .ensure_type_implements_trait(
+                type_id: key_type_id
+                trait_name: "Equal"
+                filter_for_generics: [key_type_id]
+                scope_id
+                span
+            )
+
             yield .find_or_add_type_id(Type::GenericInstance(id: dict_struct_id, args: [key_type_id, value_type_id]))
         }
         Set(inner, span) => {
             let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
 
             let set_struct_id = .find_struct_in_prelude("Set")
+
+            // Make sure the value implements Hashable and Equal<itself>
+            .ensure_type_implements_trait(
+                type_id: inner_type_id
+                trait_name: "Hashable"
+                scope_id
+                span
+            )
+            .ensure_type_implements_trait(
+                type_id: inner_type_id
+                trait_name: "Equal"
+                filter_for_generics: [inner_type_id]
+                scope_id
+                span
+            )
 
             yield .find_or_add_type_id(Type::GenericInstance(id: set_struct_id, args: [inner_type_id]))
         }
@@ -5405,6 +5435,33 @@ struct Typechecker {
                 return_type_id: checked_function.return_type_id
                 pseudo_function_id: function_id
             ))
+        }
+    }
+
+    fn ensure_type_implements_trait(
+        mut this
+        type_id: TypeId
+        trait_name: String
+        filter_for_generics: [TypeId]? = None
+        scope_id: ScopeId
+        span: Span
+    ) throws {
+        if .get_type(type_id) is TypeVariable {
+            return
+        }
+
+        let implementation = .find_any_singular_trait_implementation(
+            type_id
+            trait_names: [trait_name]
+            scope_id
+            span
+            filter_for_generics
+        )
+        if not implementation.has_value() {
+            .error(
+                format("Type ‘{}’ does not implement trait ‘{}’", .type_name(type_id), trait_name)
+                span
+            )
         }
     }
 
@@ -8474,6 +8531,23 @@ struct Typechecker {
             }
         }
 
+        if not inner_type_id.equals(unknown_type_id()) {
+            // Make sure the key implements Hashable and Equal<itself>
+            .ensure_type_implements_trait(
+                type_id: inner_type_id
+                trait_name: "Hashable"
+                scope_id
+                span
+            )
+            .ensure_type_implements_trait(
+                type_id: inner_type_id
+                trait_name: "Equal"
+                filter_for_generics: [inner_type_id]
+                scope_id
+                span
+            )
+        }
+
         let type_id = .find_or_add_type_id(Type::GenericInstance(
             id: set_struct_id
             args: [inner_type_id]
@@ -9241,6 +9315,23 @@ struct Typechecker {
             } else {
                 .error("Cannot infer key type for Dictionary<K, V>", span)
             }
+        }
+
+        if not key_type_id.equals(unknown_type_id()) {
+            // Make sure the key implements Hashable and Equal<itself>
+            .ensure_type_implements_trait(
+                type_id: key_type_id
+                trait_name: "Hashable"
+                scope_id
+                span
+            )
+            .ensure_type_implements_trait(
+                type_id: key_type_id
+                trait_name: "Equal"
+                filter_for_generics: [key_type_id]
+                scope_id
+                span
+            )
         }
 
         if value_type_id.equals(unknown_type_id()) {
