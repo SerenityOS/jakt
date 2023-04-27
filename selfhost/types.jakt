@@ -111,11 +111,15 @@ enum SafetyMode {
     Unsafe
 }
 
-struct ModuleId {
+struct ModuleId implements(Hashable, Equal<ModuleId>) {
     id: usize
 
     fn equals(this, anon rhs: ModuleId) -> bool {
         return this.id == rhs.id
+    }
+
+    fn hash(this) -> u32 {
+        return .id.hash()
     }
 }
 
@@ -219,7 +223,7 @@ struct TraitId {
     }
 }
 
-struct ScopeId {
+struct ScopeId implements(Hashable, Equal<ScopeId>) {
     module_id: ModuleId
     id: usize
 
@@ -227,7 +231,9 @@ struct ScopeId {
         return this.module_id.id == other.module_id.id and this.id == other.id
     }
 
-    fn to_string(this) throws -> String => format("{}:{}", .module_id.id, .id)
+    fn hash(this) -> u32 {
+        return .id.pair_hash_with(&.module_id)
+    }
 }
 
 enum BuiltinType {
@@ -1981,7 +1987,7 @@ class CheckedProgram {
         anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
     ) throws -> bool? {
         mut scopes_to_check = [scope_id]
-        mut seen: {String} = {}
+        mut seen: {ScopeId} = {}
 
         for child in .get_scope(scope_id).children {
             scopes_to_check.insert(before_index: 0, value: child)
@@ -1989,11 +1995,11 @@ class CheckedProgram {
 
         while not scopes_to_check.is_empty() {
             let scope_id = scopes_to_check.pop()!
-            if seen.contains(scope_id.to_string()) {
+            if seen.contains(scope_id) {
                 continue
             }
 
-            seen.add(scope_id.to_string())
+            seen.add(scope_id)
 
             let res = callback(scope_id, name_override: None, is_alias: false)
             match res {
@@ -2018,7 +2024,7 @@ class CheckedProgram {
             for entry in scope.resolution_mixins {
                 scopes_to_check.insert(before_index: 0, value: entry)
                 for child in .get_scope(entry).children {
-                    if not seen.contains(child.to_string()) {
+                    if not seen.contains(child) {
                         scopes_to_check.insert(before_index: 0, value: child)
                     }
                 }
@@ -2027,7 +2033,7 @@ class CheckedProgram {
             if scope.parent.has_value() {
                 scopes_to_check.insert(before_index: 0, value: scope.parent!)
                 for child in .get_scope(scope.parent!).children {
-                    if not seen.contains(child.to_string()) {
+                    if not seen.contains(child) {
                         scopes_to_check.insert(before_index: 0, value: child)
                     }
                 }
@@ -2038,7 +2044,7 @@ class CheckedProgram {
             }
 
             for child in scope.children {
-                if not seen.contains(child.to_string()) {
+                if not seen.contains(child) {
                     scopes_to_check.insert(before_index: 0, value: child)
                 }
             }
