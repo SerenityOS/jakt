@@ -17,14 +17,32 @@ namespace JaktInternal {
 using namespace Jakt;
 
 template<typename T>
+struct JaktHashableTraits : public Traits<T> {
+    static constexpr bool equals(T const& a, T const& b) {
+        if constexpr (requires { { a.equals(b) } -> SameAs<bool>; })
+            return a.equals(b);
+        else
+            return a == b;
+    }
+
+    static constexpr unsigned hash(T value)
+    {
+        if constexpr (requires { { value.hash() } -> SameAs<u32>; })
+            return value.hash();
+        else
+            return Traits<T>::hash(value);
+    }
+};
+
+template<typename T>
 struct SetStorage : public RefCounted<SetStorage<T>> {
-    HashTable<T> table;
+    HashTable<T, JaktHashableTraits<T>> table;
 };
 
 template<typename T>
 class SetIterator {
     using Storage = SetStorage<T>;
-    using Iterator = typename HashTable<T>::Iterator;
+    using Iterator = typename HashTable<T, JaktHashableTraits<T>>::Iterator;
 
 public:
     SetIterator(NonnullRefPtr<Storage> storage)
@@ -48,7 +66,7 @@ private:
 };
 
 template<typename T>
-class Set : public HashTable<T> {
+class Set {
 private:
     using Storage = SetStorage<T>;
 
