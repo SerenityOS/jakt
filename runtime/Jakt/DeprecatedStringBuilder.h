@@ -302,14 +302,3 @@ struct Jakt::Formatter<Jakt::Tuple<Ts...>> : Jakt::Formatter<Jakt::StringView> {
         return Jakt::Formatter<Jakt::StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
-
-template<typename T>
-struct Jakt::Formatter<Jakt::Optional<T>> : Jakt::Formatter<Jakt::StringView> {
-    Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::Optional<T> const& value)
-    {
-        if (!value.has_value())
-            return Jakt::Formatter<Jakt::StringView>::format(builder, "None"sv);
-        auto str = TRY(Jakt::String::formatted("{}", *value));
-        return Jakt::Formatter<Jakt::StringView>::format(builder, str);
-    }
-};
