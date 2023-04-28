@@ -415,160 +415,143 @@ boxed enum Type {
         Self => "Self"
     }
 
-    fn equals(this, anon rhs: Type) -> bool {
-        if this is Void and rhs is Void {
-            return true
-        } else if this is Bool and rhs is Bool {
-            return true
-        } else if this is U8 and rhs is U8 {
-            return true
-        } else if this is U16 and rhs is U16 {
-            return true
-        } else if this is U32 and rhs is U32 {
-            return true
-        } else if this is U64 and rhs is U64 {
-            return true
-        } else if this is I8 and rhs is I8 {
-            return true
-        } else if this is I16 and rhs is I16 {
-            return true
-        } else if this is I32 and rhs is I32 {
-            return true
-        } else if this is I64 and rhs is I64 {
-            return true
-        } else if this is F32 and rhs is F32 {
-            return true
-        } else if this is F64 and rhs is F64 {
-            return true
-        } else if this is Usize and rhs is Usize {
-            return true
-        } else if this is JaktString and rhs is JaktString {
-            return true
-        } else if this is CChar and rhs is CChar {
-            return true
-        } else if this is CInt and rhs is CInt {
-            return true
-        } else if this is Self and rhs is Self {
-            return true
-        } else if this is Unknown and rhs is Unknown {
-            return true
-        } else if this is Never and rhs is Never {
-            return true
+    fn equals(this, anon rhs: Type) -> bool => match this {
+        Void => rhs is Void
+        Bool => rhs is Bool
+        U8 => rhs is U8
+        U16 => rhs is U16
+        U32 => rhs is U32
+        U64 => rhs is U64
+        I8 => rhs is I8
+        I16 => rhs is I16
+        I32 => rhs is I32
+        I64 => rhs is I64
+        F32 => rhs is F32
+        F64 => rhs is F64
+        Usize => rhs is Usize
+        JaktString => rhs is JaktString
+        CChar => rhs is CChar
+        CInt => rhs is CInt
+        Self => rhs is Self
+        Unknown => rhs is Unknown
+        Never => rhs is Never
+        // FIXME: Check implemented traits for equality.
+        TypeVariable(name: lhs_name) => {
+            if rhs is TypeVariable(name: rhs_name) {
+                return lhs_name == rhs_name
+            }
+            yield false
         }
+        GenericResolvedType(id: lhs_id, args: lhs_args)
+        | GenericInstance(id: lhs_id, args: lhs_args) => {
+            guard rhs is GenericInstance(id: rhs_id, args: rhs_args)
+                and lhs_id.equals(rhs_id)
+                and lhs_args.size() == rhs_args.size() else {
 
-        match this {
-            // FIXME: Check implemented traits for equality.
-            TypeVariable(name: lhs_name) => {
-                if rhs is TypeVariable(name: rhs_name) {
-                    return lhs_name == rhs_name
-                } else {
-                    return false
-                }
-            }
-            GenericInstance(id: lhs_id, args: lhs_args) => {
-                guard rhs is GenericInstance(id: rhs_id, args: rhs_args)
-                    and lhs_id.equals(rhs_id)
-                    and lhs_args.size() == rhs_args.size() else {
-                    return false
-                }
-                mut idx = 0uz
-                while idx < lhs_args.size() {
-                    if not lhs_args[idx].equals(rhs_args[idx]) {
-                        return false
-                    }
-                    idx++
-                }
-                return true
-            }
-            GenericTraitInstance(id: lhs_id, args: lhs_args) => {
-                guard rhs is GenericTraitInstance(id: rhs_id, args: rhs_args)
-                    and lhs_id.equals(rhs_id)
-                    and lhs_args.size() == rhs_args.size() else {
-                    return false
-                }
-                mut idx = 0uz
-                while idx < lhs_args.size() {
-                    if not lhs_args[idx].equals(rhs_args[idx]) {
-                        return false
-                    }
-                    idx++
-                }
-                return true
-            }
-            GenericEnumInstance(id: lhs_id, args: lhs_args) => {
-                guard rhs is GenericEnumInstance(id: rhs_id, args: rhs_args)
-                    and lhs_id.equals(rhs_id)
-                    and lhs_args.size() == rhs_args.size() else {
-                    return false
-                }
-                mut idx = 0uz
-                while idx < lhs_args.size() {
-                    if not lhs_args[idx].equals(rhs_args[idx]) {
-                        return false
-                    }
-                    idx++
-                }
-                return true
-            }
-            Struct(lhs_id) => {
-                if rhs is Struct(rhs_id) {
-                    return lhs_id.equals(rhs_id)
-                }
                 return false
             }
-            Enum(lhs_id) => {
-                if rhs is Enum(rhs_id) {
-                    return lhs_id.equals(rhs_id)
-                } else {
+            mut idx = 0uz
+            while idx < lhs_args.size() {
+                if not lhs_args[idx].equals(rhs_args[idx]) {
                     return false
                 }
+                idx++
             }
-            RawPtr(lhs_id) => {
-                if rhs is RawPtr(rhs_id) {
-                    return lhs_id.equals(rhs_id)
-                } else {
-                    return false
-                }
-            }
-            Reference(lhs_id) => {
-                if rhs is Reference(rhs_id) {
-                    return lhs_id.equals(rhs_id)
-                } else {
-                    return false
-                }
-            }
-            MutableReference(lhs_id) => {
-                if rhs is MutableReference(rhs_id) {
-                    return lhs_id.equals(rhs_id)
-                } else {
-                    return false
-                }
-            }
-            Trait(lhs_id) => {
-                if rhs is Trait(rhs_id) {
-                    return lhs_id.equals(rhs_id)
-                } else {
-                    return false
-                }
-            }
-            Function(params, can_throw, return_type_id) => {
-                guard rhs is Function(params: rhs_params, can_throw: rhs_can_throw, return_type_id: rhs_return_type_id)
-                    and params.size() == rhs_params.size()
-                    and return_type_id.equals(rhs_return_type_id)
-                    and can_throw == rhs_can_throw else {
-                    return false
-                }
-                for i in 0..params.size() {
-                    if not params[i].equals(rhs_params[i]) {
-                        return false
-                    }
-                }
-                return true
-            }
-            else => {}
-        }
 
-        return false
+            return true
+        }
+        GenericTraitInstance(id: lhs_id, args: lhs_args) => {
+            guard rhs is GenericTraitInstance(id: rhs_id, args: rhs_args)
+                and lhs_id.equals(rhs_id)
+                and lhs_args.size() == rhs_args.size() else {
+
+                return false
+            }
+            mut idx = 0uz
+            while idx < lhs_args.size() {
+                if not lhs_args[idx].equals(rhs_args[idx]) {
+                    return false
+                }
+                idx++
+            }
+
+            return true
+        }
+        GenericEnumInstance(id: lhs_id, args: lhs_args) => {
+            guard rhs is GenericEnumInstance(id: rhs_id, args: rhs_args)
+                and lhs_id.equals(rhs_id)
+                and lhs_args.size() == rhs_args.size() else {
+
+                return false
+            }
+            mut idx = 0uz
+            while idx < lhs_args.size() {
+                if not lhs_args[idx].equals(rhs_args[idx]) {
+                    return false
+                }
+                idx++
+            }
+
+            return true
+        }
+        Struct(lhs_id) => {
+            if rhs is Struct(rhs_id) {
+                return lhs_id.equals(rhs_id)
+            }
+
+            return false
+        }
+        Enum(lhs_id) => {
+            if rhs is Enum(rhs_id) {
+                return lhs_id.equals(rhs_id)
+            }
+
+            return false
+        }
+        RawPtr(lhs_id) => {
+            if rhs is RawPtr(rhs_id) {
+                return lhs_id.equals(rhs_id)
+            }
+
+            return false
+        }
+        Reference(lhs_id) => {
+            if rhs is Reference(rhs_id) {
+                return lhs_id.equals(rhs_id)
+            }
+
+            return false
+        }
+        MutableReference(lhs_id) => {
+            if rhs is MutableReference(rhs_id) {
+                return lhs_id.equals(rhs_id)
+            }
+
+            return false
+        }
+        Trait(lhs_id) => {
+            if rhs is Trait(rhs_id) {
+                return lhs_id.equals(rhs_id)
+            }
+
+            return false
+        }
+        Function(params, can_throw, return_type_id) => {
+            guard rhs is Function(params: rhs_params, can_throw: rhs_can_throw, return_type_id: rhs_return_type_id)
+                and params.size() == rhs_params.size()
+                and return_type_id.equals(rhs_return_type_id)
+                and can_throw == rhs_can_throw else {
+
+                return false
+            }
+            for i in 0..params.size() {
+                if not params[i].equals(rhs_params[i]) {
+                    return false
+                }
+            }
+
+            return true
+        }
     }
 
     fn is_builtin(this) -> bool => match this {
