@@ -1,7 +1,7 @@
 #include "lexer.h"
 namespace Jakt {
 namespace lexer {
-ErrorOr<DeprecatedString> lexer::Lexer::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Lexer("sv));{
+ErrorOr<DeprecatedString> lexer::Lexer::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Lexer("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("index: {}, ", index));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("input: {}, ", input));
@@ -16,7 +16,7 @@ return JaktInternal::OptionalNone();
 }
 JaktInternal::DynamicArray<u8> const contents = (((*this).comment_contents).value());
 (((*this).comment_contents) = JaktInternal::OptionalNone());
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 {
 JaktInternal::ArrayIterator<u8> _magic = ((contents).iterator());
 for (;;){
@@ -237,7 +237,7 @@ if ((((*this).eof()) || (((*this).peek()) != '\''))){
 TRY((((*this).error(TRY(DeprecatedString::from_utf8("Expected single quote"sv)),((*this).span(start,start))))));
 }
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 TRY((((builder).append(((((*this).input))[(JaktInternal::checked_add<size_t>(start,static_cast<size_t>(1ULL)))])))));
 if (escaped){
 TRY((((builder).append(((((*this).input))[(JaktInternal::checked_add<size_t>(start,static_cast<size_t>(2ULL)))])))));
@@ -438,7 +438,7 @@ if (utility::is_ascii_digit(((*this).peek()))){
 return TRY((((*this).lex_number())));
 }
 else if ((utility::is_ascii_alpha(((*this).peek())) || (((*this).peek()) == '_'))){
-DeprecatedStringBuilder string_builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder string_builder = DeprecatedStringBuilder::create();
 while ((utility::is_ascii_alphanumeric(((*this).peek())) || (((*this).peek()) == '_'))){
 u8 const value = ((((*this).input))[((*this).index)]);
 (++(((*this).index)));
@@ -797,7 +797,7 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Equal(
 
 ErrorOr<DeprecatedString> lexer::Lexer::substring(size_t const start,size_t const length) const {
 {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(start),static_cast<size_t>(length)});
 for (;;){
@@ -909,7 +909,7 @@ ErrorOr<lexer::Token> lexer::Lexer::lex_number() {
 size_t const start = ((*this).index);
 bool floating = false;
 lexer::LiteralPrefix prefix =  lexer::LiteralPrefix { typename lexer::LiteralPrefix::None() } ;
-DeprecatedStringBuilder number = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder number = DeprecatedStringBuilder::create();
 if ((((*this).peek()) == '0')){
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<lexer::Token>>{
@@ -1003,7 +1003,7 @@ return tokens;
 }
 
 ErrorOr<DeprecatedString> lexer::LiteralSuffix::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* None */: {
 return DeprecatedString("LiteralSuffix::None"sv);
 break;}
@@ -1096,7 +1096,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> lexer::Token::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* SingleQuotedString */: {
 TRY(builder.append("Token::SingleQuotedString"sv));
 [[maybe_unused]] auto const& that = this->template get<Token::SingleQuotedString>();
@@ -2457,7 +2457,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> lexer::LiteralPrefix::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* None */: {
 return DeprecatedString("LiteralPrefix::None"sv);
 break;}

@@ -13,7 +13,7 @@ return (!(((allowed_control_exits).index() == 0 /* Nothing */)));
 }
 }
 
-ErrorOr<DeprecatedString> codegen::ControlFlowState::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ControlFlowState("sv));{
+ErrorOr<DeprecatedString> codegen::ControlFlowState::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ControlFlowState("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("allowed_exits: {}, ", allowed_exits));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("passes_through_match: {}, ", passes_through_match));
@@ -69,7 +69,7 @@ return codegen::ControlFlowState(((((*this).allowed_exits)).allow_return()),true
 
 codegen::ControlFlowState::ControlFlowState(codegen::AllowedControlExits a_allowed_exits, bool a_passes_through_match, bool a_passes_through_try, size_t a_match_nest_level) :allowed_exits(move(a_allowed_exits)), passes_through_match(move(a_passes_through_match)), passes_through_try(move(a_passes_through_try)), match_nest_level(move(a_match_nest_level)){}
 
-ErrorOr<DeprecatedString> codegen::CodegenDebugInfo::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CodegenDebugInfo("sv));{
+ErrorOr<DeprecatedString> codegen::CodegenDebugInfo::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CodegenDebugInfo("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("compiler: {}, ", *compiler));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("line_spans: {}, ", line_spans));
@@ -138,7 +138,7 @@ utility::panic(TRY(DeprecatedString::from_utf8("Reached end of file and could no
 
 codegen::CodegenDebugInfo::CodegenDebugInfo(NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Dictionary<size_t,JaktInternal::DynamicArray<codegen::LineSpan>> a_line_spans, bool a_statement_span_comments) :compiler(move(a_compiler)), line_spans(move(a_line_spans)), statement_span_comments(move(a_statement_span_comments)){}
 
-ErrorOr<DeprecatedString> codegen::LineSpan::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("LineSpan("sv));{
+ErrorOr<DeprecatedString> codegen::LineSpan::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("LineSpan("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("start: {}, ", start));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("end: {}", end));
@@ -146,7 +146,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 codegen::LineSpan::LineSpan(size_t a_start, size_t a_end) :start(move(a_start)), end(move(a_end)){}
 
-ErrorOr<DeprecatedString> codegen::CodeGenerator::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CodeGenerator("sv));{
+ErrorOr<DeprecatedString> codegen::CodeGenerator::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CodeGenerator("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("compiler: {}, ", *compiler));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("program: {}, ", *program));
@@ -2652,7 +2652,7 @@ if ((!(is_inline))){
 (output += TRY(DeprecatedString::from_utf8("::"sv)));
 }
 (output += TRY(DeprecatedString::from_utf8("debug_description() const { "sv)));
-(output += TRY(DeprecatedString::from_utf8("auto builder = MUST(DeprecatedStringBuilder::create());"sv)));
+(output += TRY(DeprecatedString::from_utf8("auto builder = DeprecatedStringBuilder::create();"sv)));
 (output += TRY((__jakt_format((StringView::from_string_literal("TRY(builder.append(\"{}(\"sv));"sv)),((struct_).name_for_codegen())))));
 (output += TRY(DeprecatedString::from_utf8("{\n"sv)));
 (output += TRY(DeprecatedString::from_utf8("JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"sv)));
@@ -3546,7 +3546,7 @@ if ((!(is_inline))){
 (output += TRY(DeprecatedString::from_utf8("::"sv)));
 }
 (output += TRY(DeprecatedString::from_utf8("debug_description() const {\n"sv)));
-(output += TRY(DeprecatedString::from_utf8("auto builder = TRY(DeprecatedStringBuilder::create());\n"sv)));
+(output += TRY(DeprecatedString::from_utf8("auto builder = DeprecatedStringBuilder::create();\n"sv)));
 (output += TRY(DeprecatedString::from_utf8("switch (this->index()) {"sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((enum_).variants)).size()))});
@@ -8016,7 +8016,7 @@ return output;
 }
 
 ErrorOr<DeprecatedString> codegen::AllowedControlExits::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Nothing */: {
 return DeprecatedString("AllowedControlExits::Nothing"sv);
 break;}

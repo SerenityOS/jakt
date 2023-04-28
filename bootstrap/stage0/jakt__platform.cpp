@@ -84,7 +84,7 @@ return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_
 }
 }
 
-ErrorOr<DeprecatedString> jakt__platform::Target::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Target("sv));{
+ErrorOr<DeprecatedString> jakt__platform::Target::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Target("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("arch: \"{}\", ", arch));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("platform: \"{}\", ", platform));

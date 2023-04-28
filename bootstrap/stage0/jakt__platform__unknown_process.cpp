@@ -37,13 +37,13 @@ return Error::from_errno(static_cast<i32>(38));
 return {};
 }
 
-ErrorOr<DeprecatedString> jakt__platform__unknown_process::Process::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Process("sv));{
+ErrorOr<DeprecatedString> jakt__platform__unknown_process::Process::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Process("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 jakt__platform__unknown_process::Process::Process() {}
 
-ErrorOr<DeprecatedString> jakt__platform__unknown_process::ExitPollResult::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ExitPollResult("sv));{
+ErrorOr<DeprecatedString> jakt__platform__unknown_process::ExitPollResult::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ExitPollResult("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("exit_code: {}, ", exit_code));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("process: {}", process));

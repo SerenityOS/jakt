@@ -19,7 +19,7 @@ DeprecatedString const tmp = ((values)[j]);
 }
 }
 
-ErrorOr<DeprecatedString> formatter::FormattedToken::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("FormattedToken("sv));{
+ErrorOr<DeprecatedString> formatter::FormattedToken::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("FormattedToken("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("token: {}, ", token));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("indent: {}, ", indent));
@@ -418,7 +418,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).token_text()))));
 }
 }
 
-ErrorOr<DeprecatedString> formatter::ReflowState::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ReflowState("sv));{
+ErrorOr<DeprecatedString> formatter::ReflowState::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ReflowState("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("token: {}, ", token));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("state: {}, ", state));
@@ -427,7 +427,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 formatter::ReflowState::ReflowState(formatter::FormattedToken a_token, formatter::State a_state, size_t a_enclosures_to_ignore) :token(move(a_token)), state(move(a_state)), enclosures_to_ignore(move(a_enclosures_to_ignore)){}
 
-ErrorOr<DeprecatedString> formatter::Formatter::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Formatter("sv));{
+ErrorOr<DeprecatedString> formatter::Formatter::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Formatter("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("token_provider: {}, ", token_provider));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("current_line: {}, ", current_line));
@@ -1518,7 +1518,7 @@ return static_cast<size_t>(0ULL);
 }
 }
 
-ErrorOr<DeprecatedString> formatter::Stage0::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Stage0("sv));{
+ErrorOr<DeprecatedString> formatter::Stage0::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Stage0("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("tokens: {}, ", tokens));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("index: {}, ", index));
@@ -5634,7 +5634,7 @@ return formatter::Stage0(tokens,static_cast<size_t>(0ULL),(TRY((DynamicArray<for
 }
 
 ErrorOr<DeprecatedString> formatter::State::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Toplevel */: {
 TRY(builder.append("State::Toplevel"sv));
 [[maybe_unused]] auto const& that = this->template get<State::Toplevel>();
@@ -5892,7 +5892,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> formatter::ExpressionMode::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* OutsideExpression */: {
 return DeprecatedString("ExpressionMode::OutsideExpression"sv);
 break;}
@@ -5909,7 +5909,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> formatter::BreakablePoint::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Paren */: {
 TRY(builder.append("BreakablePoint::Paren"sv));
 [[maybe_unused]] auto const& that = this->template get<BreakablePoint::Paren>();
@@ -6030,7 +6030,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> formatter::Entity::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Struct */: {
 return DeprecatedString("Entity::Struct"sv);
 break;}

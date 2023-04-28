@@ -1,7 +1,7 @@
 #include "repl_backend__common.h"
 namespace Jakt {
 namespace repl_backend__common {
-ErrorOr<DeprecatedString> repl_backend__common::Style::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Style("sv));{
+ErrorOr<DeprecatedString> repl_backend__common::Style::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Style("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("foreground: {}, ", foreground));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("background: {}", background));
@@ -10,7 +10,7 @@ TRY(builder.append(")"sv));return builder.to_string(); }
 repl_backend__common::Style::Style(JaktInternal::Optional<repl_backend__common::Color> a_foreground, JaktInternal::Optional<repl_backend__common::Color> a_background) :foreground(move(a_foreground)), background(move(a_background)){}
 
 ErrorOr<DeprecatedString> repl_backend__common::LineResult::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Line */: {
 TRY(builder.append("LineResult::Line"sv));
 [[maybe_unused]] auto const& that = this->template get<LineResult::Line>();
@@ -23,7 +23,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> repl_backend__common::XTermColor::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Default */: {
 return DeprecatedString("XTermColor::Default"sv);
 break;}
@@ -58,7 +58,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> repl_backend__common::Color::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Components */: {
 TRY(builder.append("Color::Components"sv));
 [[maybe_unused]] auto const& that = this->template get<Color::Components>();

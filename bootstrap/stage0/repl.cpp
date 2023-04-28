@@ -169,7 +169,7 @@ return JaktInternal::ExplicitValue(TRY((repl::serialize_unary_operation(op,TRY((
 case 8: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktTuple>();JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> const& vals = __jakt_match_value.vals;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_862; {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 TRY((((builder).append_string(TRY(DeprecatedString::from_utf8("("sv))))));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((vals).size()))});
@@ -215,7 +215,7 @@ __jakt_label_779:; __jakt_var_863.release_value(); }));
 case 10: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktArray>();JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> const& vals = __jakt_match_value.vals;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_864; {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 TRY((((builder).append_string(TRY(DeprecatedString::from_utf8("["sv))))));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((vals).size()))});
@@ -244,7 +244,7 @@ __jakt_label_780:; __jakt_var_864.release_value(); }));
 case 11: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktSet>();JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> const& vals = __jakt_match_value.vals;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_865; {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 TRY((((builder).append_string(TRY(DeprecatedString::from_utf8("{"sv))))));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((vals).size()))});
@@ -273,7 +273,7 @@ __jakt_label_781:; __jakt_var_865.release_value(); }));
 case 12: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::JaktDictionary>();JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename types::CheckedExpression>,NonnullRefPtr<typename types::CheckedExpression>>> const& vals = __jakt_match_value.vals;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_866; {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 TRY((((builder).append_string(TRY(DeprecatedString::from_utf8("["sv))))));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((vals).size()))});
@@ -326,7 +326,7 @@ case 23: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::NamespacedVar>();JaktInternal::DynamicArray<types::CheckedNamespace> const& namespaces = __jakt_match_value.namespaces;
 NonnullRefPtr<types::CheckedVariable> const& var = __jakt_match_value.var;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_867; {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 {
 JaktInternal::ArrayIterator<types::CheckedNamespace> _magic = ((namespaces).iterator());
 for (;;){
@@ -367,7 +367,7 @@ return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_l
 case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::CheckedExpression::Call>();types::CheckedCall const& call = __jakt_match_value.call;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_868; {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 {
 JaktInternal::ArrayIterator<types::ResolvedNamespace> _magic = ((((call).namespace_)).iterator());
 for (;;){
@@ -431,7 +431,7 @@ return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("<Unimplement
 }
 }
 
-ErrorOr<DeprecatedString> repl::REPL::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("REPL("sv));{
+ErrorOr<DeprecatedString> repl::REPL::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("REPL("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("compiler: {}, ", *compiler));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("typechecker: {}, ", typechecker));
@@ -873,7 +873,7 @@ if (((tokens).is_empty())){
 continue;
 }
 if ((!(repl::REPL::check_parens(tokens)))){
-DeprecatedStringBuilder sb = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder sb = DeprecatedStringBuilder::create();
 TRY((((sb).append_string(line))));
 while ((!(repl::REPL::check_parens(tokens)))){
 repl_backend__common::LineResult const line_result = ({ Optional<repl_backend__common::LineResult> __jakt_var_877;

@@ -498,6 +498,10 @@
 #    define UTF8_DEBUG 0
 #endif
 
+#ifndef WASI_DEBUG
+#    define WASI_DEBUG 0
+#endif
+
 #ifndef WASM_BINPARSER_DEBUG
 #    define WASM_BINPARSER_DEBUG 0
 #endif

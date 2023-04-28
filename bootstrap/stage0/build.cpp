@@ -1,7 +1,7 @@
 #include "build.h"
 namespace Jakt {
 namespace build {
-ErrorOr<DeprecatedString> build::Builder::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Builder("sv));{
+ErrorOr<DeprecatedString> build::Builder::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Builder("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("linked_files: {}, ", linked_files));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("files_to_compile: {}, ", files_to_compile));
@@ -160,7 +160,7 @@ return Error::from_errno(static_cast<i32>(1));
 return {};
 }
 
-ErrorOr<DeprecatedString> build::ParallelExecutionPool::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParallelExecutionPool("sv));{
+ErrorOr<DeprecatedString> build::ParallelExecutionPool::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParallelExecutionPool("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("pids: {}, ", pids));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("completed: {}, ", completed));

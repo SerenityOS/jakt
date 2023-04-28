@@ -34,7 +34,7 @@ using Variant<IterationDecision_Details::Break<T>, IterationDecision_Details::Co
     using Break = IterationDecision_Details::Break<T>;
     using Continue = IterationDecision_Details::Continue<T>;
 ErrorOr<DeprecatedString> debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Break */: {
 TRY(builder.append("IterationDecision::Break"sv));
 [[maybe_unused]] auto const& that = this->template get<IterationDecision::Break>();

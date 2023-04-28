@@ -2238,7 +2238,7 @@ types::StructId const& struct_id = __jakt_match_value.struct_id;
 JaktInternal::Optional<types::FunctionId> const& constructor = __jakt_match_value.constructor;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_189; {
 types::CheckedStruct const structure = ((((interpreter)->program))->get_struct(struct_id));
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 JaktInternal::DynamicArray<DeprecatedString> field_names = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
 TRY((((builder).append(((structure).name)))));
 if (((constructor).has_value())){
@@ -2314,7 +2314,7 @@ types::StructId const& struct_id = __jakt_match_value.struct_id;
 JaktInternal::Optional<types::FunctionId> const& constructor = __jakt_match_value.constructor;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_190; {
 types::CheckedStruct const structure = ((((interpreter)->program))->get_struct(struct_id));
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 JaktInternal::DynamicArray<DeprecatedString> field_names = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
 TRY((((builder).append(((structure).name)))));
 if (((constructor).has_value())){
@@ -2391,7 +2391,7 @@ types::FunctionId const& constructor = __jakt_match_value.constructor;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_191; {
 types::CheckedEnum const enum_ = ((((interpreter)->program))->get_enum(enum_id));
 NonnullRefPtr<types::CheckedFunction> const function = ((((interpreter)->program))->get_function(constructor));
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 JaktInternal::DynamicArray<DeprecatedString> field_names = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
 TRY((((builder).append(((enum_).name)))));
 TRY((((builder).append((StringView::from_string_literal("::"sv))))));
@@ -2450,7 +2450,7 @@ return JaktInternal::ExplicitValue(TRY((__jakt_format(format_string,TRY(Deprecat
 case 26: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktTuple>();JaktInternal::DynamicArray<types::Value> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_192; {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 JaktInternal::Tuple<u32,u32> const surrounding = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<u32,u32>, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = *((value).impl);
@@ -2506,7 +2506,7 @@ __jakt_label_178:; __jakt_var_192.release_value(); }));
 case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::DynamicArray<types::Value> const& fields = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_193; {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 JaktInternal::Tuple<u32,u32> const surrounding = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<u32,u32>, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = *((value).impl);
@@ -2562,7 +2562,7 @@ __jakt_label_179:; __jakt_var_193.release_value(); }));
 case 22: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktSet>();JaktInternal::DynamicArray<types::Value> const& fields = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_194; {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 JaktInternal::Tuple<u32,u32> const surrounding = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<u32,u32>, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = *((value).impl);
@@ -2619,7 +2619,7 @@ case 21: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktDictionary>();JaktInternal::DynamicArray<types::Value> const& keys = __jakt_match_value.keys;
 JaktInternal::DynamicArray<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<DeprecatedString> __jakt_var_195; {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 TRY((((builder).append_code_point(static_cast<u32>(U'[')))));
 size_t index = static_cast<size_t>(0ULL);
 {
@@ -2666,9 +2666,9 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Canno
 
 ErrorOr<DeprecatedString> comptime_format_impl(DeprecatedString const format_string,JaktInternal::ArraySlice<types::Value> const arguments,NonnullRefPtr<interpreter::Interpreter> const interpreter) {
 {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 size_t current_argument_index = static_cast<size_t>(0ULL);
-DeprecatedStringBuilder format_field_builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder format_field_builder = DeprecatedStringBuilder::create();
 JaktInternal::Optional<size_t> index_in_field = JaktInternal::OptionalNone();
 bool expect_close_brace = false;
 Function<JaktInternal::Tuple<JaktInternal::Optional<size_t>,DeprecatedString>(DeprecatedString)> const argument_and_index = [](DeprecatedString str) -> JaktInternal::Tuple<JaktInternal::Optional<size_t>,DeprecatedString> {
@@ -2796,7 +2796,7 @@ return TRY((((builder).to_string())));
 }
 }
 
-ErrorOr<DeprecatedString> interpreter::InterpreterScope::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("InterpreterScope("sv));{
+ErrorOr<DeprecatedString> interpreter::InterpreterScope::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("InterpreterScope("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("bindings: {}, ", bindings));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("parent: {}, ", parent));
@@ -3003,7 +3003,7 @@ return id;
 }
 }
 
-ErrorOr<DeprecatedString> interpreter::Interpreter::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Interpreter("sv));{
+ErrorOr<DeprecatedString> interpreter::Interpreter::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Interpreter("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("compiler: {}, ", *compiler));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("program: {}, ", *program));
@@ -5610,7 +5610,7 @@ return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretEr
 JaktInternal::DynamicArray<types::Value> fields = ((fields_current_string_).template get<0>());
 DeprecatedString current_string = ((fields_current_string_).template get<1>());
 
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 TRY((((builder).append_string(current_string))));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
@@ -5786,7 +5786,7 @@ return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretEr
 JaktInternal::DynamicArray<types::Value> fields = ((fields_current_string_).template get<0>());
 DeprecatedString current_string = ((fields_current_string_).template get<1>());
 
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 TRY((((builder).append_string(current_string))));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
@@ -5962,7 +5962,7 @@ return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretEr
 JaktInternal::DynamicArray<types::Value> fields = ((fields_current_string_).template get<0>());
 DeprecatedString current_string = ((fields_current_string_).template get<1>());
 
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 TRY((((builder).append_string(current_string))));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
@@ -6138,7 +6138,7 @@ return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretEr
 JaktInternal::DynamicArray<types::Value> fields = ((fields_current_string_).template get<0>());
 DeprecatedString current_string = ((fields_current_string_).template get<1>());
 
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 TRY((((builder).append_string(current_string))));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
@@ -21910,7 +21910,7 @@ return result;
 }
 
 ErrorOr<DeprecatedString> interpreter::ExecutionResult::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Return */: {
 TRY(builder.append("ExecutionResult::Return"sv));
 [[maybe_unused]] auto const& that = this->template get<ExecutionResult::Return>();
@@ -21925,7 +21925,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> interpreter::Deferred::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Expression */: {
 TRY(builder.append("Deferred::Expression"sv));
 [[maybe_unused]] auto const& that = this->template get<Deferred::Expression>();
@@ -21940,7 +21940,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> interpreter::StatementResult::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Return */: {
 TRY(builder.append("StatementResult::Return"sv));
 [[maybe_unused]] auto const& that = this->template get<StatementResult::Return>();

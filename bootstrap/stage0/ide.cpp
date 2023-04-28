@@ -3031,7 +3031,7 @@ return TRY((__jakt_format((StringView::from_string_literal("fn {}{}({}){}{}"sv))
 }
 }
 
-ErrorOr<DeprecatedString> ide::JaktSymbol::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("JaktSymbol("sv));{
+ErrorOr<DeprecatedString> ide::JaktSymbol::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("JaktSymbol("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("detail: {}, ", detail));
@@ -3045,7 +3045,7 @@ ide::JaktSymbol::JaktSymbol(DeprecatedString a_name, JaktInternal::Optional<Depr
 
 ErrorOr<DeprecatedString> ide::JaktSymbol::to_json() const {
 {
-DeprecatedStringBuilder json_builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder json_builder = DeprecatedStringBuilder::create();
 TRY((((json_builder).append_string(TRY(DeprecatedString::from_utf8("{"sv))))));
 TRY((((json_builder).append_string(TRY((__jakt_format((StringView::from_string_literal("\"name\": \"{}\","sv)),((*this).name))))))));
 if (((((*this).detail)).has_value())){
@@ -3078,7 +3078,7 @@ return TRY((((json_builder).to_string())));
 }
 
 ErrorOr<DeprecatedString> ide::Mutability::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* DoesNotApply */: {
 return DeprecatedString("Mutability::DoesNotApply"sv);
 break;}
@@ -3092,7 +3092,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> ide::VarVisibility::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* DoesNotApply */: {
 return DeprecatedString("VarVisibility::DoesNotApply"sv);
 break;}
@@ -3109,7 +3109,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> ide::Usage::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Variable */: {
 TRY(builder.append("Usage::Variable"sv));
 [[maybe_unused]] auto const& that = this->template get<Usage::Variable>();
@@ -3171,7 +3171,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> ide::VarType::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Variable */: {
 return DeprecatedString("VarType::Variable"sv);
 break;}

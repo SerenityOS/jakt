@@ -1,7 +1,7 @@
 #include "jakt__arguments.h"
 namespace Jakt {
 namespace jakt__arguments {
-ErrorOr<DeprecatedString> jakt__arguments::ArgsParser::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ArgsParser("sv));{
+ErrorOr<DeprecatedString> jakt__arguments::ArgsParser::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ArgsParser("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("args: {}, ", args));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("removed_indices: {}, ", removed_indices));

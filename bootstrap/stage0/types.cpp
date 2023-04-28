@@ -25,7 +25,7 @@ return types::builtin( types::BuiltinType { typename types::BuiltinType::Never()
 }
 }
 
-ErrorOr<DeprecatedString> types::FunctionGenerics::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("FunctionGenerics("sv));{
+ErrorOr<DeprecatedString> types::FunctionGenerics::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("FunctionGenerics("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("base_scope_id: {}, ", base_scope_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("base_params: {}, ", base_params));
@@ -82,7 +82,7 @@ return false;
 }
 }
 
-ErrorOr<DeprecatedString> types::StructId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("StructId("sv));{
+ErrorOr<DeprecatedString> types::StructId::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("StructId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("module: {}, ", module));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
@@ -96,7 +96,7 @@ return ((((((*this).module)).id) == ((((rhs).module)).id)) && (((*this).id) == (
 }
 }
 
-ErrorOr<DeprecatedString> types::CheckedStringLiteral::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedStringLiteral("sv));{
+ErrorOr<DeprecatedString> types::CheckedStringLiteral::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedStringLiteral("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("value: {}, ", value));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("type_id: {}, ", type_id));
@@ -111,7 +111,7 @@ return ((((*this).value)).to_string());
 
 types::CheckedStringLiteral::CheckedStringLiteral(types::StringLiteral a_value, types::TypeId a_type_id, bool a_may_throw) :value(move(a_value)), type_id(move(a_type_id)), may_throw(move(a_may_throw)){}
 
-ErrorOr<DeprecatedString> types::GenericInferences::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("GenericInferences("sv));{
+ErrorOr<DeprecatedString> types::GenericInferences::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("GenericInferences("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("values: {}", values));
 }
@@ -277,7 +277,7 @@ TRY(((*this).values).set(key, mapped_value));
 return {};
 }
 
-ErrorOr<DeprecatedString> types::CheckedFunction::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedFunction("sv));{
+ErrorOr<DeprecatedString> types::CheckedFunction::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedFunction("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
@@ -463,7 +463,7 @@ ErrorOr<void> types::CheckedFunction::set_params(JaktInternal::DynamicArray<type
 return {};
 }
 
-ErrorOr<DeprecatedString> types::ScopeId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ScopeId("sv));{
+ErrorOr<DeprecatedString> types::ScopeId::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ScopeId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("module_id: {}, ", module_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
@@ -483,7 +483,7 @@ return ((((((*this).module_id)).id) == ((((other).module_id)).id)) && (((*this).
 
 types::ScopeId::ScopeId(types::ModuleId a_module_id, size_t a_id) :module_id(move(a_module_id)), id(move(a_id)){}
 
-ErrorOr<DeprecatedString> types::LoadedModule::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("LoadedModule("sv));{
+ErrorOr<DeprecatedString> types::LoadedModule::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("LoadedModule("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("module_id: {}, ", module_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("file_id: {}", file_id));
@@ -491,7 +491,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::LoadedModule::LoadedModule(types::ModuleId a_module_id, utility::FileId a_file_id) :module_id(move(a_module_id)), file_id(move(a_file_id)){}
 
-ErrorOr<DeprecatedString> types::CheckedVariable::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedVariable("sv));{
+ErrorOr<DeprecatedString> types::CheckedVariable::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedVariable("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("type_id: {}, ", type_id));
@@ -517,7 +517,7 @@ return ((*this).external_name).value_or_lazy_evaluated([&] { return ((*this).nam
 
 types::CheckedVariable::CheckedVariable(DeprecatedString a_name, types::TypeId a_type_id, bool a_is_mutable, utility::Span a_definition_span, JaktInternal::Optional<utility::Span> a_type_span, types::CheckedVisibility a_visibility, JaktInternal::Optional<types::ScopeId> a_owner_scope, JaktInternal::Optional<DeprecatedString> a_external_name): name(move(a_name)), type_id(move(a_type_id)), is_mutable(move(a_is_mutable)), definition_span(move(a_definition_span)), type_span(move(a_type_span)), visibility(move(a_visibility)), owner_scope(move(a_owner_scope)), external_name(move(a_external_name)){}
 ErrorOr<NonnullRefPtr<CheckedVariable>> types::CheckedVariable::__jakt_create(DeprecatedString name, types::TypeId type_id, bool is_mutable, utility::Span definition_span, JaktInternal::Optional<utility::Span> type_span, types::CheckedVisibility visibility, JaktInternal::Optional<types::ScopeId> owner_scope, JaktInternal::Optional<DeprecatedString> external_name) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) CheckedVariable (move(name), move(type_id), move(is_mutable), move(definition_span), move(type_span), move(visibility), move(owner_scope), move(external_name)))); return o; }
-ErrorOr<DeprecatedString> types::CheckedTrait::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedTrait("sv));{
+ErrorOr<DeprecatedString> types::CheckedTrait::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedTrait("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
@@ -528,7 +528,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::CheckedTrait::CheckedTrait(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::Dictionary<DeprecatedString,types::FunctionId> a_methods, JaktInternal::DynamicArray<types::CheckedGenericParameter> a_generic_parameters, types::ScopeId a_scope_id): name(move(a_name)), name_span(move(a_name_span)), methods(move(a_methods)), generic_parameters(move(a_generic_parameters)), scope_id(move(a_scope_id)){}
 ErrorOr<NonnullRefPtr<CheckedTrait>> types::CheckedTrait::__jakt_create(DeprecatedString name, utility::Span name_span, JaktInternal::Dictionary<DeprecatedString,types::FunctionId> methods, JaktInternal::DynamicArray<types::CheckedGenericParameter> generic_parameters, types::ScopeId scope_id) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) CheckedTrait (move(name), move(name_span), move(methods), move(generic_parameters), move(scope_id)))); return o; }
-ErrorOr<DeprecatedString> types::Value::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Value("sv));{
+ErrorOr<DeprecatedString> types::Value::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Value("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("impl: {}, ", impl));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}", span));
@@ -902,7 +902,7 @@ return JaktInternal::ExplicitValue(*this);
 }
 }
 
-ErrorOr<DeprecatedString> types::CheckedProgram::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedProgram("sv));{
+ErrorOr<DeprecatedString> types::CheckedProgram::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedProgram("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("compiler: {}, ", *compiler));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("modules: {}, ", modules));
@@ -2243,7 +2243,7 @@ TRY((((((*this).compiler))->panic(TRY((__jakt_format((StringView::from_string_li
 }
 }
 
-ErrorOr<DeprecatedString> types::ResolvedNamespace::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ResolvedNamespace("sv));{
+ErrorOr<DeprecatedString> types::ResolvedNamespace::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ResolvedNamespace("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("external_name: {}, ", external_name));
@@ -2252,7 +2252,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::ResolvedNamespace::ResolvedNamespace(DeprecatedString a_name, JaktInternal::Optional<DeprecatedString> a_external_name, JaktInternal::Optional<JaktInternal::DynamicArray<types::TypeId>> a_generic_parameters) :name(move(a_name)), external_name(move(a_external_name)), generic_parameters(move(a_generic_parameters)){}
 
-ErrorOr<DeprecatedString> types::TypecheckFunctions::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("TypecheckFunctions("sv));{
+ErrorOr<DeprecatedString> types::TypecheckFunctions::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("TypecheckFunctions("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("block: {}, ", block));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("register_function: {}", register_function));
@@ -2260,7 +2260,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::TypecheckFunctions::TypecheckFunctions(Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, types::ScopeId, types::SafetyMode, JaktInternal::Optional<types::TypeId>)> a_block, Function<ErrorOr<types::FunctionId>(NonnullRefPtr<types::CheckedFunction>)> a_register_function): block(move(a_block)), register_function(move(a_register_function)){}
 ErrorOr<NonnullRefPtr<TypecheckFunctions>> types::TypecheckFunctions::__jakt_create(Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, types::ScopeId, types::SafetyMode, JaktInternal::Optional<types::TypeId>)> block, Function<ErrorOr<types::FunctionId>(NonnullRefPtr<types::CheckedFunction>)> register_function) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) TypecheckFunctions (move(block), move(register_function)))); return o; }
-ErrorOr<DeprecatedString> types::CheckedStruct::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedStruct("sv));{
+ErrorOr<DeprecatedString> types::CheckedStruct::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedStruct("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
@@ -2283,7 +2283,7 @@ return ((*this).external_name).value_or_lazy_evaluated([&] { return ((*this).nam
 }
 }
 
-ErrorOr<DeprecatedString> types::CheckedParameter::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedParameter("sv));{
+ErrorOr<DeprecatedString> types::CheckedParameter::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedParameter("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("requires_label: {}, ", requires_label));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("variable: {}, ", *variable));
@@ -2298,7 +2298,7 @@ return types::CheckedParameter(((*this).requires_label),TRY((((((*this).variable
 
 types::CheckedParameter::CheckedParameter(bool a_requires_label, NonnullRefPtr<types::CheckedVariable> a_variable, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> a_default_value) :requires_label(move(a_requires_label)), variable(move(a_variable)), default_value(move(a_default_value)){}
 
-ErrorOr<DeprecatedString> types::CheckedCall::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedCall("sv));{
+ErrorOr<DeprecatedString> types::CheckedCall::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedCall("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("namespace_: {}, ", namespace_));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
@@ -2318,7 +2318,7 @@ return ((*this).external_name).value_or_lazy_evaluated([&] { return ((*this).nam
 }
 }
 
-ErrorOr<DeprecatedString> types::CheckedVarDecl::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedVarDecl("sv));{
+ErrorOr<DeprecatedString> types::CheckedVarDecl::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedVarDecl("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_mutable: {}, ", is_mutable));
@@ -2328,7 +2328,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::CheckedVarDecl::CheckedVarDecl(DeprecatedString a_name, bool a_is_mutable, utility::Span a_span, types::TypeId a_type_id) :name(move(a_name)), is_mutable(move(a_is_mutable)), span(move(a_span)), type_id(move(a_type_id)){}
 
-ErrorOr<DeprecatedString> types::FunctionGenericParameter::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("FunctionGenericParameter("sv));{
+ErrorOr<DeprecatedString> types::FunctionGenericParameter::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("FunctionGenericParameter("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("kind: {}, ", kind));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("checked_parameter: {}", checked_parameter));
@@ -2348,7 +2348,7 @@ return ((((*this).checked_parameter)).type_id);
 
 types::FunctionGenericParameter::FunctionGenericParameter(types::FunctionGenericParameterKind a_kind, types::CheckedGenericParameter a_checked_parameter) :kind(move(a_kind)), checked_parameter(move(a_checked_parameter)){}
 
-ErrorOr<DeprecatedString> types::CheckedNamespace::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedNamespace("sv));{
+ErrorOr<DeprecatedString> types::CheckedNamespace::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedNamespace("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("scope: {}", scope));
@@ -2356,7 +2356,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::CheckedNamespace::CheckedNamespace(DeprecatedString a_name, types::ScopeId a_scope) :name(move(a_name)), scope(move(a_scope)){}
 
-ErrorOr<DeprecatedString> types::CheckedField::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedField("sv));{
+ErrorOr<DeprecatedString> types::CheckedField::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedField("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("variable_id: {}, ", variable_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("default_value: {}, ", default_value));
@@ -2365,7 +2365,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::CheckedField::CheckedField(types::VarId a_variable_id, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> a_default_value, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_value_expression) :variable_id(move(a_variable_id)), default_value(move(a_default_value)), default_value_expression(move(a_default_value_expression)){}
 
-ErrorOr<DeprecatedString> types::CheckedGenericParameter::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedGenericParameter("sv));{
+ErrorOr<DeprecatedString> types::CheckedGenericParameter::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedGenericParameter("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("type_id: {}, ", type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("constraints: {}, ", constraints));
@@ -2380,7 +2380,7 @@ return types::CheckedGenericParameter(type_id,(TRY((DynamicArray<types::TraitId>
 
 types::CheckedGenericParameter::CheckedGenericParameter(types::TypeId a_type_id, JaktInternal::DynamicArray<types::TraitId> a_constraints, utility::Span a_span) :type_id(move(a_type_id)), constraints(move(a_constraints)), span(move(a_span)){}
 
-ErrorOr<DeprecatedString> types::Scope::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Scope("sv));{
+ErrorOr<DeprecatedString> types::Scope::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Scope("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("namespace_name: {}, ", namespace_name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("external_name: {}, ", external_name));
@@ -2408,7 +2408,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::Scope::Scope(JaktInternal::Optional<DeprecatedString> a_namespace_name, JaktInternal::Optional<DeprecatedString> a_external_name, JaktInternal::Dictionary<DeprecatedString,types::VarId> a_vars, JaktInternal::Dictionary<DeprecatedString,types::Value> a_comptime_bindings, JaktInternal::Dictionary<DeprecatedString,types::StructId> a_structs, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<types::FunctionId>> a_functions, JaktInternal::Dictionary<DeprecatedString,types::EnumId> a_enums, JaktInternal::Dictionary<DeprecatedString,types::TypeId> a_types, JaktInternal::Dictionary<DeprecatedString,types::TraitId> a_traits, JaktInternal::Dictionary<DeprecatedString,types::ModuleId> a_imports, JaktInternal::Dictionary<DeprecatedString,types::ScopeId> a_aliases, JaktInternal::Optional<types::ScopeId> a_parent, JaktInternal::Optional<types::ScopeId> a_alias_scope, JaktInternal::DynamicArray<types::ScopeId> a_children, bool a_can_throw, JaktInternal::Optional<DeprecatedString> a_import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> a_alias_path, JaktInternal::DynamicArray<parser::IncludeAction> a_after_extern_include, JaktInternal::DynamicArray<parser::IncludeAction> a_before_extern_include, DeprecatedString a_debug_name, JaktInternal::DynamicArray<types::ScopeId> a_resolution_mixins, bool a_is_block_scope): namespace_name(move(a_namespace_name)), external_name(move(a_external_name)), vars(move(a_vars)), comptime_bindings(move(a_comptime_bindings)), structs(move(a_structs)), functions(move(a_functions)), enums(move(a_enums)), types(move(a_types)), traits(move(a_traits)), imports(move(a_imports)), aliases(move(a_aliases)), parent(move(a_parent)), alias_scope(move(a_alias_scope)), children(move(a_children)), can_throw(move(a_can_throw)), import_path_if_extern(move(a_import_path_if_extern)), alias_path(move(a_alias_path)), after_extern_include(move(a_after_extern_include)), before_extern_include(move(a_before_extern_include)), debug_name(move(a_debug_name)), resolution_mixins(move(a_resolution_mixins)), is_block_scope(move(a_is_block_scope)){}
 ErrorOr<NonnullRefPtr<Scope>> types::Scope::__jakt_create(JaktInternal::Optional<DeprecatedString> namespace_name, JaktInternal::Optional<DeprecatedString> external_name, JaktInternal::Dictionary<DeprecatedString,types::VarId> vars, JaktInternal::Dictionary<DeprecatedString,types::Value> comptime_bindings, JaktInternal::Dictionary<DeprecatedString,types::StructId> structs, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<types::FunctionId>> functions, JaktInternal::Dictionary<DeprecatedString,types::EnumId> enums, JaktInternal::Dictionary<DeprecatedString,types::TypeId> types, JaktInternal::Dictionary<DeprecatedString,types::TraitId> traits, JaktInternal::Dictionary<DeprecatedString,types::ModuleId> imports, JaktInternal::Dictionary<DeprecatedString,types::ScopeId> aliases, JaktInternal::Optional<types::ScopeId> parent, JaktInternal::Optional<types::ScopeId> alias_scope, JaktInternal::DynamicArray<types::ScopeId> children, bool can_throw, JaktInternal::Optional<DeprecatedString> import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> alias_path, JaktInternal::DynamicArray<parser::IncludeAction> after_extern_include, JaktInternal::DynamicArray<parser::IncludeAction> before_extern_include, DeprecatedString debug_name, JaktInternal::DynamicArray<types::ScopeId> resolution_mixins, bool is_block_scope) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Scope (move(namespace_name), move(external_name), move(vars), move(comptime_bindings), move(structs), move(functions), move(enums), move(types), move(traits), move(imports), move(aliases), move(parent), move(alias_scope), move(children), move(can_throw), move(import_path_if_extern), move(alias_path), move(after_extern_include), move(before_extern_include), move(debug_name), move(resolution_mixins), move(is_block_scope)))); return o; }
-ErrorOr<DeprecatedString> types::TypeId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("TypeId("sv));{
+ErrorOr<DeprecatedString> types::TypeId::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("TypeId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("module: {}, ", module));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
@@ -2449,7 +2449,7 @@ return types::TypeId(types::ModuleId((infallible_integer_cast<size_t>((((module_
 }
 }
 
-ErrorOr<DeprecatedString> types::FieldRecord::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("FieldRecord("sv));{
+ErrorOr<DeprecatedString> types::FieldRecord::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("FieldRecord("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("struct_id: {}, ", struct_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("field_id: {}", field_id));
@@ -2457,7 +2457,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::FieldRecord::FieldRecord(types::StructId a_struct_id, types::VarId a_field_id) :struct_id(move(a_struct_id)), field_id(move(a_field_id)){}
 
-ErrorOr<DeprecatedString> types::CheckedEnum::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedEnum("sv));{
+ErrorOr<DeprecatedString> types::CheckedEnum::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedEnum("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
@@ -2475,7 +2475,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::CheckedEnum::CheckedEnum(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<types::CheckedGenericParameter> a_generic_parameters, JaktInternal::DynamicArray<types::CheckedEnumVariant> a_variants, JaktInternal::DynamicArray<types::CheckedField> a_fields, types::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<DeprecatedString,JaktInternal::Tuple<types::TraitId,JaktInternal::DynamicArray<types::TypeId>>> a_trait_implementations, parser::RecordType a_record_type, types::TypeId a_underlying_type_id, types::TypeId a_type_id, bool a_is_boxed) :name(move(a_name)), name_span(move(a_name_span)), generic_parameters(move(a_generic_parameters)), variants(move(a_variants)), fields(move(a_fields)), scope_id(move(a_scope_id)), definition_linkage(move(a_definition_linkage)), trait_implementations(move(a_trait_implementations)), record_type(move(a_record_type)), underlying_type_id(move(a_underlying_type_id)), type_id(move(a_type_id)), is_boxed(move(a_is_boxed)){}
 
-ErrorOr<DeprecatedString> types::CheckedBlock::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedBlock("sv));{
+ErrorOr<DeprecatedString> types::CheckedBlock::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedBlock("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("statements: {}, ", statements));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("scope_id: {}, ", scope_id));
@@ -2486,7 +2486,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::CheckedBlock::CheckedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> a_statements, types::ScopeId a_scope_id, types::BlockControlFlow a_control_flow, JaktInternal::Optional<types::TypeId> a_yielded_type, bool a_yielded_none) :statements(move(a_statements)), scope_id(move(a_scope_id)), control_flow(move(a_control_flow)), yielded_type(move(a_yielded_type)), yielded_none(move(a_yielded_none)){}
 
-ErrorOr<DeprecatedString> types::TraitId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("TraitId("sv));{
+ErrorOr<DeprecatedString> types::TraitId::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("TraitId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("module: {}, ", module));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
@@ -2500,7 +2500,7 @@ return ((((((*this).module)).id) == ((((other).module)).id)) && (((*this).id) ==
 
 types::TraitId::TraitId(types::ModuleId a_module, size_t a_id) :module(move(a_module)), id(move(a_id)){}
 
-ErrorOr<DeprecatedString> types::FunctionId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("FunctionId("sv));{
+ErrorOr<DeprecatedString> types::FunctionId::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("FunctionId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("module: {}, ", module));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
@@ -2514,7 +2514,7 @@ return ((((((*this).module)).id) == ((((rhs).module)).id)) && (((*this).id) == (
 }
 }
 
-ErrorOr<DeprecatedString> types::Module::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Module("sv));{
+ErrorOr<DeprecatedString> types::Module::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Module("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}, ", id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
@@ -2570,7 +2570,7 @@ return types::TypeId(((*this).id),new_id);
 }
 }
 
-ErrorOr<DeprecatedString> types::VarId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("VarId("sv));{
+ErrorOr<DeprecatedString> types::VarId::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("VarId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("module: {}, ", module));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
@@ -2578,7 +2578,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 types::VarId::VarId(types::ModuleId a_module, size_t a_id) :module(move(a_module)), id(move(a_id)){}
 
-ErrorOr<DeprecatedString> types::ModuleId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ModuleId("sv));{
+ErrorOr<DeprecatedString> types::ModuleId::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ModuleId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
 }
@@ -2591,7 +2591,7 @@ return (((*this).id) == ((rhs).id));
 
 types::ModuleId::ModuleId(size_t a_id) :id(move(a_id)){}
 
-ErrorOr<DeprecatedString> types::EnumId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("EnumId("sv));{
+ErrorOr<DeprecatedString> types::EnumId::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("EnumId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("module: {}, ", module));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
@@ -2605,7 +2605,7 @@ return ((((((*this).module)).id) == ((((rhs).module)).id)) && (((*this).id) == (
 
 types::EnumId::EnumId(types::ModuleId a_module, size_t a_id) :module(move(a_module)), id(move(a_id)){}
 
-ErrorOr<DeprecatedString> types::CheckedEnumVariantBinding::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("CheckedEnumVariantBinding("sv));{
+ErrorOr<DeprecatedString> types::CheckedEnumVariantBinding::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedEnumVariantBinding("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: {}, ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("binding: \"{}\", ", binding));
@@ -2616,7 +2616,7 @@ TRY(builder.append(")"sv));return builder.to_string(); }
 types::CheckedEnumVariantBinding::CheckedEnumVariantBinding(JaktInternal::Optional<DeprecatedString> a_name, DeprecatedString a_binding, types::TypeId a_type_id, utility::Span a_span) :name(move(a_name)), binding(move(a_binding)), type_id(move(a_type_id)), span(move(a_span)){}
 
 ErrorOr<DeprecatedString> types::CheckedUnaryOperator::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* PreIncrement */: {
 return DeprecatedString("CheckedUnaryOperator::PreIncrement"sv);
 break;}
@@ -2690,7 +2690,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> types::NumericOrStringValue::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* StringValue */: {
 TRY(builder.append("NumericOrStringValue::StringValue"sv));
 [[maybe_unused]] auto const& that = this->template get<NumericOrStringValue::StringValue>();
@@ -2710,7 +2710,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> types::FunctionGenericParameterKind::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* InferenceGuide */: {
 return DeprecatedString("FunctionGenericParameterKind::InferenceGuide"sv);
 break;}
@@ -2721,7 +2721,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> types::Type::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Void */: {
 return DeprecatedString("Type::Void"sv);
 break;}
@@ -3829,7 +3829,7 @@ return JaktInternal::ExplicitValue(false);
 }
 
 ErrorOr<DeprecatedString> types::ValueImpl::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Void */: {
 return DeprecatedString("ValueImpl::Void"sv);
 break;}
@@ -4750,7 +4750,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> types::BlockControlFlow::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* AlwaysReturns */: {
 return DeprecatedString("BlockControlFlow::AlwaysReturns"sv);
 break;}
@@ -5568,7 +5568,7 @@ return JaktInternal::ExplicitValue(false);
 }
 
 ErrorOr<DeprecatedString> types::CheckedMatchBody::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Expression */: {
 TRY(builder.append("CheckedMatchBody::Expression"sv));
 [[maybe_unused]] auto const& that = this->template get<CheckedMatchBody::Expression>();
@@ -5583,7 +5583,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> types::CheckedStatement::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Expression */: {
 TRY(builder.append("CheckedStatement::Expression"sv));
 [[maybe_unused]] auto const& that = this->template get<CheckedStatement::Expression>();
@@ -5854,7 +5854,7 @@ return JaktInternal::OptionalNone();
 }
 
 ErrorOr<DeprecatedString> types::CheckedEnumVariant::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Untyped */: {
 TRY(builder.append("CheckedEnumVariant::Untyped"sv));
 [[maybe_unused]] auto const& that = this->template get<CheckedEnumVariant::Untyped>();
@@ -6061,7 +6061,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> types::CheckedMatchCase::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* EnumVariant */: {
 TRY(builder.append("CheckedMatchCase::EnumVariant"sv));
 [[maybe_unused]] auto const& that = this->template get<CheckedMatchCase::EnumVariant>();
@@ -6125,7 +6125,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> types::CheckedTypeCast::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Fallible */: {
 TRY(builder.append("CheckedTypeCast::Fallible"sv));
 [[maybe_unused]] auto const& that = this->template get<CheckedTypeCast::Fallible>();
@@ -6166,7 +6166,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> types::NumberConstant::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Signed */: {
 TRY(builder.append("NumberConstant::Signed"sv));
 [[maybe_unused]] auto const& that = this->template get<NumberConstant::Signed>();
@@ -6313,7 +6313,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> types::CheckedVisibility::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Public */: {
 return DeprecatedString("CheckedVisibility::Public"sv);
 break;}
@@ -6337,7 +6337,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> types::CheckedNumericConstant::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* I8 */: {
 TRY(builder.append("CheckedNumericConstant::I8"sv));
 [[maybe_unused]] auto const& that = this->template get<CheckedNumericConstant::I8>();
@@ -6466,7 +6466,7 @@ return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
 }
 
 ErrorOr<DeprecatedString> types::CheckedCapture::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* ByValue */: {
 return DeprecatedString("CheckedCapture::ByValue"sv);
 break;}
@@ -6486,7 +6486,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> types::StructOrEnumId::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Struct */: {
 TRY(builder.append("StructOrEnumId::Struct"sv));
 [[maybe_unused]] auto const& that = this->template get<StructOrEnumId::Struct>();
@@ -6501,7 +6501,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> types::SafetyMode::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Safe */: {
 return DeprecatedString("SafetyMode::Safe"sv);
 break;}
@@ -6512,7 +6512,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> types::MaybeResolvedScope::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Resolved */: {
 TRY(builder.append("MaybeResolvedScope::Resolved"sv));
 [[maybe_unused]] auto const& that = this->template get<MaybeResolvedScope::Resolved>();
@@ -6598,7 +6598,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> types::StringLiteral::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Static */: {
 TRY(builder.append("StringLiteral::Static"sv));
 [[maybe_unused]] auto const& that = this->template get<StringLiteral::Static>();
@@ -6629,7 +6629,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> types::StructLikeId::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Struct */: {
 TRY(builder.append("StructLikeId::Struct"sv));
 [[maybe_unused]] auto const& that = this->template get<StructLikeId::Struct>();
@@ -6697,7 +6697,7 @@ return result;
 }
 
 ErrorOr<DeprecatedString> types::CheckedExpression::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Boolean */: {
 TRY(builder.append("CheckedExpression::Boolean"sv));
 [[maybe_unused]] auto const& that = this->template get<CheckedExpression::Boolean>();
@@ -8102,7 +8102,7 @@ return JaktInternal::ExplicitValue(false);
 }
 
 ErrorOr<DeprecatedString> types::BuiltinType::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Void */: {
 return DeprecatedString("BuiltinType::Void"sv);
 break;}
