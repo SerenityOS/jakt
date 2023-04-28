@@ -1,7 +1,7 @@
 #include "jakt__path.h"
 namespace Jakt {
 namespace jakt__path {
-ErrorOr<DeprecatedString> jakt__path::Path::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Path("sv));{
+ErrorOr<DeprecatedString> jakt__path::Path::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Path("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("path: \"{}\"", path));
 }
@@ -61,7 +61,7 @@ u8 const separator = static_cast<u8>(47);
 if ((((path).byte_at(static_cast<size_t>(0ULL))) == separator)){
 return TRY((jakt__path::Path::from_string(path)));
 }
-DeprecatedStringBuilder join_builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder join_builder = DeprecatedStringBuilder::create();
 TRY((((join_builder).append_string(((*this).path)))));
 if ((((((*this).path)).byte_at((JaktInternal::checked_sub<size_t>(((((*this).path)).length()),static_cast<size_t>(1ULL))))) != separator)){
 TRY((((join_builder).append(separator))));
@@ -176,7 +176,7 @@ ErrorOr<void> jakt__path::Path::normalize_separators() {
 {
 JaktInternal::DynamicArray<u8> separators = (TRY((DynamicArray<u8>::create_with({static_cast<u8>(47)}))));
 u8 separator = static_cast<u8>(47);
-DeprecatedStringBuilder normalized_builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder normalized_builder = DeprecatedStringBuilder::create();
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).path)).length()))});
 for (;;){

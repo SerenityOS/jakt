@@ -301,7 +301,7 @@ return {};
 }
 
 ErrorOr<DeprecatedString> error::MessageSeverity::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Hint */: {
 return DeprecatedString("MessageSeverity::Hint"sv);
 break;}
@@ -356,7 +356,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> error::JaktError::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Message */: {
 TRY(builder.append("JaktError::Message"sv));
 [[maybe_unused]] auto const& that = this->template get<JaktError::Message>();

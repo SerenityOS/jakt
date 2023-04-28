@@ -113,7 +113,7 @@ abort();
 
 ErrorOr<DeprecatedString> escape_for_quotes(DeprecatedString const s) {
 {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 {
 DeprecatedStringCodePointIterator _magic = ((s).code_points());
 for (;;){
@@ -177,7 +177,7 @@ return ((((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f'))) || ((c >= 'A'
 
 ErrorOr<DeprecatedString> interpret_escapes(DeprecatedString const s) {
 {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 bool in_escape = false;
 {
 DeprecatedStringCodePointIterator _magic = ((s).code_points());
@@ -292,7 +292,7 @@ return ((c == '0') || (c == '1'));
 }
 }
 
-ErrorOr<DeprecatedString> utility::Span::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Span("sv));{
+ErrorOr<DeprecatedString> utility::Span::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Span("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("file_id: {}, ", file_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("start: {}, ", start));
@@ -313,7 +313,7 @@ return ((start <= ((*this).start)) && (end >= ((*this).end)));
 }
 }
 
-ErrorOr<DeprecatedString> utility::FileId::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("FileId("sv));{
+ErrorOr<DeprecatedString> utility::FileId::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("FileId("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
 }

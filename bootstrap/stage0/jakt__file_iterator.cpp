@@ -1,7 +1,7 @@
 #include "jakt__file_iterator.h"
 namespace Jakt {
 namespace jakt__file_iterator {
-ErrorOr<DeprecatedString> jakt__file_iterator::RecursiveFileIterator::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("RecursiveFileIterator("sv));{
+ErrorOr<DeprecatedString> jakt__file_iterator::RecursiveFileIterator::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("RecursiveFileIterator("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("extension: \"{}\", ", extension));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("directory_list: {}, ", directory_list));

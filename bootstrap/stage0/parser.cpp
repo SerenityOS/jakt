@@ -24,7 +24,7 @@ return f32_value;
 }
 }
 
-ErrorOr<DeprecatedString> parser::ParsedMatchCase::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedMatchCase("sv));{
+ErrorOr<DeprecatedString> parser::ParsedMatchCase::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedMatchCase("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("patterns: {}, ", patterns));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("marker_span: {}, ", marker_span));
@@ -91,7 +91,7 @@ return false;
 
 parser::ParsedMatchCase::ParsedMatchCase(JaktInternal::DynamicArray<parser::ParsedMatchPattern> a_patterns, utility::Span a_marker_span, parser::ParsedMatchBody a_body) :patterns(move(a_patterns)), marker_span(move(a_marker_span)), body(move(a_body)){}
 
-ErrorOr<DeprecatedString> parser::ParsedFunction::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedFunction("sv));{
+ErrorOr<DeprecatedString> parser::ParsedFunction::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedFunction("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
@@ -150,7 +150,7 @@ return true;
 }
 }
 
-ErrorOr<DeprecatedString> parser::ParsedModuleImport::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedModuleImport("sv));{
+ErrorOr<DeprecatedString> parser::ParsedModuleImport::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedModuleImport("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("module_name: {}, ", module_name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("alias_name: {}, ", alias_name));
@@ -276,7 +276,7 @@ return (((((*this).module_name)).equals(((other).module_name))) && (((*this).has
 }
 }
 
-ErrorOr<DeprecatedString> parser::ParsedVariable::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedVariable("sv));{
+ErrorOr<DeprecatedString> parser::ParsedVariable::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedVariable("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("parsed_type: {}, ", parsed_type));
@@ -292,7 +292,7 @@ return ((((*this).name) == ((rhs_parsed_varible).name)) && (((((*this).parsed_ty
 }
 }
 
-ErrorOr<DeprecatedString> parser::ParsedNameWithGenericParameters::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedNameWithGenericParameters("sv));{
+ErrorOr<DeprecatedString> parser::ParsedNameWithGenericParameters::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedNameWithGenericParameters("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
@@ -301,7 +301,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedNameWithGenericParameters::ParsedNameWithGenericParameters(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> a_generic_parameters) :name(move(a_name)), name_span(move(a_name_span)), generic_parameters(move(a_generic_parameters)){}
 
-ErrorOr<DeprecatedString> parser::ParsedVarDeclTuple::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedVarDeclTuple("sv));{
+ErrorOr<DeprecatedString> parser::ParsedVarDeclTuple::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedVarDeclTuple("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("var_decls: {}, ", var_decls));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}", span));
@@ -309,7 +309,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedVarDeclTuple::ParsedVarDeclTuple(JaktInternal::DynamicArray<parser::ParsedVarDecl> a_var_decls, utility::Span a_span) :var_decls(move(a_var_decls)), span(move(a_span)){}
 
-ErrorOr<DeprecatedString> parser::ParsedAttributeArgument::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedAttributeArgument("sv));{
+ErrorOr<DeprecatedString> parser::ParsedAttributeArgument::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedAttributeArgument("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
@@ -318,7 +318,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedAttributeArgument::ParsedAttributeArgument(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<DeprecatedString> a_assigned_value) :name(move(a_name)), span(move(a_span)), assigned_value(move(a_assigned_value)){}
 
-ErrorOr<DeprecatedString> parser::ParsedVarDecl::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedVarDecl("sv));{
+ErrorOr<DeprecatedString> parser::ParsedVarDecl::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedVarDecl("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("parsed_type: {}, ", parsed_type));
@@ -336,7 +336,7 @@ return ((((*this).name) == ((rhs_var_decl).name)) && (((*this).is_mutable) == ((
 
 parser::ParsedVarDecl::ParsedVarDecl(DeprecatedString a_name, NonnullRefPtr<typename parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span, JaktInternal::Optional<DeprecatedString> a_external_name) :name(move(a_name)), parsed_type(move(a_parsed_type)), is_mutable(move(a_is_mutable)), inlay_span(move(a_inlay_span)), span(move(a_span)), external_name(move(a_external_name)){}
 
-ErrorOr<DeprecatedString> parser::ParsedNamespace::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedNamespace("sv));{
+ErrorOr<DeprecatedString> parser::ParsedNamespace::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedNamespace("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: {}, ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
@@ -515,7 +515,7 @@ TRY((((((*this).module_imports)).push(import_))));
 return {};
 }
 
-ErrorOr<DeprecatedString> parser::ParsedMethod::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedMethod("sv));{
+ErrorOr<DeprecatedString> parser::ParsedMethod::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedMethod("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("parsed_function: {}, ", parsed_function));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("visibility: {}, ", visibility));
@@ -525,7 +525,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedMethod::ParsedMethod(parser::ParsedFunction a_parsed_function, parser::Visibility a_visibility, bool a_is_virtual, bool a_is_override) :parsed_function(move(a_parsed_function)), visibility(move(a_visibility)), is_virtual(move(a_is_virtual)), is_override(move(a_is_override)){}
 
-ErrorOr<DeprecatedString> parser::ParsedExternalTraitImplementation::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedExternalTraitImplementation("sv));{
+ErrorOr<DeprecatedString> parser::ParsedExternalTraitImplementation::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedExternalTraitImplementation("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("for_type: {}, ", for_type));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("traits: {}, ", traits));
@@ -534,7 +534,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedExternalTraitImplementation::ParsedExternalTraitImplementation(NonnullRefPtr<typename parser::ParsedType> a_for_type, JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> a_traits, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods) :for_type(move(a_for_type)), traits(move(a_traits)), methods(move(a_methods)){}
 
-ErrorOr<DeprecatedString> parser::ParsedGenericParameter::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedGenericParameter("sv));{
+ErrorOr<DeprecatedString> parser::ParsedGenericParameter::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedGenericParameter("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
@@ -543,7 +543,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedGenericParameter::ParsedGenericParameter(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> a_requires_list) :name(move(a_name)), span(move(a_span)), requires_list(move(a_requires_list)){}
 
-ErrorOr<DeprecatedString> parser::ParsedTrait::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedTrait("sv));{
+ErrorOr<DeprecatedString> parser::ParsedTrait::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedTrait("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
@@ -553,7 +553,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedTrait::ParsedTrait(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, JaktInternal::DynamicArray<parser::ParsedFunction> a_methods) :name(move(a_name)), name_span(move(a_name_span)), generic_parameters(move(a_generic_parameters)), methods(move(a_methods)){}
 
-ErrorOr<DeprecatedString> parser::ParsedExternImport::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedExternImport("sv));{
+ErrorOr<DeprecatedString> parser::ParsedExternImport::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedExternImport("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_c: {}, ", is_c));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("assigned_namespace: {}, ", assigned_namespace));
@@ -581,7 +581,7 @@ return (((((*this).assigned_namespace)).name).value());
 }
 }
 
-ErrorOr<DeprecatedString> parser::ParsedCall::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedCall("sv));{
+ErrorOr<DeprecatedString> parser::ParsedCall::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedCall("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("namespace_: {}, ", namespace_));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
@@ -630,7 +630,7 @@ return true;
 }
 }
 
-ErrorOr<DeprecatedString> parser::SumEnumVariant::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("SumEnumVariant("sv));{
+ErrorOr<DeprecatedString> parser::SumEnumVariant::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("SumEnumVariant("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
@@ -639,7 +639,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::SumEnumVariant::SumEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> a_params) :name(move(a_name)), span(move(a_span)), params(move(a_params)){}
 
-ErrorOr<DeprecatedString> parser::VisibilityRestriction::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("VisibilityRestriction("sv));{
+ErrorOr<DeprecatedString> parser::VisibilityRestriction::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("VisibilityRestriction("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("namespace_: {}, ", namespace_));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\"", name));
@@ -647,7 +647,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::VisibilityRestriction::VisibilityRestriction(JaktInternal::DynamicArray<DeprecatedString> a_namespace_, DeprecatedString a_name) :namespace_(move(a_namespace_)), name(move(a_name)){}
 
-ErrorOr<DeprecatedString> parser::ParsedName::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedName("sv));{
+ErrorOr<DeprecatedString> parser::ParsedName::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedName("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}", span));
@@ -655,7 +655,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedName::ParsedName(DeprecatedString a_name, utility::Span a_span) :name(move(a_name)), span(move(a_span)){}
 
-ErrorOr<DeprecatedString> parser::ParsedField::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedField("sv));{
+ErrorOr<DeprecatedString> parser::ParsedField::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedField("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("var_decl: {}, ", var_decl));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("visibility: {}, ", visibility));
@@ -664,7 +664,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedField::ParsedField(parser::ParsedVarDecl a_var_decl, parser::Visibility a_visibility, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_value) :var_decl(move(a_var_decl)), visibility(move(a_visibility)), default_value(move(a_default_value)){}
 
-ErrorOr<DeprecatedString> parser::ParsedAlias::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedAlias("sv));{
+ErrorOr<DeprecatedString> parser::ParsedAlias::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedAlias("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("alias_name: {}, ", alias_name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("target: {}", target));
@@ -672,7 +672,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedAlias::ParsedAlias(JaktInternal::Optional<parser::ParsedName> a_alias_name, JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> a_target) :alias_name(move(a_alias_name)), target(move(a_target)){}
 
-ErrorOr<DeprecatedString> parser::Parser::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Parser("sv));{
+ErrorOr<DeprecatedString> parser::Parser::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Parser("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("index: {}, ", index));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("tokens: {}, ", tokens));
@@ -11473,7 +11473,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-ErrorOr<DeprecatedString> parser::EnumVariantPatternArgument::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("EnumVariantPatternArgument("sv));{
+ErrorOr<DeprecatedString> parser::EnumVariantPatternArgument::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("EnumVariantPatternArgument("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: {}, ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
@@ -11515,7 +11515,7 @@ return ((!(((((*this).name)).has_value()))) && (!(((((rhs_variant_pattern_argume
 }
 }
 
-ErrorOr<DeprecatedString> parser::ParsedPatternDefault::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedPatternDefault("sv));{
+ErrorOr<DeprecatedString> parser::ParsedPatternDefault::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedPatternDefault("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("variable: {}, ", variable));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("value: {}", value));
@@ -11523,7 +11523,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedPatternDefault::ParsedPatternDefault(parser::ParsedVarDecl a_variable, NonnullRefPtr<typename parser::ParsedExpression> a_value) :variable(move(a_variable)), value(move(a_value)){}
 
-ErrorOr<DeprecatedString> parser::ParsedParameter::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedParameter("sv));{
+ErrorOr<DeprecatedString> parser::ParsedParameter::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedParameter("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("requires_label: {}, ", requires_label));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("variable: {}, ", variable));
@@ -11548,7 +11548,7 @@ return false;
 }
 }
 
-ErrorOr<DeprecatedString> parser::ValueEnumVariant::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ValueEnumVariant("sv));{
+ErrorOr<DeprecatedString> parser::ValueEnumVariant::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ValueEnumVariant("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
@@ -11557,7 +11557,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ValueEnumVariant::ValueEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_value) :name(move(a_name)), span(move(a_span)), value(move(a_value)){}
 
-ErrorOr<DeprecatedString> parser::ParsedRecord::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedRecord("sv));{
+ErrorOr<DeprecatedString> parser::ParsedRecord::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedRecord("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
@@ -11571,7 +11571,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedRecord::ParsedRecord(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> a_implements_list, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods, parser::RecordType a_record_type, JaktInternal::Optional<DeprecatedString> a_external_name) :name(move(a_name)), name_span(move(a_name_span)), generic_parameters(move(a_generic_parameters)), definition_linkage(move(a_definition_linkage)), implements_list(move(a_implements_list)), methods(move(a_methods)), record_type(move(a_record_type)), external_name(move(a_external_name)){}
 
-ErrorOr<DeprecatedString> parser::ParsedAttribute::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedAttribute("sv));{
+ErrorOr<DeprecatedString> parser::ParsedAttribute::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedAttribute("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
@@ -11581,7 +11581,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 parser::ParsedAttribute::ParsedAttribute(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<DeprecatedString> a_assigned_value, JaktInternal::DynamicArray<parser::ParsedAttributeArgument> a_arguments) :name(move(a_name)), span(move(a_span)), assigned_value(move(a_assigned_value)), arguments(move(a_arguments)){}
 
-ErrorOr<DeprecatedString> parser::ParsedBlock::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("ParsedBlock("sv));{
+ErrorOr<DeprecatedString> parser::ParsedBlock::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParsedBlock("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("stmts: {}", stmts));
 }
@@ -11693,7 +11693,7 @@ return JaktInternal::OptionalNone();
 }
 
 ErrorOr<DeprecatedString> parser::ImportName::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Literal */: {
 TRY(builder.append("ImportName::Literal"sv));
 [[maybe_unused]] auto const& that = this->template get<ImportName::Literal>();
@@ -11819,7 +11819,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> parser::ParsedMatchPattern::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* EnumVariant */: {
 TRY(builder.append("ParsedMatchPattern::EnumVariant"sv));
 [[maybe_unused]] auto const& that = this->template get<ParsedMatchPattern::EnumVariant>();
@@ -12036,7 +12036,7 @@ return true;
 }
 
 ErrorOr<DeprecatedString> parser::Visibility::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Public */: {
 return DeprecatedString("Visibility::Public"sv);
 break;}
@@ -12060,7 +12060,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> parser::ArgumentStoreLevel::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* InObject */: {
 TRY(builder.append("ArgumentStoreLevel::InObject"sv));
 [[maybe_unused]] auto const& that = this->template get<ArgumentStoreLevel::InObject>();
@@ -12079,7 +12079,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> parser::ParsedMatchBody::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Expression */: {
 TRY(builder.append("ParsedMatchBody::Expression"sv));
 [[maybe_unused]] auto const& that = this->template get<ParsedMatchBody::Expression>();
@@ -12168,7 +12168,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> parser::ParsedCapture::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* ByValue */: {
 return DeprecatedString("ParsedCapture::ByValue"sv);
 break;}
@@ -12188,7 +12188,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> parser::ParsedType::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Name */: {
 TRY(builder.append("ParsedType::Name"sv));
 [[maybe_unused]] auto const& that = this->template get<ParsedType::Name>();
@@ -12872,7 +12872,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> parser::TypeCast::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Fallible */: {
 TRY(builder.append("TypeCast::Fallible"sv));
 [[maybe_unused]] auto const& that = this->template get<TypeCast::Fallible>();
@@ -12913,7 +12913,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> parser::DefinitionLinkage::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Internal */: {
 return DeprecatedString("DefinitionLinkage::Internal"sv);
 break;}
@@ -12924,7 +12924,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> parser::ImportList::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* List */: {
 TRY(builder.append("ImportList::List"sv));
 [[maybe_unused]] auto const& that = this->template get<ImportList::List>();
@@ -12992,7 +12992,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> parser::ParsedExpression::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Boolean */: {
 TRY(builder.append("ParsedExpression::Boolean"sv));
 [[maybe_unused]] auto const& that = this->template get<ParsedExpression::Boolean>();
@@ -14720,7 +14720,7 @@ return JaktInternal::ExplicitValue(static_cast<i64>(0LL));
 }
 
 ErrorOr<DeprecatedString> parser::FunctionLinkage::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Internal */: {
 return DeprecatedString("FunctionLinkage::Internal"sv);
 break;}
@@ -14731,7 +14731,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> parser::UnaryOperator::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* PreIncrement */: {
 return DeprecatedString("UnaryOperator::PreIncrement"sv);
 break;}
@@ -14967,7 +14967,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> parser::BinaryOperator::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Add */: {
 return DeprecatedString("BinaryOperator::Add"sv);
 break;}
@@ -15247,7 +15247,7 @@ return JaktInternal::ExplicitValue(false);
 }
 
 ErrorOr<DeprecatedString> parser::NumericConstant::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* I8 */: {
 TRY(builder.append("NumericConstant::I8"sv));
 [[maybe_unused]] auto const& that = this->template get<NumericConstant::I8>();
@@ -15391,7 +15391,7 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((static_cast
 }
 
 ErrorOr<DeprecatedString> parser::ParsedStatement::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Expression */: {
 TRY(builder.append("ParsedStatement::Expression"sv));
 [[maybe_unused]] auto const& that = this->template get<ParsedStatement::Expression>();
@@ -16135,7 +16135,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> parser::IncludeAction::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Define */: {
 TRY(builder.append("IncludeAction::Define"sv));
 [[maybe_unused]] auto const& that = this->template get<IncludeAction::Define>();
@@ -16168,7 +16168,7 @@ break;}
 return builder.to_string();
 }
 ErrorOr<DeprecatedString> parser::RecordType::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Struct */: {
 TRY(builder.append("RecordType::Struct"sv));
 [[maybe_unused]] auto const& that = this->template get<RecordType::Struct>();
@@ -16261,7 +16261,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ErrorOr<DeprecatedString> parser::FunctionType::debug_description() const {
-auto builder = TRY(DeprecatedStringBuilder::create());
+auto builder = DeprecatedStringBuilder::create();
 switch (this->index()) {case 0 /* Normal */: {
 return DeprecatedString("FunctionType::Normal"sv);
 break;}

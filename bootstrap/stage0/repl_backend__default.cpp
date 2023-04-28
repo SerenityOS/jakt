@@ -1,7 +1,7 @@
 #include "repl_backend__default.h"
 namespace Jakt {
 namespace repl_backend__default {
-ErrorOr<DeprecatedString> repl_backend__default::Editor::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Editor("sv));{
+ErrorOr<DeprecatedString> repl_backend__default::Editor::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Editor("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("standard_input_file: {}, ", standard_input_file));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("line_pointer: {}, ", line_pointer));
@@ -41,7 +41,7 @@ repl_backend__default::Editor::Editor(FILE* a_standard_input_file, char* a_line_
 ErrorOr<repl_backend__common::LineResult> repl_backend__default::Editor::get_line(JaktInternal::Optional<DeprecatedString> const prompt) {
 {
 warn((StringView::from_string_literal("{}"sv)),prompt.value_or_lazy_evaluated([&] { return ((*this).prompt); }));
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 {
 char* const c_string = fgets(((*this).line_pointer),static_cast<size_t>(4096ULL),((*this).standard_input_file));
 if ((c_string == utility::null<char>())){

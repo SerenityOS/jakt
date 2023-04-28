@@ -1,7 +1,7 @@
 #include "compiler.h"
 namespace Jakt {
 namespace compiler {
-ErrorOr<DeprecatedString> compiler::Compiler::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Compiler("sv));{
+ErrorOr<DeprecatedString> compiler::Compiler::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Compiler("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("files: {}, ", files));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("file_ids: {}, ", file_ids));
@@ -33,7 +33,7 @@ return {};
 
 ErrorOr<JaktInternal::Optional<jakt__path::Path>> compiler::Compiler::search_for_path(DeprecatedString const input_module_name) const {
 {
-DeprecatedStringBuilder builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 TRY((((builder).append(static_cast<u8>(47)))));
 DeprecatedString const separator = TRY((((builder).to_string())));
 DeprecatedString const module_name = ((input_module_name).replace(TRY(DeprecatedString::from_utf8("::"sv)),separator));

@@ -16,7 +16,7 @@ return Error::from_errno(static_cast<i32>(38));
 return {};
 }
 
-ErrorOr<DeprecatedString> jakt__platform__unknown_fs::DirectoryIterator::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("DirectoryIterator("sv));{
+ErrorOr<DeprecatedString> jakt__platform__unknown_fs::DirectoryIterator::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("DirectoryIterator("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
 TRY(builder.append(")"sv));return builder.to_string(); }

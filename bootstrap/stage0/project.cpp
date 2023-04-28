@@ -1,7 +1,7 @@
 #include "project.h"
 namespace Jakt {
 namespace project {
-ErrorOr<DeprecatedString> project::Project::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("Project("sv));{
+ErrorOr<DeprecatedString> project::Project::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Project("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\"", name));
 }

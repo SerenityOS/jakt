@@ -2,7 +2,7 @@
 namespace Jakt {
 ErrorOr<void> format_output(jakt__path::Path const file_path,JaktInternal::DynamicArray<lexer::Token> const tokens,JaktInternal::Optional<FormatRange> const format_range,bool const format_debug,bool const format_inplace) {
 {
-DeprecatedStringBuilder formatted_file = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder formatted_file = DeprecatedStringBuilder::create();
 bool on_new_line = true;
 {
 formatter::Formatter _magic = TRY((formatter::Formatter::for_tokens(tokens,format_debug,static_cast<size_t>(120ULL))));
@@ -691,7 +691,7 @@ if (check_only){
 return static_cast<i64>(0LL);
 }
 JaktInternal::Dictionary<DeprecatedString,JaktInternal::Tuple<DeprecatedString,DeprecatedString>> const codegen_result = TRY((codegen::CodeGenerator::generate(compiler,checked_program,codegen_debug)));
-DeprecatedStringBuilder depfile_builder = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder depfile_builder = DeprecatedStringBuilder::create();
 if ((!(((binary_dir).exists())))){
 TRY((jakt__platform__unknown_fs::make_directory(((binary_dir).to_string()))));
 }
@@ -745,7 +745,7 @@ return static_cast<i64>(1LL);
 };
 }
 if (prettify_cpp_source){
-DeprecatedStringBuilder command = TRY((DeprecatedStringBuilder::create()));
+DeprecatedStringBuilder command = DeprecatedStringBuilder::create();
 TRY((((command).append(TRY((__jakt_format((StringView::from_string_literal("{} -i"sv)),clang_format_path)))))));
 if (((dot_clang_format_path).has_value())){
 TRY((((command).append(TRY((__jakt_format((StringView::from_string_literal(" --style=file:{}"sv)),dot_clang_format_path)))))));
@@ -1010,7 +1010,7 @@ return output;
 }
 }
 
-ErrorOr<DeprecatedString> FormatRange::debug_description() const { auto builder = MUST(DeprecatedStringBuilder::create());TRY(builder.append("FormatRange("sv));{
+ErrorOr<DeprecatedString> FormatRange::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("FormatRange("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("start: {}, ", start));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("end: {}", end));
