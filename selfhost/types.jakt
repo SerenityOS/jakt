@@ -5,7 +5,7 @@ import parser {
     ParsedParameter, ParsedRecord, ParsedStatement, ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast
     UnaryOperator
 }
-import utility { panic, todo, join, FileId, Span, IterationDecision }
+import utility { FileId, IterationDecision, Queue, Span, join, panic, todo }
 import compiler { Compiler }
 
 enum StructOrEnumId {
@@ -1986,15 +1986,17 @@ class CheckedProgram {
         scope_id: ScopeId
         anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
     ) throws -> bool? {
-        mut scopes_to_check = [scope_id]
+        mut scopes_to_check = Queue<ScopeId>()
         mut seen: {ScopeId} = {}
 
+        scopes_to_check.enqueue(scope_id)
+
         for child in .get_scope(scope_id).children {
-            scopes_to_check.insert(before_index: 0, value: child)
+            scopes_to_check.enqueue(child)
         }
 
         while not scopes_to_check.is_empty() {
-            let scope_id = scopes_to_check.pop()!
+            let scope_id = scopes_to_check.dequeue()
             if seen.contains(scope_id) {
                 continue
             }
@@ -2022,19 +2024,19 @@ class CheckedProgram {
             }
 
             for entry in scope.resolution_mixins {
-                scopes_to_check.insert(before_index: 0, value: entry)
+                scopes_to_check.enqueue(entry)
                 for child in .get_scope(entry).children {
                     if not seen.contains(child) {
-                        scopes_to_check.insert(before_index: 0, value: child)
+                        scopes_to_check.enqueue(child)
                     }
                 }
             }
 
             if scope.parent.has_value() {
-                scopes_to_check.insert(before_index: 0, value: scope.parent!)
+                scopes_to_check.enqueue(scope.parent!)
                 for child in .get_scope(scope.parent!).children {
                     if not seen.contains(child) {
-                        scopes_to_check.insert(before_index: 0, value: child)
+                        scopes_to_check.enqueue(child)
                     }
                 }
             }
@@ -2045,7 +2047,7 @@ class CheckedProgram {
 
             for child in scope.children {
                 if not seen.contains(child) {
-                    scopes_to_check.insert(before_index: 0, value: child)
+                    scopes_to_check.enqueue(child)
                 }
             }
         }

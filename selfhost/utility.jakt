@@ -173,3 +173,18 @@ enum IterationDecision<T> {
     Break(value: T)
     Continue
 }
+
+import extern "AK/Queue.h" {
+    namespace AK {
+        extern struct Queue<T> {
+            fn Queue<T>() -> Queue<T>
+            fn size(this) -> usize
+            fn is_empty(this) -> bool
+            fn enqueue(mut this, anon value: T)
+            fn dequeue(mut this) -> T
+            fn clear(mut this)
+        }
+    }
+}
+
+use AK::Queue
