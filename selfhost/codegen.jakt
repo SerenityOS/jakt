@@ -1706,7 +1706,7 @@ struct CodeGenerator {
             output += "::"
         }
         output += "debug_description() const { "
-        output += "auto builder = MUST(DeprecatedStringBuilder::create());"
+        output += "auto builder = DeprecatedStringBuilder::create();"
         output += format("TRY(builder.append(\"{}(\"sv));", struct_.name_for_codegen())
         output += "{\n"
         output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
@@ -1768,7 +1768,7 @@ struct CodeGenerator {
             output += "::"
         }
         output += "debug_description() const {\n"
-        output += "auto builder = TRY(DeprecatedStringBuilder::create());\n"
+        output += "auto builder = DeprecatedStringBuilder::create();\n"
         output += "switch (this->index()) {"
 
         for i in 0..enum_.variants.size() {
