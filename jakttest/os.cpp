@@ -32,7 +32,7 @@ ErrorOr<size_t> get_num_cpus()
 
 ErrorOr<DeprecatedString> get_system_temporary_directory()
 {
-    auto builder = TRY(DeprecatedStringBuilder::create());
+    auto builder = DeprecatedStringBuilder::create();
     auto const result = getenv("TMP_DIR");
     TRY(builder.append_c_string(result ?: "/tmp"));
     return TRY(builder.to_string());
@@ -63,7 +63,7 @@ ErrorOr<size_t> get_num_cpus()
 
 ErrorOr<DeprecatedString> get_system_temporary_directory()
 {
-    auto builder = TRY(DeprecatedStringBuilder::create());
+    auto builder = DeprecatedStringBuilder::create();
     TRY(builder.append_c_string(getenv("TEMP")));
     return TRY(builder.to_string());
 }

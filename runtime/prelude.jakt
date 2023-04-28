@@ -84,7 +84,7 @@ extern struct StringBuilder {
     fn is_empty(this) -> bool
     fn length(this) -> usize
     fn clear(mut this)
-    fn create() throws -> StringBuilder
+    fn create() -> StringBuilder
 
     // Deprecated API
     fn append_string(mut this, anon s: String) throws

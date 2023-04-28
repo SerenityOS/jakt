@@ -14,7 +14,7 @@
 
 namespace Jakt {
 
-ErrorOr<DeprecatedStringBuilder> DeprecatedStringBuilder::create()
+DeprecatedStringBuilder DeprecatedStringBuilder::create()
 {
     return DeprecatedStringBuilder {};
 }

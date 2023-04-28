@@ -47,7 +47,7 @@ ErrorOr<Optional<DeprecatedString>> DirectoryIterator::next()
         m_dirfd = NULL;
         return JaktInternal::OptionalNone {};
     }
-    auto builder = TRY(DeprecatedStringBuilder::create());
+    auto builder = DeprecatedStringBuilder::create();
     TRY(builder.append_c_string(next_dir->d_name));
     return Optional<DeprecatedString>(TRY(builder.to_string()));
 }
