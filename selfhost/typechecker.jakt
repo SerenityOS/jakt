@@ -107,7 +107,7 @@ struct Typechecker {
         let input_file = compiler.current_file
 
         if not input_file.has_value() {
-            compiler.panic("trying to typecheck a non-existant file")
+            compiler.panic("trying to typecheck a non-existent file")
         }
 
         let true_module_name = compiler.files[input_file!.id].basename(strip_extension: true)
@@ -863,7 +863,7 @@ struct Typechecker {
                 yield match result {
                     Return | Yield | Continue | Break => {
                         .error_with_hint(
-                            message: "module name must evalute to a string literal or an array of strings"
+                            message: "module name must evaluate to a string literal or an array of strings"
                             span: expression.span()
                             hint: "this expression evaluates to an invalid value"
                             hint_span: expression.span()
@@ -872,7 +872,7 @@ struct Typechecker {
                     }
                     Throw(error) => {
                         .error_with_hint(
-                            message: "module name must evalute to a string literal or an array of strings"
+                            message: "module name must evaluate to a string literal or an array of strings"
                             span: expression.span()
                             hint: format("this expression threw an error: {}", error)
                             hint_span: expression.span()
@@ -884,7 +884,7 @@ struct Typechecker {
                         JaktArray(values) => {
                             if values.is_empty() {
                                 .error_with_hint(
-                                    message: "module name must evalute to a string literal or an array of strings"
+                                    message: "module name must evaluate to a string literal or an array of strings"
                                     span: expression.span()
                                     hint: "this expression evaluates to an empty array"
                                     hint_span: expression.span()
@@ -897,7 +897,7 @@ struct Typechecker {
                                     JaktString(string) => result.push((string, value.span))
                                     else => {
                                         .error_with_hint(
-                                            message: "module name must evalute to a string literal or an array of strings"
+                                            message: "module name must evaluate to a string literal or an array of strings"
                                             span: value.span
                                             hint: "this expression evaluates to an invalid value"
                                             hint_span: value.span
@@ -909,7 +909,7 @@ struct Typechecker {
                         }
                         else => {
                             .error_with_hint(
-                                message: "module name must evalute to a string literal"
+                                message: "module name must evaluate to a string literal"
                                 span: expression.span()
                                 hint: "this expression evaluates to a non-string value"
                                 hint_span: expression.span()

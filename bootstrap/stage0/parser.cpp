@@ -8699,7 +8699,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Incomplete enum variant defintion, expected `,` or `)`; got ‘{}’"sv)),((*this).current())))),((((*this).current())).span())))));
+TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Incomplete enum variant definition, expected `,` or `)`; got ‘{}’"sv)),((*this).current())))),((((*this).current())).span())))));
 return JaktInternal::LoopBreak{};
 }
 return JaktInternal::ExplicitValue<void>();

@@ -739,7 +739,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
                 ++.index
                 return Token::Eof(.span(start: .index - 1, end: .index - 1))
             }
-            // FIXME: Once the handling of Token::Eof is fully implmented,
+            // FIXME: Once the handling of Token::Eof is fully implemented,
             //        remove the test of eof() and return of None. The purpose
             //        of it seems to be to catch situations where index has
             //        been incremented more than one past the end of the data stream.
