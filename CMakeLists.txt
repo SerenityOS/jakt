@@ -22,6 +22,28 @@ if (CMAKE_HOST_WIN32)
   set(NO_SYMLINKS_DEFAULT ON)
 endif()
 
+unset(GET_GIT_REVISION)
+execute_process(
+  COMMAND git rev-list --count HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GET_GIT_REVISION
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+set(GIT_REVISION_FILE ${CMAKE_SOURCE_DIR}/selfhost/git_revision.jakt)
+
+function(create_git_revision_file)
+  file(TOUCH ${GIT_REVISION_FILE})
+  write_file(${GIT_REVISION_FILE} "fn get_git_revision() -> u64 => ${GET_GIT_REVISION}")
+endfunction()
+
+if (EXISTS ${GIT_REVISION_FILE})
+  file(REMOVE ${GIT_REVISION_FILE})
+  create_git_revision_file()
+else()
+  create_git_revision_file()
+endif()
+
 set(FINAL_STAGE "1" CACHE STRING "Compiler stage to stop at, either 1 (default) or 2)")
 option(NO_SYMLINKS "Use hard links instead of symlinks. Useful for unprivileged Windows users" "${NO_SYMLINKS_DEFAULT}")
 option(SERENITY_SOURCE_DIR PATH "Path of an existing SerenityOS checkout to pull AK files from")
@@ -86,6 +108,7 @@ set(SELFHOST_SOURCES
   selfhost/compiler.jakt
   selfhost/error.jakt
   selfhost/formatter.jakt
+  selfhost/git_revision.jakt
   selfhost/ide.jakt
   selfhost/interpreter.jakt
   selfhost/lexer.jakt
