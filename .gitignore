@@ -12,4 +12,4 @@ CMakeFiles/
 
 # Populated by CMake, don't commit.
 runtime/AK
-
+selfhost/git_revision.jakt
