@@ -7677,7 +7677,7 @@ ErrorOr<typechecker::Typechecker> typechecker::Typechecker::typecheck(NonnullRef
 {
 JaktInternal::Optional<utility::FileId> const input_file = ((compiler)->current_file);
 if ((!(((input_file).has_value())))){
-TRY((((compiler)->panic(TRY(DeprecatedString::from_utf8("trying to typecheck a non-existant file"sv))))));
+TRY((((compiler)->panic(TRY(DeprecatedString::from_utf8("trying to typecheck a non-existent file"sv))))));
 }
 DeprecatedString const true_module_name = TRY((((((((compiler)->files))[(((input_file.value())).id)])).basename(true))));
 types::ModuleId const placeholder_module_id = types::ModuleId(static_cast<size_t>(0ULL));
@@ -10153,7 +10153,7 @@ auto&& __jakt_match_variant = result;
 switch(__jakt_match_variant.index()) {
 case 0: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>>> __jakt_var_494; {
-TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evalute to a string literal or an array of strings"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
 __jakt_var_494 = JaktInternal::OptionalNone(); goto __jakt_label_433;
 
 }
@@ -10161,7 +10161,7 @@ __jakt_label_433:; __jakt_var_494; }));
 };/*case end*/
 case 2: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>>> __jakt_var_495; {
-TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evalute to a string literal or an array of strings"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
 __jakt_var_495 = JaktInternal::OptionalNone(); goto __jakt_label_434;
 
 }
@@ -10169,7 +10169,7 @@ __jakt_label_434:; __jakt_var_495; }));
 };/*case end*/
 case 3: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>>> __jakt_var_496; {
-TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evalute to a string literal or an array of strings"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
 __jakt_var_496 = JaktInternal::OptionalNone(); goto __jakt_label_435;
 
 }
@@ -10177,7 +10177,7 @@ __jakt_label_435:; __jakt_var_496; }));
 };/*case end*/
 case 4: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>>> __jakt_var_497; {
-TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evalute to a string literal or an array of strings"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
 __jakt_var_497 = JaktInternal::OptionalNone(); goto __jakt_label_436;
 
 }
@@ -10187,7 +10187,7 @@ case 1: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename interpreter::StatementResult::Throw>();
 types::Value const& error = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>>> __jakt_var_498; {
-TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evalute to a string literal or an array of strings"sv)),((expression)->span()),TRY((__jakt_format((StringView::from_string_literal("this expression threw an error: {}"sv)),error))),((expression)->span())))));
+TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY((__jakt_format((StringView::from_string_literal("this expression threw an error: {}"sv)),error))),((expression)->span())))));
 __jakt_var_498 = JaktInternal::OptionalNone(); goto __jakt_label_437;
 
 }
@@ -10209,7 +10209,7 @@ case 20: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<types::ValueImpl::JaktArray>();JaktInternal::DynamicArray<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>>>> __jakt_var_499; {
 if (((values).is_empty())){
-TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evalute to a string literal or an array of strings"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to an empty array"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to an empty array"sv)),((expression)->span())))));
 }
 JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>> result = (TRY((DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>>::create_with({}))));
 {
@@ -10232,7 +10232,7 @@ return (TRY((((result).push((Tuple{string, ((value).span)})))))), JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evalute to a string literal or an array of strings"sv)),((value).span),TRY(DeprecatedString::from_utf8("this expression evaluates to an invalid value"sv)),((value).span)))));
+TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((value).span),TRY(DeprecatedString::from_utf8("this expression evaluates to an invalid value"sv)),((value).span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -10259,7 +10259,7 @@ __jakt_label_438:; __jakt_var_499.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>>> __jakt_var_500; {
-TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evalute to a string literal"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to a non-string value"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint(TRY(DeprecatedString::from_utf8("module name must evaluate to a string literal"sv)),((expression)->span()),TRY(DeprecatedString::from_utf8("this expression evaluates to a non-string value"sv)),((expression)->span())))));
 __jakt_var_500 = JaktInternal::OptionalNone(); goto __jakt_label_439;
 
 }
