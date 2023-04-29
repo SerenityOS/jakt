@@ -17,6 +17,7 @@ import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
 import formatter { Formatter }
+import git_revision
 import ide
 import interpreter { Interpreter, InterpreterScope, value_to_checked_expression }
 import lexer { Lexer, Token }
@@ -158,7 +159,7 @@ fn main(args: [String]) -> c_int {
     }
 
     if args_parser.flag(["-v", "--version"]) {
-        println("unreleased")
+        println("revision v{}", git_revision::get_git_revision())
         return 0
     }
 
