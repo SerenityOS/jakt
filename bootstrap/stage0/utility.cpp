@@ -13,7 +13,7 @@ break;
 }
 DeprecatedString str = (_magic_value.value());
 {
-TRY((((output).push((str + suffix)))));
+TRY((((output).push(TRY((((str) + (suffix))))))));
 }
 
 }
@@ -25,19 +25,79 @@ return output;
 
 bool is_ascii_alpha(u8 const c) {
 {
-return (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')));
+return (([](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(c,static_cast<u8>(u8'a')) && [](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(2)));
+}
+}
+(c,static_cast<u8>(u8'z'))) || ([](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(c,static_cast<u8>(u8'A')) && [](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(2)));
+}
+}
+(c,static_cast<u8>(u8'Z'))));
 }
 }
 
 bool is_whitespace(u8 const byte) {
 {
-return (((byte == ' ') || (byte == '\t')) || (byte == '\r'));
+return ((((byte) == (static_cast<u8>(u8' '))) || ((byte) == (static_cast<u8>(u8'\t')))) || ((byte) == (static_cast<u8>(u8'\r'))));
 }
 }
 
 bool is_ascii_digit(u8 const c) {
 {
-return ((c >= '0') && (c <= '9'));
+return ([](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(c,static_cast<u8>(u8'0')) && [](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(2)));
+}
+}
+(c,static_cast<u8>(u8'9')));
 }
 }
 
@@ -60,9 +120,31 @@ break;
 }
 DeprecatedString s = (_magic_value.value());
 {
-(output += s);
-if ((i < (JaktInternal::checked_sub<size_t>(((strings).size()),static_cast<size_t>(1ULL))))){
-(output += separator);
+TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
+{
+(self = TRY((((self) + (rhs)))));
+}
+return {};
+}
+(output,s)));
+if ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) == (static_cast<u8>(0)));
+}
+}
+(i,JaktInternal::checked_sub(((strings).size()),static_cast<size_t>(1ULL)))){
+TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
+{
+(self = TRY((((self) + (rhs)))));
+}
+return {};
+}
+(output,separator)));
 }
 ((i++));
 }
@@ -100,7 +182,27 @@ return {};
 
 bool is_ascii_octdigit(u8 const c) {
 {
-return ((c >= '0') && (c <= '7'));
+return ([](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(c,static_cast<u8>(u8'0')) && [](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(2)));
+}
+}
+(c,static_cast<u8>(u8'7')));
 }
 }
 
@@ -126,19 +228,19 @@ u32 cp = (_magic_value.value());
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<DeprecatedString>>{
 auto __jakt_enum_value = (cp);
-if (__jakt_enum_value == (infallible_integer_cast<u32>(('"')))) {
+if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'"'))))) {
 {
 TRY((((builder).append_string(TRY(DeprecatedString::from_utf8("\\\""sv))))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (infallible_integer_cast<u32>(('\\')))) {
+else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'\\'))))) {
 {
 TRY((((builder).append_string(TRY(DeprecatedString::from_utf8("\\\\"sv))))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (infallible_integer_cast<u32>(('\n')))) {
+else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'\n'))))) {
 {
 TRY((((builder).append_string(TRY(DeprecatedString::from_utf8("\\n"sv))))));
 }
@@ -171,7 +273,67 @@ return TRY((((builder).to_string())));
 
 bool is_ascii_hexdigit(u8 const c) {
 {
-return ((((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f'))) || ((c >= 'A') && (c <= 'F')));
+return ((([](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(c,static_cast<u8>(u8'0')) && [](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(2)));
+}
+}
+(c,static_cast<u8>(u8'9'))) || ([](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(c,static_cast<u8>(u8'a')) && [](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(2)));
+}
+}
+(c,static_cast<u8>(u8'f')))) || ([](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(c,static_cast<u8>(u8'A')) && [](u8 const& self, u8 rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(2)));
+}
+}
+(c,static_cast<u8>(u8'F'))));
 }
 }
 
@@ -191,10 +353,10 @@ u32 cp = (_magic_value.value());
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<DeprecatedString>>{
 auto __jakt_enum_value = (cp);
-if (__jakt_enum_value == (infallible_integer_cast<u32>(('\\')))) {
+if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'\\'))))) {
 {
 if (in_escape){
-TRY((((builder).append('\\'))));
+TRY((((builder).append(static_cast<u8>(u8'\\')))));
 (in_escape = false);
 }
 else {
@@ -204,24 +366,24 @@ else {
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (infallible_integer_cast<u32>(('"')))) {
+else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'"'))))) {
 {
 TRY((((builder).append_code_point(cp))));
 (in_escape = false);
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (infallible_integer_cast<u32>(('\'')))) {
+else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'\''))))) {
 {
 TRY((((builder).append_code_point(cp))));
 (in_escape = false);
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (infallible_integer_cast<u32>(('n')))) {
+else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'n'))))) {
 {
 if (in_escape){
-TRY((((builder).append('\n'))));
+TRY((((builder).append(static_cast<u8>(u8'\n')))));
 (in_escape = false);
 }
 else {
@@ -276,7 +438,7 @@ break;
 }
 DeprecatedString str = (_magic_value.value());
 {
-TRY((((output).push((prefix + str)))));
+TRY((((output).push(TRY((((prefix) + (str))))))));
 }
 
 }
@@ -288,7 +450,7 @@ return output;
 
 bool is_ascii_binary(u8 const c) {
 {
-return ((c == '0') || (c == '1'));
+return (((c) == (static_cast<u8>(u8'0'))) || ((c) == (static_cast<u8>(u8'1'))));
 }
 }
 
@@ -301,7 +463,27 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 bool utility::Span::contains(utility::Span const span) const {
 {
-return (((((*this).file_id)).equals(((span).file_id))) && ((((span).start) >= ((*this).start)) && (((span).end) <= ((*this).end))));
+return (((((*this).file_id)).equals(((span).file_id))) && ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(((span).start),((*this).start)) && [](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(2)));
+}
+}
+(((span).end),((*this).end))));
 }
 }
 
@@ -309,7 +491,27 @@ utility::Span::Span(utility::FileId a_file_id, size_t a_start, size_t a_end) :fi
 
 bool utility::Span::is_in_offset_range(size_t const start,size_t const end) const {
 {
-return ((start <= ((*this).start)) && (end >= ((*this).end)));
+return ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(2)));
+}
+}
+(start,((*this).start)) && [](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(end,((*this).end)));
 }
 }
 
@@ -322,7 +524,7 @@ utility::FileId::FileId(size_t a_id) :id(move(a_id)){}
 
 bool utility::FileId::equals(utility::FileId const rhs) const {
 {
-return (((*this).id) == ((rhs).id));
+return ((((*this).id)) == (((rhs).id)));
 }
 }
 

@@ -43,7 +43,7 @@ TRY((((args).push(arg))));
 
 size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
-if (((((((((*this).pool)).status(id)).value())).exit_code) != static_cast<i32>(0))){
+if ((((((((((*this).pool)).status(id)).value())).exit_code)) != (static_cast<i32>(0)))){
 warnln((StringView::from_string_literal("Error: Linking failed"sv)));
 return Error::from_errno(static_cast<i32>(1));
 }
@@ -77,7 +77,7 @@ TRY((((args).push(file))));
 
 size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
-if (((((((((*this).pool)).status(id)).value())).exit_code) != static_cast<i32>(0))){
+if ((((((((((*this).pool)).status(id)).value())).exit_code)) != (static_cast<i32>(0)))){
 warnln((StringView::from_string_literal("Error: Linking failed"sv)));
 return Error::from_errno(static_cast<i32>(1));
 }
@@ -112,7 +112,7 @@ JaktInternal::Tuple<size_t,jakt__platform__unknown_process::ExitPollResult> cons
 size_t const id = ((jakt__id__exit_result__).template get<0>());
 jakt__platform__unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
 
-if ((((exit_result).exit_code) != static_cast<i32>(0))){
+if (((((exit_result).exit_code)) != (static_cast<i32>(0)))){
 warnln((StringView::from_string_literal("Error: Compilation failed"sv)));
 TRY((((((*this).pool)).kill_all())));
 return Error::from_errno(static_cast<i32>(1));
@@ -146,7 +146,7 @@ JaktInternal::Tuple<size_t,jakt__platform__unknown_process::ExitPollResult> cons
 size_t const id = ((jakt__id__exit_result__).template get<0>());
 jakt__platform__unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
 
-if ((((exit_result).exit_code) != static_cast<i32>(0))){
+if (((((exit_result).exit_code)) != (static_cast<i32>(0)))){
 warnln((StringView::from_string_literal("Error: Compilation failed"sv)));
 return Error::from_errno(static_cast<i32>(1));
 }
@@ -251,7 +251,17 @@ return {};
 
 ErrorOr<size_t> build::ParallelExecutionPool::run(JaktInternal::DynamicArray<DeprecatedString> const args) {
 {
-if ((((((*this).pids)).size()) >= ((*this).max_concurrent))){
+if ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(((((*this).pids)).size()),((*this).max_concurrent))){
 TRY((((*this).wait_for_any_job_to_complete())));
 }
 jakt__platform__unknown_process::Process const process = TRY((jakt__platform__unknown_process::start_background_process(args)));

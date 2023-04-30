@@ -47,7 +47,7 @@ break;
 }
 DeprecatedString include_path = (_magic_value.value());
 {
-jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({include_path, (module_name + TRY(DeprecatedString::from_utf8(".jakt"sv)))})))))));
+jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({include_path, TRY((((module_name) + (TRY(DeprecatedString::from_utf8(".jakt"sv))))))})))))));
 if (((candidate_path).exists())){
 return candidate_path;
 }
@@ -57,8 +57,8 @@ return candidate_path;
 }
 
 if (((module_name).starts_with(standard_module_name))){
-DeprecatedString const std_module_name_path = ((module_name).substring((JaktInternal::checked_add<size_t>(((standard_module_name).length()),static_cast<size_t>(1ULL))),(JaktInternal::checked_sub<size_t>(((module_name).length()),(JaktInternal::checked_add<size_t>(((standard_module_name).length()),static_cast<size_t>(1ULL)))))));
-jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((((*this).std_include_path)).to_string()), (std_module_name_path + TRY(DeprecatedString::from_utf8(".jakt"sv)))})))))));
+DeprecatedString const std_module_name_path = ((module_name).substring(JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(((module_name).length()),JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)))));
+jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((((*this).std_include_path)).to_string()), TRY((((std_module_name_path) + (TRY(DeprecatedString::from_utf8(".jakt"sv))))))})))))));
 if (((candidate_path).exists())){
 return candidate_path;
 }
@@ -72,7 +72,7 @@ break;
 }
 DeprecatedString include_path = (_magic_value.value());
 {
-jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({include_path, (module_name + TRY(DeprecatedString::from_utf8(".jakt"sv)))})))))));
+jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({include_path, TRY((((module_name) + (TRY(DeprecatedString::from_utf8(".jakt"sv))))))})))))));
 if (((candidate_path).exists())){
 return candidate_path;
 }
@@ -83,7 +83,7 @@ return candidate_path;
 
 JaktInternal::Optional<jakt__path::Path> const current_file_path = ((*this).current_file_path());
 if (((current_file_path).has_value())){
-jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((TRY(((((current_file_path.value())).parent())))).to_string()), (module_name + TRY(DeprecatedString::from_utf8(".jakt"sv)))})))))));
+jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((TRY(((((current_file_path.value())).parent())))).to_string()), TRY((((module_name) + (TRY(DeprecatedString::from_utf8(".jakt"sv))))))})))))));
 if (((candidate_path).exists())){
 return candidate_path;
 }
@@ -138,7 +138,7 @@ break;
 error::JaktError error = (_magic_value.value());
 {
 utility::Span const span = ((error).span());
-if ((((((span).file_id)).id) == idx)){
+if (((((((span).file_id)).id)) == (idx))){
 if (((*this).json_errors)){
 TRY((error::print_error_json(file_name,error)));
 }
@@ -192,7 +192,17 @@ return ((*this).current_file);
 
 ErrorOr<JaktInternal::Optional<jakt__path::Path>> compiler::Compiler::get_file_path(utility::FileId const file_id) const {
 {
-if ((((file_id).id) >= ((((*this).files)).size()))){
+if ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(((file_id).id),((((*this).files)).size()))){
 return JaktInternal::OptionalNone();
 }
 return ((((*this).files))[((file_id).id)]);
@@ -207,7 +217,7 @@ if (((file_id).has_value())){
 return (file_id.value());
 }
 TRY((((((*this).files)).push(file))));
-(file_id = utility::FileId((JaktInternal::checked_sub<size_t>(((((*this).files)).size()),static_cast<size_t>(1ULL)))));
+(file_id = utility::FileId(JaktInternal::checked_sub(((((*this).files)).size()),static_cast<size_t>(1ULL))));
 TRY((((((*this).file_ids)).set(path,(file_id.value())))));
 return (file_id.value());
 }

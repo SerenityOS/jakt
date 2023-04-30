@@ -21,12 +21,12 @@ break;
 }
 DeprecatedString arg = (_magic_value.value());
 {
-if ((arg == TRY(DeprecatedString::from_utf8("--"sv)))){
-(((parser).definitely_positional_args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))),static_cast<size_t>(((((parser).args)).size()))})])).to_array()))));
+if (((arg) == (TRY(DeprecatedString::from_utf8("--"sv))))){
+(((parser).definitely_positional_args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>(JaktInternal::checked_add(i,static_cast<size_t>(1ULL))),static_cast<size_t>(((((parser).args)).size()))})])).to_array()))));
 (((parser).args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(i)})])).to_array()))));
 break;
 }
-({auto& _jakt_ref = i;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
+((i) += (static_cast<size_t>(1ULL)));
 }
 
 }
@@ -57,19 +57,29 @@ break;
 }
 DeprecatedString name = (_magic_value.value());
 {
-if ((((((*this).args))[i]) == name)){
-if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
+if (((((((*this).args))[i])) == (name))){
+if ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(2)));
+}
+}
+(((((*this).args)).size()),JaktInternal::checked_add(i,static_cast<size_t>(1ULL)))){
 warnln((StringView::from_string_literal("The option '{}' requires a value, but none was supplied"sv)),name);
 return Error::from_errno(static_cast<i32>(200));
 }
 TRY((((((*this).removed_indices)).push(i))));
-TRY((((((*this).removed_indices)).push((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))))));
-TRY((((result).push(((((*this).args))[(JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))])))));
+TRY((((((*this).removed_indices)).push(JaktInternal::checked_add(i,static_cast<size_t>(1ULL))))));
+TRY((((result).push(((((*this).args))[JaktInternal::checked_add(i,static_cast<size_t>(1ULL))])))));
 continue;
 }
 if (((((((*this).args))[i])).starts_with(name))){
 TRY((((((*this).removed_indices)).push(i))));
-TRY((((result).push(((((((*this).args))[i])).substring(((name).length()),(JaktInternal::checked_sub<size_t>(((((((*this).args))[i])).length()),((name).length())))))))));
+TRY((((result).push(((((((*this).args))[i])).substring(((name).length()),JaktInternal::checked_sub(((((((*this).args))[i])).length()),((name).length()))))))));
 }
 }
 
@@ -144,7 +154,7 @@ break;
 }
 DeprecatedString name = (_magic_value.value());
 {
-if ((((((*this).args))[i]) == name)){
+if (((((((*this).args))[i])) == (name))){
 TRY((((((*this).removed_indices)).push(i))));
 return true;
 }
@@ -182,18 +192,28 @@ break;
 }
 DeprecatedString name = (_magic_value.value());
 {
-if ((((((*this).args))[i]) == name)){
-if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
+if (((((((*this).args))[i])) == (name))){
+if ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(2)));
+}
+}
+(((((*this).args)).size()),JaktInternal::checked_add(i,static_cast<size_t>(1ULL)))){
 warnln((StringView::from_string_literal("The option '{}' requires a value, but none was supplied"sv)),name);
 return Error::from_errno(static_cast<i32>(200));
 }
 TRY((((((*this).removed_indices)).push(i))));
-TRY((((((*this).removed_indices)).push((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))))));
-return ((((*this).args))[(JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))]);
+TRY((((((*this).removed_indices)).push(JaktInternal::checked_add(i,static_cast<size_t>(1ULL))))));
+return ((((*this).args))[JaktInternal::checked_add(i,static_cast<size_t>(1ULL))]);
 }
 if (((((((*this).args))[i])).starts_with(name))){
 TRY((((((*this).removed_indices)).push(i))));
-return ((((((*this).args))[i])).substring(((name).length()),(JaktInternal::checked_sub<size_t>(((((((*this).args))[i])).length()),((name).length())))));
+return ((((((*this).args))[i])).substring(((name).length()),JaktInternal::checked_sub(((((((*this).args))[i])).length()),((name).length()))));
 }
 }
 
