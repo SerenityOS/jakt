@@ -2,7 +2,7 @@
 /// - output: "100\n69\n"
 
 // trait definition
-trait Hashable {
+trait MyHashable {
     fn hash(this) -> u64
 }
 
@@ -12,14 +12,14 @@ trait Bar {
 
 
 // implementation on a struct
-struct S implements(Hashable, Bar) {
+struct S implements(MyHashable, Bar) {
     fn hash(this) => 100u64
     fn bar(mut this) {
         println("S::bar")
     }
 }
 
-enum Baz implements(Hashable) {
+enum Baz implements(MyHashable) {
     Foo
     Bar
 
@@ -31,14 +31,14 @@ enum Baz implements(Hashable) {
 
 // implementing traits for builtin types can be done
 // through a newtype pattern.
-struct U64Hash implements(Hashable) {
+struct U64Hash implements(MyHashable) {
     value: u64
 
     fn hash(this) -> u64 => .value
 }
 
 // trait requiremennt on function
-fn print_hash<T requires(Hashable)>(anon value: T) {
+fn print_hash<T requires(MyHashable)>(anon value: T) {
     println("{}", value.hash())
 }
 
