@@ -3,10 +3,20 @@ namespace Jakt {
 namespace jakt__platform {
 JaktInternal::Optional<size_t> last_namespace_separator(DeprecatedString const name) {
 {
-size_t i = (JaktInternal::checked_sub<size_t>(((name).length()),static_cast<size_t>(1ULL)));
-while ((i >= static_cast<size_t>(2ULL))){
-if (((((name).byte_at(i)) == ':') && (((name).byte_at((JaktInternal::checked_sub<size_t>(i,static_cast<size_t>(1ULL))))) == ':'))){
-return (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)));
+size_t i = JaktInternal::checked_sub(((name).length()),static_cast<size_t>(1ULL));
+while ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(i,static_cast<size_t>(2ULL))){
+if ((((((name).byte_at(i))) == (static_cast<u8>(u8':'))) && ((((name).byte_at(JaktInternal::checked_sub(i,static_cast<size_t>(1ULL))))) == (static_cast<u8>(u8':'))))){
+return JaktInternal::checked_add(i,static_cast<size_t>(1ULL));
 }
 ((i--));
 }
@@ -26,7 +36,7 @@ break;
 }
 DeprecatedString str = (_magic_value.value());
 {
-TRY((((output).push(((prefix + str) + suffix)))));
+TRY((((output).push(TRY((((TRY((((prefix) + (str))))) + (suffix))))))));
 }
 
 }
@@ -128,7 +138,7 @@ ErrorOr<jakt__platform::Target> jakt__platform::Target::active() {
 {
 DeprecatedString const triple = TRY((___jakt_get_target_triple_string()));
 JaktInternal::DynamicArray<DeprecatedString> const parts = ((triple).split('-'));
-if ((((parts).size()) != static_cast<size_t>(4ULL))){
+if (((((parts).size())) != (static_cast<size_t>(4ULL)))){
 warnln((StringView::from_string_literal("Invalid target triple '{}'"sv)),triple);
 return Error::from_errno(static_cast<i32>(22));
 }

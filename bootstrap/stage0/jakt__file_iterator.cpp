@@ -17,7 +17,17 @@ return TRY((jakt__file_iterator::RecursiveFileIterator::__jakt_create(extension,
 ErrorOr<JaktInternal::Optional<jakt__path::Path>> jakt__file_iterator::RecursiveFileIterator::next() {
 {
 if ((!(((((*this).current_directory)).has_value())))){
-if ((((((*this).directory_list)).size()) > static_cast<size_t>(0ULL))){
+if ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) == (static_cast<u8>(2)));
+}
+}
+(((((*this).directory_list)).size()),static_cast<size_t>(0ULL))){
 jakt__path::Path const path = (((((*this).directory_list)).pop()).value());
 (((*this).current_directory) = TRY((jakt__platform__unknown_fs::DirectoryIterator::from_path(path))));
 if ((!(((((*this).current_directory)).has_value())))){
@@ -36,7 +46,7 @@ if ((((next.value())).template get<1>())){
 TRY((((((*this).directory_list)).push(new_path))));
 return TRY((((*this).next())));
 }
-if ((TRY((((new_path).extension()))) == ((*this).extension))){
+if (((TRY((((new_path).extension())))) == (((*this).extension)))){
 return new_path;
 }
 else {

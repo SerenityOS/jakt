@@ -6,27 +6,6 @@
 #include "compiler.h"
 namespace Jakt {
 namespace ide {
-struct JaktSymbol {
-  public:
-DeprecatedString name;JaktInternal::Optional<DeprecatedString> detail;DeprecatedString kind;utility::Span range;utility::Span selection_range;JaktInternal::DynamicArray<ide::JaktSymbol> children;JaktSymbol(DeprecatedString a_name, JaktInternal::Optional<DeprecatedString> a_detail, DeprecatedString a_kind, utility::Span a_range, utility::Span a_selection_range, JaktInternal::DynamicArray<ide::JaktSymbol> a_children);
-
-ErrorOr<DeprecatedString> to_json() const;
-ErrorOr<DeprecatedString> debug_description() const;
-};namespace Mutability_Details {
-struct DoesNotApply {
-};
-struct Immutable {
-};
-struct Mutable {
-};
-}
-struct Mutability : public Variant<Mutability_Details::DoesNotApply, Mutability_Details::Immutable, Mutability_Details::Mutable> {
-using Variant<Mutability_Details::DoesNotApply, Mutability_Details::Immutable, Mutability_Details::Mutable>::Variant;
-    using DoesNotApply = Mutability_Details::DoesNotApply;
-    using Immutable = Mutability_Details::Immutable;
-    using Mutable = Mutability_Details::Mutable;
-ErrorOr<DeprecatedString> debug_description() const;
-};
 namespace VarType_Details {
 struct Variable {
 };
@@ -55,6 +34,21 @@ using Variant<VarVisibility_Details::DoesNotApply, VarVisibility_Details::Public
     using Public = VarVisibility_Details::Public;
     using Private = VarVisibility_Details::Private;
     using Restricted = VarVisibility_Details::Restricted;
+ErrorOr<DeprecatedString> debug_description() const;
+};
+namespace Mutability_Details {
+struct DoesNotApply {
+};
+struct Immutable {
+};
+struct Mutable {
+};
+}
+struct Mutability : public Variant<Mutability_Details::DoesNotApply, Mutability_Details::Immutable, Mutability_Details::Mutable> {
+using Variant<Mutability_Details::DoesNotApply, Mutability_Details::Immutable, Mutability_Details::Mutable>::Variant;
+    using DoesNotApply = Mutability_Details::DoesNotApply;
+    using Immutable = Mutability_Details::Immutable;
+    using Mutable = Mutability_Details::Mutable;
 ErrorOr<DeprecatedString> debug_description() const;
 };
 namespace Usage_Details {
@@ -123,19 +117,13 @@ using Variant<Usage_Details::Variable, Usage_Details::Call, Usage_Details::Typen
     using EnumVariant = Usage_Details::EnumVariant;
 ErrorOr<DeprecatedString> debug_description() const;
 };
-}
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::ide::JaktSymbol> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::JaktSymbol const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::ide::Mutability> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::Mutability const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
+struct JaktSymbol {
+  public:
+DeprecatedString name;JaktInternal::Optional<DeprecatedString> detail;DeprecatedString kind;utility::Span range;utility::Span selection_range;JaktInternal::DynamicArray<ide::JaktSymbol> children;JaktSymbol(DeprecatedString a_name, JaktInternal::Optional<DeprecatedString> a_detail, DeprecatedString a_kind, utility::Span a_range, utility::Span a_selection_range, JaktInternal::DynamicArray<ide::JaktSymbol> a_children);
+
+ErrorOr<DeprecatedString> to_json() const;
+ErrorOr<DeprecatedString> debug_description() const;
+};}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::ide::VarType> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::VarType const& value) {
@@ -149,8 +137,20 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::ide::Mutability> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::Mutability const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::ide::Usage> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::Usage const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::ide::JaktSymbol> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::JaktSymbol const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

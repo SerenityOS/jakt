@@ -9,6 +9,9 @@ namespace jakt__prelude__iteration {
 }
 namespace jakt__prelude__string {
 }
+namespace jakt__prelude__operators {
+enum class Ordering: u8;
+}
 namespace jakt__prelude__prelude {
 }
 namespace jakt__arguments {
@@ -309,11 +312,11 @@ struct ValueEnumVariant;
 struct ParsedRecord;
 struct ParsedAttribute;
 struct ParsedBlock;
-namespace ImportName_Details {
-struct Literal;
-struct Comptime;
+namespace ExternalName_Details {
+struct Plain;
+struct Operator;
 }
-struct ImportName;
+struct ExternalName;
 
 namespace ParsedMatchPattern_Details {
 struct EnumVariant;
@@ -322,6 +325,12 @@ struct CatchAll;
 struct Invalid;
 }
 struct ParsedMatchPattern;
+
+namespace ImportName_Details {
+struct Literal;
+struct Comptime;
+}
+struct ImportName;
 
 namespace Visibility_Details {
 struct Public;
@@ -368,6 +377,13 @@ struct Function;
 struct Empty;
 }
 struct ParsedType;
+
+namespace ParsedTraitRequirements_Details {
+struct Nothing;
+struct Methods;
+struct ComptimeExpression;
+}
+struct ParsedTraitRequirements;
 
 namespace TypeCast_Details {
 struct Fallible;
@@ -556,39 +572,42 @@ f32 f64_to_f32(f64 const number);
 
 }
 namespace types {
-class FunctionGenerics;
-struct StructId;
-struct CheckedStringLiteral;
-struct GenericInferences;
-class CheckedFunction;
-struct ScopeId;
-struct LoadedModule;
-class CheckedVariable;
-class CheckedTrait;
-struct Value;
-class CheckedProgram;
-struct ResolvedNamespace;
-class TypecheckFunctions;
-struct CheckedStruct;
-struct CheckedParameter;
-struct CheckedCall;
-struct CheckedVarDecl;
-struct FunctionGenericParameter;
 struct CheckedNamespace;
-struct CheckedField;
-struct CheckedGenericParameter;
-class Scope;
-struct TypeId;
-struct FieldRecord;
-struct CheckedEnum;
-struct CheckedBlock;
-struct TraitId;
-struct FunctionId;
 class Module;
+struct GenericInferences;
+class TypecheckFunctions;
+class CheckedProgram;
+struct FunctionGenericParameter;
+struct ResolvedNamespace;
 struct VarId;
+struct FieldRecord;
+struct ScopeId;
+struct CheckedCall;
+struct CheckedBlock;
+struct OperatorTraitImplementation;
+struct LoadedModule;
+struct ResolvedForallChunk;
+class Scope;
+struct CheckedVarDecl;
+struct FunctionId;
+struct CheckedEnum;
+struct CheckedStruct;
+struct CheckedField;
+struct CheckedParameter;
+struct TraitId;
+struct CheckedBinaryOperator;
+struct StructId;
+struct Value;
 struct ModuleId;
-struct EnumId;
+class CheckedFunction;
+class FunctionGenerics;
+struct CheckedGenericParameter;
 struct CheckedEnumVariantBinding;
+class CheckedTrait;
+struct CheckedStringLiteral;
+class CheckedVariable;
+struct TypeId;
+struct EnumId;
 namespace CheckedUnaryOperator_Details {
 struct PreIncrement;
 struct PostIncrement;
@@ -876,6 +895,13 @@ struct Never;
 }
 struct BuiltinType;
 
+namespace CheckedTraitRequirements_Details {
+struct Nothing;
+struct Methods;
+struct ComptimeExpression;
+}
+struct CheckedTraitRequirements;
+
 types::TypeId builtin(types::BuiltinType const builtin);
 
 types::TypeId void_type_id();
@@ -925,6 +951,7 @@ ErrorOr<DeprecatedString> comptime_format_impl(DeprecatedString const format_str
 
 }
 namespace typechecker {
+template <typename K,typename V>struct InternalDictionaryProduct;
 struct TraitImplementationDescriptor;
 struct TraitImplCheck;
 struct AlreadyImplementedFor;
