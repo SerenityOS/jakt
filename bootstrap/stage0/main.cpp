@@ -199,7 +199,7 @@ outln((StringView::from_string_literal("{}"sv)),TRY((help())));
 return static_cast<int>(0);
 }
 if (TRY((((args_parser).flag((TRY((DynamicArray<DeprecatedString>::create_with({TRY(DeprecatedString::from_utf8("-v"sv)), TRY(DeprecatedString::from_utf8("--version"sv))}))))))))){
-outln((StringView::from_string_literal("unreleased"sv)));
+outln((StringView::from_string_literal("revision v{}"sv)),git_revision::get_git_revision());
 return static_cast<int>(0);
 }
 jakt__path::Path const current_executable_path = TRY((jakt__path::Path::from_string(TRY((File::current_executable_path())))));

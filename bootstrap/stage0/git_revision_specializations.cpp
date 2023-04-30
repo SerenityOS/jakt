@@ -1,4 +1,4 @@
-#include "interpreter.h"
+#include "git_revision.h"
 #include "main.h"
 #include "platform__unknown_compiler.h"
 #include "repl.h"
@@ -33,6 +33,6 @@
 #include "jakt__prelude__string.h"
 #include "jakt__prelude__iteration.h"
 namespace Jakt {
-namespace interpreter {
+namespace git_revision {
 }
 } // namespace Jakt

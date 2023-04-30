@@ -1040,6 +1040,10 @@ struct Entity;
 void bubble_sort(JaktInternal::DynamicArray<DeprecatedString> values);
 
 }
+namespace git_revision {
+u64 get_git_revision();
+
+}
 namespace ide {
 struct JaktSymbol;
 namespace Mutability_Details {

@@ -11,6 +11,7 @@
 #include "codegen.h"
 #include "error.h"
 #include "formatter.h"
+#include "git_revision.h"
 #include "ide.h"
 #include "interpreter.h"
 #include "lexer.h"

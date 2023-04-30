@@ -2,23 +2,6 @@
 #include "__unified_forward.h"
 namespace Jakt {
 namespace repl_backend__common {
-namespace LineResult_Details {
-struct Line{
-DeprecatedString value;
-template<typename _MemberT0>
-Line(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Eof {
-};
-}
-struct LineResult : public Variant<LineResult_Details::Line, LineResult_Details::Eof> {
-using Variant<LineResult_Details::Line, LineResult_Details::Eof>::Variant;
-    using Line = LineResult_Details::Line;
-    using Eof = LineResult_Details::Eof;
-ErrorOr<DeprecatedString> debug_description() const;
-};
 namespace XTermColor_Details {
 struct Default {
 };
@@ -86,13 +69,24 @@ struct Style {
 JaktInternal::Optional<repl_backend__common::Color> foreground;JaktInternal::Optional<repl_backend__common::Color> background;Style(JaktInternal::Optional<repl_backend__common::Color> a_foreground, JaktInternal::Optional<repl_backend__common::Color> a_background);
 
 ErrorOr<DeprecatedString> debug_description() const;
-};}
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::repl_backend__common::LineResult> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl_backend__common::LineResult const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};namespace LineResult_Details {
+struct Line{
+DeprecatedString value;
+template<typename _MemberT0>
+Line(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
-namespace Jakt {
+struct Eof {
+};
+}
+struct LineResult : public Variant<LineResult_Details::Line, LineResult_Details::Eof> {
+using Variant<LineResult_Details::Line, LineResult_Details::Eof>::Variant;
+    using Line = LineResult_Details::Line;
+    using Eof = LineResult_Details::Eof;
+ErrorOr<DeprecatedString> debug_description() const;
+};
+}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::repl_backend__common::XTermColor> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl_backend__common::XTermColor const& value) {
@@ -108,6 +102,12 @@ namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::repl_backend__common::Style> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl_backend__common::Style const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::repl_backend__common::LineResult> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl_backend__common::LineResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

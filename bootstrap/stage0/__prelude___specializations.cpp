@@ -8,6 +8,7 @@
 #include "jakt__prelude__configuration.h"
 #include "project.h"
 #include "ide.h"
+#include "git_revision.h"
 #include "formatter.h"
 #include "codegen.h"
 #include "typechecker.h"
