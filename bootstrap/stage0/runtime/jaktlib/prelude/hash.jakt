@@ -1,0 +1,41 @@
+trait DefaultHashable = match reflect Self {
+    U8 | U16 | U32 | U64
+    | I8 | I16 | I32 | I64
+    | Usize | CChar | CInt
+    | F32 | F64 | Bool
+    | JaktString => true
+    else => false
+}
+
+import extern "Jakt/Forward.h" {
+    namespace AK {
+        struct Traits<T> {
+            extern fn Traits<U>() -> Traits<U>
+            extern fn hash(this, anon x: T) -> u32
+        }
+    }
+
+    extern fn pair_int_hash(anon a: u32, anon b: u32) -> u32
+}
+
+trait Hashable {
+    fn hash(this) -> u32
+
+    [[inline(always)]]
+    fn pair_hash_with<T requires(Hashable)>(this, anon other: &T) -> u32 {
+        return pair_int_hash(.hash(), other.hash())
+    }
+}
+
+forall<T requires(DefaultHashable)>
+type T implements(Hashable) {
+    [[inline(always)]]
+    fn hash(this) -> u32 => AK::Traits<T>().hash(this)
+}
+
+type String implements(Hashable) {}
+
+type StringView implements(Hashable) {
+    [[inline(always)]]
+    fn hash(this) -> u32 => AK::Traits<StringView>().hash(this)
+}

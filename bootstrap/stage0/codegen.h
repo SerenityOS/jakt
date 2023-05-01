@@ -7,11 +7,9 @@
 #include "compiler.h"
 namespace Jakt {
 namespace codegen {
-struct CodegenDebugInfo {
+struct LineSpan {
   public:
-NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Dictionary<size_t,JaktInternal::DynamicArray<codegen::LineSpan>> line_spans;bool statement_span_comments;ErrorOr<void> gather_line_spans();
-ErrorOr<DeprecatedString> span_to_source_location(utility::Span const span);
-CodegenDebugInfo(NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Dictionary<size_t,JaktInternal::DynamicArray<codegen::LineSpan>> a_line_spans, bool a_statement_span_comments);
+size_t start;size_t end;LineSpan(size_t a_start, size_t a_end);
 
 ErrorOr<DeprecatedString> debug_description() const;
 };namespace AllowedControlExits_Details {
@@ -39,6 +37,13 @@ static codegen::ControlFlowState no_control_flow();
 bool is_match_nested() const;
 codegen::ControlFlowState enter_match() const;
 ControlFlowState(codegen::AllowedControlExits a_allowed_exits, bool a_passes_through_match, bool a_passes_through_try, size_t a_match_nest_level);
+
+ErrorOr<DeprecatedString> debug_description() const;
+};struct CodegenDebugInfo {
+  public:
+NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Dictionary<size_t,JaktInternal::DynamicArray<codegen::LineSpan>> line_spans;bool statement_span_comments;ErrorOr<void> gather_line_spans();
+ErrorOr<DeprecatedString> span_to_source_location(utility::Span const span);
+CodegenDebugInfo(NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Dictionary<size_t,JaktInternal::DynamicArray<codegen::LineSpan>> a_line_spans, bool a_statement_span_comments);
 
 ErrorOr<DeprecatedString> debug_description() const;
 };struct CodeGenerator {
@@ -101,15 +106,10 @@ ErrorOr<DeprecatedString> codegen_constructor(NonnullRefPtr<types::CheckedFuncti
 ErrorOr<DeprecatedString> codegen_type_possibly_as_namespace(types::TypeId const type_id, bool const as_namespace) const;
 ErrorOr<DeprecatedString> codegen_struct_predecl(types::CheckedStruct const struct_);
 ErrorOr<DeprecatedString> debug_description() const;
-};struct LineSpan {
-  public:
-size_t start;size_t end;LineSpan(size_t a_start, size_t a_end);
-
-ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::codegen::CodegenDebugInfo> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::CodegenDebugInfo const& value) {
+template<>struct Jakt::Formatter<Jakt::codegen::LineSpan> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::LineSpan const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
@@ -126,14 +126,14 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::codegen::CodeGenerator> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::CodeGenerator const& value) {
+template<>struct Jakt::Formatter<Jakt::codegen::CodegenDebugInfo> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::CodegenDebugInfo const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::codegen::LineSpan> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::LineSpan const& value) {
+template<>struct Jakt::Formatter<Jakt::codegen::CodeGenerator> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::CodeGenerator const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

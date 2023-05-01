@@ -86,7 +86,11 @@ struct VisitImpl {
         // If we're not allowed to make a member function pointer and call it directly (without explicitly resolving it),
         // we have a templated function on our hands (or a function overload set).
         // in such cases, we don't have an explicitly named overload, and we would have to select it.
-        return requires { (declval<Fn>().*(&Fn::operator()))(declval<T>()); };
+        return
+        requires
+        {
+            (declval<Fn>().*(&Fn::operator()))(declval<T>());
+        };
     }
 
     template<typename ReturnType, typename T, typename Visitor, auto... Is>
@@ -130,8 +134,10 @@ struct VariantConstructTag {
 
 template<typename T, typename Base>
 struct VariantConstructors {
+    using GCCWorkaround = IdentityType<T>;
+
     ALWAYS_INLINE VariantConstructors(T&& t)
-    requires(requires { T(move(t)); })
+    requires(requires { GCCWorkaround(declval<GCCWorkaround&&>()); })
     {
         internal_cast().clear_without_destruction();
         internal_cast().set(move(t), VariantNoClearTag {});
@@ -243,14 +249,14 @@ public:
     template<typename... NewTs>
     Variant(Variant<NewTs...>&& old)
     requires((can_contain<NewTs>() && ...))
-        : Variant(move(old).template downcast<Ts...>())
+    : Variant(move(old).template downcast<Ts...>())
     {
     }
 
     template<typename... NewTs>
     Variant(Variant<NewTs...> const& old)
     requires((can_contain<NewTs>() && ...))
-        : Variant(old.template downcast<Ts...>())
+    : Variant(old.template downcast<Ts...>())
     {
     }
 
@@ -262,7 +268,7 @@ public:
     = delete;
     Variant()
     requires(can_contain<Empty>())
-        : Variant(Empty())
+    : Variant(Empty())
     {
     }
 
@@ -297,9 +303,9 @@ public:
 #ifdef AK_HAS_CONDITIONALLY_TRIVIAL
     requires(!(IsTriviallyCopyConstructible<Ts> && ...))
 #endif
-        : Detail::MergeAndDeduplicatePacks<Detail::VariantConstructors<Ts, Variant<Ts...>>...>()
-        , m_data {}
-        , m_index(old.m_index)
+    : Detail::MergeAndDeduplicatePacks<Detail::VariantConstructors<Ts, Variant<Ts...>>...>()
+    , m_data {}
+    , m_index(old.m_index)
     {
         Helper::copy_(old.m_index, old.m_data, m_data);
     }
@@ -312,8 +318,8 @@ public:
 #ifdef AK_HAS_CONDITIONALLY_TRIVIAL
     requires(!(IsTriviallyMoveConstructible<Ts> && ...))
 #endif
-        : Detail::MergeAndDeduplicatePacks<Detail::VariantConstructors<Ts, Variant<Ts...>>...>()
-        , m_index(old.m_index)
+    : Detail::MergeAndDeduplicatePacks<Detail::VariantConstructors<Ts, Variant<Ts...>>...>()
+    , m_index(old.m_index)
     {
         Helper::move_(old.m_index, old.m_data, m_data);
     }
@@ -528,7 +534,8 @@ private:
 };
 
 template<typename... Ts>
-struct TypeList<Variant<Ts...>> : TypeList<Ts...> { };
+struct TypeList<Variant<Ts...>> : TypeList<Ts...> {
+};
 
 }
 

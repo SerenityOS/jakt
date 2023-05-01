@@ -12,6 +12,8 @@ namespace jakt__prelude__string {
 namespace jakt__prelude__operators {
 enum class Ordering: u8;
 }
+namespace jakt__prelude__hash {
+}
 namespace jakt__prelude__prelude {
 }
 namespace jakt__arguments {

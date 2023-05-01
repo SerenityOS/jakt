@@ -8,7 +8,49 @@
 #include "jakt__platform.h"
 namespace Jakt {
 namespace interpreter {
-enum class InterpretError: i32 {
+namespace ExecutionResult_Details {
+struct Return{
+types::Value value;
+template<typename _MemberT0>
+Return(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Throw{
+types::Value value;
+template<typename _MemberT0>
+Throw(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct ExecutionResult : public Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw> {
+using Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw>::Variant;
+    using Return = ExecutionResult_Details::Return;
+    using Throw = ExecutionResult_Details::Throw;
+ErrorOr<DeprecatedString> debug_description() const;
+};
+class InterpreterScope : public RefCounted<InterpreterScope>, public Weakable<InterpreterScope> {
+  public:
+virtual ~InterpreterScope() = default;
+JaktInternal::Dictionary<DeprecatedString,types::Value> bindings;JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent;JaktInternal::Dictionary<DeprecatedString,types::TypeId> type_bindings;JaktInternal::DynamicArray<interpreter::Deferred> defers;ErrorOr<void> set(DeprecatedString const name, types::Value const value);
+static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> create(JaktInternal::Dictionary<DeprecatedString,types::Value> const bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent, JaktInternal::Dictionary<DeprecatedString,types::TypeId> const type_bindings);
+ErrorOr<void> defer_statement(NonnullRefPtr<typename types::CheckedStatement> const statement);
+ErrorOr<void> perform_defers(NonnullRefPtr<interpreter::Interpreter> interpreter, utility::Span const span);
+static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> from_runtime_scope(types::ScopeId const scope_id, NonnullRefPtr<types::CheckedProgram> const program, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent);
+ErrorOr<JaktInternal::Dictionary<DeprecatedString,types::Value>> all_bindings() const;
+ErrorOr<void> type_map_for_substitution_helper(JaktInternal::Dictionary<DeprecatedString,DeprecatedString>& map) const;
+ErrorOr<types::GenericInferences> type_map_for_substitution() const;
+protected:
+explicit InterpreterScope(JaktInternal::Dictionary<DeprecatedString,types::Value> a_bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> a_parent, JaktInternal::Dictionary<DeprecatedString,types::TypeId> a_type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> a_defers);
+public:
+static ErrorOr<NonnullRefPtr<InterpreterScope>> __jakt_create(JaktInternal::Dictionary<DeprecatedString,types::Value> bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, JaktInternal::Dictionary<DeprecatedString,types::TypeId> type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> defers);
+
+ErrorOr<void> defer_expression(NonnullRefPtr<typename types::CheckedExpression> const expr);
+ErrorOr<types::Value> must_get(DeprecatedString const name) const;
+ErrorOr<types::TypeId> map_type(types::TypeId const id) const;
+ErrorOr<DeprecatedString> debug_description() const;
+};enum class InterpretError: i32 {
 CallToExternalFunction = (infallible_integer_cast<i32>((static_cast<i32>(42)))),
 MismatchingArguments = (infallible_integer_cast<i32>((static_cast<u64>(43ULL)))),
 InvalidThisArgument = (infallible_integer_cast<i32>((static_cast<u64>(44ULL)))),
@@ -61,7 +103,29 @@ ErrorOr<types::TypeId> tuple_type(JaktInternal::DynamicArray<types::TypeId> cons
 ErrorOr<interpreter::StatementResult> execute_block(types::CheckedBlock const block, NonnullRefPtr<interpreter::InterpreterScope> scope, utility::Span const call_span);
 ErrorOr<types::Value> reflect_type(types::TypeId const type_id, utility::Span const span, NonnullRefPtr<interpreter::InterpreterScope> const scope);
 ErrorOr<DeprecatedString> debug_description() const;
-};namespace StatementResult_Details {
+};namespace Deferred_Details {
+struct Expression{
+NonnullRefPtr<typename types::CheckedExpression> value;
+template<typename _MemberT0>
+Expression(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+struct Statement{
+NonnullRefPtr<typename types::CheckedStatement> value;
+template<typename _MemberT0>
+Statement(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct Deferred : public Variant<Deferred_Details::Expression, Deferred_Details::Statement> {
+using Variant<Deferred_Details::Expression, Deferred_Details::Statement>::Variant;
+    using Expression = Deferred_Details::Expression;
+    using Statement = Deferred_Details::Statement;
+ErrorOr<DeprecatedString> debug_description() const;
+};
+namespace StatementResult_Details {
 struct Return{
 types::Value value;
 template<typename _MemberT0>
@@ -105,80 +169,10 @@ using Variant<StatementResult_Details::Return, StatementResult_Details::Throw, S
     using JustValue = StatementResult_Details::JustValue;
 ErrorOr<DeprecatedString> debug_description() const;
 };
-class InterpreterScope : public RefCounted<InterpreterScope>, public Weakable<InterpreterScope> {
-  public:
-virtual ~InterpreterScope() = default;
-JaktInternal::Dictionary<DeprecatedString,types::Value> bindings;JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent;JaktInternal::Dictionary<DeprecatedString,types::TypeId> type_bindings;JaktInternal::DynamicArray<interpreter::Deferred> defers;ErrorOr<void> set(DeprecatedString const name, types::Value const value);
-static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> create(JaktInternal::Dictionary<DeprecatedString,types::Value> const bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent, JaktInternal::Dictionary<DeprecatedString,types::TypeId> const type_bindings);
-ErrorOr<void> defer_statement(NonnullRefPtr<typename types::CheckedStatement> const statement);
-ErrorOr<void> perform_defers(NonnullRefPtr<interpreter::Interpreter> interpreter, utility::Span const span);
-static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> from_runtime_scope(types::ScopeId const scope_id, NonnullRefPtr<types::CheckedProgram> const program, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent);
-ErrorOr<JaktInternal::Dictionary<DeprecatedString,types::Value>> all_bindings() const;
-ErrorOr<void> type_map_for_substitution_helper(JaktInternal::Dictionary<DeprecatedString,DeprecatedString>& map) const;
-ErrorOr<types::GenericInferences> type_map_for_substitution() const;
-protected:
-explicit InterpreterScope(JaktInternal::Dictionary<DeprecatedString,types::Value> a_bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> a_parent, JaktInternal::Dictionary<DeprecatedString,types::TypeId> a_type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> a_defers);
-public:
-static ErrorOr<NonnullRefPtr<InterpreterScope>> __jakt_create(JaktInternal::Dictionary<DeprecatedString,types::Value> bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, JaktInternal::Dictionary<DeprecatedString,types::TypeId> type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> defers);
-
-ErrorOr<void> defer_expression(NonnullRefPtr<typename types::CheckedExpression> const expr);
-ErrorOr<types::Value> must_get(DeprecatedString const name) const;
-ErrorOr<types::TypeId> map_type(types::TypeId const id) const;
-ErrorOr<DeprecatedString> debug_description() const;
-};namespace Deferred_Details {
-struct Expression{
-NonnullRefPtr<typename types::CheckedExpression> value;
-template<typename _MemberT0>
-Expression(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Statement{
-NonnullRefPtr<typename types::CheckedStatement> value;
-template<typename _MemberT0>
-Statement(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct Deferred : public Variant<Deferred_Details::Expression, Deferred_Details::Statement> {
-using Variant<Deferred_Details::Expression, Deferred_Details::Statement>::Variant;
-    using Expression = Deferred_Details::Expression;
-    using Statement = Deferred_Details::Statement;
-ErrorOr<DeprecatedString> debug_description() const;
-};
-namespace ExecutionResult_Details {
-struct Return{
-types::Value value;
-template<typename _MemberT0>
-Return(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Throw{
-types::Value value;
-template<typename _MemberT0>
-Throw(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct ExecutionResult : public Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw> {
-using Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw>::Variant;
-    using Return = ExecutionResult_Details::Return;
-    using Throw = ExecutionResult_Details::Throw;
-ErrorOr<DeprecatedString> debug_description() const;
-};
 }
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::interpreter::Interpreter> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::Interpreter const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::interpreter::StatementResult> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::StatementResult const& value) {
+template<>struct Jakt::Formatter<Jakt::interpreter::ExecutionResult> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::ExecutionResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
@@ -189,14 +183,20 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::interpreter::Interpreter> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::Interpreter const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::interpreter::Deferred> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::Deferred const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::interpreter::ExecutionResult> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::ExecutionResult const& value) {
+template<>struct Jakt::Formatter<Jakt::interpreter::StatementResult> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::StatementResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

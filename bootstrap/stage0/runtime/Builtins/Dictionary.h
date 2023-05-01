@@ -23,9 +23,27 @@ struct DirectlyPeekableTraits : public Traits<T> {
     using ConstPeekType = T const&;
 };
 
+template<typename T>
+struct JaktHashableKeyTraits : public Traits<T> {
+    static constexpr bool equals(T const& a, T const& b) {
+        if constexpr (requires { { a.equals(b) } -> SameAs<bool>; })
+            return a.equals(b);
+        else
+            return a == b;
+    }
+
+    static constexpr unsigned hash(T value)
+    {
+        if constexpr (requires { { value.hash() } -> SameAs<u32>; })
+            return value.hash();
+        else
+            return Traits<T>::hash(value);
+    }
+};
+
 template<typename K, typename V>
 struct DictionaryStorage : public RefCounted<DictionaryStorage<K, V>> {
-    HashMap<K, V, Traits<K>, DirectlyPeekableTraits<V>> map;
+    HashMap<K, V, JaktHashableKeyTraits<K>, DirectlyPeekableTraits<V>> map;
 };
 
 template<typename K, typename V>
