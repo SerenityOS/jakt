@@ -1,4 +1,4 @@
-#include "jakt__file_iterator.h"
+#include "jakt__prelude__hash.h"
 #include "main.h"
 #include "platform__unknown_compiler.h"
 #include "repl.h"
@@ -33,6 +33,6 @@
 #include "jakt__prelude__string.h"
 #include "jakt__prelude__iteration.h"
 namespace Jakt {
-namespace jakt__file_iterator {
+namespace jakt__prelude__hash {
 }
 } // namespace Jakt

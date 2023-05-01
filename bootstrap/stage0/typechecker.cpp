@@ -339,6 +339,19 @@ TRY((((((module)->structures)).push(types::CheckedStruct(((parsed_record).name),
 return {};
 }
 
+ErrorOr<void> typechecker::Typechecker::ensure_type_implements_trait(types::TypeId const type_id,DeprecatedString const trait_name,JaktInternal::Optional<JaktInternal::DynamicArray<types::TypeId>> const filter_for_generics,types::ScopeId const scope_id,utility::Span const span) {
+{
+if (((((*this).get_type(type_id)))->index() == 18 /* TypeVariable */)){
+return {};
+}
+JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const implementation = TRY((((*this).find_any_singular_trait_implementation(type_id,(TRY((DynamicArray<DeprecatedString>::create_with({trait_name})))),scope_id,span,filter_for_generics))));
+if ((!(((implementation).has_value())))){
+TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type ‘{}’ does not implement trait ‘{}’"sv)),TRY((((*this).type_name(type_id,false)))),trait_name))),span))));
+}
+}
+return {};
+}
+
 ErrorOr<JaktInternal::Tuple<types::CheckedMatchBody,JaktInternal::Optional<types::TypeId>>> typechecker::Typechecker::typecheck_match_body(parser::ParsedMatchBody const body,types::ScopeId const scope_id,types::SafetyMode const safety_mode,types::GenericInferences& generic_inferences,JaktInternal::Optional<types::TypeId> const final_result_type,utility::Span const span) {
 {
 JaktInternal::Optional<types::TypeId> result_type = final_result_type;
@@ -731,6 +744,10 @@ else {
 TRY((((*this).error(TRY(DeprecatedString::from_utf8("Cannot infer generic type for Set<T>"sv)),span))));
 }
 
+}
+if ((!(((inner_type_id).equals(types::unknown_type_id()))))){
+TRY((((*this).ensure_type_implements_trait(inner_type_id,TRY(DeprecatedString::from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
+TRY((((*this).ensure_type_implements_trait(inner_type_id,TRY(DeprecatedString::from_utf8("Equal"sv)),(TRY((DynamicArray<types::TypeId>::create_with({inner_type_id})))),scope_id,span))));
 }
 types::TypeId const type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::template __jakt_create<typename types::Type::GenericInstance>(set_struct_id,(TRY((DynamicArray<types::TypeId>::create_with({inner_type_id})))))))))));
 return TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::JaktSet>(output,span,type_id,inner_type_id)));
@@ -4418,6 +4435,10 @@ else {
 TRY((((*this).error(TRY(DeprecatedString::from_utf8("Cannot infer key type for Dictionary<K, V>"sv)),span))));
 }
 
+}
+if ((!(((key_type_id).equals(types::unknown_type_id()))))){
+TRY((((*this).ensure_type_implements_trait(key_type_id,TRY(DeprecatedString::from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
+TRY((((*this).ensure_type_implements_trait(key_type_id,TRY(DeprecatedString::from_utf8("Equal"sv)),(TRY((DynamicArray<types::TypeId>::create_with({key_type_id})))),scope_id,span))));
 }
 if (((value_type_id).equals(types::unknown_type_id()))){
 if (((value_hint).has_value())){
@@ -20347,6 +20368,8 @@ return JaktInternal::ExplicitValue(({ Optional<types::TypeId> __jakt_var_569; {
 types::TypeId const key_type_id = TRY((((*this).typecheck_typename(key,scope_id,name))));
 types::TypeId const value_type_id = TRY((((*this).typecheck_typename(value,scope_id,name))));
 types::StructId const dict_struct_id = TRY((((*this).find_struct_in_prelude(TRY(DeprecatedString::from_utf8("Dictionary"sv))))));
+TRY((((*this).ensure_type_implements_trait(key_type_id,TRY(DeprecatedString::from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
+TRY((((*this).ensure_type_implements_trait(key_type_id,TRY(DeprecatedString::from_utf8("Equal"sv)),(TRY((DynamicArray<types::TypeId>::create_with({key_type_id})))),scope_id,span))));
 __jakt_var_569 = TRY((((*this).find_or_add_type_id(TRY((types::Type::template __jakt_create<typename types::Type::GenericInstance>(dict_struct_id,(TRY((DynamicArray<types::TypeId>::create_with({key_type_id, value_type_id}))))))))))); goto __jakt_label_484;
 
 }
@@ -20358,6 +20381,8 @@ utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<types::TypeId> __jakt_var_570; {
 types::TypeId const inner_type_id = TRY((((*this).typecheck_typename(inner,scope_id,name))));
 types::StructId const set_struct_id = TRY((((*this).find_struct_in_prelude(TRY(DeprecatedString::from_utf8("Set"sv))))));
+TRY((((*this).ensure_type_implements_trait(inner_type_id,TRY(DeprecatedString::from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
+TRY((((*this).ensure_type_implements_trait(inner_type_id,TRY(DeprecatedString::from_utf8("Equal"sv)),(TRY((DynamicArray<types::TypeId>::create_with({inner_type_id})))),scope_id,span))));
 __jakt_var_570 = TRY((((*this).find_or_add_type_id(TRY((types::Type::template __jakt_create<typename types::Type::GenericInstance>(set_struct_id,(TRY((DynamicArray<types::TypeId>::create_with({inner_type_id}))))))))))); goto __jakt_label_485;
 
 }
