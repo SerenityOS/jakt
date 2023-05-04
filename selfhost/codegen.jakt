@@ -2053,7 +2053,10 @@ struct CodeGenerator {
                     else => ""
                 }
                 // FIXME: Remove this once we have proper type mutability support
-                RawAddress => "const_cast<" + .codegen_type(type_id) + ">(" + "&"
+                RawAddress => match .program.get_type(type_id).is_boxed(program: .program) {
+                    true => "const_cast<" + .codegen_type_possibly_as_namespace(type_id, as_namespace: true) + ">(" + "&*"
+                    false => "const_cast<" + .codegen_type(type_id) + ">(" + "&"
+                }
                 LogicalNot => "!"
                 BitwiseNot => "~"
                 Sizeof => "sizeof"
@@ -3703,7 +3706,10 @@ struct CodeGenerator {
         CChar => "char"
         CInt => "int"
         Never => "void"
-        RawPtr(type_id) => .codegen_type(type_id) + "*"
+        RawPtr(type_id) => match .program.get_type(type_id).is_boxed(program: .program) {
+            true => .codegen_type_possibly_as_namespace(type_id, as_namespace: true) + "*"
+            false => .codegen_type(type_id) + "*"
+        }
         Reference(type_id) => .codegen_type(type_id) + " const&"
         MutableReference(type_id) => .codegen_type(type_id) + "&"
         GenericResolvedType(id, args) | GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
