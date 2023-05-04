@@ -1,0 +1,16 @@
+/// Expect:
+/// - output: ""
+
+// brought up in #1429.
+
+fn foo() -> i32 {
+    return 1
+}
+
+struct S {
+    f: i32 = foo()
+}
+
+fn main() throws {
+    let s = S()
+}
