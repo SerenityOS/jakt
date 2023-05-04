@@ -1003,19 +1003,38 @@ struct Typechecker {
             }
         }
 
-        mut index = 0
+        guard .program.find_function_in_scope(
+            parent_scope_id: checked_struct_scope_id
+            function_name: parsed_record.name
+        ) is Some(constructor_id) else {
+            return // no constructor, no default parameters to check!
+        }
+
+        mut constructor = .get_function(constructor_id)
+
+
+        mut index = 0uz
         for unchecked_member in parsed_fields {
             defer index += 1
 
-            if not unchecked_member.default_value.has_value() or structure.fields[index].default_value.has_value() {
+            if not unchecked_member.default_value.has_value() {
                 continue
             }
 
-            structure.fields[index].default_value = .typecheck_expression(
-                unchecked_member.default_value!,
-                scope_id: checked_struct_scope_id,
-                safety_mode: SafetyMode::Safe,
-                type_hint: None
+            let variable = .get_variable(structure.fields[index].variable_id)
+            let type_hint = variable.type_id
+
+            let checked_def_value = .typecheck_expression(
+                unchecked_member.default_value!
+                scope_id: checked_struct_scope_id
+                safety_mode: SafetyMode::Safe
+                type_hint
+            )
+
+            structure.fields[index].default_value = checked_def_value
+            constructor.set_param_default_value(
+                param_index: index
+                default_value: checked_def_value
             )
         }
     }
@@ -2648,11 +2667,9 @@ struct Typechecker {
                     let variable = .get_variable(field.variable_id)
                     mut default_value = field.default_value
                     if not default_value.has_value() and field.default_value_expression.has_value() {
-                        field.default_value = .typecheck_expression(
-                            field.default_value_expression!
-                            scope_id: block_scope_id
-                            safety_mode: SafetyMode::Safe
-                            type_hint: variable.type_id
+                        field.default_value = CheckedExpression::Garbage(
+                                span: variable.definition_span
+                                type_id: variable.type_id
                         )
                     }
                     func.add_param(CheckedParameter(
@@ -7048,12 +7065,12 @@ struct Typechecker {
                 I8(val) | I16(val) | I32(val) | I64(val) => NumericOrStringValue::SignedNumericValue(val as! i64)
                 else => {
                     .error(format("Index expression evaluation failed: expected numeric or string type, found {}", value.impl), span)
-                    return CheckedExpression::Garbage(span)
+                    return CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
                 }
             }
             else => {
                 .error(format("Index expression evaluation returned an invalid object {}", index_result), span)
-                return CheckedExpression::Garbage(span)
+                return CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
             }
         }
 
@@ -7907,7 +7924,7 @@ struct Typechecker {
                     let array_slice_struct_id = .find_struct_in_prelude("ArraySlice")
                     let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
 
-                    mut result = CheckedExpression::Garbage(span)
+                    mut result = CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
                     if id.equals(array_struct_id) or id.equals(array_slice_struct_id) {
                         if .is_integer(checked_index.type()) or checked_index is Range {
                             let type_id = match checked_index {
@@ -7929,12 +7946,12 @@ struct Typechecker {
                 }
                 else => {
                     .error("Index used on value that cannot be indexed", span)
-                    yield CheckedExpression::Garbage(span)
+                    yield CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
                 }
             }
         }
         IndexedTuple(expr, index, is_optional, span) => .typecheck_indexed_tuple(expr, index, scope_id, is_optional, safety_mode, span)
-        Garbage(span) => CheckedExpression::Garbage(span)
+        Garbage(span) => CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
         NamespacedVar(name, namespace_, span) => .typecheck_namespaced_var_or_simple_enum_constructor_call(name, namespace_, scope_id, safety_mode, type_hint, span)
         Match(expr, cases, marker_span) => .typecheck_match(expr, cases, span: marker_span, scope_id, safety_mode, type_hint)
         EnumVariantArg(expr: inner_expr, arg, enum_variant, span) => {
@@ -7963,7 +7980,7 @@ struct Typechecker {
                 }
                 else => {}
             }
-            mut output = CheckedExpression::Garbage(span)
+            mut output = CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
             if checked_enum_variant.has_value() {
                 output = CheckedExpression::EnumVariantArg(expr: checked_expr, arg: checked_binding, enum_variant: checked_enum_variant!, span)
             }
