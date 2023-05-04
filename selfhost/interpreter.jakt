@@ -1335,12 +1335,12 @@ class Interpreter {
                     I8(val) | I16(val) | I32(val) | I64(val) => NumericOrStringValue::SignedNumericValue(val as! i64)
                     else => {
                         .error(format("Index expression evaluation failed: expected numeric or string type, found {}", value.impl), span)
-                        return CheckedExpression::Garbage(span)
+                        return CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
                     }
                 }
                 else => {
                     .error(format("Index expression evaluation returned an invalid object {}", index_result), span)
-                    return CheckedExpression::Garbage(span)
+                    return CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
                 }
             }
 

@@ -956,6 +956,15 @@ class CheckedFunction {
         return first_param_variable.name == "this" and first_param_variable.is_mutable
     }
 
+    public fn set_param_default_value(
+        mut this
+        param_index: usize
+        default_value: CheckedExpression
+    ) {
+        .params[param_index].default_value = default_value
+        .generics.base_params[param_index].default_value = default_value
+    }
+
     public fn add_param(mut this, anon checked_param: CheckedParameter) throws {
         .params.push(checked_param)
         .generics.base_params.push(checked_param)
@@ -1586,7 +1595,7 @@ boxed enum CheckedExpression {
     Try(expr: CheckedExpression, catch_block: CheckedBlock?, catch_name: String?, span: Span, type_id: TypeId, inner_type_id: TypeId)
     TryBlock(stmt: CheckedStatement, catch_block: CheckedBlock, error_name: String, error_span: Span, span: Span, type_id: TypeId)
     Reflect(type: TypeId, span: Span, type_id: TypeId)
-    Garbage(Span)
+    Garbage(span: Span, type_id: TypeId)
 
     fn to_number_constant(this, program: CheckedProgram) -> NumberConstant? => match this {
         NumericConstant(val, span, type_id) => val.number_constant()
@@ -1682,7 +1691,6 @@ boxed enum CheckedExpression {
         EnumVariantArg(arg) => arg.type_id
         NamespacedVar(var) => var.type_id
         Var(var) => var.type_id
-        Garbage => builtin(BuiltinType::Void)
         ComptimeIndex => builtin(BuiltinType::Unknown) // FIXME
         else(type_id) => type_id
     }
