@@ -990,13 +990,13 @@ enum Deferred {
 class InterpreterScope {
     public bindings: [String:Value]
     public parent: InterpreterScope?
-    public type_bindings: [String:TypeId]
+    public type_bindings: [TypeId:TypeId]
     public defers: [Deferred]
 
     public fn create(
         bindings: [String:Value] = [:]
         parent: InterpreterScope? = None
-        type_bindings: [String: TypeId] = [:]
+        type_bindings: [TypeId:TypeId] = [:]
     ) throws -> InterpreterScope => InterpreterScope(
         bindings
         parent
@@ -1082,15 +1082,14 @@ class InterpreterScope {
     }
 
     public fn map_type(this, anon id: TypeId) throws -> TypeId {
-        let name = id.to_string()
-        if .type_bindings.contains(name) {
-            return .type_bindings[name]
+        if .type_bindings.contains(id) {
+            return .type_bindings[id]
         }
 
         mut scope = .parent
         while scope.has_value() {
-            if scope!.type_bindings.contains(name) {
-                return scope!.type_bindings[name]
+            if scope!.type_bindings.contains(id) {
+                return scope!.type_bindings[id]
             }
             scope = scope!.parent
         }
@@ -1098,18 +1097,18 @@ class InterpreterScope {
         return id
     }
 
-    fn type_map_for_substitution_helper(this, map: &mut [String:String]) throws {
+    fn type_map_for_substitution_helper(this, map: &mut [TypeId:TypeId]) throws {
         if .parent.has_value() {
             .parent!.type_map_for_substitution_helper(map)
         }
 
         for pair in .type_bindings {
-            map.set(pair.0, pair.1.to_string())
+            map.set(pair.0, pair.1)
         }
     }
 
     public fn type_map_for_substitution(this) throws -> GenericInferences {
-        mut map: [String:String] = [:]
+        mut map: [TypeId:TypeId] = [:]
         .type_map_for_substitution_helper(&mut map)
         return GenericInferences(values: map)
     }
@@ -1151,8 +1150,8 @@ class Interpreter {
     public compiler: Compiler
     public program: CheckedProgram
     public spans: [Span]
-    public reflected_type_cache: [String:Value]
-    public seen_reflected_types: {String}
+    public reflected_type_cache: [TypeId:Value]
+    public seen_reflected_types: {TypeId}
     public current_function_id: FunctionId?
     public typecheck_functions: TypecheckFunctions
 
@@ -1535,7 +1534,15 @@ class Interpreter {
         return TypeId(module: ModuleId(id: 0), id: .program.modules[0].types.size() - 1)
     }
 
-    public fn call_prelude_function(mut this, anon prelude_function: String, anon namespace_: [ResolvedNamespace], this_argument: Value?, arguments: [Value], call_span: Span, type_bindings: [String:TypeId]) throws -> StatementResult {
+    public fn call_prelude_function(
+        mut this
+        anon prelude_function: String
+        anon namespace_: [ResolvedNamespace]
+        this_argument: Value?
+        arguments: [Value]
+        call_span: Span
+        type_bindings: [TypeId:TypeId]
+    ) throws -> StatementResult {
         if namespace_.size() != 1 {
             return match prelude_function {
                 "format" => {
@@ -1586,7 +1593,7 @@ class Interpreter {
                         parent_scope_id: .program.prelude_scope_id()
                         function_name: "as_saturated")![0])
 
-                    let output_type_id = type_bindings.get(function.generics.params[0].type_id().to_string())
+                    let output_type_id = type_bindings.get(function.generics.params[0].type_id())
                     yield StatementResult::JustValue(
                         cast_value_to_type(arguments[0], output_type_id!, interpreter: this, saturating: true)
                     )
@@ -3595,7 +3602,7 @@ class Interpreter {
                 namespace_ = effective_namespace
             }
 
-            mut type_bindings: [String:TypeId] = [:]
+            mut type_bindings: [TypeId:TypeId] = [:]
             if invocation_scope.has_value() {
                 type_bindings = invocation_scope!.type_bindings
             }
@@ -6275,12 +6282,12 @@ class Interpreter {
                 })
             }
 
-            mut type_bindings: [String:TypeId] = [:]
+            mut type_bindings: [TypeId:TypeId] = [:]
             for i in 0..function_to_run.generics.params.size() {
                 let param = function_to_run.generics.params[i]
 
                 type_bindings.set(
-                    param.type_id().to_string()
+                    param.type_id()
                     call.type_args[i]
                 )
             }
@@ -7630,14 +7637,13 @@ class Interpreter {
 
     public fn reflect_type(mut this, type_id: TypeId, span: Span, scope: InterpreterScope) throws -> Value {
         let mapped_type_id = scope.map_type(type_id)
-        let mapped_type_key = mapped_type_id.to_string()
 
-        if .reflected_type_cache.contains(mapped_type_key) {
-            return .reflected_type_cache.get(mapped_type_key)!
+        if .reflected_type_cache.contains(mapped_type_id) {
+            return .reflected_type_cache.get(mapped_type_id)!
         }
 
-        .seen_reflected_types.add(mapped_type_key)
-        defer .seen_reflected_types.remove(mapped_type_key)
+        .seen_reflected_types.add(mapped_type_id)
+        defer .seen_reflected_types.remove(mapped_type_id)
 
         let type = .program.get_type(mapped_type_id)
         let reflected_enum_id = match .program.find_reflected_primitive("Type") {
@@ -7655,7 +7661,7 @@ class Interpreter {
             )
             span
         )
-        .reflected_type_cache.set(mapped_type_key, result)
+        .reflected_type_cache.set(mapped_type_id, result)
 
         mut fields: [Value] = []
         let found_constructor = match type {

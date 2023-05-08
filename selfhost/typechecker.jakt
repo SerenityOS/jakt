@@ -33,7 +33,7 @@ import compiler { Compiler }
 import interpreter { Interpreter, InterpreterScope, ExecutionResult, value_to_checked_expression }
 
 enum FunctionMatchResult {
-    MatchSuccess(args: [CheckedExpression], maybe_this_type_id: TypeId?, used_generic_inferences: [String:String], specificity: i64)
+    MatchSuccess(args: [CheckedExpression], maybe_this_type_id: TypeId?, used_generic_inferences: [TypeId:TypeId], specificity: i64)
     MatchError(errors: [JaktError])
 }
 
@@ -3477,7 +3477,7 @@ struct Typechecker {
                         for field in common_fields {
                             fields.push(field)
                         }
-                        
+
                         if (variant.params is Some(variant_params) and variant.default_values is Some(variant_default_values)) {
                             for i in 0..variant_params.size() {
                                 let param = variant_params[i]
@@ -3504,7 +3504,7 @@ struct Typechecker {
                                     // FIXME: The typechecker can't find expressions that are outside the scope of the enum.
                                     // FIXME: Get the real safety mode from somewhere, right now it assumes it is safe.
                                     checked_default_value = .typecheck_expression(expression, scope_id: enum_.scope_id, safety_mode: SafetyMode::Safe, type_hint: type_id)
-                                } 
+                                }
 
                                 params.push(CheckedParameter(requires_label: true, variable: checked_var, default_value: checked_default_value))
 
@@ -4258,7 +4258,7 @@ struct Typechecker {
                     mut interpreter = .interpreter()
                     mut scope = InterpreterScope::create(
                         type_bindings: [
-                            .find_or_add_type_id(Type::Self).to_string(): generic_argument
+                            .find_or_add_type_id(Type::Self): generic_argument
                         ]
                     )
                     let result = try interpreter.execute_expression(expr, scope)
@@ -4383,9 +4383,9 @@ struct Typechecker {
         let span = parsed_function.name_span
         for generic_parameter in checked_function.generics.params {
             let parameter_type_id = generic_parameter.checked_parameter.type_id
-            let mapped = generic_substitutions.get(parameter_type_id.to_string())
+            let mapped = generic_substitutions.get(parameter_type_id)
             guard mapped.has_value() else { continue }
-            let type_id = TypeId::from_string(mapped!)
+            let type_id = mapped!
             guard .get_type(parameter_type_id) is TypeVariable(name: type_name) else { continue }
 
             let dependent_scope_id: ScopeId? = match .get_type(parameter_type_id) {
@@ -4682,9 +4682,6 @@ struct Typechecker {
             )
         }
 
-        let lhs_type_id_string = lhs_type_id.to_string()
-        let rhs_type_id_string = rhs_type_id.to_string()
-
         let optional_struct_id = .find_struct_in_prelude("Optional")
         let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
         let array_struct_id = .find_struct_in_prelude("Array")
@@ -4692,9 +4689,9 @@ struct Typechecker {
         match lhs_type {
             TypeVariable => {
                 // If the call expects a generic type variable, let's see if we've already seen it
-                mut seen_type_id_string = generic_inferences.get(lhs_type_id_string)
-                if seen_type_id_string.has_value() {
-                    let seen_type_id = TypeId::from_string(seen_type_id_string!)
+                mut maybe_seen_type_id = generic_inferences.get(lhs_type_id)
+                if maybe_seen_type_id.has_value() {
+                    let seen_type_id = maybe_seen_type_id!
                     if .get_type(seen_type_id) is TypeVariable {
                         return .check_types_for_compat(
                             lhs_type_id: seen_type_id
@@ -4704,7 +4701,7 @@ struct Typechecker {
                     }
                     // We've seen this type variable assigned something before
                     // we should error if it's incompatible.
-                    if seen_type_id_string.value() != rhs_type_id_string {
+                    if seen_type_id != rhs_type_id {
                         .error(
                             format(
                                 "Type mismatch: expected ‘{}’, but got ‘{}’"
@@ -4716,7 +4713,7 @@ struct Typechecker {
                         return false
                     }
                 } else {
-                    generic_inferences.set(key: lhs_type_id_string, value: rhs_type_id_string)
+                    generic_inferences.set(key: lhs_type_id, value: rhs_type_id)
                 }
             }
             GenericEnumInstance(id: lhs_enum_id, args: lhs_args) => {
@@ -4913,21 +4910,21 @@ struct Typechecker {
                         }
                     }
                     TypeVariable => {
-                        let seen_type_id_string = generic_inferences.get(rhs_type_id_string)
-                        if seen_type_id_string.has_value() {
-                            if seen_type_id_string.value() != lhs_type_id_string {
+                        let maybe_seen_type_id = generic_inferences.get(rhs_type_id)
+                        if maybe_seen_type_id.has_value() {
+                            if maybe_seen_type_id! != lhs_type_id {
                                 .error(
                                     format(
                                         "Type mismatch: expected ‘{}’, but got ‘{}’"
                                         .type_name(lhs_type_id)
-                                        .type_name(TypeId::from_string(seen_type_id_string.value()))
+                                        .type_name(maybe_seen_type_id.value())
                                     )
                                     span
                                 )
                                 return false
                             }
                         } else {
-                            generic_inferences.set(key: lhs_type_id_string, value: rhs_type_id_string)
+                            generic_inferences.set(key: lhs_type_id, value: rhs_type_id)
                         }
                     }
                     else => {
@@ -4976,16 +4973,16 @@ struct Typechecker {
                     }
                     TypeVariable => {
                         // If the call expects a generic type variable, let's see if we've already seen it
-                        let seen_type_id_string = generic_inferences.get(rhs_type_id_string)
-                        if seen_type_id_string.has_value() {
+                        let seen_type_id = generic_inferences.get(rhs_type_id)
+                        if seen_type_id.has_value() {
                             // We've seen this type variable assigned something before
                             // we should error if it's incompatible.
 
-                            if seen_type_id_string.value() != lhs_type_id_string {
+                            if seen_type_id.value() != lhs_type_id {
                                 .error(
                                     format(
                                         "Type mismatch: expected ‘{}’, but got ‘{}’"
-                                        .type_name(TypeId::from_string(seen_type_id_string.value()))
+                                        .type_name(seen_type_id.value())
                                         .type_name(rhs_type_id)
                                     )
                                     span
@@ -4993,7 +4990,7 @@ struct Typechecker {
                                 return false
                             }
                         } else {
-                            generic_inferences.set(key: lhs_type_id_string, value: rhs_type_id_string)
+                            generic_inferences.set(key: lhs_type_id, value: rhs_type_id)
                         }
                     }
                     else => {
@@ -5075,7 +5072,7 @@ struct Typechecker {
                 }
             }
             else => {
-                if generic_inferences.map_name(rhs_type_id_string) != generic_inferences.map_name(lhs_type_id_string) {
+                if generic_inferences.map(rhs_type_id) != generic_inferences.map(lhs_type_id) {
                     .error(
                         format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                         span
@@ -8781,8 +8778,8 @@ struct Typechecker {
         if type_to_match_on is GenericEnumInstance(id, args) {
             let enum_ = .get_enum(id)
             for i in 0..enum_.generic_parameters.size() {
-                let generic = enum_.generic_parameters[i].type_id.to_string()
-                let argument_type = args[i].to_string()
+                let generic = enum_.generic_parameters[i].type_id
+                let argument_type = args[i]
                 if generic != argument_type {
                     .generic_inferences.set(generic, argument_type)
                 }
@@ -9559,7 +9556,7 @@ struct Typechecker {
             let typevar_type_id = callee_candidate.generics.params[type_arg_index].type_id()
 
             if not typevar_type_id.equals(checked_type) {
-                .generic_inferences.set(typevar_type_id.to_string(), checked_type.to_string())
+                .generic_inferences.set(typevar_type_id, checked_type)
             }
 
             type_arg_index += 1
@@ -9582,8 +9579,8 @@ struct Typechecker {
                     }
 
                     .generic_inferences.set(
-                        structure.generic_parameters[i].type_id.to_string()
-                        args[i].to_string()
+                        structure.generic_parameters[i].type_id
+                        args[i]
                     )
                 }
             }
@@ -9716,14 +9713,14 @@ struct Typechecker {
             }
         }
 
-        mut generic_inferences_from_parent: [String:String] = [:]
+        mut generic_inferences_from_parent: [TypeId:TypeId] = [:]
         if parent_id.has_value() and parent_id!.generic_arguments.has_value() {
             let arguments = parent_id!.generic_arguments!
             let parameters = parent_id!.generic_parameters(&.program)
 
             for i in 0..arguments.size() {
-                generic_inferences_from_parent.set(parameters[i].to_string(), arguments[i].to_string())
-                .generic_inferences.set(parameters[i].to_string(), arguments[i].to_string())
+                generic_inferences_from_parent.set(parameters[i], arguments[i])
+                .generic_inferences.set(parameters[i], arguments[i])
             }
         }
 
@@ -9752,7 +9749,7 @@ struct Typechecker {
             else => {
                 mut max_found_specificity = -1i64
                 mut errors_while_trying_to_find_matching_function: [JaktError] = []
-                mut generic_inferences_for_best_match: [String:String] = [:]
+                mut generic_inferences_for_best_match: [TypeId:TypeId] = [:]
                 // find the best match i.e. the most specific implementation that matches the signature
                 for candidate in resolved_function_id_candidates.iterator() {
                     match .match_function_and_resolve_args(call, caller_scope_id, candidate, safety_mode, span, this_expr) {
@@ -9862,9 +9859,9 @@ struct Typechecker {
 
                 for generic_typevar in callee.generics.params {
                     if generic_typevar.kind is Parameter {
-                        let substitution = .generic_inferences.get(generic_typevar.type_id().to_string())
+                        let substitution = .generic_inferences.get(generic_typevar.type_id())
                         if substitution.has_value() {
-                            generic_arguments.push(TypeId::from_string(substitution!))
+                            generic_arguments.push(substitution!)
                         } else if not .in_comptime_function_call {
                             .error("Not all generic parameters have known types", span)
                         } else {
@@ -9997,7 +9994,7 @@ struct Typechecker {
 
             for entry in .generic_inferences.iterator() {
                 let (key, value) = entry
-                eval_scope.type_bindings.set(key, TypeId::from_string(value))
+                eval_scope.type_bindings.set(key, value)
             }
 
             if this_expr.has_value() {
@@ -10050,12 +10047,12 @@ struct Typechecker {
             }
 
 
-            mut type_bindings: [String:TypeId] = [:]
+            mut type_bindings: [TypeId:TypeId] = [:]
             for i in 0uz..resolved_function.generics.params.size() {
                 let param = resolved_function.generics.params[i]
 
                 type_bindings.set(
-                    param.type_id().to_string()
+                    param.type_id()
                     function_call.type_args[i]
                 )
             }
@@ -10481,11 +10478,11 @@ struct AlreadyImplementedFor {
 // helper struct to implement the checking of trait implementations
 struct TraitImplCheck {
     // methods that don't yet have a specified implementation.
-    missing_methods: [String:[String:FunctionId]] // typeid -> [method name -> function id]
+    missing_methods: [TypeId:[String:FunctionId]] // typeid -> [method name -> function id]
     // same name, but signature doesn't match.
-    unmatched_signatures: [String:[String:Span]] // typeid -> [method name -> span]
+    unmatched_signatures: [TypeId:[String:Span]] // typeid -> [method name -> span]
     // same name, signature matches, but isn't marked public.
-    private_matching_methods: [String:[String:Span]] // typeid -> [method name -> span]
+    private_matching_methods: [TypeId:[String:Span]] // typeid -> [method name -> span]
     // 'Cannot implement method X for trait Y since it already implements Z'
     already_implemented_for: [String:AlreadyImplementedFor] // trait name -> (type name, span)
 
@@ -10513,9 +10510,8 @@ struct TraitImplCheck {
             return
         }
 
-        let type_name = trait_type_id.to_string()
-        .unmatched_signatures[type_name] = [:]
-        .private_matching_methods[type_name] = [:]
+        .private_matching_methods[trait_type_id] = [:]
+        .unmatched_signatures[trait_type_id] = [:]
 
         mut missing_methods: [String:FunctionId] = [:]
         missing_methods.ensure_capacity(trait_methods.size())
@@ -10525,12 +10521,12 @@ struct TraitImplCheck {
             missing_methods.set(method_name, method_id)
         }
 
-        .missing_methods.set(type_name, missing_methods)
+        .missing_methods.set(trait_type_id, missing_methods)
     }
 
     fn throw_errors(mut this, record_decl_span: Span, typechecker: &mut Typechecker) throws {
-        for (trait_type_name, missing_methods) in .missing_methods {
-            let (trait_id, trait_generic_arguments) = match typechecker.get_type(TypeId::from_string(trait_type_name)) {
+        for (trait_type_id, missing_methods) in .missing_methods {
+            let (trait_id, trait_generic_arguments) = match typechecker.get_type(trait_type_id) {
                 GenericTraitInstance(id: trait_id, args) | Trait(trait_id) default(args: [TypeId] = []) => (trait_id, args)
                 else => {
                     // unreachable
@@ -10540,8 +10536,8 @@ struct TraitImplCheck {
 
             let trait_name = typechecker.get_trait(trait_id).name
 
-            let unmatched_signatures = .unmatched_signatures[trait_type_name]
-            let private_matching_methods = .private_matching_methods[trait_type_name]
+            let unmatched_signatures = .unmatched_signatures[trait_type_id]
+            let private_matching_methods = .private_matching_methods[trait_type_id]
             for (method_name, trait_method_id) in missing_methods {
                 let already_implemented_for = .already_implemented_for.get(method_name)
                 let unmatched_signature = unmatched_signatures.get(method_name)
@@ -10598,7 +10594,7 @@ struct TraitImplCheck {
         let method = typechecker.get_function(method_id)
 
         // search for a matching method
-        for (trait_type_name, methods) in .missing_methods {
+        for (trait_type_id, methods) in .missing_methods {
             let trait_method_id = methods.get(method_name)
 
             guard trait_method_id.has_value() else {
@@ -10606,7 +10602,7 @@ struct TraitImplCheck {
             }
             let trait_method = typechecker.get_function(trait_method_id!)
 
-            let (trait_id, trait_generic_arguments) = match typechecker.get_type(TypeId::from_string(trait_type_name)) {
+            let (trait_id, trait_generic_arguments) = match typechecker.get_type(trait_type_id) {
                 GenericTraitInstance(id: trait_id, args) | Trait(trait_id) default(args: [TypeId] = []) => (trait_id, args)
                 else => {
                     // unreachable
@@ -10619,19 +10615,19 @@ struct TraitImplCheck {
             defer typechecker.generic_inferences.restore(old_generic_inferences)
 
             guard trait_.generic_parameters.size() == trait_generic_arguments.size() else {
-                .unmatched_signatures[trait_type_name].set(method_name, method.name_span)
+                .unmatched_signatures[trait_type_id].set(method_name, method.name_span)
                 continue
             }
 
             typechecker.generic_inferences.set_all(keys: trait_.generic_parameters, values: trait_generic_arguments)
 
             guard typechecker.signatures_match(self_type_id, trait_method, method) else {
-                .unmatched_signatures[trait_type_name].set(method_name, method.name_span)
+                .unmatched_signatures[trait_type_id].set(method_name, method.name_span)
                 continue
             }
 
             guard method.visibility is Public else {
-                .private_matching_methods[trait_type_name].set(method_name, method.name_span)
+                .private_matching_methods[trait_type_id].set(method_name, method.name_span)
                 continue
             }
 
@@ -10639,7 +10635,7 @@ struct TraitImplCheck {
             // Register it as already implemented so that the rest of the traits
             // that needed a similar method know that the method was already implementing
             // one trait.
-            .missing_methods[trait_type_name].remove(method_name)
+            .missing_methods[trait_type_id].remove(method_name)
             .already_implemented_for[method_name] = AlreadyImplementedFor(trait_name: trait_.name, encounter_span: method.name_span)
             break
         }

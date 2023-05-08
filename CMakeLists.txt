@@ -87,6 +87,7 @@ set(SELFHOST_SOURCES
   selfhost/error.jakt
   selfhost/formatter.jakt
   selfhost/ide.jakt
+  selfhost/ids.jakt
   selfhost/interpreter.jakt
   selfhost/lexer.jakt
   selfhost/parser.jakt
