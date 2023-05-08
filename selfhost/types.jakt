@@ -7,152 +7,11 @@ import parser {
 }
 import utility { FileId, IterationDecision, Queue, Span, join, panic, todo }
 import compiler { Compiler }
+import ids { EnumId, FunctionId, ModuleId, ScopeId, StructId, TraitId, TypeId, VarId }
 
 enum StructOrEnumId {
     Struct(StructId)
     Enum(EnumId)
-}
-
-struct GenericInferences {
-    values: [String:String]
-
-    fn set(mut this, anon key: String, anon value: String) throws {
-        if key == value {
-            println("Warning: Generic parameter {} is being bound to itself", key)
-            abort()
-        }
-
-        let mapped_value = .map_name(value)
-        if key == mapped_value {
-            return
-        }
-
-        .values[key] = mapped_value
-    }
-
-    fn set_all(mut this, keys: [CheckedGenericParameter], values: [TypeId]) throws {
-        for i in 0..(keys.size()) {
-            let key = keys[i].type_id.to_string()
-            let value = values[i].to_string()
-            .set(key, value)
-        }
-    }
-
-    fn get(this, anon key: String) -> String? {
-        return .values.get(key)
-    }
-
-    fn map_name(this, anon type: String) -> String {
-        mut mapped = .values.get(type)
-        mut final_mapped_result = mapped
-        while mapped.has_value() {
-            final_mapped_result = mapped
-            mapped = .values.get(mapped!)
-        }
-        return final_mapped_result ?? type
-    }
-
-    fn map(this, anon type_id: TypeId) throws -> TypeId {
-        return TypeId::from_string(.map_name(type_id.to_string()))
-    }
-
-    fn find_and_map(this, anon name: String, anon program: &CheckedProgram) throws -> TypeId? {
-        for (k, v) in .values {
-            let type_id = TypeId::from_string(k)
-            if program.get_type(type_id) is TypeVariable(name: var_name) and var_name == name {
-                return TypeId::from_string(.map_name(v))
-            }
-        }
-
-        return None
-    }
-
-    fn iterator(this) -> [String:String] => .values
-
-    fn perform_checkpoint(mut this, reset: bool = true) throws -> [String:String] {
-        let result = .values
-        .values = [:]
-
-        if not reset {
-            for (key, value) in result {
-                .values[key] = value
-            }
-        }
-
-        return result
-    }
-
-    fn restore(mut this, anon checkpoint: [String:String]) {
-        .values = checkpoint
-    }
-
-    fn set_from(mut this, anon checkpoint: [String:String]) throws {
-        for (key, value) in checkpoint {
-            .set(key, value)
-        }
-    }
-
-    fn debug_description(this, anon program: &CheckedProgram) throws {
-        eprintln("Generic inferences:")
-        for (key, value) in .values {
-            let key_type = TypeId::from_string(key)
-            let value_type = TypeId::from_string(value)
-            eprintln(
-                "  {} => {}"
-                program.type_name(key_type, debug_mode: true)
-                program.type_name(value_type, debug_mode: true)
-            )
-        }
-    }
-}
-
-enum SafetyMode {
-    Safe
-    Unsafe
-}
-
-struct ModuleId implements(Hashable, Equal<ModuleId>) {
-    id: usize
-
-    fn equals(this, anon rhs: ModuleId) -> bool {
-        return this.id == rhs.id
-    }
-
-    fn hash(this) -> u32 {
-        return .id.hash()
-    }
-}
-
-struct VarId {
-    module: ModuleId
-    id: usize
-}
-
-struct FunctionId {
-    module: ModuleId
-    id: usize
-
-    fn equals(this, anon rhs: FunctionId) -> bool {
-        return this.module.id == rhs.module.id and this.id == rhs.id
-    }
-}
-
-struct StructId {
-    module: ModuleId
-    id: usize
-
-    fn equals(this, anon rhs: StructId) -> bool {
-        return this.module.id == rhs.module.id and this.id == rhs.id
-    }
-}
-
-struct EnumId {
-    module: ModuleId
-    id: usize
-
-    fn equals(this, anon rhs: EnumId) -> bool {
-        return this.module.id == rhs.module.id and this.id == rhs.id
-    }
 }
 
 enum StructLikeId {
@@ -182,58 +41,95 @@ enum StructLikeId {
     }
 }
 
-struct TypeId {
-    module: ModuleId
-    id: usize
+struct GenericInferences {
+    values: [TypeId:TypeId]
 
-    fn none() -> TypeId? => None
-
-    fn equals(this, anon rhs: TypeId) -> bool {
-        return this.module.id == rhs.module.id and this.id == rhs.id
-    }
-
-    // FIXME: Remove when we have language support, used as workaround [String:String] <-> [TypeId:TypeId]
-    fn to_string(this) throws -> String {
-        return format("{}_{}", .module.id, .id)
-    }
-
-    // FIXME: Remove when we have language support, used as workaround [String:String] <-> [TypeId:TypeId]
-    fn from_string(anon type_id_string: String) throws -> TypeId {
-        let parts = type_id_string.split(c'_')
-        if not (parts.size() == 2) {
-            panic(format("Failed to convert string ‘{}’ to a TypeId: Wrong number of parts. (Wanted 2, got {})", type_id_string, parts.size()))
+    fn set(mut this, anon key: TypeId, anon value: TypeId) throws {
+        if key == value {
+            println("Warning: Generic parameter {} is being bound to itself", key)
+            abort()
         }
 
-        let module_id = parts[0].to_uint()
-        let type_id = parts[1].to_uint()
-        if not module_id.has_value() or not type_id.has_value() {
-            panic(format("Failed to convert string ‘{}’ to a TypeId. (module_id = {} ({}), type_id = {} ({}))", type_id_string, module_id, parts[0], type_id, parts[1]))
+        let mapped_value = .map(value)
+        if key == mapped_value {
+            return
         }
 
-        return TypeId(module: ModuleId(id: module_id.value() as! usize), id: type_id.value() as! usize)
+        .values[key] = mapped_value
+    }
+
+    fn set_all(mut this, keys: [CheckedGenericParameter], values: [TypeId]) throws {
+        for i in 0..(keys.size()) {
+            let key = keys[i].type_id
+            let value = values[i]
+            .set(key, value)
+        }
+    }
+
+    fn get(this, anon key: TypeId) -> TypeId? {
+        return .values.get(key)
+    }
+
+    fn map(this, anon type: TypeId) -> TypeId {
+        mut mapped = .values.get(type)
+        mut final_mapped_result = mapped
+        while mapped.has_value() {
+            final_mapped_result = mapped
+            mapped = .values.get(mapped!)
+        }
+        return final_mapped_result ?? type
+    }
+
+    fn find_and_map(this, anon name: String, anon program: &CheckedProgram) throws -> TypeId? {
+        for (type_id, v) in .values {
+            if program.get_type(type_id) is TypeVariable(name: var_name) and var_name == name {
+                return .map(v)
+            }
+        }
+
+        return None
+    }
+
+    fn iterator(this) -> [TypeId:TypeId] => .values
+
+    fn perform_checkpoint(mut this, reset: bool = true) throws -> [TypeId:TypeId] {
+        let result = .values
+        .values = [:]
+
+        if not reset {
+            for (key, value) in result {
+                .values[key] = value
+            }
+        }
+
+        return result
+    }
+
+    fn restore(mut this, anon checkpoint: [TypeId:TypeId]) {
+        .values = checkpoint
+    }
+
+    fn set_from(mut this, anon checkpoint: [TypeId:TypeId]) throws {
+        for (key, value) in checkpoint {
+            .set(key, value)
+        }
+    }
+
+    fn debug_description(this, anon program: &CheckedProgram) throws {
+        eprintln("Generic inferences:")
+        for (key, value) in .values {
+            eprintln(
+                "  {} => {}"
+                program.type_name(key, debug_mode: true)
+                program.type_name(value, debug_mode: true)
+            )
+        }
     }
 }
 
-struct TraitId {
-    module: ModuleId
-    id: usize
-
-    fn equals(this, anon other: TraitId) -> bool {
-        return this.module.id == other.module.id and this.id == other.id
-    }
-}
-
-struct ScopeId implements(Hashable, Equal<ScopeId>) {
-    module_id: ModuleId
-    id: usize
-
-    fn equals(this, anon other: ScopeId) -> bool {
-        return this.module_id.id == other.module_id.id and this.id == other.id
-    }
-
-    fn hash(this) -> u32 {
-        return .id.pair_hash_with(&.module_id)
-    }
+enum SafetyMode {
+    Safe
+    Unsafe
 }
 
 enum BuiltinType {
@@ -898,23 +794,23 @@ class CheckedFunction {
             return false
         }
 
-        mut lhs_generic_type_ids: {String} = {}
-        mut rhs_generic_type_ids: {String} = {}
+        mut lhs_generic_type_ids: {TypeId} = {}
+        mut rhs_generic_type_ids: {TypeId} = {}
         for param in this.generics.params.iterator() {
             let type_id: TypeId = param.type_id()
-            lhs_generic_type_ids.add(type_id.to_string())
+            lhs_generic_type_ids.add(type_id)
         }
         for param in other.generics.params.iterator() {
             let type_id: TypeId = param.type_id()
-            rhs_generic_type_ids.add(type_id.to_string())
+            rhs_generic_type_ids.add(type_id)
         }
 
         for param_index in 0..this.params.size() {
             let lhs_param = this.params[param_index]
             let rhs_param = other.params[param_index]
 
-            let lhs_param_id = lhs_param.variable.type_id.to_string()
-            let rhs_param_id = rhs_param.variable.type_id.to_string()
+            let lhs_param_id = lhs_param.variable.type_id
+            let rhs_param_id = rhs_param.variable.type_id
 
             if not lhs_param.variable.type_id.equals(rhs_param.variable.type_id)
                 and not (lhs_generic_type_ids.contains(lhs_param_id) and rhs_generic_type_ids.contains(rhs_param_id))
@@ -2452,9 +2348,9 @@ class CheckedProgram {
 
         match type_ {
             TypeVariable => {
-                let replacment_type_id_string = generic_inferences.get(type_id.to_string())
-                if replacment_type_id_string.has_value() {
-                    return TypeId::from_string(replacment_type_id_string.value())
+                let replacement_type_id = generic_inferences.get(type_id)
+                if replacement_type_id.has_value() {
+                    return replacement_type_id!
                 }
             }
             GenericTraitInstance(id, args) => {

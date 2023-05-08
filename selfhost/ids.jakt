@@ -1,0 +1,83 @@
+import jakt::prelude::hash { pair_int_hash }
+
+struct ModuleId implements(Hashable, Equal<ModuleId>) {
+    id: usize
+
+    fn equals(this, anon rhs: ModuleId) -> bool {
+        return this.id == rhs.id
+    }
+
+    fn hash(this) -> u32 {
+        return .id.hash()
+    }
+}
+
+struct VarId {
+    module: ModuleId
+    id: usize
+}
+
+struct FunctionId {
+    module: ModuleId
+    id: usize
+
+    fn equals(this, anon rhs: FunctionId) -> bool {
+        return this.module.id == rhs.module.id and this.id == rhs.id
+    }
+}
+
+struct StructId {
+    module: ModuleId
+    id: usize
+
+    fn equals(this, anon rhs: StructId) -> bool {
+        return this.module.id == rhs.module.id and this.id == rhs.id
+    }
+}
+
+struct EnumId {
+    module: ModuleId
+    id: usize
+
+    fn equals(this, anon rhs: EnumId) -> bool {
+        return this.module.id == rhs.module.id and this.id == rhs.id
+    }
+}
+
+struct TypeId implements(Hashable, Equal<TypeId>) {
+    module: ModuleId
+    id: usize
+
+    fn none() -> TypeId? => None
+
+    fn equals(this, anon rhs: TypeId) -> bool {
+        return this.module.id == rhs.module.id and this.id == rhs.id
+    }
+
+    // FIXME: Using .id.pair_hash_with(&.module) here causes a compiler crash.
+    fn hash(this) -> u32 {
+        return pair_int_hash(.id.hash(), .module.hash())
+    }
+}
+
+struct TraitId {
+    module: ModuleId
+    id: usize
+
+    fn equals(this, anon other: TraitId) -> bool {
+        return this.module.id == other.module.id and this.id == other.id
+    }
+}
+
+struct ScopeId implements(Hashable, Equal<ScopeId>) {
+    module_id: ModuleId
+    id: usize
+
+    fn equals(this, anon other: ScopeId) -> bool {
+        return this.module_id.id == other.module_id.id and this.id == other.id
+    }
+
+    fn hash(this) -> u32 {
+        return pair_int_hash(.id.hash(), .module_id.hash())
+    }
+}

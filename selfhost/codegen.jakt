@@ -462,36 +462,35 @@ struct CodeGenerator {
         return result
     }
 
-    fn postorder_traversal(this, encoded_type_id: String, mut visited: {String}, encoded_dependency_graph: [String: [String]], mut output: [TypeId]) throws {
-        let type_id = TypeId::from_string(encoded_type_id)
-        if visited.contains(type_id.to_string()) {
+    fn postorder_traversal(this, type_id: TypeId, mut visited: {TypeId}, dependency_graph: [TypeId: [TypeId]], mut output: [TypeId]) throws {
+        if visited.contains(type_id) {
             return
         }
-        visited.add(type_id.to_string())
-        if encoded_dependency_graph.contains(encoded_type_id) {
-            for dependency in encoded_dependency_graph.get(encoded_type_id)! {
-                .postorder_traversal(encoded_type_id: dependency, visited, encoded_dependency_graph, output)
+        visited.add(type_id)
+        if dependency_graph.contains(type_id) {
+            for dependency in dependency_graph.get(type_id)! {
+                .postorder_traversal(type_id: dependency, visited, dependency_graph, output)
             }
         }
         output.push(type_id)
     }
 
-    fn produce_codegen_dependency_graph(this, scope: Scope) throws -> [String : [String]] {
-        mut dependency_graph: [String : [String]] = [:]
+    fn produce_codegen_dependency_graph(this, scope: Scope) throws -> [TypeId:[TypeId]] {
+        mut dependency_graph: [TypeId:[TypeId]] = [:]
 
         for type_ in scope.types {
-            dependency_graph.set(type_.1.to_string(), .extract_dependencies_from(type_id: type_.1, dependency_graph, top_level: true))
+            dependency_graph.set(type_.1, .extract_dependencies_from(type_id: type_.1, dependency_graph, top_level: true))
         }
 
         return dependency_graph
     }
 
-    fn extract_dependencies_from(this, type_id: TypeId, dependency_graph: [String : [String]], top_level: bool) throws -> [String] {
-        mut dependencies: [String] = []
+    fn extract_dependencies_from(this, type_id: TypeId, dependency_graph: [TypeId:[TypeId]], top_level: bool) throws -> [TypeId] {
+        mut dependencies: [TypeId] = []
 
         let type_ = .program.get_type(type_id)
-        if not type_.is_boxed(program: .program) and dependency_graph.contains(type_id.to_string()) {
-            for dependency in dependency_graph.get(type_id.to_string())! {
+        if not type_.is_boxed(program: .program) and dependency_graph.contains(type_id) {
+            for dependency in dependency_graph.get(type_id)! {
                 dependencies.push(dependency)
             }
             return dependencies
@@ -512,8 +511,8 @@ struct CodeGenerator {
         return dependencies
     }
 
-    fn extract_dependencies_from_enum(this, enum_id: EnumId, dependency_graph: [String : [String]], top_level: bool) throws -> [String] {
-        mut dependencies: [String] = []
+    fn extract_dependencies_from_enum(this, enum_id: EnumId, dependency_graph: [TypeId:[TypeId]], top_level: bool) throws -> [TypeId] {
+        mut dependencies: [TypeId] = []
 
         let enum_ = .program.get_enum(enum_id)
         if enum_.definition_linkage is External {
@@ -526,8 +525,8 @@ struct CodeGenerator {
             // include them in the dependency graph.
             return dependencies
         }
-        dependencies.push(enum_.type_id.to_string())
-        if not enum_.underlying_type_id.equals(unknown_type_id()) {
+        dependencies.push(enum_.type_id)
+        if enum_.underlying_type_id != unknown_type_id() {
             let inner_dependencies = .extract_dependencies_from(type_id: enum_.underlying_type_id, dependency_graph, top_level: false)
             for dependency in inner_dependencies {
                 dependencies.push(dependency)
@@ -557,8 +556,14 @@ struct CodeGenerator {
         return dependencies
     }
 
-    fn extract_dependencies_from_struct(this, struct_id: StructId, dependency_graph: [String : [String]], top_level: bool, args: [TypeId]) throws -> [String] {
-        mut dependencies: [String] = []
+    fn extract_dependencies_from_struct(
+        this
+        struct_id: StructId
+        dependency_graph: [TypeId:[TypeId]]
+        top_level: bool
+        args: [TypeId]
+    ) throws -> [TypeId] {
+        mut dependencies: [TypeId] = []
         let struct_ = .program.get_struct(struct_id)
 
         if struct_.definition_linkage is External and struct_.name != "Optional" {
@@ -589,11 +594,11 @@ struct CodeGenerator {
         mut super_struct_id = struct_.super_struct_id
         while super_struct_id.has_value() {
             let super_struct = .program.get_struct(super_struct_id!)
-            dependencies.push(super_struct.type_id.to_string())
+            dependencies.push(super_struct.type_id)
             super_struct_id = super_struct.super_struct_id
         }
 
-        dependencies.push(struct_.type_id.to_string())
+        dependencies.push(struct_.type_id)
         // The struct's fields are also dependencies.
         for field in struct_.fields {
             let type_id = .program.get_variable(field.variable_id).type_id
@@ -772,7 +777,7 @@ struct CodeGenerator {
         if scope.alias_path.has_value() or scope.import_path_if_extern.has_value() {
             return ""
         }
-        mut seen_types: {String} = {}
+        mut seen_types: {TypeId} = {}
 
         mut output = ""
         if scope.namespace_name.has_value() {
@@ -794,7 +799,7 @@ struct CodeGenerator {
                     continue
                 }
                 let struct_ = .program.get_struct(struct_id)
-                if seen_types.contains(struct_.type_id.to_string()) {
+                if seen_types.contains(struct_.type_id) {
                     continue
                 }
 
@@ -820,7 +825,7 @@ struct CodeGenerator {
                     continue
                 }
                 let enum_ = .program.get_enum(enum_id)
-                if seen_types.contains(enum_.type_id.to_string()) {
+                if seen_types.contains(enum_.type_id) {
                     continue
                 }
 
@@ -863,7 +868,7 @@ struct CodeGenerator {
         if scope.alias_path.has_value() or scope.import_path_if_extern.has_value() {
             return ""
         }
-        mut seen_types: {String} = {}
+        mut seen_types: {TypeId} = {}
 
         if as_forward {
             mut output = ""
@@ -871,13 +876,13 @@ struct CodeGenerator {
                 output += "namespace " + scope.namespace_name! + " {\n"
             }
 
-            let encoded_dependency_graph = .produce_codegen_dependency_graph(scope)
-            for entry in encoded_dependency_graph {
+            let dependency_graph = .produce_codegen_dependency_graph(scope)
+            for entry in dependency_graph {
                 let traversal: [TypeId] = []
                 .postorder_traversal(
-                    encoded_type_id: entry.0
+                    type_id: entry.0
                     visited: seen_types
-                    encoded_dependency_graph
+                    dependency_graph
                     output: traversal
                 )
                 for type_id in traversal {
@@ -912,7 +917,7 @@ struct CodeGenerator {
                             panic(format("Unexpected type in dependency graph: {}", type_))
                         }
                     }
-                    seen_types.add(type_id.to_string())
+                    seen_types.add(type_id)
                 }
             }
 
@@ -921,7 +926,7 @@ struct CodeGenerator {
                     continue
                 }
                 let struct_ = .program.get_struct(struct_id)
-                if seen_types.contains(struct_.type_id.to_string()) {
+                if seen_types.contains(struct_.type_id) {
                     continue
                 }
                 output += .codegen_struct(struct_)
@@ -933,7 +938,7 @@ struct CodeGenerator {
                     continue
                 }
                 let enum_ = .program.get_enum(enum_id)
-                if seen_types.contains(enum_.type_id.to_string()) {
+                if seen_types.contains(enum_.type_id) {
                     continue
                 }
                 output += .codegen_enum(enum_)
