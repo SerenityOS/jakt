@@ -21,7 +21,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("target_triple: {}, ", target_triple));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("user_configuration: {}", user_configuration));
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+TRY(builder.append(")"sv));return { builder.to_string(); }
 ErrorOr<void> compiler::Compiler::load_prelude() {
 {
 DeprecatedString const module_name = TRY(DeprecatedString::from_utf8("__prelude__"sv));
