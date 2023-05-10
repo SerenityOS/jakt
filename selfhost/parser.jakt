@@ -2994,6 +2994,12 @@ struct Parser {
 
                     while not .eof() {
                         if .peek(1) is Colon {
+                            guard .current() is Identifier else {
+                                .error("Enum variant missing type", .current().span())
+                                .index++
+                                continue
+                            }
+
                             mut var_decl = .parse_variable_declaration(is_mutable: false)
                             if var_decl.parsed_type is Name(name, span) {
                                 var_decl.inlay_span = span
