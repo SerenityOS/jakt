@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "Enum variant missing type" 
+
+enum Flag {
+    A({:
+}
+
+fn main() {}
