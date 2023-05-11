@@ -7643,6 +7643,7 @@ struct Typechecker {
         UnaryOp(expr, op, span) => {
             let checked_expr = match op {
                 Dereference => .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
+                Negate => .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint, span)
                 else => .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
             }
 
