@@ -5549,7 +5549,7 @@ struct Typechecker {
             }
         }
 
-        return CheckedExpression::UnaryOp(expr: CheckedExpression::NumericConstant(val: new_constant, span, type_id), op: CheckedUnaryOperator::Negate, span, type_id: flipped_sign_type)
+        return CheckedExpression::NumericConstant(val: new_constant, span, type_id: flipped_sign_type)
     }
 
     fn typecheck_binary_operation(
