@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: ""
+
+// brought up by #1437 
+
+fn ret_negative() -> i32 {
+    return -1
+}
+
+fn main() {}
