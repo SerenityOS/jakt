@@ -187,6 +187,72 @@ enum Token {
     }
 }
 
+fn is_illegal_cpp_keyword(string: String) throws -> bool => match string {
+    "alignas" => true
+    "alignof" => true
+    "and_eq" => true
+    "asm" => true
+    "auto" => true
+    "bitand" => true
+    "bitor" => true
+    "case" => true
+    "char" => true
+    "char8_t" => true
+    "char16_t" => true
+    "char32_t" => true
+    "compl" => true
+    "concept" => true
+    "const" => true
+    "consteval" => true
+    "constexpr" => true
+    "constinit" => true
+    "const_cast" => true
+    "co_await" => true
+    "co_return" => true
+    "co_yield" => true
+    "decltype" => true
+    "delete" => true
+    "do" => true
+    "double" => true
+    "dynamic_cast" => true
+    "explicit" => true
+    "export" => true
+    "float" => true
+    "friend" => true
+    "goto" => true
+    "int" => true
+    "long" => true
+    "mutable" => true
+    "new" => true
+    "noexcept" => true
+    "not_eq" => true
+    "nullptr" => true
+    "operator" => true
+    "or_eq" => true
+    "protected" => true
+    "register" => true
+    "reinterpret_cast" => true
+    "short" => true
+    "signed" => true
+    "static" => true
+    "static_assert" => true
+    "static_cast" => true
+    "switch" => true
+    "template" => true
+    "thread_local" => true
+    "typedef" => true
+    "typeid" => true
+    "typename" => true
+    "union" => true
+    "unsigned" => true
+    "using" => true
+    "volatile" => true
+    "wchar_t" => true
+    "xor" => true
+    "xor_eq" => true
+    else => false
+}
+
 enum LiteralPrefix {
     None
     Hexadecimal
@@ -368,6 +434,10 @@ struct Lexer implements(ThrowingIterable<Token>) {
 
             if end - start >= 6 and string.substring(start: 0, length: 6) == "__jakt" {
                 .error("reserved identifier name", span)
+            }
+
+            if is_illegal_cpp_keyword(string) {
+                .error("C++ keywords are not allowed to be used as identifiers", span)
             }
 
             return Token::from_keyword_or_identifier(string, span)
