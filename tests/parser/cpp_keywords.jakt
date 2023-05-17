@@ -1,0 +1,67 @@
+/// Expect:
+/// - error: "C++ keywords are not allowed to be used as identifiers"
+
+fn main() {
+    let alignas = 1
+    let alignof = 1
+    let and_eq = 1
+    let asm = 1
+    let auto = 1
+    let bitand = 1
+    let bitor = 1
+    let case = 1
+    let char = 1
+    let char8_t = 1
+    let char16_t = 1
+    let char32_t = 1
+    let compl = 1
+    let concept = 1
+    let const = 1
+    let consteval = 1
+    let constexpr = 1
+    let constinit = 1
+    let const_cast = 1
+    let co_await = 1
+    let co_return = 1
+    let co_yield = 1
+    let decltype = 1
+    let delete = 1
+    let do = 1
+    let double = 1
+    let dynamic_cast = 1
+    let explicit = 1
+    let export = 1
+    let float = 1
+    let friend = 1
+    let goto = 1
+    let int = 1
+    let long = 1
+    let mutable = 1
+    let new = 1
+    let noexcept = 1
+    let not_eq = 1
+    let nullptr = 1
+    let operator = 1
+    let or_eq = 1
+    let protected = 1
+    let register = 1
+    let reinterpret_cast = 1
+    let short = 1
+    let signed = 1
+    let static = 1
+    let static_assert = 1
+    let static_cast = 1
+    let switch = 1
+    let template = 1
+    let thread_local = 1
+    let typedef = 1
+    let typeid = 1
+    let typename = 1
+    let union = 1
+    let unsigned = 1
+    let using = 1
+    let volatile = 1
+    let wchar_t = 1
+    let xor = 1
+    let xor_eq = 1
+}
