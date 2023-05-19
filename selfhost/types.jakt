@@ -2081,10 +2081,26 @@ class CheckedProgram {
 
         let functions = results.value()
         if functions.size() != 1 {
-            .compiler.panic(format("internal error: found multiple (or no) functions with name '{}'", function_name))
+            .compiler.panic(format("internal error: found {} functions with name '{}', but expected 1", functions.size(), function_name))
         }
 
         return functions[0]
+    }
+
+    public fn find_default_constructors_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> FunctionId? {
+        let results = .find_functions_with_name_in_scope(parent_scope_id, function_name)
+        if not results.has_value() {
+            return None
+        }
+
+        for id in results.value() {
+            let function = .get_function(id)
+            if function.type is ImplicitConstructor {
+                return id
+            }
+        }
+
+        return None
     }
 
     public fn find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {

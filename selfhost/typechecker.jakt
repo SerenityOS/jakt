@@ -1003,7 +1003,7 @@ struct Typechecker {
             }
         }
 
-        guard .program.find_function_in_scope(
+        guard .program.find_default_constructors_in_scope(
             parent_scope_id: checked_struct_scope_id
             function_name: parsed_record.name
         ) is Some(constructor_id) else {

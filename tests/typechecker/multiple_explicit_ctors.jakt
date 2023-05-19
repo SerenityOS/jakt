@@ -1,0 +1,12 @@
+/// Expect:
+/// - output: ""
+
+// Allow multiple explicit constructors.
+extern struct Test {
+    fn Test(a: i32) -> Test
+    fn Test(a: i64) -> Test
+}
+
+fn main() {
+
+}
