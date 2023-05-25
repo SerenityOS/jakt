@@ -1,0 +1,19 @@
+/// Expect:
+/// - output: "(\"yak\", \"shaved!\")\n"
+
+// brought up by #1246.
+
+struct Foo implements(IntoIterator<(String, String)>) {
+	stuff: [String: String]
+	fn iterator(this) -> DictionaryIterator<String, String> => .stuff.iterator()
+}
+
+fn main() {
+
+	let foo = Foo(stuff: ["yak": "shaved!"])
+
+	for kv in foo {
+		println("{}", kv)
+	}
+	
+}

@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: ""
+
+// brought up by #1436.
+
+fn main() {
+	mut row: [bool] = [false, false, false, false, false, false, false]
+	mut board: [[bool]] = []
+
+	board.push(row[..].to_array())
+}
