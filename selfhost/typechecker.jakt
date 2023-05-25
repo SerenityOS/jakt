@@ -4688,30 +4688,15 @@ struct Typechecker {
 
         match lhs_type {
             TypeVariable => {
-                // If the call expects a generic type variable, let's see if we've already seen it
-                mut maybe_seen_type_id = generic_inferences.get(lhs_type_id)
-                if maybe_seen_type_id.has_value() {
-                    let seen_type_id = maybe_seen_type_id!
-                    if .get_type(seen_type_id) is TypeVariable {
-                        return .check_types_for_compat(
-                            lhs_type_id: seen_type_id
-                            rhs_type_id: lhs_type_id
-                            generic_inferences
-                            span)
-                    }
-                    // We've seen this type variable assigned something before
-                    // we should error if it's incompatible.
-                    if seen_type_id != rhs_type_id {
-                        .error(
-                            format(
-                                "Type mismatch: expected ‘{}’, but got ‘{}’"
-                                .type_name(seen_type_id)
-                                .type_name(rhs_type_id)
-                            )
-                            span
-                        )
-                        return false
-                    }
+				// Unpack one layer of inference at a time
+                let maybe_resolved_inference = generic_inferences.get(lhs_type_id)
+                if maybe_resolved_inference is Some(resolved_inference) {
+					return .check_types_for_compat(
+						lhs_type_id: resolved_inference
+						rhs_type_id
+						generic_inferences
+						span
+					)
                 } else {
                     generic_inferences.set(key: lhs_type_id, value: rhs_type_id)
                 }
