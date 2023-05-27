@@ -187,72 +187,6 @@ enum Token {
     }
 }
 
-fn is_illegal_cpp_keyword(string: String) throws -> bool => match string {
-    "alignas" => true
-    "alignof" => true
-    "and_eq" => true
-    "asm" => true
-    "auto" => true
-    "bitand" => true
-    "bitor" => true
-    "case" => true
-    "char" => true
-    "char8_t" => true
-    "char16_t" => true
-    "char32_t" => true
-    "compl" => true
-    "concept" => true
-    "const" => true
-    "consteval" => true
-    "constexpr" => true
-    "constinit" => true
-    "const_cast" => true
-    "co_await" => true
-    "co_return" => true
-    "co_yield" => true
-    "decltype" => true
-    "delete" => true
-    "do" => true
-    "double" => true
-    "dynamic_cast" => true
-    "explicit" => true
-    "export" => true
-    "float" => true
-    "friend" => true
-    "goto" => true
-    "int" => true
-    "long" => true
-    "mutable" => true
-    "new" => true
-    "noexcept" => true
-    "not_eq" => true
-    "nullptr" => true
-    "operator" => true
-    "or_eq" => true
-    "protected" => true
-    "register" => true
-    "reinterpret_cast" => true
-    "short" => true
-    "signed" => true
-    "static" => true
-    "static_assert" => true
-    "static_cast" => true
-    "switch" => true
-    "template" => true
-    "thread_local" => true
-    "typedef" => true
-    "typeid" => true
-    "typename" => true
-    "union" => true
-    "unsigned" => true
-    "using" => true
-    "volatile" => true
-    "wchar_t" => true
-    "xor" => true
-    "xor_eq" => true
-    else => false
-}
-
 enum LiteralPrefix {
     None
     Hexadecimal
@@ -302,9 +236,75 @@ struct Lexer implements(ThrowingIterable<Token>) {
     input: [u8]
     compiler: Compiler
     comment_contents: [u8]?
+    illegal_cpp_keywords: {String}
 
     fn lex(compiler: Compiler) throws -> [Token] {
-        mut lexer = Lexer(index: 0, input: compiler.current_file_contents, compiler, comment_contents: None)
+        let illegal_cpp_keywords: {String} = {
+            "alignas",
+            "alignof",
+            "and_eq",
+            "asm",
+            "auto",
+            "bitand",
+            "bitor",
+            "case",
+            "char",
+            "char8_t",
+            "char16_t",
+            "char32_t",
+            "compl",
+            "concept",
+            "const",
+            "consteval",
+            "constexpr",
+            "constinit",
+            "const_cast",
+            "co_await",
+            "co_return",
+            "co_yield",
+            "decltype",
+            "delete",
+            "do",
+            "double",
+            "dynamic_cast",
+            "explicit",
+            "export",
+            "float",
+            "friend",
+            "goto",
+            "int",
+            "long",
+            "mutable",
+            "new",
+            "noexcept",
+            "not_eq",
+            "nullptr",
+            "operator",
+            "or_eq",
+            "protected",
+            "register",
+            "reinterpret_cast",
+            "short",
+            "signed",
+            "static",
+            "static_assert",
+            "static_cast",
+            "switch",
+            "template",
+            "thread_local",
+            "typedef",
+            "typeid",
+            "typename",
+            "union",
+            "unsigned",
+            "using",
+            "volatile",
+            "wchar_t",
+            "xor",
+            "xor_eq",
+        }
+
+        mut lexer = Lexer(index: 0, input: compiler.current_file_contents, compiler, comment_contents: None, illegal_cpp_keywords)
         mut tokens: [Token] = []
 
         for token in lexer {
@@ -436,7 +436,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
                 .error("reserved identifier name", span)
             }
 
-            if is_illegal_cpp_keyword(string) {
+            if .illegal_cpp_keywords.contains(string) {
                 .error("C++ keywords are not allowed to be used as identifiers", span)
             }
 
