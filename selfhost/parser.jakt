@@ -14,7 +14,7 @@ import compiler { Compiler }
 
 enum ExternalName {
     Plain(String)
-    Operator(String)
+    Operator(name: String, is_prefix: bool = false)
 
     fn as_name_for_definition(this) throws -> String => match this {
         Plain(name) => name
@@ -24,6 +24,11 @@ enum ExternalName {
     fn as_name_for_use(this) throws -> String => match this {
         Plain(name) => name
         Operator(name) => format(" {} ", name)
+    }
+
+    fn is_prefix(this) -> bool => match this {
+        Plain => false
+        Operator(is_prefix) => is_prefix
     }
 }
 
@@ -1949,7 +1954,10 @@ struct Parser {
 
                     if attribute.assigned_value!.starts_with("operator(") and attribute.assigned_value!.ends_with(")") {
                         let operator_name = attribute.assigned_value!.substring(start: 9, length: attribute.assigned_value!.length() - 10)
-                        field.var_decl.external_name = ExternalName::Operator(operator_name)
+                        field.var_decl.external_name = ExternalName::Operator(name: operator_name)
+                    } else if attribute.assigned_value!.starts_with("prefix-operator(") and attribute.assigned_value!.ends_with(")") {
+                        let operator_name = attribute.assigned_value!.substring(start: 16, length: attribute.assigned_value!.length() - 17)
+                        field.var_decl.external_name = ExternalName::Operator(name: operator_name, is_prefix: true)
                     } else {
                         field.var_decl.external_name = ExternalName::Plain(attribute.assigned_value!)
                     }
@@ -1986,7 +1994,10 @@ struct Parser {
 
                     if attribute.assigned_value!.starts_with("operator(") and attribute.assigned_value!.ends_with(")") {
                         let operator_name = attribute.assigned_value!.substring(start: 9, length: attribute.assigned_value!.length() - 10)
-                        parsed_function.external_name = ExternalName::Operator(operator_name)
+                        parsed_function.external_name = ExternalName::Operator(name: operator_name)
+                    } else if attribute.assigned_value!.starts_with("prefix-operator(") and attribute.assigned_value!.ends_with(")") {
+                        let operator_name = attribute.assigned_value!.substring(start: 16, length: attribute.assigned_value!.length() - 17)
+                        parsed_function.external_name = ExternalName::Operator(name: operator_name, is_prefix: true)
                     } else {
                         parsed_function.external_name = ExternalName::Plain(attribute.assigned_value!)
                     }
