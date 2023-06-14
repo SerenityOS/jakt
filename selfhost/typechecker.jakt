@@ -2093,7 +2093,33 @@ struct Typechecker {
             for method in implementation.methods {
                 mut this_arg_type_id: TypeId? = None
                 if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
-                    this_arg_type_id = for_type
+                    this_arg_type_id = match .get_type(for_type) {
+                        Struct(id) => {
+                            let struct_ = .get_struct(id)
+                            mut type = for_type
+                            if not struct_.generic_parameters.is_empty() {
+                                mut type_arguments: [TypeId] = []
+                                for param in struct_.generic_parameters {
+                                    type_arguments.push(param.type_id)
+                                }
+                                type = .find_or_add_type_id(Type::GenericInstance(id, args: type_arguments))
+                            }
+                            yield type
+                        }
+                        Enum(id) => {
+                            let enum_ = .get_enum(id)
+                            mut type = for_type
+                            if not enum_.generic_parameters.is_empty() {
+                                mut type_arguments: [TypeId] = []
+                                for param in enum_.generic_parameters {
+                                    type_arguments.push(param.type_id)
+                                }
+                                type = .find_or_add_type_id(Type::GenericEnumInstance(id, args: type_arguments))
+                            }
+                            yield type
+                        }
+                        else => for_type
+                    }
                 }
 
                 .typecheck_function_predecl(
@@ -3844,7 +3870,7 @@ struct Typechecker {
             }
         }
 
-        if (not func.generic_parameters.is_empty() or not parent_generic_parameters.is_empty()) and not func.must_instantiate {
+        if (not func.generic_parameters.is_empty()) and not func.must_instantiate {
             return None
         }
 
@@ -4381,6 +4407,35 @@ struct Typechecker {
         }
 
         let span = parsed_function.name_span
+        if this_type_id.has_value() {
+            let p: [CheckedGenericParameter] = []
+            let a: [TypeId] = []
+
+            let (params, args) = match .get_type(this_type_id!) {
+                GenericInstance(id, args) => (.get_struct(id).generic_parameters, args)
+                GenericEnumInstance(id, args) => (.get_enum(id).generic_parameters, args)
+                else => (p, a)
+            }
+
+            for i in 0..params.size() {
+                let param = params[i]
+                let arg = generic_substitutions.map(args[i])
+                guard .get_type(param.type_id) is TypeVariable(name: type_name) else { continue }
+
+                let dependent_scope_id: ScopeId? = match .get_type(param.type_id) {
+                    GenericInstance(id: struct_id) | Struct(struct_id) => .get_struct(struct_id).scope_id
+                    GenericEnumInstance(id: enum_id) | Enum(enum_id) => .get_enum(enum_id).scope_id
+                    GenericTraitInstance(id: trait_id) | Trait(trait_id) => .get_trait(trait_id).scope_id
+                    else => None
+                }
+
+                .add_type_to_scope(scope_id, type_name, type_id: arg, span)
+                if dependent_scope_id.has_value() {
+                    mut scope = .get_scope(scope_id)
+                    scope.aliases.set(type_name, dependent_scope_id!)
+                }
+            }
+        }
         for generic_parameter in checked_function.generics.params {
             let parameter_type_id = generic_parameter.checked_parameter.type_id
             let mapped = generic_substitutions.get(parameter_type_id)
