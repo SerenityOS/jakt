@@ -3265,7 +3265,7 @@ struct CodeGenerator {
             }
         }
 
-        let is_called_as_method = not field_accessor.is_empty() or (not is_optional and name is Operator)
+        let is_called_as_method = not name.is_prefix() and (not field_accessor.is_empty() or (not is_optional and name is Operator))
 
         if is_called_as_method {
             output += "(("
