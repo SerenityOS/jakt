@@ -13,7 +13,7 @@ import typechecker {
     never_type_id, unknown_type_id, void_type_id
 }
 import types { CheckedParameter, StructLikeId }
-import utility { Span, interpret_escapes, join, panic, prepend_to_each, todo }
+import utility { Queue, Span, interpret_escapes, join, panic, prepend_to_each, todo }
 import compiler { Compiler }
 
 enum AllowedControlExits {
@@ -293,6 +293,27 @@ struct CodeGenerator {
         output += "#endif\n"
 
         let sorted_modules = generator.topologically_sort_modules()
+        mut imported_paths: {String} = {}
+        for idx in sorted_modules.size()..0 {
+            let i = sorted_modules[idx - 1]
+            mut q = Queue<ScopeId>()
+            q.enqueue(ScopeId(module_id: i, id: 0))
+            while not q.is_empty() {
+                let scope_id = q.dequeue()
+                let scope = generator.program.get_scope(scope_id)
+                for child in scope.children {
+                    q.enqueue(child)
+                }
+                if scope.import_path_if_extern is Some(path) {
+                    imported_paths.add(path)
+                }
+            }
+        }
+
+        for path in imported_paths {
+            output += format("#include <{}>\n", path)
+        }
+
         output += "namespace Jakt {\n"
 
         for idx in sorted_modules.size()..0 {
@@ -311,6 +332,7 @@ struct CodeGenerator {
         output += "} // namespace Jakt\n"
 
 
+        // FIXME: Try and get rid of this header if possible.
         result.set(
             "__unified_forward.h",
             (output, compiler.current_file_path()!.to_string()),
