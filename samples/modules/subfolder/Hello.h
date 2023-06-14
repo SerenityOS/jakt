@@ -1,5 +1,7 @@
 /// Expect: Skip
 
+#pragma once
+
 #include <Jakt/AKIntegration.h>
 #include <AK/String.h>
 #include <AK/Format.h>
