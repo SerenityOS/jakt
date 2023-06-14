@@ -1496,7 +1496,9 @@ struct CodeGenerator {
                     output += "\n"
                 } else {
                     if struct_is_generic {
-                        output += .codegen_function(function, as_method: true)
+                        if not function.specialization_index.has_value() {
+                            output += .codegen_function(function, as_method: true)
+                        }
                     } else if function.generics.params.is_empty() or not function.specialization_index.has_value() {
                         output += .codegen_function_predecl(function, as_method: true)
                     }
