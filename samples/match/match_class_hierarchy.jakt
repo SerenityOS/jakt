@@ -1,0 +1,21 @@
+/// Expect:
+/// - output: "C\n"
+
+class A { public fn a(this) throws { println("A") } }
+class B : A { public fn b(mut this) throws { println("B") } }
+class C : B { public fn c(this) throws { println("C") } }
+class D : A { public fn d(this) throws { println("D") } }
+
+fn test() throws -> A {
+    return C()
+}
+
+fn main() {
+    mut x = test()
+    match x {
+        D(d) => d.d()
+        C(&c) => c.c()
+        B(&mut b) => b.b()
+        A(a) => a.a()
+    }
+}
