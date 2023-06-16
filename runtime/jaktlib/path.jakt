@@ -66,6 +66,10 @@ struct Path {
         return Path::from_string(join_builder.to_string())
     }
 
+    fn join(this, anon path: Path) throws -> Path {
+        return .join(path.path)
+    }
+
     fn is_dot(this) throws -> bool {
         return .path == "." or .path == ".."
     }
