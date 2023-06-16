@@ -327,6 +327,14 @@ type String implements(ThrowingAdd<String, String>) {
     extern fn add(this, anon rhs: String) throws -> String
 }
 
+type StringView implements(Equal<StringView>) {
+    [[name="operator(==)"]]
+    extern fn equals(this, anon rhs: String) -> bool
+
+    [[inline()]]
+    fn not_equals(this, anon rhs: String) -> bool => not .equals(rhs)
+}
+
 type Optional implements(Equal<Optional<T>>) {
     [[name="operator(==)"]]
     extern fn equals(this, anon rhs: Optional<T>) -> bool
