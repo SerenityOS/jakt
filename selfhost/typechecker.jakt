@@ -2618,6 +2618,21 @@ struct Typechecker {
         return reverse_chain
     }
 
+    fn struct_inherits_from(
+        this
+        struct_id: StructId
+        super_struct_id: StructId
+        struct_inheritance_chain: [StructId]? = None
+    ) throws -> bool {
+        let chain = struct_inheritance_chain ?? .struct_inheritance_chain(struct_id)
+        for id in chain {
+            if id == super_struct_id {
+                return true
+            }
+        }
+        return false
+    }
+
     fn typecheck_struct_constructor(mut this, parsed_record: ParsedRecord, struct_id: StructId, scope_id: ScopeId) throws {
         let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
@@ -9006,223 +9021,481 @@ struct Typechecker {
             Void => {
                 .error("Can't match on 'void' type", checked_expr.span())
             }
-            else => {
-                let is_boolean_match = type_to_match_on is Bool
-                mut seen_true = false
-                mut seen_false = false
-                mut catch_all_span: Span? = None
+            else => match type_to_match_on.is_boxed(program: .program) {
+                true => {
+                    let (struct_to_match_on, struct_inheritance_chain) = match type_to_match_on {
+                        Struct(id) | GenericInstance(id) => (id, .struct_inheritance_chain(struct_id: id))
+                        else => {
+                            .compiler.panic("Expected struct or generic instance in inheritance-style match expression")
+                        }
+                    }
+                    mut seen_catch_all = false
+                    mut catch_all_matches_original_type = false
+                    mut catch_all_marker_span: Span? = None
+                    mut covered_cases: {StructId} = {}
 
-                mut is_enum_match = false
-                mut is_value_match = false
-                mut seen_catch_all = false
-
-                mut all_variants_constant = true
-
-                let case_count = cases.size()
-                mut current_case_index = 0uz
-                for case_ in cases {
-                    for pattern in case_.patterns {
-                        match pattern {
-                            EnumVariant(variant_names, variant_arguments, arguments_span) => {
-                                if is_value_match {
-                                    .error(
-                                        "Cannot have an enum match case in a match expression containing value matches"
-                                        case_.marker_span
-                                    )
-                                }
-
-                                if variant_names.size() == 0 {
-                                    .compiler.panic("typecheck_match - else - EnumVariant - variant_names.size() == 0")
-                                }
-
-                                is_enum_match = true
-
-                                // We don't know what the enum type is, but we have the type var for it, so generate a generic enum match.
-                                // note that this will be fully checked when this match expression is actually instantiated.
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
-                                mut defaults: [CheckedStatement] = []
-                                for (_, default_) in pattern.defaults {
-                                    let checked_var_decl = .typecheck_var_decl(
-                                        var: default_.variable
-                                        init: default_.value
-                                        scope_id: new_scope_id
-                                        safety_mode
-                                        span: default_.variable.span
-                                    )
-                                    defaults.push(checked_var_decl)
-                                }
-
-                                let (checked_body, result_type) = .typecheck_match_body(
-                                    body: case_.body
-                                    scope_id: new_scope_id
-                                    safety_mode
-                                    generic_inferences: &mut .generic_inferences
-                                    final_result_type
-                                    span: case_.marker_span
-                                )
-                                final_result_type = result_type
-
-                                let checked_match_case = CheckedMatchCase::EnumVariant(
-                                    defaults
-                                    name: variant_names.last()!.0
-                                    args: variant_arguments
-                                    subject_type_id
-                                    index: 0
-                                    scope_id: new_scope_id
-                                    body: checked_body
-                                    marker_span: case_.marker_span
-                                )
-                                checked_cases.push(checked_match_case)
-                            }
-                            CatchAll(variant_arguments) => {
-                                if current_case_index != case_count - 1 {
-                                    .error("Match else case is only allowed as the last case", case_.marker_span)
-                                }
-
-                                catch_all_span = case_.marker_span
-
-                                if seen_catch_all {
-                                    .error("Multiple catch-all cases in match are not allowed", case_.marker_span)
-                                } else {
-                                    seen_catch_all = true
-                                }
-
-                                if variant_arguments.size() != 0 {
-                                    let old_ignore_errors = .ignore_errors
-                                    .ignore_errors = false
-                                    .error("Bindings aren't allowed in a generic else", case_.marker_span)
-                                    .ignore_errors = old_ignore_errors
-                                    .had_an_error = false
-                                }
-
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
-                                mut defaults: [CheckedStatement] = []
-                                for (_, default_) in pattern.defaults {
-                                    let checked_var_decl = .typecheck_var_decl(
-                                        var: default_.variable
-                                        init: default_.value
-                                        scope_id: new_scope_id
-                                        safety_mode
-                                        span: default_.variable.span
-                                    )
-                                    defaults.push(checked_var_decl)
-                                }
-
-                                let (checked_body, result_type) = .typecheck_match_body(
-                                    body: case_.body
-                                    scope_id: new_scope_id
-                                    safety_mode
-                                    generic_inferences: &mut .generic_inferences
-                                    final_result_type
-                                    span: case_.marker_span
-                                )
-                                final_result_type = result_type
-
-                                let checked_match_case = CheckedMatchCase::CatchAll(
-                                    defaults
-                                    has_arguments: variant_arguments.size() != 0
-                                    body: checked_body
-                                    marker_span: case_.marker_span
-                                )
-
-                                checked_cases.push(checked_match_case)
-                            }
-                            Expression(expr) => {
-                                if is_enum_match {
-                                    .error(
-                                        "Cannot have a value match case in a match expression containing enum matches"
-                                        case_.marker_span
-                                    )
-                                }
-                                is_value_match = true
-
-                                let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
-                                    condition: expr
-                                    acc: None
-                                    then_block: None
-                                    else_statement: None
-                                    scope_id
-                                    span
-                                )
-                                let checked_expression = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: Some(subject_type_id), span)
-
-                                if is_boolean_match and checked_expression is Boolean(val) {
-                                    if val {
-                                        seen_true = true
-                                    } else {
-                                        seen_false = true
+                    for case_ in cases {
+                        for pattern in case_.patterns {
+                            match pattern {
+                                EnumVariant(variant_names, variant_arguments, arguments_span) => {
+                                    mut names: [String] = []
+                                    for name in variant_names {
+                                        names.push(name.0)
                                     }
-                                }
 
-                                if not checked_expression.to_number_constant(program: .program).has_value() {
-                                    all_variants_constant = false
-                                }
-
-                                mut expression_type = checked_expression.type()
-
-                                if checked_expression is Range(from, to) {
-                                    guard from.has_value() or to.has_value() else {
-                                        .error(
-                                            "There has to be at least a 'from', or a 'to' in a range expression"
-                                            expr.span()
+                                    let type = .typecheck_typename(
+                                        parsed_type: ParsedType::NamespacedName(
+                                            name: names.last()!
+                                            namespaces: names[..(names.size() - 1)].to_array()
+                                            params: []
+                                            span: case_.marker_span
                                         )
-                                        continue
+                                        scope_id
+                                        name: None
+                                    )
+
+                                    if seen_catch_all {
+                                        .error_with_hint(
+                                            "This case is unreachable because a catch-all case is present before it"
+                                            case_.marker_span
+                                            match catch_all_matches_original_type {
+                                                true => "Catch-all case matching the original subject type seen here"
+                                                false => "Catch-all case seen here"
+                                            }
+                                            catch_all_marker_span!
+                                        )
                                     }
-                                    if from.has_value() {
-                                        expression_type = from!.type()
-                                    } else if to.has_value() {
-                                        expression_type = to!.type()
+
+                                    let check_cover_overlap = fn[this, &type, &case_, &covered_cases](anon id: StructId) throws {
+                                        for covered_case in covered_cases {
+                                            // If a supertype of this case has already been covered, then this case will never match
+                                            if .struct_inherits_from(
+                                                    struct_id: id
+                                                    super_struct_id: covered_case
+                                                ) {
+                                                .error_with_hint(
+                                                    format(
+                                                        "Type ‘{}’ used as a match case at this position is redundant"
+                                                        .type_name(type)
+                                                    )
+                                                    case_.marker_span
+                                                    format(
+                                                        "Type ‘{}’ (a supertype of ‘{}’) has been covered by a case above"
+                                                        .get_struct(covered_case).name
+                                                        .type_name(type)
+                                                    )
+                                                    case_.marker_span
+                                                )
+                                            }
+
+                                        }
+                                    }
+
+                                    if type == subject_type_id {
+                                        if seen_catch_all {
+                                            .error("Multiple catch-all cases in match are not allowed", case_.marker_span)
+                                        } else {
+                                            seen_catch_all = true
+                                            catch_all_marker_span = case_.marker_span
+                                            catch_all_matches_original_type = true
+                                            check_cover_overlap(struct_to_match_on)
+                                        }
+                                    } else {
+                                        match .get_type(type) {
+                                            Struct(id) | GenericInstance(id) => {
+                                                if not .struct_inherits_from(
+                                                    struct_id: struct_to_match_on
+                                                    super_struct_id: id
+                                                    struct_inheritance_chain
+                                                ) and not .struct_inherits_from(
+                                                    struct_id: id
+                                                    super_struct_id: struct_to_match_on
+                                                ) {
+                                                    .error_with_hint(
+                                                        format(
+                                                            "Type ‘{}’ cannot be used as a match case for ‘{}’"
+                                                            .type_name(type)
+                                                            .type_name(subject_type_id)
+                                                        )
+                                                        case_.marker_span
+                                                        format(
+                                                            "Neither ‘{}’ nor ‘{}’ are super types of the other"
+                                                            .type_name(type)
+                                                            .type_name(subject_type_id)
+                                                        )
+                                                        case_.marker_span
+                                                    )
+                                                } else {
+                                                    check_cover_overlap(id)
+                                                    covered_cases.add(id)
+                                                }
+                                            }
+                                            else => {
+                                                .error(
+                                                    format(
+                                                        "Type ‘{}’ cannot be used as a match case for ‘{}’"
+                                                        .type_name(type)
+                                                        .type_name(subject_type_id)
+                                                    )
+                                                    case_.marker_span
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    let new_scope_id = .create_scope(
+                                        parent_scope_id: scope_id
+                                        can_throw: .get_scope(scope_id).can_throw
+                                        debug_name: format("class-variant({})", names)
+                                    )
+
+                                    mut rebind_name: ClassInstanceRebind? = None
+                                    if not variant_arguments.is_empty() {
+                                        if variant_arguments.size() != 1 {
+                                            .error(
+                                                "Class instance matches may only have one match argument (the name to rebind to)"
+                                                arguments_span
+                                            )
+                                        }
+                                        let arg = variant_arguments[0]
+                                        rebind_name = ClassInstanceRebind(
+                                            name: arg.name_in_enum()
+                                            name_span: arg.name_in_enum_span()
+                                            is_mutable: arg.is_mutable
+                                            is_reference: arg.is_reference
+                                        )
+
+                                        mut module = .current_module()
+                                        let variable_id = module.add_variable(checked_variable: CheckedVariable(
+                                            name: rebind_name!.name
+                                            type_id: type
+                                            is_mutable: rebind_name!.is_mutable
+                                            definition_span: rebind_name!.name_span
+                                            type_span: case_.marker_span
+                                            visibility: CheckedVisibility::Public
+                                        ))
+
+                                        if rebind_name!.is_mutable and not checked_expr.is_mutable(program: .program) {
+                                            .error("Cannot call mutating method on an immutable object instance", span)
+                                        }
+                                        .add_var_to_scope(
+                                            scope_id: new_scope_id
+                                            name: rebind_name!.name
+                                            var_id: variable_id
+                                            span: rebind_name!.name_span
+                                        )
+                                    }
+
+                                    let (checked_body, result_type) = .typecheck_match_body(
+                                        body: case_.body
+                                        scope_id: new_scope_id
+                                        safety_mode
+                                        generic_inferences: &mut .generic_inferences
+                                        final_result_type
+                                        span: case_.marker_span
+                                    )
+                                    final_result_type = result_type
+
+                                    checked_cases.push(CheckedMatchCase::ClassInstance(
+                                        defaults: []
+                                        type
+                                        body: checked_body
+                                        rebind_name
+                                        marker_span: case_.marker_span
+                                    ))
+                                }
+                                CatchAll(variant_arguments, arguments_span) => {
+                                    if seen_catch_all {
+                                        .error("Multiple catch-all cases in match are not allowed", case_.marker_span)
+                                    } else {
+                                        seen_catch_all = true
+                                        catch_all_marker_span = case_.marker_span
+
+                                        let new_scope_id = .create_scope(
+                                            parent_scope_id: scope_id
+                                            can_throw: .get_scope(scope_id).can_throw
+                                            debug_name: "class-variant(else)"
+                                        )
+
+                                        if not variant_arguments.is_empty() {
+                                            .error(
+                                                "Catch-all cases in class instance matches cannot have arguments"
+                                                arguments_span
+                                            )
+                                        }
+
+                                        let (checked_body, result_type) = .typecheck_match_body(
+                                            body: case_.body
+                                            scope_id: new_scope_id
+                                            safety_mode
+                                            generic_inferences: &mut .generic_inferences
+                                            final_result_type
+                                            span: case_.marker_span
+                                        )
+                                        final_result_type = result_type
+
+                                        checked_cases.push(CheckedMatchCase::CatchAll(
+                                            defaults: []
+                                            has_arguments: false
+                                            body: checked_body
+                                            marker_span: case_.marker_span
+                                        ))
                                     }
                                 }
-
-                                // FIXME: In the future, we should really make this a "does it satisfy some trait" check.
-                                //        For now, we just check that the types are equal.
-                                .check_types_for_compat(
-                                    lhs_type_id: expression_type
-                                    rhs_type_id: subject_type_id
-                                    generic_inferences: &mut .generic_inferences
-                                    span: case_.marker_span
-                                )
-
-                                if not pattern.defaults.is_empty() {
-                                    .error("Expression patterns cannot have default bindings", case_.marker_span)
+                                else => {
+                                    .error(
+                                        "Only named types and 'else' patterns are allowed in class instance match expressions"
+                                        case_.marker_span
+                                    )
                                 }
-
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-expression({})", expr))
-                                let (checked_body, result_type) = .typecheck_match_body(
-                                    body: case_.body
-                                    scope_id: new_scope_id
-                                    safety_mode
-                                    generic_inferences: &mut .generic_inferences
-                                    final_result_type
-                                    span: case_.marker_span
-                                )
-                                final_result_type = result_type
-
-                                let checked_match_case = CheckedMatchCase::Expression(
-                                    defaults: []
-                                    expression: checked_expression
-                                    body: checked_body
-                                    marker_span: case_.marker_span
-                                )
-                                checked_cases.push(checked_match_case)
                             }
-                            else => {}
                         }
                     }
 
-                    current_case_index++
-                }
+                    if not seen_catch_all {
+                        // Make sure everything in the inheritance chain is covered
+                        mut missing: {String} = {}
+                        for struct_id in struct_inheritance_chain {
+                            if not covered_cases.contains(struct_id) {
+                                let struct_name = .get_struct(struct_id).name
+                                missing.add(format("‘{}’", struct_name))
+                            }
+                        }
 
-                if is_value_match and not (seen_catch_all or (is_boolean_match and seen_true and seen_false)) {
-                    .error(
-                        "Match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"
-                        span
-                    )
-                }
+                        if not missing.is_empty() {
+                            mut builder = StringBuilder::create()
+                            builder.append("Missing match cases for ")
+                            mut first = true
+                            for name in missing {
+                                if first { first = false } else { builder.append(", ") }
+                                builder.append(name)
+                            }
 
-                if is_value_match and seen_catch_all and is_boolean_match and seen_true and seen_false {
-                    .error("All cases are covered, but an irrefutable pattern is also present", catch_all_span!)
+                            .error(
+                                builder.to_string()
+                                span
+                            )
+                        }
+                    }
+                }
+                false => {
+                    let is_boolean_match = type_to_match_on is Bool
+                    mut seen_true = false
+                    mut seen_false = false
+                    mut catch_all_span: Span? = None
+
+                    mut is_enum_match = false
+                    mut is_value_match = false
+                    mut seen_catch_all = false
+
+                    mut all_variants_constant = true
+
+                    let case_count = cases.size()
+                    mut current_case_index = 0uz
+                    for case_ in cases {
+                        for pattern in case_.patterns {
+                            match pattern {
+                                EnumVariant(variant_names, variant_arguments, arguments_span) => {
+                                    if is_value_match {
+                                        .error(
+                                            "Cannot have an enum match case in a match expression containing value matches"
+                                            case_.marker_span
+                                        )
+                                    }
+
+                                    if variant_names.size() == 0 {
+                                        .compiler.panic("typecheck_match - else - EnumVariant - variant_names.size() == 0")
+                                    }
+
+                                    is_enum_match = true
+
+                                    // We don't know what the enum type is, but we have the type var for it, so generate a generic enum match.
+                                    // note that this will be fully checked when this match expression is actually instantiated.
+                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
+                                    mut defaults: [CheckedStatement] = []
+                                    for (_, default_) in pattern.defaults {
+                                        let checked_var_decl = .typecheck_var_decl(
+                                            var: default_.variable
+                                            init: default_.value
+                                            scope_id: new_scope_id
+                                            safety_mode
+                                            span: default_.variable.span
+                                        )
+                                        defaults.push(checked_var_decl)
+                                    }
+
+                                    let (checked_body, result_type) = .typecheck_match_body(
+                                        body: case_.body
+                                        scope_id: new_scope_id
+                                        safety_mode
+                                        generic_inferences: &mut .generic_inferences
+                                        final_result_type
+                                        span: case_.marker_span
+                                    )
+                                    final_result_type = result_type
+
+                                    let checked_match_case = CheckedMatchCase::EnumVariant(
+                                        defaults
+                                        name: variant_names.last()!.0
+                                        args: variant_arguments
+                                        subject_type_id
+                                        index: 0
+                                        scope_id: new_scope_id
+                                        body: checked_body
+                                        marker_span: case_.marker_span
+                                    )
+                                    checked_cases.push(checked_match_case)
+                                }
+                                CatchAll(variant_arguments) => {
+                                    if current_case_index != case_count - 1 {
+                                        .error("Match else case is only allowed as the last case", case_.marker_span)
+                                    }
+
+                                    catch_all_span = case_.marker_span
+
+                                    if seen_catch_all {
+                                        .error("Multiple catch-all cases in match are not allowed", case_.marker_span)
+                                    } else {
+                                        seen_catch_all = true
+                                    }
+
+                                    if variant_arguments.size() != 0 {
+                                        let old_ignore_errors = .ignore_errors
+                                        .ignore_errors = false
+                                        .error("Bindings aren't allowed in a generic else", case_.marker_span)
+                                        .ignore_errors = old_ignore_errors
+                                        .had_an_error = false
+                                    }
+
+                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
+                                    mut defaults: [CheckedStatement] = []
+                                    for (_, default_) in pattern.defaults {
+                                        let checked_var_decl = .typecheck_var_decl(
+                                            var: default_.variable
+                                            init: default_.value
+                                            scope_id: new_scope_id
+                                            safety_mode
+                                            span: default_.variable.span
+                                        )
+                                        defaults.push(checked_var_decl)
+                                    }
+
+                                    let (checked_body, result_type) = .typecheck_match_body(
+                                        body: case_.body
+                                        scope_id: new_scope_id
+                                        safety_mode
+                                        generic_inferences: &mut .generic_inferences
+                                        final_result_type
+                                        span: case_.marker_span
+                                    )
+                                    final_result_type = result_type
+
+                                    let checked_match_case = CheckedMatchCase::CatchAll(
+                                        defaults
+                                        has_arguments: variant_arguments.size() != 0
+                                        body: checked_body
+                                        marker_span: case_.marker_span
+                                    )
+
+                                    checked_cases.push(checked_match_case)
+                                }
+                                Expression(expr) => {
+                                    if is_enum_match {
+                                        .error(
+                                            "Cannot have a value match case in a match expression containing enum matches"
+                                            case_.marker_span
+                                        )
+                                    }
+                                    is_value_match = true
+
+                                    let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
+                                        condition: expr
+                                        acc: None
+                                        then_block: None
+                                        else_statement: None
+                                        scope_id
+                                        span
+                                    )
+                                    let checked_expression = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: Some(subject_type_id), span)
+
+                                    if is_boolean_match and checked_expression is Boolean(val) {
+                                        if val {
+                                            seen_true = true
+                                        } else {
+                                            seen_false = true
+                                        }
+                                    }
+
+                                    if not checked_expression.to_number_constant(program: .program).has_value() {
+                                        all_variants_constant = false
+                                    }
+
+                                    mut expression_type = checked_expression.type()
+
+                                    if checked_expression is Range(from, to) {
+                                        guard from.has_value() or to.has_value() else {
+                                            .error(
+                                                "There has to be at least a 'from', or a 'to' in a range expression"
+                                                expr.span()
+                                            )
+                                            continue
+                                        }
+                                        if from.has_value() {
+                                            expression_type = from!.type()
+                                        } else if to.has_value() {
+                                            expression_type = to!.type()
+                                        }
+                                    }
+
+                                    // FIXME: In the future, we should really make this a "does it satisfy some trait" check.
+                                    //        For now, we just check that the types are equal.
+                                    .check_types_for_compat(
+                                        lhs_type_id: expression_type
+                                        rhs_type_id: subject_type_id
+                                        generic_inferences: &mut .generic_inferences
+                                        span: case_.marker_span
+                                    )
+
+                                    if not pattern.defaults.is_empty() {
+                                        .error("Expression patterns cannot have default bindings", case_.marker_span)
+                                    }
+
+                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-expression({})", expr))
+                                    let (checked_body, result_type) = .typecheck_match_body(
+                                        body: case_.body
+                                        scope_id: new_scope_id
+                                        safety_mode
+                                        generic_inferences: &mut .generic_inferences
+                                        final_result_type
+                                        span: case_.marker_span
+                                    )
+                                    final_result_type = result_type
+
+                                    let checked_match_case = CheckedMatchCase::Expression(
+                                        defaults: []
+                                        expression: checked_expression
+                                        body: checked_body
+                                        marker_span: case_.marker_span
+                                    )
+                                    checked_cases.push(checked_match_case)
+                                }
+                                else => {}
+                            }
+                        }
+
+                        current_case_index++
+                    }
+
+                    if is_value_match and not (seen_catch_all or (is_boolean_match and seen_true and seen_false)) {
+                        .error(
+                            "Match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"
+                            span
+                        )
+                    }
+
+                    if is_value_match and seen_catch_all and is_boolean_match and seen_true and seen_false {
+                        .error("All cases are covered, but an irrefutable pattern is also present", catch_all_span!)
+                    }
                 }
             }
         }

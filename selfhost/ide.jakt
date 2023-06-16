@@ -798,7 +798,13 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
                             Expression(expr) => find_span_in_expression(program, expr, span)
                         }
                     }
-
+                    ClassInstance(body, marker_span) => match marker_span.contains(span) {
+                        true => None // FIXME: Implement this
+                        else => match body {
+                            Block(block) => find_span_in_block(program, block, span)
+                            Expression(expr) => find_span_in_expression(program, expr, span)
+                        }
+                    }
                 }
                 if found.has_value() {
                     return found

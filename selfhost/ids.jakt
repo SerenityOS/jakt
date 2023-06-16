@@ -26,12 +26,16 @@ struct FunctionId {
     }
 }
 
-struct StructId {
+struct StructId implements(Hashable, Equal<StructId>) {
     module: ModuleId
     id: usize
 
     fn equals(this, anon rhs: StructId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
+    }
+
+    fn hash(this) -> u32 {
+        return pair_int_hash(.id.hash(), .module.hash())
     }
 }
 

@@ -2692,6 +2692,22 @@ struct CodeGenerator {
                     output += .codegen_match_body(body, return_type_id)
                     output += "}\n"
                 }
+                ClassInstance(type, body, rebind_name, marker_span) => {
+                    let type_name = .codegen_type_possibly_as_namespace(type_id: type, as_namespace: true)
+                    output += format("if (is<{}>(__jakt_enum_value.ptr())) {{\n", type_name)
+                    output += format(
+                        "auto {} = NonnullRefPtr {{ *static_cast<RawPtr<{}>>(__jakt_enum_value.ptr()) }};\n"
+                        (rebind_name?.name ?? "__jakt_match_value")
+                        type_name
+                    )
+
+                    for default_ in defaults {
+                        output += .codegen_statement(statement: default_)
+                    }
+
+                    output += .codegen_match_body(body, return_type_id)
+                    output += "}\n"
+                }
             }
             first = false
         }

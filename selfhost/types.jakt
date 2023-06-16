@@ -1405,11 +1405,19 @@ enum CheckedMatchBody {
     Block(CheckedBlock)
 }
 
+struct ClassInstanceRebind {
+    name: String
+    name_span: Span
+    is_mutable: bool
+    is_reference: bool
+}
+
 enum CheckedMatchCase {
     defaults: [CheckedStatement]
 
     EnumVariant(name: String, args: [EnumVariantPatternArgument], subject_type_id: TypeId, index: usize, scope_id: ScopeId, body: CheckedMatchBody, marker_span: Span)
     Expression(expression: CheckedExpression, body: CheckedMatchBody, marker_span: Span)
+    ClassInstance(type: TypeId, body: CheckedMatchBody, rebind_name: ClassInstanceRebind?, marker_span: Span)
     CatchAll(has_arguments: bool, body: CheckedMatchBody, marker_span: Span)
 }
 
@@ -1585,7 +1593,7 @@ boxed enum CheckedExpression {
             mut control_flow: BlockControlFlow? = None
             for case_ in match_cases {
                 let case_control_flow = match case_ {
-                    EnumVariant(body) | Expression(body) | CatchAll(body) => match body {
+                    else(body) => match body {
                         Block(block) => block.control_flow
                         Expression(expr) => expr.control_flow()
                     }

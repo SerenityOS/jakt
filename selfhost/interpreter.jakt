@@ -6924,7 +6924,7 @@ class Interpreter {
                                 span = marker_span
                                 break
                             }
-                            Expression(marker_span) => {
+                            ClassInstance(marker_span) | Expression(marker_span) => {
                                 .error("Value matches are not allowed on enums", marker_span)
                                 throw Error::from_errno(InterpretError::InvalidType as! i32)
                             }
@@ -7031,6 +7031,11 @@ class Interpreter {
                                 span = marker_span
                                 continue
                             }
+                            ClassInstance(marker_span) => {
+                                // FIXME: Implement this
+                                .error("Class instance matches are not implemented yet", marker_span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
                             EnumVariant(marker_span) => {
                                 .error(
                                     format("Value matches cannot have enum variant arms (matching on {})", value.type_name()),
@@ -7041,6 +7046,9 @@ class Interpreter {
                     }
 
                     if found_body is None and catch_all_case is None {
+                        .error(
+                            format("No match found for value of type {}", value.type_name()),
+                            .spans.last()!)
                         throw Error::from_errno(InterpretError::InvalidType as! i32)
                     }
                     found_body = found_body ?? catch_all_case!
@@ -7363,6 +7371,7 @@ class Interpreter {
     public fn string_from_value(mut this, anon value: Value) throws -> String => match value.impl {
         JaktString(x) => x
         else => {
+            .error("Expected string value", value.span)
             throw Error::from_errno(InterpretError::InvalidType as! i32)
         }
     }
