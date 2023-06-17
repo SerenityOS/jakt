@@ -3,7 +3,7 @@
 
 class Foo {
     public fn toss(this) throws {
-        throw Error::from_errno(0)
+        throw Error::from_errno(1)
     }
 }
 

@@ -2,7 +2,7 @@
 /// - output: "PASS\n"
 
 fn troublemaker() throws -> i64 {
-    throw Error::from_errno(0)
+    throw Error::from_errno(1)
 }
 
 fn main() {
