@@ -5912,21 +5912,25 @@ struct Typechecker {
 
                     type_id = builtin(BuiltinType::Bool)
                 } else {
-                    .error_with_hint(
-                        format(
-                            "Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)",
-                            .type_name(lhs_type_id),
-                            .type_name(rhs_type_id),
+                    if .get_type(lhs_type_id) is TypeVariable(trait_implementations) and trait_implementations.is_empty() {
+                        // YOLO Generics Mode: We'll worry about this later.
+                    } else {
+                        .error_with_hint(
+                            format(
+                                "Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)",
+                                .type_name(lhs_type_id),
+                                .type_name(rhs_type_id),
+                            )
+                            span
+                            format(
+                                "Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"
+                                trait_names[0]
+                                .type_name(rhs_type_id)
+                                .type_name(lhs_type_id)
+                            )
+                            lhs_span
                         )
-                        span
-                        format(
-                            "Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"
-                            trait_names[0]
-                            .type_name(rhs_type_id)
-                            .type_name(lhs_type_id)
-                        )
-                        lhs_span
-                    )
+                    }
                 }
             }
             else => {}
