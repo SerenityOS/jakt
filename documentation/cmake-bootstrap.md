@@ -45,7 +45,19 @@ for validation, set the CMake cache variable `FINAL_STAGE` to `2`.
 
 Jakt is known to compile with clang >=13 on Linux, macOS and Windows. g++ also works, provided the version is >=10.2.
 
-MSVC is not supported, however clang-cl.exe and clang.exe do work and clang-cl is used in CI.
+MSVC is not supported, however clang-cl.exe and clang.exe do work and clang-cl is used in CI. If you have the Clang tools installed through Visual Studio then you must specify `-T ClangCL` or if you want to use Ninja, specify `-GNinja`. Doing neither may cause the build process to fail. Additionally, clang-cl seems dependent on environment variables to find MSVC, so ensure you're running it from the Developer or PowerShell Command Prompt. Clang++ doesn't seem to have the same requirement.
+
+
+```sh
+# Developer/PowerShell Command Prompt and clang-cl with VS packaged Clang
+cmake -B build -T ClangCL
+# Developer/PowerShell Command Prompt and clang-cl
+cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang-cl
+# Windows Clang++ example
+cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++
+```
+
+
 
 On MSYS2, g++ may error out with a "string table overflow" error. In that case, re-configure the build directory with -DCMAKE_BUILD_TYPE=MinSizeRel to get the -Os flag. Do note that using WSL2 or clang directly on windows is a more supported build platform. Maintainers will be reluctant to merge runtime or jakttest patches for MSYS2 quirks to keep the number of supported platfoms under control.
 

@@ -76,7 +76,7 @@ target_include_directories(jakt_stage0
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
 )
 apply_output_rules(jakt_stage0)
-if (MSVC)
+if (MSVC OR (DEFINED MSVC_VERSION AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
     target_link_options(jakt_stage0 PRIVATE LINKER:/STACK:0x800000)
 endif()
 
@@ -155,7 +155,7 @@ target_include_directories(jakt_stage1
 )
 add_executable(Jakt::jakt_stage1 ALIAS jakt_stage1)
 apply_output_rules(jakt_stage1)
-if (MSVC)
+if (MSVC OR (DEFINED MSVC_VERSION AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU"))
     target_link_options(jakt_stage1 PRIVATE LINKER:/STACK:0x800000)
 endif()
 
@@ -175,7 +175,7 @@ if (FINAL_STAGE GREATER_EQUAL 2)
   )
   add_executable(Jakt::jakt_stage2 ALIAS jakt_stage2)
   apply_output_rules(jakt_stage2)
-  if (MSVC)
+  if (MSVC OR (DEFINED MSVC_VERSION AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
     target_link_options(jakt_stage2 PRIVATE LINKER:/STACK:0x800000)
   endif()
 endif()
