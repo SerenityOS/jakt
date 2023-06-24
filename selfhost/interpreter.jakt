@@ -6936,6 +6936,11 @@ class Interpreter {
                         }
                     }
 
+                    if not catch_all_case.has_value() and not found_body.has_value() {
+                        .error("Match is not exhaustive", span!)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+
                     found_body = found_body ?? catch_all_case!
                     let empty_args: [EnumVariantPatternArgument] = []
                     found_args = found_args ?? empty_args
