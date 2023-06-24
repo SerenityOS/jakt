@@ -1896,6 +1896,13 @@ struct Parser {
                             parsed_namespace.records.push(parsed_class)
                             saw_an_entity = true
                         }
+                        Enum => {
+                            mut parsed_enum = .parse_enum(DefinitionLinkage::External, is_boxed: false)
+                            .apply_attributes(&mut parsed_enum, &active_attributes)
+                            active_attributes = []
+                            parsed_namespace.records.push(parsed_enum)
+                            saw_an_entity = true
+                        }
                         else => {
                             active_attributes = []
                             .error("Unexpected keyword", .current().span())
