@@ -3,7 +3,7 @@ cmake_policy(SET CMP0091 NEW)
 
 project(Jakt
         VERSION 0.0.1
-        LANGUAGES CXX
+        LANGUAGES CXX C
         HOMEPAGE_URL https://github.com/SerenityOS/jakt
         DESCRIPTION "Jakt programming language compiler")
 
@@ -15,6 +15,15 @@ endif()
 
 find_package(Threads REQUIRED)
 
+SET(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
+SET(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
+find_package(Clang CONFIG)
+
+set(JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT none)
+if (Clang_FOUND)
+  set(JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT clang)
+endif()
+
 include(GNUInstallDirs)
 
 set(NO_SYMLINKS_DEFAULT OFF)
@@ -25,6 +34,7 @@ endif()
 set(FINAL_STAGE "1" CACHE STRING "Compiler stage to stop at, either 1 (default) or 2)")
 option(NO_SYMLINKS "Use hard links instead of symlinks. Useful for unprivileged Windows users" "${NO_SYMLINKS_DEFAULT}")
 option(SERENITY_SOURCE_DIR PATH "Path of an existing SerenityOS checkout to pull AK files from")
+set(CPP_AUTO_IMPORT_PROCESSOR "${JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT}" CACHE STRING "'import extern' processor to use (default=none/clang/libcpp/none)")
 
 if (NO_SYMLINKS)
   set(LINK_COMMAND create_hardlink)
@@ -33,6 +43,28 @@ else()
   set(LINK_COMMAND create_symlink)
   set(LINK_GENEX TARGET_FILE_NAME)
 endif()
+
+set(JAKT_USING_CLANG OFF)
+set(JAKT_CPP_AUTO_IMPORT_PROCESSOR "${CPP_AUTO_IMPORT_PROCESSOR}")
+set(JAKT_CPP_AUTO_IMPORT_EXTRA_SOURCES
+  selfhost/cpp_import/none.jakt
+)
+
+if (CPP_AUTO_IMPORT_PROCESSOR STREQUAL "clang")
+  set(JAKT_USING_CLANG ON)
+  set(JAKT_CPP_AUTO_IMPORT_EXTRA_SOURCES
+    selfhost/cpp_import/clang.jakt
+    selfhost/cpp_import/clang_c.jakt
+  )
+elseif(CPP_AUTO_IMPORT_PROCESSOR STREQUAL "libcpp")
+  set(JAKT_CPP_AUTO_IMPORT_EXTRA_SOURCES
+    selfhost/cpp_import/libcpp.jakt
+    selfhost/cpp_import/hashmap.jakt
+    selfhost/cpp_import/vector.jakt
+  )
+endif()
+
+message(STATUS "Using ${JAKT_CPP_AUTO_IMPORT_PROCESSOR} as the cpp import processor (using Clang=${JAKT_USING_CLANG})")
 
 set(in_build_prefix "")
 get_cmake_property(is_multi_config GENERATOR_IS_MULTI_CONFIG)
@@ -99,8 +131,8 @@ set(SELFHOST_SOURCES
   selfhost/types.jakt
   selfhost/utility.jakt
   selfhost/platform.jakt
-  selfhost/cpp_import/none.jakt
   selfhost/cpp_import/common.jakt
+  ${JAKT_CPP_AUTO_IMPORT_EXTRA_SOURCES}
 )
 
 # FIXME: STDLIB target needed
@@ -141,19 +173,30 @@ else()
   list(APPEND SELFHOST_STDLIB_SOURCES platform__unknown_compiler.cpp)
 endif()
 
+set(SELFHOST_CONFIGS
+  "jakt.cpp_import.processor=${JAKT_CPP_AUTO_IMPORT_PROCESSOR}"
+)
+
 add_jakt_executable(jakt_stage1
   COMPILER jakt_stage0
   MAIN_SOURCE selfhost/main.jakt
   MODULE_SOURCES ${SELFHOST_SOURCES}
   STDLIB_SOURCES ${SELFHOST_STDLIB_SOURCES}
   RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime"
+  CONFIGS ${SELFHOST_CONFIGS}
 )
+
+if (JAKT_USING_CLANG)
+  target_link_libraries(jakt_stage1 PRIVATE libclang)
+endif()
 
 target_include_directories(jakt_stage1
   INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
   PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
+  PRIVATE
+    ${CLANG_INCLUDE_DIRS}
 )
 add_executable(Jakt::jakt_stage1 ALIAS jakt_stage1)
 apply_output_rules(jakt_stage1)
@@ -168,13 +211,19 @@ if (FINAL_STAGE GREATER_EQUAL 2)
     MODULE_SOURCES ${SELFHOST_SOURCES}
     STDLIB_SOURCES ${SELFHOST_STDLIB_SOURCES}
     RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime"
+    CONFIGS ${SELFHOST_CONFIGS}
   )
   target_include_directories(jakt_stage2
     INTERFACE
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
     PUBLIC
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
+    PRIVATE
+      ${CLANG_INCLUDE_DIRS}
   )
+  if (JAKT_USING_CLANG)
+    target_link_libraries(jakt_stage2 PRIVATE libclang)
+  endif()
   add_executable(Jakt::jakt_stage2 ALIAS jakt_stage2)
   apply_output_rules(jakt_stage2)
   if (MSVC)
