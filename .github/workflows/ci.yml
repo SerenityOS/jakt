@@ -51,7 +51,7 @@ jobs:
           sudo echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME} main" | sudo tee -a /etc/apt/sources.list.d/llvm.list
           sudo echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-15 main" | sudo tee -a /etc/apt/sources.list.d/llvm.list
           sudo apt-get update
-          sudo apt-get install -y clang-15
+          sudo apt-get install -y clang-15 libclang-15-dev
 
       - name: Install macOS dependencies
         if: ${{ matrix.platform == 'macos-latest' }}
@@ -59,6 +59,7 @@ jobs:
 
       - name: Build Jakt Stage 1
         run: |
+          export "CMAKE_PREFIX_PATH=$(brew --prefix llvm@15)"
           cmake -GNinja -B build -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }} -DCMAKE_BUILD_TYPE=Release -DFINAL_STAGE=1 -DCMAKE_INSTALL_PREFIX=jakt-install
           cmake --build build
 

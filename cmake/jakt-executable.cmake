@@ -55,7 +55,7 @@ function(add_jakt_compiler_flags target)
 endfunction()
 
 function(add_jakt_executable executable)
-  cmake_parse_arguments(PARSE_ARGV 1 JAKT_EXECUTABLE "" "MAIN_SOURCE;RUNTIME_DIRECTORY;COMPILER" "MODULE_SOURCES;STDLIB_SOURCES;INCLUDES")
+  cmake_parse_arguments(PARSE_ARGV 1 JAKT_EXECUTABLE "" "MAIN_SOURCE;RUNTIME_DIRECTORY;COMPILER" "MODULE_SOURCES;STDLIB_SOURCES;INCLUDES;CONFIGS")
   set(main_source "${CMAKE_CURRENT_LIST_DIR}/${JAKT_EXECUTABLE_MAIN_SOURCE}" )
   get_filename_component(main_base "${main_source}" NAME_WE)
   get_filename_component(main_directory "${main_source}" DIRECTORY)
@@ -99,6 +99,11 @@ function(add_jakt_executable executable)
     list(APPEND cpp_files "${entry_base}_specializations.cpp")
   endforeach()
 
+  set(configs)
+  foreach(config IN LISTS JAKT_EXECUTABLE_CONFIGS)
+    list(APPEND configs "--config" "${config}")
+  endforeach()
+
   set(binary_tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/${executable}_tmp")
   list(TRANSFORM cpp_files PREPEND "${binary_tmp_dir}/")
 
@@ -113,6 +118,7 @@ function(add_jakt_executable executable)
       --binary-dir "${binary_tmp_dir}"
       --runtime-path "${runtime_path}"
       -I "$<JOIN:${JAKT_EXECUTABLE_COMPILER_INCLUDES},;-I>"
+      ${configs}
       "${main_source}"
     VERBATIM
     COMMENT "Building jakt file ${JAKT_EXECUTABLE_MAIN_SOURCE} with ${JAKT_EXECUTABLE_COMPILER}"
