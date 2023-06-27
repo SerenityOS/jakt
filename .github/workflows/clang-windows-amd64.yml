@@ -1,0 +1,58 @@
+name: "Build clang for windows"
+
+on:
+  # schedule:
+  #   - cron: '0 0 * * 1'
+  workflow_dispatch:
+  # FIXME: Only for testing, remove later.
+  pull_request:
+
+env:
+  LLVM_VER: 16.0.4
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Cache LibClang
+      id: cache-clang
+      uses: actions/cache@v3
+      with:
+        path: llvm-project-env:LLVM_VER/install
+        key: libclang-${{ runner.os }}-${{ github.run_id }}
+
+    - name: Clone llvm/llvm-project
+      run: |
+        choco install wget git
+        git clone https://github.com/llvm/llvm-project.git llvm-project-$env:LLVM_VER -b llvmorg-$env:LLVM_VER --depth=1
+
+    - name: Prepare build directory
+      run: |
+        mkdir -p llvm-project-$env:LLVM_VER/build
+        mkdir -p llvm-project-$env:LLVM_VER/install
+
+    - name: Run CMake
+      run: |
+        cd llvm-project-$env:LLVM_VER/build
+        cmake ../llvm `
+          -Thost=x64 `
+          -DLLVM_ENABLE_PROJECTS=clang `
+          -DLLVM_ENABLE_PROJECTS=clang `
+          -DLLVM_ENABLE_ZLIB=OFF `
+          -DLLVM_ENABLE_ZSTD=OFF `
+          -DLLVM_ENABLE_TERMINFO=OFF `
+          -DLLVM_TARGETS_TO_BUILD=X86 `
+          -DCMAKE_CXX_FLAGS="/MP" `
+          -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/llvm-project-$env:LLVM_VER/install" `
+          -DLLVM_USE_CRT_MINSIZEREL="MT"
+
+    - name: Build and install
+      run: |
+        cd llvm-project-$env:LLVM_VER/build
+        cmake --build . --config RelWithDebInfo --target install
