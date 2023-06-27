@@ -7,11 +7,11 @@
 #pragma once
 
 #if defined(KERNEL)
-#    include <Kernel/Assertions.h>
+#    include <Kernel/Library/Assertions.h>
 #else
 #    include <assert.h>
 extern "C" __attribute__((noreturn)) void ak_verification_failed(char const*);
-#    ifndef NDEBUG
+#    if !defined(NDEBUG) && !defined(WIN32)
 #        define VERIFY assert
 #    else
 #        define __stringify_helper(x) #x

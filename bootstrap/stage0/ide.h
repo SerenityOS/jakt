@@ -18,6 +18,21 @@ using Variant<VarType_Details::Variable, VarType_Details::Field>::Variant;
     using Field = VarType_Details::Field;
 ErrorOr<DeprecatedString> debug_description() const;
 };
+namespace Mutability_Details {
+struct DoesNotApply {
+};
+struct Immutable {
+};
+struct Mutable {
+};
+}
+struct Mutability : public Variant<Mutability_Details::DoesNotApply, Mutability_Details::Immutable, Mutability_Details::Mutable> {
+using Variant<Mutability_Details::DoesNotApply, Mutability_Details::Immutable, Mutability_Details::Mutable>::Variant;
+    using DoesNotApply = Mutability_Details::DoesNotApply;
+    using Immutable = Mutability_Details::Immutable;
+    using Mutable = Mutability_Details::Mutable;
+ErrorOr<DeprecatedString> debug_description() const;
+};
 namespace VarVisibility_Details {
 struct DoesNotApply {
 };
@@ -36,30 +51,15 @@ using Variant<VarVisibility_Details::DoesNotApply, VarVisibility_Details::Public
     using Restricted = VarVisibility_Details::Restricted;
 ErrorOr<DeprecatedString> debug_description() const;
 };
-namespace Mutability_Details {
-struct DoesNotApply {
-};
-struct Immutable {
-};
-struct Mutable {
-};
-}
-struct Mutability : public Variant<Mutability_Details::DoesNotApply, Mutability_Details::Immutable, Mutability_Details::Mutable> {
-using Variant<Mutability_Details::DoesNotApply, Mutability_Details::Immutable, Mutability_Details::Mutable>::Variant;
-    using DoesNotApply = Mutability_Details::DoesNotApply;
-    using Immutable = Mutability_Details::Immutable;
-    using Mutable = Mutability_Details::Mutable;
-ErrorOr<DeprecatedString> debug_description() const;
-};
 namespace Usage_Details {
 struct Variable {
 utility::Span span;
 DeprecatedString name;
-types::TypeId type_id;
+ids::TypeId type_id;
 ide::Mutability mutability;
 ide::VarType var_type;
 ide::VarVisibility visibility;
-JaktInternal::Optional<types::TypeId> struct_type_id;
+JaktInternal::Optional<ids::TypeId> struct_type_id;
 template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6>
 Variable(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6):
 span{ forward<_MemberT0>(member_0)},
@@ -72,14 +72,14 @@ struct_type_id{ forward<_MemberT6>(member_6)}
 {}
 };
 struct Call{
-types::FunctionId value;
+ids::FunctionId value;
 template<typename _MemberT0>
 Call(_MemberT0&& member_0):
 value{ forward<_MemberT0>(member_0)}
 {}
 };
 struct Typename{
-types::TypeId value;
+ids::TypeId value;
 template<typename _MemberT0>
 Typename(_MemberT0&& member_0):
 value{ forward<_MemberT0>(member_0)}
@@ -95,8 +95,8 @@ value{ forward<_MemberT0>(member_0)}
 struct EnumVariant {
 utility::Span span;
 DeprecatedString name;
-types::TypeId type_id;
-JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::TypeId>> variants;
+ids::TypeId type_id;
+JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,ids::TypeId>> variants;
 JaktInternal::Optional<types::NumberConstant> number_constant;
 template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4>
 EnumVariant(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4):
@@ -131,14 +131,14 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::ide::VarVisibility> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::VarVisibility const& value) {
+template<>struct Jakt::Formatter<Jakt::ide::Mutability> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::Mutability const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::ide::Mutability> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::Mutability const& value) {
+template<>struct Jakt::Formatter<Jakt::ide::VarVisibility> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::VarVisibility const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

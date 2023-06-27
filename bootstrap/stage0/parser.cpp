@@ -4281,6 +4281,16 @@ TRY((((((parsed_namespace).records)).push(parsed_class))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
+case 71: {
+{
+parser::ParsedRecord parsed_enum = TRY((((*this).parse_enum( parser::DefinitionLinkage { typename parser::DefinitionLinkage::External() } ,false))));
+TRY((((*this).apply_attributes(((parsed_enum)),((active_attributes))))));
+(active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
+TRY((((((parsed_namespace).records)).push(parsed_enum))));
+(saw_an_entity = true);
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
 default: {
 {
 (active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
@@ -6034,7 +6044,11 @@ return JaktInternal::LoopContinue{};
 }
 if (((((((attribute).assigned_value).value())).starts_with(TRY(DeprecatedString::from_utf8("operator("sv)))) && (((((attribute).assigned_value).value())).ends_with(TRY(DeprecatedString::from_utf8(")"sv)))))){
 DeprecatedString const operator_name = (((((attribute).assigned_value).value())).substring(static_cast<size_t>(9ULL),JaktInternal::checked_sub((((((attribute).assigned_value).value())).length()),static_cast<size_t>(10ULL))));
-(((((((field))).var_decl)).external_name) =  parser::ExternalName { typename parser::ExternalName::Operator(operator_name) } );
+(((((((field))).var_decl)).external_name) =  parser::ExternalName { typename parser::ExternalName::Operator(operator_name,false) } );
+}
+else if (((((((attribute).assigned_value).value())).starts_with(TRY(DeprecatedString::from_utf8("prefix-operator("sv)))) && (((((attribute).assigned_value).value())).ends_with(TRY(DeprecatedString::from_utf8(")"sv)))))){
+DeprecatedString const operator_name = (((((attribute).assigned_value).value())).substring(static_cast<size_t>(16ULL),JaktInternal::checked_sub((((((attribute).assigned_value).value())).length()),static_cast<size_t>(17ULL))));
+(((((((field))).var_decl)).external_name) =  parser::ExternalName { typename parser::ExternalName::Operator(operator_name,true) } );
 }
 else {
 (((((((field))).var_decl)).external_name) =  parser::ExternalName { typename parser::ExternalName::Plain((((attribute).assigned_value).value())) } );
@@ -6097,7 +6111,11 @@ return JaktInternal::LoopContinue{};
 }
 if (((((((attribute).assigned_value).value())).starts_with(TRY(DeprecatedString::from_utf8("operator("sv)))) && (((((attribute).assigned_value).value())).ends_with(TRY(DeprecatedString::from_utf8(")"sv)))))){
 DeprecatedString const operator_name = (((((attribute).assigned_value).value())).substring(static_cast<size_t>(9ULL),JaktInternal::checked_sub((((((attribute).assigned_value).value())).length()),static_cast<size_t>(10ULL))));
-(((((parsed_function))).external_name) =  parser::ExternalName { typename parser::ExternalName::Operator(operator_name) } );
+(((((parsed_function))).external_name) =  parser::ExternalName { typename parser::ExternalName::Operator(operator_name,false) } );
+}
+else if (((((((attribute).assigned_value).value())).starts_with(TRY(DeprecatedString::from_utf8("prefix-operator("sv)))) && (((((attribute).assigned_value).value())).ends_with(TRY(DeprecatedString::from_utf8(")"sv)))))){
+DeprecatedString const operator_name = (((((attribute).assigned_value).value())).substring(static_cast<size_t>(16ULL),JaktInternal::checked_sub((((((attribute).assigned_value).value())).length()),static_cast<size_t>(17ULL))));
+(((((parsed_function))).external_name) =  parser::ExternalName { typename parser::ExternalName::Operator(operator_name,true) } );
 }
 else {
 (((((parsed_function))).external_name) =  parser::ExternalName { typename parser::ExternalName::Plain((((attribute).assigned_value).value())) } );
@@ -8840,6 +8858,7 @@ JaktInternal::DynamicArray<parser::ParsedVarDecl> var_decls = (TRY((DynamicArray
 JaktInternal::DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>> default_values = (TRY((DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>>::create_with({}))));
 while ((!(((*this).eof())))){
 if (((((*this).peek(static_cast<size_t>(1ULL)))).index() == 5 /* Colon */)){
+if (((((*this).current())).index() == 3 /* Identifier */)){
 parser::ParsedVarDecl var_decl = TRY((((*this).parse_variable_declaration(false))));
 if (((((var_decl).parsed_type))->index() == 0 /* Name */)){
 DeprecatedString const name = ((((var_decl).parsed_type))->get<parser::ParsedType::Name>()).name;
@@ -8851,6 +8870,13 @@ TRY((((*this).error(TRY(DeprecatedString::from_utf8("use 'boxed enum' to make th
 }
 TRY((((var_decls).push(var_decl))));
 continue;
+}
+else {
+TRY((((*this).error(TRY(DeprecatedString::from_utf8("Enum variant missing type"sv)),((((*this).current())).span())))));
+((((*this).index)++));
+continue;
+}
+
 }
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::SumEnumVariant>,JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>>>{
@@ -12089,7 +12115,15 @@ break;}
 case 1 /* Operator */: {
 TRY(builder.append("ExternalName::Operator"sv));
 [[maybe_unused]] auto const& that = this->template get<ExternalName::Operator>();
-TRY(builder.appendff("(\"{}\")", that.value));
+TRY(builder.append("("sv));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("name: \"{}\", ", that.name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("is_prefix: {}", that.is_prefix));
+}
+TRY(builder.append(")"sv));
 break;}
 }
 return builder.to_string();
@@ -12106,9 +12140,31 @@ DeprecatedString const& name = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(name);
 };/*case end*/
 case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::ExternalName::Operator>();
-DeprecatedString const& name = __jakt_match_value.value;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ExternalName::Operator>();DeprecatedString const& name = __jakt_match_value.name;
 return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal(" {} "sv)),name))));
+};/*case end*/
+default: VERIFY_NOT_REACHED();}/*switch end*/
+}()
+);
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+});
+}
+}
+
+bool parser::ExternalName::is_prefix() const {
+{
+return ({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = *this;
+switch(__jakt_match_variant.index()) {
+case 0: {
+return JaktInternal::ExplicitValue(false);
+};/*case end*/
+case 1: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ExternalName::Operator>();bool const& is_prefix = __jakt_match_value.is_prefix;
+return JaktInternal::ExplicitValue(is_prefix);
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -12132,8 +12188,7 @@ DeprecatedString const& name = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(name);
 };/*case end*/
 case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename parser::ExternalName::Operator>();
-DeprecatedString const& name = __jakt_match_value.value;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ExternalName::Operator>();DeprecatedString const& name = __jakt_match_value.name;
 return JaktInternal::ExplicitValue(TRY((((TRY(DeprecatedString::from_utf8("operator"sv))) + (name)))));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/

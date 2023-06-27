@@ -40,6 +40,11 @@ public:
             set(item.key, item.value);
     }
 
+    HashMap(HashMap const&) = default; // FIXME: Not OOM-safe! Use clone() instead.
+    HashMap(HashMap&& other) noexcept = default;
+    HashMap& operator=(HashMap const& other) = default; // FIXME: Not OOM-safe! Use clone() instead.
+    HashMap& operator=(HashMap&& other) noexcept = default;
+
     [[nodiscard]] bool is_empty() const
     {
         return m_table.is_empty();
@@ -281,9 +286,10 @@ public:
         return hash;
     }
 
-    ErrorOr<HashMap<K, V>> clone()
+    template<typename NewKeyTraits = KeyTraits, typename NewValueTraits = ValueTraits, bool NewIsOrdered = IsOrdered>
+    ErrorOr<HashMap<K, V, NewKeyTraits, NewValueTraits, NewIsOrdered>> clone() const
     {
-        HashMap<K, V> hash_map_clone;
+        HashMap<K, V, NewKeyTraits, NewValueTraits, NewIsOrdered> hash_map_clone;
         for (auto& it : *this)
             TRY(hash_map_clone.try_set(it.key, it.value));
         return hash_map_clone;

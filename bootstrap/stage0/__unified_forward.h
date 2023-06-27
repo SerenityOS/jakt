@@ -4,6 +4,9 @@
 extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
 const unsigned int CP_UTF8 = 65001;
 #endif
+#include <Jakt/Forward.h>
+#include <stdio.h>
+#include <AK/Queue.h>
 namespace Jakt {
 namespace jakt__prelude__iteration {
 }
@@ -573,6 +576,16 @@ ErrorOr<utility::Span> merge_spans(utility::Span const start, utility::Span cons
 f32 f64_to_f32(f64 const number);
 
 }
+namespace ids {
+struct FunctionId;
+struct StructId;
+struct VarId;
+struct ScopeId;
+struct TypeId;
+struct ModuleId;
+struct EnumId;
+struct TraitId;
+}
 namespace types {
 struct CheckedNamespace;
 class Module;
@@ -581,9 +594,7 @@ class TypecheckFunctions;
 class CheckedProgram;
 struct FunctionGenericParameter;
 struct ResolvedNamespace;
-struct VarId;
 struct FieldRecord;
-struct ScopeId;
 struct CheckedCall;
 struct CheckedBlock;
 struct OperatorTraitImplementation;
@@ -591,16 +602,12 @@ struct LoadedModule;
 struct ResolvedForallChunk;
 class Scope;
 struct CheckedVarDecl;
-struct FunctionId;
 struct CheckedEnum;
 struct CheckedStruct;
 struct CheckedField;
 struct CheckedParameter;
-struct TraitId;
 struct CheckedBinaryOperator;
-struct StructId;
 struct Value;
-struct ModuleId;
 class CheckedFunction;
 class FunctionGenerics;
 struct CheckedGenericParameter;
@@ -608,8 +615,7 @@ struct CheckedEnumVariantBinding;
 class CheckedTrait;
 struct CheckedStringLiteral;
 class CheckedVariable;
-struct TypeId;
-struct EnumId;
+struct ClassInstanceRebind;
 namespace CheckedUnaryOperator_Details {
 struct PreIncrement;
 struct PostIncrement;
@@ -758,6 +764,7 @@ struct CheckedEnumVariant;
 namespace CheckedMatchCase_Details {
 struct EnumVariant;
 struct Expression;
+struct ClassInstance;
 struct CatchAll;
 }
 struct CheckedMatchCase;
@@ -904,13 +911,13 @@ struct ComptimeExpression;
 }
 struct CheckedTraitRequirements;
 
-types::TypeId builtin(types::BuiltinType const builtin);
+ids::TypeId builtin(types::BuiltinType const builtin);
 
-types::TypeId void_type_id();
+ids::TypeId void_type_id();
 
-types::TypeId unknown_type_id();
+ids::TypeId unknown_type_id();
 
-types::TypeId never_type_id();
+ids::TypeId never_type_id();
 
 }
 namespace interpreter {
@@ -939,11 +946,11 @@ struct JustValue;
 }
 struct StatementResult;
 
-ErrorOr<size_t> align_of_impl(types::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter);
+ErrorOr<size_t> align_of_impl(ids::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter);
 
-ErrorOr<size_t> size_of_impl(types::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter);
+ErrorOr<size_t> size_of_impl(ids::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter);
 
-ErrorOr<types::Value> cast_value_to_type(types::Value const this_value, types::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter, bool const saturating);
+ErrorOr<types::Value> cast_value_to_type(types::Value const this_value, ids::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter, bool const saturating);
 
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> value_to_checked_expression(types::Value const this_value, NonnullRefPtr<interpreter::Interpreter> interpreter);
 
@@ -1076,15 +1083,15 @@ struct VarType;
 
 ErrorOr<ide::JaktSymbol> record_to_symbol(parser::ParsedRecord const record);
 
-ErrorOr<ide::Usage> get_enum_variant_usage_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id, DeprecatedString const name);
+ErrorOr<ide::Usage> get_enum_variant_usage_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id, DeprecatedString const name);
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> completions_for_type_id(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id);
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> completions_for_type_id(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id);
 
-ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::TypeId>>> enum_variant_fields(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnumVariant const checked_enum_variant);
+ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,ids::TypeId>>> enum_variant_fields(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnumVariant const checked_enum_variant);
 
-ErrorOr<DeprecatedString> get_enum_variant_signature_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id, DeprecatedString const name);
+ErrorOr<DeprecatedString> get_enum_variant_signature_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id, DeprecatedString const name);
 
-ErrorOr<DeprecatedString> get_type_signature(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id);
+ErrorOr<DeprecatedString> get_type_signature(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_scope(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::Scope> const scope, utility::Span const span);
 
@@ -1092,9 +1099,9 @@ ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> find_dot_completions(Nonnu
 
 ErrorOr<utility::Span> find_definition_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
-ErrorOr<DeprecatedString> get_var_signature(NonnullRefPtr<types::CheckedProgram> const program, DeprecatedString const name, types::TypeId const var_type_id, ide::Mutability const mutability, ide::VarType const var_type, ide::VarVisibility const visibility, JaktInternal::Optional<types::TypeId> const struct_type_id);
+ErrorOr<DeprecatedString> get_var_signature(NonnullRefPtr<types::CheckedProgram> const program, DeprecatedString const name, ids::TypeId const var_type_id, ide::Mutability const mutability, ide::VarType const var_type, ide::VarVisibility const visibility, JaktInternal::Optional<ids::TypeId> const struct_type_id);
 
-ErrorOr<DeprecatedString> get_constructor_signature(NonnullRefPtr<types::CheckedProgram> const program, types::FunctionId const function_id);
+ErrorOr<DeprecatedString> get_constructor_signature(NonnullRefPtr<types::CheckedProgram> const program, ids::FunctionId const function_id);
 
 ErrorOr<utility::Span> find_type_definition_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
@@ -1110,11 +1117,11 @@ ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_function(NonnullRefPtr<
 
 ErrorOr<JaktInternal::Optional<DeprecatedString>> find_typename_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
-ErrorOr<utility::Span> find_type_definition_for_type_id(NonnullRefPtr<types::CheckedProgram> const program, types::TypeId const type_id, utility::Span const span);
+ErrorOr<utility::Span> find_type_definition_for_type_id(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id, utility::Span const span);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_statement(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<typename types::CheckedStatement> const statement, utility::Span const span);
 
-ErrorOr<DeprecatedString> get_enum_variant_signature(NonnullRefPtr<types::CheckedProgram> const program, DeprecatedString const name, types::TypeId const type_id, JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::TypeId>> const variants, JaktInternal::Optional<types::NumberConstant> const number_constant);
+ErrorOr<DeprecatedString> get_enum_variant_signature(NonnullRefPtr<types::CheckedProgram> const program, DeprecatedString const name, ids::TypeId const type_id, JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,ids::TypeId>> const variants, JaktInternal::Optional<types::NumberConstant> const number_constant);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_enum(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnum const checked_enum, utility::Span const span);
 
@@ -1124,7 +1131,7 @@ ErrorOr<ide::JaktSymbol> function_to_symbol(parser::ParsedFunction const functio
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_struct(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedStruct const checked_struct, utility::Span const span);
 
-ErrorOr<DeprecatedString> get_function_signature(NonnullRefPtr<types::CheckedProgram> const program, types::FunctionId const function_id);
+ErrorOr<DeprecatedString> get_function_signature(NonnullRefPtr<types::CheckedProgram> const program, ids::FunctionId const function_id);
 
 }
 namespace project {

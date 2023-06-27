@@ -29,8 +29,8 @@ namespace Detail {
 class StringData;
 }
 
-// FIXME: Remove this when Apple Clang and OpenBSD Clang fully supports consteval.
-#if defined(AK_OS_MACOS) || defined(AK_OS_OPENBSD)
+// FIXME: Remove this when OpenBSD Clang fully supports consteval.
+#if defined(AK_OS_OPENBSD)
 #    define AK_SHORT_STRING_CONSTEVAL constexpr
 #else
 #    define AK_SHORT_STRING_CONSTEVAL consteval
@@ -64,6 +64,9 @@ public:
 
     // Creates a new String from a sequence of UTF-8 encoded code points.
     static ErrorOr<String> from_utf8(StringView);
+    template<typename T>
+    requires(IsOneOf<RemoveCVReference<T>, DeprecatedString, DeprecatedFlyString>)
+    static ErrorOr<String> from_utf8(T&&) = delete;
 
     // Creates a new String by reading byte_count bytes from a UTF-8 encoded Stream.
     static ErrorOr<String> from_stream(Stream&, size_t byte_count);
@@ -137,6 +140,8 @@ public:
 
     // Returns a StringView covering the full length of the string. Note that iterating this will go byte-at-a-time, not code-point-at-a-time.
     [[nodiscard]] StringView bytes_as_string_view() const;
+
+    [[nodiscard]] size_t count(StringView needle) const { return StringUtils::count(bytes_as_string_view(), needle); }
 
     ErrorOr<String> replace(StringView needle, StringView replacement, ReplaceMode replace_mode) const;
     ErrorOr<String> reverse() const;
@@ -223,6 +228,9 @@ public:
     // FIXME: Remove these once all code has been ported to String
     [[nodiscard]] DeprecatedString to_deprecated_string() const;
     static ErrorOr<String> from_deprecated_string(DeprecatedString const&);
+    template<typename T>
+    requires(IsSame<RemoveCVReference<T>, StringView>)
+    static ErrorOr<String> from_deprecated_string(T&&) = delete;
 
 private:
     // NOTE: If the least significant bit of the pointer is set, this is a short string.

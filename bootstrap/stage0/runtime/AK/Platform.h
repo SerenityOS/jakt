@@ -117,6 +117,13 @@
 #    define AK_HAS_CONDITIONALLY_TRIVIAL
 #endif
 
+// Apple Clang 14.0.3 (shipped in Xcode 14.3) has a bug that causes __builtin_subc{,l,ll}
+// to incorrectly return whether a borrow occurred on AArch64. See our writeup for the Qemu
+// issue also caused by it: https://gitlab.com/qemu-project/qemu/-/issues/1659#note_1408275831
+#if ARCH(AARCH64) && defined(__apple_build_version__) && __clang_major__ == 14
+#    define AK_BUILTIN_SUBC_BROKEN
+#endif
+
 #ifdef ALWAYS_INLINE
 #    undef ALWAYS_INLINE
 #endif
@@ -145,10 +152,14 @@
 #ifdef NAKED
 #    undef NAKED
 #endif
-#if !ARCH(AARCH64)
+#if !ARCH(AARCH64) || defined(AK_COMPILER_CLANG)
 #    define NAKED __attribute__((naked))
 #else
-#    define NAKED
+// GCC doesn't support __attribute__((naked)) on AArch64. We use NAKED to mark functions
+// that are entirely written in inline assembly; having these be inlined would cause
+// various problems, such as explicit `ret` instructions accidentally exiting the caller
+// function or GCC discarding function arguments as they appear "dead".
+#    define NAKED NEVER_INLINE
 #endif
 
 #ifdef DISALLOW

@@ -304,9 +304,9 @@ public:
         return write_value(forward<U>(value), existing_entry_behavior);
     }
     template<typename U = T>
-    HashSetResult set(U&& value, HashSetExistingEntryBehavior existing_entry_behaviour = HashSetExistingEntryBehavior::Replace)
+    HashSetResult set(U&& value, HashSetExistingEntryBehavior existing_entry_behavior = HashSetExistingEntryBehavior::Replace)
     {
-        return MUST(try_set(forward<U>(value), existing_entry_behaviour));
+        return MUST(try_set(forward<U>(value), existing_entry_behavior));
     }
 
     template<typename TUnaryPredicate>
@@ -668,7 +668,7 @@ private:
         // that we can still probe for buckets with collisions, and we automatically optimize the
         // probe lengths. To do so, we shift the following buckets up until we reach a free bucket,
         // or a bucket with a probe length of 0 (the ideal index for that bucket).
-        auto update_bucket_neighbours = [&](BucketType* bucket) {
+        auto update_bucket_neighbors = [&](BucketType* bucket) {
             if constexpr (IsOrdered) {
                 if (bucket->previous)
                     bucket->previous->next = bucket;
@@ -704,7 +704,7 @@ private:
                 shift_from_bucket->next = nullptr;
             }
             shift_to_bucket->state = bucket_state_for_probe_length(shift_from_probe_length - 1);
-            update_bucket_neighbours(shift_to_bucket);
+            update_bucket_neighbors(shift_to_bucket);
 
             if (++shift_to_index == m_capacity) [[unlikely]]
                 shift_to_index = 0;

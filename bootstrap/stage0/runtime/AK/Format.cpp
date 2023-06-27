@@ -16,8 +16,8 @@
 #endif
 
 #ifdef KERNEL
-#    include <Kernel/Process.h>
-#    include <Kernel/Thread.h>
+#    include <Kernel/Tasks/Process.h>
+#    include <Kernel/Tasks/Thread.h>
 #    include <Kernel/Time/TimeManagement.h>
 #else
 #    include <math.h>
@@ -906,7 +906,7 @@ void set_debug_enabled(bool value)
     is_debug_enabled = value;
 }
 
-void vdbgln(StringView fmtstr, TypeErasedFormatParams& params)
+void vdbg(StringView fmtstr, TypeErasedFormatParams& params, bool newline)
 {
     if (!is_debug_enabled)
         return;
@@ -916,14 +916,14 @@ void vdbgln(StringView fmtstr, TypeErasedFormatParams& params)
 #ifdef AK_OS_SERENITY
 #    ifdef KERNEL
     if (Kernel::Processor::is_initialized() && TimeManagement::is_initialized()) {
-        struct timespec ts = TimeManagement::the().monotonic_time(TimePrecision::Coarse).to_timespec();
+        auto time = TimeManagement::the().monotonic_time(TimePrecision::Coarse);
         if (Kernel::Thread::current()) {
             auto& thread = *Kernel::Thread::current();
             thread.process().name().with([&](auto& process_name) {
-                builder.appendff("{}.{:03} \033[34;1m[#{} {}({}:{})]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, Kernel::Processor::current_id(), process_name->view(), thread.pid().value(), thread.tid().value());
+                builder.appendff("{}.{:03} \033[34;1m[#{} {}({}:{})]\033[0m: ", time.truncated_seconds(), time.nanoseconds_within_second() / 1000000, Kernel::Processor::current_id(), process_name->view(), thread.pid().value(), thread.tid().value());
             });
         } else {
-            builder.appendff("{}.{:03} \033[34;1m[#{} Kernel]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, Kernel::Processor::current_id());
+            builder.appendff("{}.{:03} \033[34;1m[#{} Kernel]\033[0m: ", time.truncated_seconds(), time.nanoseconds_within_second() / 1000000, Kernel::Processor::current_id());
         }
     } else {
         builder.appendff("\033[34;1m[Kernel]\033[0m: ");
@@ -946,7 +946,8 @@ void vdbgln(StringView fmtstr, TypeErasedFormatParams& params)
 #endif
 
     MUST(vformat(builder, fmtstr, params));
-    builder.append('\n');
+    if (newline)
+        builder.append('\n');
 
     auto const string = builder.string_view();
 
@@ -967,18 +968,16 @@ void vdmesgln(StringView fmtstr, TypeErasedFormatParams& params)
     StringBuilder builder;
 
 #    ifdef AK_OS_SERENITY
-    struct timespec ts = {};
-
     if (TimeManagement::is_initialized()) {
-        ts = TimeManagement::the().monotonic_time(TimePrecision::Coarse).to_timespec();
+        auto time = TimeManagement::the().monotonic_time(TimePrecision::Coarse);
 
         if (Kernel::Processor::is_initialized() && Kernel::Thread::current()) {
             auto& thread = *Kernel::Thread::current();
             thread.process().name().with([&](auto& process_name) {
-                builder.appendff("{}.{:03} \033[34;1m[{}({}:{})]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, process_name->view(), thread.pid().value(), thread.tid().value());
+                builder.appendff("{}.{:03} \033[34;1m[{}({}:{})]\033[0m: ", time.truncated_seconds(), time.nanoseconds_within_second() / 1000000, process_name->view(), thread.pid().value(), thread.tid().value());
             });
         } else {
-            builder.appendff("{}.{:03} \033[34;1m[Kernel]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000);
+            builder.appendff("{}.{:03} \033[34;1m[Kernel]\033[0m: ", time.truncated_seconds(), time.nanoseconds_within_second() / 1000000);
         }
     } else {
         builder.appendff("\033[34;1m[Kernel]\033[0m: ");

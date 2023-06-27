@@ -6,7 +6,8 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("index: {}, ", index));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("input: {}, ", input));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("compiler: {}, ", *compiler));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("comment_contents: {}", comment_contents));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("comment_contents: {}, ", comment_contents));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("illegal_cpp_keywords: {}", illegal_cpp_keywords));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<JaktInternal::Optional<DeprecatedString>> lexer::Lexer::consume_comment_contents() {
@@ -500,6 +501,9 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (JaktInternal::checked_sub(end,start),static_cast<size_t>(6ULL)) && ((((string).substring(static_cast<size_t>(0ULL),static_cast<size_t>(6ULL)))) == (TRY(DeprecatedString::from_utf8("__jakt"sv)))))){
 TRY((((*this).error(TRY(DeprecatedString::from_utf8("reserved identifier name"sv)),span))));
 }
+if (((((*this).illegal_cpp_keywords)).contains(string))){
+TRY((((*this).error(TRY(DeprecatedString::from_utf8("C++ keywords are not allowed to be used as identifiers"sv)),span))));
+}
 return TRY((lexer::Token::from_keyword_or_identifier(string,span)));
 }
 u8 const unknown_char = ((((*this).input))[((*this).index)]);
@@ -569,7 +573,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 
-lexer::Lexer::Lexer(size_t a_index, JaktInternal::DynamicArray<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> a_comment_contents) :index(move(a_index)), input(move(a_input)), compiler(move(a_compiler)), comment_contents(move(a_comment_contents)){}
+lexer::Lexer::Lexer(size_t a_index, JaktInternal::DynamicArray<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> a_comment_contents, JaktInternal::Set<DeprecatedString> a_illegal_cpp_keywords) :index(move(a_index)), input(move(a_input)), compiler(move(a_compiler)), comment_contents(move(a_comment_contents)), illegal_cpp_keywords(move(a_illegal_cpp_keywords)){}
 
 lexer::Token lexer::Lexer::lex_ampersand() {
 {
@@ -1051,7 +1055,8 @@ return  lexer::Token { typename lexer::Token::Number(prefix,TRY((((number).to_st
 
 ErrorOr<JaktInternal::DynamicArray<lexer::Token>> lexer::Lexer::lex(NonnullRefPtr<compiler::Compiler> const compiler) {
 {
-lexer::Lexer lexer = lexer::Lexer(static_cast<size_t>(0ULL),((compiler)->current_file_contents),compiler,JaktInternal::OptionalNone());
+JaktInternal::Set<DeprecatedString> const illegal_cpp_keywords = (TRY((Set<DeprecatedString>::create_with_values({TRY(DeprecatedString::from_utf8("alignas"sv)), TRY(DeprecatedString::from_utf8("alignof"sv)), TRY(DeprecatedString::from_utf8("and_eq"sv)), TRY(DeprecatedString::from_utf8("asm"sv)), TRY(DeprecatedString::from_utf8("auto"sv)), TRY(DeprecatedString::from_utf8("bitand"sv)), TRY(DeprecatedString::from_utf8("bitor"sv)), TRY(DeprecatedString::from_utf8("case"sv)), TRY(DeprecatedString::from_utf8("char"sv)), TRY(DeprecatedString::from_utf8("char8_t"sv)), TRY(DeprecatedString::from_utf8("char16_t"sv)), TRY(DeprecatedString::from_utf8("char32_t"sv)), TRY(DeprecatedString::from_utf8("compl"sv)), TRY(DeprecatedString::from_utf8("concept"sv)), TRY(DeprecatedString::from_utf8("const"sv)), TRY(DeprecatedString::from_utf8("consteval"sv)), TRY(DeprecatedString::from_utf8("constexpr"sv)), TRY(DeprecatedString::from_utf8("constinit"sv)), TRY(DeprecatedString::from_utf8("const_cast"sv)), TRY(DeprecatedString::from_utf8("co_await"sv)), TRY(DeprecatedString::from_utf8("co_return"sv)), TRY(DeprecatedString::from_utf8("co_yield"sv)), TRY(DeprecatedString::from_utf8("decltype"sv)), TRY(DeprecatedString::from_utf8("delete"sv)), TRY(DeprecatedString::from_utf8("do"sv)), TRY(DeprecatedString::from_utf8("double"sv)), TRY(DeprecatedString::from_utf8("dynamic_cast"sv)), TRY(DeprecatedString::from_utf8("explicit"sv)), TRY(DeprecatedString::from_utf8("export"sv)), TRY(DeprecatedString::from_utf8("float"sv)), TRY(DeprecatedString::from_utf8("friend"sv)), TRY(DeprecatedString::from_utf8("goto"sv)), TRY(DeprecatedString::from_utf8("int"sv)), TRY(DeprecatedString::from_utf8("long"sv)), TRY(DeprecatedString::from_utf8("mutable"sv)), TRY(DeprecatedString::from_utf8("new"sv)), TRY(DeprecatedString::from_utf8("noexcept"sv)), TRY(DeprecatedString::from_utf8("not_eq"sv)), TRY(DeprecatedString::from_utf8("nullptr"sv)), TRY(DeprecatedString::from_utf8("operator"sv)), TRY(DeprecatedString::from_utf8("or_eq"sv)), TRY(DeprecatedString::from_utf8("protected"sv)), TRY(DeprecatedString::from_utf8("register"sv)), TRY(DeprecatedString::from_utf8("reinterpret_cast"sv)), TRY(DeprecatedString::from_utf8("short"sv)), TRY(DeprecatedString::from_utf8("signed"sv)), TRY(DeprecatedString::from_utf8("static"sv)), TRY(DeprecatedString::from_utf8("static_assert"sv)), TRY(DeprecatedString::from_utf8("static_cast"sv)), TRY(DeprecatedString::from_utf8("switch"sv)), TRY(DeprecatedString::from_utf8("template"sv)), TRY(DeprecatedString::from_utf8("thread_local"sv)), TRY(DeprecatedString::from_utf8("typedef"sv)), TRY(DeprecatedString::from_utf8("typeid"sv)), TRY(DeprecatedString::from_utf8("typename"sv)), TRY(DeprecatedString::from_utf8("union"sv)), TRY(DeprecatedString::from_utf8("unsigned"sv)), TRY(DeprecatedString::from_utf8("using"sv)), TRY(DeprecatedString::from_utf8("volatile"sv)), TRY(DeprecatedString::from_utf8("wchar_t"sv)), TRY(DeprecatedString::from_utf8("xor"sv)), TRY(DeprecatedString::from_utf8("xor_eq"sv))}))));
+lexer::Lexer lexer = lexer::Lexer(static_cast<size_t>(0ULL),((compiler)->current_file_contents),compiler,JaktInternal::OptionalNone(),illegal_cpp_keywords);
 JaktInternal::DynamicArray<lexer::Token> tokens = (TRY((DynamicArray<lexer::Token>::create_with({}))));
 {
 lexer::Lexer _magic = lexer;
