@@ -9,18 +9,17 @@
 #include <AK/ByteBuffer.h>
 #include <AK/Error.h>
 #include <AK/Noncopyable.h>
+#include <AK/Vector.h>
 
 namespace AK {
 
 class CircularBuffer {
     AK_MAKE_NONCOPYABLE(CircularBuffer);
+    AK_MAKE_DEFAULT_MOVABLE(CircularBuffer);
 
 public:
     static ErrorOr<CircularBuffer> create_empty(size_t size);
     static ErrorOr<CircularBuffer> create_initialized(ByteBuffer);
-
-    CircularBuffer(CircularBuffer&& other) = default;
-    CircularBuffer& operator=(CircularBuffer&& other) = default;
 
     ~CircularBuffer() = default;
 
@@ -28,12 +27,22 @@ public:
     Bytes read(Bytes bytes);
     ErrorOr<void> discard(size_t discarded_bytes);
     ErrorOr<size_t> fill_from_stream(Stream&);
+    ErrorOr<size_t> flush_to_stream(Stream&);
 
     /// Compared to `read()`, this starts reading from an offset that is `distance` bytes
     /// before the current write pointer and allows for reading already-read data.
     ErrorOr<Bytes> read_with_seekback(Bytes bytes, size_t distance);
 
     ErrorOr<size_t> copy_from_seekback(size_t distance, size_t length);
+
+    struct Match {
+        size_t distance;
+        size_t length;
+    };
+    /// This searches the seekback buffer (between read head and limit) for occurrences where it matches the next `length` bytes from the read buffer.
+    /// Supplying any hints will only consider those distances, in case existing offsets need to be validated.
+    /// Note that, since we only start searching at the read head, the length between read head and write head is excluded from the distance.
+    ErrorOr<Vector<Match>> find_copy_in_seekback(size_t maximum_length, size_t minimum_length = 2, Optional<Vector<size_t> const&> distance_hints = {}) const;
 
     [[nodiscard]] size_t empty_space() const;
     [[nodiscard]] size_t used_space() const;

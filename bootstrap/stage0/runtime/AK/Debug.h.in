@@ -10,6 +10,10 @@
 #    cmakedefine01 AFLACLOADER_DEBUG
 #endif
 
+#ifndef AUDIO_DEBUG
+#    cmakedefine01 AUDIO_DEBUG
+#endif
+
 #ifndef AWAVLOADER_DEBUG
 #    cmakedefine01 AWAVLOADER_DEBUG
 #endif
@@ -58,10 +62,6 @@
 #    cmakedefine01 CRYPTO_DEBUG
 #endif
 
-#ifndef CSOCKET_DEBUG
-#    cmakedefine01 CSOCKET_DEBUG
-#endif
-
 #ifndef CSS_LOADER_DEBUG
 #    cmakedefine01 CSS_LOADER_DEBUG
 #endif
@@ -74,16 +74,8 @@
 #    cmakedefine01 CSS_TOKENIZER_DEBUG
 #endif
 
-#ifndef CURSOR_TOOL_DEBUG
-#    cmakedefine01 CURSOR_TOOL_DEBUG
-#endif
-
 #ifndef DDS_DEBUG
 #    cmakedefine01 DDS_DEBUG
-#endif
-
-#ifndef DEFERRED_INVOKE_DEBUG
-#    cmakedefine01 DEFERRED_INVOKE_DEBUG
 #endif
 
 #ifndef DHCPV4_DEBUG
@@ -138,10 +130,6 @@
 #    cmakedefine01 EVENT_DEBUG
 #endif
 
-#ifndef EVENTLOOP_DEBUG
-#    cmakedefine01 EVENTLOOP_DEBUG
-#endif
-
 #ifndef FILE_CONTENT_DEBUG
 #    cmakedefine01 FILE_CONTENT_DEBUG
 #endif
@@ -156,10 +144,6 @@
 
 #ifndef GEMINI_DEBUG
 #    cmakedefine01 GEMINI_DEBUG
-#endif
-
-#ifndef GEMINIJOB_DEBUG
-#    cmakedefine01 GEMINIJOB_DEBUG
 #endif
 
 #ifndef GENERATE_DEBUG
@@ -186,10 +170,6 @@
 #    cmakedefine01 GPT_DEBUG
 #endif
 
-#ifndef GZIP_DEBUG
-#    cmakedefine01 GZIP_DEBUG
-#endif
-
 #ifndef HEAP_DEBUG
 #    cmakedefine01 HEAP_DEBUG
 #endif
@@ -212,10 +192,6 @@
 
 #ifndef HTTPJOB_DEBUG
 #    cmakedefine01 HTTPJOB_DEBUG
-#endif
-
-#ifndef HTTPSJOB_DEBUG
-#    cmakedefine01 HTTPSJOB_DEBUG
 #endif
 
 #ifndef HUNKS_DEBUG
@@ -270,6 +246,10 @@
 #    cmakedefine01 LIBWEB_CSS_DEBUG
 #endif
 
+#ifndef LIBWEB_CSS_ANIMATION_DEBUG
+#    cmakedefine01 LIBWEB_CSS_ANIMATION_DEBUG
+#endif
+
 #ifndef LINE_EDITOR_DEBUG
 #    cmakedefine01 LINE_EDITOR_DEBUG
 #endif
@@ -280,6 +260,10 @@
 
 #ifndef LOOKUPSERVER_DEBUG
 #    cmakedefine01 LOOKUPSERVER_DEBUG
+#endif
+
+#ifndef LZMA_DEBUG
+#    cmakedefine01 LZMA_DEBUG
 #endif
 
 #ifndef MALLOC_DEBUG
@@ -308,14 +292,6 @@
 
 #ifndef MENU_DEBUG
 #    cmakedefine01 MENU_DEBUG
-#endif
-
-#ifndef MENUS_DEBUG
-#    cmakedefine01 MENUS_DEBUG
-#endif
-
-#ifndef MINIMIZE_ANIMATION_DEBUG
-#    cmakedefine01 MINIMIZE_ANIMATION_DEBUG
 #endif
 
 #ifndef MOVE_DEBUG
@@ -394,10 +370,6 @@
 #    cmakedefine01 RSA_PARSE_DEBUG
 #endif
 
-#ifndef SAFE_SYSCALL_DEBUG
-#    cmakedefine01 SAFE_SYSCALL_DEBUG
-#endif
-
 #ifndef SERVICE_DEBUG
 #    cmakedefine01 SERVICE_DEBUG
 #endif
@@ -428,6 +400,10 @@
 
 #ifndef SPAM_DEBUG
 #    cmakedefine01 SPAM_DEBUG
+#endif
+
+#ifndef SPICE_AGENT_DEBUG
+#    cmakedefine01 SPICE_AGENT_DEBUG
 #endif
 
 #ifndef SQL_DEBUG
@@ -498,8 +474,16 @@
 #    cmakedefine01 UTF8_DEBUG
 #endif
 
+#ifndef VPX_DEBUG
+#    cmakedefine01 VPX_DEBUG
+#endif
+
 #ifndef WASI_DEBUG
 #    cmakedefine01 WASI_DEBUG
+#endif
+
+#ifndef WASI_FINE_GRAINED_DEBUG
+#    cmakedefine01 WASI_FINE_GRAINED_DEBUG
 #endif
 
 #ifndef WASM_BINPARSER_DEBUG

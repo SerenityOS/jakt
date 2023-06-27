@@ -10,6 +10,10 @@
 #    define AFLACLOADER_DEBUG 0
 #endif
 
+#ifndef AUDIO_DEBUG
+#    define AUDIO_DEBUG 0
+#endif
+
 #ifndef AWAVLOADER_DEBUG
 #    define AWAVLOADER_DEBUG 0
 #endif
@@ -58,10 +62,6 @@
 #    define CRYPTO_DEBUG 0
 #endif
 
-#ifndef CSOCKET_DEBUG
-#    define CSOCKET_DEBUG 0
-#endif
-
 #ifndef CSS_LOADER_DEBUG
 #    define CSS_LOADER_DEBUG 0
 #endif
@@ -74,16 +74,8 @@
 #    define CSS_TOKENIZER_DEBUG 0
 #endif
 
-#ifndef CURSOR_TOOL_DEBUG
-#    define CURSOR_TOOL_DEBUG 0
-#endif
-
 #ifndef DDS_DEBUG
 #    define DDS_DEBUG 0
-#endif
-
-#ifndef DEFERRED_INVOKE_DEBUG
-#    define DEFERRED_INVOKE_DEBUG 0
 #endif
 
 #ifndef DHCPV4_DEBUG
@@ -138,10 +130,6 @@
 #    define EVENT_DEBUG 0
 #endif
 
-#ifndef EVENTLOOP_DEBUG
-#    define EVENTLOOP_DEBUG 0
-#endif
-
 #ifndef FILE_CONTENT_DEBUG
 #    define FILE_CONTENT_DEBUG 0
 #endif
@@ -156,10 +144,6 @@
 
 #ifndef GEMINI_DEBUG
 #    define GEMINI_DEBUG 0
-#endif
-
-#ifndef GEMINIJOB_DEBUG
-#    define GEMINIJOB_DEBUG 0
 #endif
 
 #ifndef GENERATE_DEBUG
@@ -186,10 +170,6 @@
 #    define GPT_DEBUG 0
 #endif
 
-#ifndef GZIP_DEBUG
-#    define GZIP_DEBUG 0
-#endif
-
 #ifndef HEAP_DEBUG
 #    define HEAP_DEBUG 0
 #endif
@@ -212,10 +192,6 @@
 
 #ifndef HTTPJOB_DEBUG
 #    define HTTPJOB_DEBUG 0
-#endif
-
-#ifndef HTTPSJOB_DEBUG
-#    define HTTPSJOB_DEBUG 0
 #endif
 
 #ifndef HUNKS_DEBUG
@@ -270,6 +246,10 @@
 #    define LIBWEB_CSS_DEBUG 0
 #endif
 
+#ifndef LIBWEB_CSS_ANIMATION_DEBUG
+#    define LIBWEB_CSS_ANIMATION_DEBUG 0
+#endif
+
 #ifndef LINE_EDITOR_DEBUG
 #    define LINE_EDITOR_DEBUG 0
 #endif
@@ -280,6 +260,10 @@
 
 #ifndef LOOKUPSERVER_DEBUG
 #    define LOOKUPSERVER_DEBUG 0
+#endif
+
+#ifndef LZMA_DEBUG
+#    define LZMA_DEBUG 0
 #endif
 
 #ifndef MALLOC_DEBUG
@@ -308,14 +292,6 @@
 
 #ifndef MENU_DEBUG
 #    define MENU_DEBUG 0
-#endif
-
-#ifndef MENUS_DEBUG
-#    define MENUS_DEBUG 0
-#endif
-
-#ifndef MINIMIZE_ANIMATION_DEBUG
-#    define MINIMIZE_ANIMATION_DEBUG 0
 #endif
 
 #ifndef MOVE_DEBUG
@@ -394,10 +370,6 @@
 #    define RSA_PARSE_DEBUG 0
 #endif
 
-#ifndef SAFE_SYSCALL_DEBUG
-#    define SAFE_SYSCALL_DEBUG 0
-#endif
-
 #ifndef SERVICE_DEBUG
 #    define SERVICE_DEBUG 0
 #endif
@@ -428,6 +400,10 @@
 
 #ifndef SPAM_DEBUG
 #    define SPAM_DEBUG 0
+#endif
+
+#ifndef SPICE_AGENT_DEBUG
+#    define SPICE_AGENT_DEBUG 0
 #endif
 
 #ifndef SQL_DEBUG
@@ -498,8 +474,16 @@
 #    define UTF8_DEBUG 0
 #endif
 
+#ifndef VPX_DEBUG
+#    define VPX_DEBUG 0
+#endif
+
 #ifndef WASI_DEBUG
 #    define WASI_DEBUG 0
+#endif
+
+#ifndef WASI_FINE_GRAINED_DEBUG
+#    define WASI_FINE_GRAINED_DEBUG 0
 #endif
 
 #ifndef WASM_BINPARSER_DEBUG

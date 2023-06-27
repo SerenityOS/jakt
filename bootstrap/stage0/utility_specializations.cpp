@@ -14,6 +14,7 @@
 #include "typechecker.h"
 #include "interpreter.h"
 #include "types.h"
+#include "ids.h"
 #include "parser.h"
 #include "lexer.h"
 #include "compiler.h"

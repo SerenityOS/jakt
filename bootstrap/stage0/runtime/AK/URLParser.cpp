@@ -117,7 +117,7 @@ constexpr bool is_double_dot_path_segment(StringView input)
 }
 
 // https://url.spec.whatwg.org/#string-percent-encode-after-encoding
-static DeprecatedString percent_encode_after_encoding(StringView input, URL::PercentEncodeSet percent_encode_set, bool space_as_plus = false)
+DeprecatedString URLParser::percent_encode_after_encoding(StringView input, URL::PercentEncodeSet percent_encode_set, bool space_as_plus)
 {
     // NOTE: This is written somewhat ad-hoc since we don't yet implement the Encoding spec.
 
@@ -553,7 +553,8 @@ URL URLParser::parse(StringView raw_input, Optional<URL> const& base_url, Option
                     report_validation_error();
                 state = State::FileHost;
             } else if (base_url.has_value() && base_url->m_scheme == "file") {
-                url->m_host = base_url->m_host;
+                url->m_paths = base_url->m_paths;
+                url->m_paths.remove(url->m_paths.size() - 1);
                 auto substring_from_pointer = input.substring_view(iterator - input.begin()).as_string();
                 if (!starts_with_windows_drive_letter(substring_from_pointer) && is_normalized_windows_drive_letter(base_url->m_paths[0]))
                     url->append_path(base_url->m_paths[0], URL::ApplyPercentEncoding::No);

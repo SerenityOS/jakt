@@ -81,6 +81,12 @@ return TRY((jakt__path::Path::from_string(TRY((((join_builder).to_string()))))))
 }
 }
 
+ErrorOr<jakt__path::Path> jakt__path::Path::join(jakt__path::Path const path) const {
+{
+return TRY((((*this).join(((path).path)))));
+}
+}
+
 DeprecatedString jakt__path::Path::to_string() const {
 {
 return ((*this).path);

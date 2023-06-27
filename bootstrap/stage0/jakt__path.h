@@ -11,6 +11,7 @@ Path(DeprecatedString a_path);
 
 ErrorOr<DeprecatedString> basename(bool const strip_extension) const;
 ErrorOr<jakt__path::Path> join(DeprecatedString const path) const;
+ErrorOr<jakt__path::Path> join(jakt__path::Path const path) const;
 DeprecatedString to_string() const;
 bool exists() const;
 ErrorOr<jakt__path::Path> replace_extension(DeprecatedString const new_extension) const;
