@@ -293,7 +293,7 @@ struct CodeGenerator {
         output += "#endif\n"
 
         let sorted_modules = generator.topologically_sort_modules()
-        mut imported_paths: {String} = {}
+        mut imported_paths: [String:(String, String)] = [:] // path -> (before, after)
         for idx in sorted_modules.size()..0 {
             let i = sorted_modules[idx - 1]
             mut q = Queue<ScopeId>()
@@ -305,13 +305,50 @@ struct CodeGenerator {
                     q.enqueue(child)
                 }
                 if scope.import_path_if_extern is Some(path) {
-                    imported_paths.add(path)
+                    mut before = ""
+                    mut after = ""
+
+                    for action in scope.before_extern_include {
+                        match action {
+                            Define(name, value) => {
+                                before += format("#ifdef {}\n", name)
+                                before += format("#undef {}\n", name)
+                                before += "#endif\n"
+                                before += format("#define {} {}\n", name, value)
+                            }
+                            Undefine(name) => {
+                                before += format("#ifdef {}\n", name)
+                                before += format("#undef {}\n", name)
+                                before += "#endif\n"
+                            }
+                        }
+                    }
+
+                    for action in scope.after_extern_include {
+                        match action {
+                            Define(name, value) => {
+                                after += format("#ifdef {}\n", name)
+                                after += format("#undef {}\n", name)
+                                after += "#endif\n"
+                                after += format("#define {} {}\n", name, value)
+                            }
+                            Undefine(name) => {
+                                after += format("#ifdef {}\n", name)
+                                after += format("#undef {}\n", name)
+                                after += "#endif\n"
+                            }
+                        }
+                    }
+
+                    imported_paths.set(path, (before, after))
                 }
             }
         }
 
-        for path in imported_paths {
+        for (path, actions) in imported_paths {
+            output += actions.0
             output += format("#include <{}>\n", path)
+            output += actions.1
         }
 
         output += "namespace Jakt {\n"
