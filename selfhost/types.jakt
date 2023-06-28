@@ -1176,6 +1176,7 @@ struct CheckedStruct {
     name: String
     name_span: Span
     generic_parameters: [CheckedGenericParameter]
+    generic_parameter_defaults: [TypeId?]? = None
     fields: [CheckedField]
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
@@ -1658,6 +1659,48 @@ class CheckedProgram {
     public modules: [Module]
     public loaded_modules: [String: LoadedModule]
 
+    public fn create_module(mut this, name: String, is_root: bool, path: String? = None) throws -> ModuleId {
+        let new_id = .modules.size()
+        let module_id = ModuleId(id: new_id)
+        let module = Module(
+            id: module_id,
+            name: name,
+            functions: [],
+            structures: [],
+            enums: [],
+            scopes: [],
+            types: [ // FIXME: use general builtin types array
+                Type::Void,
+                Type::Bool,
+                Type::U8,
+                Type::U16,
+                Type::U32,
+                Type::U64,
+                Type::I8,
+                Type::I16,
+                Type::I32,
+                Type::I64,
+                Type::F32,
+                Type::F64,
+                Type::Usize,
+                Type::JaktString,
+                Type::CChar,
+                Type::CInt,
+                Type::Unknown,
+                Type::Never
+            ],
+            traits: [],
+            variables: [],
+            imports: [],
+            resolved_import_path: path ?? .compiler.current_file_path()!.to_string(),
+            builtin_implementation_structs: [:]
+            is_root: is_root,
+        )
+        .modules.push(module)
+
+        return module_id
+    }
+
     public fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, module_id: ModuleId, for_block: bool = true) throws -> ScopeId {
         // Check that parent_scope_id is a valid ScopeId
         if parent_scope_id.has_value() {
@@ -1806,6 +1849,23 @@ class CheckedProgram {
                 return IterationDecision::Continue
             }
         )
+    }
+
+    public fn find_type_scope(this, scope_id: ScopeId, name: String) throws -> (TypeId, ScopeId)? {
+        return .for_each_scope_accessible_unqualified_from_scope(
+            scope_id
+            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<(TypeId, ScopeId)> {
+                let maybe_type = .get_scope(scope_id).types.get(name)
+                if maybe_type.has_value() {
+                    return IterationDecision::Break(value: (maybe_type!, scope_id))
+                }
+                return IterationDecision::Continue
+            }
+        )
+    }
+
+    public fn find_type_in_scope(this, scope_id: ScopeId, name: String) throws -> TypeId? {
+        return .find_type_scope(scope_id, name)?.0
     }
 
     public fn find_enum_in_scope(this, scope_id: ScopeId, name: String) throws -> EnumId? {
@@ -2054,6 +2114,27 @@ class CheckedProgram {
                 false => .prelude_scope_id()
             }
         }
+    }
+
+    public fn find_namespace_in_immediate_children_of_scope(
+        this
+        scope_id: ScopeId
+        anon name: String
+        treat_aliases_as_imports: bool = false
+    ) throws -> ScopeId? {
+        let scope = .get_scope(scope_id)
+        for child in scope.children {
+            let child_scope = .get_scope(child)
+            if child_scope.namespace_name.has_value() and child_scope.namespace_name! == name {
+                return child
+            }
+        }
+        if treat_aliases_as_imports {
+            if scope.aliases.contains(name) {
+                return scope.aliases.get(name)
+            }
+        }
+        return None
     }
 
     public fn find_namespace_in_scope(

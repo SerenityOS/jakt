@@ -99,6 +99,8 @@ set(SELFHOST_SOURCES
   selfhost/types.jakt
   selfhost/utility.jakt
   selfhost/platform.jakt
+  selfhost/cpp_import/none.jakt
+  selfhost/cpp_import/common.jakt
 )
 
 # FIXME: STDLIB target needed
