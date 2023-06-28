@@ -1,0 +1,19 @@
+/// Expect:
+/// - output: ""
+
+// Brought up by @robryanx on Discord.
+fn test() {
+    let x = 1
+        
+    match x {
+        else => {
+            match x {
+                else => {}
+            }
+        }
+    }
+}
+
+fn main() {
+    test()
+}
