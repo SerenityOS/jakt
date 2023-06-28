@@ -8,6 +8,7 @@ fn run_compiler(
     extra_link_libs: [String]
     optimize: bool
     extra_compiler_flags: [String]
+    use_ccache: bool
 ) throws -> [String] {
     eprintln("UNIMPLEMENTED: run_compiler(cxx_compiler_path: {}, cpp_filename: {}, output_filename: {}, runtime_path: {}, extra_include_paths: {}, extra_lib_paths: {}, extra_link_libs: {}, optimize: {}, extra_compiler_flags: {})",
         cxx_compiler_path,
