@@ -1,0 +1,543 @@
+import cpp_import::vector { Vector }
+import cpp_import::hashmap { HashMap }
+import types {
+    BlockControlFlow, CheckedBlock, CheckedField, CheckedFunction, CheckedParameter, CheckedProgram, CheckedStruct
+    CheckedVariable, CheckedVisibility, DefinitionLinkage, FileId, FunctionGenerics, FunctionLinkage, ModuleId
+    ScopeId, StructId, Type, TypeId
+}
+import parser {
+    FunctionType, ParsedField, ParsedVarDecl, RecordType
+}
+import compiler { Compiler }
+import jakt::path { Path }
+import utility { Span }
+import cpp_import::common { CppImportErrors, null, read_all }
+
+import extern c "stdlib.h" {
+    extern fn realpath(path: raw c_char, resolved_path: raw c_char) -> raw c_char
+    extern fn free(anon ptr: raw c_char)
+}
+
+import extern "LibCpp/Preprocessor.h" {
+    namespace Cpp {
+        extern struct Token {
+            fn to_deprecated_string(this) -> String
+        }
+        namespace Preprocessor {
+            extern struct Definition {
+                key: String
+                parameters: Vector<String>
+                value: String
+                filename: String
+                line: usize = 0
+                column: usize = 0
+            }
+        }
+        extern struct Preprocessor {
+            definitions_in_header_callback: fn(anon path: StringView) -> HashMap<String, Definition>
+
+            fn Preprocessor(filename: String, program: String) -> Preprocessor
+            fn process_and_lex(mut this) -> Vector<Token>
+            fn definitions(this) -> HashMap<String, Definition>
+        }
+    }
+}
+
+import extern "LibCpp/Parser.h" {
+    namespace Cpp {
+        extern class Name {
+            public fn full_name(this) -> StringView
+        }
+        [[name="Declaration const"]]
+        extern class Declaration {
+            public fn full_name(this) -> String
+            public virtual fn class_name(this) -> StringView
+            public virtual fn is_variable_declaration(this) -> bool
+            public virtual fn is_parameter(this) -> bool
+            public virtual fn is_struct_or_class(this) -> bool
+            public virtual fn is_struct(this) -> bool
+            public virtual fn is_class(this) -> bool
+            public virtual fn is_function(this) -> bool
+            public virtual fn is_namespace(this) -> bool
+            public virtual fn is_enum(this) -> bool
+            public virtual fn is_member(this) -> bool
+            public virtual fn declarations(this) -> Vector<Declaration>
+            public fn ptr(this) -> raw Declaration
+        }
+        [[name="FunctionDeclaration const"]]
+        extern class FunctionDeclaration : Declaration {
+            public fn qualifiers(this) -> Vector<StringView>
+            public fn return_type(this) -> raw Cpp::RType
+            public fn parameters(this) -> Vector<Cpp::Parameter>
+            public fn is_constructor(this) -> bool
+            public fn is_destructor(this) -> bool
+        }
+        [[name="NamespaceDeclaration const"]]
+        extern class NamespaceDeclaration : Declaration {
+        }
+        [[name="StructOrClassDeclaration const"]]
+        extern class StructOrClassDeclaration : Declaration {
+            public fn members(this) -> Vector<Declaration>
+            public fn baseclasses(this) -> Vector<Name>
+        }
+        // FIXME: Naming this 'Type' somehow interferes with 'Reflect::Type' :/
+        [[name="Type const"]]
+        extern class RType {
+            public fn is_auto(this) -> bool
+            public fn qualifiers(this) -> Vector<StringView>
+            public fn to_deprecated_string(this) -> String
+        }
+        [[name="NamedType const"]]
+        extern class NamedType : RType {
+            public fn name(this) -> raw Name
+        }
+        [[name="Pointer const"]]
+        extern class Pointer : RType {
+            public fn pointee(this) -> raw Cpp::RType
+        }
+        [[name="Reference const"]]
+        extern class Reference : RType {
+            public fn referenced_type(this) -> raw Cpp::RType
+        }
+        [[name="FunctionType const"]]
+        extern class RFunctionType : RType {
+        }
+        [[name="VariableOrParameterDeclaration const"]]
+        extern class VariableOrParameterDeclaration : Declaration {
+            public fn type(this) -> raw Cpp::RType
+        }
+        [[name="Parameter const"]]
+        extern class Parameter: VariableOrParameterDeclaration {
+            public fn is_ellipsis(this) -> bool
+        }
+        extern class TranslationUnit {
+            // ???
+            public fn declarations(this) -> Vector<Declaration>
+        }
+        extern struct Parser {
+            fn Parser(tokens: Vector<Token>, filename: String) -> Parser
+            fn parse(mut this) -> TranslationUnit
+        }
+    }
+}
+
+trait DeclarationImpl {}
+type Cpp::Declaration implements(DeclarationImpl) {
+    [[inline(always)]]
+    public fn typed_name(this) throws -> String {
+        mut s = StringBuilder::create()
+        s.append("(")
+        s.append(match true {
+            (.is_variable_declaration()) => "VarDecl"
+            (.is_parameter()) => "Parameter"
+            (.is_struct()) => "Struct"
+            (.is_class()) => "Class"
+            (.is_function()) => "Function"
+            (.is_namespace()) => "Namespace"
+            (.is_enum()) => "Enum"
+            (.is_member()) => "Member"
+            else => "Unknown"
+        })
+        s.append(") ")
+        s.append(.full_name())
+        return s.to_string()
+    }
+}
+type Cpp::NamedType implements(DeclarationImpl) {
+    [[inline(always)]]
+    public fn full_name(this) -> StringView => match .name() {
+        (null<raw Cpp::Name>()) => ""
+        else => {
+            let name = unsafe *.name()
+            yield name.full_name()
+        }
+    }
+}
+
+fn maybe_type_from(
+    anon t: raw Cpp::RType
+    anon program: &mut CheckedProgram
+    anon module_id: ModuleId
+    anon scope_id: ScopeId
+) throws -> TypeId => match t {
+    (null<raw Cpp::RType>()) => program.find_or_add_type_id(Type::Unknown, module_id)
+    else => type_from(&unsafe *t, program, module_id, scope_id)
+}
+
+fn type_from(
+    anon t: &Cpp::RType
+    anon program: &mut CheckedProgram
+    anon module_id: ModuleId
+    anon scope_id: ScopeId
+) throws -> TypeId {
+    return program.find_or_add_type_id(
+        type: match t {
+            Cpp::NamedType(&nt) => match nt.full_name() {
+                "int" => Type::I32
+                "unsigned" | "unsigned int" => Type::U32
+                "void" => Type::Void
+                "bool" => Type::Bool
+                "char" => Type::CChar
+                "unsigned char" => Type::U8
+                "short" => Type::I16
+                "unsigned short" => Type::U16
+                "long" => Type::I32
+                "unsigned long" => Type::U32
+                "long long" => Type::I64
+                "unsigned long long" => Type::U64
+                "float" => Type::F32
+                "double" => Type::F64
+                "long double" => Type::F64
+                else => {
+                    if program.find_type_in_scope(scope_id, name: String::from_string_literal(nt.full_name())) is Some(type_id) {
+                        return type_id
+                    }
+                    yield Type::Unknown
+                }
+            }
+            Cpp::Pointer(&p) => Type::RawPtr(maybe_type_from(p.pointee(), program, module_id, scope_id))
+            Cpp::Reference(&r) => match r.qualifiers().contains_slow("const") {
+                true => Type::Reference(maybe_type_from(r.referenced_type(), program, module_id, scope_id))
+                false => Type::MutableReference(maybe_type_from(r.referenced_type(), program, module_id, scope_id))
+            }
+            Cpp::RType => Type::Unknown
+        }
+        module_id
+    )
+}
+
+fn prepare_preprocessor_for(
+    anon preprocessor: &mut Cpp::Preprocessor
+    program: &mut CheckedProgram
+    import_path: Path
+    seen: &mut {String}
+) throws {
+    preprocessor.definitions_in_header_callback = fn[&preprocessor, &program, &mut seen](
+        anon path: StringView
+    ) -> HashMap<String, Cpp::Preprocessor::Definition> {
+        mut defs = HashMap<String, Cpp::Preprocessor::Definition>()
+        try {
+            let input_path = String::from_string_literal(path)
+            let path_string = input_path.substring(start: 1, length: input_path.length() - 2)
+            let found_path = program.compiler.find_in_search_paths(Path::from_string(path_string))
+            if not found_path.has_value() {
+                throw Error::from_string_literal(CppImportErrors::path_not_found())
+            }
+            let original_filename = found_path!.to_string()
+            let real_path = realpath(path: original_filename.c_string(), resolved_path: null<raw c_char>())
+            let filename = format("{}", real_path)
+            free(real_path)
+            if not seen.contains(filename) {
+                seen.add(filename)
+                let code = read_all(filename)
+                mut pp = Cpp::Preprocessor(filename, program: code)
+                prepare_preprocessor_for(&mut pp, program, import_path: Path::from_string(filename), seen)
+                pp.process_and_lex()
+                defs = pp.definitions()
+            }
+        } catch {
+        }
+
+        return defs
+    }
+}
+
+fn process_cpp_import(
+    program: &mut CheckedProgram
+    import_path: Path
+    scope_id: ScopeId
+    is_c: bool
+) throws -> ScopeId {
+    let module_id = scope_id.module_id
+    let import_scope_id = program.create_scope(
+        parent_scope_id: scope_id
+        can_throw: false
+        debug_name: format("cpp-import-module({})", import_path.to_string())
+        module_id
+        for_block: false
+    )
+
+    let found_path = program.compiler.find_in_search_paths(import_path)
+    if not found_path.has_value() {
+        throw Error::from_string_literal(CppImportErrors::path_not_found())
+    }
+
+    let original_filename = found_path!.to_string()
+    let real_path = realpath(path: original_filename.c_string(), resolved_path: null<raw c_char>())
+    let filename = format("{}", real_path)
+    free(real_path)
+
+    let code = read_all(filename)
+    mut preprocessor = Cpp::Preprocessor(filename, program: code)
+    mut seen: {String} = {}
+    prepare_preprocessor_for(&mut preprocessor, program, import_path, &mut seen)
+
+    let tokens = preprocessor.process_and_lex()
+    mut parser = Cpp::Parser(tokens, filename)
+    let translation_unit = parser.parse()
+
+    mut scope = program.get_scope(import_scope_id)
+    mut parent_scope = program.get_scope(scope_id)
+    parent_scope.children.push(import_scope_id)
+
+    scope.import_path_if_extern = filename
+
+    let span = Span(
+        file_id: FileId(id: 0)
+        start: 0
+        end: 0
+    )
+
+    for decl in translation_unit.declarations() {
+        process_cpp_declaration(program, &decl, scope_id: import_scope_id, module_id, span, this_type: None)
+    }
+
+    return import_scope_id
+}
+
+fn process_cpp_declaration(
+    program: &mut CheckedProgram
+    anon decl: &Cpp::Declaration
+    scope_id: ScopeId
+    module_id: ModuleId
+    span: Span
+    this_type: TypeId?
+) throws {
+    mut module = program.get_module(module_id)
+    match decl {
+        Cpp::FunctionDeclaration(&fd) => {
+            let function_scope = program.create_scope(
+                parent_scope_id: scope_id
+                can_throw: false
+                debug_name: format("cpp-function({})", fd.full_name())
+                module_id
+                for_block: true
+            )
+
+            mut params: [CheckedParameter] = []
+            mut is_mutating = not fd.qualifiers().contains_slow("const")
+            mut is_static = fd.qualifiers().contains_slow("static") or fd.is_constructor() or fd.is_destructor() or not this_type.has_value()
+            if not is_static {
+                let variable = CheckedVariable(
+                    name: "this"
+                    type_id: this_type!
+                    is_mutable: is_mutating
+                    definition_span: span
+                    type_span: None
+                    visibility: CheckedVisibility::Public
+                    owner_scope: function_scope
+                )
+                params.push(CheckedParameter(
+                    requires_label: false
+                    variable
+                    default_value: None
+                ))
+            }
+
+            let ps = fd.parameters()
+            for i in 0..ps.size() {
+                let p = &ps.at(i)
+                let variable = CheckedVariable(
+                    name: p.full_name()
+                    type_id: maybe_type_from(p.type(), &mut program, module_id, function_scope)
+                    is_mutable: false // fixme: const
+                    definition_span: span
+                    type_span: None
+                    visibility: CheckedVisibility::Public
+                    owner_scope: function_scope
+                )
+                params.push(CheckedParameter(
+                    requires_label: false
+                    variable
+                    default_value: None
+                ))
+            }
+
+            let return_type_id = match fd.is_constructor() {
+                true => this_type!
+                false => match fd.is_destructor() {
+                    true => program.find_or_add_type_id(Type::Void, module_id)
+                    false => maybe_type_from(fd.return_type(), &mut program, module_id, function_scope)
+                }
+            }
+
+            let function = CheckedFunction(
+                name: fd.full_name()
+                name_span: span
+                visibility: CheckedVisibility::Public
+                return_type_id
+                return_type_span: None
+                params
+                generics: FunctionGenerics(
+                    base_scope_id: function_scope
+                    base_params: params
+                    params: []
+                    specializations: []
+                )
+                block: CheckedBlock(
+                    statements: []
+                    scope_id: function_scope
+                    control_flow: BlockControlFlow::MayReturn
+                    yielded_type: None
+                    yielded_none: false
+                )
+                can_throw: false // FIXME: ErrorOr
+                type: match fd.is_constructor() {
+                    true => FunctionType::ImplicitConstructor
+                    false => match fd.is_destructor() {
+                        true => FunctionType::Destructor
+                        false => FunctionType::Normal
+                    }
+                }
+                linkage: FunctionLinkage::External
+                function_scope_id: function_scope
+                struct_id: match this_type.has_value() {
+                    true => match program.get_type(this_type!) {
+                        Struct(id) | GenericInstance(id) => Some(id)
+                        else => None
+                    }
+                    false => None
+                }
+                is_instantiated: true
+                parsed_function: None
+                is_comptime: false
+                is_virtual: false
+                is_override: false
+                is_unsafe: false
+                specialization_index: None
+
+                owner_scope: scope_id
+                is_fully_checked: true
+            )
+
+            mut module = program.modules[module_id.id]
+            let id = module.add_function(checked_function: function)
+
+            mut scope = program.get_scope(scope_id)
+            if scope.functions.contains(function.name) {
+                scope.functions[function.name].push(id)
+            } else {
+                scope.functions.set(function.name, [id])
+            }
+
+            if fd.is_constructor() and scope.parent is Some(parent_scope_id) {
+                mut parent_scope = program.get_scope(parent_scope_id)
+                if parent_scope.functions.contains(function.name) {
+                    parent_scope.functions[function.name].push(id)
+                } else {
+                    parent_scope.functions.set(function.name, [id])
+                }
+            }
+        }
+        Cpp::StructOrClassDeclaration(&sd) => {
+            let struct_scope = program.create_scope(
+                parent_scope_id: scope_id
+                can_throw: false
+                debug_name: format("cpp-struct({})", sd.full_name())
+                module_id
+                for_block: false
+            )
+
+            mut scope = program.get_scope(struct_scope)
+            scope.namespace_name = sd.full_name()
+
+            mut parent_scope = program.get_scope(scope_id)
+            parent_scope.children.push(struct_scope)
+
+            let struct_id = StructId(module: module_id, id: module.structures.size())
+            let struct_type_id = program.find_or_add_type_id(Type::Struct(struct_id), module_id)
+
+            parent_scope.structs.set(sd.full_name(), struct_id)
+            parent_scope.types.set(sd.full_name(), struct_type_id)
+
+            let members = sd.members()
+
+            // Resolve sub-namespaces first.
+            for i in 0..members.size() {
+                match &members.at(i) {
+                    Cpp::StructOrClassDeclaration | Cpp::NamespaceDeclaration => {
+                        process_cpp_declaration(
+                            program
+                            &members.at(i)
+                            scope_id: struct_scope
+                            module_id
+                            span
+                            this_type: None
+                        )
+                    }
+                    Cpp::Declaration => {}
+                }
+            }
+
+            mut fields: [CheckedField] = []
+            for i in 0..members.size() {
+                match &members.at(i) {
+                    Cpp::VariableOrParameterDeclaration(&vd) => {
+                        let name = vd.full_name()
+                        let type_id = maybe_type_from(vd.type(), &mut program, module_id, struct_scope)
+                        let variable = CheckedVariable(
+                            name
+                            type_id
+                            is_mutable: false // fixme: const
+                            definition_span: span
+                            type_span: None
+                            visibility: CheckedVisibility::Public
+                            owner_scope: struct_scope
+                        )
+                        let variable_id = module.add_variable(variable)
+
+                        let field = CheckedField(
+                            variable_id
+                            default_value: None
+                            default_value_expression: None
+                        )
+                        fields.push(field)
+                    }
+                    Cpp::Declaration => {}
+                }
+            }
+
+            mut struct_ = CheckedStruct(
+                name: sd.full_name()
+                name_span: span
+                generic_parameters: []
+                fields
+                scope_id: struct_scope
+                definition_linkage: DefinitionLinkage::External
+                trait_implementations: [:]
+                record_type: RecordType::Struct(fields: [], super_type: None)
+                type_id: struct_type_id
+                super_struct_id: None
+            )
+            module.structures.push(struct_)
+
+            let decls = sd.declarations()
+            for i in 0..decls.size() {
+                process_cpp_declaration(program, &decls.at(i), scope_id: struct_scope, module_id, span, this_type: struct_type_id)
+            }
+        }
+        Cpp::NamespaceDeclaration(&nd) => {
+            let namespace_scope = program.create_scope(
+                parent_scope_id: scope_id
+                can_throw: false
+                debug_name: format("cpp-namespace({})", nd.full_name())
+                module_id
+                for_block: false
+            )
+
+            mut scope = program.get_scope(namespace_scope)
+            scope.namespace_name = nd.full_name()
+
+            mut parent_scope = program.get_scope(scope_id)
+            parent_scope.children.push(namespace_scope)
+
+            let decls = nd.declarations()
+            for i in 0..decls.size() {
+                process_cpp_declaration(program, &decls.at(i), scope_id: namespace_scope, module_id, span, this_type: None)
+            }
+        }
+        Cpp::Declaration => {
+            eprintln("Ignoring declaration for {} '{}'", decl.class_name(), decl.full_name())
+        }
+    }
+}

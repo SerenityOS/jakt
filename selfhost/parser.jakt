@@ -230,6 +230,7 @@ struct ParsedExternImport {
     assigned_namespace: ParsedNamespace
     before_include: [IncludeAction]
     after_include: [IncludeAction]
+    should_auto_import: bool = false
 
     fn get_path(this) -> String => .assigned_namespace.import_path_if_extern!
 
@@ -2515,7 +2516,7 @@ struct Parser {
     }
 
     fn parse_extern_import(mut this, parent: &mut ParsedNamespace) throws -> ParsedExternImport {
-        // import extern . [c] "<path>" [as <alias-name>] namespace
+        // import extern . [c] "<path>" [as <alias-name>] namespace?
         mut parsed_import = ParsedExternImport(
             is_c: false
             assigned_namespace: ParsedNamespace(
@@ -2547,6 +2548,7 @@ struct Parser {
                        .current().span())
             }
         }
+        parsed_import.assigned_namespace.name_span = .current().span()
 
         let import_path = match .current() {
             QuotedString(quote) => {
@@ -2572,22 +2574,26 @@ struct Parser {
             }
         }
 
-        if not .current() is LCurly {
-            .error("Expected '{' to start namespace for the extern import"
-                    .current().span())
-        }
-        .index++
-
-        parsed_import.assigned_namespace = .parse_namespace()
-        parsed_import.assigned_namespace.import_path_if_extern = Some(import_path)
-        parsed_import.assigned_namespace.generating_import_extern_before_include = parsed_import.before_include
-        parsed_import.assigned_namespace.generating_import_extern_after_include = parsed_import.after_include
-
-        if .current() is RCurly {
+        if .current() is LCurly {
             .index++
+            parsed_import.assigned_namespace = .parse_namespace()
+            parsed_import.assigned_namespace.import_path_if_extern = Some(import_path)
+            parsed_import.assigned_namespace.generating_import_extern_before_include = parsed_import.before_include
+            parsed_import.assigned_namespace.generating_import_extern_after_include = parsed_import.after_include
+
+            if .current() is RCurly {
+                .index++
+            } else {
+                .error("Expected '}' to end namespace for the extern import"
+                        .current().span())
+            }
+
+            parent.add_child_namespace(parsed_import.assigned_namespace)
         } else {
-            .error("Expected '}' to end namespace for the extern import"
-                    .current().span())
+            parsed_import.should_auto_import = true
+            parsed_import.assigned_namespace.import_path_if_extern = Some(import_path)
+            parsed_import.assigned_namespace.generating_import_extern_before_include = parsed_import.before_include
+            parsed_import.assigned_namespace.generating_import_extern_after_include = parsed_import.after_include
         }
 
         loop {
@@ -2615,8 +2621,6 @@ struct Parser {
                 break
             }
         }
-
-        parent.add_child_namespace(parsed_import.assigned_namespace)
 
         return parsed_import
     }

@@ -1,0 +1,13 @@
+import extern "AK/Vector.h" {
+    namespace AK {
+        extern struct HashMap<K, V> {
+            fn HashMap<A, B>() -> HashMap<A, B>
+            fn set(mut this, key: K, value: V)
+            fn get(this, key: &K) -> V
+            fn contains(this, key: &K) -> bool
+            fn size(this) -> usize
+        }
+    }
+}
+
+use AK::HashMap
