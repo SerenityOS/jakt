@@ -10,6 +10,7 @@ fn run_compiler(
     extra_link_libs: [String]
     optimize: bool
     extra_compiler_flags: [String]
+    use_ccache: bool
 ) throws -> [String] {
     mut file_path = Path::from_string(cxx_compiler_path)
 
@@ -36,6 +37,10 @@ fn run_compiler(
         "-Wno-user-defined-literals"
         "-Wno-deprecated-declarations"
     ]
+
+    if use_ccache {
+        compile_args.insert(before_index: 0, value: "ccache")
+    }
 
     if optimize {
         compile_args.push("/O3")

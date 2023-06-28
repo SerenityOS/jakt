@@ -64,6 +64,7 @@ fn help() throws -> String {
     output += "  --try-hints\t\t\t\tEmit machine-readable try hints (for IDE integration).\n"
     output += "  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"
     output += "  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"
+    output += "  --use-ccache\t\t\t\tUse ccache when compiling.\n"
 
     output += "\nOptions:\n"
     output += "  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\t\t\t\tDefaults to clang-format\n"
@@ -209,6 +210,7 @@ fn main(args: [String]) -> c_int {
     let completions = args_parser.option(["-m", "--completions"])
     let print_symbols = args_parser.flag(["--print-symbols"])
     let project_name = args_parser.option(["--create"])
+    let use_ccache = args_parser.flag(["--use-ccache"])
     let user_configuration_specs = args_parser.option_multiple(["--config"])
 
     mut user_configuration: [String:String] = [:]
@@ -617,6 +619,7 @@ fn main(args: [String]) -> c_int {
         try builder.build_all(
             binary_dir
             compiler_invocation: &fn[
+                use_ccache
                 cxx_compiler_path
                 runtime_path
                 extra_include_paths
@@ -633,6 +636,7 @@ fn main(args: [String]) -> c_int {
                     extra_link_libs: []
                     optimize
                     extra_compiler_flags
+                    use_ccache
                 )
             }
         ) catch {
