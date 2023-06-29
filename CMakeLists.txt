@@ -141,6 +141,7 @@ set(SELFHOST_STDLIB_SOURCES
   jakt__arguments.cpp
   jakt__file_iterator.cpp
   jakt__platform.cpp
+  jakt__platform__utility.cpp
   jakt__path.cpp
 )
 

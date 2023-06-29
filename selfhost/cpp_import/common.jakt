@@ -10,30 +10,6 @@ fn read_all(filename: String) throws -> String {
     return s.to_string()
 }
 
-comptime null_maker<T>(dep: bool = true) -> fn() -> T => match reflect T {
-    RawPtr => fn[comptime dep]() -> T {
-        unsafe { cpp { "return nullptr;" } }
-        abort()
-    }
-    I8 | U8 | I16 | U16 | I32 | U32 | I64 | U64 => fn[comptime dep]() -> T {
-        return 0
-    }
-    F32 | F64 => fn[comptime dep]() -> T {
-        return 0.0
-    }
-    Bool => fn[comptime dep]() -> T {
-        return false
-    }
-    else => fn[comptime dep]() -> T {
-        abort()
-    }
-}
-
-fn null<T>() -> T {
-    let make_null = null_maker<T>()
-    return make_null()
-}
-
 struct CppImportErrors {
     fn path_not_found() -> StringView => "Could not find import path"
     fn no_this_type() -> StringView => "No 'this' type when compiling a function"

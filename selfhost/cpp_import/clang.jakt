@@ -10,7 +10,8 @@ import parser {
 import compiler { Compiler }
 import jakt::path { Path }
 import utility { Span, join }
-import cpp_import::common { CppImportErrors, null, read_all }
+import cpp_import::common { CppImportErrors, read_all }
+import jakt::platform::utility { null }
 import cpp_import::clang_c {
     CXChildVisitResult, CXClientData, CXCursor, CXCursorKind, CXFile, CXIndex, CXSourceLocation, CXString
     CXTranslationUnit, CXTranslationUnit_Flags, CXType, CXTypeKind, CXUnsavedFile, CXToken, CXTokenKind
