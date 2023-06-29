@@ -9,6 +9,8 @@
 #include "jakt__path.h"
 #include "compiler.h"
 #include "interpreter.h"
+#include "cpp_import__common.h"
+#include "cpp_import__none.h"
 namespace Jakt {
 namespace typechecker {
 struct TraitImplementationDescriptor {
@@ -170,7 +172,7 @@ DeprecatedString trait_name;utility::Span encounter_span;AlreadyImplementedFor(D
 ErrorOr<DeprecatedString> debug_description() const;
 };struct Typechecker {
   public:
-NonnullRefPtr<compiler::Compiler> compiler;NonnullRefPtr<types::CheckedProgram> program;ids::ModuleId current_module_id;JaktInternal::Optional<ids::TypeId> current_struct_type_id;JaktInternal::Optional<ids::FunctionId> current_function_id;bool inside_defer;size_t checkidx;bool ignore_errors;bool dump_type_hints;bool dump_try_hints;u64 lambda_count;types::GenericInferences generic_inferences;JaktInternal::Optional<ids::TypeId> self_type_id;DeprecatedString root_module_name;bool in_comptime_function_call;bool had_an_error;ErrorOr<void> typecheck_struct_predecl_initial(parser::ParsedRecord const parsed_record, size_t const struct_index, size_t const module_struct_len, ids::ScopeId const scope_id);
+NonnullRefPtr<compiler::Compiler> compiler;NonnullRefPtr<types::CheckedProgram> program;ids::ModuleId current_module_id;JaktInternal::Optional<ids::TypeId> current_struct_type_id;JaktInternal::Optional<ids::FunctionId> current_function_id;bool inside_defer;size_t checkidx;bool ignore_errors;bool dump_type_hints;bool dump_try_hints;u64 lambda_count;types::GenericInferences generic_inferences;JaktInternal::Optional<ids::TypeId> self_type_id;DeprecatedString root_module_name;bool in_comptime_function_call;bool had_an_error;JaktInternal::Dictionary<DeprecatedString,ids::ScopeId> cpp_import_cache;ErrorOr<void> typecheck_struct_predecl_initial(parser::ParsedRecord const parsed_record, size_t const struct_index, size_t const module_struct_len, ids::ScopeId const scope_id);
 ErrorOr<void> ensure_type_implements_trait(ids::TypeId const type_id, DeprecatedString const trait_name, JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> const filter_for_generics, ids::ScopeId const scope_id, utility::Span const span);
 ErrorOr<JaktInternal::Tuple<types::CheckedMatchBody,JaktInternal::Optional<ids::TypeId>>> typecheck_match_body(parser::ParsedMatchBody const body, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, types::GenericInferences& generic_inferences, JaktInternal::Optional<ids::TypeId> const final_result_type, utility::Span const span);
 ErrorOr<DeprecatedString> type_name(ids::TypeId const type_id, bool const debug_mode) const;
@@ -205,6 +207,7 @@ ErrorOr<void> typecheck_namespace_declarations(parser::ParsedNamespace const par
 ErrorOr<void> typecheck_struct_constructor(parser::ParsedRecord const parsed_record, ids::StructId const struct_id, ids::ScopeId const scope_id);
 ErrorOr<ids::TypeId> resolve_type_var(ids::TypeId const type_var_type_id, ids::ScopeId const scope_id) const;
 ErrorOr<void> check_type_argument_requirements(ids::TypeId const generic_argument, JaktInternal::DynamicArray<ids::TraitId> const constraints, utility::Span const arg_span);
+ErrorOr<DeprecatedString> stringify_function_prototype(ids::FunctionId const function_id);
 ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>>> get_type_ids_from_type_hint_if_struct_ids_match(JaktInternal::Optional<ids::TypeId> const type_hint, ids::StructId const expected_struct_id) const;
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_generic_arguments_method_call(NonnullRefPtr<typename types::CheckedExpression> const checked_expr, parser::ParsedCall const call, ids::ScopeId const scope_id, utility::Span const span, bool const is_optional, types::SafetyMode const safety_mode);
 ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_loop(parser::ParsedBlock const parsed_block, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
@@ -232,7 +235,7 @@ ErrorOr<void> typecheck_enum_predecl_initial(parser::ParsedRecord const parsed_r
 ErrorOr<ids::TypeId> typecheck_generic_resolved_type(DeprecatedString const name, JaktInternal::DynamicArray<ids::TypeId> const checked_inner_types, ids::ScopeId const scope_id, utility::Span const span);
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_comptime_index(NonnullRefPtr<typename parser::ParsedExpression> const expr, NonnullRefPtr<typename parser::ParsedExpression> const index, ids::ScopeId const scope_id, bool const is_optional, types::SafetyMode const safety_mode, utility::Span const span);
 ErrorOr<void> typecheck_namespace_fields(parser::ParsedNamespace const parsed_namespace, ids::ScopeId const scope_id);
-Typechecker(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, ids::ModuleId a_current_module_id, JaktInternal::Optional<ids::TypeId> a_current_struct_type_id, JaktInternal::Optional<ids::FunctionId> a_current_function_id, bool a_inside_defer, size_t a_checkidx, bool a_ignore_errors, bool a_dump_type_hints, bool a_dump_try_hints, u64 a_lambda_count, types::GenericInferences a_generic_inferences, JaktInternal::Optional<ids::TypeId> a_self_type_id, DeprecatedString a_root_module_name, bool a_in_comptime_function_call, bool a_had_an_error);
+Typechecker(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, ids::ModuleId a_current_module_id, JaktInternal::Optional<ids::TypeId> a_current_struct_type_id, JaktInternal::Optional<ids::FunctionId> a_current_function_id, bool a_inside_defer, size_t a_checkidx, bool a_ignore_errors, bool a_dump_type_hints, bool a_dump_try_hints, u64 a_lambda_count, types::GenericInferences a_generic_inferences, JaktInternal::Optional<ids::TypeId> a_self_type_id, DeprecatedString a_root_module_name, bool a_in_comptime_function_call, bool a_had_an_error, JaktInternal::Dictionary<DeprecatedString,ids::ScopeId> a_cpp_import_cache);
 
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> cast_to_underlying(NonnullRefPtr<typename parser::ParsedExpression> const expr, ids::ScopeId const scope_id, NonnullRefPtr<typename parser::ParsedType> const parsed_type);
 ErrorOr<ids::TypeId> substitute_typevars_in_type(ids::TypeId const type_id, types::GenericInferences const generic_inferences);
