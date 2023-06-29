@@ -10,11 +10,11 @@ import error { JaktError, print_error }
 import lexer { Lexer }
 import parser {
     BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, FunctionLinkage, FunctionType, ImportList, ImportName
-    NumericConstant, ParsedAlias, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport
-    ParsedExternalTraitImplementation, ParsedField, ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedMethod
-    ParsedModuleImport, ParsedName, ParsedNameWithGenericParameters, ParsedNamespace, ParsedParameter
-    ParsedPatternDefault, ParsedRecord, ParsedStatement, ParsedTrait, ParsedType, ParsedVarDecl, Parser, RecordType
-    TypeCast, UnaryOperator, Visibility, ParsedGenericParameter
+    IncludeAction, NumericConstant, ParsedAlias, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression
+    ParsedExternImport, ParsedExternalTraitImplementation, ParsedField, ParsedFunction, ParsedGenericParameter
+    ParsedMatchBody, ParsedMatchCase, ParsedMethod, ParsedModuleImport, ParsedName, ParsedNameWithGenericParameters
+    ParsedNamespace, ParsedParameter, ParsedPatternDefault, ParsedRecord, ParsedStatement, ParsedTrait, ParsedType
+    ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator, Visibility
 }
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant
@@ -10361,7 +10361,7 @@ struct Typechecker {
 
         let force_inline = match resolved_function_id.has_value() {
             true => .get_function(resolved_function_id!).force_inline
-            false => None
+            false => InlineState::Default
         }
         let function_call = CheckedCall(
             namespace_: resolved_namespaces

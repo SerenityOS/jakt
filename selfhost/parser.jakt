@@ -379,6 +379,12 @@ enum ArgumentStoreLevel {
     InStaticStorage
 }
 
+enum InlineState {
+    Default
+    MakeDefinitionAvailable
+    ForceInline
+}
+
 struct ParsedFunction {
     id: usize
     name: String
@@ -400,7 +406,7 @@ struct ParsedFunction {
     external_name: ExternalName? = None
     deprecated_message: String? = None // if not None, the function is deprecated
     stores_arguments: [(usize, ArgumentStoreLevel)]? = None // if not None, the function stores the given arguments, extending their lifetime requirements.
-    force_inline: bool? = None // true -> force inline, false -> force not inline, None -> don't care
+    force_inline: InlineState = InlineState::Default
 
     fn equals(this, anon other: ParsedFunction, ignore_block: bool = false) -> bool {
         if this.name != other.name or
@@ -2016,7 +2022,7 @@ struct Parser {
                     parsed_function.deprecated_message = message
                 }
                 "inline" => {
-                    if parsed_function.force_inline.has_value() {
+                    if not (parsed_function.force_inline is Default) {
                         .error(
                             format("The attribute '{}' cannot be applied more than once", attribute.name)
                             attribute.span
@@ -2024,8 +2030,20 @@ struct Parser {
                         continue
                     }
 
-                    let force_inline = (attribute.arguments.first()?.name ?? "") != "never"
-                    parsed_function.force_inline = force_inline
+                    let inline_state = match (attribute.arguments.first()?.name ?? "") {
+                        "never" => InlineState::Default
+                        "" | "always" => InlineState::ForceInline
+                        "make_available" => InlineState::MakeDefinitionAvailable
+                        else => {
+                            .error(
+                                format("Invalid argument for attribute '{}'", attribute.name)
+                                attribute.span
+                            )
+                            continue
+                        }
+                    }
+
+                    parsed_function.force_inline = inline_state
                 }
                 "stores_arguments" => {
                     // [[stores_arguments(foo: this, bar)]] -> [(foo, InObject("this")), (bar, InStaticStorage)]
