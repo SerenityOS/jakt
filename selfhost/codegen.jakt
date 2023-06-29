@@ -1491,8 +1491,18 @@ struct CodeGenerator {
             else => {}
         }
 
+        let set_access_level = fn[&mut output](anon visibility: CheckedVisibility) throws -> void => match visibility {
+            Restricted | Public => {
+                output += "public: "
+            }
+            Private => {
+                output += "private: "
+            }
+        }
+
         for field in struct_.fields {
             let variable = .program.get_variable(field.variable_id)
+            set_access_level(variable.visibility)
             output += .codegen_type(variable.type_id)
             output += " "
             output += variable.name_for_codegen().as_name_for_definition()
@@ -1505,6 +1515,7 @@ struct CodeGenerator {
                 let previous_function_id = .current_function
 
                 let function = .program.get_function(function_id)
+                set_access_level(function.visibility)
                 .current_function = Some(function)
                 defer .current_function = previous_function_id
 
@@ -1534,6 +1545,7 @@ struct CodeGenerator {
             }
         }
 
+        set_access_level(CheckedVisibility::Public)
         if struct_.generic_parameters.is_empty() {
             output += "ErrorOr<DeprecatedString> debug_description() const;\n"
         } else {
