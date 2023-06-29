@@ -354,6 +354,14 @@ struct Options {
             options.job_count = os::get_num_cpus()
         }
 
+        let jakt_path_test = fs::stat_silencing_enoent(path: String::format("{}/bin/jakt", options.build_dir))
+        let jakt_path_test_win = fs::stat_silencing_enoent(path: String::format("{}/bin/jakt.exe", options.build_dir))
+
+        // The test could be more comprehensive than this, but this works for now
+        if (not jakt_path_test.has_value()) and (not jakt_path_test_win.has_value()) {
+            options.errors.push(String::format("Could not find jakt binary at {}/bin/jakt", options.build_dir))
+        }
+
         return options
     }
 }
