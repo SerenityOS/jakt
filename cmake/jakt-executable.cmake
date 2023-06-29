@@ -35,7 +35,7 @@ function(add_jakt_compiler_flags target)
   )
   if (MSVC)
     # For clang-cl, which shows up to CMake as MSVC and accepts both kinds of arguments
-    target_compile_options("${target}" PRIVATE /permissive- /utf-8 /EHsc- -W4)
+    target_compile_options("${target}" PRIVATE /permissive- /utf-8 /EHsc- -W[123])
   else()
     target_compile_options("${target}" PRIVATE -fno-exceptions -fdiagnostics-color=always -Wall)
   endif()
