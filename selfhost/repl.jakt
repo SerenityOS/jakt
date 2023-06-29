@@ -188,6 +188,7 @@ struct REPL {
             optimize: false
             target_triple
             user_configuration
+            binary_dir: Path::from_string("build")
         )
 
         compiler.load_prelude()

@@ -21,6 +21,7 @@ class Compiler {
     public optimize: bool
     public target_triple: String?
     public user_configuration: [String:String]
+    public binary_dir: Path
 
     public fn panic(this, anon message: String) throws -> never {
         .print_errors()
