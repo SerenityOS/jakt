@@ -322,6 +322,7 @@ fn main(args: [String]) -> c_int {
         optimize
         target_triple
         user_configuration
+        binary_dir
     )
 
     compiler.load_prelude()
