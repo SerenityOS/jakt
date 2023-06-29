@@ -1133,6 +1133,10 @@ struct CodeGenerator {
             for (_, overload_set) in scope.functions {
                 for function_id in overload_set {
                     let function = .program.get_function(function_id)
+                    if function.force_inline is MakeDefinitionAvailable {
+                        continue
+                    }
+
                     let previous_function = .current_function
                     .current_function = function
                     defer .current_function = previous_function
@@ -1305,7 +1309,7 @@ struct CodeGenerator {
             return ""
         }
 
-        if function.force_inline ?? false {
+        if function.force_inline is ForceInline {
             return ""
         }
 
@@ -1518,14 +1522,14 @@ struct CodeGenerator {
                         output += .codegen_constructor(function, is_inline: true)
                     }
                     output += "\n"
-                } else {
-                    if struct_is_generic {
-                        if not function.specialization_index.has_value() {
-                            output += .codegen_function(function, as_method: true)
-                        }
-                    } else if function.generics.params.is_empty() or not function.specialization_index.has_value() {
-                        output += .codegen_function_predecl(function, as_method: true)
+                } else if function.force_inline is MakeDefinitionAvailable {
+                    output += .codegen_function(function, as_method: true)
+                } else if struct_is_generic {
+                    if not function.specialization_index.has_value() {
+                        output += .codegen_function(function, as_method: true)
                     }
+                } else if function.generics.params.is_empty() or not function.specialization_index.has_value() {
+                        output += .codegen_function_predecl(function, as_method: true)
                 }
             }
         }
@@ -3208,7 +3212,7 @@ struct CodeGenerator {
 
         let object = .codegen_expression_and_deref_if_generic_and_needed(expr)
 
-        if call.function_id.has_value() and (call.force_inline ?? false) {
+        if call.function_id.has_value() and (call.force_inline is ForceInline) {
             let function = .program.get_function(call.function_id!)
             let is_mutable = expr.is_mutable(program: .program) and function.params.first()!.variable.is_mutable
 
@@ -4386,7 +4390,7 @@ struct CodeGenerator {
             }
         }
 
-        if function.force_inline ?? false {
+        if function.force_inline is ForceInline {
             return ""
         }
 
@@ -4397,6 +4401,10 @@ struct CodeGenerator {
         }
 
         let is_main = function.name_for_codegen().as_name_for_use() == "main" and not containing_struct.has_value()
+
+        if function.force_inline is MakeDefinitionAvailable {
+            output += "__attribute__((always_inline)) inline "
+        }
 
         if function.return_type_id.equals(never_type_id()) {
             output += "[[noreturn]] "
