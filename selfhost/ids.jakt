@@ -3,10 +3,12 @@ import jakt::prelude::hash { pair_int_hash }
 struct ModuleId implements(Hashable, Equal<ModuleId>) {
     id: usize
 
+    [[inline(make_available)]]
     fn equals(this, anon rhs: ModuleId) -> bool {
         return this.id == rhs.id
     }
 
+    [[inline(make_available)]]
     fn hash(this) -> u32 {
         return .id.hash()
     }
@@ -21,6 +23,7 @@ struct FunctionId {
     module: ModuleId
     id: usize
 
+    [[inline(make_available)]]
     fn equals(this, anon rhs: FunctionId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
@@ -30,10 +33,12 @@ struct StructId implements(Hashable, Equal<StructId>) {
     module: ModuleId
     id: usize
 
+    [[inline(make_available)]]
     fn equals(this, anon rhs: StructId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
 
+    [[inline(make_available)]]
     fn hash(this) -> u32 {
         return pair_int_hash(.id.hash(), .module.hash())
     }
@@ -43,6 +48,7 @@ struct EnumId {
     module: ModuleId
     id: usize
 
+    [[inline(make_available)]]
     fn equals(this, anon rhs: EnumId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
@@ -52,13 +58,16 @@ struct TypeId implements(Hashable, Equal<TypeId>) {
     module: ModuleId
     id: usize
 
+    [[inline(make_available)]]
     fn none() -> TypeId? => None
 
+    [[inline(make_available)]]
     fn equals(this, anon rhs: TypeId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
 
     // FIXME: Using .id.pair_hash_with(&.module) here causes a compiler crash.
+    [[inline(make_available)]]
     fn hash(this) -> u32 {
         return pair_int_hash(.id.hash(), .module.hash())
     }
@@ -68,6 +77,7 @@ struct TraitId {
     module: ModuleId
     id: usize
 
+    [[inline(make_available)]]
     fn equals(this, anon other: TraitId) -> bool {
         return this.module.id == other.module.id and this.id == other.id
     }
@@ -77,11 +87,13 @@ struct ScopeId implements(Hashable, Equal<ScopeId>) {
     module_id: ModuleId
     id: usize
 
+    [[inline(make_available)]]
     fn equals(this, anon other: ScopeId) -> bool {
         return this.module_id.id == other.module_id.id and this.id == other.id
     }
 
+    [[inline(make_available)]]
     fn hash(this) -> u32 {
-        return pair_int_hash(.id.hash(), .module_id.hash())
+        return pair_int_hash(.id as! u32, .module_id.id as! u32)
     }
 }
