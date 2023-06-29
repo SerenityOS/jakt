@@ -323,6 +323,12 @@ struct Operator;
 }
 struct ExternalName;
 
+namespace ImportName_Details {
+struct Literal;
+struct Comptime;
+}
+struct ImportName;
+
 namespace ParsedMatchPattern_Details {
 struct EnumVariant;
 struct Expression;
@@ -330,12 +336,6 @@ struct CatchAll;
 struct Invalid;
 }
 struct ParsedMatchPattern;
-
-namespace ImportName_Details {
-struct Literal;
-struct Comptime;
-}
-struct ImportName;
 
 namespace Visibility_Details {
 struct Public;
@@ -382,6 +382,13 @@ struct Function;
 struct Empty;
 }
 struct ParsedType;
+
+namespace InlineState_Details {
+struct Default;
+struct MakeDefinitionAvailable;
+struct ForceInline;
+}
+struct InlineState;
 
 namespace ParsedTraitRequirements_Details {
 struct Nothing;
@@ -959,6 +966,21 @@ ErrorOr<DeprecatedString> format_value_impl(DeprecatedString const format_string
 ErrorOr<DeprecatedString> comptime_format_impl(DeprecatedString const format_string, JaktInternal::ArraySlice<types::Value> const arguments, NonnullRefPtr<interpreter::Interpreter> const interpreter);
 
 }
+namespace jakt__prelude__configuration {
+struct UserConfiguration;
+extern JaktInternal::Optional<StringView> ___jakt_get_user_configuration_value(StringView const name);
+
+}
+namespace cpp_import__common {
+struct CppImportErrors;
+ErrorOr<DeprecatedString> read_all(DeprecatedString const filename);
+
+
+}
+namespace cpp_import__none {
+ErrorOr<ids::ScopeId> process_cpp_import(NonnullRefPtr<types::CheckedProgram>& program, jakt__path::Path const import_path, ids::ScopeId const scope_id, bool const is_c, JaktInternal::Dictionary<DeprecatedString,DeprecatedString> const defines);
+
+}
 namespace typechecker {
 template <typename K,typename V>struct InternalDictionaryProduct;
 struct TraitImplementationDescriptor;
@@ -978,6 +1000,8 @@ struct MatchSuccess;
 struct MatchError;
 }
 struct FunctionMatchResult;
+
+ErrorOr<JaktInternal::Dictionary<DeprecatedString,DeprecatedString>> defines_from(JaktInternal::DynamicArray<parser::IncludeAction> const actions);
 
 }
 namespace codegen {
@@ -1137,11 +1161,6 @@ ErrorOr<DeprecatedString> get_function_signature(NonnullRefPtr<types::CheckedPro
 namespace project {
 struct Project;
 }
-namespace jakt__prelude__configuration {
-struct UserConfiguration;
-extern JaktInternal::Optional<StringView> ___jakt_get_user_configuration_value(StringView const name);
-
-}
 namespace platform {
 
 
@@ -1189,7 +1208,7 @@ ErrorOr<DeprecatedString> serialize_ast_node(NonnullRefPtr<typename types::Check
 
 }
 namespace platform__unknown_compiler {
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> run_compiler(DeprecatedString const cxx_compiler_path, DeprecatedString const cpp_filename, DeprecatedString const output_filename, DeprecatedString const runtime_path, JaktInternal::DynamicArray<DeprecatedString> const extra_include_paths, JaktInternal::DynamicArray<DeprecatedString> const extra_lib_paths, JaktInternal::DynamicArray<DeprecatedString> const extra_link_libs, bool const optimize, JaktInternal::DynamicArray<DeprecatedString> const extra_compiler_flags);
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> run_compiler(DeprecatedString const cxx_compiler_path, DeprecatedString const cpp_filename, DeprecatedString const output_filename, DeprecatedString const runtime_path, JaktInternal::DynamicArray<DeprecatedString> const extra_include_paths, JaktInternal::DynamicArray<DeprecatedString> const extra_lib_paths, JaktInternal::DynamicArray<DeprecatedString> const extra_link_libs, bool const optimize, JaktInternal::DynamicArray<DeprecatedString> const extra_compiler_flags, bool const use_ccache);
 
 }
 struct FormatRange;

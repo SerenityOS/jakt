@@ -1994,7 +1994,7 @@ TRY((((args).push((Tuple{label, arg})))));
 }
 
 NonnullRefPtr<types::CheckedFunction> const callee = ((((interpreter)->program))->get_function((constructor.value())));
-types::CheckedCall const call = types::CheckedCall(namespace_,name,args,(TRY((DynamicArray<ids::TypeId>::create_with({})))),constructor,((struct_).type_id),((callee)->can_throw),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
+types::CheckedCall const call = types::CheckedCall(namespace_,name,args,(TRY((DynamicArray<ids::TypeId>::create_with({})))),constructor,((struct_).type_id),((callee)->can_throw),JaktInternal::OptionalNone(), parser::InlineState { typename parser::InlineState::Default() } );
 __jakt_var_183 = TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::Call>(call,((this_value).span),((struct_).type_id)))); goto __jakt_label_169;
 
 }
@@ -2071,7 +2071,7 @@ TRY((((args).push((Tuple{label, arg})))));
 }
 
 NonnullRefPtr<types::CheckedFunction> const callee = ((((interpreter)->program))->get_function((constructor.value())));
-types::CheckedCall const call = types::CheckedCall(namespace_,name,args,(TRY((DynamicArray<ids::TypeId>::create_with({})))),constructor,((struct_).type_id),((callee)->can_throw),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
+types::CheckedCall const call = types::CheckedCall(namespace_,name,args,(TRY((DynamicArray<ids::TypeId>::create_with({})))),constructor,((struct_).type_id),((callee)->can_throw),JaktInternal::OptionalNone(), parser::InlineState { typename parser::InlineState::Default() } );
 __jakt_var_184 = TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::Call>(call,((this_value).span),((struct_).type_id)))); goto __jakt_label_170;
 
 }
@@ -2144,7 +2144,7 @@ TRY((((args).push((Tuple{TRY(DeprecatedString::from_utf8(""sv)), arg})))));
 }
 
 NonnullRefPtr<types::CheckedFunction> const callee = ((((interpreter)->program))->get_function(constructor));
-types::CheckedCall const call = types::CheckedCall(namespace_,((callee)->name),args,(TRY((DynamicArray<ids::TypeId>::create_with({})))),constructor,((enum_).type_id),((callee)->can_throw),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
+types::CheckedCall const call = types::CheckedCall(namespace_,((callee)->name),args,(TRY((DynamicArray<ids::TypeId>::create_with({})))),constructor,((enum_).type_id),((callee)->can_throw),JaktInternal::OptionalNone(), parser::InlineState { typename parser::InlineState::Default() } );
 __jakt_var_185 = TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::Call>(call,((this_value).span),((enum_).type_id)))); goto __jakt_label_171;
 
 }
@@ -2322,7 +2322,7 @@ TRY((((((inherited_scope)->comptime_bindings)).set(((capture).template get<0>())
 
 TRY((((statements).push_values(((((block).statements)))))));
 types::CheckedBlock const new_block = types::CheckedBlock(statements,inherited_scope_id,((block).control_flow),((block).yielded_type),((block).yielded_none));
-NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(TRY(DeprecatedString::from_utf8("synthetic_lambda"sv)),((this_value).span), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,return_type_id,JaktInternal::OptionalNone(),checked_params,TRY((types::FunctionGenerics::__jakt_create(inherited_scope_id,checked_params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({}))))))),new_block,can_throw, parser::FunctionType { typename parser::FunctionType::Expression() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,inherited_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
+NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(TRY(DeprecatedString::from_utf8("synthetic_lambda"sv)),((this_value).span), types::CheckedVisibility { typename types::CheckedVisibility::Public() } ,return_type_id,JaktInternal::OptionalNone(),checked_params,TRY((types::FunctionGenerics::__jakt_create(inherited_scope_id,checked_params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({}))))))),new_block,can_throw, parser::FunctionType { typename parser::FunctionType::Expression() } , parser::FunctionLinkage { typename parser::FunctionLinkage::Internal() } ,inherited_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(), parser::InlineState { typename parser::InlineState::Default() } )));
 Function<ErrorOr<ids::FunctionId>(NonnullRefPtr<types::CheckedFunction>)> const& register_function = ((((((interpreter)->typecheck_functions))->register_function)));
 ids::FunctionId const pseudo_function_id = TRY((register_function(checked_function)));
 __jakt_var_189 = TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::Function>((TRY((DynamicArray<types::CheckedCapture>::create_with({})))),checked_params,can_throw,return_type_id,new_block,((this_value).span),type_id,pseudo_function_id,scope_id))); goto __jakt_label_175;
@@ -4025,7 +4025,7 @@ TRY((((new_args).push((Tuple{((arg).template get<0>()), TRY((((*this).perform_fi
 }
 }
 
-__jakt_var_197 = TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::Call>(types::CheckedCall(((call).namespace_),((call).name),new_args,((call).type_args),((call).function_id),((call).return_type),((call).callee_throws),JaktInternal::OptionalNone(),JaktInternal::OptionalNone()),span,type_id))); goto __jakt_label_183;
+__jakt_var_197 = TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::Call>(types::CheckedCall(((call).namespace_),((call).name),new_args,((call).type_args),((call).function_id),((call).return_type),((call).callee_throws),JaktInternal::OptionalNone(), parser::InlineState { typename parser::InlineState::Default() } ),span,type_id))); goto __jakt_label_183;
 
 }
 __jakt_label_183:; __jakt_var_197.release_value(); }));
@@ -4053,7 +4053,7 @@ TRY((((new_args).push((Tuple{((arg).template get<0>()), TRY((((*this).perform_fi
 }
 }
 
-__jakt_var_198 = TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::MethodCall>(TRY((((*this).perform_final_interpretation_expr_pass(expr,scope)))),types::CheckedCall(((call).namespace_),((call).name),new_args,((call).type_args),((call).function_id),((call).return_type),((call).callee_throws),JaktInternal::OptionalNone(),JaktInternal::OptionalNone()),span,is_optional,type_id))); goto __jakt_label_184;
+__jakt_var_198 = TRY((types::CheckedExpression::template __jakt_create<typename types::CheckedExpression::MethodCall>(TRY((((*this).perform_final_interpretation_expr_pass(expr,scope)))),types::CheckedCall(((call).namespace_),((call).name),new_args,((call).type_args),((call).function_id),((call).return_type),((call).callee_throws),JaktInternal::OptionalNone(), parser::InlineState { typename parser::InlineState::Default() } ),span,is_optional,type_id))); goto __jakt_label_184;
 
 }
 __jakt_label_184:; __jakt_var_198.release_value(); }));
