@@ -10035,6 +10035,43 @@ struct Typechecker {
         return FunctionMatchResult::MatchSuccess(args, maybe_this_type_id, used_generic_inferences: used_inferences, specificity: total_function_specificity)
     }
 
+    fn stringify_function_prototype(mut this, anon function_id: FunctionId) throws -> String {
+        let function = .get_function(function_id)
+        mut builder = StringBuilder::create()
+        builder.append("fn ")
+        builder.append(function.name)
+        if not function.generics.params.is_empty() {
+            builder.append("<")
+            mut first = true
+            for param in function.generics.params {
+                if first { first = false } else { builder.append(", ") }
+                builder.append(.type_name(param.type_id()))
+            }
+            builder.append(">")
+        }
+        builder.append("(")
+        mut first = true
+        for param in function.params {
+            if first { first = false } else { builder.append(", ") }
+            if not param.requires_label {
+                builder.append("anon ")
+            }
+            builder.append(param.variable.name)
+            builder.append(": ")
+            builder.append(.type_name(param.variable.type_id))
+            if param.default_value.has_value() {
+                builder.append(" = ...")
+            }
+        }
+        builder.append(")")
+        if function.can_throw {
+            builder.append(" throws")
+        }
+        builder.append(" -> ")
+        builder.append(.type_name(function.return_type_id))
+        return builder.to_string()
+    }
+
     fn typecheck_call(
         mut this
         call: ParsedCall
@@ -10181,6 +10218,13 @@ struct Typechecker {
                             if .ignore_errors {
                                 .had_an_error = true
                             }
+                        }
+
+                        for candidate in resolved_function_id_candidates {
+                            .error(
+                                format("Candidate: {}", .stringify_function_prototype(candidate))
+                                span
+                            )
                         }
                     }
 
