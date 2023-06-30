@@ -247,6 +247,7 @@ fn process_cpp_import(
     import_path: Path
     scope_id: ScopeId
     is_c: bool
+    defines: [String:String]
 ) throws -> ScopeId {
     let module_id = scope_id.module_id
     let import_scope_id = program.create_scope(

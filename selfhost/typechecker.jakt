@@ -136,6 +136,7 @@ struct Typechecker {
     root_module_name: String
     in_comptime_function_call: bool = false
     had_an_error: bool = false
+    cpp_import_cache: [String:ScopeId]
 
     fn set_self_type_id(mut this, anon type_id: TypeId) throws {
         if .get_type(type_id) is Struct(struct_id) and .get_struct(struct_id).implements_type is Some(replacement_type_id) {
@@ -190,6 +191,7 @@ struct Typechecker {
             lambda_count: 0
             generic_inferences: GenericInferences(values: [:])
             root_module_name
+            cpp_import_cache: [:]
         )
 
         typechecker.include_prelude()
@@ -1402,23 +1404,38 @@ struct Typechecker {
 
     fn typecheck_extern_import(mut this, anon import_: ParsedExternImport, scope_id: ScopeId) throws {
         if import_.should_auto_import {
-            let base_import_scope_id = .create_scope(
-                parent_scope_id: scope_id
-                can_throw: false
-                debug_name: format("extern-import({})", import_.get_path())
-                for_block: false
-            )
+            let path = import_.get_path()
+            let existing_scope = .cpp_import_cache.get(path)
+            let base_import_scope_id = match existing_scope.has_value() {
+                true => existing_scope!
+                false => {
+                    let child_scope_id = .create_scope(
+                        parent_scope_id: .root_scope_id() // See the NOTE in `typecheck_namespace_predecl' about extern imports
+                        can_throw: false
+                        debug_name: format("extern-import({})", import_.get_path())
+                        for_block: false
+                    )
+                    mut child_scope = .get_scope(child_scope_id)
+                    child_scope.resolution_mixins.push(scope_id)
+                    yield child_scope_id
+                }
+            }
             {
                 // Anonymous namespace to ensure imported symbols don't clash with prelude symbols.
                 mut scope = .get_scope(scope_id)
                 scope.children.push(base_import_scope_id)
             }
 
+            guard not existing_scope.has_value() else {
+                return
+            }
+
             let import_scope_id = try process_cpp_import(
                 program: &mut .program
-                import_path: Path::from_string(import_.get_path())
+                import_path: Path::from_string(path)
                 scope_id: base_import_scope_id
                 is_c: import_.is_c
+                defines: defines_from(import_.before_include)
             ) catch e {
                 // FIXME: StringView::equals()
                 if String::from_string_literal(e.string()) == String::from_string_literal(CppImportErrors::path_not_found()) {
@@ -1437,6 +1454,8 @@ struct Typechecker {
             mut scope = .get_scope(import_scope_id)
             scope.before_extern_include = import_.assigned_namespace.generating_import_extern_before_include
             scope.after_extern_include =  import_.assigned_namespace.generating_import_extern_after_include
+
+            .cpp_import_cache.set(path, import_scope_id)
 
             .typecheck_module(parsed_namespace: import_.assigned_namespace, scope_id: import_scope_id)
             return
@@ -11083,4 +11102,14 @@ struct TraitImplCheck {
         }
     }
 
+}
+
+fn defines_from(anon actions: [IncludeAction]) throws -> [String:String] {
+    mut defines: [String:String] = [:]
+    for action in actions {
+        if action is Define(name, value) {
+            defines.set(name, value)
+        }
+    }
+    return defines
 }

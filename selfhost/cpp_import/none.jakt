@@ -6,6 +6,7 @@ fn process_cpp_import(
     import_path: Path
     scope_id: ScopeId
     is_c: bool
+    defines: [String:String]
 ) throws -> ScopeId {
     throw Error::from_string_literal("Not implemented")
 }

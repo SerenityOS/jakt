@@ -528,6 +528,13 @@ import extern c "clang-c/Index.h" {
     extern fn clang_Cursor_getNumTemplateArguments(cursor: CXCursor) -> c_int
     extern fn clang_isCursorDefinition(cursor: CXCursor) -> u32
     extern fn clang_getEnumDeclIntegerType(cursor: CXCursor) -> CXType
+    extern fn clang_getCursorDefinition(cursor: CXCursor) -> CXCursor
+    extern fn clang_getCursorUSR(cursor: CXCursor) -> CXString
+    extern fn clang_getSpecializedCursorTemplate(cursor: CXCursor) -> CXCursor
+    extern fn clang_Cursor_isNull(cursor: CXCursor) -> bool
+    extern fn clang_saveTranslationUnit(anon tu: CXTranslationUnit, file_name: raw c_char, options: u32) -> c_int
+    extern fn clang_createTranslationUnit(index: CXIndex, file_name: raw c_char) -> CXTranslationUnit
+    extern fn clang_getCanonicalCursor(anon cursor: CXCursor) -> CXCursor
 }
 
 type CXTranslationUnit implements(Equal<CXTranslationUnit>) {
