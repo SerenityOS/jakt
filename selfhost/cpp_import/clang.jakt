@@ -8,7 +8,7 @@ import parser {
     FunctionType, ParsedField, ParsedVarDecl, RecordType, ParsedType
 }
 import compiler { Compiler }
-import jakt::path { Path }
+import jakt::path { Path, get_path_separator }
 import utility { Span, join }
 import cpp_import::common { CppImportErrors, read_all }
 import jakt::platform::utility { null }
@@ -18,16 +18,17 @@ import cpp_import::clang_c {
 }
 import cpp_import::clang_c {
     clang_CXXMethod_isConst, clang_CXXMethod_isPureVirtual, clang_CXXMethod_isStatic, clang_CXXMethod_isVirtual
-    clang_Cursor_getNumTemplateArguments, clang_Cursor_getTranslationUnit, clang_Type_getNamedType
-    clang_createIndex, clang_disposeIndex, clang_disposeString, clang_disposeTokens, clang_disposeTranslationUnit
-    clang_getArgType, clang_getCString, clang_getCanonicalType, clang_getCursorExtent, clang_getCursorKind
+    clang_Cursor_getNumTemplateArguments, clang_Cursor_getTranslationUnit, clang_Cursor_isNull
+    clang_Type_getNamedType, clang_createIndex, clang_createTranslationUnit, clang_disposeIndex, clang_disposeString
+    clang_disposeTokens, clang_disposeTranslationUnit, clang_getArgType, clang_getCString, clang_getCanonicalCursor
+    clang_getCanonicalType, clang_getCursorDefinition, clang_getCursorExtent, clang_getCursorKind
     clang_getCursorKindSpelling, clang_getCursorLocation, clang_getCursorPrettyPrinted
     clang_getCursorPrintingPolicy, clang_getCursorResultType, clang_getCursorSpelling, clang_getCursorType
-    clang_getEnumDeclIntegerType, clang_getFileName, clang_getNumArgTypes, clang_getPointeeType, clang_getResultType
-    clang_getSpellingLocation, clang_getTemplateCursorKind, clang_getTokenKind, clang_getTokenSpelling
-    clang_getTranslationUnitCursor, clang_getTypeDeclaration, clang_getTypeKindSpelling, clang_getTypeSpelling
-    clang_getTypedefDeclUnderlyingType, clang_isCursorDefinition, clang_parseTranslationUnit2, clang_tokenize
-    clang_visitChildren
+    clang_getCursorUSR, clang_getEnumDeclIntegerType, clang_getFileName, clang_getNumArgTypes, clang_getPointeeType
+    clang_getResultType, clang_getSpecializedCursorTemplate, clang_getSpellingLocation, clang_getTemplateCursorKind
+    clang_getTokenKind, clang_getTokenSpelling, clang_getTranslationUnitCursor, clang_getTypeDeclaration
+    clang_getTypeKindSpelling, clang_getTypeSpelling, clang_getTypedefDeclUnderlyingType, clang_isCursorDefinition
+    clang_parseTranslationUnit2, clang_saveTranslationUnit, clang_tokenize, clang_visitChildren
 }
 import utility { allocate }
 import extern c "stdlib.h" {
@@ -403,16 +404,22 @@ fn extract_cursors_of_kinds(
     cursor: CXCursor
     kinds: {CXCursorKind}
 ) throws -> [CXCursor] {
-    mut context = CursorSearchContext(kinds, result: [])
+    let default_recurse: {CXCursorKind} = {}
+    mut context = CursorSearchContext(
+        kinds
+        result: []
+    )
     clang_visitChildren(
         parent: cursor
         visitor: fn(c: CXCursor, parent: CXCursor, data: CXClientData) -> CXChildVisitResult {
             mut ptr = bitcast<raw CursorSearchContext>(data)
             mut context = &mut unsafe *ptr
 
-            if context.kinds.is_empty() or context.kinds.contains(clang_getCursorKind(c)) {
+            let kind = clang_getCursorKind(c)
+            if context.kinds.is_empty() or context.kinds.contains(kind) {
                 try context.result.push(c)
             }
+
             return CXChildVisitResult::CXChildVisit_Continue
         }
         client_data: CXClientData(bitcast<raw void>(&raw context))
@@ -826,6 +833,47 @@ fn process_enum(
     )
 }
 
+fn inherits_from_refcounted_base(anon cursor: CXCursor) throws -> bool {
+    mut definition = clang_getCursorDefinition(cursor)
+    let maybe_template = clang_getSpecializedCursorTemplate(cursor: definition)
+    if not clang_Cursor_isNull(cursor: maybe_template) {
+        definition = maybe_template
+    }
+
+    mut kind = clang_getCursorKind(definition)
+    if kind is CXCursor_ClassTemplate {
+        let def = extract_cursors_of_kinds(
+            cursor: definition
+            kinds: {CXCursorKind::CXCursor_StructDecl, CXCursorKind::CXCursor_ClassDecl}
+        ).first()
+
+        if def.has_value() {
+            definition = clang_getCanonicalCursor(clang_getCursorDefinition(cursor: def!))
+            kind = clang_getCursorKind(definition)
+        }
+    }
+
+    let usr = string_from(clang_getCursorUSR(cursor: definition))
+    if usr == "c:@N@AK@S@RefCountedBase" {
+        return true
+    }
+    // FIXME: Figure out why ::Core::Object doesn't have any CXXBaseSpecifier children.
+    if usr == "c:@N@Core@S@Object" {
+        return true
+    }
+
+    for base in extract_cursors_of_kinds(
+        cursor: definition
+        kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier}
+    ) {
+        if inherits_from_refcounted_base(base) {
+            return true
+        }
+    }
+
+    return false
+}
+
 fn process_struct(
     program: &mut CheckedProgram
     parent_scope_id: ScopeId
@@ -845,6 +893,11 @@ fn process_struct(
     if name.is_empty() {
         name = format("<anonymous@{}>", &raw cursor)
     }
+
+    let bases = extract_cursors_of_kinds(
+        cursor
+        kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier}
+    )
 
     mut module = program.get_module(module_id)
     let existing_struct_id = program.get_scope(parent_scope_id).structs.get(name)
@@ -929,6 +982,23 @@ fn process_struct(
         return
     }
 
+    // If the struct somehow inherits from AK::RefCountedBase, we'll make it boxed.
+    mut is_class = false
+    for base in bases {
+        if inherits_from_refcounted_base(base) {
+            is_class = true
+            break
+        }
+    }
+
+    mut super_struct_ids: [StructId] = []
+    for base in bases {
+        match program.get_type(type_from(&mut program, scope_id: parent_scope_id, module_id, t: clang_getCursorType(base))) {
+            GenericInstance(id) | Struct(id) => { super_struct_ids.push(id) }
+            else => {}
+        }
+    }
+
     process_namespace_contents(
         program
         scope_id: struct_scope
@@ -1002,9 +1072,13 @@ fn process_struct(
         scope_id: existing_struct.scope_id
         definition_linkage: DefinitionLinkage::External
         trait_implementations: existing_struct.trait_implementations
-        record_type: existing_struct.record_type
+        record_type: match is_class {
+            true => RecordType::Class(fields: [], super_type: None)
+            false => RecordType::Struct(fields: [], super_type: None)
+        }
         type_id: struct_type_id
-        super_struct_id: None
+        // FIXME: Multiple inheritance?
+        super_struct_id: super_struct_ids.first()
     )
     module.structures[struct_id.id] = the_struct
 
@@ -1017,6 +1091,11 @@ fn process_struct(
         allowed_contents: AllowedContents::OnlyFunctions
         this_type: struct_type_id
     )
+
+    // Don't synthesize a constructor for classes, we can't create an instance that way.
+    if is_class {
+        return
+    }
 
     // Look for a constructor, generate one with the fields if none exist
     let ctors = program.find_functions_with_name_in_scope(
@@ -1111,6 +1190,7 @@ fn process_cpp_import(
     import_path: Path
     scope_id: ScopeId
     is_c: bool
+    defines: [String:String]
 ) throws -> ScopeId {
     let module_id = scope_id.module_id
     let import_scope_id = program.create_scope(
@@ -1143,47 +1223,73 @@ fn process_cpp_import(
     )
 
     let index = clang_createIndex(excludeDeclarationsFromPCH: false, displayDiagnostics: true)
-    mut args = allocate<raw c_char>(count: 2 + program.compiler.include_paths.size())
 
-    let r = bitcast<raw c_char>(args)
-    defer free(r)
-
-    mut args_storage = [""; 2 + program.compiler.include_paths.size()]
-    if is_c {
-        args_storage[0] = "-xc"
-        args_storage[1] = "-std=c11"
-    } else {
-        args_storage[0] = "-xc++-header"
-        args_storage[1] = "-std=c++20"
-    }
-    for i in 0..program.compiler.include_paths.size() {
-        args_storage[i + 2] = format("-I{}", program.compiler.include_paths[i])
-    }
-    for i in 0..args_storage.size() {
-        unsafe { cpp { "args[i] = const_cast<char*>(args_storage[i].characters());" } }
-    }
-
+    // Check if a PCH exists for this file
     mut tu = CXTranslationUnit()
-    let err = clang_parseTranslationUnit2(
-        index
-        source_filename: filename.c_string()
-        command_line_args: args
-        num_command_line_args: args_storage.size() as! c_int
-        unsaved_files: null<raw CXUnsavedFile>()
-        num_unsaved_files: 0
-        options: CXTranslationUnit_Flags::CXTranslationUnit_SkipFunctionBodies as! c_int
-        out_tu: &raw tu
-    )
 
-    if not (err is CXError_Success) {
-        eprintln("Error: {}", match err {
-            CXError_Failure => "Failure"
-            CXError_Crashed => "Crashed"
-            CXError_InvalidArguments => "InvalidArguments"
-            CXError_ASTReadError => "ASTReadError"
-            else => "Unknown"
-        })
-        throw Error::from_string_literal(CppImportErrors::path_not_found())
+    let path_separator_string = format("{:c}", get_path_separator())
+    let pch_file_path = program.compiler.binary_dir.join(
+        filename.replace(replace: path_separator_string, with: "_")
+    ).replace_extension("pch")
+
+    if pch_file_path.exists() {
+        // Parse the TU from the PCH
+        tu = clang_createTranslationUnit(index, file_name: pch_file_path.to_string().c_string())
+    }
+
+    if tu == CXTranslationUnit() {
+        mut args_storage = [""; 2 + program.compiler.include_paths.size() + defines.size()]
+        if is_c {
+            args_storage[0] = "-xc"
+            args_storage[1] = "-std=c11"
+        } else {
+            args_storage[0] = "-xc++-header"
+            args_storage[1] = "-std=c++20"
+        }
+        for i in 0..program.compiler.include_paths.size() {
+            args_storage[i + 2] = format("-I{}", program.compiler.include_paths[i])
+        }
+
+        mut defines_it = defines.iterator()
+        for i in 0..defines.size() {
+            let (key, value) = defines_it.next()!
+            args_storage[i + 2 + program.compiler.include_paths.size()] = format("-D{}={}", key, value)
+        }
+
+        mut args = allocate<raw c_char>(count: args_storage.size())
+        let r = bitcast<raw c_char>(args)
+        defer free(r)
+
+        for i in 0..args_storage.size() {
+            unsafe { cpp { "args[i] = const_cast<char*>(args_storage[i].characters());" } }
+        }
+
+        let err = clang_parseTranslationUnit2(
+            index
+            source_filename: filename.c_string()
+            command_line_args: args
+            num_command_line_args: args_storage.size() as! c_int
+            unsaved_files: null<raw CXUnsavedFile>()
+            num_unsaved_files: 0
+            options: CXTranslationUnit_Flags::CXTranslationUnit_SkipFunctionBodies as! c_int
+            out_tu: &raw tu
+        )
+        if not (err is CXError_Success) {
+            eprintln("Error: {}", match err {
+                CXError_Failure => "Failure"
+                CXError_Crashed => "Crashed"
+                CXError_InvalidArguments => "InvalidArguments"
+                CXError_ASTReadError => "ASTReadError"
+                else => "Unknown"
+            })
+            throw Error::from_string_literal(CppImportErrors::path_not_found())
+        }
+
+        clang_saveTranslationUnit(
+            tu
+            file_name: pch_file_path.to_string().c_string()
+            options: 0
+        )
     }
 
     let cursor = clang_getTranslationUnitCursor(tu)

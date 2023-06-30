@@ -211,6 +211,7 @@ struct REPL {
             lambda_count: 0
             generic_inferences: GenericInferences(values: [:])
             root_module_name
+            cpp_import_cache: [:]
         )
 
         compiler.current_file = file_id
@@ -269,7 +270,7 @@ struct REPL {
           bytes_.push(line.byte_at(pos))
           ++pos
       }
-      
+
       return bytes_
     }
 
