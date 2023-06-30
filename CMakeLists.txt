@@ -47,6 +47,7 @@ function(apply_output_rules target)
 endfunction()
 
 include(cmake/jakt-executable.cmake)
+include(cmake/generate-version-from-git.cmake)
 
 add_subdirectory(runtime)
 
@@ -99,6 +100,7 @@ set(SELFHOST_SOURCES
   selfhost/types.jakt
   selfhost/utility.jakt
   selfhost/platform.jakt
+  selfhost/version.jakt
 )
 
 # FIXME: STDLIB target needed

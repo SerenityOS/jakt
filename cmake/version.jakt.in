@@ -1,0 +1,5 @@
+struct Version {
+    public fn val(value: String = "@GIT_VER@") -> String {
+        return value
+    }
+}

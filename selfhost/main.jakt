@@ -27,6 +27,7 @@ import repl { REPL, serialize_ast_node }
 import typechecker { Typechecker }
 import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImpl }
 import utility { Span, escape_for_quotes, join, write_to_file}
+import version { Version }
 
 import platform_fs() {
     make_directory
@@ -158,7 +159,7 @@ fn main(args: [String]) -> c_int {
     }
 
     if args_parser.flag(["-v", "--version"]) {
-        println("unreleased")
+        println("{}", Version::val())
         return 0
     }
 
