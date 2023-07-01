@@ -8,6 +8,6 @@ pkgs.mkShell
     cmake
     ninja
     python3
-    clang_14
+    clang_15
   ];
 }
