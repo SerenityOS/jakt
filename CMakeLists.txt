@@ -7,6 +7,12 @@ project(Jakt
         HOMEPAGE_URL https://github.com/SerenityOS/jakt
         DESCRIPTION "Jakt programming language compiler")
 
+# FIXME: Serenity's CMake toolchain files don't seem to include these,
+#        and not having them makes CMake find host packages for a serenity build...
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
     set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE FILEPATH "Path to a compiler launcher program, e.g. ccache")
@@ -73,44 +79,61 @@ if (is_multi_config)
 endif()
 
 function(apply_output_rules target)
-  set_property(TARGET ${target} PROPERTY "ARCHIVE_OUTPUT_DIRECTORY" "${CMAKE_BINARY_DIR}/${in_build_prefix}lib")
-  set_property(TARGET ${target} PROPERTY "LIBRARY_OUTPUT_DIRECTORY" "${CMAKE_BINARY_DIR}/${in_build_prefix}lib")
-  set_property(TARGET ${target} PROPERTY "RUNTIME_OUTPUT_DIRECTORY" "${CMAKE_BINARY_DIR}/${in_build_prefix}bin")
+  cmake_parse_arguments(PARSE_ARGV 1 OUTPUT_RULES "" "TARGET_DIR" "")
+  set(output_prefix "${PROJECT_BINARY_DIR}/${in_build_prefix}")
+  set_property(TARGET ${target} PROPERTY "ARCHIVE_OUTPUT_DIRECTORY" "${output_prefix}lib/${OUTPUT_RULES_TARGET_DIR}")
+  set_property(TARGET ${target} PROPERTY "LIBRARY_OUTPUT_DIRECTORY" "${output_prefix}lib/${OUTPUT_RULES_TARGET_DIR}")
+  set_property(TARGET ${target} PROPERTY "RUNTIME_OUTPUT_DIRECTORY" "${output_prefix}bin/${OUTPUT_RULES_TARGET_DIR}")
 endfunction()
 
 include(cmake/jakt-executable.cmake)
 
 add_subdirectory(runtime)
 
-file(GLOB JAKT_STAGE0_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/*.cpp")
-file(GLOB JAKT_STAGE0_RUNTIME_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/runtime/*.cpp")
-file(GLOB JAKT_STAGE0_RUNTIME_LIB_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/runtime/*/*.cpp")
-list(APPEND JAKT_STAGE0_ALL_SOURCES
-    ${JAKT_STAGE0_SOURCES}
-    ${JAKT_STAGE0_RUNTIME_SOURCES}
-    ${JAKT_STAGE0_RUNTIME_LIB_SOURCES}
-)
-
-# Note: This currently does not build under windows, but it is not needed by the runtime.
-list(FILTER JAKT_STAGE0_ALL_SOURCES EXCLUDE REGEX ".*AK/Time\.cpp$")
-list(FILTER JAKT_STAGE0_ALL_SOURCES EXCLUDE REGEX ".*AK/DOSPackedTime\.cpp$")
-
-add_executable(jakt_stage0 "${JAKT_STAGE0_ALL_SOURCES}")
-add_executable(Jakt::jakt_stage0 ALIAS jakt_stage0)
-add_jakt_compiler_flags(jakt_stage0)
-target_link_libraries(jakt_stage0 PRIVATE Threads::Threads)
-target_include_directories(jakt_stage0
-  PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime>
-  INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime>
-  PUBLIC
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
-)
-apply_output_rules(jakt_stage0)
-if (MSVC)
-    target_link_options(jakt_stage0 PRIVATE LINKER:/STACK:0x800000)
+if (NOT ${JAKT_TARGET_TRIPLE} STREQUAL ${JAKT_DEFAULT_TARGET_TRIPLE})
+  jakt_make_runtime_available(TARGET ${JAKT_TARGET_TRIPLE})
 endif()
+
+if (CMAKE_CROSSCOMPILING)
+  find_program(HOST_JAKT jakt REQUIRED HINTS jakt-install/bin)
+  add_executable(Jakt::jakt IMPORTED)
+  set_target_properties(Jakt::jakt PROPERTIES IMPORTED_LOCATION "${HOST_JAKT}")
+  set(BOOSTRAP_COMPILER ${HOST_JAKT})
+  message(STATUS "Using host jakt at ${HOST_JAKT} to bootstrap")
+else()
+  file(GLOB JAKT_STAGE0_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/*.cpp")
+  file(GLOB JAKT_STAGE0_RUNTIME_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/runtime/*.cpp")
+  file(GLOB JAKT_STAGE0_RUNTIME_LIB_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/runtime/*/*.cpp")
+  list(APPEND JAKT_STAGE0_ALL_SOURCES
+      ${JAKT_STAGE0_SOURCES}
+      ${JAKT_STAGE0_RUNTIME_SOURCES}
+      ${JAKT_STAGE0_RUNTIME_LIB_SOURCES}
+  )
+
+  # Note: This currently does not build under windows, but it is not needed by the runtime.
+  list(FILTER JAKT_STAGE0_ALL_SOURCES EXCLUDE REGEX ".*AK/Time\.cpp$")
+  list(FILTER JAKT_STAGE0_ALL_SOURCES EXCLUDE REGEX ".*AK/DOSPackedTime\.cpp$")
+
+  add_executable(jakt_stage0 "${JAKT_STAGE0_ALL_SOURCES}")
+  add_executable(Jakt::jakt_stage0 ALIAS jakt_stage0)
+  add_jakt_compiler_flags(jakt_stage0)
+  target_link_libraries(jakt_stage0 PRIVATE Threads::Threads)
+  target_include_directories(jakt_stage0
+    PRIVATE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime>
+    INTERFACE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime>
+    PUBLIC
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
+  )
+  apply_output_rules(jakt_stage0)
+  if (MSVC)
+      target_link_options(jakt_stage0 PRIVATE LINKER:/STACK:0x800000)
+  endif()
+  set(BOOSTRAP_COMPILER jakt_stage0)
+endif()
+
+message(STATUS "Building for target ${JAKT_TARGET_TRIPLE}")
 
 set(SELFHOST_SOURCES
   selfhost/build.jakt
@@ -141,9 +164,14 @@ set(SELFHOST_STDLIB_SOURCES
   jakt__arguments.cpp
   jakt__file_iterator.cpp
   jakt__platform.cpp
-  jakt__platform__utility.cpp
   jakt__path.cpp
 )
+
+if (CPP_AUTO_IMPORT_PROCESSOR STREQUAL "clang")
+  list(APPEND SELFHOST_STDLIB_SOURCES
+    jakt__platform__utility.cpp
+  )
+endif()
 
 if(CMAKE_HOST_WIN32)
   list(APPEND SELFHOST_STDLIB_SOURCES
@@ -179,7 +207,7 @@ set(SELFHOST_CONFIGS
 )
 
 add_jakt_executable(jakt_stage1
-  COMPILER jakt_stage0
+  COMPILER "${BOOSTRAP_COMPILER}"
   MAIN_SOURCE selfhost/main.jakt
   MODULE_SOURCES ${SELFHOST_SOURCES}
   STDLIB_SOURCES ${SELFHOST_STDLIB_SOURCES}
@@ -254,12 +282,13 @@ add_executable(Jakt::jakt ALIAS jakt_stage${FINAL_STAGE})
 
 if (NOT CMAKE_SKIP_INSTALL_RULES)
   include(cmake/install-rules.cmake)
+  jakt_install_runtime(${JAKT_TARGET_TRIPLE})
 endif()
 
 # FIXME: Remove if we decide to use CTest
 option(JAKT_BUILD_TESTING "Whether to build tests or not, default on" ON)
 
-if (JAKT_BUILD_TESTING)
+if (JAKT_BUILD_TESTING AND NOT CMAKE_CROSSCOMPILING)
   add_jakt_executable(jakttest
     MAIN_SOURCE
       jakttest/jakttest.jakt

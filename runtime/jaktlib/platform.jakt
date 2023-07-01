@@ -19,6 +19,8 @@ struct Target {
             abi: parts[3]
         )
     }
+
+    fn name(this) throws -> String => format("{}-{}-{}-{}", .arch, .platform, .os, .abi)
 }
 
 fn platform_import_names() throws -> [String] {
@@ -31,7 +33,7 @@ fn platform_import_names() throws -> [String] {
             else => ["windows"]
         }
         "darwin" => ["darwin", "posix"]
-        "linux" | "openbsd" | "serenity" => [target.os, "posix"]
+        "linux" | "openbsd" | "serenityos" => [target.os, "posix"]
         else => [target.os, "unknown"]
     }
 }

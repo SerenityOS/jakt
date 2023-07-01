@@ -22,7 +22,11 @@ install(
     COMPONENT Jakt_Development
 )
 
-set(stages 0 1 2)
+if (CMAKE_CROSSCOMPILING)
+    set(stages 1)
+else()
+    set(stages 0 1 2)
+endif()
 foreach (stage IN LISTS stages)
   if (FINAL_STAGE LESS "${stage}")
     break()
@@ -44,45 +48,52 @@ foreach (stage IN LISTS stages)
   )
 endforeach()
 
-install(
-    TARGETS jakt_runtime
-    EXPORT JaktTargets
-    RUNTIME #
-        DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        COMPONENT Jakt_Runtime
-    LIBRARY #
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        COMPONENT Jakt_Runtime
-        NAMELINK_COMPONENT Jakt_Development
-    ARCHIVE #
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        COMPONENT Jakt_Development
-)
+# FIXME: foreach(target IN LISTS JAKT_RUNTIME_TARGETS) for this
+function(jakt_install_runtime TARGET)
+  if(NOT DEFINED TARGET)
+    message(FATAL_ERROR "jakt_install_runtime called without a required target argument")
+  endif()
 
-install(
-    TARGETS jakt_main
-    EXPORT JaktTargets
-    RUNTIME #
-        DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        COMPONENT Jakt_Runtime
-    LIBRARY #
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        COMPONENT Jakt_Runtime
-        NAMELINK_COMPONENT Jakt_Development
-    ARCHIVE #
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        COMPONENT Jakt_Development
-)
+  install(
+      TARGETS "jakt_runtime_${TARGET}"
+      EXPORT JaktTargets
+      RUNTIME #
+          DESTINATION "${CMAKE_INSTALL_BINDIR}/${TARGET}"
+          COMPONENT Jakt_Runtime
+      LIBRARY #
+          DESTINATION "${CMAKE_INSTALL_LIBDIR}/${TARGET}"
+          COMPONENT Jakt_Runtime
+          NAMELINK_COMPONENT Jakt_Development
+      ARCHIVE #
+          DESTINATION "${CMAKE_INSTALL_LIBDIR}/${TARGET}"
+          COMPONENT Jakt_Development
+  )
+
+  install(
+      TARGETS "jakt_main_${TARGET}"
+      EXPORT JaktTargets
+      RUNTIME #
+          DESTINATION "${CMAKE_INSTALL_BINDIR}/${TARGET}"
+          COMPONENT Jakt_Runtime
+      LIBRARY #
+          DESTINATION "${CMAKE_INSTALL_LIBDIR}/${TARGET}"
+          COMPONENT Jakt_Runtime
+          NAMELINK_COMPONENT Jakt_Development
+      ARCHIVE #
+          DESTINATION "${CMAKE_INSTALL_LIBDIR}/${TARGET}"
+          COMPONENT Jakt_Development
+  )
+endfunction(jakt_install_runtime)
 
 # Install runtime files. In the future we should probably have a bazillion rules
 #   for compiling this into a static archive for different configs
 install(DIRECTORY "runtime"
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        COMPONENT Jakt_Development
-        FILES_MATCHING PATTERN "*.h"
-                       PATTERN "*.cpp"
-                       PATTERN "*.jakt"
-                       PATTERN "utility"
+      DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+      COMPONENT Jakt_Development
+      FILES_MATCHING PATTERN "*.h"
+                     PATTERN "*.cpp"
+                     PATTERN "*.jakt"
+                     PATTERN "utility"
 )
 
 install(
