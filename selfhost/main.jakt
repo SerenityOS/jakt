@@ -37,6 +37,8 @@ import platform_compiler() {
     run_compiler
 }
 
+import jakt::platform { Target }
+
 fn usage() throws => "usage: jakt [-h] [OPTIONS] <filename>"
 fn help() throws -> String {
     mut output = "Flags:\n"

@@ -4,8 +4,9 @@
 #
 
 # FIXME: Should this live in a toolchain file?
-set(JAKT_TARGET_IN "${CMAKE_SYSTEM_PROCESSOR}-unknown-${CMAKE_SYSTEM_NAME}-unknown")
-STRING(TOLOWER ${JAKT_TARGET_IN} JAKT_TARGET)
+set(JAKT_TARGET_TRIPLE_IN "${CMAKE_SYSTEM_PROCESSOR}-unknown-${CMAKE_SYSTEM_NAME}-unknown")
+string(TOLOWER ${JAKT_TARGET_TRIPLE_IN} JAKT_DEFAULT_TARGET_TRIPLE)
+set(JAKT_TARGET_TRIPLE "${JAKT_DEFAULT_TARGET_TRIPLE}" CACHE STRING "Target triple for jakt compiler")
 
 function(add_jakt_compiler_flags target)
   target_compile_options("${target}" PRIVATE
@@ -30,6 +31,8 @@ function(add_jakt_compiler_flags target)
     -Wno-unused-command-line-argument
     -Wno-unused-lambda-capture
     -Wno-reorder-ctor
+    -Wno-dangling-reference
+    -Wno-type-limits
     # Silence warning about `no_unique_address`;
     # It does not apply on windows, and clang-cl just warns about it.
     -Wno-unknown-attributes
@@ -55,10 +58,14 @@ function(add_jakt_compiler_flags target)
 endfunction()
 
 function(add_jakt_executable executable)
-  cmake_parse_arguments(PARSE_ARGV 1 JAKT_EXECUTABLE "" "MAIN_SOURCE;RUNTIME_DIRECTORY;COMPILER" "MODULE_SOURCES;STDLIB_SOURCES;INCLUDES;CONFIGS")
+  cmake_parse_arguments(PARSE_ARGV 1 JAKT_EXECUTABLE "" "MAIN_SOURCE;RUNTIME_DIRECTORY;COMPILER;TARGET" "MODULE_SOURCES;STDLIB_SOURCES;INCLUDES;CONFIGS")
   set(main_source "${CMAKE_CURRENT_LIST_DIR}/${JAKT_EXECUTABLE_MAIN_SOURCE}" )
   get_filename_component(main_base "${main_source}" NAME_WE)
   get_filename_component(main_directory "${main_source}" DIRECTORY)
+
+  if (NOT JAKT_EXECUTABLE_TARGET)
+    set(JAKT_EXECUTABLE_TARGET "${JAKT_TARGET_TRIPLE}")
+  endif()
 
   set(cpp_files
     "${main_base}.cpp"
@@ -79,6 +86,12 @@ function(add_jakt_executable executable)
 
   if (NOT JAKT_EXECUTABLE_COMPILER)
     set(JAKT_EXECUTABLE_COMPILER Jakt::jakt)
+  endif()
+
+  if (TARGET JAKT_EXECUTABLE_COMPILER)
+    set(JAKT_EXECUTABLE_COMPILER_PATH "$<TARGET_FILE:${JAKT_EXECUTABLE_COMPILER}>")
+  else()
+    set(JAKT_EXECUTABLE_COMPILER_PATH "${JAKT_EXECUTABLE_COMPILER}")
   endif()
 
   if (NOT JAKT_EXECUTABLE_RUNTIME_DIRECTORY)
@@ -111,10 +124,10 @@ function(add_jakt_executable executable)
 
   add_custom_command(
     OUTPUT ${cpp_files}
-    COMMAND "$<TARGET_FILE:${JAKT_EXECUTABLE_COMPILER}>"
+    COMMAND "${JAKT_EXECUTABLE_COMPILER_PATH}"
       -S
       $<$<CONFIG:Release>:-O>
-      -T "${JAKT_TARGET}"
+      -T "${JAKT_EXECUTABLE_TARGET}"
       --binary-dir "${binary_tmp_dir}"
       --runtime-path "${runtime_path}"
       -I "$<JOIN:${JAKT_EXECUTABLE_COMPILER_INCLUDES},;-I>"
@@ -141,7 +154,7 @@ function(add_jakt_executable executable)
     target_include_directories("${executable}" PRIVATE "$<BUILD_INTERFACE:${path}>")
   endforeach()
 
-  target_link_libraries("${executable}" PRIVATE Jakt::jakt_main)
-  target_link_libraries("${executable}" PRIVATE Jakt::jakt_runtime)
+  target_link_libraries("${executable}" PRIVATE Jakt::jakt_main_${JAKT_EXECUTABLE_TARGET})
+  target_link_libraries("${executable}" PRIVATE Jakt::jakt_runtime_${JAKT_EXECUTABLE_TARGET})
   add_dependencies("${executable}" "generate_${executable}")
 endfunction()

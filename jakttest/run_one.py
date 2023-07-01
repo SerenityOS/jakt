@@ -10,8 +10,8 @@ import sys
 from pathlib import Path
 
 # .lib on windows, .a otherwise
-MAIN_LIBRARY_NAME = "libjakt_main.a" if os.name != "nt" else "jakt_main.lib"
-RUNTIME_LIBRARY_NAME = "libjakt_runtime.a" if os.name != "nt" else "jakt_runtime.lib"
+MAIN_LIBRARY_NAME = "libjakt_main_{}.a" if os.name != "nt" else "jakt_main_{}.lib"
+RUNTIME_LIBRARY_NAME = "libjakt_runtime_{}.a" if os.name != "nt" else "jakt_runtime_{}.lib"
 WINDOWS_SPECIFIC_COMPILER_ARGUMENTS = (
     []
     if os.name != "nt"
@@ -102,8 +102,8 @@ def main():
                     temp_dir / "output",
                     *WINDOWS_SPECIFIC_COMPILER_ARGUMENTS,
                     *list(temp_dir.glob("*.cpp")),
-                    jakt_lib_dir / MAIN_LIBRARY_NAME,
-                    jakt_lib_dir / RUNTIME_LIBRARY_NAME,
+                    jakt_lib_dir / target_triple / MAIN_LIBRARY_NAME.format(target_triple),
+                    jakt_lib_dir / target_triple / RUNTIME_LIBRARY_NAME.format(target_triple),
                 ],
                 check=True,
                 stderr=stderr,
