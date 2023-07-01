@@ -7,6 +7,7 @@ pkgs.mkShell
     pkgconfig
     cmake
     ninja
+    python3
     clang_14
   ];
 }
