@@ -634,9 +634,9 @@ struct TestScheduler {
             run_once_script
             "jakttest/run_one.py"
             "--jakt-binary"
-            String::format("{}/bin/jakt", build_dir)
+            format("{}/bin/jakt", build_dir)
             "--jakt-lib-dir"
-            String::format("{}/lib", build_dir)
+            format("{}/lib", build_dir)
             "--target-triple"
             ___jakt_get_target_triple_string()
             "--cpp-compiler"

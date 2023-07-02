@@ -1,0 +1,9 @@
+/// Expect:
+/// - error: "Call to unknown function: ‘format’"
+
+// brought up by #1461.
+
+fn test() {
+    let a = Array::format("hello {}", "world")
+    println("format result: '{}'", a)
+}
