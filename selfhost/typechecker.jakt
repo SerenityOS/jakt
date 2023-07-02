@@ -10115,6 +10115,11 @@ struct Typechecker {
         let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
         defer .generic_inferences.restore(old_generic_inferences)
 
+        let is_print_like = call.namespace_.is_empty() and match call.name {
+            "print" | "println" | "eprintln" | "eprint" | "format" => true
+            else => false
+        }
+
         for name in call.namespace_ {
             resolved_namespaces.push(ResolvedNamespace(name, external_name: None, generic_parameters: None))
         }
@@ -10157,11 +10162,8 @@ struct Typechecker {
                 }
             }
             else => {
-                match call.name {
-                    "print" | "println" | "eprintln" | "eprint" | "format" => {}
-                    else => {
-                        resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: caller_scope_id, must_be_enum_constructor)
-                    }
+                if not is_print_like {
+                    resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: caller_scope_id, must_be_enum_constructor)
                 }
                 yield caller_scope_id
             }
@@ -10178,56 +10180,54 @@ struct Typechecker {
             }
         }
 
-        match call.name {
-            "print" | "println" | "eprintln" | "eprint" | "format" => {
-                mut first = true
-                for arg in call.args {
-                    let type_hint = match first {
-                        true => {
-                            first = false
-                            yield Some(.prelude_struct_type_named("StringView"))
-                        }
-                        false => None
+        if is_print_like {
+            mut first = true
+            for arg in call.args {
+                let type_hint = match first {
+                    true => {
+                        first = false
+                        yield Some(.prelude_struct_type_named("StringView"))
                     }
-
-                    let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint)
-
-                    args.push((call.name, checked_arg))
+                    false => None
                 }
 
-                if call.name == "format" {
-                    return_type = .prelude_struct_type_named("String")
-                    callee_throws = true
+                let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint)
+
+                args.push((call.name, checked_arg))
+            }
+
+            if call.name == "format" {
+                return_type = .prelude_struct_type_named("String")
+                callee_throws = true
+            }
+        } else {
+            mut max_found_specificity = -1i64
+            mut errors_while_trying_to_find_matching_function: [JaktError] = []
+            mut generic_inferences_for_best_match: [TypeId:TypeId] = [:]
+            // find the best match i.e. the most specific implementation that matches the signature
+            for candidate in resolved_function_id_candidates.iterator() {
+                match .match_function_and_resolve_args(call, caller_scope_id, candidate, safety_mode, span, this_expr) {
+                    MatchSuccess(args: resolved_args, maybe_this_type_id: resolved_this_type_id, used_generic_inferences, specificity) => {
+                        if specificity > max_found_specificity {
+                            resolved_function_id = candidate
+                            maybe_this_type_id = resolved_this_type_id
+                            max_found_specificity = specificity
+                            generic_inferences_for_best_match = used_generic_inferences
+
+                            args = []
+                            for resolved_arg in resolved_args.iterator() {
+                                args.push((call.name, resolved_arg))
+                            }
+                        }
+                    }
+                    MatchError(errors) => {
+                        for error in errors.iterator() {
+                            errors_while_trying_to_find_matching_function.push(error)
+                        }
+                        continue
+                    }
                 }
             }
-            else => {
-                mut max_found_specificity = -1i64
-                mut errors_while_trying_to_find_matching_function: [JaktError] = []
-                mut generic_inferences_for_best_match: [TypeId:TypeId] = [:]
-                // find the best match i.e. the most specific implementation that matches the signature
-                for candidate in resolved_function_id_candidates.iterator() {
-                    match .match_function_and_resolve_args(call, caller_scope_id, candidate, safety_mode, span, this_expr) {
-                        MatchSuccess(args: resolved_args, maybe_this_type_id: resolved_this_type_id, used_generic_inferences, specificity) => {
-                            if specificity > max_found_specificity {
-                                resolved_function_id = candidate
-                                maybe_this_type_id = resolved_this_type_id
-                                max_found_specificity = specificity
-                                generic_inferences_for_best_match = used_generic_inferences
-
-                                args = []
-                                for resolved_arg in resolved_args.iterator() {
-                                    args.push((call.name, resolved_arg))
-                                }
-                            }
-                        }
-                        MatchError(errors) => {
-                            for error in errors.iterator() {
-                                errors_while_trying_to_find_matching_function.push(error)
-                            }
-                            continue
-                        }
-                    }
-                }
 
                 if not resolved_function_id.has_value() {
                     if not resolved_function_id_candidates.is_empty() {
@@ -10247,101 +10247,100 @@ struct Typechecker {
                         }
                     }
 
-                    mut checked_type_args: [TypeId] = []
-                    for type_arg in call.type_args {
-                        checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, name: None))
-                    }
-
-                    for arg in call.args {
-                        let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
-                        args.push((call.name, checked_arg))
-                    }
-
-                    return CheckedExpression::Call(
-                        call: CheckedCall(
-                            namespace_: resolved_namespaces,
-                            name: call.name,
-                            args,
-                            type_args: checked_type_args,
-                            function_id: None,
-                            return_type: builtin(BuiltinType::Unknown),
-                            callee_throws
-                            external_name: None
-                        ),
-                        span,
-                        type_id: builtin(BuiltinType::Unknown)
-                    )
+                mut checked_type_args: [TypeId] = []
+                for type_arg in call.type_args {
+                    checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, name: None))
                 }
 
-                .generic_inferences.restore(generic_inferences_for_best_match)
-                .generic_inferences.set_from(generic_inferences_from_parent)
-                let callee = .get_function(resolved_function_id!)
-                callee_throws = callee.can_throw
-                return_type = callee.return_type_id
-
-                if callee.is_unsafe and safety_mode is Safe {
-                    .error("Cannot call unsafe function in safe context", span)
+                for arg in call.args {
+                    let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
+                    args.push((call.name, checked_arg))
                 }
 
-                // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
-                // type variable. For the moment, we'll just checked to see if it's a type variable.
-                // FIXME: `unknown_type_id()` and `None` are really the same thing. Can we remove `unknown_type_id()`?
-                if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
-                    let old_ignore_errors = .ignore_errors
+                return CheckedExpression::Call(
+                    call: CheckedCall(
+                        namespace_: resolved_namespaces,
+                        name: call.name,
+                        args,
+                        type_args: checked_type_args,
+                        function_id: None,
+                        return_type: builtin(BuiltinType::Unknown),
+                        callee_throws
+                        external_name: None
+                    ),
+                    span,
+                    type_id: builtin(BuiltinType::Unknown)
+                )
+            }
+
+            .generic_inferences.restore(generic_inferences_for_best_match)
+            .generic_inferences.set_from(generic_inferences_from_parent)
+            let callee = .get_function(resolved_function_id!)
+            callee_throws = callee.can_throw
+            return_type = callee.return_type_id
+
+            if callee.is_unsafe and safety_mode is Safe {
+                .error("Cannot call unsafe function in safe context", span)
+            }
+
+            // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
+            // type variable. For the moment, we'll just checked to see if it's a type variable.
+            // FIXME: `unknown_type_id()` and `None` are really the same thing. Can we remove `unknown_type_id()`?
+            if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
+                let old_ignore_errors = .ignore_errors
+                .ignore_errors = true
+                .check_types_for_compat(
+                    lhs_type_id: return_type
+                    rhs_type_id: type_hint!
+                    generic_inferences: &mut .generic_inferences
+                    span
+                )
+                .ignore_errors = old_ignore_errors
+                .had_an_error = false
+            }
+
+            return_type = .substitute_typevars_in_type(type_id: return_type, generic_inferences: .generic_inferences)
+
+            if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
+                let old_ignore_errors = .ignore_errors
+                if callee.is_instantiated {
+                    // If this is a possible respecialization of a generic function that is the child of a specialized version of that function
+                    // allow an error here, if it is not a respecialization we will recheck
                     .ignore_errors = true
-                    .check_types_for_compat(
-                        lhs_type_id: return_type
-                        rhs_type_id: type_hint!
-                        generic_inferences: &mut .generic_inferences
-                        span
-                    )
-                    .ignore_errors = old_ignore_errors
-                    .had_an_error = false
                 }
+                .check_types_for_compat(
+                    lhs_type_id: type_hint!
+                    rhs_type_id: return_type
+                    generic_inferences: &mut .generic_inferences
+                    span
+                )
+                .ignore_errors = old_ignore_errors
+                .had_an_error = false
+            }
 
-                return_type = .substitute_typevars_in_type(type_id: return_type, generic_inferences: .generic_inferences)
-
-                if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
-                    let old_ignore_errors = .ignore_errors
-                    if callee.is_instantiated {
-                        // If this is a possible respecialization of a generic function that is the child of a specialized version of that function
-                        // allow an error here, if it is not a respecialization we will recheck
-                        .ignore_errors = true
+            for generic_typevar in callee.generics.params {
+                if generic_typevar.kind is Parameter {
+                    let substitution = .generic_inferences.get(generic_typevar.type_id())
+                    if substitution.has_value() {
+                        generic_arguments.push(substitution!)
+                    } else if not .in_comptime_function_call {
+                        .error("Not all generic parameters have known types", span)
+                    } else {
+                        generic_arguments.push(generic_typevar.type_id())
                     }
+                }
+            }
+
+            if not callee.is_instantiated or (not callee.linkage is External and not callee.generics.is_specialized_for_types(types: generic_arguments)) {
+                generic_checked_function_to_instantiate = Some(resolved_function_id!)
+            } else if callee.is_instantiated {
+                if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
                     .check_types_for_compat(
                         lhs_type_id: type_hint!
                         rhs_type_id: return_type
                         generic_inferences: &mut .generic_inferences
                         span
                     )
-                    .ignore_errors = old_ignore_errors
-                    .had_an_error = false
-                }
-
-                for generic_typevar in callee.generics.params {
-                    if generic_typevar.kind is Parameter {
-                        let substitution = .generic_inferences.get(generic_typevar.type_id())
-                        if substitution.has_value() {
-                            generic_arguments.push(substitution!)
-                        } else if not .in_comptime_function_call {
-                            .error("Not all generic parameters have known types", span)
-                        } else {
-                            generic_arguments.push(generic_typevar.type_id())
-                        }
-                    }
-                }
-
-                if not callee.is_instantiated or (not callee.linkage is External and not callee.generics.is_specialized_for_types(types: generic_arguments)) {
-                    generic_checked_function_to_instantiate = Some(resolved_function_id!)
-                } else if callee.is_instantiated {
-                    if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
-                        .check_types_for_compat(
-                            lhs_type_id: type_hint!
-                            rhs_type_id: return_type
-                            generic_inferences: &mut .generic_inferences
-                            span
-                        )
-                    }
                 }
             }
         }
