@@ -9481,15 +9481,7 @@ struct Typechecker {
                                     }
                                     is_value_match = true
 
-                                    let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
-                                        condition: expr
-                                        acc: None
-                                        then_block: None
-                                        else_statement: None
-                                        scope_id
-                                        span
-                                    )
-                                    let checked_expression = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: Some(subject_type_id), span)
+                                    let checked_expression = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: Some(subject_type_id), span)
 
                                     if is_boolean_match and checked_expression is Boolean(val) {
                                         if val {
