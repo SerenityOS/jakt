@@ -1,0 +1,15 @@
+/// Expect:
+/// - output: "foo called\n"
+
+// Asserts that `foo()` is called only once.
+// Brought up by #1450.
+
+fn foo() -> i32? {
+    println("foo called")
+    return 1i32
+}
+
+fn main() {
+    if foo() is Some(x) {
+    }
+}

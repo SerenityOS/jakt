@@ -208,6 +208,7 @@ struct REPL {
             dump_type_hints: compiler.dump_type_hints
             dump_try_hints: compiler.dump_try_hints
             lambda_count: 0
+            saved_expr_decl_count: 0
             generic_inferences: GenericInferences(values: [:])
             root_module_name
         )

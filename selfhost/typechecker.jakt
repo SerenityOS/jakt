@@ -131,6 +131,7 @@ struct Typechecker {
     dump_type_hints: bool
     dump_try_hints: bool
     lambda_count: u64
+    saved_expr_decl_count: u64
     generic_inferences: GenericInferences
     self_type_id: TypeId? = None
     root_module_name: String
@@ -188,6 +189,7 @@ struct Typechecker {
             dump_type_hints: compiler.dump_type_hints
             dump_try_hints: compiler.dump_try_hints
             lambda_count: 0
+            saved_expr_decl_count: 0
             generic_inferences: GenericInferences(values: [:])
             root_module_name
         )
@@ -6048,11 +6050,14 @@ struct Typechecker {
             .error("Else block of guard must either `return`, `break`, `continue`, or `throw`", span) // FIXME: better span?
         }
 
+        mut saved_expr_decls: [CheckedStatement] = []
+
         let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
             condition: expr
             acc: None
             then_block: remaining_code
             else_statement: ParsedStatement::Block(block: else_block, span)
+            &mut saved_expr_decls
             scope_id
             span
         )
@@ -6067,33 +6072,48 @@ struct Typechecker {
             checked_else = .typecheck_statement(new_else_statement!, scope_id, safety_mode)
         }
 
-        if checked_block.yielded_type.has_value() {
-            return CheckedStatement::Yield(
-                expr: CheckedExpression::Match(
-                    expr: checked_condition,
-                    match_cases: [
-                        CheckedMatchCase::Expression(
-                            defaults: []
-                            expression: CheckedExpression::Boolean(val: true, span)
-                            body: CheckedMatchBody::Expression(CheckedExpression::Block(block: checked_block, span, type_id: checked_block.yielded_type!))
-                            marker_span: span
-                        ),
-                        CheckedMatchCase::CatchAll(
-                            defaults: []
-                            has_arguments: false
-                            body: CheckedMatchBody::Block(checked_else_block)
-                            marker_span: span
-                        )
-                    ]
+        let guard_result = match checked_block.yielded_type.has_value() {
+            true => CheckedStatement::Yield(
+                    expr: CheckedExpression::Match(
+                        expr: checked_condition,
+                        match_cases: [
+                            CheckedMatchCase::Expression(
+                                defaults: []
+                                expression: CheckedExpression::Boolean(val: true, span)
+                                body: CheckedMatchBody::Expression(CheckedExpression::Block(block: checked_block, span, type_id: checked_block.yielded_type!))
+                                marker_span: span
+                            ),
+                            CheckedMatchCase::CatchAll(
+                                defaults: []
+                                has_arguments: false
+                                body: CheckedMatchBody::Block(checked_else_block)
+                                marker_span: span
+                            )
+                        ]
+                        span
+                        type_id: checked_block.yielded_type!
+                        all_variants_constant: false
+                    ),
                     span
-                    type_id: checked_block.yielded_type!
-                    all_variants_constant: false
-                ),
+                )
+            else => CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
+        }
+
+        if saved_expr_decls.is_empty() {
+            return guard_result
+        } else {
+            saved_expr_decls.push(guard_result)
+            return CheckedStatement::Block(
+                block: CheckedBlock(
+                    statements: saved_expr_decls
+                    scope_id
+                    control_flow: checked_block.control_flow
+                    yielded_type: checked_block.yielded_type
+                    yielded_none: checked_block.yielded_none
+                )
                 span
             )
         }
-
-        return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
     }
 
     fn typecheck_for(
@@ -6325,6 +6345,7 @@ struct Typechecker {
         acc: ParsedExpression?
         then_block: ParsedBlock?
         else_statement: ParsedStatement?
+        saved_expr_decls: &mut [CheckedStatement]
         scope_id: ScopeId
         span: Span
     ) throws -> (ParsedExpression, ParsedBlock?, ParsedStatement?) {
@@ -6336,6 +6357,7 @@ struct Typechecker {
                         acc
                         then_block
                         else_statement
+                        saved_expr_decls
                         scope_id
                         span
                     )
@@ -6345,24 +6367,64 @@ struct Typechecker {
                         acc: accumulated_condition
                         then_block: rhs_then_block
                         else_statement: rhs_else_statement
+                        saved_expr_decls
                         scope_id
                         span
                     )
                 }
             }
-            UnaryOp(expr, op) => {
+            UnaryOp(expr: unsaved_expr, op) => {
                 if op is IsEnumVariant(inner, bindings) {
-                    let unary_op_single_condition = ParsedExpression::UnaryOp(expr, op: UnaryOperator::Is(inner), span)
                     mut outer_if_stmts: [ParsedStatement] = []
 
                     let ignore_errors_state = .ignore_errors
                     .ignore_errors = true
+
+                    let expr = match bindings.is_empty() {
+                        // No bindings means that the expression result
+                        // is used just for the check.
+                        true => unsaved_expr
+                        false => {
+                            // declare the variable and just repeat
+                            // the name access.
+                            let saved_name = format(
+                                "__jakt_bound_{}"
+                                .saved_expr_decl_count++
+                            )
+
+                            let var_decl = .typecheck_var_decl(
+                                var: ParsedVarDecl(
+                                    name: saved_name
+                                    parsed_type: ParsedType::Empty
+                                    is_mutable: false
+                                    inlay_span: None
+                                    span: unsaved_expr.span()
+                                )
+                                init: unsaved_expr
+                                scope_id
+                                safety_mode: SafetyMode::Safe
+                                span: unsaved_expr.span()
+                            )
+
+                            saved_expr_decls.push(var_decl)
+
+                            yield ParsedExpression::Var(
+                                name: saved_name
+                                span: unsaved_expr.span()
+                            )
+                        }
+                    }
+
+                    let unary_op_single_condition = ParsedExpression::UnaryOp(expr, op: UnaryOperator::Is(inner), span)
+
                     let pre_checked_unary_op = .typecheck_expression(
                         unary_op_single_condition,
                         scope_id,
                         safety_mode: SafetyMode::Safe,
                         type_hint: None
                     )
+
+
                     .ignore_errors = ignore_errors_state
 
                     for binding in bindings {
@@ -6381,7 +6443,7 @@ struct Typechecker {
                             outer_if_stmts.push(ParsedStatement::VarDecl(var, init: enum_variant_arg, span))
                         }
                     }
-                    mut inner_condition = condition
+                    mut inner_condition = unary_op_single_condition
                     if then_block.has_value() {
                         if acc.has_value() {
                             inner_condition = acc!
@@ -6399,6 +6461,7 @@ struct Typechecker {
                         acc: None
                         then_block: new_then_block
                         else_statement
+			saved_expr_decls
                         scope_id
                         span
                     )
@@ -6414,11 +6477,15 @@ struct Typechecker {
     }
 
     fn typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+
+        mut saved_expr_decls: [CheckedStatement] = []
+
         let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
             condition
             acc: None
             then_block
             else_statement
+            &mut saved_expr_decls
             scope_id
             span
         )
@@ -6437,7 +6504,28 @@ struct Typechecker {
         if new_else_statement.has_value() {
             checked_else = .typecheck_statement(new_else_statement!, scope_id, safety_mode)
         }
-        return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
+        let if_result =  CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
+	
+        if saved_expr_decls.is_empty() {
+            return if_result
+        } else {
+            saved_expr_decls.push(if_result)
+
+            mut control_flow = checked_block.control_flow
+            if checked_else is Some(stmt) and stmt is Block(block: checked_else_block) {
+            control_flow = control_flow.unify_with(checked_else_block.control_flow)
+            }
+            return CheckedStatement::Block(
+                block: CheckedBlock(
+                    statements: saved_expr_decls
+                    scope_id
+                    control_flow
+                    yielded_type: None
+                    yielded_none: false
+                )
+                span
+            )
+        }
     }
 
     fn typecheck_destructuring_assignment(mut this, vars: [ParsedVarDecl], var_decl: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
@@ -6950,11 +7038,14 @@ struct Typechecker {
             type_hint = Some(.get_function(.current_function_id!).return_type_id)
         }
 
+        mut saved_expr_decls: [CheckedStatement] = []
+
         let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
             condition: expr!
             acc: None
             then_block: None
             else_statement: None
+            &mut saved_expr_decls
             scope_id
             span
         )
@@ -6974,7 +7065,31 @@ struct Typechecker {
             .unify_with_type(found_type: checked_expr.type(), expected_type: type_hint!, span)
         }
 
-        return CheckedStatement::Return(val: checked_expr, span)
+        let return_result = CheckedStatement::Return(val: checked_expr, span)
+
+        if saved_expr_decls.is_empty() {
+            return return_result
+        } else {
+            saved_expr_decls.push(return_result)
+
+            // Make this a `Return` so that type deduction for fat arrow
+            // function does not need to know whether the expression had
+            // bindings or not.
+            return CheckedStatement::Return(
+                val: CheckedExpression::Block(
+                    block: CheckedBlock(
+                        statements: saved_expr_decls
+                        scope_id
+                        control_flow: BlockControlFlow::AlwaysReturns
+                        yielded_type: checked_expr.type()
+                        yielded_none: checked_expr is OptionalNone
+                    )
+                    span
+                    type_id: checked_expr.type()
+                )
+                span
+            )
+        }
     }
 
     fn dereference_if_needed(mut this, anon checked_expr: CheckedExpression, span: Span) throws -> CheckedExpression {
