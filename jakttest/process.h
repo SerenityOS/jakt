@@ -16,8 +16,8 @@ class ExitPollResult {
 
 public:
     constexpr ExitPollResult(i32 exit_code, i32 pid)
-        : m_pid(pid)
-        , m_exit_code(exit_code)
+        : m_exit_code(exit_code)
+        , m_pid(pid)
     {
     }
 
