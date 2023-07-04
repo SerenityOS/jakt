@@ -95,13 +95,20 @@ if (NOT ${JAKT_TARGET_TRIPLE} STREQUAL ${JAKT_DEFAULT_TARGET_TRIPLE})
   jakt_make_runtime_available(TARGET ${JAKT_TARGET_TRIPLE})
 endif()
 
-if (CMAKE_CROSSCOMPILING)
-  find_program(HOST_JAKT jakt REQUIRED HINTS jakt-install/bin)
+set(JAKT_BOOTSTRAP_COMPILER "" CACHE FILEPATH "Path to an existing bootstrap jakt compiler")
+set(JAKT_BUILDING_STAGE0 NO)
+if (CMAKE_CROSSCOMPILING OR NOT (JAKT_BOOTSTRAP_COMPILER STREQUAL ""))
+  if (JAKT_BOOTSTRAP_COMPILER STREQUAL "")
+    find_program(HOST_JAKT jakt REQUIRED HINTS jakt-install/bin)
+  else()
+    set(HOST_JAKT "${JAKT_BOOTSTRAP_COMPILER}")
+  endif()
   add_executable(Jakt::jakt IMPORTED)
   set_target_properties(Jakt::jakt PROPERTIES IMPORTED_LOCATION "${HOST_JAKT}")
   set(BOOSTRAP_COMPILER ${HOST_JAKT})
   message(STATUS "Using host jakt at ${HOST_JAKT} to bootstrap")
 else()
+  set(JAKT_BUILDING_STAGE0 YES)
   file(GLOB JAKT_STAGE0_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/*.cpp")
   file(GLOB JAKT_STAGE0_RUNTIME_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/runtime/*.cpp")
   file(GLOB JAKT_STAGE0_RUNTIME_LIB_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/runtime/*/*.cpp")
@@ -300,6 +307,7 @@ if (JAKT_BUILD_TESTING AND NOT CMAKE_CROSSCOMPILING)
       jakttest/utility.jakt
     INCLUDES
       "${CMAKE_CURRENT_SOURCE_DIR}/jakttest"
+    RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime"
   )
   add_jakt_compiler_flags(jakttest)
   target_sources(jakttest PRIVATE
