@@ -22,7 +22,7 @@ install(
     COMPONENT Jakt_Development
 )
 
-if (CMAKE_CROSSCOMPILING)
+if (NOT JAKT_BUILDING_STAGE0)
     set(stages 1)
 else()
     set(stages 0 1 2)
