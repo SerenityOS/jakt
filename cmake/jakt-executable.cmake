@@ -13,6 +13,7 @@ function(add_jakt_compiler_flags target)
     -Wall
     -Wextra
     -Werror
+    -Wno-maybe-uninitialized
     -Wno-unused-local-typedefs
     -Wno-unused-function
     -Wno-unused-variable
