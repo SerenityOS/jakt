@@ -11,6 +11,10 @@ import extern c "unistd.h" {
     extern fn getcwd(anon mut buf: raw c_char, anon size: usize) -> raw c_char
 }
 
+import extern c "stdlib.h" {
+    extern fn realpath(anon path: raw c_char, anon mut resolved_path: raw c_char) -> raw c_char
+}
+
 import extern "dirent.h" {
     extern struct DIR {}
     extern struct dirent {
@@ -40,6 +44,23 @@ fn current_directory() throws -> String {
     }
 
     let buf = getcwd(buffer, buffer_size)
+    if buf == null<c_char>() {
+        throw Error::from_errno(errno_value())
+    }
+
+    mut b = StringBuilder::create()
+    b.append_c_string(buf)
+    return b.to_string()
+}
+
+fn real_path(anon path: String) throws -> String {
+    let buffer_size : usize = 4096; // Roughly PATH_MAX
+    mut buffer = allocate<c_char>(count: buffer_size  + 1)
+    defer {
+        unsafe { cpp { "free(buffer);" } }
+    }
+
+    let buf = realpath(path: path.c_string(), resolved_path: buffer)
     if buf == null<c_char>() {
         throw Error::from_errno(errno_value())
     }

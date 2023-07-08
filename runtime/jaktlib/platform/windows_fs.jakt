@@ -5,6 +5,7 @@ import utility { allocate, null }
 import extern c "direct.h" {
     extern fn _mkdir(path: raw c_char) -> i32
     extern fn _getcwd(anon mut buffer: raw c_char, anon maxlen: i32) -> raw c_char
+    extern fn _fullpath(anon mut abs_path: raw c_char, anon rel_path: raw c_char, anon max_length: i32) -> raw c_char
 }
 
 import extern c "windows.h" {
@@ -27,6 +28,23 @@ fn make_directory(path: String) throws {
     if _mkdir(path: path.c_string()) != 0 {
         throw Error::from_errno(errno_value())
     }
+}
+
+fn real_path(anon path: String) throws -> String {
+    let buffer_size : i32 = 4096; // Roughly PATH_MAX
+    mut buffer = allocate<c_char>(count: buffer_size as! usize + 1)
+    defer {
+        unsafe { cpp { "free(buffer);" } }
+    }
+
+    let buf = _fullpath(abs_path: buffer, rel_path: path.c_string(), max_length: buffer_size)
+    if buf == null<c_char>() {
+        throw Error::from_errno(errno_value())
+    }
+
+    mut b = StringBuilder::create()
+    b.append_c_string(buf)
+    return b.to_string()
 }
 
 fn current_directory() throws -> String {

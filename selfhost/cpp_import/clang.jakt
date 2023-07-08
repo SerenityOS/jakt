@@ -12,6 +12,8 @@ import jakt::path { Path, get_path_separator }
 import utility { Span, join }
 import cpp_import::common { CppImportErrors, read_all }
 import jakt::platform::utility { null }
+import jakt::platform { platform_fs }
+import platform_fs() { real_path }
 import cpp_import::clang_c {
     CXChildVisitResult, CXClientData, CXCursor, CXCursorKind, CXFile, CXIndex, CXSourceLocation, CXString
     CXTranslationUnit, CXTranslationUnit_Flags, CXType, CXTypeKind, CXUnsavedFile, CXToken, CXTokenKind
@@ -32,7 +34,6 @@ import cpp_import::clang_c {
 }
 import utility { allocate }
 import extern c "stdlib.h" {
-    extern fn realpath(path: raw c_char, resolved_path: raw c_char) -> raw c_char
     extern fn free(anon ptr: raw c_char)
 }
 
@@ -1206,10 +1207,7 @@ fn process_cpp_import(
         throw Error::from_string_literal(CppImportErrors::path_not_found())
     }
 
-    let original_filename = found_path!.to_string()
-    let real_path = realpath(path: original_filename.c_string(), resolved_path: null<raw c_char>())
-    let filename = format("{}", real_path)
-    free(real_path)
+    let filename = real_path(path: found_path!.to_string())
 
     mut scope = program.get_scope(import_scope_id)
     mut parent_scope = program.get_scope(scope_id)
