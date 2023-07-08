@@ -106,6 +106,9 @@ jobs:
           fi
 
   selfhost-windows:
+    env:
+      LLVM_VER: 16.0.6
+
     strategy:
       fail-fast: true
 
@@ -114,6 +117,13 @@ jobs:
     steps:
      - run: git config --global core.autocrlf false
      - uses: actions/checkout@v3
+     - name: Cache Clang
+       uses: actions/cache@v3
+       id: cache-clang
+       with:
+         path: 'llvm-install-${{ env.LLVM_VER }}/'
+         key: 'libclang-${{ runner.os }}-${{ env.LLVM_VER }}'
+
      - name: Setup Ninja
        uses: ashutoshvarma/setup-ninja@master
        with:
@@ -121,6 +131,8 @@ jobs:
          version: 1.10.0
          dest: ${{ github.workspace }}/ninja_bin
      - name: Configure CMake
+       env:
+         CMAKE_PREFIX_PATH: ${{ github.workspace }}/llvm-install-${{ env.LLVM_VER }}
        run: cmake -B build -G Ninja -DFINAL_STAGE=1 -DCMAKE_CXX_COMPILER=clang.exe -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=jakt-install
 
      - name: Build Jakt Stage 1 Selfhost
