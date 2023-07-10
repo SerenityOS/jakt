@@ -201,10 +201,12 @@ fn main(args: [String]) -> c_int {
     let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? default_compiler_path
     let archiver_path = args_parser.option(["-A", "--archiver"])
     let link_archive = args_parser.option(["-a", "--link-archive"])
+    let build_static = args_parser.flag(["--static"])
     let extra_include_paths = args_parser.option_multiple(["-I"])
     let extra_lib_paths = args_parser.option_multiple(["-L"])
     let extra_link_libs = args_parser.option_multiple(["-l"])
     let extra_linker_args = args_parser.option_multiple(["-Wl"])
+    let extra_cpp_files = args_parser.option_multiple(["-X"])
     let set_output_filename = args_parser.option(["-o", "--output-filename"])
     let goto_def = args_parser.option(["-g", "--goto-def"])
     let goto_type_def = args_parser.option(["-t", "--goto-type-def"])
@@ -609,6 +611,10 @@ fn main(args: [String]) -> c_int {
             files.push(file_name)
         }
 
+        for file in extra_cpp_files {
+            files.push(file)
+        }
+
         mut builder = Builder::for_building(
             files
             max_concurrent
@@ -617,6 +623,10 @@ fn main(args: [String]) -> c_int {
         mut extra_compiler_flags = ["-c"]
         if ak_stdlib {
             extra_compiler_flags.push("-DJAKT_USING_AK_AS_STANDARD_LIBRARY=1")
+        }
+
+        if build_static {
+            extra_compiler_flags.push("-static")
         }
 
         try builder.build_all(
@@ -649,7 +659,7 @@ fn main(args: [String]) -> c_int {
         if link_archive.has_value() {
             try builder.link_into_archive(
                 archiver: archiver_path ?? "ar"
-                archive_filename: link_archive!
+                archive_filename: binary_dir.join(link_archive!).to_string()
             ) catch {
                 return 1
             }
