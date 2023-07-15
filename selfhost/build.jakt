@@ -116,10 +116,12 @@ struct Builder {
 
             .linked_files.push(built_object)
 
-            let id = .pool.run(compiler_invocation(
+            let args = compiler_invocation(
                 input_filename: binary_dir.join(file_name).to_string()
                 output_filename: built_object
-            ))
+            )
+
+            let id = .pool.run(args)
             ids.add(id)
 
             eprintln("{:c}[2LBuilding: {}/{} ({})", 0x1b, ids.size(), .files_to_compile.size(), file_name)

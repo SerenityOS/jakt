@@ -3,8 +3,7 @@ import jakt::prelude::configuration { UserConfiguration }
 
 comptime platform_compiler() throws -> [String] => platform_module("platform::compiler")
 
-comptime library_name(anon name: String) throws -> String {
-    let target = Target::active()
+fn library_name_for_target(anon name: String, anon target: Target) throws -> String {
     let target_name = target.name()
     return format("{}/{}"
         target_name
@@ -14,6 +13,8 @@ comptime library_name(anon name: String) throws -> String {
         }
     )
 }
+
+comptime library_name(anon name: String) throws -> String => library_name_for_target(name, target: Target::active())
 
 comptime repl_backend() throws -> String => match UserConfiguration::value_of("jakt.repl_backend") ?? "default" {
     "default" => "repl_backend::default"

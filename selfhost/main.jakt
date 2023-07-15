@@ -21,17 +21,14 @@ import ide
 import interpreter { Interpreter, InterpreterScope, value_to_checked_expression }
 import lexer { Lexer, Token }
 import parser { Parser }
-import platform { library_name, platform_compiler }
+import platform { library_name_for_target, platform_compiler }
 import project { Project }
 import repl { REPL, serialize_ast_node }
 import typechecker { Typechecker }
 import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImpl }
-import utility { Span, escape_for_quotes, join, write_to_file}
+import utility { Queue, Span, escape_for_quotes, join, write_to_file }
 
-import platform_fs() {
-    make_directory
-    DirectoryIterator
-}
+import platform_fs() { DirectoryIterator, make_directory }
 
 import platform_compiler() {
     run_compiler
@@ -39,18 +36,17 @@ import platform_compiler() {
 
 import jakt::platform { Target }
 
-fn usage() throws => "usage: jakt [-h] [OPTIONS] <filename>"
+fn usage() throws => "usage: jakt [cross] [-h] [OPTIONS] <filename>"
 fn help() throws -> String {
-    mut output = "Flags:\n"
+    mut output = ""
+    output += "Non-cross mode:\n"
+    output += "FLAGS:\n"
     output += "  -h,--help\t\t\t\tPrint this help and exit.\n"
     output += "  -O\t\t\t\t\tBuild an optimized executable.\n"
     output += "  -dl\t\t\t\t\tPrint debug info for the lexer.\n"
     output += "  -dp\t\t\t\t\tPrint debug info for the parser.\n"
     output += "  -dt\t\t\t\t\tPrint debug info for the typechecker.\n"
     output += "  -S,--emit-cpp-source-only\t\tOnly output source (do not build).\n"
-    output += "  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"
-    output += "  --runtime-library-path PATH\t\tSpecify the path to the runtime library.\n"
-    output += "  -J,--jobs NUMBER\t\t\tSpecify the number of jobs to run in parallel, defaults to 2 (1 on windows).\n"
     output += "  -cr,--compile-run\t\t\tBuild and run an executable file.\n"
     output += "  -r,--run\t\t\t\tRun the given file without compiling it (all positional arguments after the file name will be passed to main).\n"
     output += "  -d\t\t\t\t\tInsert debug statement spans in generated C++ code.\n"
@@ -67,8 +63,12 @@ fn help() throws -> String {
     output += "  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"
     output += "  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"
     output += "  --use-ccache\t\t\t\tUse ccache when compiling.\n"
+    output += "  --ak-is-my-only-stdlib\t\tForget about interop, AK is the one and only STL.\n"
 
     output += "\nOptions:\n"
+    output += "  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"
+    output += "  --runtime-library-path PATH\t\tSpecify the path to the runtime library.\n"
+    output += "  -J,--jobs NUMBER\t\t\tSpecify the number of jobs to run in parallel, defaults to 2 (1 on windows).\n"
     output += "  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\t\t\t\tDefaults to clang-format\n"
     output += "  -D,--dot-clang-format-path PATH\tPath to the .clang-format file to use.\n\t\t\t\t\tDefaults to none, invoking clangs default .clang-format file handling.\n"
     output += "  -R,--runtime-path PATH\t\tPath of the Jakt runtime headers.\n\t\t\t\t\tDefaults to $PWD/runtime.\n"
@@ -83,7 +83,24 @@ fn help() throws -> String {
     output += "  -e,--hover INDEX\t\t\tReturn the type of element at index.\n"
     output += "  -m,--completions INDEX\t\tReturn dot completions at index.\n"
     output += "  --create NAME\t\t\t\tCreate sample project in $PWD/NAME\n"
-    output += "  --ak-is-my-only-stdlib\t\tForget about interop, AK is the one and only STL.\n"
+
+    output += "\nCross mode:\n"
+    output += "  Flags and options not listed below will be passed verbatim to the underlying `jakt' invocation.\n"
+    output += "FLAGS:\n"
+    output += "  --only-support-libs\t\t\tOnly build and install support libraries for the target platform.\n"
+
+    output += "\nOPTIONS:\n"
+    output += "  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"
+    output += "  --sysroot PATH\t\t\tSpecify the sysroot used for the build.\n"
+    output += "  --system-lib-dir PATH\t\t\tSpecify a system library directory to use.\n"
+    output += "  --system-include-dir PATH\t\tSpecify a system include directory to use.\n"
+    output += "  --compiler-include-dir PATH\t\tSpecify a compiler include directory to use.\n"
+    output += "  --compiler-lib-dir PATH\t\tSpecify a compiler library directory to use.\n"
+    output += "  --install-root PATH\t\t\tSpecify the root directory to install to.\n"
+    output += "  --runtime-lib-path PATH\t\tSpecify the path to the host runtime library.\n"
+    output += "  --runtime-path PATH\t\t\tSpecify the path to the host runtime headers.\n"
+    output += "  --source-file PATH\t\t\tSpecify the path to the source file to compile.\n"
+    output += "  -o,--output-filename FILE\t\tName of the output binary.\n"
     return output
 }
 
@@ -143,7 +160,7 @@ fn value_or_throw<T>(anon maybe: T?) throws -> T {
         return maybe!
     }
 
-    throw Error::from_errno(1)
+    throw Error::from_string_literal("Expected value but found none")
 }
 
 fn main(args: [String]) -> c_int {
@@ -152,6 +169,284 @@ fn main(args: [String]) -> c_int {
         return 1
     }
 
+    if args[1] == "cross" {
+        return selfhost_crosscompiler_main(args)
+    }
+
+    return compiler_main(args)
+}
+
+fn install(from: Path, to: Path) throws {
+    mut directories_to_copy: Queue<(Path, Path)> = Queue()
+    directories_to_copy.enqueue((from, Path::from_string(".")))
+    while not directories_to_copy.is_empty() {
+        let (directory, relative_dir) = directories_to_copy.dequeue()
+        for (entry, is_directory) in DirectoryIterator::from_path(path: directory)! {
+            let path = directory.join(entry)
+            let path_relative_to_target = relative_dir.join(entry)
+
+            if is_directory {
+                try make_directory(path: to.join(path_relative_to_target.to_string()).to_string())
+                directories_to_copy.enqueue((path, path_relative_to_target))
+                continue
+            }
+
+            // FIXME: Symlink
+            let target_path = to.join(path_relative_to_target.to_string())
+            mut input_file = File::open_for_reading(path.to_string())
+            mut output_file = File::open_for_writing(target_path.to_string())
+            mut buffer = [0u8; 4096]
+            while true {
+                let bytes_read = input_file.read(buffer)
+                if bytes_read == 0 {
+                    break
+                }
+
+                mut bytes_written: usize = 0
+                while bytes_written < bytes_read {
+                    bytes_written += output_file.write(buffer[bytes_written..bytes_read].to_array())
+                }
+
+                if bytes_written != bytes_read {
+                    throw Error::from_string_literal("Failed to write to file")
+                }
+            }
+        }
+    }
+}
+
+fn selfhost_crosscompiler_main(args: [String]) throws -> c_int {
+    mut compiler_args: [String] = []
+
+    mut target_triple: String? = None
+    mut sysroot: String? = None
+    mut system_lib_dirs: [String] = []
+    mut system_include_dirs: [String] = []
+    mut compiler_include_dir: String? = None
+    mut compiler_lib_dir: String? = None
+
+    mut install_root: String? = None
+    mut runtime_lib_path: Path? = None
+    mut runtime_path: Path? = None
+
+    mut source_file: String? = None
+    mut output_filename: String? = None
+    mut only_support_libs = false
+
+    mut args_to_process: Queue<String> = Queue()
+    for arg in args[1..] {
+        args_to_process.enqueue(arg)
+    }
+
+    while not args_to_process.is_empty() {
+        let arg = args_to_process.dequeue()
+        match arg {
+            "--target-triple" | "-T" => { target_triple = args_to_process.dequeue() }
+            "--sysroot" => { sysroot = args_to_process.dequeue() }
+            "--system-lib-dir" => {
+                system_lib_dirs.push(args_to_process.dequeue())
+            }
+            "--system-include-dir" => {
+                system_include_dirs.push(args_to_process.dequeue())
+            }
+            "--compiler-include-dir" => {
+                compiler_include_dir = args_to_process.dequeue()
+            }
+            "--compiler-lib-dir" => {
+                compiler_lib_dir = args_to_process.dequeue()
+            }
+            "--install-root" => { install_root = args_to_process.dequeue() }
+            "--runtime-lib-path" => { runtime_lib_path = Path::from_string(args_to_process.dequeue()) }
+            "--runtime-path" => { runtime_path = Path::from_string(args_to_process.dequeue()) }
+            "--source-file" => { source_file = args_to_process.dequeue() }
+            "--output-filename" | "-o" => { output_filename = args_to_process.dequeue() }
+            "--only-support-libs" => { only_support_libs = true }
+            else => { compiler_args.push(arg) }
+        }
+    }
+
+    if source_file is None and not only_support_libs {
+        eprintln("error: Expected --source_file to be passed")
+        return 1
+    }
+
+    if install_root is None {
+        eprintln("error: Expected --install-root to be passed")
+        return 1
+    }
+
+    if target_triple is None {
+        eprintln("error: Expected --target-triple to be passed")
+        return 1
+    }
+
+    let abbreviated_triple = Target::from_triple(target_triple!).name(abbreviate: true)
+
+    let install_dir = Path::from_string(install_root!)
+    let install_lib_dir = install_dir.join("lib").join(target_triple!)
+    let install_runtime_dir = install_dir.join("include/runtime")
+    let install_bin_dir = install_dir.join("bin")
+
+    let current_executable_path = Path::from_string(File::current_executable_path())
+    let local_install_base_path = current_executable_path.parent().parent()
+    if runtime_path is None {
+        runtime_path = local_install_base_path.join("include/runtime")
+    }
+    if runtime_lib_path is None {
+        runtime_lib_path = local_install_base_path.join("lib").join(Target::active().name())
+    }
+
+    let compiler_invocation_args = fn[
+        &compiler_args
+        &abbreviated_triple
+        &sysroot
+        &compiler_include_dir
+        &compiler_lib_dir
+        &system_include_dirs
+        &system_lib_dirs
+        &runtime_lib_path
+        &runtime_path
+    ]() throws -> [String] {
+        mut args = compiler_args[..].to_array()
+        args.push("--target-triple")
+        args.push(format("{}-unknown", abbreviated_triple))
+
+        if sysroot.has_value() {
+            args.push("--extra-cpp-flag")
+            args.push(format("--sysroot={}", sysroot!))
+        }
+
+        if compiler_include_dir.has_value() {
+            args.push("-I")
+            args.push(compiler_include_dir!)
+        }
+
+        if compiler_lib_dir.has_value() {
+            args.push("-L")
+            args.push(compiler_lib_dir!)
+        }
+
+        for system_include_dir in system_include_dirs {
+            args.push("-I")
+            args.push(system_include_dir)
+        }
+
+        for system_lib_dir in system_lib_dirs {
+            args.push("-L")
+            args.push(system_lib_dir)
+        }
+
+        if runtime_lib_path.has_value() {
+            args.push("--runtime-library-path")
+            args.push(runtime_lib_path!.to_string())
+        }
+
+        if runtime_path.has_value() {
+            args.push("--runtime-path")
+            args.push(runtime_path!.to_string())
+        }
+
+        return args
+    }
+
+    if not install_lib_dir.exists() { mkdir_p(path: install_lib_dir) }
+    install(from: runtime_path!, to: install_runtime_dir)
+    if not install_bin_dir.exists() { mkdir_p(path: install_bin_dir) }
+
+    let runtime_archive_path = install_lib_dir.join(format("libjakt_runtime_{}.a", target_triple!))
+    let main_archive_path = install_lib_dir.join(format("libjakt_main_{}.a", target_triple!))
+
+    let build_archive = fn[&compiler_invocation_args](anon sources: [Path], anon target: Path) throws -> c_int {
+        mut invocation_args = compiler_invocation_args()
+        for source in sources {
+            invocation_args.push("-X")
+            invocation_args.push(source.to_string())
+        }
+
+        invocation_args.push("--static")
+        invocation_args.push("--link-archive")
+        invocation_args.push(target.to_string())
+        invocation_args.push("/dev/null")
+
+        return compiler_main(invocation_args)
+    }
+
+    if not runtime_archive_path.exists() {
+        eprintln("Building jakt runtime for target {}...", abbreviated_triple)
+        mut sources: [Path] = [runtime_path!.join("IO/File.cpp")]
+        sources.push_values(&find_with_extension(path: runtime_path!.join("AK"), extension: "cpp"))
+        sources.push_values(&find_with_extension(path: runtime_path!.join("Jakt"), extension: "cpp"))
+
+        if build_archive(sources, runtime_archive_path) != 0 {
+            return 1
+        }
+    }
+
+    if not main_archive_path.exists() {
+        eprintln("Building jakt main for target {}...", abbreviated_triple)
+        mut sources: [Path] = [runtime_path!.join("Main.cpp")]
+
+        if build_archive(sources, main_archive_path) != 0 {
+            return 1
+        }
+    }
+
+    runtime_lib_path = install_lib_dir.parent()
+    runtime_path = install_runtime_dir
+
+    if not only_support_libs {
+        mut compiler_args = compiler_invocation_args()
+        let source_path = Path::from_string(source_file!)
+        compiler_args.push(source_path.to_string())
+        compiler_args.push("-o")
+        let default_output_filename = install_bin_dir.join(output_filename ?? source_path.basename(strip_extension: true)).to_string()
+        compiler_args.push(default_output_filename)
+
+        return compiler_main(compiler_args)
+    }
+
+    return 0
+}
+
+fn mkdir_p(anon path: Path) throws {
+    let components = path.components()
+    if components.is_empty() { return }
+
+    mut current_path = Path::from_string(components[0])
+    for part in components[1..] {
+        if not current_path.exists() {
+            eprintln("- mkdir {}", current_path)
+            make_directory(path: current_path.to_string())
+        }
+
+        current_path = current_path.join(part)
+    }
+
+    if not current_path.exists() {
+        make_directory(path: current_path.to_string())
+    }
+}
+
+fn find_with_extension(path: Path, extension: String) throws -> [Path] {
+    mut directories_to_search: Queue<Path> = Queue()
+    directories_to_search.enqueue(path)
+    mut files_found: [Path] = []
+    while not directories_to_search.is_empty() {
+        let directory = directories_to_search.dequeue()
+        for (entry, is_directory) in DirectoryIterator::from_path(path: directory)! {
+            let path = directory.join(entry)
+            if is_directory {
+                directories_to_search.enqueue(path)
+            } else if entry.extension() == extension {
+                files_found.push(path)
+            }
+        }
+    }
+
+    return files_found
+}
+
+fn compiler_main(anon args: [String]) throws -> c_int {
     mut args_parser = ArgsParser::from_args(args)
 
     if args_parser.flag(["-h", "--help"]) {
@@ -207,6 +502,7 @@ fn main(args: [String]) -> c_int {
     let extra_link_libs = args_parser.option_multiple(["-l"])
     let extra_linker_args = args_parser.option_multiple(["-Wl"])
     let extra_cpp_files = args_parser.option_multiple(["-X"])
+    let extra_cpp_flags = args_parser.option_multiple(["--extra-cpp-flag"])
     let set_output_filename = args_parser.option(["-o", "--output-filename"])
     let goto_def = args_parser.option(["-g", "--goto-def"])
     let goto_type_def = args_parser.option(["-t", "--goto-type-def"])
@@ -260,6 +556,10 @@ fn main(args: [String]) -> c_int {
         let project = Project(name: project_name!)
         project.populate()
         return 0
+    }
+
+    let compiler_is = fn[cxx_compiler_path](anon name: String) throws -> bool {
+        return Path::from_string(cxx_compiler_path).basename() == name
     }
 
     mut file_name: String? = None
@@ -629,6 +929,17 @@ fn main(args: [String]) -> c_int {
             extra_compiler_flags.push("-static")
         }
 
+        if target_triple.has_value() {
+            if compiler_is("clang++") and target_triple! != Target::active().name() {
+                extra_compiler_flags.push("-target")
+                extra_compiler_flags.push(target_triple!)
+            }
+        }
+
+        for flag in extra_cpp_flags {
+            extra_compiler_flags.push(flag)
+        }
+
         try builder.build_all(
             binary_dir
             compiler_invocation: &fn[
@@ -666,9 +977,25 @@ fn main(args: [String]) -> c_int {
         } else {
             mut extra_arguments: [String] = ["-g"]
 
+            for flag in extra_cpp_flags {
+                extra_arguments.push(flag)
+            }
+
+            let target = match target_triple.has_value() {
+                true => Target::from_triple(target_triple!)
+                false => Target::active()
+            }
+
+            if target_triple.has_value() {
+                if compiler_is("clang++") and target_triple! != Target::active().name() {
+                    extra_arguments.push("-target")
+                    extra_arguments.push(target.name(abbreviate: true))
+                }
+            }
+
             let runtime_lib_path = Path::from_string(runtime_library_path)
-            extra_arguments.push(runtime_lib_path.join(library_name("main")).to_string())
-            extra_arguments.push(runtime_lib_path.join(library_name("runtime")).to_string())
+            extra_arguments.push(runtime_lib_path.join(library_name_for_target("main", target)).to_string())
+            extra_arguments.push(runtime_lib_path.join(library_name_for_target("runtime", target)).to_string())
 
             for path in extra_lib_paths {
                 extra_arguments.push("-L")
@@ -680,7 +1007,7 @@ fn main(args: [String]) -> c_int {
                 extra_arguments.push(lib)
             }
 
-            if is_windows() and Path::from_string(cxx_compiler_path).basename() == "clang-cl" {
+            if is_windows() and compiler_is("clang-cl") {
                 extra_arguments.push("/link")
                 extra_arguments.push("/subsystem:console")
             }
