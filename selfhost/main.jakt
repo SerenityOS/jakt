@@ -63,6 +63,7 @@ fn help() throws -> String {
     output += "  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"
     output += "  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"
     output += "  --use-ccache\t\t\t\tUse ccache when compiling.\n"
+    output += "  --discover\t\t\t\tDiscover all files in the project, print the dependencies and outputs, then exit.\n"
     output += "  --ak-is-my-only-stdlib\t\tForget about interop, AK is the one and only STL.\n"
 
     output += "\nOptions:\n"
@@ -538,6 +539,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     let input_format_range = args_parser.option(["-fr", "--format-range"]) ?? ""
 
     let ak_stdlib = args_parser.flag(["--ak-is-my-only-stdlib"])
+    let discover_only = args_parser.flag(["--discover"])
 
     let max_concurrent = try value_or_throw(compiler_job_count.to_uint()) catch {
         eprintln("error: invalid value for --jobs: {}", compiler_job_count)
@@ -845,6 +847,23 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     }
 
     let codegen_result = CodeGenerator::generate(compiler, checked_program, debug_info: codegen_debug)
+
+    if discover_only {
+        for (file, contents_and_path) in codegen_result {
+            let (_, module_file_path) = contents_and_path
+            if module_file_path == "__prelude__" {
+                continue
+            }
+
+            let path = binary_dir.join(file)
+            println(
+                "{}:{}"
+                path.to_string()
+                module_file_path
+            )
+        }
+        return 0
+    }
 
     mut depfile_builder = StringBuilder::create()
 
