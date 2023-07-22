@@ -5613,7 +5613,7 @@ struct Typechecker {
                 }
             }
 
-            return .find_or_add_type_id(Type::GenericInstance(id: struct_id!, args: checked_inner_types))
+            return .find_or_add_type_id(Type::GenericInstance(id: struct_id!, args: effective_inner_types))
         }
 
         let enum_id = .program.find_enum_in_scope(scope_id, name)
