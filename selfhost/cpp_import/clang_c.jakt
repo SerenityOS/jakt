@@ -535,6 +535,30 @@ import extern c "clang-c/Index.h" {
     extern fn clang_saveTranslationUnit(anon tu: CXTranslationUnit, file_name: raw c_char, options: u32) -> c_int
     extern fn clang_createTranslationUnit(index: CXIndex, file_name: raw c_char) -> CXTranslationUnit
     extern fn clang_getCanonicalCursor(anon cursor: CXCursor) -> CXCursor
+    extern fn clang_isDeclaration(anon kind: CXCursorKind) -> bool
+    extern fn clang_isExpression(anon kind: CXCursorKind) -> bool
+    extern fn clang_equalCursors(anon a: CXCursor, anon b: CXCursor) -> bool
+    extern fn clang_getCursorSemanticParent(anon a: CXCursor) -> CXCursor
+
+    extern struct CXEvalResult {}
+    extern enum CXEvalResultKind : c_int {
+        CXEval_Int
+        CXEval_Float
+        CXEval_ObjCStrLiteral
+        CXEval_StrLiteral
+        CXEval_CFStr
+        CXEval_Other
+        CXEval_UnExposed
+    }
+    extern fn clang_Cursor_Evaluate(cursor: CXCursor) -> CXEvalResult
+    extern fn clang_EvalResult_isUnsignedInt(anon result: CXEvalResult) -> bool
+    extern fn clang_EvalResult_getKind(anon result: CXEvalResult) -> CXEvalResultKind
+    extern fn clang_EvalResult_getAsInt(anon result: CXEvalResult) -> c_int
+    extern fn clang_EvalResult_getAsLongLong(anon result: CXEvalResult) -> i64
+    extern fn clang_EvalResult_getAsUnsigned(anon result: CXEvalResult) -> u64
+    extern fn clang_EvalResult_getAsDouble(anon result: CXEvalResult) -> f64
+    extern fn clang_EvalResult_getAsStr(anon result: CXEvalResult) -> raw c_char
+    extern fn clang_EvalResult_dispose(anon result: CXEvalResult) -> void
 }
 
 type CXTranslationUnit implements(Equal<CXTranslationUnit>) {
