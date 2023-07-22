@@ -254,7 +254,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
             "char32_t",
             "compl",
             "concept",
-            "const",
+            // "const",
             "consteval",
             "constexpr",
             "constinit",

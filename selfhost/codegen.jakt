@@ -5,16 +5,17 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import parser { BinaryOperator, FunctionLinkage }
+import parser { BinaryOperator, FunctionLinkage, ParsedBlock }
 import typechecker {
     BuiltinType, CheckedBinaryOperator, CheckedBlock, CheckedCall, CheckedEnum, CheckedExpression, CheckedFunction
     CheckedMatchBody, CheckedMatchCase, CheckedProgram, CheckedStatement, CheckedStruct, CheckedVariable
     CheckedVisibility, EnumId, FunctionId, Module, ModuleId, Scope, ScopeId, StructId, Type, TypeId, VarId, builtin
     never_type_id, unknown_type_id, void_type_id
 }
-import types { CheckedParameter, StructLikeId }
+import types { CheckedGenericParameter, CheckedParameter, FunctionGenericParameter, SafetyMode, StructLikeId }
 import utility { Queue, Span, interpret_escapes, join, panic, prepend_to_each, todo }
 import compiler { Compiler }
+import interpreter { Interpreter, TypecheckFunctions, value_to_checked_expression }
 
 enum AllowedControlExits {
     /// No control exit statements allowed
@@ -1277,21 +1278,78 @@ struct CodeGenerator {
         return output
     }
 
+    fn codegen_template_parameter_names(
+        mut this
+        anon parameters: [FunctionGenericParameter]
+        names: &mut [String]
+    ) throws -> String {
+        mut ids: [TypeId] = []
+        for parameter in parameters {
+            ids.push(parameter.checked_parameter.type_id)
+        }
+        return .codegen_template_parameter_names(ids, names)
+    }
+
+    fn codegen_template_parameter_names(
+        mut this
+        anon parameters: [FunctionGenericParameter]
+    ) throws -> String {
+        mut names: [String] = []
+        return .codegen_template_parameter_names(parameters, &mut names)
+    }
+
+    fn codegen_template_parameter_names(
+        mut this
+        anon parameters: [CheckedGenericParameter]
+        names: &mut [String]
+    ) throws -> String {
+        mut ids: [TypeId] = []
+        for parameter in parameters {
+            ids.push(parameter.type_id)
+        }
+        return .codegen_template_parameter_names(ids, names)
+    }
+
+    fn codegen_template_parameter_names(
+        mut this
+        anon parameters: [CheckedGenericParameter]
+    ) throws -> String {
+        mut names: [String] = []
+        return .codegen_template_parameter_names(parameters, &mut names)
+    }
+
+    fn codegen_template_parameter_names(
+        mut this
+        anon parameters: [TypeId]
+        names: &mut [String]
+    ) throws -> String {
+        mut output = ""
+        mut first = true
+        for id in parameters {
+            if first {
+                first = false
+            } else {
+                output += ","
+            }
+            if .program.get_type(id) is TypeVariable(is_value) and is_value {
+                output += "auto "
+            } else {
+                output += "typename "
+            }
+            let name = .codegen_type(id)
+
+            output += name
+            names.push(name)
+        }
+        return output
+    }
+
     fn codegen_function_generic_parameters(mut this, function: CheckedFunction) throws -> String {
         mut output = ""
 
         if not function.generics.params.is_empty() {
             output += "template <"
-            mut first = true
-            for generic_parameter in function.generics.params {
-                if first {
-                    first = false
-                } else {
-                    output += ","
-                }
-                output += "typename "
-                output += .codegen_type(generic_parameter.type_id())
-            }
+            output += .codegen_template_parameter_names(function.generics.params)
             output += ">\n"
         }
 
@@ -1395,16 +1453,7 @@ struct CodeGenerator {
 
         if not struct_.generic_parameters.is_empty() {
             output += "template <"
-            mut first = true
-            for generic_parameter in struct_.generic_parameters {
-                if first {
-                    first = false
-                } else {
-                    output += ","
-                }
-                output += "typename "
-                output += .codegen_type(generic_parameter.type_id)
-            }
+            output += .codegen_template_parameter_names(struct_.generic_parameters)
             output += ">"
         }
 
@@ -1429,13 +1478,14 @@ struct CodeGenerator {
 
         mut struct_is_generic = false
         mut generic_parameter_names: [String] = []
+        mut template_parameters = ""
         if not struct_.generic_parameters.is_empty() {
             struct_is_generic = true
-            for generic_parameter in struct_.generic_parameters {
-                generic_parameter_names.push(.codegen_type(generic_parameter.type_id))
-            }
-
-            output += format("template <{}>", join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", "))
+            template_parameters = .codegen_template_parameter_names(
+                struct_.generic_parameters
+                names: &mut generic_parameter_names
+            )
+            output += format("template <{}>", template_parameters)
         }
 
         match struct_.record_type {
@@ -1554,7 +1604,11 @@ struct CodeGenerator {
 
         output += "};"
 
-        .deferred_output += .codegen_ak_formatter(name: struct_.name_for_codegen().as_name_for_definition(), generic_parameter_names)
+        .deferred_output += .codegen_ak_formatter(
+            name: struct_.name_for_codegen().as_name_for_definition()
+            generic_parameter_names
+            template_parameters
+        )
 
         return output
     }
@@ -1571,13 +1625,7 @@ struct CodeGenerator {
         }
 
         let is_generic = not enum_.generic_parameters.is_empty()
-        mut template_args_array: [String] = []
-        for generic_parameter in enum_.generic_parameters {
-            if .program.get_type(generic_parameter.type_id) is TypeVariable(name) {
-                template_args_array.push("typename " + name)
-            }
-        }
-        mut template_args = join(template_args_array, separator: ", ")
+        mut template_args = .codegen_template_parameter_names(enum_.generic_parameters)
 
         output += format("namespace {}_Details", enum_.name) + " {\n"
         for variant in enum_.variants {
@@ -1622,12 +1670,7 @@ struct CodeGenerator {
 
         let is_generic = not enum_.generic_parameters.is_empty()
         mut generic_parameter_names: [String] = []
-        for generic_parameter in enum_.generic_parameters {
-            if .program.get_type(generic_parameter.type_id) is TypeVariable(name) {
-                generic_parameter_names.push(name)
-            }
-        }
-        mut template_args = join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", ")
+        mut template_args = .codegen_template_parameter_names(enum_.generic_parameters, names: &mut generic_parameter_names)
 
         mut common_fields: [(String, String)] = []
         for field in enum_.fields {
@@ -1740,7 +1783,7 @@ struct CodeGenerator {
         if enum_.is_boxed {
             mut fully_instantiated_name = enum_.name
             if is_generic {
-                fully_instantiated_name += format("<{}>", join(generic_parameter_names, separator: ", "))
+                fully_instantiated_name += format("<{}>", template_args)
             }
             output += "template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {\n"
             output += format("return adopt_nonnull_ref_or_enomem(new (nothrow) {}(V(forward<Args>(args)...)));\n", fully_instantiated_name)
@@ -1788,7 +1831,7 @@ struct CodeGenerator {
 
         output += "};\n"
 
-        .deferred_output += .codegen_ak_formatter(name: enum_.name, generic_parameter_names)
+        .deferred_output += .codegen_ak_formatter(name: enum_.name, generic_parameter_names, template_args)
 
         return output
     }
@@ -1798,16 +1841,7 @@ struct CodeGenerator {
 
         if not is_inline and not struct_.generic_parameters.is_empty() {
             output += "template <"
-            mut first = true
-            for param in struct_.generic_parameters {
-                if first {
-                    first = false
-                } else {
-                    output += ","
-                }
-                output += "typename "
-                output += .codegen_type(param.type_id)
-            }
+            output += .codegen_template_parameter_names(struct_.generic_parameters)
             output += ">\n"
         }
 
@@ -1860,16 +1894,7 @@ struct CodeGenerator {
 
         if not is_inline and not enum_.generic_parameters.is_empty() {
             output += "template <"
-            mut first = true
-            for param in enum_.generic_parameters {
-                if first {
-                    first = false
-                } else {
-                    output += ","
-                }
-                output += "typename "
-                output += .codegen_type(param.type_id)
-            }
+            output += .codegen_template_parameter_names(enum_.generic_parameters)
             output += ">\n"
         }
 
@@ -1933,10 +1958,9 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_ak_formatter(mut this, name: String, generic_parameter_names: [String]) throws -> String {
+    fn codegen_ak_formatter(mut this, name: String, generic_parameter_names: [String], anon template_args: String) throws -> String {
         mut output = ""
 
-        let template_args = join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", ")
         let generic_type_args = join(generic_parameter_names, separator: ", ")
 
         mut qualified_name = ""
@@ -3560,7 +3584,7 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_namespace_path(this, call: CheckedCall) throws -> String {
+    fn codegen_namespace_path(mut this, call: CheckedCall) throws -> String {
         if call.function_id.has_value() {
             let scope = .program.get_function(call.function_id!).owner_scope
             if scope.has_value() {
@@ -3822,11 +3846,11 @@ struct CodeGenerator {
     }
 
 
-    fn codegen_type(this, anon type_id: TypeId) throws -> String {
+    fn codegen_type(mut this, anon type_id: TypeId) throws -> String {
         return .codegen_type_possibly_as_namespace(type_id, as_namespace: false)
     }
 
-    fn codegen_type_possibly_as_namespace(this, type_id: TypeId, as_namespace: bool) throws -> String => match .program.get_type(type_id) {
+    fn codegen_type_possibly_as_namespace(mut this, type_id: TypeId, as_namespace: bool) throws -> String => match .program.get_type(type_id) {
         Void => "void"
         Bool => "bool"
         U8 => "u8"
@@ -3844,6 +3868,31 @@ struct CodeGenerator {
         CChar => "char"
         CInt => "int"
         Never => "void"
+        Const(value) => {
+            mut interpreter = Interpreter::create(
+                compiler: .compiler
+                program: .program
+                typecheck_functions: TypecheckFunctions(
+                    block: fn(
+                        parsed_block: ParsedBlock
+                        parent_scope_id: ScopeId
+                        safety_mode: SafetyMode
+                        yield_type_hint: TypeId?
+                    ) throws -> CheckedBlock {
+                        throw Error::from_string_literal("Cannot typecheck a const block")
+                    }
+
+                    register_function: fn(
+                        function: CheckedFunction
+                    ) throws -> FunctionId {
+                        throw Error::from_string_literal("Cannot typecheck a const function")
+                    }
+                )
+                spans: []
+            )
+            let expr = value_to_checked_expression(value, interpreter)
+            yield .codegen_expression(expr)
+        }
         RawPtr(type_id) => match .program.get_type(type_id).is_boxed(program: .program) {
             true => .codegen_type_possibly_as_namespace(type_id, as_namespace: true) + "*"
             false => .codegen_type(type_id) + "*"
@@ -3892,7 +3941,7 @@ struct CodeGenerator {
         }
     }
 
-    fn codegen_generic_type_instance(this, id: StructId, args: [TypeId], as_namespace: bool) throws -> String {
+    fn codegen_generic_type_instance(mut this, id: StructId, args: [TypeId], as_namespace: bool) throws -> String {
         // FIXME: Handle WeakPtr
         mut output = ""
         let type_module = .program.get_module(id.module)
@@ -3944,7 +3993,7 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_generic_enum_instance(this, id: EnumId, args: [TypeId], as_namespace: bool) throws -> String {
+    fn codegen_generic_enum_instance(mut this, id: EnumId, args: [TypeId], as_namespace: bool) throws -> String {
         mut output = ""
         mut close_tag = false
         let enum_ = .program.get_enum(id)
@@ -4088,16 +4137,7 @@ struct CodeGenerator {
 
         if not is_inline and not struct_.generic_parameters.is_empty() {
             output += "template <"
-            mut first = true
-            for param in struct_.generic_parameters {
-                if first {
-                    first = false
-                } else {
-                    output += ","
-                }
-                output += "typename "
-                output += .codegen_type(param.type_id)
-            }
+            output += .codegen_template_parameter_names(struct_.generic_parameters)
             output += ">\n"
         }
 
@@ -4217,16 +4257,7 @@ struct CodeGenerator {
 
         if not is_inline and not structure.generic_parameters.is_empty() {
             output += "template <"
-            mut first = true
-            for param in structure.generic_parameters {
-                if first {
-                    first = false
-                } else {
-                    output += ","
-                }
-                output += "typename "
-                output += .codegen_type(param.type_id)
-            }
+            output += .codegen_template_parameter_names(structure.generic_parameters)
             output += ">\n"
         }
 

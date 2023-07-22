@@ -24,8 +24,8 @@ import types {
     CheckedVariable, CheckedVisibility, ClassInstanceRebind, EnumId, FieldRecord, FunctionGenericParameter
     FunctionGenerics, FunctionId, GenericInferences, IterationDecision, LoadedModule, MaybeResolvedScope, Module
     ModuleId, NumberConstant, OperatorTraitImplementation, ResolvedNamespace, SafetyMode, Scope, ScopeId
-    StringLiteral, StructId, StructLikeId, TraitId, Type, TypeId, Value, VarId, builtin, never_type_id
-    unknown_type_id, void_type_id
+    StringLiteral, StructId, StructLikeId, TraitId, Type, TypeId, Value, VarId, builtin comptime_format_impl,
+    never_type_id, unknown_type_id, void_type_id
 }
 import types
 import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo }
@@ -2251,7 +2251,7 @@ struct Typechecker {
 
             mut trait_implementations: [TypeId] = []
             mut parameter = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
-            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations))
+            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations, gen_parameter.is_value))
 
             if gen_parameter.requires_list.has_value() {
                 .fill_trait_requirements(
@@ -2475,7 +2475,7 @@ struct Typechecker {
             mut checked_param = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
 
             mut trait_implementations: [TypeId] = []
-            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations))
+            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations, is_value: gen_parameter.is_value))
 
             if gen_parameter.requires_list.has_value() {
                 .fill_trait_requirements(
@@ -2578,7 +2578,9 @@ struct Typechecker {
                 mut parameter = FunctionGenericParameter::parameter(type_var_type_id, span: generic_parameter.span)
 
                 mut trait_implementations: [TypeId] = []
-                module.types.push(Type::TypeVariable(name: generic_parameter.name, trait_implementations))
+                module.types.push(
+                    Type::TypeVariable(name: generic_parameter.name, trait_implementations, is_value: generic_parameter.is_value)
+                )
 
                 if generic_parameter.requires_list.has_value() {
                     .fill_trait_requirements(
@@ -2984,7 +2986,7 @@ struct Typechecker {
 
             mut parameter = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
             mut trait_implementations: [TypeId] = []
-            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations))
+            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations, is_value: gen_parameter.is_value))
 
             if gen_parameter.requires_list.has_value() {
                 .fill_trait_requirements(
@@ -3189,7 +3191,7 @@ struct Typechecker {
                             let generic_param = trait_.generic_parameters[i]
                             let generic_param_type = generic_params[i]
 
-                            guard .get_type(generic_param.type_id) is TypeVariable(name) else {
+                            guard .get_type(generic_param.type_id) is TypeVariable(name, is_value) else {
                                 continue
                             }
 
@@ -3199,6 +3201,15 @@ struct Typechecker {
                                 type_id: generic_param_type
                                 span: generic_param.span
                             )
+
+                            if is_value and .get_type(generic_param_type) is Const(value) {
+                                .add_comptime_binding_to_scope(
+                                    scope_id: id
+                                    name
+                                    value
+                                    span: generic_param.span
+                                )
+                            }
 
                             mixin_scope_id = id
                         }
@@ -4142,7 +4153,9 @@ struct Typechecker {
             if base_definition {
                 mut parameter = FunctionGenericParameter::parameter(type_var_type_id, span: generic_parameter.span)
                 mut trait_implementations: [TypeId] = []
-                current_module.types.push(Type::TypeVariable(name: generic_parameter.name, trait_implementations))
+                current_module.types.push(
+                    Type::TypeVariable(name: generic_parameter.name, trait_implementations, is_value: generic_parameter.is_value)
+                )
                 if generic_parameter.requires_list.has_value() {
                     .fill_trait_requirements(
                         names: generic_parameter.requires_list!,
@@ -4812,6 +4825,31 @@ struct Typechecker {
             )
         }
 
+        if rhs_type is Const(rhs) and lhs_type is Const(lhs) {
+            if rhs.impl.equals(lhs.impl) {
+                return true
+            }
+
+            let interpreter = .interpreter()
+            .error(
+                format(
+                    "Literal type value mismatch: expected '{}', found '{}'"
+                    comptime_format_impl(
+                        format_string: "{}"
+                        arguments: [lhs][..]
+                        program: &.program
+                    )
+                    comptime_format_impl(
+                        format_string: "{}"
+                        arguments: [rhs][..]
+                        program: &.program
+                    )
+                )
+                span
+            )
+            return false
+        }
+
         let optional_struct_id = .find_struct_in_prelude("Optional")
         let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
         let array_struct_id = .find_struct_in_prelude("Array")
@@ -4830,6 +4868,26 @@ struct Typechecker {
                 } else {
                     generic_inferences.set(key: lhs_type_id, value: rhs_type_id)
                 }
+            }
+            Dependent(namespace_type, name) => {
+                if rhs_type is Dependent(namespace_type: rhs_namespace_type, name: rhs_name) {
+                    .check_types_for_compat(
+                        lhs_type_id: namespace_type
+                        rhs_type_id: rhs_namespace_type
+                        generic_inferences
+                        span
+                    )
+
+                    if name != rhs_name {
+                        .error(
+                            format("Type mismatch: mismatched names for dependent types: ‘{}’ and ‘{}’", name, rhs_name)
+                            span
+                        )
+                        return false
+                    }
+                }
+
+                // Can't compare a dependent type to a non-dependent type at this stage, so just assume it's fine
             }
             GenericEnumInstance(id: lhs_enum_id, args: lhs_args) => {
                 if rhs_type is GenericEnumInstance(id: rhs_enum_id, args: rhs_args) {
@@ -5334,6 +5392,28 @@ struct Typechecker {
     }
 
     fn typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId, name: String?) throws -> TypeId => match parsed_type {
+        DependentType(base, name: dependent_name) => {
+            let base_type = .typecheck_typename(parsed_type: base, scope_id, name)
+            let type_id = .find_or_add_type_id(Type::Dependent(namespace_type: base_type, name: dependent_name))
+            yield .substitute_typevars_in_type(type_id, generic_inferences: .generic_inferences)
+        }
+        Const(expr) => {
+            let checked_expr = .typecheck_expression(
+                expr
+                scope_id
+                safety_mode: SafetyMode::Safe
+                type_hint: None
+            )
+            mut interpreter = .interpreter()
+            mut scope = InterpreterScope::from_runtime_scope(scope_id, program: .program)
+            let value = try interpreter.execute_expression(expr: checked_expr, scope)
+            if value.has_value() and value! is JustValue(resolved_value) {
+                return .find_or_add_type_id(Type::Const(resolved_value))
+            }
+
+            .error("Could not evaluate const expression", expr.span())
+            return .find_or_add_type_id(Type::Unknown)
+        }
         Reference(inner) => {
             let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
             yield .find_or_add_type_id(Type::Reference(inner_type_id))

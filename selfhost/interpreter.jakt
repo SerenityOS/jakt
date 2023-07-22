@@ -77,6 +77,8 @@ fn align_of_impl(
     CChar => 1
     CInt => Target::active().int_alignment()
     TypeVariable
+    | Const
+    | Dependent
     | GenericTraitInstance
     | GenericResolvedType => 0
     GenericInstance(id: struct_id, args)
@@ -188,6 +190,8 @@ fn size_of_impl(
     CChar => 1
     CInt => Target::active().int_size()
     TypeVariable
+    | Const
+    | Dependent
     | GenericTraitInstance
     | GenericResolvedType => 0
 
