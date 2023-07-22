@@ -199,6 +199,12 @@ inline constexpr T arithmetic_shift_right(T value, size_t steps)
     }
 }
 
+template<typename T>
+ALWAYS_INLINE auto assert_type(T&& input) -> decltype(input)
+{
+    return forward<T>(input);
+}
+
 template<typename OutputType, typename InputType>
 ALWAYS_INLINE Optional<OutputType> fallible_integer_cast(InputType input)
 {
@@ -360,6 +366,7 @@ namespace Jakt {
 using JaktInternal::abort;
 using JaktInternal::as_saturated;
 using JaktInternal::as_truncated;
+using JaktInternal::assert_type;
 using JaktInternal::fallible_class_cast;
 using JaktInternal::fallible_integer_cast;
 using JaktInternal::infallible_class_cast;
