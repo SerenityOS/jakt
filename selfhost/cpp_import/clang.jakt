@@ -90,10 +90,10 @@ fn type_from(
         CXType_LongLong => program.find_or_add_type_id(type: Type::I64, module_id)
         CXType_Float => program.find_or_add_type_id(type: Type::F32, module_id)
         CXType_Double => program.find_or_add_type_id(type: Type::F64, module_id)
-        CXType_Typedef => type_from(program, scope_id, module_id, t: clang_getCanonicalType(t))
+        CXType_Typedef => type_from(program, scope_id, module_id, clang_getCanonicalType(t))
         CXType_Pointer => program.find_or_add_type_id(
             type: Type::RawPtr(
-                type_from(program, scope_id, module_id, t: clang_getPointeeType(t))
+                type_from(program, scope_id, module_id, clang_getPointeeType(t))
             )
             module_id
         )
@@ -118,19 +118,14 @@ fn type_from(
             }
         }
         CXType_Elaborated => type_from(program, scope_id, module_id, clang_Type_getNamedType(t))
-        CXType_Unexposed => {
-            // who knows what this is really
-            // just look it up by name
-            let name = string_from(clang_getTypeSpelling(t))
-            yield program.find_type_in_scope(scope_id, name) ?? program.find_or_add_type_id(type: Type::Unknown, module_id)
-        }
+        CXType_Unexposed => program.find_or_add_type_id(Type::Unknown, module_id)
         CXType_LValueReference => program.find_or_add_type_id(
             type: Type::Reference(
-                type_from(program, scope_id, module_id, t: clang_getPointeeType(t))
+                type_from(program, scope_id, module_id, clang_getPointeeType(t))
             )
             module_id
         )
-        CXType_RValueReference => type_from(program, scope_id, module_id, t: clang_getPointeeType(t))
+        CXType_RValueReference => type_from(program, scope_id, module_id, clang_getPointeeType(t))
         else => {
             let v = clang_getTypeSpelling(t)
             eprintln("Unknown type kind: {} ({})", string_from(v), t.kind as! c_int)
