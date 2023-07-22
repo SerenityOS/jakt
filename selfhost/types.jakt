@@ -2860,3 +2860,227 @@ class TypecheckFunctions {
         checked_function: CheckedFunction
     ) throws -> FunctionId
 }
+
+fn format_value_impl(anon format_string: String, anon value: Value, program: &CheckedProgram) throws -> String => match value.impl {
+    Bool(v)
+    | U8(v)
+    | U16(v)
+    | U32(v)
+    | U64(v)
+    | USize(v)
+    | I8(v)
+    | I16(v)
+    | I32(v)
+    | I64(v)
+    | F32(v)
+    | F64(v)
+    | CChar(v)
+    | CInt(v)
+    | JaktString(v)
+    | StringView(v)
+    => format(format_string, v)
+
+    Void => format(format_string, "(void)")
+
+    Struct(fields, struct_id, constructor)
+    | Class(fields, struct_id, constructor)
+    => {
+        let structure = program.get_struct(struct_id)
+        mut builder = StringBuilder::create()
+        mut field_names: [String] = []
+
+        builder.append(structure.name)
+        if constructor.has_value() {
+            let function = program.get_function(constructor!)
+            builder.append("::")
+            builder.append(function.name)
+            for parameter in function.params {
+                field_names.push(parameter.variable.name)
+            }
+        } else {
+            for field in structure.fields {
+                field_names.push(program.get_variable(field.variable_id).name)
+            }
+        }
+        builder.append('(')
+        mut index = 0uz
+        for field in fields {
+            if index > 0 {
+                builder.append(", ")
+            }
+
+            builder.append(field_names[index])
+            builder.append(": ")
+            builder.append(format_value_impl(format_string, field, program))
+            index += 1
+        }
+
+        builder.append(')')
+        yield builder.to_string()
+    }
+
+    Enum(fields, enum_id, constructor) => {
+        let enum_ = program.get_enum(enum_id)
+        let function = program.get_function(constructor)
+        mut builder = StringBuilder::create()
+        mut field_names: [String] = []
+
+        builder.append(enum_.name)
+        builder.append("::")
+        builder.append(function.name)
+        for parameter in function.params {
+            field_names.push(parameter.variable.name)
+        }
+
+        builder.append('(')
+        mut index = 0uz
+        for field in fields {
+            if index > 0 {
+                builder.append(", ")
+            }
+
+            builder.append(field_names[index])
+            builder.append(": ")
+            builder.append(format_value_impl(format_string, field, program))
+            index += 1
+        }
+
+        builder.append(')')
+        yield builder.to_string()
+    }
+
+    OptionalSome(value) => format_value_impl(
+        format_string: format("Some({})", format_string)
+        value
+        program
+    )
+    OptionalNone => format(format_string, "None")
+
+    JaktTuple(fields)
+    | JaktArray(values: fields)
+    | JaktSet(values: fields) => {
+        mut builder = StringBuilder::create()
+        let surrounding = match value.impl {
+            JaktTuple => ('(', ')')
+            JaktArray => ('[', ']')
+            JaktSet => ('{', '}')
+            else => {
+                abort()
+            }
+        }
+        builder.append(surrounding.0)
+        mut index = 0uz
+        for field in fields {
+            if index > 0 {
+                builder.append(", ")
+            }
+
+            builder.append(format_value_impl(format_string, field, program))
+            index += 1
+        }
+
+        builder.append(surrounding.1)
+        yield builder.to_string()
+    }
+
+    JaktDictionary(keys, values) => {
+        mut builder = StringBuilder::create()
+        builder.append('[')
+        mut index = 0uz
+        for key in keys {
+            if index > 0 {
+                builder.append(", ")
+            }
+
+            builder.append(format_value_impl(format_string, key, program))
+            builder.append(": ")
+            builder.append(format_value_impl(format_string, values[index], program))
+
+            index += 1
+        }
+
+        builder.append(']')
+        yield builder.to_string()
+    }
+
+    else => {
+        eprintln("Cannot format value {}", value.impl)
+        throw Error::from_string_literal("Cannot format value of this type")
+    }
+}
+
+fn comptime_format_impl(format_string: String, arguments: ArraySlice<Value>, program: &CheckedProgram) throws -> String {
+    mut builder = StringBuilder::create()
+    mut current_argument_index = 0uz
+    mut format_field_builder = StringBuilder::create()
+    mut index_in_field: usize? = None
+    mut expect_close_brace = false
+
+    let argument_and_index = fn(anon str: String) -> (usize?, String) {
+        mut slice_end = 0uz
+        mut has_index = false
+        for code_point in str.code_points() {
+            guard code_point >= '0' and code_point <= '9' else {
+                break
+            }
+            slice_end += 1
+            has_index = true
+        }
+
+        if has_index {
+            let index_str = str.substring(start: 0, length: slice_end)
+            let index = index_str.to_uint()
+            if index.has_value() {
+                return (index! as! usize, str.substring(start: slice_end, length: str.length() - slice_end))
+            }
+        }
+
+        return (None, str)
+    }
+
+    for code_point in format_string.code_points() {
+        match code_point {
+            '{' => {
+                if index_in_field.has_value() and index_in_field! == 0 {
+                    builder.append('{')
+                    index_in_field = None
+                } else if index_in_field.has_value() {
+                    format_field_builder.append('{')
+                    index_in_field = index_in_field! + 1
+                } else {
+                    index_in_field = 0
+                }
+            }
+            '}' => {
+                if expect_close_brace {
+                    builder.append('}')
+                    expect_close_brace = false
+                } else if not index_in_field.has_value() {
+                    expect_close_brace = true
+                } else {
+                    index_in_field = None
+                    let fmt_string = format_field_builder.to_string()
+                    format_field_builder.clear()
+                    let (index, format_string) = argument_and_index(fmt_string)
+                    let effective_index = index ?? current_argument_index++
+                    if effective_index >= arguments.size() {
+                        throw Error::from_string_literal("Not enough arguments for format string")
+                    }
+
+                    let effective_format_string = format("{{{}}}", format_string)
+
+                    builder.append(format_value_impl(effective_format_string, arguments[effective_index], program))
+                }
+            }
+            else => {
+                if index_in_field.has_value() {
+                    format_field_builder.append(code_point)
+                } else {
+                    builder.append(code_point)
+                }
+            }
+        }
+    }
+
+    return builder.to_string()
+}
