@@ -2202,7 +2202,9 @@ struct CodeGenerator {
                         }
                         Infallible => {
                             mut cast_type = "verify_cast"
-                            if type.is_boxed(program: .program) {
+                            if expr.type() == unknown_type_id() {
+                                cast_type = "assert_type"
+                            } else if type.is_boxed(program: .program) {
                                 cast_type = "infallible_class_cast"
                             } else if .program.is_integer(type_id) {
                                 cast_type = "infallible_integer_cast"
