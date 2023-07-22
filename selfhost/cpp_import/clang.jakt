@@ -1,8 +1,9 @@
 import types {
-    BlockControlFlow, CheckedBlock, CheckedField, CheckedFunction, CheckedGenericParameter, CheckedParameter
-    CheckedProgram, CheckedStruct, CheckedVariable, CheckedVisibility, DefinitionLinkage, FileId, FunctionGenerics
-    FunctionLinkage, ModuleId, ScopeId, StructId, Type, TypeId, FunctionGenericParameter, FunctionGenericParameterKind
-    ExternalName, EnumId, CheckedEnum, CheckedEnumVariant
+    BlockControlFlow, CheckedBlock, CheckedEnum, CheckedEnumVariant, CheckedField, CheckedFunction
+    CheckedGenericParameter, CheckedParameter, CheckedProgram, CheckedStruct, CheckedVariable, CheckedVisibility
+    DefinitionLinkage, EnumId, ExternalName, FileId, FunctionGenericParameter, FunctionGenericParameterKind
+    FunctionGenerics, FunctionLinkage, ModuleId, ScopeId, SpecializedType, StructId, Type, TypeId, Value, ValueImpl
+    unknown_type_id
 }
 import parser {
     FunctionType, ParsedField, ParsedVarDecl, RecordType, ParsedType
@@ -20,17 +21,21 @@ import cpp_import::clang_c {
 }
 import cpp_import::clang_c {
     clang_CXXMethod_isConst, clang_CXXMethod_isPureVirtual, clang_CXXMethod_isStatic, clang_CXXMethod_isVirtual
-    clang_Cursor_getNumTemplateArguments, clang_Cursor_getTranslationUnit, clang_Cursor_isNull
-    clang_Type_getNamedType, clang_createIndex, clang_createTranslationUnit, clang_disposeIndex, clang_disposeString
-    clang_disposeTokens, clang_disposeTranslationUnit, clang_getArgType, clang_getCString, clang_getCanonicalCursor
+    clang_Cursor_Evaluate, clang_Cursor_getNumTemplateArguments, clang_Cursor_getTranslationUnit
+    clang_Cursor_isNull, clang_EvalResult_dispose, clang_EvalResult_getAsDouble, clang_EvalResult_getAsInt
+    clang_EvalResult_getAsLongLong, clang_EvalResult_getAsStr, clang_EvalResult_getAsUnsigned
+    clang_EvalResult_getKind, clang_EvalResult_isUnsignedInt, clang_Type_getNamedType, clang_createIndex
+    clang_createTranslationUnit, clang_disposeIndex, clang_disposeString, clang_disposeTokens
+    clang_disposeTranslationUnit, clang_equalCursors, clang_getArgType, clang_getCString, clang_getCanonicalCursor
     clang_getCanonicalType, clang_getCursorDefinition, clang_getCursorExtent, clang_getCursorKind
     clang_getCursorKindSpelling, clang_getCursorLocation, clang_getCursorPrettyPrinted
-    clang_getCursorPrintingPolicy, clang_getCursorResultType, clang_getCursorSpelling, clang_getCursorType
-    clang_getCursorUSR, clang_getEnumDeclIntegerType, clang_getFileName, clang_getNumArgTypes, clang_getPointeeType
-    clang_getResultType, clang_getSpecializedCursorTemplate, clang_getSpellingLocation, clang_getTemplateCursorKind
-    clang_getTokenKind, clang_getTokenSpelling, clang_getTranslationUnitCursor, clang_getTypeDeclaration
-    clang_getTypeKindSpelling, clang_getTypeSpelling, clang_getTypedefDeclUnderlyingType, clang_isCursorDefinition
-    clang_parseTranslationUnit2, clang_saveTranslationUnit, clang_tokenize, clang_visitChildren
+    clang_getCursorPrintingPolicy, clang_getCursorResultType, clang_getCursorSemanticParent, clang_getCursorSpelling
+    clang_getCursorType, clang_getCursorUSR, clang_getEnumDeclIntegerType, clang_getFileName, clang_getNumArgTypes
+    clang_getPointeeType, clang_getResultType, clang_getSpecializedCursorTemplate, clang_getSpellingLocation
+    clang_getTemplateCursorKind, clang_getTokenKind, clang_getTokenSpelling, clang_getTranslationUnitCursor
+    clang_getTypeDeclaration, clang_getTypeKindSpelling, clang_getTypeSpelling, clang_getTypedefDeclUnderlyingType
+    clang_isCursorDefinition, clang_isDeclaration, clang_isExpression, clang_parseTranslationUnit2
+    clang_saveTranslationUnit, clang_tokenize, clang_visitChildren
 }
 import utility { allocate }
 import extern c "stdlib.h" {
@@ -63,6 +68,100 @@ fn string_from(anon string: CXString, dispose: bool = true) throws -> String {
         "value = { clang_getCString(string), strlen(clang_getCString(string)) };"
     } }
     return String::from_string_literal(value)
+}
+
+fn const_type_from(
+    program: &mut CheckedProgram
+    scope_id: ScopeId
+    module_id: ModuleId
+    anon cursor: CXCursor
+) throws -> TypeId {
+    if not clang_isExpression(clang_getCursorKind(cursor)) {
+        eprintln("[ICE] Const type input is not an expression")
+        return program.find_or_add_type_id(type: Type::Unknown, module_id)
+    }
+
+    let eval_result = clang_Cursor_Evaluate(cursor)
+    defer clang_EvalResult_dispose(eval_result)
+
+    let value_impl = match clang_EvalResult_getKind(eval_result) {
+        CXEval_Int => match clang_EvalResult_isUnsignedInt(eval_result) {
+            true => cast_to_type(clang_EvalResult_getAsUnsigned(eval_result) as! u64, clang_getCursorType(cursor))
+            false => cast_to_type(clang_EvalResult_getAsLongLong(eval_result) as! i64, clang_getCursorType(cursor))
+        }
+        CXEval_UnExposed => cast_to_type(clang_EvalResult_getAsInt(eval_result) as! i64, clang_getCursorType(cursor))
+        CXEval_Float => cast_to_type(clang_EvalResult_getAsDouble(eval_result), clang_getCursorType(cursor))
+        CXEval_StrLiteral
+        | CXEval_ObjCStrLiteral
+        | CXEval_CFStr
+        | CXEval_Other => {
+            eprintln("Const type input kind {} not supported", clang_EvalResult_getKind(eval_result) as! c_int)
+            return program.find_or_add_type_id(type: Type::Unknown, module_id)
+        }
+    }
+
+    return program.find_or_add_type_id(type: Type::Const(
+        Value(impl: value_impl, span: empty_span())
+    ), module_id)
+}
+
+fn cpp_static_cast<T, U>(value: U) -> T {
+    mut x = null<T>()
+    unsafe { cpp { "x = static_cast<decltype(x)>(value);" } }
+    return x
+}
+
+fn cast_to_type(
+    anon value: i64
+    anon type: CXType
+) throws -> ValueImpl => match clang_getCanonicalType(type).kind {
+    CXType_Bool => ValueImpl::Bool(cpp_static_cast<bool>(value))
+    CXType_Char_U => ValueImpl::U8(cpp_static_cast<u8>(value))
+    CXType_UChar => ValueImpl::U8(cpp_static_cast<u8>(value))
+    CXType_Char16 => ValueImpl::U16(cpp_static_cast<u16>(value))
+    CXType_Char32 => ValueImpl::U32(cpp_static_cast<u32>(value))
+    CXType_UShort => ValueImpl::U16(cpp_static_cast<u16>(value))
+    CXType_UInt => ValueImpl::U32(cpp_static_cast<u32>(value))
+    CXType_ULong => ValueImpl::U32(cpp_static_cast<u32>(value))
+    CXType_ULongLong => ValueImpl::U64(cpp_static_cast<u64>(value))
+    CXType_Char_S => ValueImpl::I8(cpp_static_cast<i8>(value))
+    CXType_SChar => ValueImpl::I8(cpp_static_cast<i8>(value))
+    CXType_Short => ValueImpl::I16(cpp_static_cast<i16>(value))
+    CXType_Int => ValueImpl::I32(cpp_static_cast<i32>(value))
+    CXType_Long => ValueImpl::I32(cpp_static_cast<i32>(value))
+    CXType_LongLong => ValueImpl::I64(cpp_static_cast<i64>(value))
+    else => ValueImpl::Void
+}
+
+fn cast_to_type(
+    anon value: u64
+    anon type: CXType
+) throws -> ValueImpl => match clang_getCanonicalType(type).kind {
+    CXType_Bool => ValueImpl::Bool(cpp_static_cast<bool>(value))
+    CXType_Char_U => ValueImpl::U8(cpp_static_cast<u8>(value))
+    CXType_UChar => ValueImpl::U8(cpp_static_cast<u8>(value))
+    CXType_Char16 => ValueImpl::U16(cpp_static_cast<u16>(value))
+    CXType_Char32 => ValueImpl::U32(cpp_static_cast<u32>(value))
+    CXType_UShort => ValueImpl::U16(cpp_static_cast<u16>(value))
+    CXType_UInt => ValueImpl::U32(cpp_static_cast<u32>(value))
+    CXType_ULong => ValueImpl::U32(cpp_static_cast<u32>(value))
+    CXType_ULongLong => ValueImpl::U64(cpp_static_cast<u64>(value))
+    CXType_Char_S => ValueImpl::I8(cpp_static_cast<i8>(value))
+    CXType_SChar => ValueImpl::I8(cpp_static_cast<i8>(value))
+    CXType_Short => ValueImpl::I16(cpp_static_cast<i16>(value))
+    CXType_Int => ValueImpl::I32(cpp_static_cast<i32>(value))
+    CXType_Long => ValueImpl::I32(cpp_static_cast<i32>(value))
+    CXType_LongLong => ValueImpl::I64(cpp_static_cast<i64>(value))
+    else => ValueImpl::Void
+}
+
+fn cast_to_type(
+    anon value: f64
+    anon type: CXType
+) throws -> ValueImpl => match clang_getCanonicalType(type).kind {
+    CXType_Float => ValueImpl::F32(cpp_static_cast<f32>(value))
+    CXType_Double => ValueImpl::F64(value)
+    else => ValueImpl::Void
 }
 
 fn type_from(
@@ -138,6 +237,7 @@ struct Context {
     program: CheckedProgram
     module_id: ModuleId
     scope_id: ScopeId
+    this_type: TypeId?
     extra: raw void
 }
 
@@ -161,19 +261,20 @@ fn process_namespace_contents(
     allowed_contents: AllowedContents
     this_type: TypeId?
 ) throws {
-    let extra = (allowed_contents, this_type)
     mut context = Context(
         program: *program
         module_id
         scope_id
-        extra: bitcast<raw void>(&raw extra)
+        this_type
+        extra: bitcast<raw void>(&raw allowed_contents)
     )
 
     clang_visitChildren(
         parent: cursor
         visitor: fn(c: CXCursor, parent: CXCursor, data: CXClientData) -> CXChildVisitResult {
             mut context = unsafe *bitcast<raw Context>(data)
-            let (allowed_contents, this_type) = unsafe *bitcast<raw (AllowedContents, TypeId?)>(context.extra)
+            let this_type = context.this_type
+            let allowed_contents = unsafe *bitcast<raw AllowedContents>(context.extra)
 
             return match clang_getCursorKind(cursor: c) {
                 CXCursor_StructDecl | CXCursor_ClassDecl => {
@@ -216,6 +317,20 @@ fn process_namespace_contents(
                 CXCursor_CXXMethod | CXCursor_FunctionDecl => match allowed_contents {
                     OnlyFunctions | Everything => {
                         try process_function(
+                            program: &mut context.program
+                            parent_scope_id: context.scope_id
+                            module_id: context.module_id
+                            this_type
+                            kind: ExternFunctionKind::Normal
+                            cursor: c
+                        )
+                        yield CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    else => CXChildVisitResult::CXChildVisit_Continue
+                }
+                CXCursor_FunctionTemplate => match allowed_contents {
+                    OnlyFunctions | Everything => {
+                        try process_function_template(
                             program: &mut context.program
                             parent_scope_id: context.scope_id
                             module_id: context.module_id
@@ -277,6 +392,7 @@ fn process_namespace_contents(
                             program: &mut context.program
                             parent_scope_id: context.scope_id
                             module_id: context.module_id
+                            this_type_id: this_type
                             cursor: c
                         )
                         yield CXChildVisitResult::CXChildVisit_Continue
@@ -286,6 +402,18 @@ fn process_namespace_contents(
                 CXCursor_ClassTemplate => match allowed_contents {
                     Everything => {
                         try process_class_template(
+                            program: &mut context.program
+                            parent_scope_id: context.scope_id
+                            module_id: context.module_id
+                            cursor: c
+                        )
+                        yield CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    else => CXChildVisitResult::CXChildVisit_Continue
+                }
+                CXCursor_ClassTemplatePartialSpecialization => match allowed_contents {
+                    Everything => {
+                        try process_class_template_partial_specialization(
                             program: &mut context.program
                             parent_scope_id: context.scope_id
                             module_id: context.module_id
@@ -306,6 +434,208 @@ unsafe fn read_at_offset<T>(anon xs: raw T, anon i: u32) -> T {
     return unsafe *bitcast<raw T>(bitcast<u64>(xs) + (i as! u64 * (sizeof T as! u64)))
 }
 
+fn process_class_template_partial_specialization(
+    program: &mut CheckedProgram
+    parent_scope_id: ScopeId
+    module_id: ModuleId
+    cursor: CXCursor
+) throws {
+    let name = name_from(cursor)
+    let template_parameters = extract_cursors_of_kinds(
+        cursor
+        kinds: {CXCursorKind::CXCursor_TemplateTypeParameter, CXCursorKind::CXCursor_NonTypeTemplateParameter}
+    )
+    let specialization_template_parameters = extract_template_parameters(program, parent_scope_id, module_id, cursor)
+
+    // Resolve arguments
+    let template_arguments = extract_matching_cursors_breaking_at_boundary(
+        cursor
+        &fn(anon kind: CXCursorKind) -> bool => not clang_isDeclaration(kind)
+        skip: template_parameters.size()
+    )
+
+    let struct_id = program.find_struct_in_scope(
+        scope_id: parent_scope_id
+        name
+    )
+    if not struct_id.has_value() {
+        eprintln("[ICE] Couldn't find struct for partial specialization named {}", name)
+        return
+    }
+
+    let base_struct = program.get_struct(struct_id!)
+
+    // Make a specialization
+    mut arguments: [TypeId] = []
+    for argument in template_arguments {
+        mut type = match clang_isExpression(clang_getCursorKind(argument)) {
+            true => const_type_from(
+                program
+                scope_id: parent_scope_id
+                module_id
+                cursor: argument
+            )
+            false => type_from(
+                program
+                scope_id: parent_scope_id
+                module_id
+                clang_getCursorType(argument)
+            )
+        }
+        arguments.push(type)
+    }
+
+    mut specialized_name = ""
+    for argument in arguments {
+        specialized_name = specialized_name + ", " + program.type_name(argument)
+    }
+    if specialized_name.length() > 0 {
+        specialized_name = specialized_name.substring(start: 2, length: specialized_name.length() - 2)
+    }
+
+    process_struct(
+        program
+        parent_scope_id
+        module_id
+        cursor
+        generic_parameters: base_struct.generic_parameters
+        generic_parameter_defaults: base_struct.generic_parameter_defaults
+        named_specialization_disambiguator: specialized_name
+    )
+
+    let base_type_id = program.find_or_add_type_id(Type::Struct(struct_id!), module_id)
+    let specialized_struct_id = program.find_struct_in_scope(
+        scope_id: parent_scope_id
+        name: format("{}<{}>", name, specialized_name)
+    )
+    if not specialized_struct_id.has_value() {
+        eprintln("[ICE] Couldn't find struct for partial specialization named {}", name)
+        abort()
+    }
+
+    let type_id = program.find_or_add_type_id(
+        Type::Struct(specialized_struct_id!)
+        module_id
+    )
+    let specialization = SpecializedType(
+        base_type_id
+        arguments
+        type_id
+    )
+
+    mut scope = program.get_scope(parent_scope_id)
+    scope.explicitly_specialized_types.set(name, specialization)
+}
+
+struct TemplateParameters {
+    params: [CheckedGenericParameter]
+    defaults: [TypeId?]
+}
+
+fn extract_template_parameters(
+    program: &mut CheckedProgram
+    parent_scope_id: ScopeId
+    module_id: ModuleId
+    cursor: CXCursor
+) throws -> TemplateParameters {
+    let template_parameters = extract_cursors_of_kinds(
+        cursor
+        kinds: {CXCursorKind::CXCursor_TemplateTypeParameter, CXCursorKind::CXCursor_NonTypeTemplateParameter}
+    )
+    mut params: [CheckedGenericParameter] = []
+    mut defaults: [TypeId?] = []
+    for parameter in template_parameters {
+        let spelling = string_from(clang_getCursorSpelling(parameter))
+        let name = name_from(parameter)
+        mut constraints_and_default_value = extract_cursors_of_kinds(
+            cursor: parameter
+            kinds: {}
+        )
+        mut default_value_cursor: CXCursor? = None
+        mut constraint_cursor: CXCursor? = None
+
+        match constraints_and_default_value.size() {
+            0 => {}
+            1 => {
+                // We need to figure out if this is a constraint or a default value
+                // Thanks clang-c <3
+                let cursor = constraints_and_default_value[0]
+                if clang_getCursorType(cursor).kind is CXType_Invalid {
+                    // This is not a 'type', so it's a constraint.
+                    constraint_cursor = cursor
+                } else {
+                    default_value_cursor = cursor
+                }
+            }
+            else => {
+                // We're good, [0] is the constraint, and [1] is the default value
+                constraint_cursor = constraints_and_default_value[0]
+                default_value_cursor = constraints_and_default_value[1]
+            }
+        }
+
+        mut default_type: TypeId? = None
+        if default_value_cursor.has_value() {
+            default_type = match clang_isExpression(clang_getCursorKind(default_value_cursor!)) {
+                true => const_type_from(
+                    program
+                    scope_id: parent_scope_id
+                    module_id
+                    cursor: default_value_cursor!
+                )
+                false => type_from(
+                    program
+                    scope_id: parent_scope_id
+                    module_id
+                    clang_getCursorType(default_value_cursor!)
+                )
+            }
+
+            let name = name_from(cursor)
+            if name == "Vector" {
+                eprintln("Vector default value: {} '{}' = {}"
+                    string_from(clang_getTypeSpelling(clang_getCursorType(default_value_cursor!)))
+                    string_from(clang_getCursorSpelling(default_value_cursor!))
+                    program.type_name(default_type!, debug_mode: true)
+                )
+                for entry in constraints_and_default_value {
+                    eprintln("  {} '{}'"
+                        string_from(clang_getTypeSpelling(clang_getCursorType(entry)))
+                        string_from(clang_getCursorSpelling(entry))
+                    )
+                }
+            }
+        }
+
+        // FIXME: Constraints, etc.
+        params.push(
+            CheckedGenericParameter(
+                type_id: program.find_or_add_type_id(
+                    Type::TypeVariable(
+                        name
+                        trait_implementations: []
+                        is_value: clang_getCursorKind(parameter) is CXCursor_NonTypeTemplateParameter
+                    )
+                    module_id
+                )
+                constraints: []
+                span: empty_span()
+            )
+        )
+        defaults.push(default_type)
+    }
+
+    if defaults.size() != params.size() {
+        eprintln("[ICE] Template parameters ({}) and defaults ({}) don't match", params, defaults)
+        abort()
+    }
+
+    return TemplateParameters(
+        params
+        defaults
+    )
+}
+
 fn process_class_template(
     program: &mut CheckedProgram
     parent_scope_id: ScopeId
@@ -315,73 +645,14 @@ fn process_class_template(
     let name = name_from(cursor)
     match clang_getTemplateCursorKind(cursor) {
         CXCursor_StructDecl | CXCursor_ClassDecl => {
-            let template_parameters = extract_cursors_of_kinds(
-                cursor
-                kinds: {CXCursorKind::CXCursor_TemplateTypeParameter}
-            )
-            mut params: [CheckedGenericParameter] = []
-            mut defaults: [TypeId?] = []
-            for parameter in template_parameters {
-                let spelling = string_from(clang_getCursorSpelling(parameter))
-                let name = name_from(parameter)
-                mut constraints_and_default_value = extract_cursors_of_kinds(
-                    cursor: parameter
-                    kinds: {}
-                )
-                mut default_value_cursor: CXCursor? = None
-                mut constraint_cursor: CXCursor? = None
-
-                match constraints_and_default_value.size() {
-                    0 => {}
-                    1 => {
-                        // We need to figure out if this is a constraint or a default value
-                        // Thanks clang-c <3
-                        let cursor = constraints_and_default_value[0]
-                        if clang_getCursorType(cursor).kind is CXType_Invalid {
-                            // This is not a 'type', so it's a constraint.
-                            constraint_cursor = cursor
-                        } else {
-                            default_value_cursor = cursor
-                        }
-                    }
-                    else => {
-                        // We're good, [0] is the constraint, and [1] is the default value
-                        constraint_cursor = constraints_and_default_value[0]
-                        default_value_cursor = constraints_and_default_value[1]
-                    }
-                }
-
-                mut default_type: TypeId? = None
-                if default_value_cursor.has_value() {
-                    default_type = type_from(
-                        program
-                        scope_id: parent_scope_id
-                        module_id
-                        clang_getCursorType(default_value_cursor!)
-                    )
-                }
-
-                // FIXME: Constraints, etc.
-                params.push(
-                    CheckedGenericParameter(
-                        type_id: program.find_or_add_type_id(
-                            Type::TypeVariable(name, trait_implementations: [])
-                            module_id
-                        )
-                        constraints: []
-                        span: empty_span()
-                    )
-                )
-                defaults.push(default_type)
-            }
-
+            let template_parameters = extract_template_parameters(program, parent_scope_id, module_id, cursor)
             process_struct(
                 program
                 parent_scope_id
                 module_id
                 cursor
-                generic_parameters: params
-                generic_parameter_defaults: defaults
+                generic_parameters: template_parameters.params
+                generic_parameter_defaults: template_parameters.defaults
             )
         }
         else => {
@@ -400,7 +671,6 @@ fn extract_cursors_of_kinds(
     cursor: CXCursor
     kinds: {CXCursorKind}
 ) throws -> [CXCursor] {
-    let default_recurse: {CXCursorKind} = {}
     mut context = CursorSearchContext(
         kinds
         result: []
@@ -423,10 +693,43 @@ fn extract_cursors_of_kinds(
     return context.result
 }
 
+fn extract_matching_cursors_breaking_at_boundary(
+    cursor: CXCursor
+    anon predicate: &fn(anon kind: CXCursorKind) -> bool
+    skip: usize = 0
+) throws -> [CXCursor] {
+    mut results: [CXCursor] = []
+    mut context = (&raw predicate, results, skip)
+
+    clang_visitChildren(
+        parent: cursor
+        visitor: fn(c: CXCursor, parent: CXCursor, data: CXClientData) -> CXChildVisitResult {
+            mut ptr = bitcast<raw (raw fn(anon kind: CXCursorKind) -> bool, [CXCursor], usize)>(data)
+            mut context = &mut unsafe *ptr
+            let predicate = &unsafe *context.0
+
+            let kind = clang_getCursorKind(c)
+            if predicate(kind) {
+                try context.1.push(c)
+            } else if context.2 == 0 {
+                return CXChildVisitResult::CXChildVisit_Break
+            } else if context.2 > 0 {
+                context.2 -= 1
+            }
+
+            return CXChildVisitResult::CXChildVisit_Continue
+        }
+        client_data: CXClientData(bitcast<raw void>(&raw context))
+    )
+
+    return results
+}
+
 fn process_type_alias(
     program: &mut CheckedProgram
     parent_scope_id: ScopeId
     module_id: ModuleId
+    this_type_id: TypeId?
     cursor: CXCursor
 ) throws {
     process_namespace_contents(
@@ -435,7 +738,7 @@ fn process_type_alias(
         module_id: module_id
         cursor: cursor
         allowed_contents: AllowedContents::OnlyTypes
-        this_type: None
+        this_type: this_type_id
     )
 
     let name = name_from(cursor)
@@ -530,6 +833,41 @@ fn function_names_from(cursor: CXCursor) throws -> (String, ExternalName?) {
     return (name, extern_name)
 }
 
+fn process_function_template(
+    program: &mut CheckedProgram
+    parent_scope_id: ScopeId
+    module_id: ModuleId
+    this_type: TypeId?
+    kind: ExternFunctionKind
+    cursor: CXCursor
+) throws {
+    let template_parameters = extract_template_parameters(program, parent_scope_id, module_id, cursor)
+    process_function(
+        program
+        parent_scope_id
+        module_id
+        this_type
+        kind
+        cursor
+        template_parameters
+    )
+}
+
+fn function_generic_parameters_from(
+    anon params: [CheckedGenericParameter]?
+) throws -> [FunctionGenericParameter] {
+    mut result: [FunctionGenericParameter] = []
+    if params.has_value() {
+        for param in params! {
+            result.push(FunctionGenericParameter(
+                kind: FunctionGenericParameterKind::Parameter
+                checked_parameter: param
+            ))
+        }
+    }
+    return result
+}
+
 fn process_function(
     program: &mut CheckedProgram
     parent_scope_id: ScopeId
@@ -537,6 +875,7 @@ fn process_function(
     this_type: TypeId?
     kind: ExternFunctionKind
     cursor: CXCursor
+    template_parameters: TemplateParameters? = None
 ) throws {
     if not this_type.has_value() and (kind is Constructor or kind is Destructor) {
         eprintln("[ICE] Constructor or destructor ({}) without a this type", name_from(cursor))
@@ -593,7 +932,12 @@ fn process_function(
     for parameter in parameters {
         let arg_type = clang_getCursorType(parameter)
         let arg_name = name_from(parameter)
-        let arg_type_id = type_from(program, scope_id: function_scope, module_id, arg_type)
+        let arg_type_id = type_from(
+            program
+            scope_id: function_scope
+            module_id
+            arg_type
+        )
         let variable = CheckedVariable(
             name: arg_name
             type_id: arg_type_id
@@ -631,7 +975,7 @@ fn process_function(
         generics: FunctionGenerics(
             base_scope_id: function_scope
             base_params: params
-            params: []
+            params: function_generic_parameters_from(template_parameters?.params)
             specializations: []
         )
         block: CheckedBlock(
@@ -877,6 +1221,7 @@ fn process_struct(
     cursor: CXCursor
     generic_parameters: [CheckedGenericParameter]? = None
     generic_parameter_defaults: [TypeId?]? = None
+    named_specialization_disambiguator: String? = None
 ) throws {
     if generic_parameters.has_value() and generic_parameter_defaults.has_value() {
         if generic_parameters!.size() != generic_parameter_defaults!.size() {
@@ -890,13 +1235,18 @@ fn process_struct(
         name = format("<anonymous@{}>", &raw cursor)
     }
 
+    let specialized_name = match named_specialization_disambiguator.has_value() {
+        true => format("{}<{}>", name, named_specialization_disambiguator!),
+        false => name
+    }
+
     let bases = extract_cursors_of_kinds(
         cursor
         kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier}
     )
 
     mut module = program.get_module(module_id)
-    let existing_struct_id = program.get_scope(parent_scope_id).structs.get(name)
+    let existing_struct_id = program.get_scope(parent_scope_id).structs.get(specialized_name)
 
     let (struct_scope, scope_was_just_made) = match existing_struct_id.has_value() {
         true => (program.get_struct(existing_struct_id!).scope_id, false)
@@ -904,7 +1254,7 @@ fn process_struct(
             program.create_scope(
                 parent_scope_id
                 can_throw: false
-                debug_name: format("cpp-struct({})", name)
+                debug_name: format("cpp-struct({})", specialized_name)
                 module_id
                 for_block: false
             ),
@@ -913,7 +1263,7 @@ fn process_struct(
     }
 
     mut scope = program.get_scope(struct_scope)
-    scope.namespace_name = name
+    scope.namespace_name = specialized_name
 
     if generic_parameters.has_value() {
         for parameter in generic_parameters! {
@@ -951,8 +1301,8 @@ fn process_struct(
         module_id
     )
 
-    parent_scope.structs.set(name, struct_id)
-    parent_scope.types.set(name, struct_type_id)
+    parent_scope.structs.set(specialized_name, struct_id)
+    parent_scope.types.set(specialized_name, struct_type_id)
 
     if scope_was_just_made {
         // This is a predecl, so just add an empty struct for now.
@@ -989,7 +1339,12 @@ fn process_struct(
 
     mut super_struct_ids: [StructId] = []
     for base in bases {
-        match program.get_type(type_from(&mut program, scope_id: parent_scope_id, module_id, t: clang_getCursorType(base))) {
+        match program.get_type(type_from(
+            &mut program
+            scope_id: parent_scope_id
+            module_id
+            clang_getCursorType(base)
+        )) {
             GenericInstance(id) | Struct(id) => { super_struct_ids.push(id) }
             else => {}
         }
@@ -1009,6 +1364,7 @@ fn process_struct(
         program: *program
         module_id
         scope_id: struct_scope
+        this_type: struct_type_id
         extra: bitcast<raw void>(&raw fields)
     )
 
@@ -1029,7 +1385,12 @@ fn process_struct(
                     // if the field is a function (and not a function pointer), skip it here
                     if not (clang_getCursorType(c).kind is CXType_FunctionProto) {
                         let name = name_from(c)
-                        let type_id = type_from(&mut program, scope_id: struct_scope, module_id, t: clang_getCursorType(c))
+                        let type_id = type_from(
+                            &mut program
+                            scope_id: struct_scope
+                            module_id
+                            clang_getCursorType(c)
+                        )
                         let variable = CheckedVariable(
                             name
                             type_id
@@ -1299,5 +1660,60 @@ fn process_cpp_import(
     clang_disposeTranslationUnit(tu)
     clang_disposeIndex(index)
 
+    // dump_scope(import_scope_id, &program)
+
     return import_scope_id
+}
+
+fn dump_scope(anon scope_id: ScopeId, anon program: &CheckedProgram, indent: i64 = 0) throws {
+    mut scope = program.get_scope(scope_id)
+    eprintln("{: >{}}Scope (ns={}) {}", "", indent, scope.namespace_name, scope.debug_name)
+    let cindent = indent + 2
+    eprintln("{: >{}}Types:", "", cindent)
+    for (name, type_id) in scope.types {
+        let type = program.get_type(type_id)
+        eprintln("{: >{}}{}: {}", "", cindent + 2, name, program.type_name(type_id, debug_mode: true))
+    }
+    eprintln("{: >{}}Specializations:", "", cindent)
+    for (name, type) in scope.explicitly_specialized_types {
+        let type_name = program.type_name(type.type_id, debug_mode: true)
+        mut args = ""
+        for arg in type.arguments {
+            args = args + program.type_name(arg, debug_mode: true) + ", "
+        }
+
+        eprintln("{: >{}}{}<{}> = {}", "", cindent + 2, name, args, type_name)
+    }
+    eprintln("{: >{}}Variables:", "", cindent)
+    for (name, var_id) in scope.vars {
+        let var = program.get_variable(var_id)
+        eprintln("{: >{}}{}: {}", "", cindent + 2, name, program.type_name(var.type_id, debug_mode: true))
+    }
+    eprintln("{: >{}}Functions:", "", cindent)
+    for (name, ids) in scope.functions {
+        eprintln("{: >{}}{}:", "", cindent + 2, name)
+        for id in ids {
+            let function = program.get_function(id)
+            mut args = ""
+            for arg in function.params {
+                args = args + program.type_name(arg.variable.type_id, debug_mode: true) + ", "
+            }
+
+            eprintln("{: >{}}fn({}) -> {}", "", cindent + 4, args, program.type_name(function.return_type_id, debug_mode: true))
+        }
+    }
+    eprintln("{: >{}}Structs:", "", cindent)
+    for (name, id) in scope.structs {
+        let struct_ = program.get_struct(id)
+        eprintln("{: >{}}{}@{}: {}", "", cindent + 2, id.id, id.module, struct_.name)
+    }
+    eprintln("{: >{}}Aliases:", "", cindent)
+    for (name, id) in scope.aliases {
+        let scope = program.get_scope(id)
+        eprintln("{: >{}}{}: {}", "", cindent + 2, name, scope.debug_name)
+    }
+    eprintln("{: >{}}Children:", "", cindent)
+    for id in scope.children {
+        dump_scope(id, program, indent: cindent + 2)
+    }
 }
