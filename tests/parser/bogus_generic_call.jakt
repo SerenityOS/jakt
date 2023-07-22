@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Call to unknown function"
+/// - error: "C++ keywords are not allowed to be used as identifiers"
 
 fn f() {
     // Background: I pasted some C++ into a jakt program and it made the compiler loop infinitely :^)
