@@ -6689,7 +6689,7 @@ struct Typechecker {
         return None
     }
 
-    fn required_scope_id_in_hierarchy_for(mut this, anon expr: CheckedExpression, current_scope_id: ScopeId) throws -> ScopeId? => match expr {
+    fn required_scope_id_in_hierarchy_for(mut this, anon expr: CheckedExpression, current_scope_id: ScopeId) throws -> (ScopeId?, CheckedExpression) => match expr {
         Boolean
         | NumericConstant
         | QuotedString
@@ -6697,9 +6697,9 @@ struct Typechecker {
         | CharacterConstant
         | CCharacterConstant
         | Reflect
-        => .root_scope_id()
+        => (.root_scope_id(), expr)
         // Immediate values, let's not have lifetime extension for now.
-        BinaryOp => None
+        BinaryOp => (None, expr)
         UnaryOp(op, expr) => match op {
             PreIncrement | PreDecrement => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
             // NOTE: This should be the scope of whatever the pointer points to,
@@ -6707,17 +6707,18 @@ struct Typechecker {
             // outlive the pointer anyway.
             Dereference => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
             Reference | MutableReference => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
-            else => None
+            TypeCast => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
+            else => (None, expr)
         }
         JaktArray(vals) | JaktTuple(vals) | JaktSet(vals) => {
             mut final_scope_id: ScopeId? = None
             for val in vals {
                 final_scope_id = .scope_lifetime_union(
                     final_scope_id
-                    .required_scope_id_in_hierarchy_for(val, current_scope_id)
+                    .required_scope_id_in_hierarchy_for(val, current_scope_id).0
                 )
             }
-            yield final_scope_id
+            yield (final_scope_id, expr)
         }
         JaktDictionary(vals) => {
             mut final_scope_id: ScopeId? = None
@@ -6725,14 +6726,14 @@ struct Typechecker {
                 final_scope_id = .scope_lifetime_union(
                     final_scope_id
                     .scope_lifetime_union(
-                        .required_scope_id_in_hierarchy_for(key, current_scope_id)
-                        .required_scope_id_in_hierarchy_for(val, current_scope_id)
+                        .required_scope_id_in_hierarchy_for(key, current_scope_id).0
+                        .required_scope_id_in_hierarchy_for(val, current_scope_id).0
                     )
                 )
             }
-            yield final_scope_id
+            yield (final_scope_id, expr)
         }
-        Range => None
+        Range => (None, expr)
         IndexedExpression(expr)
         | IndexedDictionary(expr)
         | IndexedTuple(expr)
@@ -6741,18 +6742,18 @@ struct Typechecker {
         | ComptimeIndex(expr)
         => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
         // FIXME: Actually look into the match and figure out the lifetimes.
-        Match => None
+        Match => (None, expr)
         // FIXME: Implement this
-        EnumVariantArg => None
-        Call => None
+        EnumVariantArg => (None, expr)
+        Call => (None, expr)
         // FIXME: This assumes far too much, the returned value might not even be a reference to the internals of the object.
         //        but the absolute smallest guaranteed lifetime for something returned from a member function is the lifetime of the object (for now).
         MethodCall(expr) => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
-        Var(var) | NamespacedVar(var) => var.owner_scope ?? current_scope_id // If the variable doesn't have an owner yet, we're in the process of defining it.
-        OptionalNone => None
-        OptionalSome => None
+        Var(var) | NamespacedVar(var) => (var.owner_scope ?? current_scope_id, expr) // If the variable doesn't have an owner yet, we're in the process of defining it.
+        OptionalNone => (None, expr)
+        OptionalSome => (None, expr)
         ForcedUnwrap(expr) => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
-        Block => None // Blocks can't yield values (for now)
+        Block => (None, expr) // Blocks can't yield values (for now)
         Function(captures) | DependentFunction(captures) => {
             mut final_scope_id: ScopeId? = None
             for capture in captures {
@@ -6763,12 +6764,12 @@ struct Typechecker {
                 }
                 final_scope_id = .scope_lifetime_union(final_scope_id, scope_id)
             }
-            yield final_scope_id
+            yield (final_scope_id, expr)
         }
         // FIXME: Check what the expression actually returns, also check the catch block (if one exists)
-        Try => None
-        TryBlock => None
-        Garbage => None
+        Try => (None, expr)
+        TryBlock => (None, expr)
+        Garbage => (None, expr)
     }
 
     fn typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
@@ -6790,11 +6791,13 @@ struct Typechecker {
 
         if .type_contains_reference(type_id: lhs_type_id) {
             // If the variable type is a reference, we need to make sure that this scope does not outlive the reference.
-            let init_scope_id = .required_scope_id_in_hierarchy_for(checked_expr, current_scope_id: scope_id)
+            let (init_scope_id, cause_expr) = .required_scope_id_in_hierarchy_for(checked_expr, current_scope_id: scope_id)
             if .scope_lifetime_subsumes(scope_id, init_scope_id) {
-                .error(
+                .error_with_hint(
                     "Cannot assign a reference to a variable that outlives the reference"
                     checked_expr.span()
+                    "Limited by this expression's lifetime"
+                    cause_expr.span()
                 )
             }
         }
@@ -10489,10 +10492,10 @@ struct Typechecker {
                         return args[index - 1].1
                     }
 
-                    let arg_scope_id = .required_scope_id_in_hierarchy_for(resolve_arg(index), current_scope_id: caller_scope_id)
+                    let arg_scope_id = .required_scope_id_in_hierarchy_for(resolve_arg(index), current_scope_id: caller_scope_id).0
                     let stored_scope_id = match level {
                         InStaticStorage => Some(.root_scope_id())
-                        InObject(argument_index) => .required_scope_id_in_hierarchy_for(resolve_arg(argument_index), current_scope_id: caller_scope_id)
+                        InObject(argument_index) => .required_scope_id_in_hierarchy_for(resolve_arg(argument_index), current_scope_id: caller_scope_id).0
                     }
 
                     if .scope_lifetime_subsumes(stored_scope_id, arg_scope_id) {
