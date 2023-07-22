@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "42\n"
+
+fn actually_kinda_useless<comptime T>() -> i32 {
+    // FIXME: Can't really acccess the value of 'T' yet.
+    return 42
+}
+
+fn main() {
+    println("{}", actually_kinda_useless<comptime 69>())
+}

@@ -34,7 +34,42 @@ enum StructLikeId {
         return result
     }
 
+    fn generic_parameters_as_checked(this, anon program: &CheckedProgram) throws -> [CheckedGenericParameter] => match this {
+        Struct(id) => program.get_struct(id).generic_parameters
+        Enum(id) => program.get_enum(id).generic_parameters
+        Trait(id) => program.get_trait(id).generic_parameters
+    }
+
     fn scope_id(this, anon program: &CheckedProgram) throws -> ScopeId => match this {
+        Struct(id) => program.get_struct(id).scope_id
+        Enum(id) => program.get_enum(id).scope_id
+        Trait(id) => program.get_trait(id).scope_id
+    }
+
+    fn specialized_by(
+        this
+        anon arguments: [TypeId]
+        anon program: &mut CheckedProgram
+        module_id: ModuleId
+    ) throws -> TypeId => match this {
+        Struct(id) => program.find_or_add_type_id(Type::GenericInstance(id, args: arguments), module_id)
+        Enum(id) => program.find_or_add_type_id(Type::GenericEnumInstance(id, args: arguments), module_id)
+        Trait(id) => program.find_or_add_type_id(Type::GenericTraitInstance(id, args: arguments), module_id)
+    }
+
+    fn from_type_id(anon type_id: TypeId, anon program: &CheckedProgram) throws -> StructLikeId? {
+        return match program.get_type(type_id) {
+            GenericInstance(id: struct_id, args) | Struct(struct_id) default(args: [TypeId] = [])
+                => StructLikeId::Struct(generic_arguments: args, struct_id)
+            GenericEnumInstance(id: enum_id, args) | Enum(enum_id) default(args: [TypeId] = [])
+                => StructLikeId::Enum(generic_arguments: args, enum_id)
+            GenericTraitInstance(id: trait_id, args) | Trait(trait_id) default(args: [TypeId] = [])
+                => StructLikeId::Trait(generic_arguments: args, trait_id)
+            else => None
+        }
+    }
+
+    fn associated_scope_id(this, anon program: &CheckedProgram) throws -> ScopeId => match this {
         Struct(id) => program.get_struct(id).scope_id
         Enum(id) => program.get_enum(id).scope_id
         Trait(id) => program.get_trait(id).scope_id
@@ -214,7 +249,8 @@ boxed enum Type {
     CInt
     Unknown
     Never
-    TypeVariable(name: String, trait_implementations: [TypeId])
+    TypeVariable(name: String, trait_implementations: [TypeId], is_value: bool = false)
+    Dependent(namespace_type: TypeId, name: String)
     GenericInstance(id: StructId, args: [TypeId])
     GenericEnumInstance(id: EnumId, args: [TypeId])
     GenericTraitInstance(id: TraitId, args: [TypeId])
@@ -227,7 +263,7 @@ boxed enum Type {
     MutableReference(TypeId)
     Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
     Self
-
+    Const(Value)
 
     fn is_boxed(this, program: CheckedProgram) -> bool => match this {
         Struct(struct_id) | GenericInstance(id: struct_id) => program.get_struct(struct_id).record_type is Class
@@ -236,12 +272,14 @@ boxed enum Type {
     }
 
     fn is_concrete(this) -> bool => match this {
-        TypeVariable | Self | Unknown => false
+        TypeVariable | Self | Dependent | Unknown => false
         else => true
     }
 
     fn specificity(this, program: CheckedProgram, base_specificity: i64 = 1<<31) -> i64 => match this {
         TypeVariable => 0
+        Dependent => 0
+        Const => base_specificity
         GenericInstance(args) => {
             mut specificity = base_specificity / 2
             for subtype_id in args.iterator() {
@@ -297,6 +335,7 @@ boxed enum Type {
         Unknown => "Unknown"
         Never => "Never"
         TypeVariable => "TypeVariable"
+        Dependent => "Dependent"
         GenericInstance => "GenericInstance"
         GenericEnumInstance => "GenericEnumInstance"
         GenericTraitInstance => "GenericTraitInstance"
@@ -309,6 +348,7 @@ boxed enum Type {
         MutableReference => "MutableReference"
         Function => "Function"
         Self => "Self"
+        Const => "Const"
     }
 
     fn equals(this, anon rhs: Type) -> bool => match this {
@@ -337,6 +377,16 @@ boxed enum Type {
                 return lhs_name == rhs_name
             }
             yield false
+        }
+        Dependent(namespace_type, name) => {
+            if rhs is Dependent(namespace_type: rhs_namespace_type, name: rhs_name) {
+                return namespace_type.equals(rhs_namespace_type) and name == rhs_name
+            }
+            yield false
+        }
+        Const(lhs_value) => match rhs {
+            Const(rhs_value) => lhs_value.impl.equals(rhs_value.impl)
+            else => false
         }
         GenericResolvedType(id: lhs_id, args: lhs_args)
         | GenericInstance(id: lhs_id, args: lhs_args) => {
@@ -2289,6 +2339,11 @@ class CheckedProgram {
             Void => "void"
             Unknown => "unknown"
             JaktString => "builtin(String)"
+            Dependent(namespace_type, name) => format(
+                "{}::{}"
+                .type_name(namespace_type, debug_mode)
+                name
+            )
             Trait(id) => .get_trait(id).name
             Self => "Self"
             Function(params, return_type_id) => {
@@ -2415,6 +2470,7 @@ class CheckedProgram {
             RawPtr(type_id) => format("raw {}", .type_name(type_id, debug_mode))
             Reference(type_id) => format("&{}", .type_name(type_id, debug_mode))
             MutableReference(type_id) => format("&mut {}", .type_name(type_id, debug_mode))
+            Const(value) => comptime_format_impl(format_string: "comptime {}", arguments: [value][..], program: &this)
         }
     }
 
@@ -2459,6 +2515,41 @@ class CheckedProgram {
                 if replacement_type_id.has_value() {
                     return replacement_type_id!
                 }
+            }
+            Dependent(namespace_type, name) => {
+                let mapped_type_id = .substitute_typevars_in_type(type_id: namespace_type, generic_inferences, module_id)
+                let type = .get_type(mapped_type_id)
+                if type is TypeVariable {
+                    return .find_or_add_type_id(
+                        type: Type::Dependent(namespace_type: mapped_type_id, name)
+                        module_id
+                    )
+                }
+
+                let struct_like_id = StructLikeId::from_type_id(mapped_type_id, &this)
+                guard struct_like_id.has_value() else {
+                    return type_id
+                }
+
+                let scope_id = struct_like_id!.associated_scope_id(&this)
+                let found_type = .find_type_in_scope(scope_id, name)
+                if found_type.has_value() {
+                    mut copied_inferences = generic_inferences
+                    if struct_like_id!.generic_arguments.has_value() {
+                        copied_inferences.set_all(
+                            keys: struct_like_id!.generic_parameters_as_checked(&this)
+                            values: struct_like_id!.generic_arguments!
+                        )
+                    }
+
+                    return .substitute_typevars_in_type(
+                        type_id: found_type!
+                        generic_inferences: copied_inferences
+                        module_id
+                    )
+                }
+
+                return type_id
             }
             GenericTraitInstance(id, args) => {
                 mut new_args: [TypeId] = []

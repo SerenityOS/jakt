@@ -1,10 +1,11 @@
 import parser { ParsedNamespace, ParsedRecord, ParsedFunction, BinaryOperator, FunctionLinkage, merge_spans }
 import typechecker {
-    BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
-    CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
-    Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId,
-    CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id,
-    CheckedVariable, NumberConstant, CheckedEnumVariant}
+    BuiltinType, CheckedBlock, CheckedCall, CheckedEnum, CheckedEnumVariant, CheckedExpression, CheckedFunction
+    CheckedMatchBody, CheckedMatchCase, CheckedProgram, CheckedStatement, CheckedStruct, CheckedVariable, EnumId
+    FunctionId, Module, ModuleId, NumberConstant, Scope, ScopeId, StructId, Type, TypeId, unknown_type_id
+    void_type_id
+}
+import types { comptime_format_impl }
 import utility { panic, todo, join, prepend_to_each, Span }
 import compiler { Compiler }
 
@@ -227,6 +228,8 @@ fn find_type_definition_for_type_id(program: CheckedProgram, type_id: TypeId, sp
         Function => span
         Trait(id) => program.get_trait(id).name_span
         Self => span
+        Dependent => span
+        Const(value) => value.span
         GenericInstance(id: struct_id, args) => {
             mut output = span
             if struct_id.equals(array_struct_id) or struct_id.equals(optional_struct_id) or struct_id.equals(range_struct_id) or struct_id.equals(set_struct_id) or struct_id.equals(tuple_struct_id) or struct_id.equals(weak_ptr_struct_id) {
@@ -1046,6 +1049,8 @@ fn get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> String
         Unknown => ""
         Self => "Self"
         Trait(trait_id) => program.get_trait(trait_id).name
+        Dependent(namespace_type, name) => format("{}::{}", program.type_name(namespace_type), name)
+        Const(value) => comptime_format_impl(format_string: "const {}", arguments: [value][..], &program)
         Function(params, return_type_id) => {
             mut param_names: [String] = []
             for x in params {

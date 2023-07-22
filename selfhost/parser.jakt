@@ -473,6 +473,7 @@ struct ParsedGenericParameter {
     span: Span
     // the list, if it exists, must have at least one element.
     requires_list: [ParsedNameWithGenericParameters]?
+    is_value: bool
 }
 
 enum ParsedTraitRequirements {
@@ -1479,6 +1480,8 @@ boxed enum ParsedType {
     RawPtr(inner: ParsedType, span: Span)
     WeakPtr(inner: ParsedType, span: Span)
     Function(params: [ParsedParameter], can_throw: bool, return_type: ParsedType, span: Span)
+    Const(expr: ParsedExpression, span: Span)
+    DependentType(base: ParsedType, name: String, span: Span)
     Empty
 
     fn span(this) -> Span => match this {
@@ -1487,6 +1490,10 @@ boxed enum ParsedType {
     }
 
     fn equals(this, anon rhs_parsed_type: ParsedType) -> bool => match this {
+        DependentType(base, name) => match rhs_parsed_type {
+            DependentType(base: rhs_base, name: rhs_name) => base.equals(rhs_base) and name == rhs_name
+            else => false
+        }
         Name(name: lhs_name) => match rhs_parsed_type {
             Name(name: rhs_name) => lhs_name == rhs_name
             else => false
@@ -1609,6 +1616,7 @@ boxed enum ParsedType {
             else => false
         }
         Empty => rhs_parsed_type is Empty
+        Const => false // FIXME: Implement this.
     }
 }
 
@@ -3866,7 +3874,43 @@ struct Parser {
     }
 
     fn parse_typename(mut this) throws -> ParsedType {
+        let base = .parse_typename_base()
+        mut result = base
+        mut done = false
+        while not done {
+            match .current() {
+                ColonColon => {
+                    // This is a dependent type
+                    .index++
+                    if .current() is Identifier(name) {
+                        .index++
+                        result = ParsedType::DependentType(
+                            base: result
+                            name
+                            span: merge_spans(base.span(), .current().span())
+                        )
+                    } else {
+                        .error("Expected identifier after `::`", .current().span())
+                        done = true
+                    }
+                }
+                else => {
+                    done = true
+                }
+            }
+        }
+        return result
+    }
+
+    fn parse_typename_base(mut this) throws -> ParsedType {
         let start = .current().span()
+
+        if .current() is Comptime {
+            .index++
+            let expr = .parse_operand()
+            return ParsedType::Const(expr, span: merge_spans(start, expr.span()))
+        }
+
         mut is_reference = false
         mut is_mutable_reference = false
 
@@ -3925,7 +3969,7 @@ struct Parser {
         Identifier(name) => {
             let span = .current().span()
             .index++
-            mut parsed_type =  ParsedType::Name(name, span)
+            mut parsed_type = ParsedType::Name(name, span)
             if .current() is LessThan {
                 mut params = .parse_type_parameter_list()
                 parsed_type = ParsedType::GenericType(name, generic_parameters: params, span)
@@ -5963,9 +6007,11 @@ struct Parser {
         .skip_newlines()
 
         mut saw_ending_bracket = false
+        mut next_generic_is_value = false
         while not .eof() {
             match .current() {
                 Identifier(name, span) => {
+                    mut effective_name = name
                     mut requires_list: [ParsedNameWithGenericParameters]? = None
 
                     .index++
@@ -5974,10 +6020,17 @@ struct Parser {
                         requires_list = .parse_trait_list()
                     }
 
-                    generic_parameters.push(ParsedGenericParameter(name, span, requires_list))
+                    generic_parameters.push(ParsedGenericParameter(name, span, requires_list, is_value: next_generic_is_value))
+                    next_generic_is_value = false
+
                     if .current() is Comma or .current() is Eol {
                         .index++
                     }
+                }
+                Comptime => {
+                    .index++
+                    next_generic_is_value = true
+                    continue
                 }
                 GreaterThan => {
                     .index++
