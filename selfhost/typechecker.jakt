@@ -24,8 +24,8 @@ import types {
     CheckedVariable, CheckedVisibility, ClassInstanceRebind, EnumId, FieldRecord, FunctionGenericParameter
     FunctionGenerics, FunctionId, GenericInferences, IterationDecision, LoadedModule, MaybeResolvedScope, Module
     ModuleId, NumberConstant, OperatorTraitImplementation, ResolvedNamespace, SafetyMode, Scope, ScopeId
-    StringLiteral, StructId, StructLikeId, TraitId, Type, TypeId, Value, VarId, builtin comptime_format_impl,
-    never_type_id, unknown_type_id, void_type_id
+    SpecializedType, StringLiteral, StructId, StructLikeId, TraitId, Type, TypeId, Value, VarId, builtin
+    comptime_format_impl, never_type_id, unknown_type_id, void_type_id
 }
 import types
 import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo }
@@ -5678,7 +5678,107 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_generic_resolved_type(mut this, name: String, checked_inner_types: [TypeId], scope_id: ScopeId, span: Span) throws -> TypeId {
+    fn find_explicitly_specialized_type_in_scope(
+        mut this
+        scope_id: ScopeId
+        name: String
+        arguments: [TypeId]
+        span: Span
+    ) throws -> TypeId? {
+        mut matching_types: [SpecializedType] = []
+        .program.for_each_scope_accessible_unqualified_from_scope(
+            scope_id
+            &fn[
+                &mut matching_types
+                &name
+                &arguments
+                &span
+                this
+            ](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
+                let scope = .get_scope(scope_id)
+                if not scope.explicitly_specialized_types.contains(name) {
+                    return IterationDecision::Continue
+                }
+
+                let specialized_type = scope.explicitly_specialized_types[name]
+                let checkpoint = .generic_inferences.perform_checkpoint(reset: false)
+                defer .generic_inferences.restore(checkpoint)
+
+                mut is_okay = true
+                for i in 0..specialized_type.arguments.size() {
+                    if arguments.size() <= i {
+                        break
+                    }
+                    let given_arg = arguments[i]
+                    let specialized_arg = specialized_type.arguments[i]
+
+                    let old_ignore_errors = .ignore_errors
+                    defer .ignore_errors = old_ignore_errors
+                    .ignore_errors = true
+
+                    if not .check_types_for_compat(
+                        lhs_type_id: specialized_arg
+                        rhs_type_id: given_arg
+                        generic_inferences: &mut .generic_inferences
+                        span
+                    ) {
+                        is_okay = false
+                        break
+                    }
+                }
+
+                if is_okay { matching_types.push(specialized_type) }
+                return IterationDecision::Continue
+            }
+        )
+
+        mut result: TypeId? = None
+        mut chosen_specialization: SpecializedType? = None
+        mut max_seen_specificity = 0
+        for specialization in matching_types {
+            mut total_specificity = 0
+            for arg in specialization.arguments {
+                total_specificity += .get_type(arg).specificity(program: .program)
+            }
+            if total_specificity > max_seen_specificity {
+                max_seen_specificity = total_specificity
+                result = specialization.type_id
+                chosen_specialization = specialization
+            }
+        }
+
+        if chosen_specialization.has_value() {
+            if StructLikeId::from_type_id(result!, &.program) is Some(struct_like_id) {
+                .generic_inferences.set_all(
+                    keys: struct_like_id.generic_parameters_as_checked(program: &.program)
+                    values: chosen_specialization!.arguments
+                )
+            }
+        }
+        return result
+    }
+
+    fn typecheck_generic_resolved_type(
+        mut this
+        name: String
+        checked_inner_types: [TypeId]
+        scope_id: ScopeId
+        span: Span
+    ) throws -> TypeId {
+        let explicitly_specialized_type = .find_explicitly_specialized_type_in_scope(
+            scope_id
+            name
+            arguments: checked_inner_types
+            span
+        )
+        if explicitly_specialized_type.has_value() {
+            return StructLikeId::from_type_id(explicitly_specialized_type!, program: &.program)!.specialized_by(
+                arguments: checked_inner_types
+                program: &mut .program
+                module_id: .current_module().id
+            )
+        }
+
         let struct_id = .find_struct_in_scope(scope_id, name)
         if struct_id.has_value() {
             let struct_ = .get_struct(struct_id!)
@@ -9973,17 +10073,6 @@ struct Typechecker {
 
         // 2. Look for a function with this name.
         let maybe_overload_set = .find_scoped_functions_with_name_in_scope(parent_scope_id: current_scope_id, function_name: call.name)
-        if call.name == "ptr" {
-            eprintln("Looking for function 'ptr' in scope {} {} => {}",
-                scope_id
-                .debug_description_of(scope_id)
-                maybe_overload_set
-            )
-            if not maybe_overload_set.has_value() {
-                let scope = .get_scope(scope_id)
-                eprintln("All functions in this scope: {:#}", scope.functions.keys())
-            }
-        }
         if maybe_overload_set.has_value() {
             let function = .get_function(maybe_overload_set!.0[0])
             if not must_be_enum_constructor or function.type is ImplicitEnumConstructor {

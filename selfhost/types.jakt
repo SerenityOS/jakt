@@ -585,6 +585,12 @@ boxed enum Type {
     }
 }
 
+struct SpecializedType {
+    base_type_id: TypeId
+    arguments: [TypeId]
+    type_id: TypeId
+}
+
 class Scope {
     public namespace_name: String?
     public external_name: ExternalName?
@@ -613,6 +619,7 @@ class Scope {
     public is_block_scope: bool = true
 
     public resolved_forall_chunks: [ResolvedForallChunk]? = None
+    public explicitly_specialized_types: [String:SpecializedType]
 
     public fn namespace_name_for_codegen(this) -> ExternalName? {
         if .external_name.has_value() { return .external_name }
@@ -1796,6 +1803,7 @@ class CheckedProgram {
             debug_name
             resolution_mixins: []
             is_block_scope: for_block
+            explicitly_specialized_types: [:]
         )
 
         .modules[module_id.id].scopes.push(scope)
@@ -2489,7 +2497,12 @@ class CheckedProgram {
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
-    public fn substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: GenericInferences, module_id: ModuleId) throws -> TypeId {
+    public fn substitute_typevars_in_type(
+        mut this
+        type_id: TypeId
+        generic_inferences: GenericInferences
+        module_id: ModuleId
+    ) throws -> TypeId {
         mut result = .substitute_typevars_in_type_helper(type_id, generic_inferences, module_id)
 
         loop {
@@ -2506,7 +2519,12 @@ class CheckedProgram {
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
-    fn substitute_typevars_in_type_helper(mut this, type_id: TypeId , generic_inferences: GenericInferences, module_id: ModuleId) throws -> TypeId {
+    fn substitute_typevars_in_type_helper(
+        mut this
+        type_id: TypeId
+        generic_inferences: GenericInferences
+        module_id: ModuleId
+    ) throws -> TypeId {
         let type_ = .get_type(type_id)
 
         match type_ {
