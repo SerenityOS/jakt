@@ -1422,8 +1422,13 @@ struct Typechecker {
             }
             {
                 // Anonymous namespace to ensure imported symbols don't clash with prelude symbols.
+                // (unless the imported namespace is actually named)
                 mut scope = .get_scope(scope_id)
                 scope.children.push(base_import_scope_id)
+                if import_.assigned_namespace.name.has_value() {
+                    .get_scope(base_import_scope_id).namespace_name = import_.assigned_namespace.name!
+                    .get_scope(base_import_scope_id).external_name = ExternalName::Plain("") // global ns
+                }
             }
 
             guard not existing_scope.has_value() else {
