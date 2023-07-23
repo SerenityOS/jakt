@@ -37,6 +37,9 @@ cmake --build build -- install
 
 # build new vsix
 cd ./editors/vscode || error_and_exit "Failed to navigate to vscode directory"
+npm i
+( cd client; npm i; )
+
 npx vsce package
 NEW_VSIX_PATH=$(find . -maxdepth 1 -type f -name "*.vsix" -exec realpath {} +)
 cd - || error_and_exit "Failed to navigate back to project root"
