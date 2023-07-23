@@ -358,6 +358,8 @@ fn do_nothing_in_particular() => match AlertDescription::CloseNotify {
 ## Generics
 
 - [x] Generic types
+- [x] Constant generics (minimal support)
+- [ ] Constant generics (full support)
 - [x] Generic type inference
 - [x] Traits
 
@@ -387,6 +389,13 @@ fn main() {
 }
 ```
 
+```jakt
+struct MyArray<T, comptime U> {
+    // NOTE: There is currently no way to access the value 'U', referring to 'U' is only valid as the type at the moment.
+    data: [T]
+}
+```
+
 ## Namespaces
 
 - [x] Namespace support for functions and struct/class/enum
@@ -413,6 +422,7 @@ There are two built-in casting operators in **Jakt**.
 
 The `as` cast can do these things (note that the implementation may not agree yet):
 - Casts to the same type are infallible and pointless, so might be forbidden in the future.
+- If the source type is _unknown_, the cast is valid as a type assertion.
 - If both types are primitive, a safe conversion is done.
     - Integer casts will fail if the value is out of range. This means that promotion casts like i32 -> i64 are infallible.
     - Float -> Integer casts truncate the decimal point (?)
@@ -522,7 +532,7 @@ Other operators have not yet been converted to traits, decided on, or implemente
 | Operator | Description | Status |
 |----------|-------------|--------|
 | `&` | Bitwise And | Not Decided |
-| `|` | Bitwise Or | Not Decided |
+| `\|` | Bitwise Or | Not Decided |
 | `^` | Bitwise Xor | Not Decided |
 | `~` | Bitwise Not | Not Decided |
 | `<<` | Bitwise Shift Left | Not Decided |
