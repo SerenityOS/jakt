@@ -1,1107 +1,1105 @@
 {
-  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "jakt",
-  "fileTypes": [
-    "jakt"
-  ],
-  "patterns": [
-    {
-      "include": "#function"
-    },
-    {
-      "include": "#namespace"
-    },
-    {
-      "include": "#struct"
-    },
-    {
-      "include": "#trait"
-    },
-    {
-      "include": "#variable-declaration"
-    },
-    {
-      "include": "#expressions"
-    },
-    {
-      "include": "#comment"
-    }
-  ],
-  "repository": {
-    "expressions": {
-      "patterns": [
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "jakt",
+    "fileTypes": ["jakt"],
+    "patterns": [
         {
-          "include": "#comment"
+            "include": "#function"
         },
         {
-          "include": "#strings"
+            "include": "#namespace"
         },
         {
-          "include": "#this"
+            "include": "#struct"
         },
         {
-          "include": "#constant"
+            "include": "#trait"
         },
         {
-          "include": "#number"
+            "include": "#variable-declaration"
         },
         {
-          "include": "#control"
+            "include": "#expressions"
         },
         {
-          "include": "#operators"
-        },
-        {
-          "include": "#indexing"
-        },
-        {
-          "include": "#call"
-        },
-        {
-          "include": "#variable-declaration"
-        },
-        {
-          "include": "#types"
-        },
-        {
-          "name": "meta.block.jakt",
-          "begin": "(\\{)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.brace.jakt"
-            }
-          },
-          "end": "(\\})",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.brace.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "$self"
-            }
-          ]
+            "include": "#comment"
         }
-      ]
+    ],
+    "repository": {
+        "expressions": {
+            "patterns": [
+                {
+                    "include": "#comment"
+                },
+                {
+                    "include": "#strings"
+                },
+                {
+                    "include": "#this"
+                },
+                {
+                    "include": "#constant"
+                },
+                {
+                    "include": "#number"
+                },
+                {
+                    "include": "#control"
+                },
+                {
+                    "include": "#operators"
+                },
+                {
+                    "include": "#indexing"
+                },
+                {
+                    "include": "#call"
+                },
+                {
+                    "include": "#variable-declaration"
+                },
+                {
+                    "include": "#types"
+                },
+                {
+                    "name": "meta.block.jakt",
+                    "begin": "(\\{)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.brace.jakt"
+                        }
+                    },
+                    "end": "(\\})",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.brace.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                }
+            ]
+        },
+        "this": {
+            "name": "variable.language.this.jakt",
+            "match": "\\bthis\\b"
+        },
+        "variable-declaration": {
+            "name": "meta.variable.definition.jakt",
+            "comment": "FIXME: The identifier matching is identical to the lexer but more characters may be allowed in the future.",
+            "begin": "\\b(let|mut)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)?",
+            "beginCaptures": {
+                "1": {
+                    "name": "keyword.let.jakt"
+                },
+                "2": {
+                    "name": "variable.other.jakt"
+                },
+                "3": {
+                    "name": "punctuation.colon.jakt"
+                }
+            },
+            "end": "((?:\\+|\\-|\\*|\\/|%)?=)",
+            "endCaptures": {
+                "1": {
+                    "name": "keyword.operator.assignment.jakt"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#types"
+                }
+            ]
+        },
+        "namespace": {
+            "patterns": [
+                {
+                    "name": "meta.namespace.jakt",
+                    "match": "\\b(namespace)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.namespace.jakt"
+                        },
+                        "2": {
+                            "name": "entity.name.namespace.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "meta.block.namespace.jakt",
+                    "begin": "(?<=(?:namespace).*?)(\\{)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.brace.jakt"
+                        }
+                    },
+                    "end": "(\\})",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.brace.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                }
+            ]
+        },
+        "struct": {
+            "patterns": [
+                {
+                    "name": "meta.type.struct.jakt",
+                    "match": "(\\bextern\\s+)?\\b(class|struct)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
+                    "captures": {
+                        "1": {
+                            "name": "storage.modifier.linkage.jakt"
+                        },
+                        "2": {
+                            "name": "keyword.type.struct.jakt"
+                        },
+                        "3": {
+                            "name": "entity.name.type.struct.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "meta.block.struct.jakt",
+                    "begin": "(?<=(?:class|struct).*?)(\\{)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.brace.jakt"
+                        }
+                    },
+                    "end": "(\\})",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.brace.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#field"
+                        },
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.type.generic-arguments.jakt",
+                    "begin": "(?<=(?:class|struct|enum).*?)\\s*(<)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.angle-bracket.jakt"
+                        }
+                    },
+                    "end": "(>)",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.angle-bracket.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#types"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.type.implements.jakt",
+                    "begin": "(?<=(?:class|struct|enum).*?)\\s*(implements)(\\()",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "keyword.type.implements.jakt"
+                        },
+                        "2": {
+                            "name": "punctuation.begin.bracket.jakt"
+                        }
+                    },
+                    "end": "(\\))",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.bracket.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#types"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.type.enum.body.jakt",
+                    "begin": "(?<=\\benum\\b.*?)(\\{)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.brace.jakt"
+                        }
+                    },
+                    "end": "(\\})",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.brace.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#enum-field"
+                        },
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.type.enum.jakt",
+                    "match": "(?:\\b(boxed)\\s+)?\\b(enum)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(?:(:)\\s*((?:[ui](?:8|16|32|64))|usize))?",
+                    "captures": {
+                        "1": {
+                            "name": "storage.modifier.pointer.jakt"
+                        },
+                        "2": {
+                            "name": "keyword.type.enum.jakt"
+                        },
+                        "3": {
+                            "name": "entity.name.type.enum.jakt"
+                        },
+                        "4": {
+                            "name": "punctuation.colon.jakt"
+                        },
+                        "5": {
+                            "name": "storage.type.numeric.jakt"
+                        },
+                        "6": {
+                            "name": "punctuation.begin.brace.jakt"
+                        }
+                    }
+                }
+            ]
+        },
+        "trait": {
+            "patterns": [
+                {
+                    "name": "meta.type.trait.jakt",
+                    "match": "\\b(trait)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.type.trait.jakt"
+                        },
+                        "2": {
+                            "name": "entity.name.type.trait.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "meta.block.trait.jakt",
+                    "begin": "(?<=(?:trait).*?)(\\{)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.brace.jakt"
+                        }
+                    },
+                    "end": "(\\})",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.brace.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.type.generic-arguments.jakt",
+                    "begin": "(?<=(?:trait).*?)\\s*(<)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.angle-bracket.jakt"
+                        }
+                    },
+                    "end": "(>)",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.angle-bracket.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#types"
+                        }
+                    ]
+                }
+            ]
+        },
+        "field": {
+            "name": "meta.field.jakt",
+            "begin": "(?:\\b(public|private)\\s+)?\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)",
+            "beginCaptures": {
+                "1": {
+                    "name": "storage.modifier.visibility.jakt"
+                },
+                "2": {
+                    "name": "variable.field.jakt"
+                },
+                "3": {
+                    "name": "punctuation.colon.jakt"
+                }
+            },
+            "end": "$",
+            "patterns": [
+                {
+                    "include": "#types"
+                }
+            ]
+        },
+        "enum-field": {
+            "patterns": [
+                {
+                    "name": "meta.field.assigned.enum.jakt",
+                    "match": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(=)",
+                    "captures": {
+                        "1": {
+                            "name": "variable.field.enum.jakt"
+                        },
+                        "2": {
+                            "name": "keyword.operator.assignment.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#number"
+                        }
+                    ]
+                },
+                {
+                    "include": "#field"
+                },
+                {
+                    "name": "meta.field.enum.jakt",
+                    "match": "(?<!\\)\\s*)(?<!\\=\\s*)\\b((?:\\w|_)(?:\\w|_|[0-9])*)(?:\\s*$|\\s*\\(|\\,)",
+                    "captures": {
+                        "1": {
+                            "name": "variable.field.enum.jakt"
+                        }
+                    }
+                }
+            ]
+        },
+        "types": {
+            "patterns": [
+                {
+                    "name": "storage.modifier.mut.jakt",
+                    "match": "\\bmut\\b"
+                },
+                {
+                    "name": "storage.modifier.pointer.jakt",
+                    "match": "\\b(raw|weak)\\b"
+                },
+                {
+                    "name": "storage.type.primitive.jakt",
+                    "match": "\\b(String|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|bool|c_int|c_char|usize|void)\\b"
+                },
+                {
+                    "match": "\\b(?:[A-Z]|_)(?:\\w|_|[0-9])*\\s*(::)",
+                    "captures": {
+                        "1": {
+                            "name": "entity.name.namespace.jakt"
+                        },
+                        "2": {
+                            "name": "punctuation.double-colon.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "storage.type.generic.jakt",
+                    "begin": "\\b((?:[A-Z]|_)(?:\\w|_|[0-9])*)\\s*(<)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "storage.type.other.jakt"
+                        },
+                        "2": {
+                            "name": "punctuation.begin.angle-bracket.jakt"
+                        }
+                    },
+                    "end": "(>)",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.angle-bracket.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#types"
+                        }
+                    ]
+                },
+                {
+                    "name": "storage.type.generic-requires.jakt",
+                    "begin": "\\b((?:[A-Z]|_)(?:\\w|_|[0-9])*)\\s*(requires)(\\()",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "storage.type.other.jakt"
+                        },
+                        "2": {
+                            "name": "keyword.type.requires.jakt"
+                        },
+                        "3": {
+                            "name": "punctuation.begin.bracket.jakt"
+                        }
+                    },
+                    "end": "(\\))",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.bracket.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#types"
+                        }
+                    ]
+                },
+                {
+                    "name": "storage.type.other.jakt",
+                    "match": "\\b(?:[A-Z]|_)(?:\\w|_|[0-9])*\\b"
+                },
+                {
+                    "name": "storage.type.array.jakt",
+                    "begin": "(\\[)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.square-bracket.jakt"
+                        }
+                    },
+                    "end": "(\\])",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.square-bracket.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#types"
+                        }
+                    ]
+                },
+                {
+                    "name": "storage.type.optional.jakt",
+                    "match": "\\?"
+                },
+                {
+                    "name": "punctuation.comma.generic-type-list.jakt",
+                    "match": ","
+                }
+            ]
+        },
+        "function": {
+            "patterns": [
+                {
+                    "name": "meta.function.declaration.jakt",
+                    "match": "(?:\\b(public|private)\\s+)?(\\bextern\\s+)?(?:(\\boverride\\b)\\s+|(\\bvirtual\\b)\\s+)?(\\b(?:fn|comptime))\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
+                    "captures": {
+                        "1": {
+                            "name": "storage.modifier.visibility.jakt"
+                        },
+                        "2": {
+                            "name": "storage.modifier.linkage.jakt"
+                        },
+                        "3": {
+                            "name": "storage.modifier.specifier.override.jakt"
+                        },
+                        "4": {
+                            "name": "storage.modifier.specifier.virtual.jakt"
+                        },
+                        "5": {
+                            "name": "keyword.function.jakt"
+                        },
+                        "6": {
+                            "name": "entity.name.function"
+                        }
+                    }
+                },
+                {
+                    "name": "meta.function.argument-list.jakt",
+                    "begin": "(?<=(?:fn|comptime).*?)(\\()",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.bracket"
+                        }
+                    },
+                    "end": "(\\))",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.bracket"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#argument-list"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.function.return-type.jakt",
+                    "begin": "(?<=\\)\\s*)(throws)?\\s*(\\-\\>)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "keyword.type.throws.jakt"
+                        },
+                        "2": {
+                            "name": "punctuation.arrow.thin.jakt"
+                        }
+                    },
+                    "end": "(?=(\\{)|$|(\\=\\>))",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.bracket"
+                        },
+                        "2": {
+                            "name": "keyword.operator.fat-arrow.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#types"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.function.return-throws.jakt",
+                    "begin": "(?<=\\)\\s*)(throws)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "keyword.type.throws.jakt"
+                        }
+                    },
+                    "end": "(?=\\{|$|\\=\\>)",
+                    "patterns": [
+                        {
+                            "include": "#types"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.function.return-shorthand.jakt",
+                    "begin": "(?<=(?:fn|comptime).*?)(\\=\\>)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "keyword.operator.fat-arrow.jakt"
+                        }
+                    },
+                    "end": "$",
+                    "patterns": [
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.function.body.jakt",
+                    "begin": "(?<=(?:fn|comptime).*?)(\\{)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.brace.jakt"
+                        }
+                    },
+                    "end": "(\\})",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.brace.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.function.generic-arguments.jakt",
+                    "begin": "(?<=(?:fn|comptime)\\s+(\\w)*?)(<)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.angle-bracket.jakt"
+                        }
+                    },
+                    "end": "(>)",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.angle-bracket.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#types"
+                        }
+                    ]
+                }
+            ]
+        },
+        "argument-list": {
+            "patterns": [
+                {
+                    "name": "storage.modifier.anon.argument.jakt",
+                    "match": "\\banon\\b"
+                },
+                {
+                    "include": "#this"
+                },
+                {
+                    "match": "\\b(mut)\\b",
+                    "captures": {
+                        "1": {
+                            "name": "storage.modifier.mut.argument.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "meta.argument.jakt",
+                    "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)\\s*(&)?\\s*(\\bmut\\b)?",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "variable.parameter.jakt"
+                        },
+                        "2": {
+                            "name": "punctuation.colon.jakt"
+                        },
+                        "3": {
+                            "name": "keyword.reference.jakt"
+                        },
+                        "4": {
+                            "name": "storage.modifier.mut.argument.jakt"
+                        }
+                    },
+                    "end": "$|(,)|(?:(?=\\)))",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.comma.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#types"
+                        }
+                    ]
+                },
+                {
+                    "name": "punctuation.comma.jakt",
+                    "match": ","
+                }
+            ]
+        },
+        "parameter-list": {
+            "patterns": [
+                {
+                    "name": "meta.parameter.jakt",
+                    "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)(?!\\:)\\s*(&)?\\s*(\\bmut\\b)?",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "variable.parameter.name.jakt"
+                        },
+                        "2": {
+                            "name": "punctuation.colon.jakt"
+                        },
+                        "3": {
+                            "name": "keyword.reference.jakt"
+                        },
+                        "4": {
+                            "name": "storage.modifier.mut.argument.jakt"
+                        }
+                    },
+                    "end": "$|(,)|(?=\\))",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.comma.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                },
+                {
+                    "match": "\\b(mut)\\b",
+                    "captures": {
+                        "1": {
+                            "name": "storage.modifier.mut.argument.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "keyword.reference.jakt",
+                    "match": "&"
+                },
+                {
+                    "name": "punctuation.comma.jakt",
+                    "match": ","
+                },
+                {
+                    "include": "$self"
+                }
+            ]
+        },
+        "match-patterns": {
+            "patterns": [
+                {
+                    "name": "meta.pattern.enum.jakt",
+                    "match": "\\b((?:[A-Z]|_)(?:\\w|_|[0-9])*)(::)",
+                    "captures": {
+                        "1": {
+                            "name": "entity.name.type.enum.jakt"
+                        },
+                        "2": {
+                            "name": "punctuation.double-colon.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "meta.pattern.enum.variant.tuple.jakt",
+                    "begin": "\\b((?:[A-Z]|_)(?:\\w|_|[0-9])*)\\s*(\\()",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "entity.name.type.enum.jakt"
+                        },
+                        "2": {
+                            "name": "punctuation.begin.bracket.jakt"
+                        }
+                    },
+                    "end": "(\\))",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.bracket.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#parameter-list"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.pattern.enum.variant.jakt",
+                    "match": "\\b((?:[A-Z]|_)(?:\\w|_|[0-9])*)\\b",
+                    "captures": {
+                        "1": {
+                            "name": "entity.name.type.enum.jakt"
+                        }
+                    }
+                },
+                {
+                    "begin": "(\\=\\>)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "keyword.operator.fat-arrow.jakt"
+                        }
+                    },
+                    "end": "$",
+                    "patterns": [
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                },
+                {
+                    "include": "$self"
+                }
+            ]
+        },
+        "indexing": {
+            "patterns": [
+                {
+                    "name": "meta.index.struct.jakt",
+                    "match": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(\\.)",
+                    "captures": {
+                        "1": {
+                            "name": "variable.other.jakt"
+                        },
+                        "2": {
+                            "name": "punctuation.period.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "meta.index.namespace.jakt",
+                    "match": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(::)",
+                    "captures": {
+                        "1": {
+                            "name": "entity.name.namespace.jakt"
+                        },
+                        "2": {
+                            "name": "punctuation.double-colon.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "meta.index.array.jakt",
+                    "begin": "(\\[)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.square-bracket.jakt"
+                        }
+                    },
+                    "end": "(\\])",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.square-bracket.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                },
+                {
+                    "name": "meta.index.other.jakt",
+                    "match": "(\\.)",
+                    "captures": {
+                        "1": {
+                            "name": "punctuation.period.jakt"
+                        }
+                    }
+                }
+            ]
+        },
+        "call": {
+            "name": "meta.call.jakt",
+            "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(\\()",
+            "beginCaptures": {
+                "1": {
+                    "name": "entity.name.function.call.jakt"
+                },
+                "2": {
+                    "name": "punctuation.begin.bracket.jakt"
+                }
+            },
+            "end": "(\\))",
+            "endCaptures": {
+                "1": {
+                    "name": "punctuation.end.bracket.jakt"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#parameter-list"
+                }
+            ]
+        },
+        "control": {
+            "patterns": [
+                {
+                    "name": "meta.control.jakt",
+                    "match": "\\b(if|else|while|for|loop|try|catch|cpp|unsafe|defer|match|guard)\\b(?=.*?(?:\\{|$))",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.block.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "keyword.control.jakt",
+                    "match": "\\b(return|throw|continue|break|yield)\\b"
+                },
+                {
+                    "name": "keyword.control.other.jakt",
+                    "match": "\\b(as)\\b\\s"
+                },
+                {
+                    "name": "keyword.control.import.jakt",
+                    "match": "\\b(import)(?:\\s*)(?:(\\bextern\\s+c)|(\\bextern))?\\b",
+                    "captures": {
+                        "2": {
+                            "name": "keyword.control.import.extern-c.jakt"
+                        },
+                        "3": {
+                            "name": "keyword.control.import.extern.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "meta.control.match.jakt",
+                    "begin": "(?<=match.*?)(\\{)",
+                    "beginCaptures": {
+                        "2": {
+                            "name": "punctuation.begin.brace.jakt"
+                        }
+                    },
+                    "end": "(\\})",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.brace.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#match-patterns"
+                        }
+                    ]
+                }
+            ]
+        },
+        "operators": {
+            "patterns": [
+                {
+                    "name": "keyword.operator.logic.jakt",
+                    "match": "\\b(not|and|or|is)\\b"
+                },
+                {
+                    "name": "keyword.operator.arithmetic.jakt",
+                    "match": "(\\+|\\-|\\*|\\/|\\^|\\~|\\%)(=)?"
+                },
+                {
+                    "name": "keyword.operator.comparison.jakt",
+                    "match": "(((=|>|<)(=)?)|!=)"
+                },
+                {
+                    "name": "keyword.operator.cast.jakt",
+                    "match": "\\b(as)(\\!|\\?)"
+                },
+                {
+                    "name": "keyword.other.jakt",
+                    "match": "\\b(in)\\b"
+                },
+                {
+                    "name": "keyword.operator.range.jakt",
+                    "match": "\\.\\."
+                },
+                {
+                    "name": "punctuation.semicolon.jakt",
+                    "match": ";"
+                }
+            ]
+        },
+        "constant": {
+            "match": "\\b(?:true|false)\\b",
+            "name": "constant.language.jakt"
+        },
+        "number": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.hex.jakt",
+                    "match": "\\b(?<!\\$)0(?:x|X)[0-9a-fA-F][0-9a-fA-F_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
+                    "captures": {
+                        "1": {
+                            "name": "storage.type.numeric.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "constant.numeric.binary.jakt",
+                    "match": "\\b(?<!\\$)0(?:b|B)[01][01_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
+                    "captures": {
+                        "1": {
+                            "name": "storage.type.numeric.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "constant.numeric.octal.jakt",
+                    "match": "\\b(?<!\\$)0(?:o|O)?[0-7][0-7_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
+                    "captures": {
+                        "1": {
+                            "name": "storage.type.numeric.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "constant.numeric.float.jakt",
+                    "match": "\\b(?<!\\$|\\.)[0-9](?:[0-9]|_)*((?:[f](?:32|64)))\\b(?!\\$)",
+                    "captures": {
+                        "1": {
+                            "name": "storage.type.numeric.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "constant.numeric.float.jakt",
+                    "match": "\\b(?<!\\$|\\.)[0-9](?:[0-9]|_)*(?:\\.)(?:[0-9]|_)*((?:[f](?:32|64)))?\\b(?!\\$)",
+                    "captures": {
+                        "1": {
+                            "name": "storage.type.numeric.jakt"
+                        }
+                    }
+                },
+                {
+                    "name": "constant.numeric.jakt",
+                    "match": "\\b(?<!\\$)[0-9][0-9_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
+                    "captures": {
+                        "1": {
+                            "name": "storage.type.numeric.jakt"
+                        }
+                    }
+                }
+            ],
+            "name": "constant.numeric.jakt"
+        },
+        "comment": {
+            "patterns": [
+                {
+                    "captures": {
+                        "1": {
+                            "name": "punctuation.definition.comment.jakt"
+                        }
+                    },
+                    "match": "(//).*$\\n?",
+                    "name": "comment.line.double-slash.jakt"
+                }
+            ]
+        },
+        "strings": {
+            "patterns": [
+                {
+                    "name": "string.quoted.double.jakt",
+                    "begin": "(\")",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.quote.double.jakt"
+                        }
+                    },
+                    "end": "(\")",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.quote.double.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "name": "constant.character.escape.jakt",
+                            "match": "\\\\."
+                        }
+                    ]
+                },
+                {
+                    "name": "string.quoted.single.jakt",
+                    "begin": "(')",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.begin.quote.single.jakt"
+                        }
+                    },
+                    "end": "(')",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.quote.single.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "name": "constant.character.escape.jakt",
+                            "match": "\\\\."
+                        }
+                    ]
+                }
+            ]
+        }
     },
-    "this": {
-      "name": "variable.language.this.jakt",
-      "match": "\\bthis\\b"
-    },
-    "variable-declaration": {
-      "name": "meta.variable.definition.jakt",
-      "comment": "FIXME: The identifier matching is identical to the lexer but more characters may be allowed in the future.",
-      "begin": "\\b(let|mut)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)?",
-      "beginCaptures": {
-        "1": {
-          "name": "keyword.let.jakt"
-        },
-        "2": {
-          "name": "variable.other.jakt"
-        },
-        "3": {
-          "name": "punctuation.colon.jakt"
-        }
-      },
-      "end": "((?:\\+|\\-|\\*|\\/|%)?=)",
-      "endCaptures": {
-        "1": {
-          "name": "keyword.operator.assignment.jakt"
-        }
-      },
-      "patterns": [
-        {
-          "include": "#types"
-        }
-      ]
-    },
-    "namespace": {
-      "patterns": [
-        {
-          "name": "meta.namespace.jakt",
-          "match": "\\b(namespace)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
-          "captures": {
-            "1": {
-              "name": "keyword.namespace.jakt"
-            },
-            "2": {
-              "name": "entity.name.namespace.jakt"
-            }
-          }
-        },
-        {
-          "name": "meta.block.namespace.jakt",
-          "begin": "(?<=(?:namespace).*?)(\\{)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.brace.jakt"
-            }
-          },
-          "end": "(\\})",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.brace.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "$self"
-            }
-          ]
-        }
-      ]
-    },
-    "struct": {
-      "patterns": [
-        {
-          "name": "meta.type.struct.jakt",
-          "match": "(\\bextern\\s+)?\\b(class|struct)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
-          "captures": {
-            "1": {
-              "name": "storage.modifier.linkage.jakt"
-            },
-            "2": {
-              "name": "keyword.type.struct.jakt"
-            },
-            "3": {
-              "name": "entity.name.type.struct.jakt"
-            }
-          }
-        },
-        {
-          "name": "meta.block.struct.jakt",
-          "begin": "(?<=(?:class|struct).*?)(\\{)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.brace.jakt"
-            }
-          },
-          "end": "(\\})",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.brace.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#field"
-            },
-            {
-              "include": "$self"
-            }
-          ]
-        },
-        {
-          "name": "meta.type.generic-arguments.jakt",
-          "begin": "(?<=(?:class|struct|enum).*?)\\s*(<)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.angle-bracket.jakt"
-            }
-          },
-          "end": "(>)",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.angle-bracket.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        },
-        {
-          "name": "meta.type.implements.jakt",
-          "begin": "(?<=(?:class|struct|enum).*?)\\s*(implements)(\\()",
-          "beginCaptures": {
-            "1": {
-              "name": "keyword.type.implements.jakt"
-            },
-            "2": {
-              "name": "punctuation.begin.bracket.jakt"
-            }
-          },
-          "end": "(\\))",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.bracket.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        },
-        {
-          "name": "meta.type.enum.body.jakt",
-          "begin": "(?<=\\benum\\b.*?)(\\{)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.brace.jakt"
-            }
-          },
-          "end": "(\\})",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.brace.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#enum-field"
-            },
-            {
-              "include": "$self"
-            }
-          ]
-        },
-        {
-          "name": "meta.type.enum.jakt",
-          "match": "(?:\\b(boxed)\\s+)?\\b(enum)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(?:(:)\\s*((?:[ui](?:8|16|32|64))|usize))?",
-          "captures": {
-            "1": {
-              "name": "storage.modifier.pointer.jakt"
-            },
-            "2": {
-              "name": "keyword.type.enum.jakt"
-            },
-            "3": {
-              "name": "entity.name.type.enum.jakt"
-            },
-            "4": {
-              "name": "punctuation.colon.jakt"
-            },
-            "5": {
-              "name": "storage.type.numeric.jakt"
-            },
-            "6": {
-              "name": "punctuation.begin.brace.jakt"
-            }
-          }
-        }
-      ]
-    },
-    "trait": {
-      "patterns": [
-        {
-          "name": "meta.type.trait.jakt",
-          "match": "\\b(trait)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
-          "captures": {
-            "1": {
-              "name": "keyword.type.trait.jakt"
-            },
-            "2": {
-              "name": "entity.name.type.trait.jakt"
-            }
-          }
-        },
-        {
-          "name": "meta.block.trait.jakt",
-          "begin": "(?<=(?:trait).*?)(\\{)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.brace.jakt"
-            }
-          },
-          "end": "(\\})",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.brace.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "$self"
-            }
-          ]
-        },
-        {
-          "name": "meta.type.generic-arguments.jakt",
-          "begin": "(?<=(?:trait).*?)\\s*(<)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.angle-bracket.jakt"
-            }
-          },
-          "end": "(>)",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.angle-bracket.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        }
-      ]
-    },
-    "field": {
-      "name": "meta.field.jakt",
-      "begin": "(?:\\b(public|private)\\s+)?\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)",
-      "beginCaptures": {
-        "1": {
-          "name": "storage.modifier.visibility.jakt"
-        },
-        "2": {
-          "name": "variable.field.jakt"
-        },
-        "3": {
-          "name": "punctuation.colon.jakt"
-        }
-      },
-      "end": "$",
-      "patterns": [
-        {
-          "include": "#types"
-        }
-      ]
-    },
-    "enum-field": {
-      "patterns": [
-        {
-          "name": "meta.field.assigned.enum.jakt",
-          "match": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(=)",
-          "captures": {
-            "1": {
-              "name": "variable.field.enum.jakt"
-            },
-            "2": {
-              "name": "keyword.operator.assignment.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#number"
-            }
-          ]
-        },
-        {
-          "include": "#field"
-        },
-        {
-          "name": "meta.field.enum.jakt",
-          "match": "(?<!\\)\\s*)(?<!\\=\\s*)\\b((?:\\w|_)(?:\\w|_|[0-9])*)(?:\\s*$|\\s*\\(|\\,)",
-          "captures": {
-            "1": {
-              "name": "variable.field.enum.jakt"
-            }
-          }
-        }
-      ]
-    },
-    "types": {
-      "patterns": [
-        {
-          "name": "storage.modifier.mut.jakt",
-          "match": "\\bmut\\b"
-        },
-        {
-          "name": "storage.modifier.pointer.jakt",
-          "match": "\\b(raw|weak)\\b"
-        },
-        {
-          "name": "storage.type.primitive.jakt",
-          "match": "\\b(String|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|bool|c_int|c_char|usize|void)\\b"
-        },
-        {
-          "match": "\\b(?:[A-Z]|_)(?:\\w|_|[0-9])*\\s*(::)",
-          "captures": {
-            "1": {
-              "name": "entity.name.namespace.jakt"
-            },
-            "2": {
-              "name": "punctuation.double-colon.jakt"
-            }
-          }
-        },
-        {
-          "name": "storage.type.generic.jakt",
-          "begin": "\\b((?:[A-Z]|_)(?:\\w|_|[0-9])*)\\s*(<)",
-          "beginCaptures": {
-            "1": {
-              "name": "storage.type.other.jakt"
-            },
-            "2": {
-              "name": "punctuation.begin.angle-bracket.jakt"
-            }
-          },
-          "end": "(>)",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.angle-bracket.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        },
-        {
-          "name": "storage.type.generic-requires.jakt",
-          "begin": "\\b((?:[A-Z]|_)(?:\\w|_|[0-9])*)\\s*(requires)(\\()",
-          "beginCaptures": {
-            "1": {
-              "name": "storage.type.other.jakt"
-            },
-            "2": {
-              "name": "keyword.type.requires.jakt"
-            },
-            "3": {
-              "name": "punctuation.begin.bracket.jakt"
-            }
-          },
-          "end": "(\\))",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.bracket.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        },
-        {
-          "name": "storage.type.other.jakt",
-          "match": "\\b(?:[A-Z]|_)(?:\\w|_|[0-9])*\\b"
-        },
-        {
-          "name": "storage.type.array.jakt",
-          "begin": "(\\[)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.square-bracket.jakt"
-            }
-          },
-          "end": "(\\])",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.square-bracket.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        },
-        {
-          "name": "storage.type.optional.jakt",
-          "match": "\\?"
-        },
-        {
-          "name": "punctuation.comma.generic-type-list.jakt",
-          "match": ","
-        }
-      ]
-    },
-    "function": {
-      "patterns": [
-        {
-          "name": "meta.function.declaration.jakt",
-          "match": "(?:\\b(public|private)\\s+)?(\\bextern\\s+)?(?:(\\boverride\\b)\\s+|(\\bvirtual\\b)\\s+)?(\\b(?:fn|comptime))\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
-          "captures": {
-            "1": {
-              "name": "storage.modifier.visibility.jakt"
-            },
-            "2": {
-              "name": "storage.modifier.linkage.jakt"
-            },
-            "3": {
-              "name": "storage.modifier.specifier.override.jakt"
-            },
-            "4": {
-              "name": "storage.modifier.specifier.virtual.jakt"
-            },
-            "5": {
-              "name": "keyword.function.jakt"
-            },
-            "6": {
-              "name": "entity.name.function"
-            }
-          }
-        },
-        {
-          "name": "meta.function.argument-list.jakt",
-          "begin": "(?<=(?:fn|comptime).*?)(\\()",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.bracket"
-            }
-          },
-          "end": "(\\))",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.bracket"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#argument-list"
-            }
-          ]
-        },
-        {
-          "name": "meta.function.return-type.jakt",
-          "begin": "(?<=\\)\\s*)(throws)?\\s*(\\-\\>)",
-          "beginCaptures": {
-            "1": {
-              "name": "keyword.type.throws.jakt"
-            },
-            "2": {
-              "name": "punctuation.arrow.thin.jakt"
-            }
-          },
-          "end": "(?=(\\{)|$|(\\=\\>))",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.begin.bracket"
-            },
-            "2": {
-              "name": "keyword.operator.fat-arrow.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        },
-        {
-          "name": "meta.function.return-throws.jakt",
-          "begin": "(?<=\\)\\s*)(throws)",
-          "beginCaptures": {
-            "1": {
-              "name": "keyword.type.throws.jakt"
-            }
-          },
-          "end": "(?=\\{|$|\\=\\>)",
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        },
-        {
-          "name": "meta.function.return-shorthand.jakt",
-          "begin": "(?<=(?:fn|comptime).*?)(\\=\\>)",
-          "beginCaptures": {
-            "1": {
-              "name": "keyword.operator.fat-arrow.jakt"
-            }
-          },
-          "end": "$",
-          "patterns": [
-            {
-              "include": "$self"
-            }
-          ]
-        },
-        {
-          "name": "meta.function.body.jakt",
-          "begin": "(?<=(?:fn|comptime).*?)(\\{)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.brace.jakt"
-            }
-          },
-          "end": "(\\})",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.brace.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "$self"
-            }
-          ]
-        },
-        {
-          "name": "meta.function.generic-arguments.jakt",
-          "begin": "(?<=(?:fn|comptime)\\s+(\\w)*?)(<)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.angle-bracket.jakt"
-            }
-          },
-          "end": "(>)",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.angle-bracket.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        }
-      ]
-    },
-    "argument-list": {
-      "patterns": [
-        {
-          "name": "storage.modifier.anon.argument.jakt",
-          "match": "\\banon\\b"
-        },
-        {
-          "include": "#this"
-        },
-        {
-          "match": "\\b(mut)\\b",
-          "captures": {
-            "1": {
-              "name": "storage.modifier.mut.argument.jakt"
-            }
-          }
-        },
-        {
-          "name": "meta.argument.jakt",
-          "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)\\s*(&)?\\s*(\\bmut\\b)?",
-          "beginCaptures": {
-            "1": {
-              "name": "variable.parameter.jakt"
-            },
-            "2": {
-              "name": "punctuation.colon.jakt"
-            },
-            "3": {
-              "name": "keyword.reference.jakt"
-            },
-            "4": {
-              "name": "storage.modifier.mut.argument.jakt"
-            }
-          },
-          "end": "$|(,)|(?:(?=\\)))",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.comma.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        },
-        {
-          "name": "punctuation.comma.jakt",
-          "match": ","
-        }
-      ]
-    },
-    "parameter-list": {
-      "patterns": [
-        {
-          "name": "meta.parameter.jakt",
-          "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)(?!\\:)\\s*(&)?\\s*(\\bmut\\b)?",
-          "beginCaptures": {
-            "1": {
-              "name": "variable.parameter.name.jakt"
-            },
-            "2": {
-              "name": "punctuation.colon.jakt"
-            },
-            "3": {
-              "name": "keyword.reference.jakt"
-            },
-            "4": {
-              "name": "storage.modifier.mut.argument.jakt"
-            }
-          },
-          "end": "$|(,)|(?=\\))",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.comma.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "$self"
-            }
-          ]
-        },
-        {
-          "match": "\\b(mut)\\b",
-          "captures": {
-            "1": {
-              "name": "storage.modifier.mut.argument.jakt"
-            }
-          }
-        },
-        {
-          "name": "keyword.reference.jakt",
-          "match": "&"
-        },
-        {
-          "name": "punctuation.comma.jakt",
-          "match": ","
-        },
-        {
-          "include": "$self"
-        }
-      ]
-    },
-    "match-patterns": {
-      "patterns": [
-        {
-          "name": "meta.pattern.enum.jakt",
-          "match": "\\b((?:[A-Z]|_)(?:\\w|_|[0-9])*)(::)",
-          "captures": {
-            "1": {
-              "name": "entity.name.type.enum.jakt"
-            },
-            "2": {
-              "name": "punctuation.double-colon.jakt"
-            }
-          }
-        },
-        {
-          "name": "meta.pattern.enum.variant.tuple.jakt",
-          "begin": "\\b((?:[A-Z]|_)(?:\\w|_|[0-9])*)\\s*(\\()",
-          "beginCaptures": {
-            "1": {
-              "name": "entity.name.type.enum.jakt"
-            },
-            "2": {
-              "name": "punctuation.begin.bracket.jakt"
-            }
-          },
-          "end": "(\\))",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.bracket.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#parameter-list"
-            }
-          ]
-        },
-        {
-          "name": "meta.pattern.enum.variant.jakt",
-          "match": "\\b((?:[A-Z]|_)(?:\\w|_|[0-9])*)\\b",
-          "captures": {
-            "1": {
-              "name": "entity.name.type.enum.jakt"
-            }
-          }
-        },
-        {
-          "begin": "(\\=\\>)",
-          "beginCaptures": {
-            "1": {
-              "name": "keyword.operator.fat-arrow.jakt"
-            }
-          },
-          "end": "$",
-          "patterns": [
-            {
-              "include": "$self"
-            }
-          ]
-        },
-        {
-          "include": "$self"
-        }
-      ]
-    },
-    "indexing": {
-      "patterns": [
-        {
-          "name": "meta.index.struct.jakt",
-          "match": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(\\.)",
-          "captures": {
-            "1": {
-              "name": "variable.other.jakt"
-            },
-            "2": {
-              "name": "punctuation.period.jakt"
-            }
-          }
-        },
-        {
-          "name": "meta.index.namespace.jakt",
-          "match": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(::)",
-          "captures": {
-            "1": {
-              "name": "entity.name.namespace.jakt"
-            },
-            "2": {
-              "name": "punctuation.double-colon.jakt"
-            }
-          }
-        },
-        {
-          "name": "meta.index.array.jakt",
-          "begin": "(\\[)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.square-bracket.jakt"
-            }
-          },
-          "end": "(\\])",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.square-bracket.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "$self"
-            }
-          ]
-        },
-        {
-          "name": "meta.index.other.jakt",
-          "match": "(\\.)",
-          "captures": {
-            "1": {
-              "name": "punctuation.period.jakt"
-            }
-          }
-        }
-      ]
-    },
-    "call": {
-      "name": "meta.call.jakt",
-      "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(\\()",
-      "beginCaptures": {
-        "1": {
-          "name": "entity.name.function.call.jakt"
-        },
-        "2": {
-          "name": "punctuation.begin.bracket.jakt"
-        }
-      },
-      "end": "(\\))",
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.end.bracket.jakt"
-        }
-      },
-      "patterns": [
-        {
-          "include": "#parameter-list"
-        }
-      ]
-    },
-    "control": {
-      "patterns": [
-        {
-          "name": "meta.control.jakt",
-          "match": "\\b(if|else|while|for|loop|try|catch|cpp|unsafe|defer|match|guard)\\b(?=.*?(?:\\{|$))",
-          "captures": {
-            "1": {
-              "name": "keyword.control.block.jakt"
-            }
-          }
-        },
-        {
-          "name": "keyword.control.jakt",
-          "match": "\\b(return|throw|continue|break|yield)\\b"
-        },
-        {
-          "name": "keyword.control.other.jakt",
-          "match": "\\b(as)\\b\\s"
-        },
-        {
-          "name": "keyword.control.import.jakt",
-          "match": "\\b(import)(?:\\s*)(?:(\\bextern\\s+c)|(\\bextern))?\\b",
-          "captures": {
-            "2": {
-              "name": "keyword.control.import.extern-c.jakt"
-            },
-            "3": {
-              "name": "keyword.control.import.extern.jakt"
-            }
-          }
-        },
-        {
-          "name": "meta.control.match.jakt",
-          "begin": "(?<=match.*?)(\\{)",
-          "beginCaptures": {
-            "2": {
-              "name": "punctuation.begin.brace.jakt"
-            }
-          },
-          "end": "(\\})",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.brace.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#match-patterns"
-            }
-          ]
-        }
-      ]
-    },
-    "operators": {
-      "patterns": [
-        {
-          "name": "keyword.operator.logic.jakt",
-          "match": "\\b(not|and|or|is)\\b"
-        },
-        {
-          "name": "keyword.operator.arithmetic.jakt",
-          "match": "(\\+|\\-|\\*|\\/|\\^|\\~|\\%)(=)?"
-        },
-        {
-          "name": "keyword.operator.comparison.jakt",
-          "match": "(((=|>|<)(=)?)|!=)"
-        },
-        {
-          "name": "keyword.operator.cast.jakt",
-          "match": "\\b(as)(\\!|\\?)"
-        },
-        {
-          "name": "keyword.other.jakt",
-          "match": "\\b(in)\\b"
-        },
-        {
-          "name": "keyword.operator.range.jakt",
-          "match": "\\.\\."
-        },
-        {
-          "name": "punctuation.semicolon.jakt",
-          "match": ";"
-        }
-      ]
-    },
-    "constant": {
-      "match": "\\b(?:true|false)\\b",
-      "name": "constant.language.jakt"
-    },
-    "number": {
-      "patterns": [
-        {
-          "name": "constant.numeric.hex.jakt",
-          "match": "\\b(?<!\\$)0(?:x|X)[0-9a-fA-F][0-9a-fA-F_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
-          "captures": {
-            "1": {
-              "name": "storage.type.numeric.jakt"
-            }
-          }
-        },
-        {
-          "name": "constant.numeric.binary.jakt",
-          "match": "\\b(?<!\\$)0(?:b|B)[01][01_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
-          "captures": {
-            "1": {
-              "name": "storage.type.numeric.jakt"
-            }
-          }
-        },
-        {
-          "name": "constant.numeric.octal.jakt",
-          "match": "\\b(?<!\\$)0(?:o|O)?[0-7][0-7_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
-          "captures": {
-            "1": {
-              "name": "storage.type.numeric.jakt"
-            }
-          }
-        },
-        {
-          "name": "constant.numeric.float.jakt",
-          "match": "\\b(?<!\\$|\\.)[0-9](?:[0-9]|_)*((?:[f](?:32|64)))\\b(?!\\$)",
-          "captures": {
-            "1": {
-              "name": "storage.type.numeric.jakt"
-            }
-          }
-        },
-        {
-          "name": "constant.numeric.float.jakt",
-          "match": "\\b(?<!\\$|\\.)[0-9](?:[0-9]|_)*(?:\\.)(?:[0-9]|_)*((?:[f](?:32|64)))?\\b(?!\\$)",
-          "captures": {
-            "1": {
-              "name": "storage.type.numeric.jakt"
-            }
-          }
-        },
-        {
-          "name": "constant.numeric.jakt",
-          "match": "\\b(?<!\\$)[0-9][0-9_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
-          "captures": {
-            "1": {
-              "name": "storage.type.numeric.jakt"
-            }
-          }
-        }
-      ],
-      "name": "constant.numeric.jakt"
-    },
-    "comment": {
-      "patterns": [
-        {
-          "captures": {
-            "1": {
-              "name": "punctuation.definition.comment.jakt"
-            }
-          },
-          "match": "(//).*$\\n?",
-          "name": "comment.line.double-slash.jakt"
-        }
-      ]
-    },
-    "strings": {
-      "patterns": [
-        {
-          "name": "string.quoted.double.jakt",
-          "begin": "(\")",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.quote.double.jakt"
-            }
-          },
-          "end": "(\")",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.quote.double.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "name": "constant.character.escape.jakt",
-              "match": "\\\\."
-            }
-          ]
-        },
-        {
-          "name": "string.quoted.single.jakt",
-          "begin": "(')",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.begin.quote.single.jakt"
-            }
-          },
-          "end": "(')",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.quote.single.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "name": "constant.character.escape.jakt",
-              "match": "\\\\."
-            }
-          ]
-        }
-      ]
-    }
-  },
-  "scopeName": "source.jakt"
+    "scopeName": "source.jakt"
 }

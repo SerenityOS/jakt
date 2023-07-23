@@ -41,9 +41,9 @@ npx vsce package
 
 Then install vscode by switching to the Extensions section on the left, then the `...` at the top middle and choose "Install from VSIX..." and choose the package you just created.
 
-In the settings for jakt under Preferences: Open Settings (UI) from the command palate (cmd/ctrl + shift + p), set the Jakt Compiler: Executable Path to your configured ``/path/to/bin/jakt``. This must be an absolute path, you cannot use $JAKT_INSTALL here.
+In the settings for jakt under Preferences: Open Settings (UI) from the command palate (cmd/ctrl + shift + p), set the Jakt Compiler: Executable Path to your configured `/path/to/bin/jakt`. This must be an absolute path, you cannot use $JAKT_INSTALL here.
 
-Alternatively, modify the ``.vscode/settings.json`` file to have an entry similar to the following:
+Alternatively, modify the `.vscode/settings.json` file to have an entry similar to the following:
 
 ```
 "jaktLanguageServer.compiler.executablePath": "/path/to/jakt-install/bin/jakt"
