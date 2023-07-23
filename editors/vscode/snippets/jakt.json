@@ -2,23 +2,13 @@
     "Jakttest output header": {
         "scope": "jakt",
         "prefix": "jt",
-        "body": [
-            "/// Expect:",
-            "/// - output: \"$1\"",
-            "",
-            "$0"
-        ],
+        "body": ["/// Expect:", "/// - output: \"$1\"", "", "$0"],
         "description": "Jakttest output header"
     },
     "Jakttest error header": {
         "scope": "jakt",
         "prefix": "jte",
-        "body": [
-            "/// Expect:",
-            "/// - error: \"$1\"",
-            "",
-            "$0"
-        ],
+        "body": ["/// Expect:", "/// - error: \"$1\"", "", "$0"],
         "description": "Jakttest error header"
     }
 }

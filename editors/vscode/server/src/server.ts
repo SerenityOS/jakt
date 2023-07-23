@@ -30,12 +30,12 @@ interface JaktTextDocument extends TextDocument {
 }
 
 interface JaktSymbol {
-    name: string
-    detail?: string
-    kind: "namespace" | "function" | "method" | "struct" | "class" | "enum" | "enum-member"
-    range: {start: number, end: number}
-    selection_range: {start: number, end: number}
-    children: JaktSymbol[]
+    name: string;
+    detail?: string;
+    kind: "namespace" | "function" | "method" | "struct" | "class" | "enum" | "enum-member";
+    range: { start: number; end: number };
+    selection_range: { start: number; end: number };
+    children: JaktSymbol[];
 }
 
 import {
@@ -79,13 +79,12 @@ function includeFlagForPath(file_path: string): string {
 }
 
 function getClickableFilePosition(textDocumentPositionParams: TextDocumentPositionParams) {
-    return `${textDocumentPositionParams.textDocument.uri.replace('file://', '')}:${textDocumentPositionParams.position.line}:${textDocumentPositionParams.position.character}`;
+    return `${textDocumentPositionParams.textDocument.uri.replace("file://", "")}:${
+        textDocumentPositionParams.position.line
+    }:${textDocumentPositionParams.position.character}`;
 }
 
-async function durationLogWrapper<T>(
-    label: string,
-    fn: () => Promise<T>
-): Promise<T> {
+async function durationLogWrapper<T>(label: string, fn: () => Promise<T>): Promise<T> {
     console.log("Triggered " + label + ": ...");
     console.time(label);
     const result = await fn();
@@ -148,14 +147,11 @@ connection.onInitialize((params: InitializeParams) => {
 connection.onInitialized(() => {
     if (hasConfigurationCapability) {
         // Register for all configuration changes.
-        connection.client.register(
-            DidChangeConfigurationNotification.type,
-            undefined
-        );
+        connection.client.register(DidChangeConfigurationNotification.type, undefined);
     }
     if (hasWorkspaceFolderCapability) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        connection.workspace.onDidChangeWorkspaceFolders((_event) => {
+        connection.workspace.onDidChangeWorkspaceFolders(_event => {
             // connection.console.log('Workspace folder change event received.');
         });
     }
@@ -166,7 +162,7 @@ async function goToDefinition(
     jaktOutput: string
 ): Promise<HandlerResult<Definition, void> | undefined> {
     return await durationLogWrapper(`goToDefinition`, async () => {
-        const lines = jaktOutput.split("\n").filter((l) => l.length > 0);
+        const lines = jaktOutput.split("\n").filter(l => l.length > 0);
         for (const line of lines) {
             const obj = JSON.parse(line);
             // connection.console.log("going to type definition");
@@ -180,8 +176,8 @@ async function goToDefinition(
             );
 
             const uri = obj.file
-              ? "file://" + (await fs.promises.realpath(obj.file))
-              : document.uri;
+                ? "file://" + (await fs.promises.realpath(obj.file))
+                : document.uri;
 
             return {
                 uri: uri,
@@ -204,83 +200,89 @@ connection.onDocumentSymbol(async (request): Promise<DocumentSymbol[]> => {
         const lineBreaks = findLineBreaks(text);
         const stdout = await runCompiler(
             text,
-            "--print-symbols " +
-                includeFlagForPath(request.textDocument.uri),
+            "--print-symbols " + includeFlagForPath(request.textDocument.uri),
             settings
         );
         const toSymbolDefinition = (symbol: JaktSymbol): DocumentSymbol => {
             const kind_map = {
-                "namespace": SymbolKind.Namespace,
-                "function": SymbolKind.Function,
-                "method": SymbolKind.Method,
-                "struct": SymbolKind.Struct,
-                "class": SymbolKind.Class,
-                "enum": SymbolKind.Enum,
-                "enum-member": SymbolKind.EnumMember
+                namespace: SymbolKind.Namespace,
+                function: SymbolKind.Function,
+                method: SymbolKind.Method,
+                struct: SymbolKind.Struct,
+                class: SymbolKind.Class,
+                enum: SymbolKind.Enum,
+                "enum-member": SymbolKind.EnumMember,
             };
             return {
                 name: symbol.name,
                 detail: symbol.detail,
                 kind: kind_map[symbol.kind],
                 range: {
-                    start:  convertSpan(symbol.range.start, lineBreaks),
-                    end:  convertSpan(symbol.range.end, lineBreaks)
+                    start: convertSpan(symbol.range.start, lineBreaks),
+                    end: convertSpan(symbol.range.end, lineBreaks),
                 },
                 selectionRange: {
-                    start:  convertSpan(symbol.selection_range.start, lineBreaks),
-                    end:  convertSpan(symbol.selection_range.end, lineBreaks)
+                    start: convertSpan(symbol.selection_range.start, lineBreaks),
+                    end: convertSpan(symbol.selection_range.end, lineBreaks),
                 },
-                children: symbol.children.map(child => toSymbolDefinition(child))
+                children: symbol.children.map(child => toSymbolDefinition(child)),
             };
         };
-        const result = (JSON.parse(stdout) as JaktSymbol[]).map(symbol => toSymbolDefinition(symbol));
+        const result = (JSON.parse(stdout) as JaktSymbol[]).map(symbol =>
+            toSymbolDefinition(symbol)
+        );
         return result;
     });
 });
 
-connection.onDefinition(async (request) => {
-    return await durationLogWrapper(`onDefinition ${getClickableFilePosition(request)}`, async () => {
-    const document = documents.get(request.textDocument.uri);
-    if (!document) return;
-    const settings = await getDocumentSettings(request.textDocument.uri);
+connection.onDefinition(async request => {
+    return await durationLogWrapper(
+        `onDefinition ${getClickableFilePosition(request)}`,
+        async () => {
+            const document = documents.get(request.textDocument.uri);
+            if (!document) return;
+            const settings = await getDocumentSettings(request.textDocument.uri);
 
-    const text = document.getText();
+            const text = document.getText();
 
-    // connection.console.log("request: ");
-    // connection.console.log(request.textDocument.uri);
-    // connection.console.log("index: " + convertPosition(request.position, text));
-    const stdout = await runCompiler(
-        text,
-        "-g " +
-            convertPosition(request.position, text) +
-            includeFlagForPath(request.textDocument.uri),
-        settings
+            // connection.console.log("request: ");
+            // connection.console.log(request.textDocument.uri);
+            // connection.console.log("index: " + convertPosition(request.position, text));
+            const stdout = await runCompiler(
+                text,
+                "-g " +
+                    convertPosition(request.position, text) +
+                    includeFlagForPath(request.textDocument.uri),
+                settings
+            );
+            return goToDefinition(document, stdout);
+        }
     );
-    return goToDefinition(document, stdout);
-    });
 });
 
 connection.onTypeDefinition(async (request: TypeDefinitionParams) => {
-    return await durationLogWrapper(`onTypeDefinition ${getClickableFilePosition(request)}`, async () => {
-        const document = documents.get(request.textDocument.uri);
-        if (!document) return;
-        const settings = await getDocumentSettings(request.textDocument.uri);
+    return await durationLogWrapper(
+        `onTypeDefinition ${getClickableFilePosition(request)}`,
+        async () => {
+            const document = documents.get(request.textDocument.uri);
+            if (!document) return;
+            const settings = await getDocumentSettings(request.textDocument.uri);
 
-        const text = document.getText();
-        // connection.console.log("request: ");
-        // connection.console.log(request.textDocument.uri);
-        // connection.console.log("index: " + convertPosition(request.position, text));
-        const stdout = await runCompiler(
-            text,
-            "-t " +
-                convertPosition(request.position, text) +
-                includeFlagForPath(request.textDocument.uri),
-            settings
-        );
-        return goToDefinition(document, stdout);
-    });
+            const text = document.getText();
+            // connection.console.log("request: ");
+            // connection.console.log(request.textDocument.uri);
+            // connection.console.log("index: " + convertPosition(request.position, text));
+            const stdout = await runCompiler(
+                text,
+                "-t " +
+                    convertPosition(request.position, text) +
+                    includeFlagForPath(request.textDocument.uri),
+                settings
+            );
+            return goToDefinition(document, stdout);
+        }
+    );
 });
-
 
 connection.onHover(async (request: HoverParams) => {
     return await durationLogWrapper(`onHover ${getClickableFilePosition(request)}`, async () => {
@@ -302,7 +304,7 @@ connection.onHover(async (request: HoverParams) => {
             settings
         );
 
-        const lines = stdout.split("\n").filter((l) => l.length > 0);
+        const lines = stdout.split("\n").filter(l => l.length > 0);
         for (const line of lines) {
             const obj = JSON.parse(line);
             // connection.console.log("hovering");
@@ -352,16 +354,14 @@ let globalSettings: ExampleSettings = defaultSettings;
 // Cache the settings of all open documents
 const documentSettings: Map<string, Thenable<ExampleSettings>> = new Map();
 
-connection.onDidChangeConfiguration((change) => {
+connection.onDidChangeConfiguration(change => {
     // connection.console.log("onDidChangeConfiguration, hasConfigurationCapability: " + hasConfigurationCapability);
     // connection.console.log("change is " + JSON.stringify(change));
     if (hasConfigurationCapability) {
         // Reset all cached document settings
         documentSettings.clear();
     } else {
-        globalSettings = <ExampleSettings>(
-            (change.settings.jaktLanguageServer || defaultSettings)
-        );
+        globalSettings = <ExampleSettings>(change.settings.jaktLanguageServer || defaultSettings);
     }
 
     // Revalidate all open text documents
@@ -385,7 +385,7 @@ function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
 }
 
 // Only keep settings for open documents
-documents.onDidClose((e) => {
+documents.onDidClose(e => {
     documentSettings.delete(e.document.uri);
 });
 
@@ -422,11 +422,8 @@ function throttle(fn: (...args: any) => void, delay: number) {
 // when the text document first opened or when its content has changed.
 documents.onDidChangeContent(
     (() => {
-        const throttledValidateTextDocument = throttle(
-            validateTextDocument,
-            500
-        );
-        return (change) => {
+        const throttledValidateTextDocument = throttle(validateTextDocument, 500);
+        return change => {
             throttledValidateTextDocument(change.document);
         };
     })()
@@ -456,8 +453,7 @@ function lowerBoundBinarySearch(arr: number[], num: number): number {
 function convertSpan(utf8_offset: number, lineBreaks: Array<number>): Position {
     const lineBreakIndex = lowerBoundBinarySearch(lineBreaks, utf8_offset);
 
-    const start_of_line_offset =
-        lineBreakIndex == -1 ? 0 : lineBreaks[lineBreakIndex] + 1;
+    const start_of_line_offset = lineBreakIndex == -1 ? 0 : lineBreaks[lineBreakIndex] + 1;
     const character = Math.max(0, utf8_offset - start_of_line_offset);
 
     return { line: lineBreakIndex + 1, character };
@@ -491,7 +487,7 @@ async function runCompiler(
     text: string,
     flags: string,
     settings: ExampleSettings,
-    options: {allowErrors?: boolean} = {}
+    options: { allowErrors?: boolean } = {}
 ): Promise<string> {
     const allowErrors = options.allowErrors === undefined ? true : options.allowErrors;
 
@@ -505,14 +501,12 @@ async function runCompiler(
     let stdout = "";
     try {
         const output = await exec(
-          `${
-            settings.compiler.executablePath
-          } ${flags} ${settings.extraCompilerImportPaths
-            .map((x) => "-I " + x)
-            .join(" ")} ${tmpFile.name}`,
-          {
-            timeout: settings.maxCompilerInvocationTime,
-          }
+            `${settings.compiler.executablePath} ${flags} ${settings.extraCompilerImportPaths
+                .map(x => "-I " + x)
+                .join(" ")} ${tmpFile.name}`,
+            {
+                timeout: settings.maxCompilerInvocationTime,
+            }
         );
         stdout = output.stdout;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -545,14 +539,10 @@ function findLineBreaks(utf16_text: string): Array<number> {
     return lineBreaks;
 }
 
-async function validateTextDocument(
-    textDocument: JaktTextDocument
-): Promise<void> {
+async function validateTextDocument(textDocument: JaktTextDocument): Promise<void> {
     return await durationLogWrapper(`validateTextDocument ${textDocument.uri}`, async () => {
         if (!hasDiagnosticRelatedInformationCapability) {
-            console.error(
-                "Trying to validate a document with no diagnostic capability"
-            );
+            console.error("Trying to validate a document with no diagnostic capability");
             return;
         }
 
@@ -578,7 +568,7 @@ async function validateTextDocument(
         //        It'd be nicer if it didn't give duplicate hints in the first place.
         const seenTypeHintPositions = new Set();
 
-        const lines = stdout.split("\n").filter((l) => l.length > 0);
+        const lines = stdout.split("\n").filter(l => l.length > 0);
         for (const line of lines) {
             // connection.console.log(line);
             try {
@@ -660,62 +650,65 @@ async function validateTextDocument(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-connection.onDidChangeWatchedFiles((_change) => {
+connection.onDidChangeWatchedFiles(_change => {
     // Monitored files have change in VSCode
     connection.console.log("We received an file change event");
 });
 
 // This handler provides the initial list of the completion items.
 connection.onCompletion(async (request: TextDocumentPositionParams): Promise<CompletionItem[]> => {
-    return await durationLogWrapper(`onCompletion ${getClickableFilePosition(request)}`, async () => {
-        // The pass parameter contains the position of the text document in
-        // which code complete got requested. For the example we ignore this
-        // info and always provide the same completion items.
+    return await durationLogWrapper(
+        `onCompletion ${getClickableFilePosition(request)}`,
+        async () => {
+            // The pass parameter contains the position of the text document in
+            // which code complete got requested. For the example we ignore this
+            // info and always provide the same completion items.
 
-        const document = documents.get(request.textDocument.uri);
-        const settings = await getDocumentSettings(request.textDocument.uri);
+            const document = documents.get(request.textDocument.uri);
+            const settings = await getDocumentSettings(request.textDocument.uri);
 
-        const text = document?.getText();
+            const text = document?.getText();
 
-        if (typeof text == "string") {
-            // connection.console.log("completion request: ");
-            // connection.console.log(request.textDocument.uri);
-            const index = convertPosition(request.position, text) - 1;
-            // connection.console.log("index: " + index);
-            const stdout = await runCompiler(
-                text,
-                "-m " + index + includeFlagForPath(request.textDocument.uri),
-                settings
-            );
-            // connection.console.log("got: " + stdout);
+            if (typeof text == "string") {
+                // connection.console.log("completion request: ");
+                // connection.console.log(request.textDocument.uri);
+                const index = convertPosition(request.position, text) - 1;
+                // connection.console.log("index: " + index);
+                const stdout = await runCompiler(
+                    text,
+                    "-m " + index + includeFlagForPath(request.textDocument.uri),
+                    settings
+                );
+                // connection.console.log("got: " + stdout);
 
-            const lines = stdout.split("\n").filter((l) => l.length > 0);
-            for (const line of lines) {
-                const obj = JSON.parse(line);
-                // connection.console.log("completions");
-                // connection.console.log(obj);
+                const lines = stdout.split("\n").filter(l => l.length > 0);
+                for (const line of lines) {
+                    const obj = JSON.parse(line);
+                    // connection.console.log("completions");
+                    // connection.console.log(obj);
 
-                const output = [];
-                let index = 1;
-                for (const completion of obj.completions) {
-                    output.push({
-                        label: completion,
-                        kind: completion.includes("(")
-                            ? CompletionItemKind.Function
-                            : CompletionItemKind.Field,
-                        data: index,
-                    });
-                    index++;
+                    const output = [];
+                    let index = 1;
+                    for (const completion of obj.completions) {
+                        output.push({
+                            label: completion,
+                            kind: completion.includes("(")
+                                ? CompletionItemKind.Function
+                                : CompletionItemKind.Field,
+                            data: index,
+                        });
+                        index++;
+                    }
+                    return output;
                 }
-                return output;
             }
-        }
 
-        return [];
-    });
+            return [];
+        }
+    );
 });
 
-connection.onDocumentFormatting(async (params) => {
+connection.onDocumentFormatting(async params => {
     return await durationLogWrapper(`onDocumentFormatting`, async () => {
         const document = documents.get(params.textDocument.uri);
         const settings = await getDocumentSettings(params.textDocument.uri);
@@ -729,7 +722,7 @@ connection.onDocumentFormatting(async (params) => {
                 text,
                 "-f " + includeFlagForPath(params.textDocument.uri),
                 settings,
-                {allowErrors: false}
+                { allowErrors: false }
             );
             const formatted = stdout;
             return [
@@ -746,7 +739,7 @@ connection.onDocumentFormatting(async (params) => {
     });
 });
 
-connection.onDocumentRangeFormatting(async (params) => {
+connection.onDocumentRangeFormatting(async params => {
     return await durationLogWrapper(`onDocumentRangeFormatting`, async () => {
         const document = documents.get(params.textDocument.uri);
         const settings = await getDocumentSettings(params.textDocument.uri);
@@ -756,15 +749,12 @@ connection.onDocumentRangeFormatting(async (params) => {
         if (typeof text == "string") {
             const stdout = await runCompiler(
                 text,
-                `--format-range ${
-                    convertPosition(params.range.start, text)
-                }:${
-                    convertPosition(params.range.end, text)
-                } -f ${
-                    includeFlagForPath(params.textDocument.uri)
-                }`,
+                `--format-range ${convertPosition(params.range.start, text)}:${convertPosition(
+                    params.range.end,
+                    text
+                )} -f ${includeFlagForPath(params.textDocument.uri)}`,
                 settings,
-                {allowErrors: false}
+                { allowErrors: false }
             );
             const formatted = stdout;
             return [
