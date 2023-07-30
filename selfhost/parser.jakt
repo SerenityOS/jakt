@@ -1082,7 +1082,7 @@ boxed enum ParsedExpression {
     EnumVariantArg(expr: ParsedExpression, arg: EnumVariantPatternArgument, enum_variant: ParsedType, span: Span)
     NamespacedVar(name: String, namespace_: [String], span: Span)
     Function(captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, is_fat_arrow: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
-    Try(expr: ParsedExpression, catch_block: ParsedBlock?, catch_name: String?, span: Span)
+    Try(expr: ParsedExpression, catch_block: ParsedBlock?, catch_span: Span?, catch_name: String?, span: Span)
     TryBlock(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, span: Span)
     Reflect(type: ParsedType, span: Span)
     Garbage(Span)
@@ -4564,7 +4564,9 @@ struct Parser {
                     let expression = .parse_expression(allow_assignments: true, allow_newlines: true)
                     mut catch_block: ParsedBlock? = None
                     mut catch_name: String? = None
+                    mut catch_span: Span? = None
                     if .current() is Catch {
+                        catch_span = .current().span()
                         .index++
                         if .current() is Identifier(name) {
                             catch_name = name
@@ -4572,7 +4574,7 @@ struct Parser {
                         }
                         catch_block = .parse_block()
                     }
-                    yield ParsedExpression::Try(expr: expression, catch_block, catch_name, span)
+                    yield ParsedExpression::Try(expr: expression, catch_block, catch_span, catch_name, span)
                 }
             }
         }

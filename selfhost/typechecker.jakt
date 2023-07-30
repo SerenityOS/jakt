@@ -6825,7 +6825,7 @@ struct Typechecker {
         return CheckedExpression::TryBlock(stmt: checked_stmt, catch_block: checked_catch_block, error_name, error_span, span, type_id: void_type_id())
     }
 
-    fn typecheck_try(mut this, expr: ParsedExpression, catch_block: ParsedBlock?, catch_name: String?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span, type_hint: TypeId?) throws -> CheckedExpression {
+    fn typecheck_try(mut this, expr: ParsedExpression, catch_block: ParsedBlock?, catch_span: Span?, catch_name: String?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span, type_hint: TypeId?) throws -> CheckedExpression {
         let try_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "try")
         let checked_expr = .typecheck_expression(expr, scope_id: try_scope_id, safety_mode, type_hint)
         let error_struct_id = .find_struct_in_prelude("Error")
@@ -6870,14 +6870,13 @@ struct Typechecker {
                 }
             } else {
                 if not expression_type_id.equals(builtin(BuiltinType::Void)) {
-                    // FIXME: Span pointing at the "catch"
-                    .error(message: "In a try expression that returns a value, 'catch' block must either yield a value or transfer control flow", span)
+                    .error(message: "In a try expression that returns a value, 'catch' block must either yield a value or transfer control flow", span: catch_span ?? span)
                 }
             }
             checked_catch_block = block
         }
 
-        return CheckedExpression::Try(expr: checked_expr, catch_block: checked_catch_block, catch_name, span, type_id, inner_type_id: expression_type_id)
+        return CheckedExpression::Try(expr: checked_expr, catch_block: checked_catch_block, catch_span, catch_name, span, type_id, inner_type_id: expression_type_id)
     }
 
     fn typecheck_throw(mut this, expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
@@ -8191,7 +8190,7 @@ struct Typechecker {
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
         Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode, type_hint)
         Function(captures, params, can_throw, is_fat_arrow, return_type, block, span) => .typecheck_lambda(captures, params, can_throw, is_fat_arrow, return_type, block, span, scope_id, safety_mode)
-        Try(expr, catch_block, catch_name, span) => .typecheck_try(expr, catch_block, catch_name, scope_id, safety_mode, span, type_hint)
+        Try(expr, catch_block, catch_span, catch_name, span) => .typecheck_try(expr, catch_block, catch_span, catch_name, scope_id, safety_mode, span, type_hint)
         TryBlock(stmt, catch_block, error_name, error_span, span) => .typecheck_try_block(stmt, error_name, error_span, catch_block, scope_id, safety_mode, span)
         Unsafe(expr) => .typecheck_expression(expr, scope_id, safety_mode: SafetyMode::Unsafe, type_hint)
         Operator => {
