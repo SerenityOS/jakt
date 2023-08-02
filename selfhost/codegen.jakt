@@ -1543,6 +1543,9 @@ struct CodeGenerator {
             }
             Struct => {
                 output += format("struct {}", struct_.name_for_codegen().as_name_for_definition())
+                if struct_.super_struct_id.has_value() {
+                    output += format(": public {}", .codegen_struct_type(id: struct_.super_struct_id!, as_namespace: true))
+                }
                 output += " {\n"
                 output += "  public:\n"
             }
