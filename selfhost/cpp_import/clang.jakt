@@ -322,7 +322,7 @@ fn type_from(
                 is_unsafe: false
                 specialization_index: None
 
-                owner_scope: scope_id
+                owner_scope: None
                 is_fully_checked: true
                 external_name: None
             )

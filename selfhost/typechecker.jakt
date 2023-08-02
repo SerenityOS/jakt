@@ -10713,6 +10713,13 @@ struct Typechecker {
             mut type_bindings: [TypeId:TypeId] = [:]
             for i in 0uz..resolved_function.generics.params.size() {
                 let param = resolved_function.generics.params[i]
+                if function_call.type_args.size() <= i {
+                    .error(
+                        format("Missing type argument for generic parameter {}", i)
+                        span
+                    )
+                    break
+                }
 
                 type_bindings.set(
                     param.type_id()
@@ -10721,7 +10728,7 @@ struct Typechecker {
             }
 
             mut result: ExecutionResult? = None
-            mut invocation_scope = InterpreterScope::create(type_bindings)
+            mut invocation_scope = InterpreterScope::create(parent_scope: eval_scope, type_bindings)
             try {
                 result = interpreter.execute(
                     function_to_run_id: resolved_function_id!

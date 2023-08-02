@@ -14,22 +14,28 @@ import compiler { Compiler }
 
 enum ExternalName {
     Plain(String)
+    PreprocessorName(String)
     Operator(name: String, is_prefix: bool = false)
 
     fn as_name_for_definition(this) throws -> String => match this {
         Plain(name) => name
+        PreprocessorName(name) => name
         Operator(name) => "operator" + name
     }
 
     fn as_name_for_use(this) throws -> String => match this {
         Plain(name) => name
+        PreprocessorName(name) => name
         Operator(name) => format(" {} ", name)
     }
 
     fn is_prefix(this) -> bool => match this {
         Plain => false
+        PreprocessorName => false
         Operator(is_prefix) => is_prefix
     }
+
+    fn is_scopable(this) -> bool => not (this is PreprocessorName)
 }
 
 enum NumericConstant {
