@@ -4529,7 +4529,7 @@ struct Typechecker {
             let mapped = generic_substitutions.get(parameter_type_id)
             guard mapped.has_value() else { continue }
             let type_id = mapped!
-            guard .get_type(parameter_type_id) is TypeVariable(name: type_name) else { continue }
+            guard .get_type(parameter_type_id) is TypeVariable(name: type_name, is_value) else { continue }
 
             let dependent_scope_id: ScopeId? = match .get_type(parameter_type_id) {
                 GenericInstance(id: struct_id) | Struct(struct_id) => .get_struct(struct_id).scope_id
@@ -4538,6 +4538,20 @@ struct Typechecker {
                 else => None
             }
             .add_type_to_scope(scope_id, type_name, type_id, span)
+
+            mut scope = .get_scope(scope_id)
+            if is_value and .get_type(type_id) is Const(value) {
+                scope.comptime_bindings[type_name] = value
+                let checked_var = CheckedVariable(
+                    name: type_name
+                    type_id: value.impl.type_id(&mut .program)
+                    is_mutable: false
+                    definition_span: value.span
+                    type_span: None
+                    visibility: CheckedVisibility::Public
+                )
+                scope.vars[type_name] = module.add_variable(checked_var)
+            }
 
             if dependent_scope_id.has_value() {
                 mut scope = .get_scope(scope_id)

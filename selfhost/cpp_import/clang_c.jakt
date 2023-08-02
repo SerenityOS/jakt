@@ -438,6 +438,7 @@ import extern c "clang-c/Index.h" {
     }
     extern enum CXTranslationUnit_Flags : c_int {
         CXTranslationUnit_SkipFunctionBodies
+        CXTranslationUnit_DetailedPreprocessingRecord
         CXTranslationUnit_CreatePreambleOnFirstParse
         CXTranslationUnit_Incomplete
     }
@@ -524,6 +525,7 @@ import extern c "clang-c/Index.h" {
     extern fn clang_tokenize(tu: CXTranslationUnit, range: CXSourceRange, tokens: raw raw CXToken, num_tokens: raw u32) -> void
     extern fn clang_getCursorExtent(cursor: CXCursor) -> CXSourceRange
     extern fn clang_disposeTokens(tu: CXTranslationUnit, tokens: raw CXToken, num_tokens: u32) -> void
+    extern fn clang_Cursor_isMacroFunctionLike(cursor: CXCursor) -> bool
     extern fn clang_Cursor_getTranslationUnit(cursor: CXCursor) -> CXTranslationUnit
     extern fn clang_Cursor_getNumTemplateArguments(cursor: CXCursor) -> c_int
     extern fn clang_isCursorDefinition(cursor: CXCursor) -> u32
