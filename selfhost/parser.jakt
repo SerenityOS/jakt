@@ -3470,6 +3470,14 @@ struct Parser {
             parsed_struct.implements_list = .parse_trait_list()
         }
 
+        mut super_type: ParsedType? = None
+        // Super class
+        if .current() is Colon {
+            .index++
+            super_type = .parse_typename()
+        }
+
+
         .skip_newlines()
 
         if .eof() {
@@ -3480,7 +3488,6 @@ struct Parser {
         let (fields, methods) = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public, is_class: false)
 
         parsed_struct.methods = methods
-        let super_type: ParsedType? = None
         parsed_struct.record_type = RecordType::Struct(fields, super_type)
 
         return parsed_struct
