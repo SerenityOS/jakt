@@ -2085,9 +2085,12 @@ struct CodeGenerator {
         ByteConstant(val) => "static_cast<u8>(u8'" + val + "')"
         CCharacterConstant(val) => "'" + val + "'"
         CharacterConstant(val) => "static_cast<u32>(U'" + val + "')"
-        Var(var) => match var.name {
-            "this" => .this_replacement ?? "*this"
-            else => var.name
+        Var(var) => {
+            let name = var.name_for_codegen().as_name_for_use()
+            yield match name {
+                "this" => .this_replacement ?? "*this"
+                else => name
+            }
         }
         IndexedExpression(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
@@ -2344,17 +2347,19 @@ struct CodeGenerator {
         }
         NamespacedVar(namespaces, var) => {
             mut output = ""
-            if var.owner_scope.has_value() {
-                output = .codegen_namespace_qualifier(
-                    scope_id: var.owner_scope!
-                    skip_current: false
-                )
-            } else {
-                for ns in namespaces {
-                    output += ns.name + "::"
+            if var.name_for_codegen().is_scopable() {
+                if var.owner_scope.has_value() {
+                    output = .codegen_namespace_qualifier(
+                        scope_id: var.owner_scope!
+                        skip_current: false
+                    )
+                } else {
+                    for ns in namespaces {
+                        output += ns.name + "::"
+                    }
                 }
             }
-            yield output + var.name
+            yield output + var.name_for_codegen().as_name_for_use()
         }
         Match(expr, match_cases, type_id, all_variants_constant) => .codegen_match(expr, match_cases, type_id, all_variants_constant)
         EnumVariantArg(expr, arg, enum_variant) => {
