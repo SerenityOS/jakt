@@ -1506,11 +1506,25 @@ struct CodeGenerator {
                     class_name_with_generics += ">"
                 }
 
+                output += format("class {} :", struct_.name_for_codegen().as_name_for_definition())
                 if struct_.super_struct_id.has_value() {
-                    output += format("class {}: public {} {{\n", struct_.name_for_codegen().as_name_for_definition(), .codegen_struct_type(id: struct_.super_struct_id!, as_namespace: true))
+                    output += format("public {}", .codegen_struct_type(id: struct_.super_struct_id!, as_namespace: true))
+                    if not (.program.get_struct(struct_.super_struct_id!).record_type is Class) {
+                        output += format(
+                            ", public RefCounted<{}>, public Weakable<{}>"
+                            class_name_with_generics
+                            class_name_with_generics
+                        )
+                    }
                 } else {
-                    output += format("class {} : public RefCounted<{}>, public Weakable<{}> {{\n", struct_.name_for_codegen().as_name_for_definition(), class_name_with_generics, class_name_with_generics)
+                    output += format(
+                        "public RefCounted<{}>, public Weakable<{}> "
+                        class_name_with_generics
+                        class_name_with_generics
+                    )
                 }
+
+                output += "{\n"
 
                 let scope = .program.get_scope(struct_.scope_id)
                 mut has_destructor = false
