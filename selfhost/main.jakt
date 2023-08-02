@@ -26,7 +26,7 @@ import project { Project }
 import repl { REPL, serialize_ast_node }
 import typechecker { Typechecker }
 import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImpl }
-import utility { Queue, Span, escape_for_quotes, join, write_to_file }
+import utility { Queue, Span, escape_for_quotes, join, write_to_file, to_string }
 
 import platform_fs() { DirectoryIterator, make_directory }
 
@@ -35,6 +35,26 @@ import platform_compiler() {
 }
 
 import jakt::platform { Target }
+
+comptime get_current_git_hash() throws -> String {
+    mut head_file: File? = None // FIXME: implement try expression in comptime
+    try {
+        head_file = File::open_for_reading("../.git/HEAD")
+    } catch {
+        return "unreleased"
+    }
+    guard head_file.has_value() else {
+        return "unreleased"
+    }
+    let path = to_string(head_file!.read_all())
+    guard path.starts_with("ref: ") and path.ends_with("\n") else {
+        return "HEAD"
+    }
+
+    mut ref_file = File::open_for_reading("../.git/" + path.substring(start: 5, length: path.length() - 6))
+    let hash = to_string(ref_file.read_all())
+    return hash.substring(start: 0, length: hash.length() - 1)
+}
 
 fn usage() throws => "usage: jakt [cross] [-h] [OPTIONS] <filename>"
 fn help() throws -> String {
@@ -457,7 +477,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     }
 
     if args_parser.flag(["-v", "--version"]) {
-        println("unreleased")
+        println("{}", get_current_git_hash())
         return 0
     }
 
