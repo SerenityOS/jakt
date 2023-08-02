@@ -351,6 +351,16 @@ ALWAYS_INLINE decltype(auto) deref_if_ref_pointer(T&& value)
 namespace Detail {
 template<auto... Xs>
 struct DependentValue {};
+
+template<typename T>
+struct UnderlyingClassTypeOf {
+    using Type = T;
+};
+
+template<typename T>
+struct UnderlyingClassTypeOf<NonnullRefPtr<T>> {
+    using Type = T;
+};
 }
 
 template<typename T, auto Reason>
@@ -360,9 +370,12 @@ T fail_comptime_call()
     return declval<T>();
 }
 
+template<typename T>
+using UnderlyingClassTypeOf = typename Detail::UnderlyingClassTypeOf<RemoveCVReference<T>>::Type;
 }
 
 namespace Jakt {
+using JaktInternal::___jakt_get_target_triple_string;
 using JaktInternal::abort;
 using JaktInternal::as_saturated;
 using JaktInternal::as_truncated;
@@ -370,14 +383,14 @@ using JaktInternal::assert_type;
 using JaktInternal::fallible_class_cast;
 using JaktInternal::fallible_integer_cast;
 using JaktInternal::infallible_class_cast;
-using JaktInternal::infallible_integer_cast;
 using JaktInternal::infallible_enum_cast;
+using JaktInternal::infallible_integer_cast;
 using JaktInternal::Range;
 using JaktInternal::unchecked_add;
 using JaktInternal::unchecked_div;
 using JaktInternal::unchecked_mul;
 using JaktInternal::unchecked_sub;
-using JaktInternal::___jakt_get_target_triple_string;
+using JaktInternal::UnderlyingClassTypeOf;
 }
 
 // We place main in a separate namespace to ensure it has access to the same identifiers as other functions
