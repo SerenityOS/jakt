@@ -2746,6 +2746,32 @@ boxed enum ValueImpl {
         pseudo_function_id: FunctionId?
     )
 
+    fn type_id(this, anon program: &mut CheckedProgram) throws -> TypeId => match this {
+        Void => void_type_id()
+        Bool => builtin(BuiltinType::Bool)
+        U8 => builtin(BuiltinType::U8)
+        U16 => builtin(BuiltinType::U16)
+        U32 => builtin(BuiltinType::U32)
+        U64 => builtin(BuiltinType::U64)
+        I8 => builtin(BuiltinType::I8)
+        I16 => builtin(BuiltinType::I16)
+        I32 => builtin(BuiltinType::I32)
+        I64 => builtin(BuiltinType::I64)
+        F32 => builtin(BuiltinType::F32)
+        F64 => builtin(BuiltinType::F64)
+        USize => builtin(BuiltinType::Usize)
+        JaktString => program.find_type_in_scope(scope_id: program.prelude_scope_id(), name: "String")!
+        StringView => builtin(BuiltinType::JaktString)
+        CChar => builtin(BuiltinType::CChar)
+        CInt => builtin(BuiltinType::CInt)
+        Struct(struct_id) => program.find_or_add_type_id(Type::Struct(struct_id), module_id: struct_id.module)
+        Class(struct_id) => program.find_or_add_type_id(Type::Struct(struct_id), module_id: struct_id.module)
+        Enum(enum_id) => program.find_or_add_type_id(Type::Enum(enum_id), module_id: enum_id.module)
+        else => {
+            panic("Reflected value type not implemented")
+        }
+    }
+
     fn copy(this) throws -> ValueImpl => match this {
         Void => ValueImpl::Void
         Bool(x) => ValueImpl::Bool(x)
