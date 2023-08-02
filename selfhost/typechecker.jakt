@@ -2724,16 +2724,50 @@ struct Typechecker {
             let function_scope_id = .create_scope(parent_scope_id: struct_.scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor({})", parsed_record.name))
             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor-block({})", parsed_record.name))
 
+            let inheritance_chain = .struct_inheritance_chain(struct_id)
+            mut constructor_parameters: [CheckedParameter] = []
+
+            let parent_index_in_chain = match inheritance_chain.size() >= 2 {
+                true => inheritance_chain.size() - 2
+                false => 0
+            }
+            for parent_struct_id in inheritance_chain[parent_index_in_chain..] {
+                let parent_struct = .get_struct(parent_struct_id)
+                let scope = .get_scope(parent_struct.scope_id)
+                let parent_constructors = scope.functions.get(parent_struct.name)
+                if parent_constructors.has_value() {
+                    let id = parent_constructors![0]
+                    let ctor = .get_function(id)
+                    constructor_parameters.push_values(&ctor.params)
+                } else {
+                    for field in .get_struct(parent_struct_id).fields {
+                        let variable = .get_variable(field.variable_id)
+                        mut default_value = field.default_value
+                        if not default_value.has_value() and field.default_value_expression.has_value() {
+                            field.default_value = CheckedExpression::Garbage(
+                                span: variable.definition_span
+                                type_id: variable.type_id
+                            )
+                        }
+                        constructor_parameters.push(CheckedParameter(
+                            requires_label: true
+                            variable: variable
+                            default_value: field.default_value
+                        ))
+                    }
+                }
+            }
+
             mut checked_constructor = CheckedFunction(
                 name: parsed_record.name
                 name_span: parsed_record.name_span
                 visibility: CheckedVisibility::Public
                 return_type_id: struct_type_id
                 return_type_span: None
-                params: []
+                params: constructor_parameters
                 generics: FunctionGenerics(
                     base_scope_id: function_scope_id
-                    base_params: []
+                    base_params: constructor_parameters
                     params: []
                     specializations: []
                 )
@@ -2761,27 +2795,6 @@ struct Typechecker {
             // Internal constructor
             mut module = .current_module()
             let function_id = module.add_function(checked_function: checked_constructor)
-
-            let inheritance_chain = .struct_inheritance_chain(struct_id)
-
-            mut func = module.functions.last()!
-            for field_struct_id in inheritance_chain {
-                for field in .get_struct(field_struct_id).fields {
-                    let variable = .get_variable(field.variable_id)
-                    mut default_value = field.default_value
-                    if not default_value.has_value() and field.default_value_expression.has_value() {
-                        field.default_value = CheckedExpression::Garbage(
-                                span: variable.definition_span
-                                type_id: variable.type_id
-                        )
-                    }
-                    func.add_param(CheckedParameter(
-                        requires_label: true
-                        variable: variable
-                        default_value: field.default_value
-                    ))
-                }
-            }
 
             // Add constructor to the struct's scope
             .add_function_to_scope(
