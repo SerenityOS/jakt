@@ -51,6 +51,14 @@ fn add_arrays<T>(anon a: [T], anon b: [T]) throws -> [T] {
     return result
 }
 
+fn to_string(anon bytes: [u8]) throws -> String {
+    mut builder = StringBuilder::create()
+    for byte in bytes {
+        builder.append(byte)
+    }
+    return builder.to_string()
+}
+
 fn join(anon strings: [String], separator: String) throws -> String {
     mut output = ""
 
