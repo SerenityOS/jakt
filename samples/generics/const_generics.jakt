@@ -1,9 +1,11 @@
 /// Expect:
-/// - output: "42\n"
+/// - output: "70\n"
+
+comptime id<T>(anon x: T) -> T => x
 
 fn actually_kinda_useless<comptime T>() -> i32 {
-    // FIXME: Can't really acccess the value of 'T' yet.
-    return 42
+    // FIXME: Can't really acccess the value of 'T' outside a comptime context yet (a binding exists, but not at runtime)
+    return id(T) as! i32 + 1
 }
 
 fn main() {
