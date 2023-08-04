@@ -3872,95 +3872,103 @@ struct CodeGenerator {
         return .codegen_type_possibly_as_namespace(type_id, as_namespace: false)
     }
 
-    fn codegen_type_possibly_as_namespace(mut this, type_id: TypeId, as_namespace: bool) throws -> String => match .program.get_type(type_id) {
-        Void => "void"
-        Bool => "bool"
-        U8 => "u8"
-        U16 => "u16"
-        U32 => "u32"
-        U64 => "u64"
-        I8 => "i8"
-        I16 => "i16"
-        I32 => "i32"
-        I64 => "i64"
-        F32 => "f32"
-        F64 => "f64"
-        Usize => "size_t"
-        JaktString => "DeprecatedString"
-        CChar => "char"
-        CInt => "int"
-        Never => "void"
-        Const(value) => {
-            mut interpreter = Interpreter::create(
-                compiler: .compiler
-                program: .program
-                typecheck_functions: TypecheckFunctions(
-                    block: fn(
-                        parsed_block: ParsedBlock
-                        parent_scope_id: ScopeId
-                        safety_mode: SafetyMode
-                        yield_type_hint: TypeId?
-                    ) throws -> CheckedBlock {
-                        throw Error::from_string_literal("Cannot typecheck a const block")
-                    }
+    fn codegen_type_possibly_as_namespace(mut this, type_id: TypeId, as_namespace: bool) throws -> String {
+        mut qualifiers = ""
 
-                    register_function: fn(
-                        function: CheckedFunction
-                    ) throws -> FunctionId {
-                        throw Error::from_string_literal("Cannot typecheck a const function")
-                    }
+        if not as_namespace and .program.get_type(type_id).qualifiers.is_immutable {
+            qualifiers += " const"
+        }
+
+        return match .program.get_type(type_id) {
+            Void => "void"
+            Bool => "bool"
+            U8 => "u8"
+            U16 => "u16"
+            U32 => "u32"
+            U64 => "u64"
+            I8 => "i8"
+            I16 => "i16"
+            I32 => "i32"
+            I64 => "i64"
+            F32 => "f32"
+            F64 => "f64"
+            Usize => "size_t"
+            JaktString => "DeprecatedString"
+            CChar => "char"
+            CInt => "int"
+            Never => "void"
+            Const(value) => {
+                mut interpreter = Interpreter::create(
+                    compiler: .compiler
+                    program: .program
+                    typecheck_functions: TypecheckFunctions(
+                        block: fn(
+                            parsed_block: ParsedBlock
+                            parent_scope_id: ScopeId
+                            safety_mode: SafetyMode
+                            yield_type_hint: TypeId?
+                        ) throws -> CheckedBlock {
+                            throw Error::from_string_literal("Cannot typecheck a const block")
+                        }
+
+                        register_function: fn(
+                            function: CheckedFunction
+                        ) throws -> FunctionId {
+                            throw Error::from_string_literal("Cannot typecheck a const function")
+                        }
+                    )
+                    spans: []
                 )
-                spans: []
-            )
-            let expr = value_to_checked_expression(value, interpreter)
-            yield .codegen_expression(expr)
-        }
-        RawPtr(type_id) => match .program.get_type(type_id).is_boxed(program: .program) {
-            true => .codegen_type_possibly_as_namespace(type_id, as_namespace: true) + "*"
-            false => .codegen_type(type_id) + "*"
-        }
-        Reference(type_id) => .codegen_type(type_id) + " const&"
-        MutableReference(type_id) => .codegen_type(type_id) + "&"
-        GenericResolvedType(id, args) | GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
-        Struct(id) => {
-            let implements_type = .program.get_struct(id).implements_type
-            yield match implements_type.has_value() {
-                true => .codegen_type_possibly_as_namespace(type_id: implements_type!, as_namespace)
-                false => .codegen_struct_type(id, as_namespace)
+                let expr = value_to_checked_expression(value, interpreter)
+                yield .codegen_expression(expr)
             }
-        }
-        Enum(id) => .codegen_enum_type(id, as_namespace)
-        GenericEnumInstance(id, args) => .codegen_generic_enum_instance(id, args, as_namespace)
-        TypeVariable(name) => name
-        Function(params, can_throw, return_type_id) => {
-            mut output = "Function<"
-            if can_throw {
-                output += "ErrorOr<"
+            RawPtr(type_id) => match .program.get_type(type_id).is_boxed(program: .program) {
+                true => .codegen_type_possibly_as_namespace(type_id, as_namespace: true) + "*"
+                false => .codegen_type(type_id) + "*"
             }
-            output += .codegen_type(return_type_id)
-            if can_throw {
-                output += ">"
-            }
-            output += "("
-            mut first = true
-            for param in params {
-                if first {
-                    first = false
-                } else {
-                    output += ", "
+            Reference(type_id) => .codegen_type(type_id) + " const&"
+            MutableReference(type_id) => .codegen_type(type_id) + "&"
+            GenericResolvedType(id, args) | GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
+            Struct(id) => {
+                let implements_type = .program.get_struct(id).implements_type
+                yield match implements_type.has_value() {
+                    true => .codegen_type_possibly_as_namespace(type_id: implements_type!, as_namespace)
+                    false => .codegen_struct_type(id, as_namespace)
                 }
-                output += .codegen_type(param)
             }
-            output += ")>"
-            yield output
-        }
-        GenericTraitInstance => {
-            panic("Generic trait instance in codegen")
-        }
-        else => {
-            // The RBC uses 'auto' here but we probably want to improve in the future
-            yield "auto"
-        }
+            Enum(id) => .codegen_enum_type(id, as_namespace)
+            GenericEnumInstance(id, args) => .codegen_generic_enum_instance(id, args, as_namespace)
+            TypeVariable(name) => name
+            Function(params, can_throw, return_type_id) => {
+                mut output = "Function<"
+                if can_throw {
+                    output += "ErrorOr<"
+                }
+                output += .codegen_type(return_type_id)
+                if can_throw {
+                    output += ">"
+                }
+                output += "("
+                mut first = true
+                for param in params {
+                    if first {
+                        first = false
+                    } else {
+                        output += ", "
+                    }
+                    output += .codegen_type(param)
+                }
+                output += ")>"
+                yield output
+            }
+            GenericTraitInstance => {
+                panic("Generic trait instance in codegen")
+            }
+            else => {
+                // The RBC uses 'auto' here but we probably want to improve in the future
+                yield "auto"
+            }
+        } + qualifiers
     }
 
     fn codegen_generic_type_instance(mut this, id: StructId, args: [TypeId], as_namespace: bool) throws -> String {

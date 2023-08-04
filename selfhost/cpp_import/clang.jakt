@@ -1,9 +1,9 @@
 import types {
-    BlockControlFlow, CheckedBlock, CheckedEnum, CheckedEnumVariant, CheckedField, CheckedFunction
-    CheckedGenericParameter, CheckedParameter, CheckedProgram, CheckedStruct, CheckedVariable, CheckedVisibility
-    DefinitionLinkage, EnumId, ExternalName, FileId, FunctionGenericParameter, FunctionGenericParameterKind
-    FunctionGenerics, FunctionLinkage, ModuleId, ScopeId, SpecializedType, StructId, Type, TypeId, Value, ValueImpl
-    unknown_type_id
+    BlockControlFlow, BuiltinType, CheckedBlock, CheckedEnum, CheckedEnumVariant, CheckedField, CheckedFunction
+    CheckedGenericParameter, CheckedParameter, CheckedProgram, CheckedQualifiers, CheckedStruct, CheckedVariable
+    CheckedVisibility, DefinitionLinkage, EnumId, ExternalName, FileId, FunctionGenericParameter
+    FunctionGenericParameterKind, FunctionGenerics, FunctionLinkage, ModuleId, ScopeId, SpecializedType, StructId
+    Type, TypeId, Value, ValueImpl, builtin, unknown_type_id
 }
 import parser {
     FunctionType, ParsedField, ParsedVarDecl, RecordType, ParsedType
@@ -34,8 +34,8 @@ import cpp_import::clang_c {
     clang_getPointeeType, clang_getResultType, clang_getSpecializedCursorTemplate, clang_getSpellingLocation
     clang_getTemplateCursorKind, clang_getTokenKind, clang_getTokenSpelling, clang_getTranslationUnitCursor
     clang_getTypeDeclaration, clang_getTypeKindSpelling, clang_getTypeSpelling, clang_getTypedefDeclUnderlyingType
-    clang_isCursorDefinition, clang_isDeclaration, clang_isExpression, clang_parseTranslationUnit2
-    clang_saveTranslationUnit, clang_tokenize, clang_visitChildren
+    clang_isConstQualifiedType, clang_isCursorDefinition, clang_isDeclaration, clang_isExpression
+    clang_parseTranslationUnit2, clang_saveTranslationUnit, clang_tokenize, clang_visitChildren
 }
 import utility { allocate }
 import extern c "stdlib.h" {
@@ -120,7 +120,7 @@ fn const_type_from(
     anon cursor: CXCursor
 ) throws -> TypeId {
     let value = const_value_from(program, scope_id, module_id, cursor)
-    return program.find_or_add_type_id(type: Type::Const(value), module_id)
+    return program.find_or_add_type_id(type: Type::Const(value), module_id, only_in_current_module: true)
 }
 
 fn cpp_static_cast<T, U>(value: U) -> T {
@@ -188,30 +188,31 @@ fn type_from(
     module_id: ModuleId
     anon t: CXType
 ) throws -> TypeId {
-    return match t.kind {
-        CXType_Void => program.find_or_add_type_id(type: Type::Void, module_id)
-        CXType_Bool => program.find_or_add_type_id(type: Type::Bool, module_id)
-        CXType_Char_U => program.find_or_add_type_id(type: Type::U8, module_id)
-        CXType_UChar => program.find_or_add_type_id(type: Type::U8, module_id)
-        CXType_Char16 => program.find_or_add_type_id(type: Type::U16, module_id)
-        CXType_Char32 => program.find_or_add_type_id(type: Type::U32, module_id)
-        CXType_UShort => program.find_or_add_type_id(type: Type::U16, module_id)
-        CXType_UInt => program.find_or_add_type_id(type: Type::U32, module_id)
-        CXType_ULong => program.find_or_add_type_id(type: Type::U32, module_id)
-        CXType_ULongLong => program.find_or_add_type_id(type: Type::U64, module_id)
-        CXType_Char_S => program.find_or_add_type_id(type: Type::CChar, module_id)
-        CXType_SChar => program.find_or_add_type_id(type: Type::I8, module_id)
-        CXType_Short => program.find_or_add_type_id(type: Type::I16, module_id)
-        CXType_Int => program.find_or_add_type_id(type: Type::CInt, module_id)
-        CXType_Long => program.find_or_add_type_id(type: Type::I32, module_id)
-        CXType_LongLong => program.find_or_add_type_id(type: Type::I64, module_id)
-        CXType_Float => program.find_or_add_type_id(type: Type::F32, module_id)
-        CXType_Double => program.find_or_add_type_id(type: Type::F64, module_id)
+    let type = match t.kind {
+        CXType_Void => builtin(BuiltinType::Void)
+        CXType_Bool => builtin(BuiltinType::Bool)
+        CXType_Char_U => builtin(BuiltinType::U8)
+        CXType_UChar => builtin(BuiltinType::U8)
+        CXType_Char16 => builtin(BuiltinType::U16)
+        CXType_Char32 => builtin(BuiltinType::U32)
+        CXType_UShort => builtin(BuiltinType::U16)
+        CXType_UInt => builtin(BuiltinType::U32)
+        CXType_ULong => builtin(BuiltinType::U32)
+        CXType_ULongLong => builtin(BuiltinType::U64)
+        CXType_Char_S => builtin(BuiltinType::CChar)
+        CXType_SChar => builtin(BuiltinType::I8)
+        CXType_Short => builtin(BuiltinType::I16)
+        CXType_Int => builtin(BuiltinType::CInt)
+        CXType_Long => builtin(BuiltinType::I32)
+        CXType_LongLong => builtin(BuiltinType::I64)
+        CXType_Float => builtin(BuiltinType::F32)
+        CXType_Double => builtin(BuiltinType::F64)
         CXType_Typedef => {
             let typedef_name = string_from(clang_getTypeSpelling(t))
             let type_id = program.find_type_in_scope(
                 scope_id
                 name: typedef_name
+                ignore_mixin_scopes: true
             )
             if type_id.has_value() {
                 return type_id!
@@ -228,6 +229,7 @@ fn type_from(
                         type_from(program, scope_id, module_id, clang_getPointeeType(t))
                     )
                     module_id
+                    only_in_current_module: true
                 )
             }
         }
@@ -235,29 +237,32 @@ fn type_from(
             let struct_id = program.find_struct_in_scope(
                 scope_id
                 name: name_from(clang_getTypeDeclaration(t))
+                ignore_mixin_scopes: true
             )
             yield match struct_id.has_value() {
-                true => program.find_or_add_type_id(Type::Struct(struct_id!), module_id)
-                false => program.find_or_add_type_id(Type::Unknown, module_id)
+                true => program.find_or_add_type_id(Type::Struct(struct_id!), module_id, only_in_current_module: true)
+                false => builtin(BuiltinType::Unknown)
             }
         }
         CXType_Enum => {
             let enum_id = program.find_enum_in_scope(
                 scope_id
                 name: name_from(clang_getTypeDeclaration(t))
+                ignore_mixin_scopes: true
             )
             yield match enum_id.has_value() {
-                true => program.find_or_add_type_id(Type::Enum(enum_id!), module_id)
-                false => program.find_or_add_type_id(Type::Unknown, module_id)
+                true => program.find_or_add_type_id(Type::Enum(enum_id!), module_id, only_in_current_module: true)
+                false => builtin(BuiltinType::Unknown)
             }
         }
         CXType_Elaborated => type_from(program, scope_id, module_id, clang_Type_getNamedType(t))
-        CXType_Unexposed => program.find_or_add_type_id(Type::Unknown, module_id)
+        CXType_Unexposed => builtin(BuiltinType::Unknown)
         CXType_LValueReference => program.find_or_add_type_id(
             type: Type::Reference(
                 type_from(program, scope_id, module_id, clang_getPointeeType(t))
             )
             module_id
+            only_in_current_module: true
         )
         CXType_RValueReference => type_from(program, scope_id, module_id, clang_getPointeeType(t))
         CXType_FunctionProto => {
@@ -335,14 +340,18 @@ fn type_from(
                     pseudo_function_id
                 )
                 module_id
+                only_in_current_module: true
             )
         }
         else => {
             let v = clang_getTypeSpelling(t)
             eprintln("Unknown type kind: {} ({})", string_from(v), t.kind as! c_int)
-            yield program.find_or_add_type_id(type: Type::Unknown, module_id)
+            yield builtin(BuiltinType::Unknown)
         }
     }
+
+    let qualifiers = CheckedQualifiers(is_immutable: clang_isConstQualifiedType(t))
+    return program.apply_qualifiers_to_type(qualifiers, type)
 }
 
 struct Context {
@@ -551,6 +560,18 @@ fn process_namespace_contents(
                     }
                     else => CXChildVisitResult::CXChildVisit_Continue
                 }
+                CXCursor_VarDecl => match allowed_contents {
+                    Everything => {
+                        try process_ns_variable(
+                            program: &mut context.program
+                            parent_scope_id: context.scope_id
+                            module_id: context.module_id
+                            cursor: c
+                        )
+                        yield CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    else => CXChildVisitResult::CXChildVisit_Continue
+                }
                 else => CXChildVisitResult::CXChildVisit_Continue
             }
         }
@@ -585,6 +606,7 @@ fn process_class_template_partial_specialization(
     let struct_id = program.find_struct_in_scope(
         scope_id: parent_scope_id
         name
+        ignore_mixin_scopes: true
     )
     if not struct_id.has_value() {
         eprintln("[ICE] Couldn't find struct for partial specialization named {}", name)
@@ -631,10 +653,11 @@ fn process_class_template_partial_specialization(
         named_specialization_disambiguator: specialized_name
     )
 
-    let base_type_id = program.find_or_add_type_id(Type::Struct(struct_id!), module_id)
+    let base_type_id = program.find_or_add_type_id(Type::Struct(struct_id!), module_id, only_in_current_module: true)
     let specialized_struct_id = program.find_struct_in_scope(
         scope_id: parent_scope_id
         name: format("{}<{}>", name, specialized_name)
+        ignore_mixin_scopes: true
     )
     if not specialized_struct_id.has_value() {
         eprintln("[ICE] Couldn't find struct for partial specialization named {}", name)
@@ -644,6 +667,7 @@ fn process_class_template_partial_specialization(
     let type_id = program.find_or_add_type_id(
         Type::Struct(specialized_struct_id!)
         module_id
+        only_in_current_module: true
     )
     let specialization = SpecializedType(
         base_type_id
@@ -653,6 +677,35 @@ fn process_class_template_partial_specialization(
 
     mut scope = program.get_scope(parent_scope_id)
     scope.explicitly_specialized_types.set(name, specialization)
+}
+
+fn process_ns_variable(
+    program: &mut CheckedProgram
+    parent_scope_id: ScopeId
+    module_id: ModuleId
+    cursor: CXCursor
+) throws {
+    let name = name_from(cursor)
+    mut scope = program.get_scope(parent_scope_id)
+    mut module = program.get_module(module_id)
+    let type_id = type_from(
+        program
+        scope_id: parent_scope_id
+        module_id
+        clang_getCursorType(cursor)
+    )
+
+    let var_id = module.add_variable(CheckedVariable(
+        name
+        type_id
+        is_mutable: false
+        definition_span: empty_span()
+        type_span: None
+        visibility: CheckedVisibility::Public
+        owner_scope: parent_scope_id
+    ))
+
+    scope.vars.set(name, var_id)
 }
 
 fn process_macro(
@@ -774,6 +827,7 @@ fn extract_template_parameters(
                         is_value: clang_getCursorKind(parameter) is CXCursor_NonTypeTemplateParameter
                     )
                     module_id
+                    only_in_current_module: true
                 )
                 constraints: []
                 span: empty_span()
@@ -1129,7 +1183,7 @@ fn process_function(
             clang_getCursorResultType(cursor)
         )
         Constructor => this_type!
-        Destructor => program.find_or_add_type_id(Type::Void, module_id)
+        Destructor => builtin(BuiltinType::Void)
     }
 
     let function = CheckedFunction(
@@ -1256,6 +1310,7 @@ fn process_enum(
     let enum_type_id = program.find_or_add_type_id(
         Type::Enum(enum_id)
         module_id
+        only_in_current_module: true
     )
 
     parent_scope.enums.set(name, enum_id)
@@ -1415,7 +1470,11 @@ fn process_struct(
     )
 
     mut module = program.get_module(module_id)
-    let existing_struct_id = program.get_scope(parent_scope_id).structs.get(specialized_name)
+    let existing_struct_id = program.find_struct_in_scope(
+        scope_id: parent_scope_id
+        name: specialized_name
+        ignore_mixin_scope: true
+    )
 
     let (struct_scope, scope_was_just_made) = match existing_struct_id.has_value() {
         true => (program.get_struct(existing_struct_id!).scope_id, false)
@@ -1468,6 +1527,7 @@ fn process_struct(
             }
         }
         module_id
+        only_in_current_module: true
     )
 
     parent_scope.structs.set(specialized_name, struct_id)
@@ -1627,6 +1687,7 @@ fn process_struct(
     let ctors = program.find_functions_with_name_in_scope(
         parent_scope_id
         function_name: name
+        ignore_mixin_scopes: true
     )
 
     if not ctors.has_value() or ctors!.is_empty() {
