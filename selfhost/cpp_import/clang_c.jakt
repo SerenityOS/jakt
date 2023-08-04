@@ -561,6 +561,8 @@ import extern c "clang-c/Index.h" {
     extern fn clang_EvalResult_getAsDouble(anon result: CXEvalResult) -> f64
     extern fn clang_EvalResult_getAsStr(anon result: CXEvalResult) -> raw c_char
     extern fn clang_EvalResult_dispose(anon result: CXEvalResult) -> void
+
+    extern fn clang_isConstQualifiedType(anon type: CXType) -> bool
 }
 
 type CXTranslationUnit implements(Equal<CXTranslationUnit>) {

@@ -243,7 +243,7 @@ struct ParsedExternImport {
     fn get_name(this) -> String => .assigned_namespace.name!
 
     fn is_equivalent_to(this, anon other: ParsedExternImport) throws -> bool {
-        return .is_c and other.is_c and .get_path() == other.get_path() and .get_name() == other.get_name()
+        return .is_c and other.is_c and .get_path() == other.get_path() and .get_name() == other.get_name() and .should_auto_import == other.should_auto_import
     }
 }
 
@@ -1472,7 +1472,22 @@ struct ParsedCall {
     }
 }
 
+struct ParsedTypeQualifiers {
+    is_mutable: bool = false
+    is_immutable: bool = false
+}
+
+struct CheckedQualifiers implements(Equal<CheckedQualifiers>) {
+    is_immutable: bool = false
+
+    fn equals(this, anon other: CheckedQualifiers) -> bool {
+        return .is_immutable == other.is_immutable
+    }
+}
+
 boxed enum ParsedType {
+    qualifiers: ParsedTypeQualifiers? = None
+
     Name(name: String, span: Span)
     NamespacedName(name: String, namespaces: [String], params: [ParsedType], span: Span)
     GenericType(name: String, generic_parameters: [ParsedType], span: Span)
@@ -3924,10 +3939,17 @@ struct Parser {
             return ParsedType::Const(expr, span: merge_spans(start, expr.span()))
         }
 
+        mut qualifiers = ParsedTypeQualifiers()
         mut is_reference = false
         mut is_mutable_reference = false
 
-        if .current() is Ampersand {
+        if .current() is Identifier(name) and name == "const" {
+            qualifiers.is_immutable = true
+            .index++
+        } else if .current() is Mut {
+            qualifiers.is_mutable = true
+            .index++
+        } else if .current() is Ampersand {
             is_reference = true
             .index++
             if .current() is Mut {
@@ -3936,10 +3958,10 @@ struct Parser {
             }
         }
 
-        mut parsed_type = .parse_type_shorthand()
+        mut parsed_type = .parse_type_shorthand(qualifiers)
 
         if parsed_type is Empty {
-            parsed_type = .parse_type_longhand()
+            parsed_type = .parse_type_longhand(qualifiers)
         }
 
         if .current() is QuestionMark {
@@ -3960,7 +3982,7 @@ struct Parser {
         return parsed_type
     }
 
-    fn parse_type_longhand(mut this) throws -> ParsedType => match .current() {
+    fn parse_type_longhand(mut this, qualifiers: ParsedTypeQualifiers) throws -> ParsedType => match .current() {
         Raw => {
             let start = .current().span()
             .index++
@@ -3968,8 +3990,8 @@ struct Parser {
             let span = merge_spans(start, .current().span())
             // NOTE: We rewrite `raw T?` from `RawPtr<Optional<T>>` to `Optional<RawPtr<T>>`
             yield match inner {
-                Optional(inner) => ParsedType::Optional(inner: ParsedType::RawPtr(inner, span), span)
-                else => ParsedType::RawPtr(inner, span)
+                Optional(inner) => ParsedType::Optional(qualifiers, inner: ParsedType::RawPtr(inner, span), span)
+                else => ParsedType::RawPtr(qualifiers, inner, span)
             }
         }
         Weak => {
@@ -3977,15 +3999,15 @@ struct Parser {
             .index++
             let inner = .parse_typename()
             let span = merge_spans(start, .current().span())
-            yield ParsedType::WeakPtr(inner, span)
+            yield ParsedType::WeakPtr(qualifiers, inner, span)
         }
         Identifier(name) => {
             let span = .current().span()
             .index++
-            mut parsed_type = ParsedType::Name(name, span)
+            mut parsed_type = ParsedType::Name(qualifiers, name, span)
             if .current() is LessThan {
                 mut params = .parse_type_parameter_list()
-                parsed_type = ParsedType::GenericType(name, generic_parameters: params, span)
+                parsed_type = ParsedType::GenericType(qualifiers, name, generic_parameters: params, span)
             }
 
             if .current() is ColonColon {
@@ -4044,11 +4066,11 @@ struct Parser {
                 .error("Expected '->'", .current().span())
             }
 
-            yield ParsedType::Function(params, can_throw, return_type, span: merge_spans(start, return_type.span()))
+            yield ParsedType::Function(qualifiers, params, can_throw, return_type, span: merge_spans(start, return_type.span()))
         }
         else => {
             .error("Expected type name", .current().span())
-            yield ParsedType::Empty
+            yield ParsedType::Empty(qualifiers)
         }
     }
 
@@ -4124,14 +4146,14 @@ struct Parser {
         )
     }
 
-    fn parse_type_shorthand(mut this) throws -> ParsedType => match .current() {
-        LSquare => .parse_type_shorthand_array_or_dictionary()
-        LCurly => .parse_type_shorthand_set()
-        LParen => .parse_type_shorthand_tuple()
-        else => ParsedType::Empty
+    fn parse_type_shorthand(mut this, qualifiers: ParsedTypeQualifiers) throws -> ParsedType => match .current() {
+        LSquare => .parse_type_shorthand_array_or_dictionary(qualifiers)
+        LCurly => .parse_type_shorthand_set(qualifiers)
+        LParen => .parse_type_shorthand_tuple(qualifiers)
+        else => ParsedType::Empty(qualifiers)
     }
 
-    fn parse_type_shorthand_array_or_dictionary(mut this) throws -> ParsedType {
+    fn parse_type_shorthand_array_or_dictionary(mut this, qualifiers: ParsedTypeQualifiers) throws -> ParsedType {
         // [T] is shorthand for Array<T>
         // [K:V] is shorthand for Dictionary<K, V>
         let start = .current().span()
@@ -4139,7 +4161,7 @@ struct Parser {
         let inner = .parse_typename()
         if .current() is RSquare {
             .index++
-            return ParsedType::JaktArray(inner, span: merge_spans(start, .previous().span()))
+            return ParsedType::JaktArray(qualifiers, inner, span: merge_spans(start, .previous().span()))
         }
         if .current() is Colon {
             .index++
@@ -4149,13 +4171,13 @@ struct Parser {
             } else {
                 .error("Expected ']'", .current().span())
             }
-            return ParsedType::Dictionary(key: inner, value, span: merge_spans(start, .current().span()))
+            return ParsedType::Dictionary(qualifiers, key: inner, value, span: merge_spans(start, .current().span()))
         }
         .error("Expected shorthand type", .current().span())
-        return ParsedType::Empty
+        return ParsedType::Empty(qualifiers)
     }
 
-    fn parse_type_shorthand_set(mut this) throws -> ParsedType {
+    fn parse_type_shorthand_set(mut this, qualifiers: ParsedTypeQualifiers) throws -> ParsedType {
         // {T} is shorthand for Set<T>
         let start = .current().span()
         if .current() is LCurly {
@@ -4164,13 +4186,13 @@ struct Parser {
         let inner = .parse_typename()
         if .current() is RCurly {
             .index++
-            return ParsedType::Set(inner, span: merge_spans(start, .current().span()))
+            return ParsedType::Set(qualifiers, inner, span: merge_spans(start, .current().span()))
         }
         .error("Expected '}'", .current().span())
-        return ParsedType::Empty
+        return ParsedType::Empty(qualifiers)
     }
 
-    fn parse_type_shorthand_tuple(mut this) throws -> ParsedType {
+    fn parse_type_shorthand_tuple(mut this, qualifiers: ParsedTypeQualifiers) throws -> ParsedType {
         // (A, B, C) is shorthand for Tuple<A, B, C>
         let start = .current().span()
         .index++
@@ -4178,7 +4200,7 @@ struct Parser {
         while not .eof() {
             if .current() is RParen {
                 .index++
-                return ParsedType::JaktTuple(types, span: merge_spans(start, .previous().span()))
+                return ParsedType::JaktTuple(qualifiers, types, span: merge_spans(start, .previous().span()))
             }
             if .current() is Comma {
                 .index++
@@ -4192,7 +4214,7 @@ struct Parser {
             types.push(type)
         }
         .error("Expected ‘)’", .current().span())
-        return ParsedType::Empty
+        return ParsedType::Empty(qualifiers)
     }
 
     fn parse_block(mut this) throws -> ParsedBlock {

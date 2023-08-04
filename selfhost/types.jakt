@@ -3,7 +3,7 @@ import parser {
     FunctionType, IncludeAction, InlineState, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression
     ParsedExternImport, ParsedField, ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedModuleImport
     ParsedNamespace, ParsedParameter, ParsedRecord, ParsedStatement, ParsedType, ParsedVarDecl, Parser, RecordType
-    TypeCast, UnaryOperator
+    TypeCast, UnaryOperator, CheckedQualifiers
 }
 import utility { FileId, IterationDecision, Queue, Span, join, panic, todo }
 import compiler { Compiler }
@@ -51,10 +51,11 @@ enum StructLikeId {
         anon arguments: [TypeId]
         anon program: &mut CheckedProgram
         module_id: ModuleId
+        qualifiers: CheckedQualifiers = CheckedQualifiers()
     ) throws -> TypeId => match this {
-        Struct(id) => program.find_or_add_type_id(Type::GenericInstance(id, args: arguments), module_id)
-        Enum(id) => program.find_or_add_type_id(Type::GenericEnumInstance(id, args: arguments), module_id)
-        Trait(id) => program.find_or_add_type_id(Type::GenericTraitInstance(id, args: arguments), module_id)
+        Struct(id) => program.find_or_add_type_id(Type::GenericInstance(qualifiers, id, args: arguments), module_id)
+        Enum(id) => program.find_or_add_type_id(Type::GenericEnumInstance(qualifiers, id, args: arguments), module_id)
+        Trait(id) => program.find_or_add_type_id(Type::GenericTraitInstance(qualifiers, id, args: arguments), module_id)
     }
 
     fn from_type_id(anon type_id: TypeId, anon program: &CheckedProgram) throws -> StructLikeId? {
@@ -231,6 +232,8 @@ enum BuiltinType {
 }
 
 boxed enum Type {
+    qualifiers: CheckedQualifiers = CheckedQualifiers()
+
     Void
     Bool
     U8
@@ -351,7 +354,7 @@ boxed enum Type {
         Const => "Const"
     }
 
-    fn equals(this, anon rhs: Type) -> bool => match this {
+    fn equals(this, anon rhs: Type) -> bool => rhs.qualifiers == .qualifiers and match this {
         Void => rhs is Void
         Bool => rhs is Bool
         U8 => rhs is U8
@@ -1811,6 +1814,62 @@ class CheckedProgram {
         return ScopeId(module_id, id: .modules[module_id.id].scopes.size() - 1)
     }
 
+    public fn apply_qualifiers_to_type(
+        mut this
+        qualifiers: CheckedQualifiers
+        anon type_id: TypeId
+    ) throws -> TypeId {
+        let type = .get_type(type_id)
+
+        guard qualifiers != type.qualifiers else {
+            return type_id
+        }
+
+        return .find_or_add_type_id(match type {
+            Void => Type::Void(qualifiers)
+            Bool => Type::Bool(qualifiers)
+            U8 => Type::U8(qualifiers)
+            U16 => Type::U16(qualifiers)
+            U32 => Type::U32(qualifiers)
+            U64 => Type::U64(qualifiers)
+            I8 => Type::I8(qualifiers)
+            I16 => Type::I16(qualifiers)
+            I32 => Type::I32(qualifiers)
+            I64 => Type::I64(qualifiers)
+            F32 => Type::F32(qualifiers)
+            F64 => Type::F64(qualifiers)
+            Usize => Type::Usize(qualifiers)
+            JaktString => Type::JaktString(qualifiers)
+            CChar => Type::CChar(qualifiers)
+            CInt => Type::CInt(qualifiers)
+            Unknown => Type::Unknown
+            Never => Type::Never
+            TypeVariable(name, trait_implementations, is_value) => Type::TypeVariable(qualifiers, name, trait_implementations, is_value)
+            Dependent(namespace_type, name) => Type::Dependent(qualifiers, namespace_type, name)
+            GenericInstance(id, args) => Type::GenericInstance(qualifiers, id, args)
+            GenericEnumInstance(id, args) => Type::GenericEnumInstance(qualifiers, id, args)
+            GenericTraitInstance(id, args) => Type::GenericTraitInstance(qualifiers, id, args)
+            GenericResolvedType(id, args) => Type::GenericResolvedType(qualifiers, id, args)
+            Struct(id) => Type::Struct(qualifiers, id)
+            Enum(id) => Type::Enum(qualifiers, id)
+            RawPtr(id) => Type::RawPtr(qualifiers, id)
+            Trait(id) => Type::Trait(qualifiers, id)
+            Reference(id) => Type::Reference(qualifiers, id)
+            MutableReference(id) => Type::MutableReference(qualifiers, id)
+            Function(params, can_throw, return_type_id, pseudo_function_id) => Type::Function(
+                qualifiers
+                params
+                can_throw
+                return_type_id
+                pseudo_function_id
+            )
+            Self => Type::Self(qualifiers)
+            Const(value) => Type::Const(qualifiers, value)
+        }
+        module_id: type_id.module
+        only_in_current_module: true)
+    }
+
     public fn builtin_implementation_struct(mut this, builtin: BuiltinType, for_module: ModuleId) throws -> StructId {
         let id = builtin.id()
         mut module = .modules[for_module.id]
@@ -1889,7 +1948,7 @@ class CheckedProgram {
         return .loaded_modules.get(module_name)
     }
 
-    public fn find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? {
+    public fn find_var_in_scope(this, scope_id: ScopeId, var: String, ignore_mixin_scopes: bool = false) throws -> CheckedVariable? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[var, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<CheckedVariable> {
@@ -1900,10 +1959,11 @@ class CheckedProgram {
                 }
                 return IterationDecision::Continue
             }
+            ignore_mixin_scopes
         )
     }
 
-    public fn find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? {
+    public fn find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String, ignore_mixin_scopes: bool = false) throws -> Value? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<Value> {
@@ -1914,10 +1974,11 @@ class CheckedProgram {
                 }
                 return IterationDecision::Continue
             }
+            ignore_mixin_scopes
         )
     }
 
-    public fn find_type_scope(this, scope_id: ScopeId, name: String) throws -> (TypeId, ScopeId)? {
+    public fn find_type_scope(this, scope_id: ScopeId, name: String, ignore_mixin_scopes: bool = false) throws -> (TypeId, ScopeId)? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<(TypeId, ScopeId)> {
@@ -1927,14 +1988,15 @@ class CheckedProgram {
                 }
                 return IterationDecision::Continue
             }
+            ignore_mixin_scopes
         )
     }
 
-    public fn find_type_in_scope(this, scope_id: ScopeId, name: String) throws -> TypeId? {
-        return .find_type_scope(scope_id, name)?.0
+    public fn find_type_in_scope(this, scope_id: ScopeId, name: String, ignore_mixin_scopes: bool = false) throws -> TypeId? {
+        return .find_type_scope(scope_id, name, ignore_mixin_scopes)?.0
     }
 
-    public fn find_enum_in_scope(this, scope_id: ScopeId, name: String) throws -> EnumId? {
+    public fn find_enum_in_scope(this, scope_id: ScopeId, name: String, ignore_mixin_scopes: bool = false) throws -> EnumId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<EnumId> {
@@ -1945,10 +2007,11 @@ class CheckedProgram {
                 }
                 return IterationDecision::Continue
             }
+            ignore_mixin_scopes
         )
     }
 
-    public fn find_trait_in_scope(this, scope_id: ScopeId, name: String) throws -> TraitId? {
+    public fn find_trait_in_scope(this, scope_id: ScopeId, name: String, ignore_mixin_scopes: bool = false) throws -> TraitId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<TraitId> {
@@ -1959,6 +2022,7 @@ class CheckedProgram {
                 }
                 return IterationDecision::Continue
             }
+            ignore_mixin_scopes
         )
     }
 
@@ -1994,11 +2058,52 @@ class CheckedProgram {
 
     public fn is_signed(this, anon type_id: TypeId) -> bool => .get_type(type_id).is_signed()
 
-    private fn for_each_scope_accessible_unqualified_from_scope_impl(
+    private fn for_each_scope_accessible_unqualified_from_scope_direct_chain(
         this
         scope_id: ScopeId
         anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
     ) throws -> bool? {
+        // Only scan the direct chain of scopes, not the entire tree
+        mut current_scope = scope_id
+        loop {
+            let scope = .get_scope(current_scope)
+            let maybe_result = callback(scope_id: current_scope, name_override: None, is_alias: false)
+            match maybe_result {
+                Break(value) => {
+                    return Some(value)
+                }
+                else => {}
+            }
+
+            for child in scope.children {
+                let maybe_result = callback(scope_id: child, name_override: None, is_alias: false)
+                match maybe_result {
+                    Break(value) => {
+                        return Some(value)
+                    }
+                    else => {}
+                }
+            }
+
+            if scope.parent is Some(id) {
+                current_scope = id
+            } else {
+                break
+            }
+        }
+        return None
+    }
+
+    private fn for_each_scope_accessible_unqualified_from_scope_impl(
+        this
+        scope_id: ScopeId
+        anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
+        ignore_mixin_scopes: bool = false
+    ) throws -> bool? {
+        if ignore_mixin_scopes {
+            return .for_each_scope_accessible_unqualified_from_scope_direct_chain(scope_id, callback)
+        }
+
         mut scopes_to_check = Queue<ScopeId>()
         mut seen: {ScopeId} = {}
 
@@ -2036,16 +2141,16 @@ class CheckedProgram {
                 }
             }
 
-            for entry in scope.resolution_mixins {
-                scopes_to_check.enqueue(entry)
-                for child in .get_scope(entry).children {
+            if scope.parent.has_value() {
+                scopes_to_check.enqueue(scope.parent!)
+                for child in .get_scope(scope.parent!).children {
                     scopes_to_check.enqueue(child)
                 }
             }
 
-            if scope.parent.has_value() {
-                scopes_to_check.enqueue(scope.parent!)
-                for child in .get_scope(scope.parent!).children {
+            for entry in scope.resolution_mixins {
+                scopes_to_check.enqueue(entry)
+                for child in .get_scope(entry).children {
                     scopes_to_check.enqueue(child)
                 }
             }
@@ -2083,6 +2188,7 @@ class CheckedProgram {
         this
         scope_id: ScopeId
         anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<T>
+        ignore_mixin_scopes: bool = false
     ) throws -> T? {
         mut result: T? = None
         .for_each_scope_accessible_unqualified_from_scope_impl(
@@ -2098,12 +2204,13 @@ class CheckedProgram {
                     }
                 }
             }
+            ignore_mixin_scopes
         )
 
         return result
     }
 
-    public fn find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? {
+    public fn find_struct_in_scope(this, scope_id: ScopeId, name: String, ignore_mixin_scopes: bool = false) throws -> StructId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<StructId> {
@@ -2115,13 +2222,14 @@ class CheckedProgram {
 
                 return IterationDecision::Continue
             }
+            ignore_mixin_scopes
         )
     }
 
     public fn find_struct_in_prelude(this, anon name: String) throws -> StructId {
         // start at the prelude scope id
         let scope_id = .prelude_scope_id()
-        let struct_id = .find_struct_in_scope(scope_id, name)
+        let struct_id = .find_struct_in_scope(scope_id, name, ignore_mixin_scopes: true)
         if struct_id.has_value() {
             return struct_id.value()
         }
@@ -2129,7 +2237,7 @@ class CheckedProgram {
         .compiler.panic(format("internal error: {} builtin definition not found", name))
     }
 
-    public fn is_scope_directly_accessible_from(this, check_scope_id: ScopeId, scope_id: ScopeId) throws -> bool {
+    public fn is_scope_directly_accessible_from(this, check_scope_id: ScopeId, scope_id: ScopeId, ignore_mixin_scopes: bool = false) throws -> bool {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[check_scope_id](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
@@ -2139,12 +2247,13 @@ class CheckedProgram {
 
                 return IterationDecision::Continue
             }
+            ignore_mixin_scopes
         ) ?? false
     }
 
     public fn find_reflected_primitive(this, anon primitive: String) throws -> StructOrEnumId {
         let scope_id = .prelude_scope_id()
-        let maybe_namespace = .find_namespace_in_scope(scope_id, "Reflect")
+        let maybe_namespace = .find_namespace_in_scope(scope_id, "Reflect", ignore_mixin_scopes: true)
         if not maybe_namespace.has_value() {
             .compiler.panic(format("internal error: builtin namespace 'Reflect' not found"))
         }
@@ -2202,6 +2311,7 @@ class CheckedProgram {
         scope_id: ScopeId
         anon name: String
         treat_aliases_as_imports: bool = false
+        ignore_mixin_scopes: bool = false
     ) throws -> (ScopeId, bool)? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
@@ -2219,6 +2329,7 @@ class CheckedProgram {
 
                 return IterationDecision::Continue
             }
+            ignore_mixin_scopes
         )
     }
 
@@ -2252,11 +2363,11 @@ class CheckedProgram {
         return None
     }
 
-    public fn find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
-        return .find_scoped_functions_with_name_in_scope(parent_scope_id, function_name)?.0
+    public fn find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String, ignore_mixin_scopes: bool = false) throws -> [FunctionId]? {
+        return .find_scoped_functions_with_name_in_scope(parent_scope_id, function_name, ignore_mixin_scopes)?.0
     }
 
-    public fn find_scoped_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> ([FunctionId], ScopeId)? {
+    public fn find_scoped_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String, ignore_mixin_scopes: bool = false) throws -> ([FunctionId], ScopeId)? {
         mut result_ids: [FunctionId] = []
         mut result_scope: ScopeId? = None
         .for_each_scope_accessible_unqualified_from_scope(
@@ -2277,6 +2388,7 @@ class CheckedProgram {
 
                 return IterationDecision::Continue
             }
+            ignore_mixin_scopes
         )
 
         if result_scope is None {
@@ -2322,7 +2434,10 @@ class CheckedProgram {
     public fn type_name(this, anon type_id: TypeId, debug_mode: bool = false) throws -> String {
         let type = .get_type(type_id)
 
-        return match debug_mode {
+        return match type.qualifiers.is_immutable {
+            true => "const "
+            false => ""
+        } + match debug_mode {
             true => format("({}@{}) ", type_id.id, type_id.module.id) + match type {
                 TypeVariable => "var "
                 else => ""
@@ -2482,11 +2597,20 @@ class CheckedProgram {
         }
     }
 
-    public fn find_or_add_type_id(mut this, anon type: Type, module_id: ModuleId) throws -> TypeId {
-        for module in .modules {
-            for id in 0..module.types.size() {
-                if module.types[id].equals(type) {
-                    return TypeId(module: module.id, id)
+    public fn find_or_add_type_id(mut this, anon type: Type, module_id: ModuleId, only_in_current_module: bool = false) throws -> TypeId {
+        if only_in_current_module {
+            let types = &.get_module(module_id).types
+            for id in 0..types.size() {
+                if types[id].equals(type) {
+                    return TypeId(module: module_id, id)
+                }
+            }
+        } else {
+            for module in .modules {
+                for id in 0..module.types.size() {
+                    if module.types[id].equals(type) {
+                        return TypeId(module: module.id, id)
+                    }
                 }
             }
         }
