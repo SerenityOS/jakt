@@ -66,19 +66,7 @@ public:
     template<Integral I>
     explicit constexpr operator I() const
     {
-        I value = m_value >> precision;
-        // fract(m_value) >= .5?
-        if (m_value & (1u << (precision - 1))) {
-            // fract(m_value) > .5?
-            if (m_value & (radix_mask >> 2u)) {
-                // yes: round "up";
-                value += (m_value > 0 ? 1 : -1);
-            } else {
-                //  no: round to even;
-                value += value & 1;
-            }
-        }
-        return value;
+        return trunc().raw() >> precision;
     }
 
     static constexpr This create_raw(Underlying value)
@@ -111,9 +99,27 @@ public:
         return *this;
     }
 
-    constexpr This round() const
+    constexpr This rint() const
     {
-        return This { static_cast<Underlying>(*this) };
+        // Note: Round fair, break tie to even
+        Underlying value = m_value >> precision;
+
+        // Note: For negative numbers the ordering are reversed,
+        //       and they were already decremented by the shift, so we need to
+        //       add 1 when we see a fract values behind the `.5`s place set,
+        //       because that means they are smaller than .5
+        // fract(m_value) >= .5?
+        if (m_value & (1u << (precision - 1))) {
+            // fract(m_value) > .5?
+            if (m_value & (radix_mask >> 2u)) {
+                // yes: round "up";
+                value += 1;
+            } else {
+                //  no: round to even;
+                value += value & 1;
+            }
+        }
+        return value;
     }
     constexpr This floor() const
     {
@@ -124,7 +130,7 @@ public:
         return create_raw((m_value & ~radix_mask)
             + (m_value & radix_mask ? 1 << precision : 0));
     }
-    constexpr This trunk() const
+    constexpr This trunc() const
     {
         return create_raw((m_value & ~radix_mask)
             + ((m_value & radix_mask)
@@ -132,14 +138,14 @@ public:
                     : 0));
     }
 
-    constexpr Underlying lround() const { return static_cast<Underlying>(*this); }
+    constexpr Underlying lrint() const { return rint().raw() >> precision; }
     constexpr Underlying lfloor() const { return m_value >> precision; }
     constexpr Underlying lceil() const
     {
         return (m_value >> precision)
             + (m_value & radix_mask ? 1 : 0);
     }
-    constexpr Underlying ltrunk() const
+    constexpr Underlying ltrunc() const
     {
         return (m_value >> precision)
             + ((m_value & radix_mask)
@@ -202,27 +208,38 @@ public:
     }
     constexpr This operator*(This const& other) const
     {
-        // FIXME: Potential Overflow, although result could be represented accurately
-        Underlying value = m_value * other.raw();
-        This ret {};
-        ret.raw() = value >> precision;
-        // fract(value) >= .5?
+        // FIXME: Figure out a way to use more narrow types and avoid __int128
+        using MulRes = Conditional<sizeof(Underlying) < sizeof(i64), i64, __int128>;
+
+        MulRes value = raw();
+        value *= other.raw();
+
+        This ret = create_raw(value >> precision);
+        // Rounding:
+        // If last bit cut off is 1:
         if (value & (1u << (precision - 1))) {
-            // fract(value) > .5?
+            // If the bit after is 1 as well
             if (value & (radix_mask >> 2u)) {
-                // yes: round up;
-                ret.raw() += (value > 0 ? 1 : -1);
+                // We round away from 0
+                ret.raw() += 1;
             } else {
-                //  no: round to even (aka unset last sigificant bit);
-                ret.raw() += m_value & 1;
+                // Otherwise we round to the next even value
+                // Which means we add the least significant bit of the raw return value
+                ret.raw() += ret.raw() & 1;
             }
         }
         return ret;
     }
     constexpr This operator/(This const& other) const
     {
-        // FIXME: Better rounding?
-        return create_raw((m_value / other.m_value) << (precision));
+        // FIXME: Figure out a way to use more narrow types and avoid __int128
+        using DivRes = Conditional<sizeof(Underlying) < sizeof(i64), i64, __int128>;
+
+        DivRes value = raw();
+        value <<= precision;
+        value /= other.raw();
+
+        return create_raw(value);
     }
 
     template<Integral I>
@@ -268,26 +285,12 @@ public:
     }
     This& operator*=(This const& other)
     {
-        Underlying value = m_value * other.raw();
-        m_value = value >> precision;
-        // fract(value) >= .5?
-        if (value & (1u << (precision - 1))) {
-            // fract(value) > .5?
-            if (value & (radix_mask >> 2u)) {
-                // yes: round up;
-                m_value += (value > 0 ? 1 : -1);
-            } else {
-                //  no: round to even (aka unset last sigificant bit);
-                m_value += m_value & 1;
-            }
-        }
+        *this = *this * other;
         return *this;
     }
     This& operator/=(This const& other)
     {
-        // FIXME: See above
-        m_value /= other.raw();
-        m_value <<= precision;
+        *this = *this / other;
         return *this;
     }
 
@@ -440,7 +443,7 @@ struct Formatter<FixedPoint<precision, Underlying>> : StandardFormatter {
         if constexpr (IsSigned<Underlying>)
             is_negative = value < 0;
 
-        i64 integer = value.ltrunk();
+        i64 integer = value.ltrunc();
         constexpr u64 one = static_cast<Underlying>(1) << precision;
         u64 fraction_raw = value.raw() & (one - 1);
         return builder.put_fixed_point(is_negative, integer, fraction_raw, one, base, upper_case, m_zero_pad, m_use_separator, m_align, m_width.value(), m_precision.value(), m_fill, m_sign_mode, real_number_display_mode);

@@ -4,14 +4,14 @@ namespace Jakt {
 namespace jakt__platform__unknown_process {
 struct Process {
   public:
-Process();
+public: Process();
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ExitPollResult {
   public:
-i32 exit_code;jakt__platform__unknown_process::Process process;ExitPollResult(i32 a_exit_code, jakt__platform__unknown_process::Process a_process);
+public: i32 exit_code;public: jakt__platform__unknown_process::Process process;public: ExitPollResult(i32 a_exit_code, jakt__platform__unknown_process::Process a_process);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::jakt__platform__unknown_process::Process> : Jakt::Formatter<Jakt::StringView>{

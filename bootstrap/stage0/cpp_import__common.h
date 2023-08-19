@@ -5,11 +5,11 @@ namespace Jakt {
 namespace cpp_import__common {
 struct CppImportErrors {
   public:
-static StringView no_this_type();
-static StringView path_not_found();
-CppImportErrors();
+public: static StringView no_this_type();
+public: static StringView path_not_found();
+public: CppImportErrors();
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::cpp_import__common::CppImportErrors> : Jakt::Formatter<Jakt::StringView>{

@@ -2,6 +2,7 @@
 #include "__unified_forward.h"
 #include "parser.h"
 #include "typechecker.h"
+#include "types.h"
 #include "utility.h"
 #include "compiler.h"
 namespace Jakt {
@@ -20,10 +21,10 @@ ErrorOr<DeprecatedString> debug_description() const;
 };
 struct JaktSymbol {
   public:
-DeprecatedString name;JaktInternal::Optional<DeprecatedString> detail;DeprecatedString kind;utility::Span range;utility::Span selection_range;JaktInternal::DynamicArray<ide::JaktSymbol> children;JaktSymbol(DeprecatedString a_name, JaktInternal::Optional<DeprecatedString> a_detail, DeprecatedString a_kind, utility::Span a_range, utility::Span a_selection_range, JaktInternal::DynamicArray<ide::JaktSymbol> a_children);
+public: DeprecatedString name;public: JaktInternal::Optional<DeprecatedString> detail;public: DeprecatedString kind;public: utility::Span range;public: utility::Span selection_range;public: JaktInternal::DynamicArray<ide::JaktSymbol> children;public: JaktSymbol(DeprecatedString a_name, JaktInternal::Optional<DeprecatedString> a_detail, DeprecatedString a_kind, utility::Span a_range, utility::Span a_selection_range, JaktInternal::DynamicArray<ide::JaktSymbol> a_children);
 
-ErrorOr<DeprecatedString> to_json() const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> to_json() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace VarVisibility_Details {
 struct DoesNotApply {
 };

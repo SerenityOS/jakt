@@ -30,13 +30,13 @@ ErrorOr<DeprecatedString> debug_description() const;
 };
 struct ParsedBlock {
   public:
-JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>> stmts;ParsedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>> a_stmts);
+public: JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>> stmts;public: ParsedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>> a_stmts);
 
-JaktInternal::Optional<utility::Span> find_yield_span() const;
-bool equals(parser::ParsedBlock const rhs_block) const;
-ErrorOr<JaktInternal::Optional<utility::Span>> span(parser::Parser const parser) const;
-JaktInternal::Optional<utility::Span> find_yield_keyword_span() const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: JaktInternal::Optional<utility::Span> find_yield_span() const;
+public: bool equals(parser::ParsedBlock const rhs_block) const;
+public: ErrorOr<JaktInternal::Optional<utility::Span>> span(parser::Parser const parser) const;
+public: JaktInternal::Optional<utility::Span> find_yield_keyword_span() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace FunctionType_Details {
 struct Normal {
 };
@@ -84,6 +84,13 @@ Plain(_MemberT0&& member_0):
 value{ forward<_MemberT0>(member_0)}
 {}
 };
+struct PreprocessorName{
+DeprecatedString value;
+template<typename _MemberT0>
+PreprocessorName(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
+};
 struct Operator {
 DeprecatedString name;
 bool is_prefix;
@@ -94,12 +101,14 @@ is_prefix{ forward<_MemberT1>(member_1)}
 {}
 };
 }
-struct ExternalName : public Variant<ExternalName_Details::Plain, ExternalName_Details::Operator> {
-using Variant<ExternalName_Details::Plain, ExternalName_Details::Operator>::Variant;
+struct ExternalName : public Variant<ExternalName_Details::Plain, ExternalName_Details::PreprocessorName, ExternalName_Details::Operator> {
+using Variant<ExternalName_Details::Plain, ExternalName_Details::PreprocessorName, ExternalName_Details::Operator>::Variant;
     using Plain = ExternalName_Details::Plain;
+    using PreprocessorName = ExternalName_Details::PreprocessorName;
     using Operator = ExternalName_Details::Operator;
 ErrorOr<DeprecatedString> debug_description() const;
 ErrorOr<DeprecatedString> as_name_for_use() const;
+bool is_scopable() const;
 bool is_prefix() const;
 ErrorOr<DeprecatedString> as_name_for_definition() const;
 };
@@ -120,10 +129,10 @@ ErrorOr<DeprecatedString> debug_description() const;
 };
 struct ParsedFunction {
   public:
-size_t id;DeprecatedString name;utility::Span name_span;parser::Visibility visibility;JaktInternal::DynamicArray<parser::ParsedParameter> params;JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;parser::ParsedBlock block;NonnullRefPtr<typename parser::ParsedType> return_type;utility::Span return_type_span;bool can_throw;parser::FunctionType type;parser::FunctionLinkage linkage;bool must_instantiate;bool is_comptime;bool is_fat_arrow;bool is_unsafe;JaktInternal::Optional<parser::ExternalName> external_name;JaktInternal::Optional<DeprecatedString> deprecated_message;JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> stores_arguments;parser::InlineState force_inline;ParsedFunction(size_t a_id, DeprecatedString a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::DynamicArray<parser::ParsedParameter> a_params, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<typename parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow, bool a_is_unsafe, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<DeprecatedString> a_deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> a_stores_arguments, parser::InlineState a_force_inline);
+public: size_t id;public: DeprecatedString name;public: utility::Span name_span;public: parser::Visibility visibility;public: JaktInternal::DynamicArray<parser::ParsedParameter> params;public: JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;public: parser::ParsedBlock block;public: NonnullRefPtr<typename parser::ParsedType> return_type;public: utility::Span return_type_span;public: bool can_throw;public: parser::FunctionType type;public: parser::FunctionLinkage linkage;public: bool must_instantiate;public: bool is_comptime;public: bool is_fat_arrow;public: bool is_unsafe;public: JaktInternal::Optional<parser::ExternalName> external_name;public: JaktInternal::Optional<DeprecatedString> deprecated_message;public: JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> stores_arguments;public: parser::InlineState force_inline;public: ParsedFunction(size_t a_id, DeprecatedString a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::DynamicArray<parser::ParsedParameter> a_params, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<typename parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow, bool a_is_unsafe, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<DeprecatedString> a_deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> a_stores_arguments, parser::InlineState a_force_inline);
 
-bool equals(parser::ParsedFunction const other, bool const ignore_block) const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: bool equals(parser::ParsedFunction const other, bool const ignore_block) const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace ImportList_Details {
 struct List{
 JaktInternal::DynamicArray<parser::ImportName> value;
@@ -145,32 +154,37 @@ bool is_empty() const;
 };
 struct ParsedVariable {
   public:
-DeprecatedString name;NonnullRefPtr<typename parser::ParsedType> parsed_type;bool is_mutable;utility::Span span;ParsedVariable(DeprecatedString a_name, NonnullRefPtr<typename parser::ParsedType> a_parsed_type, bool a_is_mutable, utility::Span a_span);
+public: DeprecatedString name;public: NonnullRefPtr<typename parser::ParsedType> parsed_type;public: bool is_mutable;public: utility::Span span;public: ParsedVariable(DeprecatedString a_name, NonnullRefPtr<typename parser::ParsedType> a_parsed_type, bool a_is_mutable, utility::Span a_span);
 
-bool equals(parser::ParsedVariable const rhs_parsed_varible) const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: bool equals(parser::ParsedVariable const rhs_parsed_varible) const;
+public: ErrorOr<DeprecatedString> debug_description() const;
+};struct ParsedAttribute {
+  public:
+public: DeprecatedString name;public: utility::Span span;public: JaktInternal::Optional<DeprecatedString> assigned_value;public: JaktInternal::DynamicArray<parser::ParsedAttributeArgument> arguments;public: ParsedAttribute(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<DeprecatedString> a_assigned_value, JaktInternal::DynamicArray<parser::ParsedAttributeArgument> a_arguments);
+
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedParameter {
   public:
-bool requires_label;parser::ParsedVariable variable;JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> default_argument;utility::Span span;ParsedParameter(bool a_requires_label, parser::ParsedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_argument, utility::Span a_span);
+public: bool requires_label;public: parser::ParsedVariable variable;public: JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> default_argument;public: utility::Span span;public: ParsedParameter(bool a_requires_label, parser::ParsedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_argument, utility::Span a_span);
 
-bool equals(parser::ParsedParameter const rhs_param) const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: bool equals(parser::ParsedParameter const rhs_param) const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedCall {
   public:
-JaktInternal::DynamicArray<DeprecatedString> namespace_;DeprecatedString name;JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>> args;JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> type_args;ParsedCall(JaktInternal::DynamicArray<DeprecatedString> a_namespace_, DeprecatedString a_name, JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>> a_args, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> a_type_args);
+public: JaktInternal::DynamicArray<DeprecatedString> namespace_;public: DeprecatedString name;public: JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>> args;public: JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> type_args;public: ParsedCall(JaktInternal::DynamicArray<DeprecatedString> a_namespace_, DeprecatedString a_name, JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>> a_args, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> a_type_args);
 
-bool equals(parser::ParsedCall const rhs_parsed_call) const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: bool equals(parser::ParsedCall const rhs_parsed_call) const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedGenericParameter {
   public:
-DeprecatedString name;utility::Span span;JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> requires_list;ParsedGenericParameter(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> a_requires_list);
+public: DeprecatedString name;public: utility::Span span;public: JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> requires_list;public: bool is_value;public: ParsedGenericParameter(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> a_requires_list, bool a_is_value);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedVarDeclTuple {
   public:
-JaktInternal::DynamicArray<parser::ParsedVarDecl> var_decls;utility::Span span;ParsedVarDeclTuple(JaktInternal::DynamicArray<parser::ParsedVarDecl> a_var_decls, utility::Span a_span);
+public: JaktInternal::DynamicArray<parser::ParsedVarDecl> var_decls;public: utility::Span span;public: ParsedVarDeclTuple(JaktInternal::DynamicArray<parser::ParsedVarDecl> a_var_decls, utility::Span a_span);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace ImportName_Details {
 struct Literal {
 DeprecatedString name;
@@ -200,13 +214,13 @@ utility::Span span() const;
 };
 struct ParsedModuleImport {
   public:
-parser::ImportName module_name;JaktInternal::Optional<parser::ImportName> alias_name;parser::ImportList import_list;bool has_same_alias_than(parser::ParsedModuleImport const other) const;
-ParsedModuleImport(parser::ImportName a_module_name, JaktInternal::Optional<parser::ImportName> a_alias_name, parser::ImportList a_import_list);
+public: parser::ImportName module_name;public: JaktInternal::Optional<parser::ImportName> alias_name;public: parser::ImportList import_list;public: bool has_same_alias_than(parser::ParsedModuleImport const other) const;
+public: ParsedModuleImport(parser::ImportName a_module_name, JaktInternal::Optional<parser::ImportName> a_alias_name, parser::ImportList a_import_list);
 
-bool has_same_import_semantics(parser::ParsedModuleImport const other) const;
-ErrorOr<void> merge_import_list(parser::ImportList const list);
-bool is_equivalent_to(parser::ParsedModuleImport const other) const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: bool has_same_import_semantics(parser::ParsedModuleImport const other) const;
+public: ErrorOr<void> merge_import_list(parser::ImportList const list);
+public: bool is_equivalent_to(parser::ParsedModuleImport const other) const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace IncludeAction_Details {
 struct Define {
 DeprecatedString name;
@@ -235,16 +249,98 @@ using Variant<IncludeAction_Details::Define, IncludeAction_Details::Undefine>::V
     using Undefine = IncludeAction_Details::Undefine;
 ErrorOr<DeprecatedString> debug_description() const;
 };
-struct ParsedAttribute {
+struct Parser {
   public:
-DeprecatedString name;utility::Span span;JaktInternal::Optional<DeprecatedString> assigned_value;JaktInternal::DynamicArray<parser::ParsedAttributeArgument> arguments;ParsedAttribute(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<DeprecatedString> a_assigned_value, JaktInternal::DynamicArray<parser::ParsedAttributeArgument> a_arguments);
+public: size_t index;public: JaktInternal::DynamicArray<lexer::Token> tokens;public: NonnullRefPtr<compiler::Compiler> compiler;public: bool can_have_trailing_closure;public: size_t next_function_id;public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_operand_base();
+public: utility::Span span(size_t const start, size_t const end) const;
+public: ErrorOr<JaktInternal::Optional<parser::NumericConstant>> make_integer_numeric_constant(u64 const number, lexer::LiteralSuffix const suffix, utility::Span const span);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_type_shorthand(parser::ParsedTypeQualifiers const qualifiers);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_lambda();
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_type_longhand(parser::ParsedTypeQualifiers const qualifiers);
+public: ErrorOr<parser::ParsedAlias> parse_using();
+public: ErrorOr<JaktInternal::DynamicArray<parser::ParsedParameter>> parse_function_parameters();
+public: ErrorOr<JaktInternal::DynamicArray<parser::ParsedMatchCase>> parse_match_cases();
+public: ErrorOr<JaktInternal::Optional<parser::ParsedAttribute>> parse_attribute();
+public: ErrorOr<parser::ParsedMethod> parse_method(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_virtual, bool const is_override, bool const is_comptime, bool const is_destructor, bool const is_unsafe);
+public: ErrorOr<parser::ParsedNamespace> parse_namespace(bool const process_only_one_entity);
+public: ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedGenericParameter>,parser::ParsedNamespace>> parse_forall();
+public: ErrorOr<parser::ParsedVarDecl> parse_variable_declaration(bool const is_mutable);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_type_shorthand_set(parser::ParsedTypeQualifiers const qualifiers);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parse_if_statement();
+public: ErrorOr<JaktInternal::Optional<parser::ParsedCall>> parse_call();
+public: ErrorOr<void> inject_token(lexer::Token const token);
+public: ErrorOr<parser::ParsedRecord> parse_class(parser::DefinitionLinkage const definition_linkage);
+public: ErrorOr<parser::ParsedExternalTraitImplementation> parse_external_trait_implementation();
+public: ErrorOr<parser::ParsedMatchPattern> parse_match_pattern();
+public: ErrorOr<parser::ParsedFunction> parse_function(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_comptime, bool const is_destructor, bool const is_unsafe, bool const allow_missing_body);
+public: ErrorOr<parser::ParsedExternImport> parse_extern_import(parser::ParsedNamespace& parent);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_typename();
+public: ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>> parse_struct_class_body(parser::DefinitionLinkage const definition_linkage, parser::Visibility const default_visibility, bool const is_class);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_unsafe_expr();
+public: static ErrorOr<parser::ParsedNamespace> parse(NonnullRefPtr<compiler::Compiler> const compiler, JaktInternal::DynamicArray<lexer::Token> const tokens);
+public: ErrorOr<JaktInternal::Optional<parser::NumericConstant>> make_float_numeric_constant(f64 const number, lexer::LiteralSuffix const suffix, utility::Span const span);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_range();
+public: ErrorOr<parser::ParsedBlock> parse_fat_arrow();
+public: void skip_newlines();
+public: ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ValueEnumVariant>,JaktInternal::DynamicArray<parser::ParsedMethod>>> parse_value_enum_body(parser::ParsedRecord const partial_enum, parser::DefinitionLinkage const definition_linkage);
+public: lexer::Token previous() const;
+public: ErrorOr<JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>>> parse_type_parameter_list();
+public: ErrorOr<JaktInternal::DynamicArray<parser::EnumVariantPatternArgument>> parse_variant_arguments();
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parse_guard_statement();
+public: bool eof() const;
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_asterisk();
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_match_expression();
+public: ErrorOr<void> apply_attributes(parser::ParsedField& field, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
+public: ErrorOr<void> apply_attributes(parser::ParsedFunction& parsed_function, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
+public: ErrorOr<void> apply_attributes(parser::ParsedMethod& parsed_method, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
+public: ErrorOr<void> apply_attributes(parser::ParsedRecord& parsed_record, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
+public: lexer::Token current() const;
+public: ErrorOr<parser::ParsedRecord> parse_enum(parser::DefinitionLinkage const definition_linkage, bool const is_boxed);
+public: ErrorOr<parser::ParsedBlock> parse_block();
+public: utility::Span empty_span() const;
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_postfix_colon_colon(utility::Span const start, NonnullRefPtr<typename parser::ParsedExpression> const expr);
+public: ErrorOr<void> error(DeprecatedString const message, utility::Span const span);
+public: ErrorOr<parser::ParsedTrait> parse_trait();
+public: ErrorOr<parser::Visibility> parse_restricted_visibility_modifier();
+public: ErrorOr<parser::ParsedVarDeclTuple> parse_destructuring_assignment(bool const is_mutable);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_operand_postfix_operator(utility::Span const start, NonnullRefPtr<typename parser::ParsedExpression> const expr);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_set_literal();
+public: ErrorOr<void> parse_attribute_list(JaktInternal::DynamicArray<parser::ParsedAttribute>& active_attributes);
+public: Parser(size_t a_index, JaktInternal::DynamicArray<lexer::Token> a_tokens, NonnullRefPtr<compiler::Compiler> a_compiler, bool a_can_have_trailing_closure, size_t a_next_function_id);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_expression(bool const allow_assignments, bool const allow_newlines);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_operator(bool const allow_assignments);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parse_for_statement();
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_typename_base();
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_operand();
+public: ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::SumEnumVariant>,JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>> parse_sum_enum_body(parser::ParsedRecord const partial_enum, parser::DefinitionLinkage const definition_linkage, bool const is_boxed);
+public: ErrorOr<JaktInternal::DynamicArray<parser::ParsedCapture>> parse_captures();
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_number(lexer::LiteralPrefix const prefix, DeprecatedString const number, lexer::LiteralSuffix suffix, utility::Span const span);
+public: ErrorOr<parser::ParsedModuleImport> parse_module_import();
+public: ErrorOr<parser::ParsedRecord> parse_record(parser::DefinitionLinkage const definition_linkage);
+public: lexer::Token peek(size_t const steps) const;
+public: ErrorOr<void> error_with_hint(DeprecatedString const message, utility::Span const span, DeprecatedString const hint, utility::Span const hint_span);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_type_shorthand_array_or_dictionary(parser::ParsedTypeQualifiers const qualifiers);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_type_shorthand_tuple(parser::ParsedTypeQualifiers const qualifiers);
+public: bool eol() const;
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_array_or_dictionary_literal();
+public: ErrorOr<JaktInternal::DynamicArray<parser::ParsedMatchPattern>> parse_match_patterns();
+public: ErrorOr<void> parse_import(parser::ParsedNamespace& parent);
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parse_statement(bool const inside_block);
+public: ErrorOr<parser::ParsedField> parse_field(parser::Visibility const visibility);
+public: ErrorOr<DeprecatedString> parse_argument_label();
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_ampersand();
+public: ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<parser::IncludeAction>>> parse_include_action();
+public: ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_try_block();
+public: ErrorOr<JaktInternal::DynamicArray<parser::ParsedGenericParameter>> parse_generic_parameters();
+public: ErrorOr<parser::ParsedRecord> parse_struct(parser::DefinitionLinkage const definition_linkage);
+public: ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>>> parse_trait_list();
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedExternalTraitImplementation {
   public:
-NonnullRefPtr<typename parser::ParsedType> for_type;JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> traits;JaktInternal::DynamicArray<parser::ParsedMethod> methods;ParsedExternalTraitImplementation(NonnullRefPtr<typename parser::ParsedType> a_for_type, JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> a_traits, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods);
+public: NonnullRefPtr<typename parser::ParsedType> for_type;public: JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> traits;public: JaktInternal::DynamicArray<parser::ParsedMethod> methods;public: ParsedExternalTraitImplementation(NonnullRefPtr<typename parser::ParsedType> a_for_type, JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> a_traits, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace ArgumentStoreLevel_Details {
 struct InObject {
 size_t argument_index;
@@ -582,12 +678,12 @@ bool is_assignment() const;
 };
 struct EnumVariantPatternArgument {
   public:
-JaktInternal::Optional<DeprecatedString> name;JaktInternal::Optional<utility::Span> name_span;DeprecatedString binding;utility::Span span;bool is_reference;bool is_mutable;utility::Span name_in_enum_span() const;
-DeprecatedString name_in_enum() const;
-EnumVariantPatternArgument(JaktInternal::Optional<DeprecatedString> a_name, JaktInternal::Optional<utility::Span> a_name_span, DeprecatedString a_binding, utility::Span a_span, bool a_is_reference, bool a_is_mutable);
+public: JaktInternal::Optional<DeprecatedString> name;public: JaktInternal::Optional<utility::Span> name_span;public: DeprecatedString binding;public: utility::Span span;public: bool is_reference;public: bool is_mutable;public: utility::Span name_in_enum_span() const;
+public: DeprecatedString name_in_enum() const;
+public: EnumVariantPatternArgument(JaktInternal::Optional<DeprecatedString> a_name, JaktInternal::Optional<utility::Span> a_name_span, DeprecatedString a_binding, utility::Span a_span, bool a_is_reference, bool a_is_mutable);
 
-bool equals(parser::EnumVariantPatternArgument const rhs_variant_pattern_argument) const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: bool equals(parser::EnumVariantPatternArgument const rhs_variant_pattern_argument) const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace ParsedExpression_Details {
 struct Boolean {
 bool val;
@@ -874,14 +970,16 @@ span{ forward<_MemberT6>(member_6)}
 struct Try {
 NonnullRefPtr<typename parser::ParsedExpression> expr;
 JaktInternal::Optional<parser::ParsedBlock> catch_block;
+JaktInternal::Optional<utility::Span> catch_span;
 JaktInternal::Optional<DeprecatedString> catch_name;
 utility::Span span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
-Try(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4>
+Try(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4):
 expr{ forward<_MemberT0>(member_0)},
 catch_block{ forward<_MemberT1>(member_1)},
-catch_name{ forward<_MemberT2>(member_2)},
-span{ forward<_MemberT3>(member_3)}
+catch_span{ forward<_MemberT2>(member_2)},
+catch_name{ forward<_MemberT3>(member_3)},
+span{ forward<_MemberT4>(member_4)}
 {}
 };
 struct TryBlock {
@@ -968,20 +1066,20 @@ i64 precedence() const;
 };
 struct ParsedNamespace {
   public:
-JaktInternal::Optional<DeprecatedString> name;JaktInternal::Optional<utility::Span> name_span;JaktInternal::DynamicArray<parser::ParsedFunction> functions;JaktInternal::DynamicArray<parser::ParsedRecord> records;JaktInternal::DynamicArray<parser::ParsedTrait> traits;JaktInternal::DynamicArray<parser::ParsedExternalTraitImplementation> external_trait_implementations;JaktInternal::DynamicArray<parser::ParsedNamespace> namespaces;JaktInternal::DynamicArray<parser::ParsedAlias> aliases;JaktInternal::DynamicArray<parser::ParsedModuleImport> module_imports;JaktInternal::DynamicArray<parser::ParsedExternImport> extern_imports;JaktInternal::Optional<DeprecatedString> import_path_if_extern;JaktInternal::DynamicArray<parser::IncludeAction> generating_import_extern_before_include;JaktInternal::DynamicArray<parser::IncludeAction> generating_import_extern_after_include;JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedGenericParameter>,parser::ParsedNamespace>> forall_chunks;ErrorOr<void> add_child_namespace(parser::ParsedNamespace const namespace_);
-ParsedNamespace(JaktInternal::Optional<DeprecatedString> a_name, JaktInternal::Optional<utility::Span> a_name_span, JaktInternal::DynamicArray<parser::ParsedFunction> a_functions, JaktInternal::DynamicArray<parser::ParsedRecord> a_records, JaktInternal::DynamicArray<parser::ParsedTrait> a_traits, JaktInternal::DynamicArray<parser::ParsedExternalTraitImplementation> a_external_trait_implementations, JaktInternal::DynamicArray<parser::ParsedNamespace> a_namespaces, JaktInternal::DynamicArray<parser::ParsedAlias> a_aliases, JaktInternal::DynamicArray<parser::ParsedModuleImport> a_module_imports, JaktInternal::DynamicArray<parser::ParsedExternImport> a_extern_imports, JaktInternal::Optional<DeprecatedString> a_import_path_if_extern, JaktInternal::DynamicArray<parser::IncludeAction> a_generating_import_extern_before_include, JaktInternal::DynamicArray<parser::IncludeAction> a_generating_import_extern_after_include, JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedGenericParameter>,parser::ParsedNamespace>> a_forall_chunks);
+public: JaktInternal::Optional<DeprecatedString> name;public: JaktInternal::Optional<utility::Span> name_span;public: JaktInternal::DynamicArray<parser::ParsedFunction> functions;public: JaktInternal::DynamicArray<parser::ParsedRecord> records;public: JaktInternal::DynamicArray<parser::ParsedTrait> traits;public: JaktInternal::DynamicArray<parser::ParsedExternalTraitImplementation> external_trait_implementations;public: JaktInternal::DynamicArray<parser::ParsedNamespace> namespaces;public: JaktInternal::DynamicArray<parser::ParsedAlias> aliases;public: JaktInternal::DynamicArray<parser::ParsedModuleImport> module_imports;public: JaktInternal::DynamicArray<parser::ParsedExternImport> extern_imports;public: JaktInternal::Optional<DeprecatedString> import_path_if_extern;public: JaktInternal::DynamicArray<parser::IncludeAction> generating_import_extern_before_include;public: JaktInternal::DynamicArray<parser::IncludeAction> generating_import_extern_after_include;public: JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedGenericParameter>,parser::ParsedNamespace>> forall_chunks;public: ErrorOr<void> add_child_namespace(parser::ParsedNamespace const namespace_);
+public: ParsedNamespace(JaktInternal::Optional<DeprecatedString> a_name, JaktInternal::Optional<utility::Span> a_name_span, JaktInternal::DynamicArray<parser::ParsedFunction> a_functions, JaktInternal::DynamicArray<parser::ParsedRecord> a_records, JaktInternal::DynamicArray<parser::ParsedTrait> a_traits, JaktInternal::DynamicArray<parser::ParsedExternalTraitImplementation> a_external_trait_implementations, JaktInternal::DynamicArray<parser::ParsedNamespace> a_namespaces, JaktInternal::DynamicArray<parser::ParsedAlias> a_aliases, JaktInternal::DynamicArray<parser::ParsedModuleImport> a_module_imports, JaktInternal::DynamicArray<parser::ParsedExternImport> a_extern_imports, JaktInternal::Optional<DeprecatedString> a_import_path_if_extern, JaktInternal::DynamicArray<parser::IncludeAction> a_generating_import_extern_before_include, JaktInternal::DynamicArray<parser::IncludeAction> a_generating_import_extern_after_include, JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedGenericParameter>,parser::ParsedNamespace>> a_forall_chunks);
 
-bool is_equivalent_to(parser::ParsedNamespace const other) const;
-ErrorOr<void> add_extern_import(parser::ParsedExternImport const import_);
-ErrorOr<void> add_alias(parser::ParsedAlias const alias);
-ErrorOr<void> merge_with(parser::ParsedNamespace const namespace_);
-ErrorOr<void> add_module_import(parser::ParsedModuleImport const import_);
-ErrorOr<DeprecatedString> debug_description() const;
+public: bool is_equivalent_to(parser::ParsedNamespace const other) const;
+public: ErrorOr<void> add_extern_import(parser::ParsedExternImport const import_);
+public: ErrorOr<void> add_alias(parser::ParsedAlias const alias);
+public: ErrorOr<void> merge_with(parser::ParsedNamespace const namespace_);
+public: ErrorOr<void> add_module_import(parser::ParsedModuleImport const import_);
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ValueEnumVariant {
   public:
-DeprecatedString name;utility::Span span;JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> value;ValueEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_value);
+public: DeprecatedString name;public: utility::Span span;public: JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> value;public: ValueEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_value);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace DefinitionLinkage_Details {
 struct Internal {
 };
@@ -1048,9 +1146,9 @@ ErrorOr<DeprecatedString> record_type_name() const;
 };
 struct ParsedRecord {
   public:
-DeprecatedString name;utility::Span name_span;JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;parser::DefinitionLinkage definition_linkage;JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> implements_list;JaktInternal::DynamicArray<parser::ParsedMethod> methods;parser::RecordType record_type;JaktInternal::Optional<parser::ExternalName> external_name;ParsedRecord(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> a_implements_list, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods, parser::RecordType a_record_type, JaktInternal::Optional<parser::ExternalName> a_external_name);
+public: DeprecatedString name;public: utility::Span name_span;public: JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;public: parser::DefinitionLinkage definition_linkage;public: JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> implements_list;public: JaktInternal::DynamicArray<parser::ParsedMethod> methods;public: parser::RecordType record_type;public: JaktInternal::Optional<parser::ExternalName> external_name;public: ParsedRecord(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> a_implements_list, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods, parser::RecordType a_record_type, JaktInternal::Optional<parser::ExternalName> a_external_name);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace ParsedMatchBody_Details {
 struct Expression{
 NonnullRefPtr<typename parser::ParsedExpression> value;
@@ -1076,19 +1174,19 @@ bool equals(parser::ParsedMatchBody const rhs_match_body) const;
 };
 struct ParsedMatchCase {
   public:
-JaktInternal::DynamicArray<parser::ParsedMatchPattern> patterns;utility::Span marker_span;parser::ParsedMatchBody body;bool has_equal_pattern(parser::ParsedMatchCase const rhs_match_case) const;
-bool equals(parser::ParsedMatchCase const rhs_match_case) const;
-ParsedMatchCase(JaktInternal::DynamicArray<parser::ParsedMatchPattern> a_patterns, utility::Span a_marker_span, parser::ParsedMatchBody a_body);
+public: JaktInternal::DynamicArray<parser::ParsedMatchPattern> patterns;public: utility::Span marker_span;public: parser::ParsedMatchBody body;public: bool has_equal_pattern(parser::ParsedMatchCase const rhs_match_case) const;
+public: bool equals(parser::ParsedMatchCase const rhs_match_case) const;
+public: ParsedMatchCase(JaktInternal::DynamicArray<parser::ParsedMatchPattern> a_patterns, utility::Span a_marker_span, parser::ParsedMatchBody a_body);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedExternImport {
   public:
-bool is_c;parser::ParsedNamespace assigned_namespace;JaktInternal::DynamicArray<parser::IncludeAction> before_include;JaktInternal::DynamicArray<parser::IncludeAction> after_include;bool should_auto_import;ErrorOr<bool> is_equivalent_to(parser::ParsedExternImport const other) const;
-ParsedExternImport(bool a_is_c, parser::ParsedNamespace a_assigned_namespace, JaktInternal::DynamicArray<parser::IncludeAction> a_before_include, JaktInternal::DynamicArray<parser::IncludeAction> a_after_include, bool a_should_auto_import);
+public: bool is_c;public: parser::ParsedNamespace assigned_namespace;public: JaktInternal::DynamicArray<parser::IncludeAction> before_include;public: JaktInternal::DynamicArray<parser::IncludeAction> after_include;public: bool should_auto_import;public: ErrorOr<bool> is_equivalent_to(parser::ParsedExternImport const other) const;
+public: ParsedExternImport(bool a_is_c, parser::ParsedNamespace a_assigned_namespace, JaktInternal::DynamicArray<parser::IncludeAction> a_before_include, JaktInternal::DynamicArray<parser::IncludeAction> a_after_include, bool a_should_auto_import);
 
-DeprecatedString get_path() const;
-DeprecatedString get_name() const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: DeprecatedString get_path() const;
+public: DeprecatedString get_name() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace ParsedTraitRequirements_Details {
 struct Nothing {
 };
@@ -1116,30 +1214,262 @@ ErrorOr<DeprecatedString> debug_description() const;
 };
 struct SumEnumVariant {
   public:
-DeprecatedString name;utility::Span span;JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> params;JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>>> default_values;SumEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> a_params, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>>> a_default_values);
+public: DeprecatedString name;public: utility::Span span;public: JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> params;public: JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>>> default_values;public: SumEnumVariant(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> a_params, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>>> a_default_values);
 
-ErrorOr<DeprecatedString> debug_description() const;
-};struct ParsedNameWithGenericParameters {
+public: ErrorOr<DeprecatedString> debug_description() const;
+};struct ParsedTypeQualifiers {
   public:
-DeprecatedString name;utility::Span name_span;JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> generic_parameters;ParsedNameWithGenericParameters(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> a_generic_parameters);
+public: bool is_mutable;public: bool is_immutable;public: ParsedTypeQualifiers(bool a_is_mutable, bool a_is_immutable);
 
+public: ErrorOr<DeprecatedString> debug_description() const;
+};namespace ParsedType_Details {
+struct Name {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+DeprecatedString name;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+Name(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+qualifiers{ forward<_MemberT0>(member_0)},
+name{ forward<_MemberT1>(member_1)},
+span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct NamespacedName {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+DeprecatedString name;
+JaktInternal::DynamicArray<DeprecatedString> namespaces;
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> params;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4>
+NamespacedName(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4):
+qualifiers{ forward<_MemberT0>(member_0)},
+name{ forward<_MemberT1>(member_1)},
+namespaces{ forward<_MemberT2>(member_2)},
+params{ forward<_MemberT3>(member_3)},
+span{ forward<_MemberT4>(member_4)}
+{}
+};
+struct GenericType {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+DeprecatedString name;
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> generic_parameters;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
+GenericType(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+qualifiers{ forward<_MemberT0>(member_0)},
+name{ forward<_MemberT1>(member_1)},
+generic_parameters{ forward<_MemberT2>(member_2)},
+span{ forward<_MemberT3>(member_3)}
+{}
+};
+struct JaktArray {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+NonnullRefPtr<typename parser::ParsedType> inner;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+JaktArray(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+qualifiers{ forward<_MemberT0>(member_0)},
+inner{ forward<_MemberT1>(member_1)},
+span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct Dictionary {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+NonnullRefPtr<typename parser::ParsedType> key;
+NonnullRefPtr<typename parser::ParsedType> value;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
+Dictionary(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+qualifiers{ forward<_MemberT0>(member_0)},
+key{ forward<_MemberT1>(member_1)},
+value{ forward<_MemberT2>(member_2)},
+span{ forward<_MemberT3>(member_3)}
+{}
+};
+struct JaktTuple {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> types;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+JaktTuple(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+qualifiers{ forward<_MemberT0>(member_0)},
+types{ forward<_MemberT1>(member_1)},
+span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct Set {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+NonnullRefPtr<typename parser::ParsedType> inner;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+Set(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+qualifiers{ forward<_MemberT0>(member_0)},
+inner{ forward<_MemberT1>(member_1)},
+span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct Optional {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+NonnullRefPtr<typename parser::ParsedType> inner;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+Optional(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+qualifiers{ forward<_MemberT0>(member_0)},
+inner{ forward<_MemberT1>(member_1)},
+span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct Reference {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+NonnullRefPtr<typename parser::ParsedType> inner;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+Reference(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+qualifiers{ forward<_MemberT0>(member_0)},
+inner{ forward<_MemberT1>(member_1)},
+span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct MutableReference {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+NonnullRefPtr<typename parser::ParsedType> inner;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+MutableReference(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+qualifiers{ forward<_MemberT0>(member_0)},
+inner{ forward<_MemberT1>(member_1)},
+span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct RawPtr {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+NonnullRefPtr<typename parser::ParsedType> inner;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+RawPtr(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+qualifiers{ forward<_MemberT0>(member_0)},
+inner{ forward<_MemberT1>(member_1)},
+span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct WeakPtr {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+NonnullRefPtr<typename parser::ParsedType> inner;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+WeakPtr(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+qualifiers{ forward<_MemberT0>(member_0)},
+inner{ forward<_MemberT1>(member_1)},
+span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct Function {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+JaktInternal::DynamicArray<parser::ParsedParameter> params;
+bool can_throw;
+NonnullRefPtr<typename parser::ParsedType> return_type;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4>
+Function(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4):
+qualifiers{ forward<_MemberT0>(member_0)},
+params{ forward<_MemberT1>(member_1)},
+can_throw{ forward<_MemberT2>(member_2)},
+return_type{ forward<_MemberT3>(member_3)},
+span{ forward<_MemberT4>(member_4)}
+{}
+};
+struct Const {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+NonnullRefPtr<typename parser::ParsedExpression> expr;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+Const(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+qualifiers{ forward<_MemberT0>(member_0)},
+expr{ forward<_MemberT1>(member_1)},
+span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct DependentType {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+NonnullRefPtr<typename parser::ParsedType> base;
+DeprecatedString name;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
+DependentType(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+qualifiers{ forward<_MemberT0>(member_0)},
+base{ forward<_MemberT1>(member_1)},
+name{ forward<_MemberT2>(member_2)},
+span{ forward<_MemberT3>(member_3)}
+{}
+};
+struct Empty {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
+template<typename _MemberT0>
+Empty(_MemberT0&& member_0):
+qualifiers{ forward<_MemberT0>(member_0)}
+{}
+};
+}
+struct ParsedType : public Variant<ParsedType_Details::Name, ParsedType_Details::NamespacedName, ParsedType_Details::GenericType, ParsedType_Details::JaktArray, ParsedType_Details::Dictionary, ParsedType_Details::JaktTuple, ParsedType_Details::Set, ParsedType_Details::Optional, ParsedType_Details::Reference, ParsedType_Details::MutableReference, ParsedType_Details::RawPtr, ParsedType_Details::WeakPtr, ParsedType_Details::Function, ParsedType_Details::Const, ParsedType_Details::DependentType, ParsedType_Details::Empty>, public RefCounted<ParsedType> {
+using Variant<ParsedType_Details::Name, ParsedType_Details::NamespacedName, ParsedType_Details::GenericType, ParsedType_Details::JaktArray, ParsedType_Details::Dictionary, ParsedType_Details::JaktTuple, ParsedType_Details::Set, ParsedType_Details::Optional, ParsedType_Details::Reference, ParsedType_Details::MutableReference, ParsedType_Details::RawPtr, ParsedType_Details::WeakPtr, ParsedType_Details::Function, ParsedType_Details::Const, ParsedType_Details::DependentType, ParsedType_Details::Empty>::Variant;
+    using Name = ParsedType_Details::Name;
+    using NamespacedName = ParsedType_Details::NamespacedName;
+    using GenericType = ParsedType_Details::GenericType;
+    using JaktArray = ParsedType_Details::JaktArray;
+    using Dictionary = ParsedType_Details::Dictionary;
+    using JaktTuple = ParsedType_Details::JaktTuple;
+    using Set = ParsedType_Details::Set;
+    using Optional = ParsedType_Details::Optional;
+    using Reference = ParsedType_Details::Reference;
+    using MutableReference = ParsedType_Details::MutableReference;
+    using RawPtr = ParsedType_Details::RawPtr;
+    using WeakPtr = ParsedType_Details::WeakPtr;
+    using Function = ParsedType_Details::Function;
+    using Const = ParsedType_Details::Const;
+    using DependentType = ParsedType_Details::DependentType;
+    using Empty = ParsedType_Details::Empty;
+template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {
+return adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType(V(forward<Args>(args)...)));
+}
 ErrorOr<DeprecatedString> debug_description() const;
-};struct VisibilityRestriction {
+JaktInternal::Optional<parser::ParsedTypeQualifiers> const& qualifiers() const { switch(this->index()) {case 0 /* Name */: return this->template get<ParsedType::Name>().qualifiers;
+case 1 /* NamespacedName */: return this->template get<ParsedType::NamespacedName>().qualifiers;
+case 2 /* GenericType */: return this->template get<ParsedType::GenericType>().qualifiers;
+case 3 /* JaktArray */: return this->template get<ParsedType::JaktArray>().qualifiers;
+case 4 /* Dictionary */: return this->template get<ParsedType::Dictionary>().qualifiers;
+case 5 /* JaktTuple */: return this->template get<ParsedType::JaktTuple>().qualifiers;
+case 6 /* Set */: return this->template get<ParsedType::Set>().qualifiers;
+case 7 /* Optional */: return this->template get<ParsedType::Optional>().qualifiers;
+case 8 /* Reference */: return this->template get<ParsedType::Reference>().qualifiers;
+case 9 /* MutableReference */: return this->template get<ParsedType::MutableReference>().qualifiers;
+case 10 /* RawPtr */: return this->template get<ParsedType::RawPtr>().qualifiers;
+case 11 /* WeakPtr */: return this->template get<ParsedType::WeakPtr>().qualifiers;
+case 12 /* Function */: return this->template get<ParsedType::Function>().qualifiers;
+case 13 /* Const */: return this->template get<ParsedType::Const>().qualifiers;
+case 14 /* DependentType */: return this->template get<ParsedType::DependentType>().qualifiers;
+case 15 /* Empty */: return this->template get<ParsedType::Empty>().qualifiers;
+default: VERIFY_NOT_REACHED();
+}
+}
+bool equals(NonnullRefPtr<typename parser::ParsedType> const rhs_parsed_type) const;
+utility::Span span() const;
+};
+struct ParsedNameWithGenericParameters {
   public:
-JaktInternal::DynamicArray<DeprecatedString> namespace_;DeprecatedString name;VisibilityRestriction(JaktInternal::DynamicArray<DeprecatedString> a_namespace_, DeprecatedString a_name);
+public: DeprecatedString name;public: utility::Span name_span;public: JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> generic_parameters;public: ParsedNameWithGenericParameters(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> a_generic_parameters);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedVarDecl {
   public:
-DeprecatedString name;NonnullRefPtr<typename parser::ParsedType> parsed_type;bool is_mutable;JaktInternal::Optional<utility::Span> inlay_span;utility::Span span;JaktInternal::Optional<parser::ExternalName> external_name;bool equals(parser::ParsedVarDecl const rhs_var_decl) const;
-ParsedVarDecl(DeprecatedString a_name, NonnullRefPtr<typename parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span, JaktInternal::Optional<parser::ExternalName> a_external_name);
+public: DeprecatedString name;public: NonnullRefPtr<typename parser::ParsedType> parsed_type;public: bool is_mutable;public: JaktInternal::Optional<utility::Span> inlay_span;public: utility::Span span;public: JaktInternal::Optional<parser::ExternalName> external_name;public: bool equals(parser::ParsedVarDecl const rhs_var_decl) const;
+public: ParsedVarDecl(DeprecatedString a_name, NonnullRefPtr<typename parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span, JaktInternal::Optional<parser::ExternalName> a_external_name);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedPatternDefault {
   public:
-parser::ParsedVarDecl variable;NonnullRefPtr<typename parser::ParsedExpression> value;ParsedPatternDefault(parser::ParsedVarDecl a_variable, NonnullRefPtr<typename parser::ParsedExpression> a_value);
+public: parser::ParsedVarDecl variable;public: NonnullRefPtr<typename parser::ParsedExpression> value;public: ParsedPatternDefault(parser::ParsedVarDecl a_variable, NonnullRefPtr<typename parser::ParsedExpression> a_value);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace ParsedCapture_Details {
 struct ByValue {
 DeprecatedString name;
@@ -1419,263 +1749,32 @@ ErrorOr<DeprecatedString> debug_description() const;
 bool equals(NonnullRefPtr<typename parser::ParsedStatement> const rhs_statement) const;
 utility::Span span() const;
 };
-struct ParsedName {
+struct CheckedQualifiers {
   public:
-DeprecatedString name;utility::Span span;ParsedName(DeprecatedString a_name, utility::Span a_span);
+public: bool is_immutable;public: bool equals(parser::CheckedQualifiers const other) const;
+public: CheckedQualifiers(bool a_is_immutable);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: public: ErrorOr<DeprecatedString> debug_description() const;
+};struct ParsedName {
+  public:
+public: DeprecatedString name;public: utility::Span span;public: ParsedName(DeprecatedString a_name, utility::Span a_span);
+
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedAlias {
   public:
-JaktInternal::Optional<parser::ParsedName> alias_name;JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> target;ParsedAlias(JaktInternal::Optional<parser::ParsedName> a_alias_name, JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> a_target);
+public: JaktInternal::Optional<parser::ParsedName> alias_name;public: JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> target;public: ParsedAlias(JaktInternal::Optional<parser::ParsedName> a_alias_name, JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> a_target);
 
-ErrorOr<DeprecatedString> debug_description() const;
-};namespace ParsedType_Details {
-struct Name {
-DeprecatedString name;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-Name(_MemberT0&& member_0, _MemberT1&& member_1):
-name{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct NamespacedName {
-DeprecatedString name;
-JaktInternal::DynamicArray<DeprecatedString> namespaces;
-JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> params;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
-NamespacedName(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
-name{ forward<_MemberT0>(member_0)},
-namespaces{ forward<_MemberT1>(member_1)},
-params{ forward<_MemberT2>(member_2)},
-span{ forward<_MemberT3>(member_3)}
-{}
-};
-struct GenericType {
-DeprecatedString name;
-JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> generic_parameters;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-GenericType(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-name{ forward<_MemberT0>(member_0)},
-generic_parameters{ forward<_MemberT1>(member_1)},
-span{ forward<_MemberT2>(member_2)}
-{}
-};
-struct JaktArray {
-NonnullRefPtr<typename parser::ParsedType> inner;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-JaktArray(_MemberT0&& member_0, _MemberT1&& member_1):
-inner{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Dictionary {
-NonnullRefPtr<typename parser::ParsedType> key;
-NonnullRefPtr<typename parser::ParsedType> value;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-Dictionary(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-key{ forward<_MemberT0>(member_0)},
-value{ forward<_MemberT1>(member_1)},
-span{ forward<_MemberT2>(member_2)}
-{}
-};
-struct JaktTuple {
-JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> types;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-JaktTuple(_MemberT0&& member_0, _MemberT1&& member_1):
-types{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Set {
-NonnullRefPtr<typename parser::ParsedType> inner;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-Set(_MemberT0&& member_0, _MemberT1&& member_1):
-inner{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Optional {
-NonnullRefPtr<typename parser::ParsedType> inner;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-Optional(_MemberT0&& member_0, _MemberT1&& member_1):
-inner{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Reference {
-NonnullRefPtr<typename parser::ParsedType> inner;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-Reference(_MemberT0&& member_0, _MemberT1&& member_1):
-inner{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct MutableReference {
-NonnullRefPtr<typename parser::ParsedType> inner;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-MutableReference(_MemberT0&& member_0, _MemberT1&& member_1):
-inner{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct RawPtr {
-NonnullRefPtr<typename parser::ParsedType> inner;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-RawPtr(_MemberT0&& member_0, _MemberT1&& member_1):
-inner{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct WeakPtr {
-NonnullRefPtr<typename parser::ParsedType> inner;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-WeakPtr(_MemberT0&& member_0, _MemberT1&& member_1):
-inner{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Function {
-JaktInternal::DynamicArray<parser::ParsedParameter> params;
-bool can_throw;
-NonnullRefPtr<typename parser::ParsedType> return_type;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
-Function(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
-params{ forward<_MemberT0>(member_0)},
-can_throw{ forward<_MemberT1>(member_1)},
-return_type{ forward<_MemberT2>(member_2)},
-span{ forward<_MemberT3>(member_3)}
-{}
-};
-struct Empty {
-};
-}
-struct ParsedType : public Variant<ParsedType_Details::Name, ParsedType_Details::NamespacedName, ParsedType_Details::GenericType, ParsedType_Details::JaktArray, ParsedType_Details::Dictionary, ParsedType_Details::JaktTuple, ParsedType_Details::Set, ParsedType_Details::Optional, ParsedType_Details::Reference, ParsedType_Details::MutableReference, ParsedType_Details::RawPtr, ParsedType_Details::WeakPtr, ParsedType_Details::Function, ParsedType_Details::Empty>, public RefCounted<ParsedType> {
-using Variant<ParsedType_Details::Name, ParsedType_Details::NamespacedName, ParsedType_Details::GenericType, ParsedType_Details::JaktArray, ParsedType_Details::Dictionary, ParsedType_Details::JaktTuple, ParsedType_Details::Set, ParsedType_Details::Optional, ParsedType_Details::Reference, ParsedType_Details::MutableReference, ParsedType_Details::RawPtr, ParsedType_Details::WeakPtr, ParsedType_Details::Function, ParsedType_Details::Empty>::Variant;
-    using Name = ParsedType_Details::Name;
-    using NamespacedName = ParsedType_Details::NamespacedName;
-    using GenericType = ParsedType_Details::GenericType;
-    using JaktArray = ParsedType_Details::JaktArray;
-    using Dictionary = ParsedType_Details::Dictionary;
-    using JaktTuple = ParsedType_Details::JaktTuple;
-    using Set = ParsedType_Details::Set;
-    using Optional = ParsedType_Details::Optional;
-    using Reference = ParsedType_Details::Reference;
-    using MutableReference = ParsedType_Details::MutableReference;
-    using RawPtr = ParsedType_Details::RawPtr;
-    using WeakPtr = ParsedType_Details::WeakPtr;
-    using Function = ParsedType_Details::Function;
-    using Empty = ParsedType_Details::Empty;
-template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {
-return adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType(V(forward<Args>(args)...)));
-}
-ErrorOr<DeprecatedString> debug_description() const;
-bool equals(NonnullRefPtr<typename parser::ParsedType> const rhs_parsed_type) const;
-utility::Span span() const;
-};
-struct Parser {
+public: ErrorOr<DeprecatedString> debug_description() const;
+};struct ParsedAttributeArgument {
   public:
-size_t index;JaktInternal::DynamicArray<lexer::Token> tokens;NonnullRefPtr<compiler::Compiler> compiler;bool can_have_trailing_closure;size_t next_function_id;ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_operand_base();
-utility::Span span(size_t const start, size_t const end) const;
-ErrorOr<JaktInternal::Optional<parser::NumericConstant>> make_integer_numeric_constant(u64 const number, lexer::LiteralSuffix const suffix, utility::Span const span);
-ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_type_shorthand();
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_lambda();
-ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_type_longhand();
-ErrorOr<parser::ParsedAlias> parse_using();
-ErrorOr<JaktInternal::DynamicArray<parser::ParsedParameter>> parse_function_parameters();
-ErrorOr<JaktInternal::DynamicArray<parser::ParsedMatchCase>> parse_match_cases();
-ErrorOr<JaktInternal::Optional<parser::ParsedAttribute>> parse_attribute();
-ErrorOr<parser::ParsedMethod> parse_method(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_virtual, bool const is_override, bool const is_comptime, bool const is_destructor, bool const is_unsafe);
-ErrorOr<parser::ParsedNamespace> parse_namespace(bool const process_only_one_entity);
-ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedGenericParameter>,parser::ParsedNamespace>> parse_forall();
-ErrorOr<parser::ParsedVarDecl> parse_variable_declaration(bool const is_mutable);
-ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_type_shorthand_set();
-ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parse_if_statement();
-ErrorOr<JaktInternal::Optional<parser::ParsedCall>> parse_call();
-ErrorOr<void> inject_token(lexer::Token const token);
-ErrorOr<parser::ParsedRecord> parse_class(parser::DefinitionLinkage const definition_linkage);
-ErrorOr<parser::ParsedExternalTraitImplementation> parse_external_trait_implementation();
-ErrorOr<parser::ParsedMatchPattern> parse_match_pattern();
-ErrorOr<parser::ParsedFunction> parse_function(parser::FunctionLinkage const linkage, parser::Visibility const visibility, bool const is_comptime, bool const is_destructor, bool const is_unsafe, bool const allow_missing_body);
-ErrorOr<parser::ParsedExternImport> parse_extern_import(parser::ParsedNamespace& parent);
-ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_typename();
-ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>> parse_struct_class_body(parser::DefinitionLinkage const definition_linkage, parser::Visibility const default_visibility, bool const is_class);
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_unsafe_expr();
-static ErrorOr<parser::ParsedNamespace> parse(NonnullRefPtr<compiler::Compiler> const compiler, JaktInternal::DynamicArray<lexer::Token> const tokens);
-ErrorOr<JaktInternal::Optional<parser::NumericConstant>> make_float_numeric_constant(f64 const number, lexer::LiteralSuffix const suffix, utility::Span const span);
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_range();
-ErrorOr<parser::ParsedBlock> parse_fat_arrow();
-void skip_newlines();
-ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::ValueEnumVariant>,JaktInternal::DynamicArray<parser::ParsedMethod>>> parse_value_enum_body(parser::ParsedRecord const partial_enum, parser::DefinitionLinkage const definition_linkage);
-lexer::Token previous() const;
-ErrorOr<JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>>> parse_type_parameter_list();
-ErrorOr<JaktInternal::DynamicArray<parser::EnumVariantPatternArgument>> parse_variant_arguments();
-ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parse_guard_statement();
-bool eof() const;
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_asterisk();
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_match_expression();
-ErrorOr<void> apply_attributes(parser::ParsedField& field, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
-ErrorOr<void> apply_attributes(parser::ParsedFunction& parsed_function, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
-ErrorOr<void> apply_attributes(parser::ParsedMethod& parsed_method, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
-ErrorOr<void> apply_attributes(parser::ParsedRecord& parsed_record, JaktInternal::DynamicArray<parser::ParsedAttribute> const& active_attributes);
-lexer::Token current() const;
-ErrorOr<parser::ParsedRecord> parse_enum(parser::DefinitionLinkage const definition_linkage, bool const is_boxed);
-ErrorOr<parser::ParsedBlock> parse_block();
-utility::Span empty_span() const;
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_postfix_colon_colon(utility::Span const start, NonnullRefPtr<typename parser::ParsedExpression> const expr);
-ErrorOr<void> error(DeprecatedString const message, utility::Span const span);
-ErrorOr<parser::ParsedTrait> parse_trait();
-ErrorOr<parser::Visibility> parse_restricted_visibility_modifier();
-ErrorOr<parser::ParsedVarDeclTuple> parse_destructuring_assignment(bool const is_mutable);
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_operand_postfix_operator(utility::Span const start, NonnullRefPtr<typename parser::ParsedExpression> const expr);
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_set_literal();
-ErrorOr<void> parse_attribute_list(JaktInternal::DynamicArray<parser::ParsedAttribute>& active_attributes);
-Parser(size_t a_index, JaktInternal::DynamicArray<lexer::Token> a_tokens, NonnullRefPtr<compiler::Compiler> a_compiler, bool a_can_have_trailing_closure, size_t a_next_function_id);
+public: DeprecatedString name;public: utility::Span span;public: JaktInternal::Optional<DeprecatedString> assigned_value;public: ParsedAttributeArgument(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<DeprecatedString> a_assigned_value);
 
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_expression(bool const allow_assignments, bool const allow_newlines);
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_operator(bool const allow_assignments);
-ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parse_for_statement();
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_operand();
-ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<parser::SumEnumVariant>,JaktInternal::DynamicArray<parser::ParsedField>,JaktInternal::DynamicArray<parser::ParsedMethod>>> parse_sum_enum_body(parser::ParsedRecord const partial_enum, parser::DefinitionLinkage const definition_linkage, bool const is_boxed);
-ErrorOr<JaktInternal::DynamicArray<parser::ParsedCapture>> parse_captures();
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_number(lexer::LiteralPrefix const prefix, DeprecatedString const number, lexer::LiteralSuffix suffix, utility::Span const span);
-ErrorOr<parser::ParsedModuleImport> parse_module_import();
-ErrorOr<parser::ParsedRecord> parse_record(parser::DefinitionLinkage const definition_linkage);
-lexer::Token peek(size_t const steps) const;
-ErrorOr<void> error_with_hint(DeprecatedString const message, utility::Span const span, DeprecatedString const hint, utility::Span const hint_span);
-ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_type_shorthand_array_or_dictionary();
-ErrorOr<NonnullRefPtr<typename parser::ParsedType>> parse_type_shorthand_tuple();
-bool eol() const;
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_array_or_dictionary_literal();
-ErrorOr<JaktInternal::DynamicArray<parser::ParsedMatchPattern>> parse_match_patterns();
-ErrorOr<void> parse_import(parser::ParsedNamespace& parent);
-ErrorOr<NonnullRefPtr<typename parser::ParsedStatement>> parse_statement(bool const inside_block);
-ErrorOr<parser::ParsedField> parse_field(parser::Visibility const visibility);
-ErrorOr<DeprecatedString> parse_argument_label();
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_ampersand();
-ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<parser::IncludeAction>>> parse_include_action();
-ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parse_try_block();
-ErrorOr<JaktInternal::DynamicArray<parser::ParsedGenericParameter>> parse_generic_parameters();
-ErrorOr<parser::ParsedRecord> parse_struct(parser::DefinitionLinkage const definition_linkage);
-ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>>> parse_trait_list();
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedMethod {
   public:
-parser::ParsedFunction parsed_function;parser::Visibility visibility;bool is_virtual;bool is_override;ParsedMethod(parser::ParsedFunction a_parsed_function, parser::Visibility a_visibility, bool a_is_virtual, bool a_is_override);
+public: parser::ParsedFunction parsed_function;public: parser::Visibility visibility;public: bool is_virtual;public: bool is_override;public: ParsedMethod(parser::ParsedFunction a_parsed_function, parser::Visibility a_visibility, bool a_is_virtual, bool a_is_override);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace ParsedMatchPattern_Details {
 struct EnumVariant {
 JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> defaults;
@@ -1736,21 +1835,21 @@ bool equals(parser::ParsedMatchPattern const rhs_parsed_match_pattern) const;
 bool is_equal_pattern(parser::ParsedMatchPattern const rhs_parsed_match_pattern) const;
 bool defaults_equal(JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> const defaults) const;
 };
-struct ParsedAttributeArgument {
+struct VisibilityRestriction {
   public:
-DeprecatedString name;utility::Span span;JaktInternal::Optional<DeprecatedString> assigned_value;ParsedAttributeArgument(DeprecatedString a_name, utility::Span a_span, JaktInternal::Optional<DeprecatedString> a_assigned_value);
+public: JaktInternal::DynamicArray<DeprecatedString> namespace_;public: DeprecatedString name;public: VisibilityRestriction(JaktInternal::DynamicArray<DeprecatedString> a_namespace_, DeprecatedString a_name);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedField {
   public:
-parser::ParsedVarDecl var_decl;parser::Visibility visibility;JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> default_value;ParsedField(parser::ParsedVarDecl a_var_decl, parser::Visibility a_visibility, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_value);
+public: parser::ParsedVarDecl var_decl;public: parser::Visibility visibility;public: JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> default_value;public: ParsedField(parser::ParsedVarDecl a_var_decl, parser::Visibility a_visibility, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_value);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ParsedTrait {
   public:
-DeprecatedString name;utility::Span name_span;JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;parser::ParsedTraitRequirements requirements;ParsedTrait(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedTraitRequirements a_requirements);
+public: DeprecatedString name;public: utility::Span name_span;public: JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;public: parser::ParsedTraitRequirements requirements;public: ParsedTrait(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedTraitRequirements a_requirements);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };template <typename T>
 T u64_to_float(u64 const number);
 }
@@ -1809,6 +1908,12 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::parser::ParsedAttribute> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::ParsedAttribute const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::parser::ParsedParameter> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::ParsedParameter const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
@@ -1851,8 +1956,8 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::parser::ParsedAttribute> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::ParsedAttribute const& value) {
+template<>struct Jakt::Formatter<Jakt::parser::Parser> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::Parser const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
@@ -1965,14 +2070,20 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::parser::ParsedNameWithGenericParameters> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::ParsedNameWithGenericParameters const& value) {
+template<>struct Jakt::Formatter<Jakt::parser::ParsedTypeQualifiers> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::ParsedTypeQualifiers const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::parser::VisibilityRestriction> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::VisibilityRestriction const& value) {
+template<>struct Jakt::Formatter<Jakt::parser::ParsedType> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::ParsedType const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::parser::ParsedNameWithGenericParameters> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::ParsedNameWithGenericParameters const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
@@ -2001,6 +2112,12 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::parser::CheckedQualifiers> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::CheckedQualifiers const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::parser::ParsedName> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::ParsedName const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
@@ -2013,14 +2130,8 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::parser::ParsedType> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::ParsedType const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::parser::Parser> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::Parser const& value) {
+template<>struct Jakt::Formatter<Jakt::parser::ParsedAttributeArgument> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::ParsedAttributeArgument const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
@@ -2037,8 +2148,8 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::parser::ParsedAttributeArgument> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::ParsedAttributeArgument const& value) {
+template<>struct Jakt::Formatter<Jakt::parser::VisibilityRestriction> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::parser::VisibilityRestriction const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

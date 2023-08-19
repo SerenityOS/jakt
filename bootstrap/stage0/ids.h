@@ -5,7 +5,7 @@ namespace Jakt {
 namespace ids {
 struct ModuleId {
   public:
-size_t id;__attribute__((always_inline)) inline u32 hash() const {
+public: size_t id;public: __attribute__((always_inline)) inline u32 hash() const {
 {
 return [](size_t const& self) -> u32 {
 {
@@ -15,52 +15,47 @@ return ((AK::Traits<size_t>()).hash(self));
 (((*this).id));
 }
 }
-__attribute__((always_inline)) inline bool equals(ids::ModuleId const rhs) const {
+public: public: __attribute__((always_inline)) inline bool equals(ids::ModuleId const rhs) const {
 {
 return ((((*this).id)) == (((rhs).id)));
 }
 }
-ModuleId(size_t a_id);
+public: ModuleId(size_t a_id);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: public: ErrorOr<DeprecatedString> debug_description() const;
 };struct VarId {
   public:
-ids::ModuleId module;size_t id;VarId(ids::ModuleId a_module, size_t a_id);
+public: ids::ModuleId module;public: size_t id;public: VarId(ids::ModuleId a_module, size_t a_id);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct TraitId {
   public:
-ids::ModuleId module;size_t id;__attribute__((always_inline)) inline bool equals(ids::TraitId const other) const {
+public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(ids::TraitId const other) const {
 {
 return (((((((*this).module)).id)) == (((((other).module)).id))) && ((((*this).id)) == (((other).id))));
 }
 }
-TraitId(ids::ModuleId a_module, size_t a_id);
+public: TraitId(ids::ModuleId a_module, size_t a_id);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct ScopeId {
   public:
-ids::ModuleId module_id;size_t id;__attribute__((always_inline)) inline u32 hash() const {
+public: ids::ModuleId module_id;public: size_t id;public: __attribute__((always_inline)) inline u32 hash() const {
 {
-return pair_int_hash([](size_t const& self) -> u32 {
-{
-return ((AK::Traits<size_t>()).hash(self));
+return pair_int_hash((infallible_integer_cast<u32>((((*this).id)))),(infallible_integer_cast<u32>((((((*this).module_id)).id)))));
 }
 }
-(((*this).id)),((((*this).module_id)).hash()));
-}
-}
-__attribute__((always_inline)) inline bool equals(ids::ScopeId const other) const {
+public: public: __attribute__((always_inline)) inline bool equals(ids::ScopeId const other) const {
 {
 return (((((((*this).module_id)).id)) == (((((other).module_id)).id))) && ((((*this).id)) == (((other).id))));
 }
 }
-ScopeId(ids::ModuleId a_module_id, size_t a_id);
+public: public: ScopeId(ids::ModuleId a_module_id, size_t a_id);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct StructId {
   public:
-ids::ModuleId module;size_t id;__attribute__((always_inline)) inline u32 hash() const {
+public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline u32 hash() const {
 {
 return pair_int_hash([](size_t const& self) -> u32 {
 {
@@ -70,37 +65,37 @@ return ((AK::Traits<size_t>()).hash(self));
 (((*this).id)),((((*this).module)).hash()));
 }
 }
-StructId(ids::ModuleId a_module, size_t a_id);
+public: StructId(ids::ModuleId a_module, size_t a_id);
 
-__attribute__((always_inline)) inline bool equals(ids::StructId const rhs) const {
+public: public: __attribute__((always_inline)) inline bool equals(ids::StructId const rhs) const {
 {
 return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)) == (((rhs).id))));
 }
 }
-ErrorOr<DeprecatedString> debug_description() const;
+public: public: ErrorOr<DeprecatedString> debug_description() const;
 };struct EnumId {
   public:
-ids::ModuleId module;size_t id;__attribute__((always_inline)) inline bool equals(ids::EnumId const rhs) const {
+public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(ids::EnumId const rhs) const {
 {
 return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)) == (((rhs).id))));
 }
 }
-EnumId(ids::ModuleId a_module, size_t a_id);
+public: EnumId(ids::ModuleId a_module, size_t a_id);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct FunctionId {
   public:
-ids::ModuleId module;size_t id;FunctionId(ids::ModuleId a_module, size_t a_id);
+public: ids::ModuleId module;public: size_t id;public: FunctionId(ids::ModuleId a_module, size_t a_id);
 
-__attribute__((always_inline)) inline bool equals(ids::FunctionId const rhs) const {
+public: __attribute__((always_inline)) inline bool equals(ids::FunctionId const rhs) const {
 {
 return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)) == (((rhs).id))));
 }
 }
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct TypeId {
   public:
-ids::ModuleId module;size_t id;__attribute__((always_inline)) inline u32 hash() const {
+public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline u32 hash() const {
 {
 return pair_int_hash([](size_t const& self) -> u32 {
 {
@@ -110,19 +105,19 @@ return ((AK::Traits<size_t>()).hash(self));
 (((*this).id)),((((*this).module)).hash()));
 }
 }
-__attribute__((always_inline)) inline static JaktInternal::Optional<ids::TypeId> none() {
+public: __attribute__((always_inline)) inline static JaktInternal::Optional<ids::TypeId> none() {
 {
 return JaktInternal::OptionalNone();
 }
 }
-TypeId(ids::ModuleId a_module, size_t a_id);
+public: TypeId(ids::ModuleId a_module, size_t a_id);
 
-__attribute__((always_inline)) inline bool equals(ids::TypeId const rhs) const {
+public: public: __attribute__((always_inline)) inline bool equals(ids::TypeId const rhs) const {
 {
 return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)) == (((rhs).id))));
 }
 }
-ErrorOr<DeprecatedString> debug_description() const;
+public: public: ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::ids::ModuleId> : Jakt::Formatter<Jakt::StringView>{

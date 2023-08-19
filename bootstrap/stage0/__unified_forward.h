@@ -49,6 +49,8 @@ ErrorOr<DeprecatedString> current_directory();
 
 ErrorOr<void> make_directory(DeprecatedString const path);
 
+ErrorOr<DeprecatedString> real_path(DeprecatedString const path);
+
 }
 namespace jakt__file_iterator {
 class RecursiveFileIterator;
@@ -289,36 +291,39 @@ struct LiteralPrefix;
 
 }
 namespace parser {
-struct ParsedMatchCase;
 struct ParsedFunction;
+struct ParsedGenericParameter;
+struct EnumVariantPatternArgument;
+struct ParsedPatternDefault;
+struct ParsedExternalTraitImplementation;
+struct ParsedTrait;
+struct ParsedAttributeArgument;
+struct ParsedExternImport;
+struct CheckedQualifiers;
 struct ParsedModuleImport;
 struct ParsedVariable;
 struct ParsedNameWithGenericParameters;
-struct ParsedVarDeclTuple;
-struct ParsedAttributeArgument;
-struct ParsedVarDecl;
-struct ParsedNamespace;
-struct ParsedMethod;
-struct ParsedExternalTraitImplementation;
-struct ParsedGenericParameter;
-struct ParsedTrait;
-struct ParsedExternImport;
-struct ParsedCall;
 struct SumEnumVariant;
-struct VisibilityRestriction;
-struct ParsedName;
-struct ParsedField;
-struct ParsedAlias;
-struct Parser;
-struct EnumVariantPatternArgument;
-struct ParsedPatternDefault;
-struct ParsedParameter;
-struct ValueEnumVariant;
+struct ParsedMatchCase;
 struct ParsedRecord;
-struct ParsedAttribute;
 struct ParsedBlock;
+struct ParsedVarDeclTuple;
+struct ParsedAttribute;
+struct Parser;
+struct ParsedCall;
+struct ParsedNamespace;
+struct ParsedVarDecl;
+struct ParsedName;
+struct ParsedAlias;
+struct ParsedMethod;
+struct ParsedField;
+struct ParsedParameter;
+struct ParsedTypeQualifiers;
+struct ValueEnumVariant;
+struct VisibilityRestriction;
 namespace ExternalName_Details {
 struct Plain;
+struct PreprocessorName;
 struct Operator;
 }
 struct ExternalName;
@@ -379,6 +384,8 @@ struct MutableReference;
 struct RawPtr;
 struct WeakPtr;
 struct Function;
+struct Const;
+struct DependentType;
 struct Empty;
 }
 struct ParsedType;
@@ -607,6 +614,7 @@ struct CheckedBlock;
 struct OperatorTraitImplementation;
 struct LoadedModule;
 struct ResolvedForallChunk;
+struct SpecializedType;
 class Scope;
 struct CheckedVarDecl;
 struct CheckedEnum;
@@ -677,6 +685,7 @@ struct CInt;
 struct Unknown;
 struct Never;
 struct TypeVariable;
+struct Dependent;
 struct GenericInstance;
 struct GenericEnumInstance;
 struct GenericTraitInstance;
@@ -689,6 +698,7 @@ struct Reference;
 struct MutableReference;
 struct Function;
 struct Self;
+struct Const;
 }
 struct Type;
 
@@ -918,6 +928,8 @@ struct ComptimeExpression;
 }
 struct CheckedTraitRequirements;
 
+ErrorOr<DeprecatedString> comptime_format_impl(DeprecatedString const format_string, JaktInternal::ArraySlice<types::Value> const arguments, NonnullRefPtr<types::CheckedProgram> const& program);
+
 ids::TypeId builtin(types::BuiltinType const builtin);
 
 ids::TypeId void_type_id();
@@ -925,6 +937,8 @@ ids::TypeId void_type_id();
 ids::TypeId unknown_type_id();
 
 ids::TypeId never_type_id();
+
+ErrorOr<DeprecatedString> format_value_impl(DeprecatedString const format_string, types::Value const value, NonnullRefPtr<types::CheckedProgram> const& program);
 
 }
 namespace interpreter {
@@ -960,10 +974,6 @@ ErrorOr<size_t> size_of_impl(ids::TypeId const type_id, NonnullRefPtr<interprete
 ErrorOr<types::Value> cast_value_to_type(types::Value const this_value, ids::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter, bool const saturating);
 
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> value_to_checked_expression(types::Value const this_value, NonnullRefPtr<interpreter::Interpreter> interpreter);
-
-ErrorOr<DeprecatedString> format_value_impl(DeprecatedString const format_string, types::Value const value, NonnullRefPtr<interpreter::Interpreter> const interpreter);
-
-ErrorOr<DeprecatedString> comptime_format_impl(DeprecatedString const format_string, JaktInternal::ArraySlice<types::Value> const arguments, NonnullRefPtr<interpreter::Interpreter> const interpreter);
 
 }
 namespace jakt__prelude__configuration {
@@ -1164,6 +1174,8 @@ struct Project;
 namespace platform {
 
 
+ErrorOr<DeprecatedString> library_name_for_target(DeprecatedString const name, jakt__platform::Target const target);
+
 
 }
 namespace jakt__libc__io {
@@ -1214,12 +1226,22 @@ ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> run_compiler(DeprecatedStr
 struct FormatRange;
 ErrorOr<void> format_output(jakt__path::Path const file_path, JaktInternal::DynamicArray<lexer::Token> const tokens, JaktInternal::Optional<FormatRange> const format_range, bool const format_debug, bool const format_inplace);
 
+ErrorOr<void> install(jakt__path::Path const from, jakt__path::Path const to);
+
+ErrorOr<void> mkdir_p(jakt__path::Path const path);
+
 ErrorOr<DeprecatedString> usage();
+
+ErrorOr<JaktInternal::DynamicArray<jakt__path::Path>> find_with_extension(jakt__path::Path const path, DeprecatedString const extension);
+
+ErrorOr<int> compiler_main(JaktInternal::DynamicArray<DeprecatedString> const args);
 
 ErrorOr<DeprecatedString> help();
 
 ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(DeprecatedString const range, size_t const input_file_length);
 
 ErrorOr<DeprecatedString> indent(size_t const level);
+
+ErrorOr<int> selfhost_crosscompiler_main(JaktInternal::DynamicArray<DeprecatedString> const args);
 
 } // namespace Jakt

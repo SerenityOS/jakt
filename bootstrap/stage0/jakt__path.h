@@ -6,23 +6,24 @@ namespace Jakt {
 namespace jakt__path {
 struct Path {
   public:
-DeprecatedString path;ErrorOr<DeprecatedString> extension() const;
-Path(DeprecatedString a_path);
+private: DeprecatedString path;public: ErrorOr<DeprecatedString> extension() const;
+public: Path(DeprecatedString a_path);
 
-ErrorOr<DeprecatedString> basename(bool const strip_extension) const;
-ErrorOr<jakt__path::Path> join(DeprecatedString const path) const;
-ErrorOr<jakt__path::Path> join(jakt__path::Path const path) const;
-DeprecatedString to_string() const;
-bool exists() const;
-ErrorOr<jakt__path::Path> replace_extension(DeprecatedString const new_extension) const;
-static JaktInternal::Optional<size_t> last_slash(DeprecatedString const path);
-static ErrorOr<jakt__path::Path> from_string(DeprecatedString const string);
-static ErrorOr<jakt__path::Path> from_parts(JaktInternal::DynamicArray<DeprecatedString> const parts);
-ErrorOr<JaktInternal::Tuple<DeprecatedString,DeprecatedString>> split_at_last_slash() const;
-ErrorOr<jakt__path::Path> parent() const;
-ErrorOr<void> normalize_separators();
-ErrorOr<bool> is_dot() const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> basename(bool const strip_extension) const;
+public: ErrorOr<jakt__path::Path> join(DeprecatedString const path) const;
+public: ErrorOr<jakt__path::Path> join(jakt__path::Path const path) const;
+public: DeprecatedString to_string() const;
+public: bool exists() const;
+public: ErrorOr<jakt__path::Path> replace_extension(DeprecatedString const new_extension) const;
+private: static JaktInternal::Optional<size_t> last_slash(DeprecatedString const path);
+public: static ErrorOr<jakt__path::Path> from_string(DeprecatedString const string);
+public: static ErrorOr<jakt__path::Path> from_parts(JaktInternal::DynamicArray<DeprecatedString> const parts);
+private: ErrorOr<JaktInternal::Tuple<DeprecatedString,DeprecatedString>> split_at_last_slash() const;
+public: ErrorOr<jakt__path::Path> parent() const;
+private: ErrorOr<void> normalize_separators();
+public: ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> components() const;
+public: ErrorOr<bool> is_dot() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::jakt__path::Path> : Jakt::Formatter<Jakt::StringView>{

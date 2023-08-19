@@ -83,9 +83,9 @@ ErrorOr<DeprecatedString> debug_description() const;
 };
 struct Style {
   public:
-JaktInternal::Optional<repl_backend__common::Color> foreground;JaktInternal::Optional<repl_backend__common::Color> background;Style(JaktInternal::Optional<repl_backend__common::Color> a_foreground, JaktInternal::Optional<repl_backend__common::Color> a_background);
+public: JaktInternal::Optional<repl_backend__common::Color> foreground;public: JaktInternal::Optional<repl_backend__common::Color> background;public: Style(JaktInternal::Optional<repl_backend__common::Color> a_foreground, JaktInternal::Optional<repl_backend__common::Color> a_background);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::repl_backend__common::LineResult> : Jakt::Formatter<Jakt::StringView>{

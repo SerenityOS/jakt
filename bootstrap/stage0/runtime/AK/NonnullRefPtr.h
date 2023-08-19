@@ -9,7 +9,6 @@
 #define NONNULLREFPTR_SCRUB_BYTE 0xe1
 
 #include <AK/Assertions.h>
-#include <AK/Atomic.h>
 #include <AK/Format.h>
 #include <AK/Traits.h>
 #include <AK/Types.h>
@@ -54,8 +53,8 @@ public:
     }
 
     template<typename U>
-    ALWAYS_INLINE NonnullRefPtr(U const& object)
     requires(IsConvertible<U*, T*>)
+    ALWAYS_INLINE NonnullRefPtr(U const& object)
         : m_ptr(const_cast<T*>(static_cast<T const*>(&object)))
     {
         m_ptr->ref();
@@ -72,8 +71,8 @@ public:
     }
 
     template<typename U>
-    ALWAYS_INLINE NonnullRefPtr(NonnullRefPtr<U>&& other)
     requires(IsConvertible<U*, T*>)
+    ALWAYS_INLINE NonnullRefPtr(NonnullRefPtr<U>&& other)
         : m_ptr(static_cast<T*>(&other.leak_ref()))
     {
     }
@@ -85,8 +84,8 @@ public:
     }
 
     template<typename U>
-    ALWAYS_INLINE NonnullRefPtr(NonnullRefPtr<U> const& other)
     requires(IsConvertible<U*, T*>)
+    ALWAYS_INLINE NonnullRefPtr(NonnullRefPtr<U> const& other)
         : m_ptr(const_cast<T*>(static_cast<T const*>(other.ptr())))
     {
         m_ptr->ref();
@@ -121,8 +120,8 @@ public:
     }
 
     template<typename U>
-    NonnullRefPtr& operator=(NonnullRefPtr<U> const& other)
     requires(IsConvertible<U*, T*>)
+    NonnullRefPtr& operator=(NonnullRefPtr<U> const& other)
     {
         NonnullRefPtr tmp { other };
         swap(tmp);
@@ -137,8 +136,8 @@ public:
     }
 
     template<typename U>
-    NonnullRefPtr& operator=(NonnullRefPtr<U>&& other)
     requires(IsConvertible<U*, T*>)
+    NonnullRefPtr& operator=(NonnullRefPtr<U>&& other)
     {
         NonnullRefPtr tmp { move(other) };
         swap(tmp);
@@ -202,8 +201,8 @@ public:
     bool operator==(NonnullRefPtr const& other) const { return m_ptr == other.m_ptr; }
 
     template<typename RawPtr>
-    bool operator==(RawPtr other) const
     requires(IsPointer<RawPtr>)
+    bool operator==(RawPtr other) const
     {
         return m_ptr == other;
     }
@@ -266,8 +265,8 @@ struct Formatter<NonnullRefPtr<T>> : Formatter<T const*> {
 };
 
 template<typename T, typename U>
-inline void swap(NonnullRefPtr<T>& a, NonnullRefPtr<U>& b)
 requires(IsConvertible<U*, T*>)
+inline void swap(NonnullRefPtr<T>& a, NonnullRefPtr<U>& b)
 {
     a.swap(b);
 }

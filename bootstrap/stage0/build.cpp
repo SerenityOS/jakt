@@ -124,7 +124,8 @@ return Error::from_errno(static_cast<i32>(1));
 
 DeprecatedString const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((jakt__path::Path::from_string(file_name)))).replace_extension(TRY(DeprecatedString::from_utf8("o"sv))))))).to_string())))))).to_string());
 TRY((((((*this).linked_files)).push(built_object))));
-size_t const id = TRY((((((*this).pool)).run(TRY((compiler_invocation(((TRY((((binary_dir).join(file_name))))).to_string()),built_object)))))));
+JaktInternal::DynamicArray<DeprecatedString> const args = TRY((compiler_invocation(((TRY((((binary_dir).join(file_name))))).to_string()),built_object)));
+size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((ids).add(id))));
 warnln((StringView::from_string_literal("{:c}[2LBuilding: {}/{} ({})"sv)),static_cast<i64>(27LL),((ids).size()),((((*this).files_to_compile)).size()),file_name);
 }

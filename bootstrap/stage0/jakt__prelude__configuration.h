@@ -4,9 +4,9 @@ namespace Jakt {
 namespace jakt__prelude__configuration {
 struct UserConfiguration {
   public:
-UserConfiguration();
+public: UserConfiguration();
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: public: ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::jakt__prelude__configuration::UserConfiguration> : Jakt::Formatter<Jakt::StringView>{

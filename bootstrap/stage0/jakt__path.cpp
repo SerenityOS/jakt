@@ -230,6 +230,67 @@ TRY((((normalized_builder).append(ch))));
 return {};
 }
 
+ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> jakt__path::Path::components() const {
+{
+JaktInternal::DynamicArray<DeprecatedString> parts = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
+JaktInternal::Optional<size_t> last_slash = JaktInternal::OptionalNone();
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).path)).length()))});
+for (;;){
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+if (((((((*this).path)).byte_at(i))) == (static_cast<u8>(47)))){
+if (((last_slash).has_value())){
+if (((i) == (JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL))))){
+(last_slash = i);
+continue;
+}
+TRY((((parts).push(((((*this).path)).substring(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(i,(last_slash.value())),static_cast<size_t>(1ULL))))))));
+}
+else {
+if (((i) == (static_cast<size_t>(0ULL)))){
+TRY((((parts).push(TRY(DeprecatedString::from_utf8("/"sv))))));
+}
+else {
+TRY((((parts).push(((((*this).path)).substring(static_cast<size_t>(0ULL),i))))));
+}
+
+}
+
+(last_slash = i);
+}
+}
+
+}
+}
+
+if (((last_slash).has_value())){
+if ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) == (static_cast<u8>(0)));
+}
+}
+(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),((((*this).path)).length()))){
+TRY((((parts).push(((((*this).path)).substring(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(((((*this).path)).length()),(last_slash.value())),static_cast<size_t>(1ULL))))))));
+}
+}
+else {
+TRY((((parts).push(((*this).path)))));
+}
+
+return parts;
+}
+}
+
 ErrorOr<bool> jakt__path::Path::is_dot() const {
 {
 return (((((*this).path)) == (TRY(DeprecatedString::from_utf8("."sv)))) || ((((*this).path)) == (TRY(DeprecatedString::from_utf8(".."sv)))));
