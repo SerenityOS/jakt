@@ -541,6 +541,8 @@ import extern c "clang-c/Index.h" {
     extern fn clang_isExpression(anon kind: CXCursorKind) -> bool
     extern fn clang_equalCursors(anon a: CXCursor, anon b: CXCursor) -> bool
     extern fn clang_getCursorSemanticParent(anon a: CXCursor) -> CXCursor
+    extern fn clang_getArrayElementType(anon a: CXType) -> CXType
+    extern fn clang_getArraySize(anon a: CXType) -> u64
 
     extern struct CXEvalResult {}
     extern enum CXEvalResultKind : c_int {

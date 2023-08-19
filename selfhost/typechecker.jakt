@@ -10494,23 +10494,23 @@ struct Typechecker {
                 }
             }
 
-                if not resolved_function_id.has_value() {
-                    if not resolved_function_id_candidates.is_empty() {
-                        .error("No function with matching signature found.", span)
-                        for match_error in errors_while_trying_to_find_matching_function.iterator() {
-                            .compiler.errors.push(match_error)
-                            if .ignore_errors {
-                                .had_an_error = true
-                            }
-                        }
-
-                        for candidate in resolved_function_id_candidates {
-                            .error(
-                                format("Candidate: {}", .stringify_function_prototype(candidate))
-                                span
-                            )
+            if not resolved_function_id.has_value() {
+                if not resolved_function_id_candidates.is_empty() {
+                    .error("No function with matching signature found.", span)
+                    for match_error in errors_while_trying_to_find_matching_function.iterator() {
+                        .compiler.errors.push(match_error)
+                        if .ignore_errors {
+                            .had_an_error = true
                         }
                     }
+
+                    for candidate in resolved_function_id_candidates {
+                        .error(
+                            format("Candidate: {}", .stringify_function_prototype(candidate))
+                            span
+                        )
+                    }
+                }
 
                 mut checked_type_args: [TypeId] = []
                 for type_arg in call.type_args {

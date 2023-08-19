@@ -26,9 +26,10 @@ import cpp_import::clang_c {
     clang_EvalResult_getAsInt, clang_EvalResult_getAsLongLong, clang_EvalResult_getAsStr
     clang_EvalResult_getAsUnsigned, clang_EvalResult_getKind, clang_EvalResult_isUnsignedInt
     clang_Type_getNamedType, clang_createIndex, clang_createTranslationUnit, clang_disposeIndex, clang_disposeString
-    clang_disposeTokens, clang_disposeTranslationUnit, clang_equalCursors, clang_getArgType, clang_getCString
-    clang_getCanonicalCursor, clang_getCanonicalType, clang_getCursorDefinition, clang_getCursorExtent
-    clang_getCursorKind, clang_getCursorKindSpelling, clang_getCursorLocation, clang_getCursorPrettyPrinted
+    clang_disposeTokens, clang_disposeTranslationUnit, clang_equalCursors, clang_getArgType
+    clang_getArrayElementType, clang_getArraySize, clang_getCString, clang_getCanonicalCursor
+    clang_getCanonicalType, clang_getCursorDefinition, clang_getCursorExtent, clang_getCursorKind
+    clang_getCursorKindSpelling, clang_getCursorLocation, clang_getCursorPrettyPrinted
     clang_getCursorPrintingPolicy, clang_getCursorResultType, clang_getCursorSemanticParent, clang_getCursorSpelling
     clang_getCursorType, clang_getCursorUSR, clang_getEnumDeclIntegerType, clang_getFileName, clang_getNumArgTypes
     clang_getPointeeType, clang_getResultType, clang_getSpecializedCursorTemplate, clang_getSpellingLocation
@@ -338,6 +339,35 @@ fn type_from(
                     can_throw: false
                     return_type_id
                     pseudo_function_id
+                )
+                module_id
+                only_in_current_module: true
+            )
+        }
+        CXType_ConstantArray => {
+            let element_type = clang_getArrayElementType(t)
+            let element_type_id = type_from(program, scope_id, module_id, element_type)
+            let array_size = clang_getArraySize(t)
+            let static_array_struct_id = program.find_struct_in_scope(
+                scope_id
+                name: "StaticArray"
+                ignore_mixin_scopes: true
+            )!
+            let generic_arguments = [
+                element_type_id
+                program.find_or_add_type_id(
+                    Type::Const(Value(
+                        impl: ValueImpl::U64(array_size)
+                        span: empty_span()
+                    ))
+                    module_id
+                    only_in_current_module: true
+                )
+            ]
+            yield program.find_or_add_type_id(
+                type: Type::GenericInstance(
+                    id: static_array_struct_id
+                    args: generic_arguments
                 )
                 module_id
                 only_in_current_module: true
