@@ -80,11 +80,11 @@ static formatter::Entity from_token(lexer::Token const& token);
 };
 struct FormattedToken {
   public:
-lexer::Token token;size_t indent;JaktInternal::DynamicArray<u8> trailing_trivia;JaktInternal::DynamicArray<u8> preceding_trivia;FormattedToken(lexer::Token a_token, size_t a_indent, JaktInternal::DynamicArray<u8> a_trailing_trivia, JaktInternal::DynamicArray<u8> a_preceding_trivia);
+public: lexer::Token token;public: size_t indent;public: JaktInternal::DynamicArray<u8> trailing_trivia;public: JaktInternal::DynamicArray<u8> preceding_trivia;public: FormattedToken(lexer::Token a_token, size_t a_indent, JaktInternal::DynamicArray<u8> a_trailing_trivia, JaktInternal::DynamicArray<u8> a_preceding_trivia);
 
-ErrorOr<DeprecatedString> token_text() const;
-ErrorOr<DeprecatedString> debug_text() const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> token_text() const;
+public: ErrorOr<DeprecatedString> debug_text() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace ExpressionMode_Details {
 struct OutsideExpression {
 };
@@ -260,59 +260,59 @@ ErrorOr<DeprecatedString> name() const;
 };
 struct ReflowState {
   public:
-formatter::FormattedToken token;formatter::State state;size_t enclosures_to_ignore;ReflowState(formatter::FormattedToken a_token, formatter::State a_state, size_t a_enclosures_to_ignore);
+public: formatter::FormattedToken token;public: formatter::State state;public: size_t enclosures_to_ignore;public: ReflowState(formatter::FormattedToken a_token, formatter::State a_state, size_t a_enclosures_to_ignore);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct Stage0 {
   public:
-JaktInternal::DynamicArray<lexer::Token> tokens;size_t index;JaktInternal::DynamicArray<formatter::State> states;size_t indent;bool already_seen_enclosure_in_current_line;JaktInternal::DynamicArray<size_t> dedents_to_skip;bool debug;ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_implements_context(lexer::Token const token);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
-ErrorOr<void> push_state(formatter::State const state);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_import_context(bool const is_extern, lexer::Token const token);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_toplevel_context(size_t const open_parens, size_t const open_curlies, size_t const open_squares, bool const is_extern, lexer::Token const token);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_entity_declaration_context(formatter::Entity const entity, bool const accept_generics, bool const has_generics, size_t const generic_nesting, bool const is_extern, lexer::Token const token);
-lexer::Token consume();
-bool line_has_indent() const;
-static ErrorOr<JaktInternal::DynamicArray<u8>> to_array(DeprecatedString const x);
-static ErrorOr<formatter::Stage0> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::DynamicArray<u8> const source, bool const debug);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_parameter_list_context(size_t const open_parens, lexer::Token const token);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_capture_list_context(lexer::Token const token);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_impl(bool const reconsume);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_statement_context(size_t const open_parens, size_t const open_curlies, size_t const open_squares, size_t const arrow_indents, JaktInternal::Optional<size_t> const allow_eol, bool const inserted_comma, formatter::ExpressionMode const expression_mode, size_t const dedents_on_open_curly, i64& indent_change, lexer::Token const token);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_generic_call_type_params_context(size_t const open_angles, lexer::Token const token);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_restriction_list_context(lexer::Token const token);
-ErrorOr<formatter::FormattedToken> formatted_token(lexer::Token const token) const;
-ErrorOr<formatter::FormattedToken> formatted_token(lexer::Token const token, JaktInternal::DynamicArray<u8> const trailing_trivia, JaktInternal::DynamicArray<u8> const preceding_trivia) const;
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> formatted_peek();
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_type_context(size_t const open_parens, size_t const open_curlies, size_t const open_squares, size_t const open_angles, bool const seen_start, lexer::Token const token);
-Stage0(JaktInternal::DynamicArray<lexer::Token> a_tokens, size_t a_index, JaktInternal::DynamicArray<formatter::State> a_states, size_t a_indent, bool a_already_seen_enclosure_in_current_line, JaktInternal::DynamicArray<size_t> a_dedents_to_skip, bool a_debug);
+public: JaktInternal::DynamicArray<lexer::Token> tokens;public: size_t index;public: JaktInternal::DynamicArray<formatter::State> states;public: size_t indent;public: bool already_seen_enclosure_in_current_line;public: JaktInternal::DynamicArray<size_t> dedents_to_skip;public: bool debug;private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_implements_context(lexer::Token const token);
+public: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
+private: ErrorOr<void> push_state(formatter::State const state);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_import_context(bool const is_extern, lexer::Token const token);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_toplevel_context(size_t const open_parens, size_t const open_curlies, size_t const open_squares, bool const is_extern, lexer::Token const token);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_entity_declaration_context(formatter::Entity const entity, bool const accept_generics, bool const has_generics, size_t const generic_nesting, bool const is_extern, lexer::Token const token);
+private: lexer::Token consume();
+private: bool line_has_indent() const;
+private: static ErrorOr<JaktInternal::DynamicArray<u8>> to_array(DeprecatedString const x);
+public: static ErrorOr<formatter::Stage0> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::DynamicArray<u8> const source, bool const debug);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_parameter_list_context(size_t const open_parens, lexer::Token const token);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_capture_list_context(lexer::Token const token);
+public: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_impl(bool const reconsume);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_statement_context(size_t const open_parens, size_t const open_curlies, size_t const open_squares, size_t const arrow_indents, JaktInternal::Optional<size_t> const allow_eol, bool const inserted_comma, formatter::ExpressionMode const expression_mode, size_t const dedents_on_open_curly, i64& indent_change, lexer::Token const token);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_generic_call_type_params_context(size_t const open_angles, lexer::Token const token);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_restriction_list_context(lexer::Token const token);
+private: ErrorOr<formatter::FormattedToken> formatted_token(lexer::Token const token) const;
+private: ErrorOr<formatter::FormattedToken> formatted_token(lexer::Token const token, JaktInternal::DynamicArray<u8> const trailing_trivia, JaktInternal::DynamicArray<u8> const preceding_trivia) const;
+public: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> formatted_peek();
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_type_context(size_t const open_parens, size_t const open_curlies, size_t const open_squares, size_t const open_angles, bool const seen_start, lexer::Token const token);
+public: Stage0(JaktInternal::DynamicArray<lexer::Token> a_tokens, size_t a_index, JaktInternal::DynamicArray<formatter::State> a_states, size_t a_indent, bool a_already_seen_enclosure_in_current_line, JaktInternal::DynamicArray<size_t> a_dedents_to_skip, bool a_debug);
 
-formatter::State state() const;
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_entity_definition_context(formatter::Entity const entity, bool const is_extern, i64& indent_change, lexer::Token const token);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_extern_context(lexer::Token const token);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_function_type_context(bool const seen_final_type, lexer::Token const token);
-void pop_state();
-lexer::Token peek(i64 const offset) const;
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_match_pattern_context(size_t const open_parens, bool const allow_multiple, lexer::Token const token);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_import_list_context(bool const emitted_comma, lexer::Token const token);
-ErrorOr<void> replace_state(formatter::State const state);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_variable_declaration_context(size_t const open_parens, lexer::Token const token);
-static ErrorOr<formatter::Stage0> for_tokens(JaktInternal::DynamicArray<lexer::Token> const tokens, bool const debug);
-ErrorOr<DeprecatedString> debug_description() const;
+public: formatter::State state() const;
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_entity_definition_context(formatter::Entity const entity, bool const is_extern, i64& indent_change, lexer::Token const token);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_extern_context(lexer::Token const token);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_function_type_context(bool const seen_final_type, lexer::Token const token);
+private: void pop_state();
+private: lexer::Token peek(i64 const offset) const;
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_match_pattern_context(size_t const open_parens, bool const allow_multiple, lexer::Token const token);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_import_list_context(bool const emitted_comma, lexer::Token const token);
+private: ErrorOr<void> replace_state(formatter::State const state);
+private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_variable_declaration_context(size_t const open_parens, lexer::Token const token);
+public: static ErrorOr<formatter::Stage0> for_tokens(JaktInternal::DynamicArray<lexer::Token> const tokens, bool const debug);
+public: ErrorOr<DeprecatedString> debug_description() const;
 };struct Formatter {
   public:
-formatter::Stage0 token_provider;JaktInternal::DynamicArray<formatter::ReflowState> current_line;size_t current_line_length;size_t max_allowed_line_length;JaktInternal::DynamicArray<formatter::BreakablePoint> breakable_points_in_current_line;JaktInternal::DynamicArray<formatter::ReflowState> tokens_to_reflow;JaktInternal::DynamicArray<JaktInternal::Optional<lexer::Token>> replace_commas_in_enclosure;size_t enclosures_to_ignore;bool in_condition_expr;bool in_condition_expr_indented;JaktInternal::Optional<size_t> logical_break_indent;size_t empty_line_count;ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<formatter::FormattedToken>>> next();
-static bool should_ignore_state(formatter::State const state);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> peek();
-static ErrorOr<formatter::Formatter> for_tokens(JaktInternal::DynamicArray<lexer::Token> const tokens, bool const debug, size_t const max_allowed_line_length);
-static ErrorOr<JaktInternal::DynamicArray<u8>> to_array(DeprecatedString const s);
-ErrorOr<void> fixup_tokens_to_reflow();
-Formatter(formatter::Stage0 a_token_provider, JaktInternal::DynamicArray<formatter::ReflowState> a_current_line, size_t a_current_line_length, size_t a_max_allowed_line_length, JaktInternal::DynamicArray<formatter::BreakablePoint> a_breakable_points_in_current_line, JaktInternal::DynamicArray<formatter::ReflowState> a_tokens_to_reflow, JaktInternal::DynamicArray<JaktInternal::Optional<lexer::Token>> a_replace_commas_in_enclosure, size_t a_enclosures_to_ignore, bool a_in_condition_expr, bool a_in_condition_expr_indented, JaktInternal::Optional<size_t> a_logical_break_indent, size_t a_empty_line_count);
+public: formatter::Stage0 token_provider;public: JaktInternal::DynamicArray<formatter::ReflowState> current_line;public: size_t current_line_length;public: size_t max_allowed_line_length;public: JaktInternal::DynamicArray<formatter::BreakablePoint> breakable_points_in_current_line;public: JaktInternal::DynamicArray<formatter::ReflowState> tokens_to_reflow;public: JaktInternal::DynamicArray<JaktInternal::Optional<lexer::Token>> replace_commas_in_enclosure;public: size_t enclosures_to_ignore;public: bool in_condition_expr;public: bool in_condition_expr_indented;public: JaktInternal::Optional<size_t> logical_break_indent;public: size_t empty_line_count;public: ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<formatter::FormattedToken>>> next();
+private: static bool should_ignore_state(formatter::State const state);
+public: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> peek();
+public: static ErrorOr<formatter::Formatter> for_tokens(JaktInternal::DynamicArray<lexer::Token> const tokens, bool const debug, size_t const max_allowed_line_length);
+private: static ErrorOr<JaktInternal::DynamicArray<u8>> to_array(DeprecatedString const s);
+private: ErrorOr<void> fixup_tokens_to_reflow();
+public: Formatter(formatter::Stage0 a_token_provider, JaktInternal::DynamicArray<formatter::ReflowState> a_current_line, size_t a_current_line_length, size_t a_max_allowed_line_length, JaktInternal::DynamicArray<formatter::BreakablePoint> a_breakable_points_in_current_line, JaktInternal::DynamicArray<formatter::ReflowState> a_tokens_to_reflow, JaktInternal::DynamicArray<JaktInternal::Optional<lexer::Token>> a_replace_commas_in_enclosure, size_t a_enclosures_to_ignore, bool a_in_condition_expr, bool a_in_condition_expr_indented, JaktInternal::Optional<size_t> a_logical_break_indent, size_t a_empty_line_count);
 
-ErrorOr<size_t> token_length(formatter::FormattedToken const token) const;
-ErrorOr<void> fixup_closing_enclosures(JaktInternal::DynamicArray<formatter::ReflowState>& line) const;
-size_t pick_breaking_point_index() const;
-ErrorOr<DeprecatedString> debug_description() const;
+private: ErrorOr<size_t> token_length(formatter::FormattedToken const token) const;
+public: ErrorOr<void> fixup_closing_enclosures(JaktInternal::DynamicArray<formatter::ReflowState>& line) const;
+private: size_t pick_breaking_point_index() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };template <typename T>
 ErrorOr<JaktInternal::DynamicArray<T>> concat(JaktInternal::DynamicArray<T> const xs, T const y);
 template <typename T>

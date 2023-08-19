@@ -7,13 +7,13 @@ namespace Jakt {
 namespace project {
 struct Project {
   public:
-DeprecatedString name;ErrorOr<void> create_template_cmake_lists(DeprecatedString const project_directory) const;
-ErrorOr<void> populate() const;
-ErrorOr<void> create_readme(DeprecatedString const project_directory) const;
-ErrorOr<void> create_sample_jakt_files(DeprecatedString const project_directory) const;
-Project(DeprecatedString a_name);
+public: DeprecatedString name;public: ErrorOr<void> create_template_cmake_lists(DeprecatedString const project_directory) const;
+public: ErrorOr<void> populate() const;
+public: ErrorOr<void> create_readme(DeprecatedString const project_directory) const;
+public: ErrorOr<void> create_sample_jakt_files(DeprecatedString const project_directory) const;
+public: Project(DeprecatedString a_name);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::project::Project> : Jakt::Formatter<Jakt::StringView>{

@@ -217,11 +217,11 @@ using MergeAndDeduplicatePacks = InheritFromPacks<MakeIndexSequence<sizeof...(Ps
 namespace AK {
 
 struct Empty {
+    constexpr bool operator==(Empty const&) const = default;
 };
 
 template<typename T>
-concept NotLvalueReference = !
-IsLvalueReference<T>;
+concept NotLvalueReference = !IsLvalueReference<T>;
 
 template<NotLvalueReference... Ts>
 struct Variant

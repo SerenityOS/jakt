@@ -142,6 +142,10 @@
 #    define FILE_WATCHER_DEBUG 0
 #endif
 
+#ifndef FLAC_ENCODER_DEBUG
+#    define FLAC_ENCODER_DEBUG 0
+#endif
+
 #ifndef GEMINI_DEBUG
 #    define GEMINI_DEBUG 0
 #endif
@@ -202,12 +206,20 @@
 #    define ICO_DEBUG 0
 #endif
 
+#ifndef ILBM_DEBUG
+#    define ILBM_DEBUG 0
+#endif
+
 #ifndef IMAGE_DECODER_DEBUG
 #    define IMAGE_DECODER_DEBUG 0
 #endif
 
 #ifndef IMAGE_LOADER_DEBUG
 #    define IMAGE_LOADER_DEBUG 0
+#endif
+
+#ifndef IMAP_PARSER_DEBUG
+#    define IMAP_PARSER_DEBUG 0
 #endif
 
 #ifndef ITEM_RECTS_DEBUG

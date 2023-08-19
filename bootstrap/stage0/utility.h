@@ -5,10 +5,10 @@ namespace Jakt {
 namespace utility {
 struct FileId {
   public:
-size_t id;FileId(size_t a_id);
+public: size_t id;public: FileId(size_t a_id);
 
-bool equals(utility::FileId const rhs) const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: bool equals(utility::FileId const rhs) const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace IterationDecision_Details {
 template<typename T>
 struct Break {
@@ -49,11 +49,11 @@ return builder.to_string();
 };
 struct Span {
   public:
-utility::FileId file_id;size_t start;size_t end;bool contains(utility::Span const span) const;
-Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
+public: utility::FileId file_id;public: size_t start;public: size_t end;public: bool contains(utility::Span const span) const;
+public: Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
 
-bool is_in_offset_range(size_t const start, size_t const end) const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: bool is_in_offset_range(size_t const start, size_t const end) const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };template <typename T>
 T* allocate(size_t const count);
 template <typename T>

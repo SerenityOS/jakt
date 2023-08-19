@@ -10,6 +10,11 @@ fn current_directory() throws -> String {
     throw Error::from_errno(38)
 }
 
+fn real_path(path: String) throws -> String {
+    eprintln("NOT IMPLEMENTED: real_path {}", path)
+    throw Error::from_errno(38)
+}
+
 class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
     public fn next(mut this) throws -> (Path, bool)? {
         eprintln("NOT IMPLEMENTED: DirectoryIterator::next()")

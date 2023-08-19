@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <AK/Base64.h>
 #include <AK/CharacterTypes.h>
 #include <AK/Debug.h>
 #include <AK/LexicalPath.h>
@@ -15,9 +16,9 @@
 
 namespace AK {
 
-// FIXME: It could make sense to force users of URL to use URLParser::parse() explicitly instead of using a constructor.
+// FIXME: It could make sense to force users of URL to use URLParser::basic_parse() explicitly instead of using a constructor.
 URL::URL(StringView string)
-    : URL(URLParser::parse(string))
+    : URL(URLParser::basic_parse(string))
 {
     if constexpr (URL_PARSER_DEBUG) {
         if (m_valid)
@@ -32,43 +33,33 @@ URL URL::complete_url(StringView relative_url) const
     if (!is_valid())
         return {};
 
-    return URLParser::parse(relative_url, *this);
+    return URLParser::basic_parse(relative_url, *this);
 }
 
-DeprecatedString URL::username(ApplyPercentDecoding apply_percent_decoding) const
+ErrorOr<String> URL::username() const
 {
-    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(m_username) : m_username;
+    return String::from_deprecated_string(percent_decode(m_username));
 }
 
-DeprecatedString URL::password(ApplyPercentDecoding apply_percent_decoding) const
+ErrorOr<String> URL::password() const
 {
-    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(m_password) : m_password;
+    return String::from_deprecated_string(percent_decode(m_password));
 }
 
-DeprecatedString URL::path_segment_at_index(size_t index, ApplyPercentDecoding apply_percent_decoding) const
+DeprecatedString URL::path_segment_at_index(size_t index) const
 {
     VERIFY(index < path_segment_count());
-    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(m_paths[index]) : m_paths[index];
+    return percent_decode(m_paths[index]);
 }
 
-DeprecatedString URL::basename(ApplyPercentDecoding apply_percent_decoding) const
+DeprecatedString URL::basename() const
 {
     if (!m_valid)
         return {};
     if (m_paths.is_empty())
         return {};
     auto& last_segment = m_paths.last();
-    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(last_segment) : last_segment;
-}
-
-DeprecatedString URL::query(ApplyPercentDecoding apply_percent_decoding) const
-{
-    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(m_query) : m_query;
-}
-
-DeprecatedString URL::fragment(ApplyPercentDecoding apply_percent_decoding) const
-{
-    return apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(m_fragment) : m_fragment;
+    return percent_decode(last_segment);
 }
 
 // NOTE: This only exists for compatibility with the existing URL tests which check for both .is_null() and .is_empty().
@@ -79,32 +70,40 @@ static DeprecatedString deprecated_string_percent_encode(DeprecatedString const&
     return URL::percent_encode(input.view(), set, space_as_plus);
 }
 
-void URL::set_scheme(DeprecatedString scheme)
+void URL::set_scheme(String scheme)
 {
     m_scheme = move(scheme);
     m_valid = compute_validity();
 }
 
-void URL::set_username(DeprecatedString username, ApplyPercentEncoding apply_percent_encoding)
+// https://url.spec.whatwg.org/#set-the-username
+ErrorOr<void> URL::set_username(StringView username)
 {
-    if (apply_percent_encoding == ApplyPercentEncoding::Yes)
-        username = deprecated_string_percent_encode(username, PercentEncodeSet::Userinfo);
-    m_username = move(username);
+    // To set the username given a url and username, set url’s username to the result of running UTF-8 percent-encode on username using the userinfo percent-encode set.
+    m_username = TRY(String::from_deprecated_string(deprecated_string_percent_encode(username, PercentEncodeSet::Userinfo)));
     m_valid = compute_validity();
+    return {};
 }
 
-void URL::set_password(DeprecatedString password, ApplyPercentEncoding apply_percent_encoding)
+// https://url.spec.whatwg.org/#set-the-password
+ErrorOr<void> URL::set_password(StringView password)
 {
-    if (apply_percent_encoding == ApplyPercentEncoding::Yes)
-        password = deprecated_string_percent_encode(password, PercentEncodeSet::Userinfo);
-    m_password = move(password);
+    // To set the password given a url and password, set url’s password to the result of running UTF-8 percent-encode on password using the userinfo percent-encode set.
+    m_password = TRY(String::from_deprecated_string(deprecated_string_percent_encode(password, PercentEncodeSet::Userinfo)));
     m_valid = compute_validity();
+    return {};
 }
 
-void URL::set_host(DeprecatedString host)
+void URL::set_host(Host host)
 {
     m_host = move(host);
     m_valid = compute_validity();
+}
+
+// https://url.spec.whatwg.org/#concept-host-serializer
+ErrorOr<String> URL::serialized_host() const
+{
+    return URLParser::serialize_host(m_host);
 }
 
 void URL::set_port(Optional<u16> port)
@@ -117,39 +116,26 @@ void URL::set_port(Optional<u16> port)
     m_valid = compute_validity();
 }
 
-void URL::set_paths(Vector<DeprecatedString> paths, ApplyPercentEncoding apply_percent_encoding)
+void URL::set_paths(Vector<DeprecatedString> const& paths)
 {
-    if (apply_percent_encoding == ApplyPercentEncoding::Yes) {
-        Vector<DeprecatedString> encoded_paths;
-        encoded_paths.ensure_capacity(paths.size());
-        for (auto& segment : paths)
-            encoded_paths.unchecked_append(deprecated_string_percent_encode(segment, PercentEncodeSet::Path));
-        m_paths = move(encoded_paths);
-    } else {
-        m_paths = move(paths);
-    }
+    m_paths.clear_with_capacity();
+    m_paths.ensure_capacity(paths.size());
+    for (auto const& segment : paths)
+        m_paths.unchecked_append(deprecated_string_percent_encode(segment, PercentEncodeSet::Path));
     m_valid = compute_validity();
 }
 
-void URL::append_path(DeprecatedString path, ApplyPercentEncoding apply_percent_encoding)
+void URL::append_path(StringView path)
 {
-    if (apply_percent_encoding == ApplyPercentEncoding::Yes)
-        path = deprecated_string_percent_encode(path, PercentEncodeSet::Path);
-    m_paths.append(path);
+    m_paths.append(deprecated_string_percent_encode(path, PercentEncodeSet::Path));
 }
 
-void URL::set_query(DeprecatedString query, ApplyPercentEncoding apply_percent_encoding)
+// https://url.spec.whatwg.org/#cannot-have-a-username-password-port
+bool URL::cannot_have_a_username_or_password_or_port() const
 {
-    if (apply_percent_encoding == ApplyPercentEncoding::Yes)
-        query = deprecated_string_percent_encode(query, is_special() ? PercentEncodeSet::SpecialQuery : PercentEncodeSet::Query);
-    m_query = move(query);
-}
-
-void URL::set_fragment(DeprecatedString fragment, ApplyPercentEncoding apply_percent_encoding)
-{
-    if (apply_percent_encoding == ApplyPercentEncoding::Yes)
-        fragment = deprecated_string_percent_encode(fragment, PercentEncodeSet::Fragment);
-    m_fragment = move(fragment);
+    // A URL cannot have a username/password/port if its host is null or the empty string, or its scheme is "file".
+    // FIXME: The spec does not mention anything to do with 'cannot be a base URL'.
+    return m_host.has<Empty>() || m_host == String {} || m_cannot_be_a_base_url || m_scheme == "file"sv;
 }
 
 // FIXME: This is by no means complete.
@@ -159,18 +145,7 @@ bool URL::compute_validity() const
     if (m_scheme.is_empty())
         return false;
 
-    if (m_scheme == "data") {
-        if (m_data_mime_type.is_empty())
-            return false;
-        if (m_data_payload_is_base64) {
-            if (m_data_payload.length() % 4 != 0)
-                return false;
-            for (auto character : m_data_payload) {
-                if (!is_ascii_alphanumeric(character) || character == '+' || character == '/' || character == '=')
-                    return false;
-            }
-        }
-    } else if (m_cannot_be_a_base_url) {
+    if (m_cannot_be_a_base_url) {
         if (m_paths.size() != 1)
             return false;
         if (m_paths[0].is_empty())
@@ -184,33 +159,35 @@ bool URL::compute_validity() const
     }
 
     // NOTE: A file URL's host should be the empty string for localhost, not null.
-    if (m_scheme == "file" && m_host.is_null())
+    if (m_scheme == "file" && m_host.has<Empty>())
         return false;
 
     return true;
 }
 
-bool URL::scheme_requires_port(StringView scheme)
-{
-    return (default_port_for_scheme(scheme) != 0);
-}
-
+// https://url.spec.whatwg.org/#default-port
 u16 URL::default_port_for_scheme(StringView scheme)
 {
+    // Spec defined mappings with port:
+    if (scheme == "ftp")
+        return 21;
     if (scheme == "http")
         return 80;
     if (scheme == "https")
         return 443;
+    if (scheme == "ws")
+        return 80;
+    if (scheme == "wss")
+        return 443;
+
+    // NOTE: not in spec, but we support these too
     if (scheme == "gemini")
         return 1965;
     if (scheme == "irc")
         return 6667;
     if (scheme == "ircs")
         return 6697;
-    if (scheme == "ws")
-        return 80;
-    if (scheme == "wss")
-        return 443;
+
     return 0;
 }
 
@@ -221,14 +198,15 @@ URL URL::create_with_file_scheme(DeprecatedString const& path, DeprecatedString 
         return {};
 
     URL url;
-    url.set_scheme("file");
+    url.set_scheme("file"_string);
     // NOTE: If the hostname is localhost (or null, which implies localhost), it should be set to the empty string.
     //       This is because a file URL always needs a non-null hostname.
-    url.set_host(hostname.is_null() || hostname == "localhost" ? DeprecatedString::empty() : hostname);
+    url.set_host(hostname.is_null() || hostname == "localhost" ? String {} : String::from_deprecated_string(hostname).release_value_but_fixme_should_propagate_errors());
     url.set_paths(lexical_path.parts());
     if (path.ends_with('/'))
         url.append_slash();
-    url.set_fragment(fragment);
+    if (!fragment.is_null())
+        url.set_fragment(String::from_deprecated_string(fragment).release_value_but_fixme_should_propagate_errors());
     return url;
 }
 
@@ -237,14 +215,16 @@ URL URL::create_with_help_scheme(DeprecatedString const& path, DeprecatedString 
     LexicalPath lexical_path(path);
 
     URL url;
-    url.set_scheme("help");
+    url.set_scheme("help"_string);
     // NOTE: If the hostname is localhost (or null, which implies localhost), it should be set to the empty string.
     //       This is because a file URL always needs a non-null hostname.
-    url.set_host(hostname.is_null() || hostname == "localhost" ? DeprecatedString::empty() : hostname);
+    url.set_host(hostname.is_null() || hostname == "localhost" ? String {} : String::from_deprecated_string(hostname).release_value_but_fixme_should_propagate_errors());
+
     url.set_paths(lexical_path.parts());
     if (path.ends_with('/'))
         url.append_slash();
-    url.set_fragment(fragment);
+    if (!fragment.is_null())
+        url.set_fragment(String::from_deprecated_string(fragment).release_value_but_fixme_should_propagate_errors());
     return url;
 }
 
@@ -258,90 +238,104 @@ URL URL::create_with_url_or_path(DeprecatedString const& url_or_path)
     return URL::create_with_file_scheme(path);
 }
 
+URL URL::create_with_data(StringView mime_type, StringView payload, bool is_base64)
+{
+    URL url;
+    url.set_cannot_be_a_base_url(true);
+    url.set_scheme("data"_string);
+
+    StringBuilder builder;
+    builder.append(mime_type);
+    if (is_base64)
+        builder.append(";base64"sv);
+    builder.append(',');
+    builder.append(payload);
+    url.set_paths({ builder.to_deprecated_string() });
+    return url;
+}
+
 // https://url.spec.whatwg.org/#special-scheme
 bool URL::is_special_scheme(StringView scheme)
 {
     return scheme.is_one_of("ftp", "file", "http", "https", "ws", "wss");
 }
 
-DeprecatedString URL::serialize_path(ApplyPercentDecoding apply_percent_decoding) const
+DeprecatedString URL::serialize_path() const
 {
     if (cannot_be_a_base_url())
         return m_paths[0];
     StringBuilder builder;
     for (auto& path : m_paths) {
         builder.append('/');
-        builder.append(apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(path) : path);
+        builder.append(percent_decode(path));
     }
-    return builder.to_deprecated_string();
-}
-
-DeprecatedString URL::serialize_data_url() const
-{
-    VERIFY(m_scheme == "data");
-    VERIFY(!m_data_mime_type.is_null());
-    VERIFY(!m_data_payload.is_null());
-    StringBuilder builder;
-    builder.append(m_scheme);
-    builder.append(':');
-    builder.append(m_data_mime_type);
-    if (m_data_payload_is_base64)
-        builder.append(";base64"sv);
-    builder.append(',');
-    // NOTE: The specification does not say anything about encoding this, but we should encode at least control and non-ASCII
-    //       characters (since this is also a valid representation of the same data URL).
-    builder.append(URL::percent_encode(m_data_payload, PercentEncodeSet::C0Control));
     return builder.to_deprecated_string();
 }
 
 // https://url.spec.whatwg.org/#concept-url-serializer
 DeprecatedString URL::serialize(ExcludeFragment exclude_fragment) const
 {
-    if (m_scheme == "data")
-        return serialize_data_url();
-    StringBuilder builder;
-    builder.append(m_scheme);
-    builder.append(':');
+    // 1. Let output be url’s scheme and U+003A (:) concatenated.
+    StringBuilder output;
+    output.append(m_scheme);
+    output.append(':');
 
-    if (!m_host.is_null()) {
-        builder.append("//"sv);
+    // 2. If url’s host is non-null:
+    if (!m_host.has<Empty>()) {
+        // 1. Append "//" to output.
+        output.append("//"sv);
 
+        // 2. If url includes credentials, then:
         if (includes_credentials()) {
-            builder.append(m_username);
+            // 1. Append url’s username to output.
+            output.append(m_username);
+
+            // 2. If url’s password is not the empty string, then append U+003A (:), followed by url’s password, to output.
             if (!m_password.is_empty()) {
-                builder.append(':');
-                builder.append(m_password);
+                output.append(':');
+                output.append(m_password);
             }
-            builder.append('@');
+
+            // 3. Append U+0040 (@) to output.
+            output.append('@');
         }
 
-        builder.append(m_host);
+        // 3. Append url’s host, serialized, to output.
+        output.append(serialized_host().release_value_but_fixme_should_propagate_errors());
+
+        // 4. If url’s port is non-null, append U+003A (:) followed by url’s port, serialized, to output.
         if (m_port.has_value())
-            builder.appendff(":{}", *m_port);
+            output.appendff(":{}", *m_port);
     }
 
+    // 3. If url’s host is null, url does not have an opaque path, url’s path’s size is greater than 1, and url’s path[0] is the empty string, then append U+002F (/) followed by U+002E (.) to output.
+    // 4. Append the result of URL path serializing url to output.
+    // FIXME: Implement this closer to spec steps.
     if (cannot_be_a_base_url()) {
-        builder.append(m_paths[0]);
+        output.append(m_paths[0]);
     } else {
-        if (m_host.is_null() && m_paths.size() > 1 && m_paths[0].is_empty())
-            builder.append("/."sv);
+        if (m_host.has<Empty>() && m_paths.size() > 1 && m_paths[0].is_empty())
+            output.append("/."sv);
         for (auto& segment : m_paths) {
-            builder.append('/');
-            builder.append(segment);
+            output.append('/');
+            output.append(segment);
         }
     }
 
-    if (!m_query.is_null()) {
-        builder.append('?');
-        builder.append(m_query);
+    // 5. If url’s query is non-null, append U+003F (?), followed by url’s query, to output.
+    if (m_query.has_value()) {
+        output.append('?');
+        output.append(*m_query);
     }
 
-    if (exclude_fragment == ExcludeFragment::No && !m_fragment.is_null()) {
-        builder.append('#');
-        builder.append(m_fragment);
+    // 6. If exclude fragment is false and url’s fragment is non-null, then append U+0023 (#), followed by url’s fragment, to output.
+    if (exclude_fragment == ExcludeFragment::No && m_fragment.has_value()) {
+        output.append('#');
+        output.append(*m_fragment);
     }
 
-    return builder.to_deprecated_string();
+    // 7. Return output.
+    return output.to_deprecated_string();
 }
 
 // https://url.spec.whatwg.org/#url-rendering
@@ -351,15 +345,14 @@ DeprecatedString URL::serialize(ExcludeFragment exclude_fragment) const
 DeprecatedString URL::serialize_for_display() const
 {
     VERIFY(m_valid);
-    if (m_scheme == "data")
-        return serialize_data_url();
+
     StringBuilder builder;
     builder.append(m_scheme);
     builder.append(':');
 
-    if (!m_host.is_null()) {
+    if (!m_host.has<Empty>()) {
         builder.append("//"sv);
-        builder.append(m_host);
+        builder.append(serialized_host().release_value_but_fixme_should_propagate_errors());
         if (m_port.has_value())
             builder.appendff(":{}", *m_port);
     }
@@ -367,7 +360,7 @@ DeprecatedString URL::serialize_for_display() const
     if (cannot_be_a_base_url()) {
         builder.append(m_paths[0]);
     } else {
-        if (m_host.is_null() && m_paths.size() > 1 && m_paths[0].is_empty())
+        if (m_host.has<Empty>() && m_paths.size() > 1 && m_paths[0].is_empty())
             builder.append("/."sv);
         for (auto& segment : m_paths) {
             builder.append('/');
@@ -375,14 +368,14 @@ DeprecatedString URL::serialize_for_display() const
         }
     }
 
-    if (!m_query.is_null()) {
+    if (m_query.has_value()) {
         builder.append('?');
-        builder.append(m_query);
+        builder.append(*m_query);
     }
 
-    if (!m_fragment.is_null()) {
+    if (m_fragment.has_value()) {
         builder.append('#');
-        builder.append(m_fragment);
+        builder.append(*m_fragment);
     }
 
     return builder.to_deprecated_string();
@@ -415,7 +408,7 @@ DeprecatedString URL::serialize_origin() const
     StringBuilder builder;
     builder.append(m_scheme);
     builder.append("://"sv);
-    builder.append(m_host);
+    builder.append(serialized_host().release_value_but_fixme_should_propagate_errors());
     if (m_port.has_value())
         builder.appendff(":{}", *m_port);
     return builder.to_deprecated_string();
@@ -428,6 +421,80 @@ bool URL::equals(URL const& other, ExcludeFragment exclude_fragments) const
     if (!m_valid || !other.m_valid)
         return false;
     return serialize(exclude_fragments) == other.serialize(exclude_fragments);
+}
+
+// https://fetch.spec.whatwg.org/#data-url-processor
+ErrorOr<URL::DataURL> URL::process_data_url() const
+{
+    // 1. Assert: dataURL’s scheme is "data".
+    VERIFY(scheme() == "data");
+
+    // 2. Let input be the result of running the URL serializer on dataURL with exclude fragment set to true.
+    auto input = serialize(URL::ExcludeFragment::Yes);
+
+    // 3. Remove the leading "data:" from input.
+    input = input.substring("data:"sv.length());
+
+    // 4. Let position point at the start of input.
+
+    // 5. Let mimeType be the result of collecting a sequence of code points that are not equal to U+002C (,), given position.
+    auto position = input.find(',');
+    auto mime_type = input.substring_view(0, position.value_or(input.length()));
+
+    // 6. Strip leading and trailing ASCII whitespace from mimeType.
+    mime_type = mime_type.trim_whitespace(TrimMode::Both);
+
+    // 7. If position is past the end of input, then return failure.
+    if (!position.has_value())
+        return Error::from_string_literal("Missing a comma character");
+
+    // 8. Advance position by 1.
+    position = position.value() + 1;
+
+    // 9. Let encodedBody be the remainder of input.
+    auto encoded_body = input.substring_view(position.value());
+
+    // 10. Let body be the percent-decoding of encodedBody.
+    auto body = URL::percent_decode(encoded_body).to_byte_buffer();
+
+    // 11. If mimeType ends with U+003B (;), followed by zero or more U+0020 SPACE, followed by an ASCII case-insensitive match for "base64", then:
+    if (mime_type.ends_with("base64"sv, CaseSensitivity::CaseInsensitive)) {
+        auto trimmed_substring_view = mime_type.substring_view(0, mime_type.length() - 6);
+        trimmed_substring_view = trimmed_substring_view.trim(" "sv, TrimMode::Right);
+        if (trimmed_substring_view.ends_with(';')) {
+            // 1. Let stringBody be the isomorphic decode of body.
+            auto string_body = StringView(body);
+
+            // 2. Set body to the forgiving-base64 decode of stringBody.
+            //    FIXME: Check if it's really forgiving.
+            // 3. If body is failure, then return failure.
+            body = TRY(decode_base64(string_body));
+
+            // 4. Remove the last 6 code points from mimeType.
+            // 5. Remove trailing U+0020 SPACE code points from mimeType, if any.
+            // 6. Remove the last U+003B (;) from mimeType.
+            mime_type = trimmed_substring_view.substring_view(0, trimmed_substring_view.length() - 1);
+        }
+    }
+
+    // 12. If mimeType starts with ";", then prepend "text/plain" to mimeType.
+    StringBuilder builder;
+    if (mime_type.starts_with(';')) {
+        builder.append("text/plain"sv);
+        builder.append(mime_type);
+        mime_type = builder.string_view();
+    }
+
+    // FIXME: Parse the MIME type's components according to https://mimesniff.spec.whatwg.org/#parse-a-mime-type
+    // FIXME: 13. Let mimeTypeRecord be the result of parsing mimeType.
+    auto mime_type_record = mime_type.trim("\n\r\t "sv, TrimMode::Both);
+
+    // 14. If mimeTypeRecord is failure, then set mimeTypeRecord to text/plain;charset=US-ASCII.
+    if (mime_type_record.is_empty())
+        mime_type_record = "text/plain;charset=US-ASCII"sv;
+
+    // 15. Return a new data: URL struct whose MIME type is mimeTypeRecord and body is body.
+    return URL::DataURL { TRY(String::from_utf8(mime_type_record)), body };
 }
 
 void URL::append_percent_encoded(StringBuilder& builder, u32 code_point)

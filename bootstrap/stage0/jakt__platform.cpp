@@ -80,6 +80,9 @@ return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_
 else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("openbsd"sv))) {
 return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("posix"sv))})))));
 }
+else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("serenityos"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("posix"sv))})))));
+}
 else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("serenity"sv))) {
 return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("posix"sv))})))));
 }
@@ -103,6 +106,17 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 jakt__platform::Target::Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi) :arch(move(a_arch)), platform(move(a_platform)), os(move(a_os)), abi(move(a_abi)){}
+
+ErrorOr<jakt__platform::Target> jakt__platform::Target::from_triple(DeprecatedString const triple) {
+{
+JaktInternal::DynamicArray<DeprecatedString> const parts = ((triple).split('-'));
+if (((((parts).size())) != (static_cast<size_t>(4ULL)))){
+warnln((StringView::from_string_literal("Invalid target triple '{}'"sv)),triple);
+return Error::from_errno(static_cast<i32>(22));
+}
+return jakt__platform::Target(((parts)[static_cast<i64>(0LL)]),((parts)[static_cast<i64>(1LL)]),((parts)[static_cast<i64>(2LL)]),((parts)[static_cast<i64>(3LL)]));
+}
+}
 
 ErrorOr<size_t> jakt__platform::Target::int_alignment() const {
 {
@@ -134,15 +148,30 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("point
 }
 }
 
+ErrorOr<DeprecatedString> jakt__platform::Target::name(bool const abbreviate) const {
+{
+return ({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<DeprecatedString>>{
+auto __jakt_enum_value = (abbreviate);
+if (__jakt_enum_value == true) {
+return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}-{}-{}"sv)),((*this).arch),((*this).platform),((*this).os)))));
+}
+else if (__jakt_enum_value == false) {
+return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}-{}-{}-{}"sv)),((*this).arch),((*this).platform),((*this).os),((*this).abi)))));
+}
+VERIFY_NOT_REACHED();
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+});
+}
+}
+
 ErrorOr<jakt__platform::Target> jakt__platform::Target::active() {
 {
 DeprecatedString const triple = TRY((___jakt_get_target_triple_string()));
-JaktInternal::DynamicArray<DeprecatedString> const parts = ((triple).split('-'));
-if (((((parts).size())) != (static_cast<size_t>(4ULL)))){
-warnln((StringView::from_string_literal("Invalid target triple '{}'"sv)),triple);
-return Error::from_errno(static_cast<i32>(22));
-}
-return jakt__platform::Target(((parts)[static_cast<i64>(0LL)]),((parts)[static_cast<i64>(1LL)]),((parts)[static_cast<i64>(2LL)]),((parts)[static_cast<i64>(3LL)]));
+return TRY((jakt__platform::Target::from_triple(triple)));
 }
 }
 

@@ -16,6 +16,13 @@ return Error::from_errno(static_cast<i32>(38));
 return {};
 }
 
+ErrorOr<DeprecatedString> real_path(DeprecatedString const path) {
+{
+warnln((StringView::from_string_literal("NOT IMPLEMENTED: real_path {}"sv)),path);
+return Error::from_errno(static_cast<i32>(38));
+}
+}
+
 ErrorOr<DeprecatedString> jakt__platform__unknown_fs::DirectoryIterator::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("DirectoryIterator("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }

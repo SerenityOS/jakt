@@ -25,14 +25,14 @@ struct DirectlyPeekableTraits : public Traits<T> {
 
 template<typename T>
 struct JaktHashableKeyTraits : public Traits<T> {
-    static constexpr bool equals(T const& a, T const& b) {
+    ALWAYS_INLINE static constexpr bool equals(T const& a, T const& b) {
         if constexpr (requires { { a.equals(b) } -> SameAs<bool>; })
             return a.equals(b);
         else
             return a == b;
     }
 
-    static constexpr unsigned hash(T value)
+    ALWAYS_INLINE static constexpr unsigned hash(T value)
     {
         if constexpr (requires { { value.hash() } -> SameAs<u32>; })
             return value.hash();

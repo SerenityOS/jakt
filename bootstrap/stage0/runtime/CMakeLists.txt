@@ -71,29 +71,54 @@ set(RUNTIME_SOURCES
     Jakt/DeprecatedStringBuilder.cpp
 )
 
-add_library(jakt_runtime STATIC ${RUNTIME_SOURCES})
-add_jakt_compiler_flags(jakt_runtime)
-target_include_directories(jakt_runtime
+# FIXME: create a new external_project foreach(target IN LISTS JAKT_RUNTIME_TARGETS)
+function(make_jakt_runtime_available JAKT_RUNTIME_TARGET)
+  if (NOT DEFINED JAKT_RUNTIME_TARGET)
+    message(FATAL_ERROR "make_jakt_runtime_available called without a required target argument")
+  endif()
+
+  cmake_parse_arguments(PARSE_ARGV 1 JAKT_RUNTIME "" "" "VAR_NAME")
+  message(STATUS "Making the jakt runtime available for ${JAKT_RUNTIME_TARGET}")
+
+  set(library_name jakt_runtime_${JAKT_RUNTIME_TARGET})
+  add_library(${library_name} STATIC ${RUNTIME_SOURCES})
+  add_jakt_compiler_flags(${library_name})
+  target_include_directories(${library_name}
   PRIVATE
-   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
   PUBLIC
-   "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>"
-)
+  "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>"
+  )
 
-add_library(Jakt::jakt_runtime ALIAS jakt_runtime)
-apply_output_rules(jakt_runtime)
-target_link_libraries(jakt_runtime PRIVATE Threads::Threads)
+  apply_output_rules(${library_name} TARGET_DIR ${JAKT_RUNTIME_TARGET})
+  target_link_libraries(${library_name} PRIVATE Threads::Threads)
 
-add_library(jakt_main STATIC Main.cpp)
-add_jakt_compiler_flags(jakt_main)
-target_include_directories(jakt_main
+  set(main_name jakt_main_${JAKT_RUNTIME_TARGET})
+  add_library(${main_name} STATIC Main.cpp)
+  add_jakt_compiler_flags(${main_name})
+  target_include_directories(${main_name}
   PRIVATE
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+      "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
   PUBLIC
-    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>"
-)
+      "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>"
+  )
 
-add_library(Jakt::jakt_main ALIAS jakt_main)
-apply_output_rules(jakt_main)
+  apply_output_rules(${main_name} TARGET_DIR ${JAKT_RUNTIME_TARGET})
 
-set_target_properties(jakt_runtime jakt_main PROPERTIES POSITION_INDEPENDENT_CODE ON)
+  set_target_properties(${runtime_name} ${main_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+  add_library(Jakt::jakt_runtime_${JAKT_RUNTIME_TARGET} ALIAS jakt_runtime_${JAKT_RUNTIME_TARGET})
+  add_library(Jakt::jakt_main_${JAKT_RUNTIME_TARGET} ALIAS jakt_main_${JAKT_RUNTIME_TARGET})
+
+  if (JAKT_RUNTIME_VAR_NAME)
+    set(${JAKT_RUNTIME_VAR_NAME}
+        ${library_name}
+        ${main_name}
+        PARENT_SCOPE)
+  endif()
+endfunction(make_jakt_runtime_available)
+
+make_jakt_runtime_available("${JAKT_TARGET_TRIPLE}")
+
+add_library(Jakt::jakt_runtime ALIAS jakt_runtime_${JAKT_TARGET_TRIPLE})
+add_library(Jakt::jakt_main ALIAS jakt_main_${JAKT_TARGET_TRIPLE})

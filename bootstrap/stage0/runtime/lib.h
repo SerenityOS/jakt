@@ -199,6 +199,12 @@ inline constexpr T arithmetic_shift_right(T value, size_t steps)
     }
 }
 
+template<typename T>
+ALWAYS_INLINE auto assert_type(T&& input) -> decltype(input)
+{
+    return forward<T>(input);
+}
+
 template<typename OutputType, typename InputType>
 ALWAYS_INLINE Optional<OutputType> fallible_integer_cast(InputType input)
 {
@@ -289,23 +295,31 @@ inline ErrorOr<DeprecatedString> ___jakt_get_target_triple_string()
 #else
 // Pure guesswork.
 #   if defined(_WIN64)
-    return DeprecatedString("x86_64-pc-windows-msvc"sv);
+    return DeprecatedString("amd64-unknown-windows-unknown"sv);
 #   elif defined(_WIN32)
-    return DeprecatedString("i686-pc-windows-msvc"sv);
+    return DeprecatedString("i686-unknown-windows-unknown"sv);
 #   elif defined(__linux__)
-    return DeprecatedString("x86_64-pc-linux-gnu"sv);
+    return DeprecatedString("x86_64-unknown-linux-unknown"sv);
 #   elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
-    return DeprecatedString("x86_64-pc-bsd-unknown"sv);
+    return DeprecatedString("x86_64-unknown-bsd-unknown"sv);
 #   elif defined(__APPLE__)
 #       if defined (__arm64__)
-            return DeprecatedString("arm64-apple-darwin-unknown"sv);
+            return DeprecatedString("arm64-unknown-darwin-unknown"sv);
 #       else
-            return DeprecatedString("x86_64-apple-darwin-unknown"sv);
+            return DeprecatedString("x86_64-unknown-darwin-unknown"sv);
 #       endif
-#   elif defined(__unix__)
-    return DeprecatedString("x86_64-pc-unix-unknown"sv);
 #   elif defined(__serenity__)
-    return DeprecatedString("unknown-pc-serenity-serenity"sv);
+    #if defined(__i686__)
+        return DeprecatedString("i686-unknown-serenityos-unknown"sv);
+    #elif defined(__x86_64__)
+        return DeprecatedString("x86_64-unknown-serenityos-unknown"sv);
+    #elif defined(__aarch64__)
+        return DeprecatedString("aarch64-unknown-serenityos-unknown"sv);
+    #else
+        return DeprecatedString("unknown-unknown-serenityos-unknown"sv);
+    #endif
+#   elif defined(__unix__)
+    return DeprecatedString("x86_64-unknown-unix-unknown"sv);
 #   else
     return DeprecatedString("unknown-unknown-unknown-unknown"sv);
 #   endif
@@ -352,6 +366,7 @@ namespace Jakt {
 using JaktInternal::abort;
 using JaktInternal::as_saturated;
 using JaktInternal::as_truncated;
+using JaktInternal::assert_type;
 using JaktInternal::fallible_class_cast;
 using JaktInternal::fallible_integer_cast;
 using JaktInternal::infallible_class_cast;

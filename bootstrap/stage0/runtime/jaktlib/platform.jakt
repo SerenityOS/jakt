@@ -4,8 +4,7 @@ struct Target {
     os: String
     abi: String
 
-    fn active() throws -> Target {
-        let triple = ___jakt_get_target_triple_string()
+    fn from_triple(anon triple: String) throws -> Target {
         let parts = triple.split(c'-')
         if parts.size() != 4 {
             eprintln("Invalid target triple '{}'", triple)
@@ -19,6 +18,16 @@ struct Target {
             abi: parts[3]
         )
     }
+
+    fn active() throws -> Target {
+        let triple = ___jakt_get_target_triple_string()
+        return Target::from_triple(triple)
+    }
+
+    fn name(this, abbreviate: bool = false) throws -> String => match abbreviate {
+        true => format("{}-{}-{}", .arch, .platform, .os)
+        false => format("{}-{}-{}-{}", .arch, .platform, .os, .abi)
+    }
 }
 
 fn platform_import_names() throws -> [String] {
@@ -31,7 +40,7 @@ fn platform_import_names() throws -> [String] {
             else => ["windows"]
         }
         "darwin" => ["darwin", "posix"]
-        "linux" | "openbsd" | "serenity" => [target.os, "posix"]
+        "linux" | "openbsd" | "serenityos" | "serenity" => [target.os, "posix"]
         else => [target.os, "unknown"]
     }
 }

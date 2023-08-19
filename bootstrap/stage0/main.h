@@ -26,9 +26,9 @@
 namespace Jakt {
 struct FormatRange {
   public:
-size_t start;size_t end;FormatRange(size_t a_start, size_t a_end);
+public: size_t start;public: size_t end;public: FormatRange(size_t a_start, size_t a_end);
 
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };template <typename T>
 ErrorOr<T> value_or_throw(JaktInternal::Optional<T> const maybe);
 } // namespace Jakt

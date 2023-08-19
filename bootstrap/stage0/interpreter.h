@@ -63,26 +63,26 @@ using Variant<Deferred_Details::Expression, Deferred_Details::Statement>::Varian
     using Statement = Deferred_Details::Statement;
 ErrorOr<DeprecatedString> debug_description() const;
 };
-class InterpreterScope : public RefCounted<InterpreterScope>, public Weakable<InterpreterScope> {
+class InterpreterScope :public RefCounted<InterpreterScope>, public Weakable<InterpreterScope> {
   public:
 virtual ~InterpreterScope() = default;
-JaktInternal::Dictionary<DeprecatedString,types::Value> bindings;JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent;JaktInternal::Dictionary<ids::TypeId,ids::TypeId> type_bindings;JaktInternal::DynamicArray<interpreter::Deferred> defers;ErrorOr<void> set(DeprecatedString const name, types::Value const value);
-static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> create(JaktInternal::Dictionary<DeprecatedString,types::Value> const bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const type_bindings);
-ErrorOr<void> defer_statement(NonnullRefPtr<typename types::CheckedStatement> const statement);
-ErrorOr<void> perform_defers(NonnullRefPtr<interpreter::Interpreter> interpreter, utility::Span const span);
-static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> from_runtime_scope(ids::ScopeId const scope_id, NonnullRefPtr<types::CheckedProgram> const program, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent);
-ErrorOr<JaktInternal::Dictionary<DeprecatedString,types::Value>> all_bindings() const;
-ErrorOr<void> type_map_for_substitution_helper(JaktInternal::Dictionary<ids::TypeId,ids::TypeId>& map) const;
-ErrorOr<types::GenericInferences> type_map_for_substitution() const;
-protected:
+public: JaktInternal::Dictionary<DeprecatedString,types::Value> bindings;public: JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent;public: JaktInternal::Dictionary<ids::TypeId,ids::TypeId> type_bindings;public: JaktInternal::DynamicArray<interpreter::Deferred> defers;public: ErrorOr<void> set(DeprecatedString const name, types::Value const value);
+public: static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> create(JaktInternal::Dictionary<DeprecatedString,types::Value> const bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const type_bindings);
+public: ErrorOr<void> defer_statement(NonnullRefPtr<typename types::CheckedStatement> const statement);
+public: ErrorOr<void> perform_defers(NonnullRefPtr<interpreter::Interpreter> interpreter, utility::Span const span);
+public: static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> from_runtime_scope(ids::ScopeId const scope_id, NonnullRefPtr<types::CheckedProgram> const program, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent);
+public: ErrorOr<JaktInternal::Dictionary<DeprecatedString,types::Value>> all_bindings() const;
+private: ErrorOr<void> type_map_for_substitution_helper(JaktInternal::Dictionary<ids::TypeId,ids::TypeId>& map) const;
+public: ErrorOr<types::GenericInferences> type_map_for_substitution() const;
+public: protected:
 explicit InterpreterScope(JaktInternal::Dictionary<DeprecatedString,types::Value> a_bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> a_parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> a_type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> a_defers);
 public:
 static ErrorOr<NonnullRefPtr<InterpreterScope>> __jakt_create(JaktInternal::Dictionary<DeprecatedString,types::Value> bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> defers);
 
-ErrorOr<void> defer_expression(NonnullRefPtr<typename types::CheckedExpression> const expr);
-ErrorOr<types::Value> must_get(DeprecatedString const name) const;
-ErrorOr<ids::TypeId> map_type(ids::TypeId const id) const;
-ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<void> defer_expression(NonnullRefPtr<typename types::CheckedExpression> const expr);
+public: ErrorOr<types::Value> must_get(DeprecatedString const name) const;
+public: ErrorOr<ids::TypeId> map_type(ids::TypeId const id) const;
+public: ErrorOr<DeprecatedString> debug_description() const;
 };namespace StatementResult_Details {
 struct Return{
 types::Value value;
@@ -127,48 +127,48 @@ using Variant<StatementResult_Details::Return, StatementResult_Details::Throw, S
     using JustValue = StatementResult_Details::JustValue;
 ErrorOr<DeprecatedString> debug_description() const;
 };
-class Interpreter : public RefCounted<Interpreter>, public Weakable<Interpreter> {
+class Interpreter :public RefCounted<Interpreter>, public Weakable<Interpreter> {
   public:
 virtual ~Interpreter() = default;
-NonnullRefPtr<compiler::Compiler> compiler;NonnullRefPtr<types::CheckedProgram> program;JaktInternal::DynamicArray<utility::Span> spans;JaktInternal::Dictionary<ids::TypeId,types::Value> reflected_type_cache;JaktInternal::Set<ids::TypeId> seen_reflected_types;JaktInternal::Optional<ids::FunctionId> current_function_id;NonnullRefPtr<types::TypecheckFunctions> typecheck_functions;ErrorOr<DeprecatedString> string_from_value(types::Value const value);
-ErrorOr<void> update_binding(NonnullRefPtr<typename types::CheckedExpression> const binding, NonnullRefPtr<interpreter::InterpreterScope> scope, types::Value const value, utility::Span const span);
-protected:
+public: NonnullRefPtr<compiler::Compiler> compiler;public: NonnullRefPtr<types::CheckedProgram> program;public: JaktInternal::DynamicArray<utility::Span> spans;public: JaktInternal::Dictionary<ids::TypeId,types::Value> reflected_type_cache;public: JaktInternal::Set<ids::TypeId> seen_reflected_types;public: JaktInternal::Optional<ids::FunctionId> current_function_id;public: NonnullRefPtr<types::TypecheckFunctions> typecheck_functions;public: ErrorOr<DeprecatedString> string_from_value(types::Value const value);
+public: ErrorOr<void> update_binding(NonnullRefPtr<typename types::CheckedExpression> const binding, NonnullRefPtr<interpreter::InterpreterScope> scope, types::Value const value, utility::Span const span);
+public: protected:
 explicit Interpreter(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, JaktInternal::DynamicArray<utility::Span> a_spans, JaktInternal::Dictionary<ids::TypeId,types::Value> a_reflected_type_cache, JaktInternal::Set<ids::TypeId> a_seen_reflected_types, JaktInternal::Optional<ids::FunctionId> a_current_function_id, NonnullRefPtr<types::TypecheckFunctions> a_typecheck_functions);
 public:
 static ErrorOr<NonnullRefPtr<Interpreter>> __jakt_create(NonnullRefPtr<compiler::Compiler> compiler, NonnullRefPtr<types::CheckedProgram> program, JaktInternal::DynamicArray<utility::Span> spans, JaktInternal::Dictionary<ids::TypeId,types::Value> reflected_type_cache, JaktInternal::Set<ids::TypeId> seen_reflected_types, JaktInternal::Optional<ids::FunctionId> current_function_id, NonnullRefPtr<types::TypecheckFunctions> typecheck_functions);
 
-ErrorOr<types::CheckedBlock> typecheck_block(parser::ParsedBlock const block, ids::ScopeId const scope);
-ErrorOr<types::Value> reflect_methods(ids::ScopeId const scope_id, utility::Span const span, NonnullRefPtr<interpreter::InterpreterScope> const interpreter_scope);
-ErrorOr<types::Value> bool_value(bool const value, utility::Span const span);
-ErrorOr<types::Value> string_value(DeprecatedString const string, utility::Span const span);
-ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> perform_final_interpretation_expr_pass(NonnullRefPtr<typename types::CheckedExpression> const expr, NonnullRefPtr<interpreter::InterpreterScope> const scope);
-ErrorOr<types::CheckedBlock> perform_final_interpretation_pass(types::CheckedBlock const block, JaktInternal::Optional<ids::ScopeId> const runtime_scope, NonnullRefPtr<interpreter::InterpreterScope> const scope);
-ErrorOr<types::CheckedBlock> perform_final_interpretation_pass(parser::ParsedBlock const block, ids::ScopeId const runtime_scope, NonnullRefPtr<interpreter::InterpreterScope> const scope);
-ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> perform_final_interpretation_pass(NonnullRefPtr<typename types::CheckedStatement> const statement, NonnullRefPtr<interpreter::InterpreterScope> const scope);
-ErrorOr<types::Value> array_value_of_type(JaktInternal::DynamicArray<types::Value> const values, ids::TypeId const type, utility::Span const span);
-ErrorOr<ids::TypeId> string_type();
-ErrorOr<void> error_with_hint(DeprecatedString const message, utility::Span const span, DeprecatedString const hint_message, utility::Span const hint_span);
-ErrorOr<interpreter::StatementResult> call_prelude_function(DeprecatedString const prelude_function, JaktInternal::DynamicArray<types::ResolvedNamespace> const namespace_, JaktInternal::Optional<types::Value> const this_argument, JaktInternal::DynamicArray<types::Value> const arguments, utility::Span const call_span, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const type_bindings);
-ErrorOr<void> enter_span(utility::Span const span);
-ErrorOr<bool> get_prelude_function(ids::ScopeId const scope_id) const;
-ErrorOr<ids::TypeId> find_or_add_type_id(NonnullRefPtr<typename types::Type> const type);
-ErrorOr<interpreter::StatementResult> execute_expression_without_cast(NonnullRefPtr<typename types::CheckedExpression> const expr, NonnullRefPtr<interpreter::InterpreterScope> scope);
-ErrorOr<interpreter::StatementResult> execute_expression(NonnullRefPtr<typename types::CheckedExpression> const expr, NonnullRefPtr<interpreter::InterpreterScope> scope);
-ErrorOr<interpreter::StatementResult> execute_binary_operator(types::Value const lhs_value, types::Value const rhs_value, parser::BinaryOperator const op, utility::Span const span, NonnullRefPtr<interpreter::InterpreterScope> const scope);
-ErrorOr<ids::TypeId> array_type_of_struct(ids::StructId const struct_id);
-void leave_span();
-ErrorOr<JaktInternal::DynamicArray<types::Value>> reflect_fields(JaktInternal::DynamicArray<ids::VarId> const fields, utility::Span const span, NonnullRefPtr<interpreter::InterpreterScope> const scope);
-ErrorOr<types::Value> tuple_value(JaktInternal::DynamicArray<types::Value> const members, ids::TypeId const type, utility::Span const span);
-ErrorOr<void> error(DeprecatedString const message, utility::Span const span);
-static ErrorOr<NonnullRefPtr<interpreter::Interpreter>> create(NonnullRefPtr<compiler::Compiler> const compiler, NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::TypecheckFunctions> const typecheck_functions, JaktInternal::DynamicArray<utility::Span> const spans);
-ErrorOr<interpreter::StatementResult> execute_statement(NonnullRefPtr<typename types::CheckedStatement> const statement, NonnullRefPtr<interpreter::InterpreterScope> scope, utility::Span const call_span);
-ErrorOr<JaktInternal::DynamicArray<types::Value>> reflect_sum_enum_variants(types::CheckedEnum const subject_enum, utility::Span const span, NonnullRefPtr<interpreter::InterpreterScope> const scope);
-ErrorOr<interpreter::ExecutionResult> execute(ids::FunctionId const function_to_run_id, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> namespace_, JaktInternal::Optional<types::Value> const this_argument, JaktInternal::DynamicArray<types::Value> const arguments, utility::Span const call_span, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const invocation_scope);
-static ErrorOr<types::CheckedBlock> invoke_typecheck_block(Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, ids::ScopeId, types::SafetyMode, JaktInternal::Optional<ids::TypeId>)> const& function, parser::ParsedBlock const block, ids::ScopeId const parent_scope_id);
-ErrorOr<ids::TypeId> tuple_type(JaktInternal::DynamicArray<ids::TypeId> const members);
-ErrorOr<interpreter::StatementResult> execute_block(types::CheckedBlock const block, NonnullRefPtr<interpreter::InterpreterScope> scope, utility::Span const call_span);
-ErrorOr<types::Value> reflect_type(ids::TypeId const type_id, utility::Span const span, NonnullRefPtr<interpreter::InterpreterScope> const scope);
-ErrorOr<DeprecatedString> debug_description() const;
+private: ErrorOr<types::CheckedBlock> typecheck_block(parser::ParsedBlock const block, ids::ScopeId const scope);
+public: ErrorOr<types::Value> reflect_methods(ids::ScopeId const scope_id, utility::Span const span, NonnullRefPtr<interpreter::InterpreterScope> const interpreter_scope);
+public: ErrorOr<types::Value> bool_value(bool const value, utility::Span const span);
+public: ErrorOr<types::Value> string_value(DeprecatedString const string, utility::Span const span);
+public: ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> perform_final_interpretation_expr_pass(NonnullRefPtr<typename types::CheckedExpression> const expr, NonnullRefPtr<interpreter::InterpreterScope> const scope);
+public: ErrorOr<types::CheckedBlock> perform_final_interpretation_pass(types::CheckedBlock const block, JaktInternal::Optional<ids::ScopeId> const runtime_scope, NonnullRefPtr<interpreter::InterpreterScope> const scope);
+public: ErrorOr<types::CheckedBlock> perform_final_interpretation_pass(parser::ParsedBlock const block, ids::ScopeId const runtime_scope, NonnullRefPtr<interpreter::InterpreterScope> const scope);
+public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> perform_final_interpretation_pass(NonnullRefPtr<typename types::CheckedStatement> const statement, NonnullRefPtr<interpreter::InterpreterScope> const scope);
+public: ErrorOr<types::Value> array_value_of_type(JaktInternal::DynamicArray<types::Value> const values, ids::TypeId const type, utility::Span const span);
+public: ErrorOr<ids::TypeId> string_type();
+public: ErrorOr<void> error_with_hint(DeprecatedString const message, utility::Span const span, DeprecatedString const hint_message, utility::Span const hint_span);
+public: ErrorOr<interpreter::StatementResult> call_prelude_function(DeprecatedString const prelude_function, JaktInternal::DynamicArray<types::ResolvedNamespace> const namespace_, JaktInternal::Optional<types::Value> const this_argument, JaktInternal::DynamicArray<types::Value> const arguments, utility::Span const call_span, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const type_bindings);
+public: ErrorOr<void> enter_span(utility::Span const span);
+public: ErrorOr<bool> get_prelude_function(ids::ScopeId const scope_id) const;
+public: ErrorOr<ids::TypeId> find_or_add_type_id(NonnullRefPtr<typename types::Type> const type);
+public: ErrorOr<interpreter::StatementResult> execute_expression_without_cast(NonnullRefPtr<typename types::CheckedExpression> const expr, NonnullRefPtr<interpreter::InterpreterScope> scope);
+public: ErrorOr<interpreter::StatementResult> execute_expression(NonnullRefPtr<typename types::CheckedExpression> const expr, NonnullRefPtr<interpreter::InterpreterScope> scope);
+public: ErrorOr<interpreter::StatementResult> execute_binary_operator(types::Value const lhs_value, types::Value const rhs_value, parser::BinaryOperator const op, utility::Span const span, NonnullRefPtr<interpreter::InterpreterScope> const scope);
+public: ErrorOr<ids::TypeId> array_type_of_struct(ids::StructId const struct_id);
+public: void leave_span();
+public: ErrorOr<JaktInternal::DynamicArray<types::Value>> reflect_fields(JaktInternal::DynamicArray<ids::VarId> const fields, utility::Span const span, NonnullRefPtr<interpreter::InterpreterScope> const scope);
+public: ErrorOr<types::Value> tuple_value(JaktInternal::DynamicArray<types::Value> const members, ids::TypeId const type, utility::Span const span);
+public: ErrorOr<void> error(DeprecatedString const message, utility::Span const span);
+public: static ErrorOr<NonnullRefPtr<interpreter::Interpreter>> create(NonnullRefPtr<compiler::Compiler> const compiler, NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::TypecheckFunctions> const typecheck_functions, JaktInternal::DynamicArray<utility::Span> const spans);
+public: ErrorOr<interpreter::StatementResult> execute_statement(NonnullRefPtr<typename types::CheckedStatement> const statement, NonnullRefPtr<interpreter::InterpreterScope> scope, utility::Span const call_span);
+public: ErrorOr<JaktInternal::DynamicArray<types::Value>> reflect_sum_enum_variants(types::CheckedEnum const subject_enum, utility::Span const span, NonnullRefPtr<interpreter::InterpreterScope> const scope);
+public: ErrorOr<interpreter::ExecutionResult> execute(ids::FunctionId const function_to_run_id, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> namespace_, JaktInternal::Optional<types::Value> const this_argument, JaktInternal::DynamicArray<types::Value> const arguments, utility::Span const call_span, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const invocation_scope);
+private: static ErrorOr<types::CheckedBlock> invoke_typecheck_block(Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, ids::ScopeId, types::SafetyMode, JaktInternal::Optional<ids::TypeId>)> const& function, parser::ParsedBlock const block, ids::ScopeId const parent_scope_id);
+public: ErrorOr<ids::TypeId> tuple_type(JaktInternal::DynamicArray<ids::TypeId> const members);
+public: ErrorOr<interpreter::StatementResult> execute_block(types::CheckedBlock const block, NonnullRefPtr<interpreter::InterpreterScope> scope, utility::Span const call_span);
+public: ErrorOr<types::Value> reflect_type(ids::TypeId const type_id, utility::Span const span, NonnullRefPtr<interpreter::InterpreterScope> const scope);
+public: ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::interpreter::ExecutionResult> : Jakt::Formatter<Jakt::StringView>{
