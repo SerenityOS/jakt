@@ -10286,6 +10286,7 @@ struct Typechecker {
         }
 
         mut total_function_specificity = 0
+
         let resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(
             params: callee_candidate.generics.base_params
             args: call.args
@@ -10294,13 +10295,35 @@ struct Typechecker {
             arg_offset
             span
         )
-        if callee_candidate.generics.base_params.size() == resolved_args.size() + arg_offset {
-            for i in 0..(callee_candidate.generics.base_params.size() - arg_offset) {
+        mut params_to_compare: [TypeId] = []
+        mut is_specialized_comptime_function = false
+        if callee_candidate.is_comptime and callee_candidate.specialization_index is Some(index) {
+            params_to_compare = callee_candidate.generics.specializations[index]
+            // This is a specialization, so give it a higher specificity if it matches.
+            is_specialized_comptime_function = true
+        } else {
+            params_to_compare.ensure_capacity(callee_candidate.generics.base_params.size())
+            for param in callee_candidate.generics.base_params {
+                params_to_compare.push(param.variable.type_id)
+            }
+        }
+
+        if params_to_compare.size() == resolved_args.size() + arg_offset {
+            for i in 0..(params_to_compare.size() - arg_offset) {
                 let (name, span, checked_arg) = resolved_args[i]
-                let type_to = .get_type(callee_candidate.generics.base_params[i+arg_offset].variable.type_id)
+                let type_to = .get_type(params_to_compare[i+arg_offset])
                 total_function_specificity += type_to.specificity(program: .program)
+
+                if is_specialized_comptime_function {
+                    .check_types_for_compat(
+                        lhs_type_id: callee_candidate.generics.base_params[i + arg_offset].variable.type_id
+                        rhs_type_id: checked_arg.type()
+                        generic_inferences: &mut .generic_inferences
+                        span: checked_arg.span()
+                    )
+                }
                 .check_types_for_compat(
-                    lhs_type_id: callee_candidate.generics.base_params[i+arg_offset].variable.type_id
+                    lhs_type_id: params_to_compare[i+arg_offset]
                     rhs_type_id: checked_arg.type()
                     generic_inferences: &mut .generic_inferences
                     span: checked_arg.span()
@@ -10308,6 +10331,7 @@ struct Typechecker {
                 args.push(checked_arg)
             }
         }
+
         let num_match_errors = .compiler.errors.size() - num_old_compiler_errors
         if num_match_errors > 0 {
             for error_index in 0uz..num_match_errors {
@@ -10316,7 +10340,17 @@ struct Typechecker {
             return FunctionMatchResult::MatchError(errors: argument_errors)
         }
         let used_inferences = .generic_inferences.perform_checkpoint(reset: false)
-        return FunctionMatchResult::MatchSuccess(args, maybe_this_type_id, used_generic_inferences: used_inferences, specificity: total_function_specificity)
+        if is_specialized_comptime_function {
+            total_function_specificity += 1
+            total_function_specificity *= 2
+        }
+
+        return FunctionMatchResult::MatchSuccess(
+            args
+            maybe_this_type_id
+            used_generic_inferences: used_inferences
+            specificity: total_function_specificity
+        )
     }
 
     fn stringify_function_prototype(mut this, anon function_id: FunctionId) throws -> String {
@@ -10353,6 +10387,18 @@ struct Typechecker {
         }
         builder.append(" -> ")
         builder.append(.type_name(function.return_type_id))
+
+        if function.specialization_index is Some(index) {
+            builder.append(format(" [specialization {}: <", index))
+            let type_ids = function.generics.specializations[index]
+            for i in 0..type_ids.size() {
+                if i != 0 {
+                    builder.append(", ")
+                }
+                builder.append(.type_name(type_ids[i]))
+            }
+            builder.append(">]")
+        }
         return builder.to_string()
     }
 
@@ -10472,7 +10518,12 @@ struct Typechecker {
             // find the best match i.e. the most specific implementation that matches the signature
             for candidate in resolved_function_id_candidates.iterator() {
                 match .match_function_and_resolve_args(call, caller_scope_id, candidate, safety_mode, span, this_expr) {
-                    MatchSuccess(args: resolved_args, maybe_this_type_id: resolved_this_type_id, used_generic_inferences, specificity) => {
+                    MatchSuccess(
+                        args: resolved_args
+                        maybe_this_type_id: resolved_this_type_id
+                        used_generic_inferences
+                        specificity
+                    ) => {
                         if specificity > max_found_specificity {
                             resolved_function_id = candidate
                             maybe_this_type_id = resolved_this_type_id

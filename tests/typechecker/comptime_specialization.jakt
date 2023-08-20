@@ -1,0 +1,12 @@
+/// Expect:
+/// - output: "10 10\n"
+
+comptime test<T>() -> i32 {
+    return 10
+}
+
+fn main() {
+    let x = test<i32>()
+    let y = test<i32>()
+    println("{} {}", x, y)
+}
