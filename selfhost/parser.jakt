@@ -12,6 +12,11 @@ import lexer { Token, LiteralPrefix, LiteralSuffix }
 import utility { panic, todo, FileId, Span, join }
 import compiler { Compiler }
 
+struct ParsedFunctionParameters {
+    parameters: [ParsedParameter]
+    has_varargs: bool
+}
+
 enum ExternalName {
     Plain(String)
     PreprocessorName(String)
@@ -408,6 +413,7 @@ struct ParsedFunction {
     is_comptime: bool
     is_fat_arrow: bool
     is_unsafe: bool
+    has_varargs: bool = false
 
     external_name: ExternalName? = None
     deprecated_message: String? = None // if not None, the function is deprecated
@@ -3585,7 +3591,7 @@ struct Parser {
         return parsed_class
     }
 
-    public fn parse_function_parameters(mut this) throws -> [ParsedParameter] {
+    public fn parse_function_parameters(mut this) throws -> ParsedFunctionParameters {
         if .current() is LParen {
             .index++
         } else {
@@ -3594,7 +3600,7 @@ struct Parser {
 
         .skip_newlines()
 
-        mut params: [ParsedParameter] = []
+        mut result = ParsedFunctionParameters(parameters: [], has_varargs: false)
         mut current_param_requires_label = true
         mut current_param_is_mutable = false
 
@@ -3618,7 +3624,31 @@ struct Parser {
                     current_param_is_mutable = false
                     parameter_complete = false
                 }
+                DotDot => {
+                    if result.has_varargs {
+                        .error("Multiple varargs cannot be present in one parameter list", .current().span())
+                        error = true
+                    }
+                    if current_param_is_mutable {
+                        .error("A variadic argument cannot be mutable", .current().span())
+                        error = true
+                    }
+                    if not current_param_requires_label {
+                        .error("A variadic argument cannot be anonymous", .current().span())
+                        error = true
+                    }
+                    result.has_varargs = true
+                    .index++
+
+                    parameter_complete = false
+                    current_param_requires_label = true
+                    current_param_is_mutable = false
+                }
                 Anon => {
+                    if result.has_varargs {
+                        .error("A variadic argument may only appear at the end of a parameter list", .current().span())
+                        error = true
+                    }
                     if parameter_complete and not error  {
                         .error("‘anon’ must appear at start of parameter declaration, not the end", .current().span())
                         error = true
@@ -3635,6 +3665,10 @@ struct Parser {
                     current_param_requires_label = false
                 }
                 Mut => {
+                    if result.has_varargs {
+                        .error("A variadic argument may only appear at the end of a parameter list", .current().span())
+                        error = true
+                    }
                     if parameter_complete and not error  {
                         .error("‘mut’ must appear at start of parameter declaration, not the end", .current().span())
                         error = true
@@ -3647,7 +3681,11 @@ struct Parser {
                     current_param_is_mutable = true
                 }
                 This => {
-                    params.push(ParsedParameter(
+                    if result.has_varargs {
+                        .error("A variadic argument may only appear at the end of a parameter list", .current().span())
+                        error = true
+                    }
+                    result.parameters.push(ParsedParameter(
                         requires_label: false,
                         variable: ParsedVariable(
                             name: "this",
@@ -3662,6 +3700,10 @@ struct Parser {
                     parameter_complete = true
                 }
                 Identifier(name, span) => {
+                    if result.has_varargs {
+                        .error("A variadic argument may only appear at the end of a parameter list", .current().span())
+                        error = true
+                    }
                     let var_decl = .parse_variable_declaration(is_mutable: current_param_is_mutable)
 
                     mut default_argument: ParsedExpression? = None
@@ -3671,7 +3713,7 @@ struct Parser {
                         default_argument = .parse_expression(allow_assignments: false, allow_newlines: true)
                     }
 
-                    params.push(ParsedParameter(
+                    result.parameters.push(ParsedParameter(
                         requires_label: current_param_requires_label,
                         variable: ParsedVariable(
                             name: var_decl.name,
@@ -3695,7 +3737,7 @@ struct Parser {
                 }
             }
         }
-        return params
+        return result
     }
 
     public fn parse_function(
@@ -3774,7 +3816,9 @@ struct Parser {
         }
 
         if not is_destructor {
-            parsed_function.params = .parse_function_parameters()
+            let fn_parameters = .parse_function_parameters()
+            parsed_function.params = fn_parameters.parameters
+            parsed_function.has_varargs = fn_parameters.has_varargs
         }
 
         // NOTE: main() always throws
@@ -4051,7 +4095,10 @@ struct Parser {
             let start = .current().span()
             .index++
 
-            let params = .parse_function_parameters()
+            let fn_parameters = .parse_function_parameters()
+            if fn_parameters.has_varargs {
+                .error("Function type cannot have variadic arguments", .current().span())
+            }
 
             let can_throw = .current() is Throws
             if can_throw {
@@ -4066,7 +4113,13 @@ struct Parser {
                 .error("Expected '->'", .current().span())
             }
 
-            yield ParsedType::Function(qualifiers, params, can_throw, return_type, span: merge_spans(start, return_type.span()))
+            yield ParsedType::Function(
+                qualifiers
+                params: fn_parameters.parameters
+                can_throw
+                return_type
+                span: merge_spans(start, return_type.span())
+            )
         }
         else => {
             .error("Expected type name", .current().span())
@@ -5142,10 +5195,14 @@ struct Parser {
         let start = .current().span()
         .index++
         let captures = .parse_captures()
-        let params = .parse_function_parameters()
+        let fn_parameters = .parse_function_parameters()
         let can_throw = .current() is Throws
         if can_throw {
             .index++
+        }
+
+        if fn_parameters.has_varargs {
+            .error("Anonymous functions cannot have varargs", .current().span())
         }
 
         mut return_type = match .current() {
@@ -5170,7 +5227,7 @@ struct Parser {
 
         return ParsedExpression::Function(
             captures
-            params
+            params: fn_parameters.parameters
             can_throw
             is_fat_arrow
             return_type
