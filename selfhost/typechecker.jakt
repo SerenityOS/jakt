@@ -2538,6 +2538,14 @@ struct Typechecker {
             )
 
             let is_generic = not parsed_record.generic_parameters.is_empty() or not func.generic_parameters.is_empty()
+            mut has_varargs = method.parsed_function.has_varargs
+            if has_varargs and method.parsed_function.linkage is Internal {
+                .error(
+                    "Only external functions are allowed to be declared using varargs"
+                    method.parsed_function.name_span
+                )
+                has_varargs = false
+            }
 
             mut checked_function = CheckedFunction(
                 name: func.name
@@ -2570,6 +2578,7 @@ struct Typechecker {
                 is_virtual: false
                 is_override: false
                 is_unsafe: func.is_unsafe
+                has_varargs
             )
 
             let function_id = module.add_function(checked_function)
@@ -4160,6 +4169,15 @@ struct Typechecker {
         let is_generic_function = not parsed_function.generic_parameters.is_empty()
         let is_generic = is_generic_function or (this_arg_type_id.has_value() and .get_type(this_arg_type_id!) is GenericInstance)
 
+        mut has_varargs = parsed_function.has_varargs
+        if has_varargs and parsed_function.linkage is Internal {
+            .error(
+                "Only external functions are allowed to be declared using varargs"
+                parsed_function.name_span
+            )
+            has_varargs = false
+        }
+
         mut checked_function = CheckedFunction(
             name: parsed_function.name
             name_span: parsed_function.name_span
@@ -4186,6 +4204,7 @@ struct Typechecker {
             is_virtual: false
             is_override: false
             is_unsafe: parsed_function.is_unsafe
+            has_varargs
             external_name: parsed_function.external_name
             deprecated_message: parsed_function.deprecated_message
             force_inline: parsed_function.force_inline
@@ -10328,6 +10347,7 @@ struct Typechecker {
 
         let resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(
             params: callee_candidate.generics.base_params
+            has_varargs: callee_candidate.has_varargs
             args: call.args
             scope_id: caller_scope_id
             safety_mode
@@ -10347,7 +10367,7 @@ struct Typechecker {
             }
         }
 
-        if params_to_compare.size() == resolved_args.size() + arg_offset {
+        if params_to_compare.size() <= resolved_args.size() + arg_offset {
             for i in 0..(params_to_compare.size() - arg_offset) {
                 let (name, span, checked_arg) = resolved_args[i]
                 let type_to = .get_type(params_to_compare[i+arg_offset])
@@ -10368,6 +10388,12 @@ struct Typechecker {
                     span: checked_arg.span()
                 )
                 args.push(checked_arg)
+            }
+
+            if params_to_compare.size() < resolved_args.size() + arg_offset and callee_candidate.has_varargs {
+                for arg in resolved_args[(params_to_compare.size() - arg_offset)..] {
+                    args.push(arg.2)
+                }
             }
         }
 
@@ -10929,6 +10955,7 @@ struct Typechecker {
     fn resolve_default_params(
         mut this
         params: [CheckedParameter]
+        has_varargs: bool
         args: [(String, Span, ParsedExpression)]
         scope_id: ScopeId
         safety_mode: SafetyMode
@@ -10943,7 +10970,10 @@ struct Typechecker {
             }
         }
 
-        guard args.size() >= params.size() - arg_offset - params_with_default_value and args.size() <= params.size() - arg_offset else {
+        let max_number_of_valid_arguments = params.size() - arg_offset
+        let min_number_of_valid_arguments = max_number_of_valid_arguments - params_with_default_value
+
+        guard args.size() >= min_number_of_valid_arguments and (args.size() <= max_number_of_valid_arguments or has_varargs) else {
             .error("Wrong number of arguments", span)
             return []
         }
@@ -10990,6 +11020,10 @@ struct Typechecker {
                 mut checked_arg = maybe_checked_expr!
                 resolved_args.push((param.variable.name, span, checked_arg))
             }
+        }
+
+        for (name, span, expr) in args[consumed_arg..] {
+            resolved_args.push((name, span, .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)))
         }
 
         return resolved_args

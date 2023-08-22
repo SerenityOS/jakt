@@ -968,6 +968,14 @@ fn get_function_signature(program: CheckedProgram, function_id: FunctionId) thro
         is_first_param = false
     }
 
+    if checked_function.has_varargs {
+        if is_first_param {
+            parameters += ".."
+        } else {
+            parameters += ", .."
+        }
+    }
+
     let throws_str = match checked_function.can_throw {
         true => " throws"
         false => ""

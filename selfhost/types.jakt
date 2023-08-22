@@ -790,6 +790,7 @@ class CheckedFunction {
     public is_virtual: bool
     public is_override: bool
     public is_unsafe: bool
+    public has_varargs: bool = false
     public specialization_index: usize? = None
 
     public owner_scope: ScopeId? = None
@@ -831,6 +832,7 @@ class CheckedFunction {
         is_virtual: .is_virtual
         is_override: .is_override
         is_unsafe: .is_unsafe
+        has_varargs: .has_varargs
         specialization_index: .specialization_index
         owner_scope: .owner_scope
         is_fully_checked: .is_fully_checked
@@ -841,8 +843,10 @@ class CheckedFunction {
 
     public fn signature_matches(this, anon other: CheckedFunction, ignore_this: bool = false) throws -> bool {
         if this.name != other.name or
-        this.can_throw != other.can_throw or
-        this.is_comptime != other.is_comptime {
+            this.can_throw != other.can_throw or
+            this.is_comptime != other.is_comptime or
+            this.has_varargs != other.has_varargs {
+
             return false
         }
 
