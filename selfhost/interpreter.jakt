@@ -825,8 +825,8 @@ class InterpreterScope {
         }
 
         // How did this pass typecheck?
-        // panic(format("Could not find binding for {}", name))
-        throw Error::from_errno(InterpretError::UnknownVariable as! i32);
+        panic(format("Could not find binding for {}", name))
+        // throw Error::from_errno(InterpretError::UnknownVariable as! i32);
     }
 
     public fn set(mut this, anon name: String, anon value: Value) throws {
@@ -845,7 +845,8 @@ class InterpreterScope {
         }
 
         // How did this pass typecheck?
-        throw Error::from_errno(InterpretError::UnknownVariable as! i32);
+        panic(format("Could not find binding for {}", name))
+        // throw Error::from_errno(InterpretError::UnknownVariable as! i32);
     }
 
     public fn all_bindings(this) throws -> [String:Value] {
@@ -3231,6 +3232,45 @@ class Interpreter {
                         )
                         throw Error::from_errno(InterpretError::UnwrapOptionalNone as! i32)
                     }
+                    else => {
+                        panic("Invalid Optional configuration")
+                    }
+                }
+                "map" => match this_argument!.impl {
+                    OptionalSome(value) => {
+                        let mapper_value = arguments[0]
+                        guard mapper_value.impl is Function(block, params, return_type_id, checked_params) else {
+                            panic("Invalid mapper type in Optional::map")
+                        }
+                        mut scope = InterpreterScope::create()
+                        mut first = true
+                        for declared_param in checked_params {
+                            let name = declared_param.variable.name
+                            let (param_type_id, default_value) = params[name]
+                            if first {
+                                first = false
+                                scope.bindings.set(
+                                    name
+                                    value: cast_value_to_type(value, param_type_id, interpreter: this)
+                                )
+                            } else {
+                                let expr_value = .execute_expression(expr: default_value!, scope)
+                                if expr_value is JustValue(default_) {
+                                    scope.bindings.set(name, value: default_)
+                                } else {
+                                    return expr_value
+                                }
+                            }
+                        }
+
+                        let result = .execute_block(block, scope, call_span)
+                        guard result is JustValue(blk) else {
+                            return result
+                        }
+
+                        yield StatementResult::JustValue(blk)
+                    }
+                    OptionalNone => StatementResult::JustValue(this_argument!)
                     else => {
                         panic("Invalid Optional configuration")
                     }
