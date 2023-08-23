@@ -43,6 +43,8 @@ import extern c "stdlib.h" {
     extern fn free(anon ptr: raw c_char)
 }
 
+import jakt::prelude::configuration { UserConfiguration }
+
 fn bitcast<D, S>(anon value: S) -> D {
     mut x = null<D>()
     let f = fn[&x, &value]() {
@@ -1884,6 +1886,12 @@ fn process_struct(
     }
 }
 
+comptime clang_runtime_include_dir() throws -> String? {
+    return UserConfiguration::value_of("jakt.cpp_import.processor.clang.resource_dir").map(
+        fn(anon x: &StringView) throws -> String => format("{}/include", x)
+    )
+}
+
 fn process_cpp_import(
     program: &mut CheckedProgram
     import_path: Path
@@ -1899,6 +1907,11 @@ fn process_cpp_import(
         module_id
         for_block: false
     )
+
+    let dir = clang_runtime_include_dir()
+    if dir.has_value() {
+        program.compiler.include_paths.push(dir!)
+    }
 
     let found_path = program.compiler.find_in_search_paths(import_path)
     if not found_path.has_value() {
@@ -1934,7 +1947,9 @@ fn process_cpp_import(
     }
 
     if tu == CXTranslationUnit() {
-        mut args_storage = [""; 2 + program.compiler.include_paths.size() + defines.size()]
+        mut includes = program.compiler.include_paths[..].to_array()
+
+        mut args_storage = [""; 2 + includes.size() + defines.size()]
         if is_c {
             args_storage[0] = "-xc"
             args_storage[1] = "-std=c11"
@@ -1942,14 +1957,14 @@ fn process_cpp_import(
             args_storage[0] = "-xc++-header"
             args_storage[1] = "-std=c++20"
         }
-        for i in 0..program.compiler.include_paths.size() {
-            args_storage[i + 2] = format("-I{}", program.compiler.include_paths[i])
+        for i in 0..includes.size() {
+            args_storage[i + 2] = format("-I{}", includes[i])
         }
 
         mut defines_it = defines.iterator()
         for i in 0..defines.size() {
             let (key, value) = defines_it.next()!
-            args_storage[i + 2 + program.compiler.include_paths.size()] = format("-D{}={}", key, value)
+            args_storage[i + 2 + includes.size()] = format("-D{}={}", key, value)
         }
 
         mut args = allocate<raw c_char>(count: args_storage.size())
