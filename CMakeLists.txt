@@ -29,6 +29,14 @@ find_package(Clang CONFIG)
 set(JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT none)
 if (Clang_FOUND)
   set(JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT clang)
+  find_program(CLANG_PATH clang REQUIRED)
+  execute_process(
+    COMMAND
+      ${CLANG_PATH} -print-resource-dir
+    OUTPUT_VARIABLE
+      JAKT_CLANG_RESOURCE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
 endif()
 
 include(GNUInstallDirs)
@@ -71,7 +79,7 @@ elseif(CPP_AUTO_IMPORT_PROCESSOR STREQUAL "libcpp")
   )
 endif()
 
-message(STATUS "Using ${JAKT_CPP_AUTO_IMPORT_PROCESSOR} as the cpp import processor (using Clang=${JAKT_USING_CLANG})")
+message(STATUS "Using ${JAKT_CPP_AUTO_IMPORT_PROCESSOR} as the cpp import processor (using Clang=${JAKT_USING_CLANG}, resource dir=${JAKT_CLANG_RESOURCE_DIR})")
 
 set(in_build_prefix "")
 get_cmake_property(is_multi_config GENERATOR_IS_MULTI_CONFIG)
@@ -213,6 +221,11 @@ endif()
 set(SELFHOST_CONFIGS
   "jakt.cpp_import.processor=${JAKT_CPP_AUTO_IMPORT_PROCESSOR}"
 )
+
+if(NOT JAKT_CLANG_RESOURCE_DIR STREQUAL "")
+  list(APPEND SELFHOST_CONFIGS "jakt.cpp_import.processor.clang.resource_dir=${JAKT_CLANG_RESOURCE_DIR}")
+endif()
+
 
 add_jakt_executable(jakt_stage1
   COMPILER "${BOOSTRAP_COMPILER}"
