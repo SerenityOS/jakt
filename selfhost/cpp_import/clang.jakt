@@ -183,6 +183,14 @@ fn cast_to_type(
     else => ValueImpl::Void
 }
 
+fn value_or_error<T>(anon x: T?) throws -> T {
+    if x.has_value() {
+        return x.value()
+    }
+
+    throw Error::from_string_literal("Missing value")
+}
+
 fn type_from(
     program: &mut CheckedProgram
     scope_id: ScopeId
@@ -257,7 +265,17 @@ fn type_from(
             }
         }
         CXType_Elaborated => type_from(program, scope_id, module_id, clang_Type_getNamedType(t))
-        CXType_Unexposed => builtin(BuiltinType::Unknown)
+        CXType_Unexposed => {
+            let name = string_from(clang_getTypeSpelling(t))
+            yield match name.is_empty() {
+                true => builtin(BuiltinType::Unknown)
+                false => program.find_type_in_scope(
+                    scope_id
+                    name
+                    ignore_mixin_scopes: true
+                ) ?? builtin(BuiltinType::Unknown)
+            }
+        }
         CXType_LValueReference => program.find_or_add_type_id(
             type: Type::Reference(
                 type_from(program, scope_id, module_id, clang_getPointeeType(t))
@@ -348,11 +366,13 @@ fn type_from(
             let element_type = clang_getArrayElementType(t)
             let element_type_id = type_from(program, scope_id, module_id, element_type)
             let array_size = clang_getArraySize(t)
-            let static_array_struct_id = program.find_struct_in_scope(
+            let static_array_struct_id = try value_or_error(program.find_struct_in_scope(
                 scope_id
                 name: "StaticArray"
                 ignore_mixin_scopes: true
-            )!
+            )) catch {
+                return builtin(BuiltinType::Unknown)
+            }
             let generic_arguments = [
                 element_type_id
                 program.find_or_add_type_id(
@@ -770,6 +790,7 @@ fn process_macro(
 struct TemplateParameters {
     params: [CheckedGenericParameter]
     defaults: [TypeId?]
+    packs_by_name: [String]
 }
 
 fn extract_template_parameters(
@@ -784,9 +805,43 @@ fn extract_template_parameters(
     )
     mut params: [CheckedGenericParameter] = []
     mut defaults: [TypeId?] = []
+    mut packs_by_name: [String] = []
+
     for parameter in template_parameters {
         let spelling = string_from(clang_getCursorSpelling(parameter))
         let name = name_from(parameter)
+        mut is_variadic = false
+        // Clang-C doesn't have any API that would tell us whether this template parameter is a pack
+        // so we have to bend over backwards and figure it out ourselves:
+        // - assume the parameter spans N tokens (at minimum N = 2)
+        // - if the penultimate token in this set is '...', we have a type pack
+        // - otherwise this is a "normal" parameter.
+        {
+            let range = clang_getCursorExtent(cursor: parameter)
+            mut tokens = null<raw CXToken>()
+            mut num_tokens = 0u32
+            let tu = clang_Cursor_getTranslationUnit(cursor: parameter)
+            clang_tokenize(
+                tu
+                range
+                tokens: &raw tokens
+                num_tokens: &raw num_tokens
+            )
+            defer clang_disposeTokens(tu, tokens, num_tokens)
+
+            if num_tokens >= 1 {
+                is_variadic = string_from(clang_getTokenSpelling(tu, token: unsafe read_at_offset(tokens, num_tokens - 1))) == "..."
+            }
+            if num_tokens >= 2 {
+                is_variadic = is_variadic or string_from(clang_getTokenSpelling(tu, token: unsafe read_at_offset(tokens, num_tokens - 2))) == "..."
+            }
+        }
+
+        if is_variadic {
+            packs_by_name.push(name)
+            continue
+        }
+
         mut constraints_and_default_value = extract_cursors_of_kinds(
             cursor: parameter
             kinds: {}
@@ -874,6 +929,7 @@ fn extract_template_parameters(
     return TemplateParameters(
         params
         defaults
+        packs_by_name
     )
 }
 
@@ -1152,6 +1208,21 @@ fn process_function(
         for_block: true
     )
 
+    if template_parameters is Some(parameters) {
+        mut scope = program.get_scope(function_scope)
+        for param in parameters.params {
+            let name = match program.get_type(param.type_id) {
+                TypeVariable(name) => name
+                else => {
+                    eprintln("[ICE] Non-type variable in function template parameters")
+                    abort()
+                }
+            }
+
+            scope.types.set(name, param.type_id)
+        }
+    }
+
     mut params: [CheckedParameter] = []
     mut is_mutating = not clang_CXXMethod_isConst(cursor)
     mut is_static = not this_type.has_value() or kind is Constructor or kind is Destructor or clang_CXXMethod_isStatic(cursor)
@@ -1179,6 +1250,11 @@ fn process_function(
     )
     for parameter in parameters {
         let arg_type = clang_getCursorType(parameter)
+        if string_from(clang_getTypeSpelling(arg_type)).ends_with("...") {
+            // Skip over expanded type packs, we're treating the function as variadic.
+            continue
+        }
+
         mut arg_name = name_from(parameter)
         if arg_name.is_empty() {
             arg_name = format("anon_{}", params.size() + 1)
@@ -1216,6 +1292,11 @@ fn process_function(
         Destructor => builtin(BuiltinType::Void)
     }
 
+    mut has_varargs = false
+    if template_parameters?.packs_by_name is Some(packs) {
+        has_varargs = not packs.is_empty()
+    }
+
     let function = CheckedFunction(
         name
         name_span: empty_span()
@@ -1251,6 +1332,7 @@ fn process_function(
         is_virtual: false
         is_override: false
         is_unsafe: false
+        has_varargs
         specialization_index: None
 
         owner_scope: function_scope
