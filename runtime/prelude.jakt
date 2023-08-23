@@ -3,6 +3,8 @@ extern struct Optional<T> {
     fn value(this) -> T
     fn value_or(this, anon x: T) -> T
     fn Optional<S>(anon x: S) -> Optional<S>
+    fn map<U>(this, anon mapper: fn(anon x: &T) -> U) -> Optional<U>
+    fn map<U>(this, anon mapper: fn(anon x: &T) throws -> U) throws -> Optional<U>
 }
 
 extern struct ArrayIterator<T> {
