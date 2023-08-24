@@ -21,22 +21,23 @@ import cpp_import::clang_c {
 }
 import cpp_import::clang_c {
     clang_CXXMethod_isConst, clang_CXXMethod_isPureVirtual, clang_CXXMethod_isStatic, clang_CXXMethod_isVirtual
-    clang_Cursor_Evaluate, clang_Cursor_getNumTemplateArguments, clang_Cursor_getTranslationUnit
-    clang_Cursor_isMacroFunctionLike, clang_Cursor_isNull, clang_EvalResult_dispose, clang_EvalResult_getAsDouble
-    clang_EvalResult_getAsInt, clang_EvalResult_getAsLongLong, clang_EvalResult_getAsStr
-    clang_EvalResult_getAsUnsigned, clang_EvalResult_getKind, clang_EvalResult_isUnsignedInt
-    clang_Type_getNamedType, clang_createIndex, clang_createTranslationUnit, clang_disposeIndex, clang_disposeString
-    clang_disposeTokens, clang_disposeTranslationUnit, clang_equalCursors, clang_getArgType
-    clang_getArrayElementType, clang_getArraySize, clang_getCString, clang_getCanonicalCursor
-    clang_getCanonicalType, clang_getCursorDefinition, clang_getCursorExtent, clang_getCursorKind
-    clang_getCursorKindSpelling, clang_getCursorLocation, clang_getCursorPrettyPrinted
-    clang_getCursorPrintingPolicy, clang_getCursorResultType, clang_getCursorSemanticParent, clang_getCursorSpelling
-    clang_getCursorType, clang_getCursorUSR, clang_getEnumDeclIntegerType, clang_getFileName, clang_getNumArgTypes
-    clang_getPointeeType, clang_getResultType, clang_getSpecializedCursorTemplate, clang_getSpellingLocation
-    clang_getTemplateCursorKind, clang_getTokenKind, clang_getTokenSpelling, clang_getTranslationUnitCursor
-    clang_getTypeDeclaration, clang_getTypeKindSpelling, clang_getTypeSpelling, clang_getTypedefDeclUnderlyingType
-    clang_isConstQualifiedType, clang_isCursorDefinition, clang_isDeclaration, clang_isExpression
-    clang_parseTranslationUnit2, clang_saveTranslationUnit, clang_tokenize, clang_visitChildren
+    clang_Cursor_Evaluate, clang_Cursor_getNumTemplateArguments, clang_Cursor_getTemplateArgumentType
+    clang_Cursor_getTranslationUnit, clang_Cursor_isMacroFunctionLike, clang_Cursor_isNull, clang_EvalResult_dispose
+    clang_EvalResult_getAsDouble, clang_EvalResult_getAsInt, clang_EvalResult_getAsLongLong
+    clang_EvalResult_getAsStr, clang_EvalResult_getAsUnsigned, clang_EvalResult_getKind
+    clang_EvalResult_isUnsignedInt, clang_Type_getNamedType, clang_Type_getTemplateArgumentAsType, clang_createIndex
+    clang_createTranslationUnit, clang_disposeIndex, clang_disposeString, clang_disposeTokens
+    clang_disposeTranslationUnit, clang_equalCursors, clang_getArgType, clang_getArrayElementType
+    clang_getArraySize, clang_getCString, clang_getCanonicalCursor, clang_getCanonicalType
+    clang_getCursorDefinition, clang_getCursorExtent, clang_getCursorKind, clang_getCursorKindSpelling
+    clang_getCursorLocation, clang_getCursorPrettyPrinted, clang_getCursorPrintingPolicy, clang_getCursorResultType
+    clang_getCursorSemanticParent, clang_getCursorSpelling, clang_getCursorType, clang_getCursorUSR
+    clang_getEnumDeclIntegerType, clang_getFileName, clang_getNumArgTypes, clang_getPointeeType, clang_getResultType
+    clang_getSpecializedCursorTemplate, clang_getSpellingLocation, clang_getTemplateCursorKind, clang_getTokenKind
+    clang_getTokenSpelling, clang_getTranslationUnitCursor, clang_getTypeDeclaration, clang_getTypeKindSpelling
+    clang_getTypeSpelling, clang_getTypedefDeclUnderlyingType, clang_isConstQualifiedType, clang_isCursorDefinition
+    clang_isDeclaration, clang_isExpression, clang_parseTranslationUnit2, clang_saveTranslationUnit, clang_tokenize
+    clang_visitChildren
 }
 import utility { allocate }
 import extern c "stdlib.h" {
@@ -1283,15 +1284,24 @@ fn process_function(
         ))
     }
 
-    let return_type = match kind {
-        Normal => type_from(
-            program
-            scope_id: function_scope
-            module_id
-            clang_getCursorResultType(cursor)
-        )
-        Constructor => this_type!
-        Destructor => builtin(BuiltinType::Void)
+    let result_type = clang_getCursorResultType(cursor)
+    let (function_throws, return_type) = match kind {
+        Normal => match inherits_from_erroror(cursor: clang_getTypeDeclaration(result_type)) {
+            true => (true, type_from(
+                program
+                scope_id: function_scope
+                module_id
+                clang_Type_getTemplateArgumentAsType(result_type, 0)
+            ))
+            false => (false, type_from(
+                program
+                scope_id: function_scope
+                module_id
+                result_type
+            ))
+        }
+        Constructor => (program.get_type(this_type!).is_boxed(*program), this_type!)
+        Destructor => (false, builtin(BuiltinType::Void))
     }
 
     mut has_varargs = false
@@ -1319,7 +1329,7 @@ fn process_function(
             yielded_type: None
             yielded_none: false
         )
-        can_throw: false // FIXME: ErrorOr
+        can_throw: function_throws
         type: match kind {
             Normal => FunctionType::Normal
             Constructor => FunctionType::ImplicitConstructor
@@ -1510,7 +1520,16 @@ fn process_enum(
     )
 }
 
+fn inherits_from_erroror(anon cursor: CXCursor) throws -> bool {
+    return inherits_from_any_of(cursor, {"c:@N@AK@ST>2#T#T@ErrorOr"})
+}
+
 fn inherits_from_refcounted_base(anon cursor: CXCursor) throws -> bool {
+    // FIXME: Figure out why ::Core::Object doesn't have any CXXBaseSpecifier children.
+    return inherits_from_any_of(cursor, {"c:@N@AK@S@RefCountedBase", "c:@N@Core@S@Object"})
+}
+
+fn inherits_from_any_of(anon cursor: CXCursor, anon usrs: {String}) throws -> bool {
     mut definition = clang_getCursorDefinition(cursor)
     let maybe_template = clang_getSpecializedCursorTemplate(cursor: definition)
     if not clang_Cursor_isNull(cursor: maybe_template) {
@@ -1531,11 +1550,7 @@ fn inherits_from_refcounted_base(anon cursor: CXCursor) throws -> bool {
     }
 
     let usr = string_from(clang_getCursorUSR(cursor: definition))
-    if usr == "c:@N@AK@S@RefCountedBase" {
-        return true
-    }
-    // FIXME: Figure out why ::Core::Object doesn't have any CXXBaseSpecifier children.
-    if usr == "c:@N@Core@S@Object" {
+    if usrs.contains(usr) {
         return true
     }
 
@@ -1543,7 +1558,7 @@ fn inherits_from_refcounted_base(anon cursor: CXCursor) throws -> bool {
         cursor: definition
         kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier}
     ) {
-        if inherits_from_refcounted_base(base) {
+        if inherits_from_any_of(base, usrs) {
             return true
         }
     }
@@ -1850,7 +1865,7 @@ fn process_struct(
                 yielded_type: None
                 yielded_none: false
             )
-            can_throw: false // FIXME: ErrorOr
+            can_throw: is_class
             type: FunctionType::ImplicitConstructor
             linkage: FunctionLinkage::External
             function_scope_id: function_scope

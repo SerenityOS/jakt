@@ -516,6 +516,7 @@ import extern c "clang-c/Index.h" {
     extern fn clang_getTypedefDeclUnderlyingType(anon cursor: CXCursor) -> CXType
     extern fn clang_getTypeDeclaration(anon type: CXType) -> CXCursor
     extern fn clang_Type_getNamedType(anon type: CXType) -> CXType
+    extern fn clang_Type_getTemplateArgumentAsType(anon type: CXType, anon i: u32) -> CXType
     extern fn clang_getTemplateCursorKind(anon cursor: CXCursor) -> CXCursorKind
     extern fn clang_getCursorPrettyPrinted(cursor: CXCursor, policy: CXPrintingPolicy) -> CXString
     extern fn clang_getCursorPrintingPolicy(cursor: CXCursor) -> CXPrintingPolicy
@@ -528,6 +529,7 @@ import extern c "clang-c/Index.h" {
     extern fn clang_Cursor_isMacroFunctionLike(cursor: CXCursor) -> bool
     extern fn clang_Cursor_getTranslationUnit(cursor: CXCursor) -> CXTranslationUnit
     extern fn clang_Cursor_getNumTemplateArguments(cursor: CXCursor) -> c_int
+    extern fn clang_Cursor_getTemplateArgumentType(cursor: CXCursor, anon index: u32) -> CXType
     extern fn clang_isCursorDefinition(cursor: CXCursor) -> u32
     extern fn clang_getEnumDeclIntegerType(cursor: CXCursor) -> CXType
     extern fn clang_getCursorDefinition(cursor: CXCursor) -> CXCursor
