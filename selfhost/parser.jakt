@@ -3987,19 +3987,21 @@ struct Parser {
         mut is_reference = false
         mut is_mutable_reference = false
 
-        if .current() is Identifier(name) and name == "const" {
-            qualifiers.is_immutable = true
-            .index++
-        } else if .current() is Mut {
-            qualifiers.is_mutable = true
-            .index++
-        } else if .current() is Ampersand {
+        if .current() is Ampersand {
             is_reference = true
             .index++
             if .current() is Mut {
                 is_mutable_reference = true
                 .index++
             }
+        }
+
+        if .current() is Identifier(name) and name == "const" {
+            qualifiers.is_immutable = true
+            .index++
+        } else if .current() is Mut {
+            qualifiers.is_mutable = true
+            .index++
         }
 
         mut parsed_type = .parse_type_shorthand(qualifiers)
