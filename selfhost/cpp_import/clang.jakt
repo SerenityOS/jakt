@@ -1184,9 +1184,20 @@ fn process_function(
     cursor: CXCursor
     template_parameters: TemplateParameters? = None
 ) throws {
+    let is_declared_as_static = kind is Constructor or kind is Destructor or clang_CXXMethod_isStatic(cursor)
+
     if not this_type.has_value() and (kind is Constructor or kind is Destructor) {
         eprintln("[ICE] Constructor or destructor ({}) without a this type", name_from(cursor))
         return
+    }
+
+    if not is_declared_as_static and not this_type.has_value() {
+        let parent_cursor = clang_getCursorSemanticParent(cursor)
+        let kind = clang_getCursorKind(parent_cursor)
+        if clang_isDeclaration(kind) {
+            // This is an out-of-line definition of a member function, we've already seen it, so it's safe to skip.
+            return
+        }
     }
 
     let struct_id = match this_type.has_value() {
@@ -1228,7 +1239,7 @@ fn process_function(
 
     mut params: [CheckedParameter] = []
     mut is_mutating = not clang_CXXMethod_isConst(cursor)
-    mut is_static = not this_type.has_value() or kind is Constructor or kind is Destructor or clang_CXXMethod_isStatic(cursor)
+    let is_static = is_declared_as_static or not this_type.has_value()
 
     if not is_static {
         let variable = CheckedVariable(
