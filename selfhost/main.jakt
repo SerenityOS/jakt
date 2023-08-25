@@ -213,6 +213,7 @@ fn install(from: Path, to: Path) throws {
             }
 
             // FIXME: Symlink
+            try mkdir_p(path: to.join(path_relative_to_target.to_string()).parent())
             let target_path = to.join(path_relative_to_target.to_string())
             mut input_file = File::open_for_reading(path.to_string())
             mut output_file = File::open_for_writing(target_path.to_string())
