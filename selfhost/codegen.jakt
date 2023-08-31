@@ -1853,6 +1853,663 @@ struct CodeGenerator {
         return output
     }
 
+    fn codegen_enum_tagged_union(mut this, enum_: CheckedEnum) throws -> String {
+        mut output = ""
+        if not enum_.underlying_type_id.equals(void_type_id()) {
+            if .program.is_integer(enum_.underlying_type_id) {
+                output += "enum class " + enum_.name + ": " + .codegen_type(enum_.underlying_type_id) + " {\n"
+                for variant in enum_.variants {
+                    output += match variant {
+                        WithValue(name, expr) => name + " = " + .codegen_expression(expr) + ",\n"
+                        else => {
+                            todo(format("codegen_enum can't generate variant: {}", variant))
+                        }
+                    }
+                }
+                return output + "};\n"
+            } else {
+                todo("Enums with a non-integer underlying type")
+            }
+        }
+
+        let is_generic = not enum_.generic_parameters.is_empty()
+        mut generic_parameter_names: [String] = []
+        mut template_args = .codegen_template_parameter_names(enum_.generic_parameters, names: &mut generic_parameter_names)
+
+
+        let generic_parameter_list = join(generic_parameter_names, separator: ", ")
+
+        if is_generic {
+            output += "template<" + template_args + ">\n"
+        }
+        output += format("struct {}", enum_.name)
+        if enum_.is_boxed {
+            output += format(": public RefCounted<{}", enum_.name)
+            if is_generic {
+                output += format("<{}>", join(generic_parameter_names, separator: ", "))
+        }
+            output += ">"
+        }
+        output += " {\n"
+
+        // Choose the index type so that it can hold `variants.size()`. The
+        // indices go from [0, variants.size() - 1], but for the move
+        // constructor we need `__jakt_variant_index`es to be different if one
+        // of them is uninitialized.
+        // The uninit value is zero.
+        // Although there is no practical need for this extra "index" (the same
+        // codegen has to provide safe constructors), it is useful for further
+        // development on this portion of the codegen, since it enables
+        // assertions to verify that the compiler is indeed providing
+        // initialized values.
+        let max_index_value = enum_.variants.size()
+
+        let index_type = match max_index_value {
+            // 0..(1 << 8)
+            0uz..256uz => "u8"
+            // (1 << 8)..(1 << 16)
+            256uz..65536uz => "u16"
+            // (1 << 16)..(1 << 32)
+            65536uz..4294967296uz => "u32"
+            else => "size_t"
+        }
+
+        let (common_fields, variant_field_list) = .codegen_enum_field_lists(enum_)
+
+        // Note that all fields are public; this is a struct that is defined by
+        // the codegen and is to only be used by Jakt code, which this codegen
+        // is the only one in charge of. Using the member directly removes any
+        // need to create functions to get the appropiate values.
+        // We'll use a getter for the variant index, so that the outputted C++ doesn't
+        // have implicit "off-by-one" calculations.
+
+
+        output += format("{} __jakt_variant_index = 0;\n", index_type, max_index_value)
+
+        if not common_fields.is_empty() {
+            // Another maybe-uninitialized data member for the common fields.
+            // NOTE: Could have a record of which fields won't have a default constructor
+            // so this doesn't output a complex union if all the fields have default constructors.
+            output += "union CommonData {\n"
+
+            // This one has to be the first since C++ will use the first field to zero-init
+            // a union. This way we guarantee that the union can be default initialized.
+            output += "u8 __jakt_uninit_common;\n"
+
+            output += "struct {\n"
+
+            // Make common fields available 
+            for (field_name, type) in common_fields {
+                output += format("{} {};\n", type, field_name)
+            }
+
+            output += "};\n"
+
+            // See comment below about the constructors of `VariantData`.
+            // Make sure everything's at zero value.
+            output += "constexpr CommonData() {}\n"
+            output += "~CommonData() {}\n"
+
+            output += "} common;\n"
+        }
+
+
+        output += "union VariantData {\n"
+        
+        // We need to have some way to initialize the union if any of the other fields is non default constructible.
+        output += "u8 __jakt_uninit_value;\n"
+
+        for variant_index in 0..enum_.variants.size() {
+            let variant = enum_.variants[variant_index]
+            let fields: [(String, String)] = variant_field_list[variant_index].1
+
+            if not fields.is_empty() {
+                output += "struct {\n"
+                for (field_name, field_type) in fields.iterator() {
+                    output += format("{} {};\n", field_type, field_name)
+                }
+                output += format("}} {};\n", variant.name())
+            }
+        }
+
+        output += "constexpr VariantData() {}\n"
+        // make the union's destructor do nothing so C++ can shut up about the union
+        // not having a default destructor. The safe destructor is the outer
+        // struct's destructor, which has access to the variant index.
+        output += "~VariantData() {}\n"
+
+        output += "} as;\n"
+        output += format("constexpr {} __jakt_init_index() const noexcept {{ return __jakt_variant_index - 1; }}", index_type)
+
+
+        if enum_.generic_parameters.is_empty() {
+            output += "ErrorOr<DeprecatedString> debug_description() const;\n"
+        } else {
+            output += .codegen_enum_debug_description_getter(enum_, is_inline: true)
+        }
+
+
+
+        if is_generic {
+            // produce constructors that initialize the correct parts of the union
+
+            output += .codegen_enum_constructors(
+                enum_
+                is_inside_struct: true
+                generic_parameter_list
+                variant_field_list
+                common_fields
+            )
+
+            output += format("~{}()", enum_.name)
+
+            .codegen_enum_destructor_body(enum_, &mut output)
+
+            output += "private: void __jakt_destroy_variant() {\n"
+            .codegen_enum_destroy_variant(enum_, &mut output)
+            output += "}\n"
+            output += "public:\n"
+
+        } else {
+
+            // Just make forward declarations for the constructor.
+            for (variant_name, variant_fields) in variant_field_list {
+                codegen_enum_constructor_decl(
+                    enum_name: enum_.name
+                    variant_name
+                    variant_fields
+                    common_fields
+                    is_inline: true
+                    ctor_result_type: enum_constructor_result_type(enum_)
+                    &mut output
+                )
+                output += ";\n"
+            }
+
+
+            // Forward declare destructor, move assignment and copy assignment
+            // operators/constructors.
+            output += format("~{}();\n", enum_.name)
+            output += format("{0}& operator=({0} const &);\n", enum_.name)
+            output += format("{0}& operator=({0} &&);\n", enum_.name)
+            output += format("{0}({0} const&);\n", enum_.name)
+            output += format("{0}({0} &&);\n", enum_.name)
+            output += "private: void __jakt_destroy_variant();\n"
+            output += "public:\n"
+        }
+
+
+        let enum_scope = .program.get_scope(enum_.scope_id)
+        for (_, overload_set) in enum_scope.functions {
+            for function_id in overload_set {
+                let function = .program.get_function(function_id)
+
+                let previous_function_id = .current_function
+                .current_function = Some(function)
+                defer .current_function = previous_function_id
+
+                guard not function.type is ImplicitEnumConstructor else {
+                    continue
+                }
+
+                if not enum_.generic_parameters.is_empty() {
+                    output += .codegen_function(function, as_method: true)
+                } else if function.generics.params.is_empty() or not function.specialization_index.has_value() {
+                    output += .codegen_function_predecl(function, as_method: true)
+                }
+            }
+        }
+
+        // The only private thing is the default constructor, which is
+        // overriden to allow the `static` functions to start with an undefined
+        // value and write to it.
+        output += format("private:\n{}() {{}};\n", enum_.name)
+
+        output += "};\n"
+
+        .deferred_output += .codegen_ak_formatter(name: enum_.name, generic_parameter_names, template_args)
+
+        return output
+    }
+
+    fn codegen_enum_constructor_decl(
+        enum_name: String
+        variant_name: String
+        variant_fields: [(String, String)] // field_name, .codegen_type(field_type)
+        common_fields: [(String, String)] // field_name, .codegen_type(field_type)
+        is_inline: bool // whether it's an inline definition (inside of the `struct`) or out-of-line one.
+        ctor_result_type: String
+        output: &mut String
+    ) throws {
+        output += "[[nodiscard]] "
+        if is_inline {
+            output += format("static {} {}(", ctor_result_type, variant_name)
+        } else {
+            output += format("{} {}::{}(", ctor_result_type, enum_name, variant_name)
+        }
+
+        let has_common_fields = not common_fields.is_empty()
+            
+        // arguments
+        if has_common_fields {
+            let (first_name, first_type) = common_fields[0]
+            output += format("{} {}", first_type, first_name)
+
+            for i in 1..common_fields.size() {
+                let (name, type) = common_fields[i]
+                output += format(", {} {}", type, name)
+            }
+
+            for (name, type) in variant_fields {
+                output += format(", {} {}", type, name)
+            }
+        } else if not variant_fields.is_empty() {
+            let (first_name, first_type) = variant_fields[0]
+            output += format("{} {}", first_type, first_name)
+
+            for i in 1..variant_fields.size() {
+                let (name, type) = variant_fields[i]
+                output += format(", {} {}", type, name)
+            }
+        }
+
+        output += ")"
+    }
+
+    fn codegen_for_enum_variants(this, anon enum_: &CheckedEnum, anon stmt_fmt: &fn(accessor: String) throws -> String, index_expr: String, output: &mut StringBuilder) throws {
+        // Adding to output here in a loop was causing a 30% slowdown, so using
+        // a StringBuilder to mitigate it.
+        output.append(format("switch ({}) {{\n", index_expr))
+
+        let common_field_count = enum_.fields.size()
+
+        for variant_index in 0..enum_.variants.size() {
+            let variant = &enum_.variants[variant_index]
+            let variant_name = variant.name()
+            output.append(format("case {} /* {} */:\n", variant_index, variant_name))
+
+            match variant {
+                Untyped | WithValue => {}
+                Typed => {
+                    output.append(stmt_fmt(accessor: format("as.{}.value", variant_name)))
+                }
+                StructLike(fields) => {
+                    for field in fields[common_field_count..] {
+                        let variable = .program.get_variable(field)
+                        let name = variable.name_for_codegen().as_name_for_use()
+
+                        output.append(stmt_fmt(accessor: format("as.{}.{}", variant_name, name)))
+                    }
+                }
+            }
+
+            output.append("break;\n")
+        }
+
+        output.append("}\n")
+    }
+
+    /// Generates the body for a copy/ move assignment operator/constructor.
+    ///
+    /// Assumes that the argument is named "rhs".
+    fn codegen_enum_assignment_body(
+        this
+        enum_: CheckedEnum
+        is_constructor: bool // whether it's a constructor. If false, it's an assignment operator.
+        use_move: bool // whether to use the "move()" function from AK lib.
+    ) throws -> String {
+        mut output = StringBuilder::create()
+        output.append("{")
+
+        if is_constructor {
+            // The assigned value must be initialized.
+            // The constructed value is assumed to be uninitialized.
+            output.append("VERIFY(rhs.__jakt_variant_index != 0);\n")
+        } else {
+            // Both values are assumed to be initialized
+            output.append("VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);\n")
+        }
+
+        let assign = fn[use_move](accessor: String) throws -> String {
+            let rhs = match use_move {
+                true => format("move(rhs.{})", accessor)
+                false => format("rhs.{}", accessor)
+            }
+            return format("this->{} = {};\n", accessor, rhs)
+        }
+
+        let placement_new = fn[use_move](accessor: String) throws -> String {
+            let rhs = match use_move {
+                true => format("move(rhs.{})", accessor)
+                false => format("rhs.{}", accessor)
+            }
+            return format("new (&this->{0}) (decltype(this->{0}))({1});\n",
+                accessor, rhs)
+        }
+
+        if is_constructor {
+            for common in enum_.fields {
+                let variable = .program.get_variable(common.variable_id)
+                let name = variable.name_for_codegen().as_name_for_use()
+
+                output.append(placement_new(accessor: format("common.{}", name)))
+            }
+        } else {
+            for common in enum_.fields {
+                let variable = .program.get_variable(common.variable_id)
+                let name = variable.name_for_codegen().as_name_for_use()
+
+                output.append(assign(accessor: format("common.{}", name)))
+            }
+        }
+
+
+        if is_constructor {
+            // In a constructor, everything needs placement new since it's uninitialized.
+            .codegen_for_enum_variants(&enum_, &placement_new, index_expr: "rhs.__jakt_init_index()", &mut output)
+        } else {
+            // If it's not the same thing, the only safe thing here is to call the destructor
+            // and use placement_new.
+            // NOTE: This method can leave performance on the table. Consider the
+            // case of two distinct variants where a value of the same type exists
+            // at the same offset in both of them. That value could have used an
+            // assignment operator since it's already initialized to the correct
+            // type.
+
+            output.append("if (this->__jakt_variant_index != rhs.__jakt_variant_index) {\n")
+            output.append("this->__jakt_destroy_variant();\n")
+
+            .codegen_for_enum_variants(&enum_, &placement_new, index_expr: "rhs.__jakt_init_index()", &mut output)
+
+            output.append("} else {\n")
+
+            // Here we can use assignment for all of the fields, since we know for sure
+            // they have been initialized.
+
+            .codegen_for_enum_variants(&enum_, &assign, index_expr: "rhs.__jakt_init_index()", &mut output)
+
+            output.append("}\n")
+        }
+
+        output.append("this->__jakt_variant_index = rhs.__jakt_variant_index;\n")
+
+        output.append("}\n")
+        return output.to_string()
+    }
+
+    fn codegen_enum_constructors(
+        this
+        enum_: CheckedEnum
+        is_inside_struct: bool
+        generic_parameter_list: String? // Must be Some if enum is generic.
+        variant_field_list: [(String, [(String, String)])] // variant_name, [(field_name, .codegen_type(field_type)]
+        common_fields: [(String, String)]
+    ) throws -> String {
+        mut output = ""
+
+        let is_generic = not enum_.generic_parameters.is_empty()
+
+        let ctor_result_type = enum_constructor_result_type(enum_, generic_parameter_list)
+
+        let ctor_type = match is_generic {
+            true => format("{}<{}>", enum_.name, generic_parameter_list)
+            false => enum_.name
+        }
+
+            // NOTE: these statements should compile because a default constructor is provided privately.
+        let (declare_uninit, deref_uninit) = match enum_.is_boxed {
+            true => (
+                format("NonnullRefPtr<{0}> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {0}));\n", ctor_type),
+                "__jakt_uninit_enum->"
+            )
+            false => (
+                format("{} __jakt_uninit_enum;\n", enum_.name),
+                "__jakt_uninit_enum."
+            )
+        }
+
+        guard (is_inside_struct or not is_generic) else {
+            panic("Out of line constructor cannot be generated for generic enum")
+        }
+
+        let placement_new = fn[](target: String, name: String) throws -> String {
+            return format("new (&{0}) (decltype({1}))(move({1}));\n", target, name)
+        }
+
+
+        // Variant constructors
+        for variant_index in 0..variant_field_list.size() {
+            let (variant_name, variant_fields) = variant_field_list[variant_index]
+
+            codegen_enum_constructor_decl(
+                enum_name: enum_.name
+                variant_name
+                variant_fields
+                common_fields
+                is_inline: is_inside_struct
+                ctor_result_type
+                &mut output
+            )
+
+            // Generate the body
+            output += "{\n"
+
+            output += declare_uninit
+
+            // +1 because 0 is the uninitialized tag
+            output += format("{}__jakt_variant_index = {};\n", deref_uninit, variant_index + 1)
+
+            for field in common_fields {
+                let name = field.0
+                output += placement_new(
+                    target: format("{}common.{}", deref_uninit, name)
+                    name
+                )
+            }
+
+            for field in variant_fields {
+                let name = field.0
+                output += placement_new(
+                    target: format("{}as.{}.{}", deref_uninit, variant_name, name)
+                    name
+                )
+            }
+
+            output += "return __jakt_uninit_enum;\n"
+
+            output += "}\n"
+        }
+
+        // Copy assignment operator
+        if is_inside_struct {
+            output += format("{0}& operator=({0} const &rhs)", enum_.name)
+        } else {
+            output += format("{0}& {0}::operator=({0} const &rhs)", enum_.name)
+        }
+        output += "{\n"
+        output += .codegen_enum_assignment_body(enum_,is_constructor: false use_move: false)
+        output += "return *this;\n"
+        output += "}\n"
+
+        // Copy constructor
+        if is_inside_struct {
+            output += format("{0}({0} const &rhs)", enum_.name)
+        } else {
+            output += format("{0}::{0}({0} const &rhs)", enum_.name)
+        }
+        output += .codegen_enum_assignment_body(enum_, is_constructor: true, use_move: false)
+
+        // Move assignment operator
+        if is_inside_struct {
+            output += format("{0}& operator=({0} &&rhs)", enum_.name)
+        } else {
+            output += format("{0}& {0}::operator=({0} &&rhs)", enum_.name)
+        }
+        output += "{\n"
+        output += .codegen_enum_assignment_body(enum_, is_constructor: false, use_move: true)
+        output += "return *this;\n"
+        output += "}\n"
+
+        // Move constructor
+        if is_inside_struct {
+            output += format("{0}({0} &&rhs)", enum_.name)
+        } else {
+            output += format("{0}::{0}({0} &&rhs)", enum_.name)
+        }
+        output += "{\n"
+        output += .codegen_enum_assignment_body(enum_, is_constructor: true, use_move: true)
+        output += "}\n"
+        return output
+    }
+
+    fn codegen_enum_field_lists(mut this, anon enum_: CheckedEnum) throws -> ( [(String, String)], [(String, [(String, String)])]) {
+        mut common_fields: [(String, String)] = []
+        mut common_field_names: {String} = {}
+        for field in enum_.fields {
+            let variable = .program.get_variable(field.variable_id)
+            let name = variable.name_for_codegen().as_name_for_definition()
+            common_fields.push((name, .codegen_type(variable.type_id)))
+            common_field_names.add(name)
+        }
+
+        // "(<variant_name>, <(arg name, type) list>)". The rest of the function can be generated without looking at the variant.
+        mut variant_field_list: [(String, [(String, String)])] = []
+        for variant_index in 0..enum_.variants.size() {
+            let variant = enum_.variants[variant_index]
+            let fields: [(String, String)] = match variant {
+                Untyped(name) => [] // no data to add, just the index.
+                StructLike(name, fields: own_fields) => {
+                    mut fields: [(String, String)] = []
+                    for field in own_fields {
+                        let variable = .program.get_variable(field)
+                        if not common_field_names.contains(variable.name) {
+                            fields.push((variable.name_for_codegen().as_name_for_definition(), .codegen_type(variable.type_id)))
+                        }
+                    }
+
+                    yield fields
+                }
+                Typed(name, type_id) => {
+                    mut fields: [(String, String)] = []
+                    fields.push(("value", .codegen_type(type_id)))
+
+                    yield fields
+                }
+                else => {
+                    todo(format("codegen enum variant: {}", variant))
+                }
+            }
+
+            variant_field_list.push((variant.name(), fields))
+        }
+
+        return (common_fields, variant_field_list)
+    }
+
+    fn destructor_name(this, anon id: TypeId) throws -> String? => match .program.get_type(id) {
+        JaktString => "DeprecatedString"
+        GenericInstance(id) | GenericResolvedType(id) | Struct(id) => {
+            let struct_ = .program.get_struct(id)
+            yield match (struct_.record_type is Class) {
+                true => "NonnullRefPtr"
+                false => struct_.name_for_codegen().as_name_for_use()
+            }
+        }
+        TypeVariable(name) => name
+        Enum(id) | GenericEnumInstance(id) => {
+            let enum_ = .program.get_enum(id)
+            yield match enum_.is_boxed {
+                true => "NonnullRefPtr"
+                false => enum_.name
+            }
+        }
+        else => None
+    }
+
+    fn enum_constructor_result_type(enum_: CheckedEnum, generic_parameter_list: String? = None) throws -> String {
+        mut result = enum_.name
+        if not enum_.generic_parameters.is_empty() {
+            result += format("<{}>", generic_parameter_list!)
+        }
+        if enum_.is_boxed {
+            result = format("ErrorOr<NonnullRefPtr<{}>>", result)
+        }
+        return result
+    }
+
+    /// Generates the body for `__jakt_destroy_variant`, which calls the correct
+    /// destructors just for the varying part of the enum. Used both in the
+    /// destructor to fully destruct everything, but also on copy & move
+    /// assignment operators when the variant tag isn't the same.
+    fn codegen_enum_destroy_variant(this
+        enum_: CheckedEnum
+        output: &mut String
+    ) throws {
+        let common_field_count = enum_.fields.size()
+        output += "switch (this->__jakt_init_index()) {\n"
+        for variant_index in 0..enum_.variants.size() {
+            let variant = enum_.variants[variant_index]
+            let variant_name = variant.name()
+            output += format("case {} /* {} */:", variant_index, variant_name)
+
+            match variant {
+                Untyped | WithValue => {}
+                Typed(type_id) => {
+                    let ds_name = .destructor_name(type_id)
+                    if ds_name is Some(name) {
+                        output += format("this->as.{}.value.~{}();\n", variant_name, name)
+                    }
+                }
+                StructLike(fields) => {
+                    for field in fields[common_field_count..] {
+                        let variable = .program.get_variable(field)
+
+                        let ds: String? = .destructor_name(variable.type_id)
+
+                        if ds is Some(name) {
+                            output += format("this->as.{}.{}.~{}();\n", 
+                                variant_name
+                                variable.name_for_codegen().as_name_for_use()
+                                name
+                            )
+                        }
+
+                    }
+                }
+            }
+
+            output += "break;\n"
+        }
+        output += "}\n"
+    }
+
+    fn codegen_enum_destructor_body(
+        this
+        enum_: CheckedEnum
+        output: &mut String
+    ) throws {
+        output += "{\n"
+
+        output += "if (this->__jakt_variant_index == 0) return;\n"
+
+        let common_field_count = enum_.fields.size()
+
+        for common_field in enum_.fields {
+            let variable = .program.get_variable(common_field.variable_id)
+
+            let ds: String? = .destructor_name(variable.type_id)
+
+            if ds is Some(name) {
+                output += format("this->common.{}.~{}();\n", variable.name_for_codegen().as_name_for_use(), name)
+            }
+
+        }
+
+        output += "this->__jakt_destroy_variant();\n"
+
+        output += "}\n"
+    }
+
     fn codegen_debug_description_getter(mut this, struct_: CheckedStruct, is_inline: bool = false) throws -> String {
         mut output = ""
 
