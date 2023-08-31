@@ -1281,6 +1281,8 @@ enum CheckedEnumVariant {
     Untyped(enum_id: EnumId, name: String, span: Span)
     Typed(enum_id: EnumId, name: String, type_id: TypeId, span: Span)
     WithValue(enum_id: EnumId, name: String, expr: CheckedExpression, span: Span)
+    // NOTE: The parent enum's `CheckedEnum.fields` are duplicated at the start of
+    // the `fields` array. This invariant is used to skip over them when not needed.
     StructLike(enum_id: EnumId, name: String, fields: [VarId], span: Span)
 
     fn equals(this, anon other: CheckedEnumVariant) -> bool {

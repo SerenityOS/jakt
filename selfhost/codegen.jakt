@@ -1175,6 +1175,22 @@ struct CodeGenerator {
 
             if enum_.underlying_type_id.equals(void_type_id()) {
                 output += .codegen_enum_debug_description_getter(enum_)
+                let (common_fields, variant_field_list) = .codegen_enum_field_lists(enum_)
+                output += .codegen_enum_constructors(
+                    enum_
+                    is_inside_struct: false
+                    generic_parameter_list: None
+                    variant_field_list
+                    common_fields
+                )
+
+                output += format("{0}::~{0}()", enum_.name)
+
+                .codegen_enum_destructor_body(enum_, &mut output)
+
+                output += format("void {0}::__jakt_destroy_variant() {{\n", enum_.name)
+                .codegen_enum_destroy_variant(enum_, &mut output)
+                output += "}\n"
             }
 
             let scope = .program.get_scope(enum_.scope_id)
@@ -1644,20 +1660,6 @@ struct CodeGenerator {
         let is_generic = not enum_.generic_parameters.is_empty()
         mut template_args = .codegen_template_parameter_names(enum_.generic_parameters)
 
-        output += format("namespace {}_Details", enum_.name) + " {\n"
-        for variant in enum_.variants {
-            match variant {
-                Untyped(name) | StructLike(name) | Typed(name) => {
-                    if is_generic {
-                        output += format("template<{}>\n", template_args)
-                    }
-                    output += format("struct {};\n", name)
-                }
-                else => {}
-            }
-        }
-        output += "}\n"
-
         if is_generic {
             output += format("template<{}>\n", template_args)
         }
@@ -1667,193 +1669,6 @@ struct CodeGenerator {
     }
 
     fn codegen_enum(mut this, enum_: CheckedEnum) throws -> String {
-        mut output = ""
-        if not enum_.underlying_type_id.equals(void_type_id()) {
-            if .program.is_integer(enum_.underlying_type_id) {
-                output += "enum class " + enum_.name + ": " + .codegen_type(enum_.underlying_type_id) + " {\n"
-                for variant in enum_.variants {
-                    output += match variant {
-                        WithValue(name, expr) => name + " = " + .codegen_expression(expr) + ",\n"
-                        else => {
-                            todo(format("codegen_enum can't generate variant: {}", variant))
-                        }
-                    }
-                }
-                return output + "};\n"
-            } else {
-                todo("Enums with a non-integer underlying type")
-            }
-        }
-
-        let is_generic = not enum_.generic_parameters.is_empty()
-        mut generic_parameter_names: [String] = []
-        mut template_args = .codegen_template_parameter_names(enum_.generic_parameters, names: &mut generic_parameter_names)
-
-        mut common_fields: [(String, String)] = []
-        for field in enum_.fields {
-            let variable = .program.get_variable(field.variable_id)
-            common_fields.push((variable.name_for_codegen().as_name_for_definition(), .codegen_type(variable.type_id)))
-        }
-
-        output += "namespace " + enum_.name + "_Details {\n"
-        for variant in enum_.variants {
-            let fields = match variant {
-                Untyped(name) => {
-                    if is_generic {
-                        output += "template<" + template_args + ">\n"
-                    }
-                    output += "struct " + name + " {\n"
-                    yield common_fields
-                }
-                StructLike(name, fields: own_fields) => {
-                    mut fields: [(String, String)] = []
-                    for field in own_fields {
-                        let variable = .program.get_variable(field)
-                        fields.push((variable.name_for_codegen().as_name_for_definition(), .codegen_type(variable.type_id)))
-                    }
-
-                    if is_generic {
-                        output += "template<" + template_args + ">\n"
-                    }
-                    output += "struct " + name + " {\n"
-                    yield fields
-                }
-                Typed(name, type_id) => {
-                    mut fields: [(String, String)] = []
-                    for field in common_fields {
-                        fields.push(field)
-                    }
-                    fields.push(("value", .codegen_type(type_id)))
-
-                    if is_generic {
-                        output += "template<" + template_args + ">\n"
-                    }
-                    output += "struct " + name + "{\n"
-                    yield fields
-                }
-                else => {
-                    todo(format("codegen enum variant: {}", variant))
-                }
-            }
-
-            for (name, type) in fields {
-                output += format("{} {};\n", type, name)
-            }
-            if not fields.is_empty() {
-                output += "template<"
-                mut generic_typenames: [String] = []
-                mut generic_argument_types: [String] = []
-                mut initializers: [String] = []
-                for i in 0..fields.size() {
-                    generic_typenames.push(format("typename _MemberT{}", i))
-                    generic_argument_types.push(format("_MemberT{}&& member_{}", i, i))
-
-                    mut initializer = fields[i].0 + "{ forward<_MemberT"
-                    initializer += format("{}>(member_{}", i, i) + ")}"
-                    initializers.push(initializer)
-                }
-                output += join(generic_typenames, separator: ", ")
-                output += ">\n"
-                output += variant.name() + "(" + join(generic_argument_types, separator: ", ") + "):\n"
-                output += join(initializers, separator: ",\n") + "\n{}\n"
-            }
-            output +="};\n"
-        }
-        output += "}\n"
-
-        if is_generic {
-            output += "template<" + template_args + ">\n"
-        }
-        mut variant_names: [String] = []
-        mut variant_arguments_array: [String] = []
-        for variant in enum_.variants {
-            mut argument = enum_.name + "_Details::" + variant.name()
-            if is_generic {
-                argument += format("<{}>", join(generic_parameter_names, separator: ", "))
-            }
-            variant_arguments_array.push(argument)
-            variant_names.push(variant.name())
-        }
-        let variant_args = join(variant_arguments_array, separator: ", ")
-
-        output += format("struct {} : public Variant<{}>", enum_.name, variant_args)
-        if enum_.is_boxed {
-            output += format(", public RefCounted<{}", enum_.name)
-            if is_generic {
-                output += format("<{}>", join(generic_parameter_names, separator: ", "))
-            }
-            output += ">"
-        }
-        output += " {\n"
-        output += "using Variant<" + variant_args + ">::Variant;\n"
-
-        for name in variant_names {
-            output += "    using " +  name + " = " + enum_.name + "_Details::" + name
-            if is_generic {
-                output += "<"
-                output += join(generic_parameter_names, separator: ", ")
-                output += ">"
-            }
-            output += ";\n"
-        }
-
-        if enum_.is_boxed {
-            mut fully_instantiated_name = enum_.name
-            if is_generic {
-                fully_instantiated_name += format("<{}>", template_args)
-            }
-            output += "template<typename V, typename... Args> static auto __jakt_create(Args&&... args) {\n"
-            output += format("return adopt_nonnull_ref_or_enomem(new (nothrow) {}(V(forward<Args>(args)...)));\n", fully_instantiated_name)
-            output += "}\n"
-        }
-
-        if enum_.generic_parameters.is_empty() {
-            output += "ErrorOr<DeprecatedString> debug_description() const;\n"
-        } else {
-            output += .codegen_enum_debug_description_getter(enum_, is_inline: true)
-        }
-
-        for (field_name, type) in common_fields {
-            output += format("{} const& {}() const {{ switch(this->index()) {{", type, field_name)
-            for i in 0..enum_.variants.size() {
-                let variant = enum_.variants[i]
-                let name = variant.name()
-                output += format("case {} /* {} */: ", i, name)
-                output += format("return this->template get<{}::{}>().{};\n", enum_.name, name, field_name)
-            }
-            output += "default: VERIFY_NOT_REACHED();\n"
-            output += "}\n}\n"
-        }
-
-        let enum_scope = .program.get_scope(enum_.scope_id)
-        for (_, overload_set) in enum_scope.functions {
-            for function_id in overload_set {
-                let function = .program.get_function(function_id)
-
-                let previous_function_id = .current_function
-                .current_function = Some(function)
-                defer .current_function = previous_function_id
-
-                guard not function.type is ImplicitEnumConstructor else {
-                    continue
-                }
-
-                if not enum_.generic_parameters.is_empty() {
-                    output += .codegen_function(function, as_method: true)
-                } else if function.generics.params.is_empty() or not function.specialization_index.has_value() {
-                    output += .codegen_function_predecl(function, as_method: true)
-                }
-            }
-        }
-
-        output += "};\n"
-
-        .deferred_output += .codegen_ak_formatter(name: enum_.name, generic_parameter_names, template_args)
-
-        return output
-    }
-
-    fn codegen_enum_tagged_union(mut this, enum_: CheckedEnum) throws -> String {
         mut output = ""
         if not enum_.underlying_type_id.equals(void_type_id()) {
             if .program.is_integer(enum_.underlying_type_id) {
@@ -2579,7 +2394,9 @@ struct CodeGenerator {
         }
         output += "debug_description() const {\n"
         output += "auto builder = DeprecatedStringBuilder::create();\n"
-        output += "switch (this->index()) {"
+        output += "switch (this->__jakt_init_index()) {"
+
+        let common_field_count = enum_.fields.size()
 
         for i in 0..enum_.variants.size() {
             let variant = enum_.variants[i]
@@ -2588,7 +2405,7 @@ struct CodeGenerator {
             match variant {
                 StructLike(fields) => {
                     output += format("TRY(builder.append(\"{}::{}\"sv));\n", enum_.name, name)
-                    output += format("[[maybe_unused]] auto const& that = this->template get<{}::{}>();\n", enum_.name, name)
+                    output += format("[[maybe_unused]] auto const& that = this->as.{};\n", name)
                     output += "TRY(builder.append(\"(\"sv));\n"
                     output += "{\n";
                     output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
@@ -2604,7 +2421,11 @@ struct CodeGenerator {
                         if i != fields.size() - 1 {
                             output += ", "
                         }
-                        output += format("\", that.{}));\n", var.name_for_codegen().as_name_for_use())
+                        if i < common_field_count {
+                            output += format("\", this->common.{}));\n", var.name_for_codegen().as_name_for_use())
+                        } else {
+                            output += format("\", that.{}));\n", var.name_for_codegen().as_name_for_use())
+                        }
                         i++
                     }
                     output += "}\n"
@@ -2612,7 +2433,7 @@ struct CodeGenerator {
                 }
                 Typed(type_id) => {
                     output += format("TRY(builder.append(\"{}::{}\"sv));\n", enum_.name, name)
-                    output += format("[[maybe_unused]] auto const& that = this->template get<{}::{}>();\n", enum_.name, name)
+                    output += format("[[maybe_unused]] auto const& that = this->as.{};\n", name)
                     if .program.is_string(type_id){
                         output += "TRY(builder.appendff(\"(\\\"{}\\\")\", that.value));\n"
                     } else {
@@ -2820,9 +2641,9 @@ struct CodeGenerator {
                 Enum(id) | GenericEnumInstance(id) => {
                     let structure = .program.get_enum(id)
                     if structure.record_type is SumEnum(is_boxed) and is_boxed and object != "*this" {
-                        output += "->"
+                        output += "->common."
                     } else {
-                        output += "."
+                        output += ".common."
                     }
                 }
                 else => {
@@ -2832,9 +2653,9 @@ struct CodeGenerator {
             if is_optional {
                 output += "map([](auto& _value) { return _value."
                 output += index
-                output += "(); })"
+                output += "; })"
             } else {
-                output += index + "()"
+                output += index
             }
             output += ")"
             yield output
@@ -2956,7 +2777,7 @@ struct CodeGenerator {
                                 }
                                 variant_index++
                             }
-                            suffix += format("index() == {} /* {} */", variant_index, name)
+                            suffix += format("__jakt_init_index() == {} /* {} */", variant_index, name)
                         }
                         ValueEnum => {
                             suffix += format("== {}{}::{}", .codegen_namespace_qualifier(scope_id: enum_.scope_id), enum_.name, name)
@@ -3031,7 +2852,7 @@ struct CodeGenerator {
                 true => "->"
                 else => "."
             }
-            yield format("(({}){}get<{}::{}>()).{}", var_name, cpp_deref_operator, enum_type, variant_name, arg_name)
+            yield format("({}){}as.{}.{}", var_name, cpp_deref_operator, variant_name, arg_name)
         }
         JaktArray(vals, repeat, span, type_id, inner_type_id) => {
             mut output = ""
@@ -3359,7 +3180,7 @@ struct CodeGenerator {
                         variant_index++
                     }
 
-                    output += format("if (__jakt_enum_value.index() == {} /* {} */) {{\n", variant_index, name)
+                    output += format("if (__jakt_enum_value.__jakt_init_index() == {} /* {} */) {{\n", variant_index, name)
 
                     mut variant_type_name = ""
                     let qualifier = .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true)
@@ -3371,9 +3192,9 @@ struct CodeGenerator {
                     variant_type_name += name
 
                     if not args.is_empty() {
-                        output += "auto& __jakt_match_value = __jakt_enum_value.template get<"
-                        output += variant_type_name
-                        output += ">();\n"
+                        output += "auto& __jakt_match_value = __jakt_enum_value.as."
+                        output += enum_.variants[variant_index].name()
+                        output += ";\n"
 
                         for arg in args {
                             output += "auto& "
@@ -3493,7 +3314,7 @@ struct CodeGenerator {
                 output += "*"
             }
             output += .codegen_expression(expr) + ";\n"
-            output += "switch(__jakt_match_variant.index()) {\n"
+            output += "switch(__jakt_match_variant.__jakt_init_index()) {\n"
 
             mut has_default = false
             for match_case in match_cases {
@@ -3508,15 +3329,14 @@ struct CodeGenerator {
                         }
                         let match_case_enum = .program.get_enum(enum_id)
                         let variant = match_case_enum.variants[index]
-                        output += format("case {}: ", index) + "{\n"
+                        output += format("case {} /* {} */: ", index, variant.name()) + "{\n"
                         match variant {
                             Untyped(name) => {
                             }
                             Typed(name, type_id) => {
                                 if not args.is_empty() {
                                     output += format(
-                                        "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
-                                        .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true),
+                                        "auto&& __jakt_match_value = __jakt_match_variant.as.{};",
                                         name
                                     )
 
@@ -3534,11 +3354,7 @@ struct CodeGenerator {
                             StructLike(name, fields) => {
                                 if not args.is_empty() {
                                     output += format(
-                                        "auto&& __jakt_match_value = __jakt_match_variant.template get<{}::{}>();",
-                                        .codegen_type_possibly_as_namespace(
-                                            type_id: subject_type_id,
-                                            as_namespace: true,
-                                        ),
+                                        "auto&& __jakt_match_value = __jakt_match_variant.as.{};",
                                         name)
 
                                     for arg in args {
@@ -4201,21 +4017,9 @@ struct CodeGenerator {
                             Enum(enum_id) => {
                                 let enum_ = .program.get_enum(enum_id)
                                 let enum_type_module = .program.get_module(enum_id.module)
-                                if enum_.is_boxed {
-                                    output += .codegen_namespace_path(call)
-                                    output += "template __jakt_create<typename "
-                                    output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
-                                    output += "::" + call.name_for_codegen().as_name_for_use() + ">"
-                                } else {
-                                    output += " " + .codegen_type(call.return_type)
-                                    output += " { "
-                                    output += "typename "
-                                    output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
-                                    output += "::"
-                                    output += call.name_for_codegen().as_name_for_use()
 
-                                    close_enum_type_wrapper = true
-                                }
+                                output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
+                                output += "::" + call.name_for_codegen().as_name_for_use()
                             }
                             GenericEnumInstance(id) => {
                                 todo("codegen generic enum instance")
@@ -4249,10 +4053,6 @@ struct CodeGenerator {
                 }
 
                 output += format("({})", join(arguments, separator: ","))
-
-                if close_enum_type_wrapper {
-                    output += " } "
-                }
             }
         }
 
