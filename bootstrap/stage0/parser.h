@@ -413,7 +413,7 @@ u8 __jakt_uninit_common;
 struct {
 DeprecatedString name;
 utility::Span span;
-};
+} init_common;
 constexpr CommonData() {}
 ~CommonData() {}
 } common;
@@ -478,7 +478,7 @@ union CommonData {
 u8 __jakt_uninit_common;
 struct {
 JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> defaults;
-};
+} init_common;
 constexpr CommonData() {}
 ~CommonData() {}
 } common;
@@ -1219,7 +1219,7 @@ union CommonData {
 u8 __jakt_uninit_common;
 struct {
 JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers;
-};
+} init_common;
 constexpr CommonData() {}
 ~CommonData() {}
 } common;
