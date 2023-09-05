@@ -4,266 +4,29 @@
 #include "lexer.h"
 namespace Jakt {
 namespace formatter {
-namespace BreakablePoint_Details {
-struct Paren {
-size_t point;
-size_t length;
-template<typename _MemberT0, typename _MemberT1>
-Paren(_MemberT0&& member_0, _MemberT1&& member_1):
-point{ forward<_MemberT0>(member_0)},
-length{ forward<_MemberT1>(member_1)}
-{}
+struct ExpressionMode {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
+[[nodiscard]] static ExpressionMode OutsideExpression();
+[[nodiscard]] static ExpressionMode BeforeExpressions();
+[[nodiscard]] static ExpressionMode AtExpressionStart();
+[[nodiscard]] static ExpressionMode InExpression();
+~ExpressionMode();
+ExpressionMode& operator=(ExpressionMode const &);
+ExpressionMode& operator=(ExpressionMode &&);
+ExpressionMode(ExpressionMode const&);
+ExpressionMode(ExpressionMode &&);
+private: void __jakt_destroy_variant();
+public:
+private:
+ExpressionMode() {};
 };
-struct Curly {
-size_t point;
-size_t length;
-template<typename _MemberT0, typename _MemberT1>
-Curly(_MemberT0&& member_0, _MemberT1&& member_1):
-point{ forward<_MemberT0>(member_0)},
-length{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Square {
-size_t point;
-size_t length;
-template<typename _MemberT0, typename _MemberT1>
-Square(_MemberT0&& member_0, _MemberT1&& member_1):
-point{ forward<_MemberT0>(member_0)},
-length{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Logical {
-size_t point;
-size_t length;
-template<typename _MemberT0, typename _MemberT1>
-Logical(_MemberT0&& member_0, _MemberT1&& member_1):
-point{ forward<_MemberT0>(member_0)},
-length{ forward<_MemberT1>(member_1)}
-{}
-};
-}
-struct BreakablePoint : public Variant<BreakablePoint_Details::Paren, BreakablePoint_Details::Curly, BreakablePoint_Details::Square, BreakablePoint_Details::Logical> {
-using Variant<BreakablePoint_Details::Paren, BreakablePoint_Details::Curly, BreakablePoint_Details::Square, BreakablePoint_Details::Logical>::Variant;
-    using Paren = BreakablePoint_Details::Paren;
-    using Curly = BreakablePoint_Details::Curly;
-    using Square = BreakablePoint_Details::Square;
-    using Logical = BreakablePoint_Details::Logical;
-ErrorOr<DeprecatedString> debug_description() const;
-size_t length() const;
-size_t point() const;
-};
-namespace Entity_Details {
-struct Struct {
-};
-struct Enum {
-};
-struct Namespace {
-};
-struct Function {
-bool arrow;
-bool indented;
-template<typename _MemberT0, typename _MemberT1>
-Function(_MemberT0&& member_0, _MemberT1&& member_1):
-arrow{ forward<_MemberT0>(member_0)},
-indented{ forward<_MemberT1>(member_1)}
-{}
-};
-}
-struct Entity : public Variant<Entity_Details::Struct, Entity_Details::Enum, Entity_Details::Namespace, Entity_Details::Function> {
-using Variant<Entity_Details::Struct, Entity_Details::Enum, Entity_Details::Namespace, Entity_Details::Function>::Variant;
-    using Struct = Entity_Details::Struct;
-    using Enum = Entity_Details::Enum;
-    using Namespace = Entity_Details::Namespace;
-    using Function = Entity_Details::Function;
-ErrorOr<DeprecatedString> debug_description() const;
-static formatter::Entity from_token(lexer::Token const& token);
-};
-struct FormattedToken {
-  public:
-public: lexer::Token token;public: size_t indent;public: JaktInternal::DynamicArray<u8> trailing_trivia;public: JaktInternal::DynamicArray<u8> preceding_trivia;public: FormattedToken(lexer::Token a_token, size_t a_indent, JaktInternal::DynamicArray<u8> a_trailing_trivia, JaktInternal::DynamicArray<u8> a_preceding_trivia);
-
-public: ErrorOr<DeprecatedString> token_text() const;
-public: ErrorOr<DeprecatedString> debug_text() const;
-public: ErrorOr<DeprecatedString> debug_description() const;
-};namespace ExpressionMode_Details {
-struct OutsideExpression {
-};
-struct BeforeExpressions {
-};
-struct AtExpressionStart {
-};
-struct InExpression {
-};
-}
-struct ExpressionMode : public Variant<ExpressionMode_Details::OutsideExpression, ExpressionMode_Details::BeforeExpressions, ExpressionMode_Details::AtExpressionStart, ExpressionMode_Details::InExpression> {
-using Variant<ExpressionMode_Details::OutsideExpression, ExpressionMode_Details::BeforeExpressions, ExpressionMode_Details::AtExpressionStart, ExpressionMode_Details::InExpression>::Variant;
-    using OutsideExpression = ExpressionMode_Details::OutsideExpression;
-    using BeforeExpressions = ExpressionMode_Details::BeforeExpressions;
-    using AtExpressionStart = ExpressionMode_Details::AtExpressionStart;
-    using InExpression = ExpressionMode_Details::InExpression;
-ErrorOr<DeprecatedString> debug_description() const;
-};
-namespace State_Details {
-struct Toplevel {
-size_t open_parens;
-size_t open_curlies;
-size_t open_squares;
-bool is_extern;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
-Toplevel(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
-open_parens{ forward<_MemberT0>(member_0)},
-open_curlies{ forward<_MemberT1>(member_1)},
-open_squares{ forward<_MemberT2>(member_2)},
-is_extern{ forward<_MemberT3>(member_3)}
-{}
-};
-struct Extern {
-};
-struct Import {
-bool is_extern;
-template<typename _MemberT0>
-Import(_MemberT0&& member_0):
-is_extern{ forward<_MemberT0>(member_0)}
-{}
-};
-struct ImportList {
-bool emitted_comma;
-template<typename _MemberT0>
-ImportList(_MemberT0&& member_0):
-emitted_comma{ forward<_MemberT0>(member_0)}
-{}
-};
-struct EntityDeclaration {
-formatter::Entity entity;
-bool accept_generics;
-bool has_generics;
-size_t generic_nesting;
-bool is_extern;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4>
-EntityDeclaration(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4):
-entity{ forward<_MemberT0>(member_0)},
-accept_generics{ forward<_MemberT1>(member_1)},
-has_generics{ forward<_MemberT2>(member_2)},
-generic_nesting{ forward<_MemberT3>(member_3)},
-is_extern{ forward<_MemberT4>(member_4)}
-{}
-};
-struct Implements {
-};
-struct CaptureList {
-};
-struct ParameterList {
-size_t open_parens;
-template<typename _MemberT0>
-ParameterList(_MemberT0&& member_0):
-open_parens{ forward<_MemberT0>(member_0)}
-{}
-};
-struct RestrictionList {
-};
-struct EntityDefinition {
-formatter::Entity entity;
-bool is_extern;
-template<typename _MemberT0, typename _MemberT1>
-EntityDefinition(_MemberT0&& member_0, _MemberT1&& member_1):
-entity{ forward<_MemberT0>(member_0)},
-is_extern{ forward<_MemberT1>(member_1)}
-{}
-};
-struct StatementContext {
-size_t open_parens;
-size_t open_curlies;
-size_t open_squares;
-size_t arrow_indents;
-JaktInternal::Optional<size_t> allow_eol;
-bool inserted_comma;
-formatter::ExpressionMode expression_mode;
-size_t dedents_on_open_curly;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6, typename _MemberT7>
-StatementContext(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6, _MemberT7&& member_7):
-open_parens{ forward<_MemberT0>(member_0)},
-open_curlies{ forward<_MemberT1>(member_1)},
-open_squares{ forward<_MemberT2>(member_2)},
-arrow_indents{ forward<_MemberT3>(member_3)},
-allow_eol{ forward<_MemberT4>(member_4)},
-inserted_comma{ forward<_MemberT5>(member_5)},
-expression_mode{ forward<_MemberT6>(member_6)},
-dedents_on_open_curly{ forward<_MemberT7>(member_7)}
-{}
-};
-struct MatchPattern {
-size_t open_parens;
-bool allow_multiple;
-template<typename _MemberT0, typename _MemberT1>
-MatchPattern(_MemberT0&& member_0, _MemberT1&& member_1):
-open_parens{ forward<_MemberT0>(member_0)},
-allow_multiple{ forward<_MemberT1>(member_1)}
-{}
-};
-struct VariableDeclaration {
-size_t open_parens;
-template<typename _MemberT0>
-VariableDeclaration(_MemberT0&& member_0):
-open_parens{ forward<_MemberT0>(member_0)}
-{}
-};
-struct GenericCallTypeParams {
-size_t open_angles;
-template<typename _MemberT0>
-GenericCallTypeParams(_MemberT0&& member_0):
-open_angles{ forward<_MemberT0>(member_0)}
-{}
-};
-struct TypeContext {
-size_t open_parens;
-size_t open_curlies;
-size_t open_squares;
-size_t open_angles;
-bool seen_start;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4>
-TypeContext(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4):
-open_parens{ forward<_MemberT0>(member_0)},
-open_curlies{ forward<_MemberT1>(member_1)},
-open_squares{ forward<_MemberT2>(member_2)},
-open_angles{ forward<_MemberT3>(member_3)},
-seen_start{ forward<_MemberT4>(member_4)}
-{}
-};
-struct FunctionTypeContext {
-bool seen_final_type;
-template<typename _MemberT0>
-FunctionTypeContext(_MemberT0&& member_0):
-seen_final_type{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct State : public Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::Implements, State_Details::CaptureList, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext> {
-using Variant<State_Details::Toplevel, State_Details::Extern, State_Details::Import, State_Details::ImportList, State_Details::EntityDeclaration, State_Details::Implements, State_Details::CaptureList, State_Details::ParameterList, State_Details::RestrictionList, State_Details::EntityDefinition, State_Details::StatementContext, State_Details::MatchPattern, State_Details::VariableDeclaration, State_Details::GenericCallTypeParams, State_Details::TypeContext, State_Details::FunctionTypeContext>::Variant;
-    using Toplevel = State_Details::Toplevel;
-    using Extern = State_Details::Extern;
-    using Import = State_Details::Import;
-    using ImportList = State_Details::ImportList;
-    using EntityDeclaration = State_Details::EntityDeclaration;
-    using Implements = State_Details::Implements;
-    using CaptureList = State_Details::CaptureList;
-    using ParameterList = State_Details::ParameterList;
-    using RestrictionList = State_Details::RestrictionList;
-    using EntityDefinition = State_Details::EntityDefinition;
-    using StatementContext = State_Details::StatementContext;
-    using MatchPattern = State_Details::MatchPattern;
-    using VariableDeclaration = State_Details::VariableDeclaration;
-    using GenericCallTypeParams = State_Details::GenericCallTypeParams;
-    using TypeContext = State_Details::TypeContext;
-    using FunctionTypeContext = State_Details::FunctionTypeContext;
-ErrorOr<DeprecatedString> debug_description() const;
-ErrorOr<DeprecatedString> name() const;
-};
-struct ReflowState {
-  public:
-public: formatter::FormattedToken token;public: formatter::State state;public: size_t enclosures_to_ignore;public: ReflowState(formatter::FormattedToken a_token, formatter::State a_state, size_t a_enclosures_to_ignore);
-
-public: ErrorOr<DeprecatedString> debug_description() const;
-};struct Stage0 {
+struct Stage0 {
   public:
 public: JaktInternal::DynamicArray<lexer::Token> tokens;public: size_t index;public: JaktInternal::DynamicArray<formatter::State> states;public: size_t indent;public: bool already_seen_enclosure_in_current_line;public: JaktInternal::DynamicArray<size_t> dedents_to_skip;public: bool debug;private: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_in_implements_context(lexer::Token const token);
 public: ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
@@ -313,6 +76,176 @@ private: ErrorOr<size_t> token_length(formatter::FormattedToken const token) con
 public: ErrorOr<void> fixup_closing_enclosures(JaktInternal::DynamicArray<formatter::ReflowState>& line) const;
 private: size_t pick_breaking_point_index() const;
 public: ErrorOr<DeprecatedString> debug_description() const;
+};struct Entity {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+struct {
+bool arrow;
+bool indented;
+} Function;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
+[[nodiscard]] static Entity Struct();
+[[nodiscard]] static Entity Enum();
+[[nodiscard]] static Entity Namespace();
+[[nodiscard]] static Entity Function(bool arrow, bool indented);
+~Entity();
+Entity& operator=(Entity const &);
+Entity& operator=(Entity &&);
+Entity(Entity const&);
+Entity(Entity &&);
+private: void __jakt_destroy_variant();
+public:
+static formatter::Entity from_token(lexer::Token const& token);
+private:
+Entity() {};
+};
+struct State {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+struct {
+size_t open_parens;
+size_t open_curlies;
+size_t open_squares;
+bool is_extern;
+} Toplevel;
+struct {
+bool is_extern;
+} Import;
+struct {
+bool emitted_comma;
+} ImportList;
+struct {
+formatter::Entity entity;
+bool accept_generics;
+bool has_generics;
+size_t generic_nesting;
+bool is_extern;
+} EntityDeclaration;
+struct {
+size_t open_parens;
+} ParameterList;
+struct {
+formatter::Entity entity;
+bool is_extern;
+} EntityDefinition;
+struct {
+size_t open_parens;
+size_t open_curlies;
+size_t open_squares;
+size_t arrow_indents;
+JaktInternal::Optional<size_t> allow_eol;
+bool inserted_comma;
+formatter::ExpressionMode expression_mode;
+size_t dedents_on_open_curly;
+} StatementContext;
+struct {
+size_t open_parens;
+bool allow_multiple;
+} MatchPattern;
+struct {
+size_t open_parens;
+} VariableDeclaration;
+struct {
+size_t open_angles;
+} GenericCallTypeParams;
+struct {
+size_t open_parens;
+size_t open_curlies;
+size_t open_squares;
+size_t open_angles;
+bool seen_start;
+} TypeContext;
+struct {
+bool seen_final_type;
+} FunctionTypeContext;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
+[[nodiscard]] static State Toplevel(size_t open_parens, size_t open_curlies, size_t open_squares, bool is_extern);
+[[nodiscard]] static State Extern();
+[[nodiscard]] static State Import(bool is_extern);
+[[nodiscard]] static State ImportList(bool emitted_comma);
+[[nodiscard]] static State EntityDeclaration(formatter::Entity entity, bool accept_generics, bool has_generics, size_t generic_nesting, bool is_extern);
+[[nodiscard]] static State Implements();
+[[nodiscard]] static State CaptureList();
+[[nodiscard]] static State ParameterList(size_t open_parens);
+[[nodiscard]] static State RestrictionList();
+[[nodiscard]] static State EntityDefinition(formatter::Entity entity, bool is_extern);
+[[nodiscard]] static State StatementContext(size_t open_parens, size_t open_curlies, size_t open_squares, size_t arrow_indents, JaktInternal::Optional<size_t> allow_eol, bool inserted_comma, formatter::ExpressionMode expression_mode, size_t dedents_on_open_curly);
+[[nodiscard]] static State MatchPattern(size_t open_parens, bool allow_multiple);
+[[nodiscard]] static State VariableDeclaration(size_t open_parens);
+[[nodiscard]] static State GenericCallTypeParams(size_t open_angles);
+[[nodiscard]] static State TypeContext(size_t open_parens, size_t open_curlies, size_t open_squares, size_t open_angles, bool seen_start);
+[[nodiscard]] static State FunctionTypeContext(bool seen_final_type);
+~State();
+State& operator=(State const &);
+State& operator=(State &&);
+State(State const&);
+State(State &&);
+private: void __jakt_destroy_variant();
+public:
+ErrorOr<DeprecatedString> name() const;
+private:
+State() {};
+};
+struct BreakablePoint {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+struct {
+size_t point;
+size_t length;
+} Paren;
+struct {
+size_t point;
+size_t length;
+} Curly;
+struct {
+size_t point;
+size_t length;
+} Square;
+struct {
+size_t point;
+size_t length;
+} Logical;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
+[[nodiscard]] static BreakablePoint Paren(size_t point, size_t length);
+[[nodiscard]] static BreakablePoint Curly(size_t point, size_t length);
+[[nodiscard]] static BreakablePoint Square(size_t point, size_t length);
+[[nodiscard]] static BreakablePoint Logical(size_t point, size_t length);
+~BreakablePoint();
+BreakablePoint& operator=(BreakablePoint const &);
+BreakablePoint& operator=(BreakablePoint &&);
+BreakablePoint(BreakablePoint const&);
+BreakablePoint(BreakablePoint &&);
+private: void __jakt_destroy_variant();
+public:
+size_t length() const;
+size_t point() const;
+private:
+BreakablePoint() {};
+};
+struct FormattedToken {
+  public:
+public: lexer::Token token;public: size_t indent;public: JaktInternal::DynamicArray<u8> trailing_trivia;public: JaktInternal::DynamicArray<u8> preceding_trivia;public: FormattedToken(lexer::Token a_token, size_t a_indent, JaktInternal::DynamicArray<u8> a_trailing_trivia, JaktInternal::DynamicArray<u8> a_preceding_trivia);
+
+public: ErrorOr<DeprecatedString> token_text() const;
+public: ErrorOr<DeprecatedString> debug_text() const;
+public: ErrorOr<DeprecatedString> debug_description() const;
+};struct ReflowState {
+  public:
+public: formatter::FormattedToken token;public: formatter::State state;public: size_t enclosures_to_ignore;public: ReflowState(formatter::FormattedToken a_token, formatter::State a_state, size_t a_enclosures_to_ignore);
+
+public: ErrorOr<DeprecatedString> debug_description() const;
 };template <typename T>
 ErrorOr<JaktInternal::DynamicArray<T>> concat(JaktInternal::DynamicArray<T> const xs, T const y);
 template <typename T>
@@ -321,38 +254,8 @@ template <typename T>
 ErrorOr<JaktInternal::DynamicArray<T>> init(JaktInternal::DynamicArray<T> const xs);
 }
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::formatter::BreakablePoint> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::BreakablePoint const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::formatter::Entity> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::Entity const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::formatter::FormattedToken> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::FormattedToken const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::formatter::ExpressionMode> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::ExpressionMode const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::formatter::State> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::State const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::formatter::ReflowState> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::ReflowState const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
@@ -365,6 +268,36 @@ namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::formatter::Formatter> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::Formatter const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::formatter::Entity> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::Entity const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::formatter::State> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::State const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::formatter::BreakablePoint> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::BreakablePoint const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::formatter::FormattedToken> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::FormattedToken const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::formatter::ReflowState> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::formatter::ReflowState const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

@@ -4,10 +4,13 @@
 extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
 const unsigned int CP_UTF8 = 65001;
 #endif
+#include <AK/Array.h>
 #include <Jakt/Forward.h>
 #include <stdio.h>
 #include <AK/Queue.h>
 namespace Jakt {
+namespace jakt__prelude__static_array {
+}
 namespace jakt__prelude__iteration {
 }
 namespace jakt__prelude__string {
@@ -76,12 +79,6 @@ struct ParallelExecutionPool;
 namespace utility {
 struct Span;
 struct FileId;
-namespace IterationDecision_Details {
-template<typename T>
-struct Break;
-template<typename T>
-struct Continue;
-}
 template<typename T>
 struct IterationDecision;
 
@@ -117,16 +114,8 @@ bool is_ascii_binary(u8 const c);
 
 }
 namespace error {
-namespace MessageSeverity_Details {
-struct Hint;
-struct Error;
-}
 struct MessageSeverity;
 
-namespace JaktError_Details {
-struct Message;
-struct MessageWithHint;
-}
 struct JaktError;
 
 ErrorOr<void> print_error_json(DeprecatedString const file_name, error::JaktError const error);
@@ -149,144 +138,10 @@ class Compiler;
 }
 namespace lexer {
 struct Lexer;
-namespace LiteralSuffix_Details {
-struct None;
-struct UZ;
-struct U8;
-struct U16;
-struct U32;
-struct U64;
-struct I8;
-struct I16;
-struct I32;
-struct I64;
-struct F32;
-struct F64;
-}
 struct LiteralSuffix;
 
-namespace Token_Details {
-struct SingleQuotedString;
-struct QuotedString;
-struct Number;
-struct Identifier;
-struct Semicolon;
-struct Colon;
-struct ColonColon;
-struct LParen;
-struct RParen;
-struct LCurly;
-struct RCurly;
-struct LSquare;
-struct RSquare;
-struct PercentSign;
-struct Plus;
-struct Minus;
-struct Equal;
-struct PlusEqual;
-struct PlusPlus;
-struct MinusEqual;
-struct MinusMinus;
-struct AsteriskEqual;
-struct ForwardSlashEqual;
-struct PercentSignEqual;
-struct NotEqual;
-struct DoubleEqual;
-struct GreaterThan;
-struct GreaterThanOrEqual;
-struct LessThan;
-struct LessThanOrEqual;
-struct LeftArithmeticShift;
-struct LeftShift;
-struct LeftShiftEqual;
-struct RightShift;
-struct RightArithmeticShift;
-struct RightShiftEqual;
-struct Asterisk;
-struct Ampersand;
-struct AmpersandEqual;
-struct AmpersandAmpersand;
-struct Pipe;
-struct PipeEqual;
-struct PipePipe;
-struct Caret;
-struct CaretEqual;
-struct Dollar;
-struct Tilde;
-struct ForwardSlash;
-struct ExclamationPoint;
-struct QuestionMark;
-struct QuestionMarkQuestionMark;
-struct QuestionMarkQuestionMarkEqual;
-struct Comma;
-struct Dot;
-struct DotDot;
-struct Eol;
-struct Eof;
-struct FatArrow;
-struct Arrow;
-struct And;
-struct Anon;
-struct As;
-struct Boxed;
-struct Break;
-struct Catch;
-struct Class;
-struct Continue;
-struct Cpp;
-struct Defer;
-struct Destructor;
-struct Else;
-struct Enum;
-struct Extern;
-struct False;
-struct For;
-struct Fn;
-struct Comptime;
-struct If;
-struct Import;
-struct In;
-struct Is;
-struct Let;
-struct Loop;
-struct Match;
-struct Mut;
-struct Namespace;
-struct Not;
-struct Or;
-struct Override;
-struct Private;
-struct Public;
-struct Raw;
-struct Reflect;
-struct Return;
-struct Restricted;
-struct Sizeof;
-struct Struct;
-struct This;
-struct Throw;
-struct Throws;
-struct True;
-struct Try;
-struct Unsafe;
-struct Virtual;
-struct Weak;
-struct While;
-struct Yield;
-struct Guard;
-struct Implements;
-struct Requires;
-struct Trait;
-struct Garbage;
-}
 struct Token;
 
-namespace LiteralPrefix_Details {
-struct None;
-struct Hexadecimal;
-struct Octal;
-struct Binary;
-}
 struct LiteralPrefix;
 
 }
@@ -321,268 +176,48 @@ struct ParsedParameter;
 struct ParsedTypeQualifiers;
 struct ValueEnumVariant;
 struct VisibilityRestriction;
-namespace ExternalName_Details {
-struct Plain;
-struct PreprocessorName;
-struct Operator;
-}
 struct ExternalName;
 
-namespace ImportName_Details {
-struct Literal;
-struct Comptime;
-}
 struct ImportName;
 
-namespace ParsedMatchPattern_Details {
-struct EnumVariant;
-struct Expression;
-struct CatchAll;
-struct Invalid;
-}
 struct ParsedMatchPattern;
 
-namespace Visibility_Details {
-struct Public;
-struct Private;
-struct Restricted;
-}
 struct Visibility;
 
-namespace ArgumentStoreLevel_Details {
-struct InObject;
-struct InStaticStorage;
-}
 struct ArgumentStoreLevel;
 
-namespace ParsedMatchBody_Details {
-struct Expression;
-struct Block;
-}
 struct ParsedMatchBody;
 
-namespace ParsedCapture_Details {
-struct ByValue;
-struct ByReference;
-struct ByMutableReference;
-struct ByComptimeDependency;
-struct AllByReference;
-}
 struct ParsedCapture;
 
-namespace ParsedType_Details {
-struct Name;
-struct NamespacedName;
-struct GenericType;
-struct JaktArray;
-struct Dictionary;
-struct JaktTuple;
-struct Set;
-struct Optional;
-struct Reference;
-struct MutableReference;
-struct RawPtr;
-struct WeakPtr;
-struct Function;
-struct Const;
-struct DependentType;
-struct Empty;
-}
 struct ParsedType;
 
-namespace InlineState_Details {
-struct Default;
-struct MakeDefinitionAvailable;
-struct ForceInline;
-}
 struct InlineState;
 
-namespace ParsedTraitRequirements_Details {
-struct Nothing;
-struct Methods;
-struct ComptimeExpression;
-}
 struct ParsedTraitRequirements;
 
-namespace TypeCast_Details {
-struct Fallible;
-struct Infallible;
-}
 struct TypeCast;
 
-namespace DefinitionLinkage_Details {
-struct Internal;
-struct External;
-}
 struct DefinitionLinkage;
 
-namespace ImportList_Details {
-struct List;
-struct All;
-}
 struct ImportList;
 
-namespace ParsedExpression_Details {
-struct Boolean;
-struct NumericConstant;
-struct QuotedString;
-struct SingleQuotedString;
-struct Call;
-struct MethodCall;
-struct IndexedTuple;
-struct IndexedStruct;
-struct ComptimeIndex;
-struct Var;
-struct IndexedExpression;
-struct UnaryOp;
-struct BinaryOp;
-struct Operator;
-struct OptionalSome;
-struct OptionalNone;
-struct JaktArray;
-struct JaktDictionary;
-struct Set;
-struct JaktTuple;
-struct Range;
-struct ForcedUnwrap;
-struct Match;
-struct EnumVariantArg;
-struct NamespacedVar;
-struct Function;
-struct Try;
-struct TryBlock;
-struct Reflect;
-struct Garbage;
-struct Unsafe;
-}
 struct ParsedExpression;
 
-namespace FunctionLinkage_Details {
-struct Internal;
-struct External;
-}
 struct FunctionLinkage;
 
-namespace UnaryOperator_Details {
-struct PreIncrement;
-struct PostIncrement;
-struct PreDecrement;
-struct PostDecrement;
-struct Negate;
-struct Dereference;
-struct RawAddress;
-struct Reference;
-struct MutableReference;
-struct LogicalNot;
-struct BitwiseNot;
-struct TypeCast;
-struct Is;
-struct IsEnumVariant;
-struct Sizeof;
-}
 struct UnaryOperator;
 
-namespace BinaryOperator_Details {
-struct Add;
-struct Subtract;
-struct Multiply;
-struct Divide;
-struct Modulo;
-struct LessThan;
-struct LessThanOrEqual;
-struct GreaterThan;
-struct GreaterThanOrEqual;
-struct Equal;
-struct NotEqual;
-struct BitwiseAnd;
-struct BitwiseXor;
-struct BitwiseOr;
-struct BitwiseLeftShift;
-struct BitwiseRightShift;
-struct ArithmeticLeftShift;
-struct ArithmeticRightShift;
-struct LogicalAnd;
-struct LogicalOr;
-struct NoneCoalescing;
-struct Assign;
-struct BitwiseAndAssign;
-struct BitwiseOrAssign;
-struct BitwiseXorAssign;
-struct BitwiseLeftShiftAssign;
-struct BitwiseRightShiftAssign;
-struct AddAssign;
-struct SubtractAssign;
-struct MultiplyAssign;
-struct ModuloAssign;
-struct DivideAssign;
-struct NoneCoalescingAssign;
-struct Garbage;
-}
 struct BinaryOperator;
 
-namespace NumericConstant_Details {
-struct I8;
-struct I16;
-struct I32;
-struct I64;
-struct U8;
-struct U16;
-struct U32;
-struct U64;
-struct USize;
-struct F32;
-struct F64;
-struct UnknownSigned;
-struct UnknownUnsigned;
-}
 struct NumericConstant;
 
-namespace ParsedStatement_Details {
-struct Expression;
-struct Defer;
-struct UnsafeBlock;
-struct DestructuringAssignment;
-struct VarDecl;
-struct If;
-struct Block;
-struct Loop;
-struct While;
-struct For;
-struct Break;
-struct Continue;
-struct Return;
-struct Throw;
-struct Yield;
-struct InlineCpp;
-struct Guard;
-struct Garbage;
-}
 struct ParsedStatement;
 
-namespace IncludeAction_Details {
-struct Define;
-struct Undefine;
-}
 struct IncludeAction;
 
-namespace RecordType_Details {
-struct Struct;
-struct Class;
-struct ValueEnum;
-struct SumEnum;
-struct Garbage;
-}
 struct RecordType;
 
-namespace FunctionType_Details {
-struct Normal;
-struct Destructor;
-struct ImplicitConstructor;
-struct ImplicitEnumConstructor;
-struct ExternalClassConstructor;
-struct Expression;
-struct Closure;
-}
 struct FunctionType;
 
 ErrorOr<utility::Span> merge_spans(utility::Span const start, utility::Span const end);
@@ -631,301 +266,50 @@ class CheckedTrait;
 struct CheckedStringLiteral;
 class CheckedVariable;
 struct ClassInstanceRebind;
-namespace CheckedUnaryOperator_Details {
-struct PreIncrement;
-struct PostIncrement;
-struct PreDecrement;
-struct PostDecrement;
-struct Negate;
-struct Dereference;
-struct RawAddress;
-struct Reference;
-struct MutableReference;
-struct LogicalNot;
-struct BitwiseNot;
-struct TypeCast;
-struct Is;
-struct IsEnumVariant;
-struct IsSome;
-struct IsNone;
-struct Sizeof;
-}
 struct CheckedUnaryOperator;
 
-namespace NumericOrStringValue_Details {
-struct StringValue;
-struct SignedNumericValue;
-struct UnsignedNumericValue;
-}
 struct NumericOrStringValue;
 
-namespace FunctionGenericParameterKind_Details {
-struct InferenceGuide;
-struct Parameter;
-}
 struct FunctionGenericParameterKind;
 
-namespace Type_Details {
-struct Void;
-struct Bool;
-struct U8;
-struct U16;
-struct U32;
-struct U64;
-struct I8;
-struct I16;
-struct I32;
-struct I64;
-struct F32;
-struct F64;
-struct Usize;
-struct JaktString;
-struct CChar;
-struct CInt;
-struct Unknown;
-struct Never;
-struct TypeVariable;
-struct Dependent;
-struct GenericInstance;
-struct GenericEnumInstance;
-struct GenericTraitInstance;
-struct GenericResolvedType;
-struct Struct;
-struct Enum;
-struct RawPtr;
-struct Trait;
-struct Reference;
-struct MutableReference;
-struct Function;
-struct Self;
-struct Const;
-}
 struct Type;
 
-namespace ValueImpl_Details {
-struct Void;
-struct Bool;
-struct U8;
-struct U16;
-struct U32;
-struct U64;
-struct I8;
-struct I16;
-struct I32;
-struct I64;
-struct F32;
-struct F64;
-struct USize;
-struct JaktString;
-struct StringView;
-struct CChar;
-struct CInt;
-struct Struct;
-struct Class;
-struct Enum;
-struct JaktArray;
-struct JaktDictionary;
-struct JaktSet;
-struct RawPtr;
-struct OptionalSome;
-struct OptionalNone;
-struct JaktTuple;
-struct Function;
-}
 struct ValueImpl;
 
-namespace BlockControlFlow_Details {
-struct AlwaysReturns;
-struct AlwaysTransfersControl;
-struct NeverReturns;
-struct MayReturn;
-struct PartialAlwaysReturns;
-struct PartialAlwaysTransfersControl;
-struct PartialNeverReturns;
-}
 struct BlockControlFlow;
 
-namespace CheckedMatchBody_Details {
-struct Expression;
-struct Block;
-}
 struct CheckedMatchBody;
 
-namespace CheckedStatement_Details {
-struct Expression;
-struct Defer;
-struct DestructuringAssignment;
-struct VarDecl;
-struct If;
-struct Block;
-struct Loop;
-struct While;
-struct Return;
-struct Break;
-struct Continue;
-struct Throw;
-struct Yield;
-struct InlineCpp;
-struct Garbage;
-}
 struct CheckedStatement;
 
-namespace CheckedEnumVariant_Details {
-struct Untyped;
-struct Typed;
-struct WithValue;
-struct StructLike;
-}
 struct CheckedEnumVariant;
 
-namespace CheckedMatchCase_Details {
-struct EnumVariant;
-struct Expression;
-struct ClassInstance;
-struct CatchAll;
-}
 struct CheckedMatchCase;
 
-namespace CheckedTypeCast_Details {
-struct Fallible;
-struct Infallible;
-}
 struct CheckedTypeCast;
 
-namespace NumberConstant_Details {
-struct Signed;
-struct Unsigned;
-struct Floating;
-}
 struct NumberConstant;
 
-namespace CheckedVisibility_Details {
-struct Public;
-struct Private;
-struct Restricted;
-}
 struct CheckedVisibility;
 
-namespace CheckedNumericConstant_Details {
-struct I8;
-struct I16;
-struct I32;
-struct I64;
-struct U8;
-struct U16;
-struct U32;
-struct U64;
-struct USize;
-struct F32;
-struct F64;
-}
 struct CheckedNumericConstant;
 
-namespace CheckedCapture_Details {
-struct ByValue;
-struct ByReference;
-struct ByMutableReference;
-struct ByComptimeDependency;
-struct AllByReference;
-}
 struct CheckedCapture;
 
-namespace StructOrEnumId_Details {
-struct Struct;
-struct Enum;
-}
 struct StructOrEnumId;
 
-namespace SafetyMode_Details {
-struct Safe;
-struct Unsafe;
-}
 struct SafetyMode;
 
-namespace MaybeResolvedScope_Details {
-struct Resolved;
-struct Unresolved;
-}
 struct MaybeResolvedScope;
 
-namespace StringLiteral_Details {
-struct Static;
-}
 struct StringLiteral;
 
-namespace StructLikeId_Details {
-struct Struct;
-struct Enum;
-struct Trait;
-}
 struct StructLikeId;
 
-namespace CheckedExpression_Details {
-struct Boolean;
-struct NumericConstant;
-struct QuotedString;
-struct ByteConstant;
-struct CharacterConstant;
-struct CCharacterConstant;
-struct UnaryOp;
-struct BinaryOp;
-struct JaktTuple;
-struct Range;
-struct JaktArray;
-struct JaktSet;
-struct JaktDictionary;
-struct IndexedExpression;
-struct IndexedDictionary;
-struct IndexedTuple;
-struct IndexedStruct;
-struct IndexedCommonEnumMember;
-struct ComptimeIndex;
-struct Match;
-struct EnumVariantArg;
-struct Call;
-struct MethodCall;
-struct NamespacedVar;
-struct Var;
-struct OptionalNone;
-struct OptionalSome;
-struct ForcedUnwrap;
-struct Block;
-struct Function;
-struct DependentFunction;
-struct Try;
-struct TryBlock;
-struct Reflect;
-struct Garbage;
-}
 struct CheckedExpression;
 
-namespace BuiltinType_Details {
-struct Void;
-struct Bool;
-struct U8;
-struct U16;
-struct U32;
-struct U64;
-struct I8;
-struct I16;
-struct I32;
-struct I64;
-struct F32;
-struct F64;
-struct Usize;
-struct JaktString;
-struct CChar;
-struct CInt;
-struct Unknown;
-struct Never;
-}
 struct BuiltinType;
 
-namespace CheckedTraitRequirements_Details {
-struct Nothing;
-struct Methods;
-struct ComptimeExpression;
-}
 struct CheckedTraitRequirements;
 
 ErrorOr<DeprecatedString> comptime_format_impl(DeprecatedString const format_string, JaktInternal::ArraySlice<types::Value> const arguments, NonnullRefPtr<types::CheckedProgram> const& program);
@@ -945,26 +329,10 @@ namespace interpreter {
 class InterpreterScope;
 class Interpreter;
 enum class InterpretError: i32;
-namespace ExecutionResult_Details {
-struct Return;
-struct Throw;
-}
 struct ExecutionResult;
 
-namespace Deferred_Details {
-struct Expression;
-struct Statement;
-}
 struct Deferred;
 
-namespace StatementResult_Details {
-struct Return;
-struct Throw;
-struct Yield;
-struct Continue;
-struct Break;
-struct JustValue;
-}
 struct StatementResult;
 
 ErrorOr<size_t> align_of_impl(ids::TypeId const type_id, NonnullRefPtr<interpreter::Interpreter> const interpreter);
@@ -998,17 +366,8 @@ struct TraitImplCheck;
 struct AlreadyImplementedFor;
 struct ImportRestrictions;
 struct Typechecker;
-namespace NumericOrStringValue_Details {
-struct StringValue;
-struct SignedNumericValue;
-struct UnsignedNumericValue;
-}
 struct NumericOrStringValue;
 
-namespace FunctionMatchResult_Details {
-struct MatchSuccess;
-struct MatchError;
-}
 struct FunctionMatchResult;
 
 ErrorOr<JaktInternal::Dictionary<DeprecatedString,DeprecatedString>> defines_from(JaktInternal::DynamicArray<parser::IncludeAction> const actions);
@@ -1019,11 +378,6 @@ struct ControlFlowState;
 struct CodegenDebugInfo;
 struct LineSpan;
 struct CodeGenerator;
-namespace AllowedControlExits_Details {
-struct Nothing;
-struct JustReturn;
-struct AtLoop;
-}
 struct AllowedControlExits;
 
 bool are_loop_exits_allowed(codegen::AllowedControlExits const allowed_control_exits);
@@ -1036,48 +390,12 @@ struct FormattedToken;
 struct ReflowState;
 struct Formatter;
 struct Stage0;
-namespace State_Details {
-struct Toplevel;
-struct Extern;
-struct Import;
-struct ImportList;
-struct EntityDeclaration;
-struct Implements;
-struct CaptureList;
-struct ParameterList;
-struct RestrictionList;
-struct EntityDefinition;
-struct StatementContext;
-struct MatchPattern;
-struct VariableDeclaration;
-struct GenericCallTypeParams;
-struct TypeContext;
-struct FunctionTypeContext;
-}
 struct State;
 
-namespace ExpressionMode_Details {
-struct OutsideExpression;
-struct BeforeExpressions;
-struct AtExpressionStart;
-struct InExpression;
-}
 struct ExpressionMode;
 
-namespace BreakablePoint_Details {
-struct Paren;
-struct Curly;
-struct Square;
-struct Logical;
-}
 struct BreakablePoint;
 
-namespace Entity_Details {
-struct Struct;
-struct Enum;
-struct Namespace;
-struct Function;
-}
 struct Entity;
 
 void bubble_sort(JaktInternal::DynamicArray<DeprecatedString> values);
@@ -1085,34 +403,12 @@ void bubble_sort(JaktInternal::DynamicArray<DeprecatedString> values);
 }
 namespace ide {
 struct JaktSymbol;
-namespace Mutability_Details {
-struct DoesNotApply;
-struct Immutable;
-struct Mutable;
-}
 struct Mutability;
 
-namespace VarVisibility_Details {
-struct DoesNotApply;
-struct Public;
-struct Private;
-struct Restricted;
-}
 struct VarVisibility;
 
-namespace Usage_Details {
-struct Variable;
-struct Call;
-struct Typename;
-struct NameSet;
-struct EnumVariant;
-}
 struct Usage;
 
-namespace VarType_Details {
-struct Variable;
-struct Field;
-}
 struct VarType;
 
 ErrorOr<ide::JaktSymbol> record_to_symbol(parser::ParsedRecord const record);
@@ -1182,30 +478,10 @@ namespace jakt__libc__io {
 }
 namespace repl_backend__common {
 struct Style;
-namespace LineResult_Details {
-struct Line;
-struct Eof;
-}
 struct LineResult;
 
-namespace XTermColor_Details {
-struct Default;
-struct Black;
-struct Red;
-struct Green;
-struct Yellow;
-struct Blue;
-struct Magenta;
-struct Cyan;
-struct White;
-struct Unchanged;
-}
 struct XTermColor;
 
-namespace Color_Details {
-struct Components;
-struct XTerm;
-}
 struct Color;
 
 }

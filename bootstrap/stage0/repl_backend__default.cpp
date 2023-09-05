@@ -45,12 +45,12 @@ DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 {
 char* const c_string = fgets(((*this).line_pointer),static_cast<size_t>(4096ULL),((*this).standard_input_file));
 if ((c_string == utility::null<char>())){
-return  repl_backend__common::LineResult { typename repl_backend__common::LineResult::Eof() } ;
+return repl_backend__common::LineResult::Eof();
 }
 TRY((((builder).append_c_string(c_string))));
 }
 
-return  repl_backend__common::LineResult { typename repl_backend__common::LineResult::Line(TRY((((builder).to_string())))) } ;
+return repl_backend__common::LineResult::Line(TRY((((builder).to_string()))));
 }
 }
 

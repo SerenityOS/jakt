@@ -8,60 +8,41 @@
 #include "jakt__platform.h"
 namespace Jakt {
 namespace interpreter {
-enum class InterpretError: i32 {
-CallToExternalFunction = (infallible_integer_cast<i32>((static_cast<i32>(42)))),
-MismatchingArguments = (infallible_integer_cast<i32>((static_cast<u64>(43ULL)))),
-InvalidThisArgument = (infallible_integer_cast<i32>((static_cast<u64>(44ULL)))),
-InvalidOperation = (infallible_integer_cast<i32>((static_cast<u64>(45ULL)))),
-InvalidType = (infallible_integer_cast<i32>((static_cast<u64>(46ULL)))),
-UnknownVariable = (infallible_integer_cast<i32>((static_cast<u64>(47ULL)))),
-Unimplemented = (infallible_integer_cast<i32>((static_cast<u64>(48ULL)))),
-UnwrapOptionalNone = (infallible_integer_cast<i32>((static_cast<u64>(49ULL)))),
-InvalidCharacterConstant = (infallible_integer_cast<i32>((static_cast<u64>(50ULL)))),
-};
-namespace ExecutionResult_Details {
-struct Return{
+struct StatementResult {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+struct {
 types::Value value;
-template<typename _MemberT0>
-Return(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Throw{
+} Return;
+struct {
 types::Value value;
-template<typename _MemberT0>
-Throw(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct ExecutionResult : public Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw> {
-using Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw>::Variant;
-    using Return = ExecutionResult_Details::Return;
-    using Throw = ExecutionResult_Details::Throw;
-ErrorOr<DeprecatedString> debug_description() const;
-};
-namespace Deferred_Details {
-struct Expression{
-NonnullRefPtr<typename types::CheckedExpression> value;
-template<typename _MemberT0>
-Expression(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Statement{
-NonnullRefPtr<typename types::CheckedStatement> value;
-template<typename _MemberT0>
-Statement(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct Deferred : public Variant<Deferred_Details::Expression, Deferred_Details::Statement> {
-using Variant<Deferred_Details::Expression, Deferred_Details::Statement>::Variant;
-    using Expression = Deferred_Details::Expression;
-    using Statement = Deferred_Details::Statement;
-ErrorOr<DeprecatedString> debug_description() const;
+} Throw;
+struct {
+types::Value value;
+} Yield;
+struct {
+types::Value value;
+} JustValue;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
+[[nodiscard]] static StatementResult Return(types::Value value);
+[[nodiscard]] static StatementResult Throw(types::Value value);
+[[nodiscard]] static StatementResult Yield(types::Value value);
+[[nodiscard]] static StatementResult Continue();
+[[nodiscard]] static StatementResult Break();
+[[nodiscard]] static StatementResult JustValue(types::Value value);
+~StatementResult();
+StatementResult& operator=(StatementResult const &);
+StatementResult& operator=(StatementResult &&);
+StatementResult(StatementResult const&);
+StatementResult(StatementResult &&);
+private: void __jakt_destroy_variant();
+public:
+private:
+StatementResult() {};
 };
 class InterpreterScope :public RefCounted<InterpreterScope>, public Weakable<InterpreterScope> {
   public:
@@ -83,49 +64,68 @@ public: ErrorOr<void> defer_expression(NonnullRefPtr<typename types::CheckedExpr
 public: ErrorOr<types::Value> must_get(DeprecatedString const name) const;
 public: ErrorOr<ids::TypeId> map_type(ids::TypeId const id) const;
 public: ErrorOr<DeprecatedString> debug_description() const;
-};namespace StatementResult_Details {
-struct Return{
+};enum class InterpretError: i32 {
+CallToExternalFunction = (infallible_integer_cast<i32>((static_cast<i32>(42)))),
+MismatchingArguments = (infallible_integer_cast<i32>((static_cast<u64>(43ULL)))),
+InvalidThisArgument = (infallible_integer_cast<i32>((static_cast<u64>(44ULL)))),
+InvalidOperation = (infallible_integer_cast<i32>((static_cast<u64>(45ULL)))),
+InvalidType = (infallible_integer_cast<i32>((static_cast<u64>(46ULL)))),
+UnknownVariable = (infallible_integer_cast<i32>((static_cast<u64>(47ULL)))),
+Unimplemented = (infallible_integer_cast<i32>((static_cast<u64>(48ULL)))),
+UnwrapOptionalNone = (infallible_integer_cast<i32>((static_cast<u64>(49ULL)))),
+InvalidCharacterConstant = (infallible_integer_cast<i32>((static_cast<u64>(50ULL)))),
+};
+struct ExecutionResult {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+struct {
 types::Value value;
-template<typename _MemberT0>
-Return(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Throw{
+} Return;
+struct {
 types::Value value;
-template<typename _MemberT0>
-Throw(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
+} Throw;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
+[[nodiscard]] static ExecutionResult Return(types::Value value);
+[[nodiscard]] static ExecutionResult Throw(types::Value value);
+~ExecutionResult();
+ExecutionResult& operator=(ExecutionResult const &);
+ExecutionResult& operator=(ExecutionResult &&);
+ExecutionResult(ExecutionResult const&);
+ExecutionResult(ExecutionResult &&);
+private: void __jakt_destroy_variant();
+public:
+private:
+ExecutionResult() {};
 };
-struct Yield{
-types::Value value;
-template<typename _MemberT0>
-Yield(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-struct Continue {
-};
-struct Break {
-};
-struct JustValue{
-types::Value value;
-template<typename _MemberT0>
-JustValue(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-}
-struct StatementResult : public Variant<StatementResult_Details::Return, StatementResult_Details::Throw, StatementResult_Details::Yield, StatementResult_Details::Continue, StatementResult_Details::Break, StatementResult_Details::JustValue> {
-using Variant<StatementResult_Details::Return, StatementResult_Details::Throw, StatementResult_Details::Yield, StatementResult_Details::Continue, StatementResult_Details::Break, StatementResult_Details::JustValue>::Variant;
-    using Return = StatementResult_Details::Return;
-    using Throw = StatementResult_Details::Throw;
-    using Yield = StatementResult_Details::Yield;
-    using Continue = StatementResult_Details::Continue;
-    using Break = StatementResult_Details::Break;
-    using JustValue = StatementResult_Details::JustValue;
-ErrorOr<DeprecatedString> debug_description() const;
+struct Deferred {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+struct {
+NonnullRefPtr<typename types::CheckedExpression> value;
+} Expression;
+struct {
+NonnullRefPtr<typename types::CheckedStatement> value;
+} Statement;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
+[[nodiscard]] static Deferred Expression(NonnullRefPtr<typename types::CheckedExpression> value);
+[[nodiscard]] static Deferred Statement(NonnullRefPtr<typename types::CheckedStatement> value);
+~Deferred();
+Deferred& operator=(Deferred const &);
+Deferred& operator=(Deferred &&);
+Deferred(Deferred const&);
+Deferred(Deferred &&);
+private: void __jakt_destroy_variant();
+public:
+private:
+Deferred() {};
 };
 class Interpreter :public RefCounted<Interpreter>, public Weakable<Interpreter> {
   public:
@@ -171,14 +171,8 @@ public: ErrorOr<types::Value> reflect_type(ids::TypeId const type_id, utility::S
 public: ErrorOr<DeprecatedString> debug_description() const;
 };}
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::interpreter::ExecutionResult> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::ExecutionResult const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::interpreter::Deferred> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::Deferred const& value) {
+template<>struct Jakt::Formatter<Jakt::interpreter::StatementResult> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::StatementResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
@@ -189,8 +183,14 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::interpreter::StatementResult> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::StatementResult const& value) {
+template<>struct Jakt::Formatter<Jakt::interpreter::ExecutionResult> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::ExecutionResult const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::interpreter::Deferred> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::interpreter::Deferred const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

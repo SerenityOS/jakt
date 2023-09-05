@@ -1,0 +1,28 @@
+import extern "AK/Array.h" {
+    [[name=Array]]
+    extern struct StaticArray<T, comptime Size> {
+        [[name=Array]]
+        extern fn StaticArray<U, comptime S>() -> StaticArray<U, S>
+
+        [[name=data]]
+        extern fn unsafe_data(this) -> raw T
+
+        extern fn size(this) -> usize
+
+        extern fn at(this, anon index: usize) -> T
+
+        extern fn first(this) -> T
+        extern fn last(this) -> T
+
+        extern fn is_empty(this) -> bool
+
+        [[name="operator(==)"]]
+        extern fn equals(this, anon other: StaticArray<T, Size>) -> bool
+
+        extern fn fill(mut this, anon value: T) -> void
+
+        extern fn first_index_of(this, anon value: T) -> usize?
+
+        extern fn contains_slow(this, anon value: T) -> bool
+    }
+}

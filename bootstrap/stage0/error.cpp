@@ -6,23 +6,23 @@ ErrorOr<void> print_error_json(DeprecatedString const file_name,error::JaktError
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<void>>{
 auto&& __jakt_match_variant = error;
-switch(__jakt_match_variant.index()) {
-case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<error::JaktError::Message>();DeprecatedString const& message = __jakt_match_value.message;
+switch(__jakt_match_variant.__jakt_init_index()) {
+case 0 /* Message */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.Message;DeprecatedString const& message = __jakt_match_value.message;
 utility::Span const& span = __jakt_match_value.span;
 {
-TRY((error::display_message_with_span_json( error::MessageSeverity { typename error::MessageSeverity::Error() } ,file_name,message,span)));
+TRY((error::display_message_with_span_json(error::MessageSeverity::Error(),file_name,message,span)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<error::JaktError::MessageWithHint>();DeprecatedString const& message = __jakt_match_value.message;
+case 1 /* MessageWithHint */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;DeprecatedString const& message = __jakt_match_value.message;
 utility::Span const& span = __jakt_match_value.span;
 DeprecatedString const& hint = __jakt_match_value.hint;
 utility::Span const& hint_span = __jakt_match_value.hint_span;
 {
-TRY((error::display_message_with_span_json( error::MessageSeverity { typename error::MessageSeverity::Error() } ,file_name,message,span)));
-TRY((error::display_message_with_span_json( error::MessageSeverity { typename error::MessageSeverity::Hint() } ,file_name,hint,hint_span)));
+TRY((error::display_message_with_span_json(error::MessageSeverity::Error(),file_name,message,span)));
+TRY((error::display_message_with_span_json(error::MessageSeverity::Hint(),file_name,hint,hint_span)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -42,23 +42,23 @@ ErrorOr<void> print_error(DeprecatedString const file_name,JaktInternal::Optiona
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<void>>{
 auto&& __jakt_match_variant = error;
-switch(__jakt_match_variant.index()) {
-case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<error::JaktError::Message>();DeprecatedString const& message = __jakt_match_value.message;
+switch(__jakt_match_variant.__jakt_init_index()) {
+case 0 /* Message */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.Message;DeprecatedString const& message = __jakt_match_value.message;
 utility::Span const& span = __jakt_match_value.span;
 {
-TRY((error::display_message_with_span( error::MessageSeverity { typename error::MessageSeverity::Error() } ,file_name,file_contents,message,span)));
+TRY((error::display_message_with_span(error::MessageSeverity::Error(),file_name,file_contents,message,span)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
-case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<error::JaktError::MessageWithHint>();DeprecatedString const& message = __jakt_match_value.message;
+case 1 /* MessageWithHint */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;DeprecatedString const& message = __jakt_match_value.message;
 utility::Span const& span = __jakt_match_value.span;
 DeprecatedString const& hint = __jakt_match_value.hint;
 utility::Span const& hint_span = __jakt_match_value.hint_span;
 {
-TRY((error::display_message_with_span( error::MessageSeverity { typename error::MessageSeverity::Error() } ,file_name,file_contents,message,span)));
-TRY((error::display_message_with_span( error::MessageSeverity { typename error::MessageSeverity::Hint() } ,file_name,file_contents,hint,hint_span)));
+TRY((error::display_message_with_span(error::MessageSeverity::Error(),file_name,file_contents,message,span)));
+TRY((error::display_message_with_span(error::MessageSeverity::Hint(),file_name,file_contents,hint,hint_span)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -462,7 +462,7 @@ return {};
 
 ErrorOr<DeprecatedString> error::MessageSeverity::debug_description() const {
 auto builder = DeprecatedStringBuilder::create();
-switch (this->index()) {case 0 /* Hint */: {
+switch (this->__jakt_init_index()) {case 0 /* Hint */: {
 return DeprecatedString("MessageSeverity::Hint"sv);
 break;}
 case 1 /* Error */: {
@@ -471,16 +471,100 @@ break;}
 }
 return builder.to_string();
 }
+[[nodiscard]] MessageSeverity MessageSeverity::Hint(){
+MessageSeverity __jakt_uninit_enum;
+__jakt_uninit_enum.__jakt_variant_index = 1;
+return __jakt_uninit_enum;
+}
+[[nodiscard]] MessageSeverity MessageSeverity::Error(){
+MessageSeverity __jakt_uninit_enum;
+__jakt_uninit_enum.__jakt_variant_index = 2;
+return __jakt_uninit_enum;
+}
+MessageSeverity& MessageSeverity::operator=(MessageSeverity const &rhs){
+{VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
+if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
+this->__jakt_destroy_variant();
+switch (rhs.__jakt_init_index()) {
+case 0 /* Hint */:
+break;
+case 1 /* Error */:
+break;
+}
+} else {
+switch (rhs.__jakt_init_index()) {
+case 0 /* Hint */:
+break;
+case 1 /* Error */:
+break;
+}
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+return *this;
+}
+MessageSeverity::MessageSeverity(MessageSeverity const &rhs){VERIFY(rhs.__jakt_variant_index != 0);
+switch (rhs.__jakt_init_index()) {
+case 0 /* Hint */:
+break;
+case 1 /* Error */:
+break;
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+MessageSeverity& MessageSeverity::operator=(MessageSeverity &&rhs){
+{VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
+if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
+this->__jakt_destroy_variant();
+switch (rhs.__jakt_init_index()) {
+case 0 /* Hint */:
+break;
+case 1 /* Error */:
+break;
+}
+} else {
+switch (rhs.__jakt_init_index()) {
+case 0 /* Hint */:
+break;
+case 1 /* Error */:
+break;
+}
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+return *this;
+}
+MessageSeverity::MessageSeverity(MessageSeverity &&rhs){
+{VERIFY(rhs.__jakt_variant_index != 0);
+switch (rhs.__jakt_init_index()) {
+case 0 /* Hint */:
+break;
+case 1 /* Error */:
+break;
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+}
+MessageSeverity::~MessageSeverity(){
+if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant();
+}
+void MessageSeverity::__jakt_destroy_variant() {
+switch (this->__jakt_init_index()) {
+case 0 /* Hint */:break;
+case 1 /* Error */:break;
+}
+}
 ErrorOr<DeprecatedString> error::MessageSeverity::ansi_color_code() const {
 {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = *this;
-switch(__jakt_match_variant.index()) {
-case 0: {
+switch(__jakt_match_variant.__jakt_init_index()) {
+case 0 /* Hint */: {
 return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("94"sv)));
 };/*case end*/
-case 1: {
+case 1 /* Error */: {
 return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("31"sv)));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -498,11 +582,11 @@ ErrorOr<DeprecatedString> error::MessageSeverity::name() const {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = *this;
-switch(__jakt_match_variant.index()) {
-case 0: {
+switch(__jakt_match_variant.__jakt_init_index()) {
+case 0 /* Hint */: {
 return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("Hint"sv)));
 };/*case end*/
-case 1: {
+case 1 /* Error */: {
 return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("Error"sv)));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -517,9 +601,9 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 
 ErrorOr<DeprecatedString> error::JaktError::debug_description() const {
 auto builder = DeprecatedStringBuilder::create();
-switch (this->index()) {case 0 /* Message */: {
+switch (this->__jakt_init_index()) {case 0 /* Message */: {
 TRY(builder.append("JaktError::Message"sv));
-[[maybe_unused]] auto const& that = this->template get<JaktError::Message>();
+[[maybe_unused]] auto const& that = this->as.Message;
 TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -532,7 +616,7 @@ TRY(builder.append(")"sv));
 break;}
 case 1 /* MessageWithHint */: {
 TRY(builder.append("JaktError::MessageWithHint"sv));
-[[maybe_unused]] auto const& that = this->template get<JaktError::MessageWithHint>();
+[[maybe_unused]] auto const& that = this->as.MessageWithHint;
 TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -550,18 +634,150 @@ break;}
 }
 return builder.to_string();
 }
+[[nodiscard]] JaktError JaktError::Message(DeprecatedString message, utility::Span span){
+JaktError __jakt_uninit_enum;
+__jakt_uninit_enum.__jakt_variant_index = 1;
+new (&__jakt_uninit_enum.as.Message.message) (decltype(message))(move(message));
+new (&__jakt_uninit_enum.as.Message.span) (decltype(span))(move(span));
+return __jakt_uninit_enum;
+}
+[[nodiscard]] JaktError JaktError::MessageWithHint(DeprecatedString message, utility::Span span, DeprecatedString hint, utility::Span hint_span){
+JaktError __jakt_uninit_enum;
+__jakt_uninit_enum.__jakt_variant_index = 2;
+new (&__jakt_uninit_enum.as.MessageWithHint.message) (decltype(message))(move(message));
+new (&__jakt_uninit_enum.as.MessageWithHint.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum.as.MessageWithHint.hint) (decltype(hint))(move(hint));
+new (&__jakt_uninit_enum.as.MessageWithHint.hint_span) (decltype(hint_span))(move(hint_span));
+return __jakt_uninit_enum;
+}
+JaktError& JaktError::operator=(JaktError const &rhs){
+{VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
+if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
+this->__jakt_destroy_variant();
+switch (rhs.__jakt_init_index()) {
+case 0 /* Message */:
+new (&this->as.Message.message) (decltype(this->as.Message.message))(rhs.as.Message.message);
+new (&this->as.Message.span) (decltype(this->as.Message.span))(rhs.as.Message.span);
+break;
+case 1 /* MessageWithHint */:
+new (&this->as.MessageWithHint.message) (decltype(this->as.MessageWithHint.message))(rhs.as.MessageWithHint.message);
+new (&this->as.MessageWithHint.span) (decltype(this->as.MessageWithHint.span))(rhs.as.MessageWithHint.span);
+new (&this->as.MessageWithHint.hint) (decltype(this->as.MessageWithHint.hint))(rhs.as.MessageWithHint.hint);
+new (&this->as.MessageWithHint.hint_span) (decltype(this->as.MessageWithHint.hint_span))(rhs.as.MessageWithHint.hint_span);
+break;
+}
+} else {
+switch (rhs.__jakt_init_index()) {
+case 0 /* Message */:
+this->as.Message.message = rhs.as.Message.message;
+this->as.Message.span = rhs.as.Message.span;
+break;
+case 1 /* MessageWithHint */:
+this->as.MessageWithHint.message = rhs.as.MessageWithHint.message;
+this->as.MessageWithHint.span = rhs.as.MessageWithHint.span;
+this->as.MessageWithHint.hint = rhs.as.MessageWithHint.hint;
+this->as.MessageWithHint.hint_span = rhs.as.MessageWithHint.hint_span;
+break;
+}
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+return *this;
+}
+JaktError::JaktError(JaktError const &rhs){VERIFY(rhs.__jakt_variant_index != 0);
+switch (rhs.__jakt_init_index()) {
+case 0 /* Message */:
+new (&this->as.Message.message) (decltype(this->as.Message.message))(rhs.as.Message.message);
+new (&this->as.Message.span) (decltype(this->as.Message.span))(rhs.as.Message.span);
+break;
+case 1 /* MessageWithHint */:
+new (&this->as.MessageWithHint.message) (decltype(this->as.MessageWithHint.message))(rhs.as.MessageWithHint.message);
+new (&this->as.MessageWithHint.span) (decltype(this->as.MessageWithHint.span))(rhs.as.MessageWithHint.span);
+new (&this->as.MessageWithHint.hint) (decltype(this->as.MessageWithHint.hint))(rhs.as.MessageWithHint.hint);
+new (&this->as.MessageWithHint.hint_span) (decltype(this->as.MessageWithHint.hint_span))(rhs.as.MessageWithHint.hint_span);
+break;
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+JaktError& JaktError::operator=(JaktError &&rhs){
+{VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
+if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
+this->__jakt_destroy_variant();
+switch (rhs.__jakt_init_index()) {
+case 0 /* Message */:
+new (&this->as.Message.message) (decltype(this->as.Message.message))(move(rhs.as.Message.message));
+new (&this->as.Message.span) (decltype(this->as.Message.span))(move(rhs.as.Message.span));
+break;
+case 1 /* MessageWithHint */:
+new (&this->as.MessageWithHint.message) (decltype(this->as.MessageWithHint.message))(move(rhs.as.MessageWithHint.message));
+new (&this->as.MessageWithHint.span) (decltype(this->as.MessageWithHint.span))(move(rhs.as.MessageWithHint.span));
+new (&this->as.MessageWithHint.hint) (decltype(this->as.MessageWithHint.hint))(move(rhs.as.MessageWithHint.hint));
+new (&this->as.MessageWithHint.hint_span) (decltype(this->as.MessageWithHint.hint_span))(move(rhs.as.MessageWithHint.hint_span));
+break;
+}
+} else {
+switch (rhs.__jakt_init_index()) {
+case 0 /* Message */:
+this->as.Message.message = move(rhs.as.Message.message);
+this->as.Message.span = move(rhs.as.Message.span);
+break;
+case 1 /* MessageWithHint */:
+this->as.MessageWithHint.message = move(rhs.as.MessageWithHint.message);
+this->as.MessageWithHint.span = move(rhs.as.MessageWithHint.span);
+this->as.MessageWithHint.hint = move(rhs.as.MessageWithHint.hint);
+this->as.MessageWithHint.hint_span = move(rhs.as.MessageWithHint.hint_span);
+break;
+}
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+return *this;
+}
+JaktError::JaktError(JaktError &&rhs){
+{VERIFY(rhs.__jakt_variant_index != 0);
+switch (rhs.__jakt_init_index()) {
+case 0 /* Message */:
+new (&this->as.Message.message) (decltype(this->as.Message.message))(move(rhs.as.Message.message));
+new (&this->as.Message.span) (decltype(this->as.Message.span))(move(rhs.as.Message.span));
+break;
+case 1 /* MessageWithHint */:
+new (&this->as.MessageWithHint.message) (decltype(this->as.MessageWithHint.message))(move(rhs.as.MessageWithHint.message));
+new (&this->as.MessageWithHint.span) (decltype(this->as.MessageWithHint.span))(move(rhs.as.MessageWithHint.span));
+new (&this->as.MessageWithHint.hint) (decltype(this->as.MessageWithHint.hint))(move(rhs.as.MessageWithHint.hint));
+new (&this->as.MessageWithHint.hint_span) (decltype(this->as.MessageWithHint.hint_span))(move(rhs.as.MessageWithHint.hint_span));
+break;
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+}
+JaktError::~JaktError(){
+if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant();
+}
+void JaktError::__jakt_destroy_variant() {
+switch (this->__jakt_init_index()) {
+case 0 /* Message */:this->as.Message.message.~DeprecatedString();
+this->as.Message.span.~Span();
+break;
+case 1 /* MessageWithHint */:this->as.MessageWithHint.message.~DeprecatedString();
+this->as.MessageWithHint.span.~Span();
+this->as.MessageWithHint.hint.~DeprecatedString();
+this->as.MessageWithHint.hint_span.~Span();
+break;
+}
+}
 utility::Span error::JaktError::span() const {
 {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<utility::Span, utility::Span>{
 auto&& __jakt_match_variant = *this;
-switch(__jakt_match_variant.index()) {
-case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<error::JaktError::Message>();utility::Span const& span = __jakt_match_value.span;
+switch(__jakt_match_variant.__jakt_init_index()) {
+case 0 /* Message */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.Message;utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<error::JaktError::MessageWithHint>();utility::Span const& span = __jakt_match_value.span;
+case 1 /* MessageWithHint */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/

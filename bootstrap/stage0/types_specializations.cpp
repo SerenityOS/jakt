@@ -35,6 +35,7 @@
 #include "jakt__prelude__operators.h"
 #include "jakt__prelude__string.h"
 #include "jakt__prelude__iteration.h"
+#include "jakt__prelude__static_array.h"
 namespace Jakt {
 namespace types {
 
@@ -73,18 +74,18 @@ TRY((((*this).for_each_scope_accessible_unqualified_from_scope_impl(scope_id,(([
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<typename utility::IterationDecision<bool>>>{
 auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(TRY((callback(scope_id,name_override,is_alias))));
-if (__jakt_enum_value.index() == 0 /* Break */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<NonnullRefPtr<types::CheckedVariable>>>::Break>();
+if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
+auto& __jakt_match_value = __jakt_enum_value.as.Break;
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
+return utility::IterationDecision<bool>::Break(true);
 }
 return JaktInternal::ExplicitValue<void>();
 }
-if (__jakt_enum_value.index() == 1 /* Continue */) {
+if (__jakt_enum_value.__jakt_init_index() == 1 /* Continue */) {
 {
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
+return utility::IterationDecision<bool>::Continue();
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -109,18 +110,18 @@ TRY((((*this).for_each_scope_accessible_unqualified_from_scope_impl(scope_id,(([
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<typename utility::IterationDecision<bool>>>{
 auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(TRY((callback(scope_id,name_override,is_alias))));
-if (__jakt_enum_value.index() == 0 /* Break */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<types::Value>>::Break>();
+if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
+auto& __jakt_match_value = __jakt_enum_value.as.Break;
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
+return utility::IterationDecision<bool>::Break(true);
 }
 return JaktInternal::ExplicitValue<void>();
 }
-if (__jakt_enum_value.index() == 1 /* Continue */) {
+if (__jakt_enum_value.__jakt_init_index() == 1 /* Continue */) {
 {
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
+return utility::IterationDecision<bool>::Continue();
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -145,18 +146,18 @@ TRY((((*this).for_each_scope_accessible_unqualified_from_scope_impl(scope_id,(([
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<typename utility::IterationDecision<bool>>>{
 auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(TRY((callback(scope_id,name_override,is_alias))));
-if (__jakt_enum_value.index() == 0 /* Break */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<JaktInternal::Tuple<ids::TypeId,ids::ScopeId>>>::Break>();
+if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
+auto& __jakt_match_value = __jakt_enum_value.as.Break;
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
+return utility::IterationDecision<bool>::Break(true);
 }
 return JaktInternal::ExplicitValue<void>();
 }
-if (__jakt_enum_value.index() == 1 /* Continue */) {
+if (__jakt_enum_value.__jakt_init_index() == 1 /* Continue */) {
 {
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
+return utility::IterationDecision<bool>::Continue();
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -181,18 +182,18 @@ TRY((((*this).for_each_scope_accessible_unqualified_from_scope_impl(scope_id,(([
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<typename utility::IterationDecision<bool>>>{
 auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(TRY((callback(scope_id,name_override,is_alias))));
-if (__jakt_enum_value.index() == 0 /* Break */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<ids::EnumId>>::Break>();
+if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
+auto& __jakt_match_value = __jakt_enum_value.as.Break;
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
+return utility::IterationDecision<bool>::Break(true);
 }
 return JaktInternal::ExplicitValue<void>();
 }
-if (__jakt_enum_value.index() == 1 /* Continue */) {
+if (__jakt_enum_value.__jakt_init_index() == 1 /* Continue */) {
 {
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
+return utility::IterationDecision<bool>::Continue();
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -217,18 +218,18 @@ TRY((((*this).for_each_scope_accessible_unqualified_from_scope_impl(scope_id,(([
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<typename utility::IterationDecision<bool>>>{
 auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(TRY((callback(scope_id,name_override,is_alias))));
-if (__jakt_enum_value.index() == 0 /* Break */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<ids::TraitId>>::Break>();
+if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
+auto& __jakt_match_value = __jakt_enum_value.as.Break;
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
+return utility::IterationDecision<bool>::Break(true);
 }
 return JaktInternal::ExplicitValue<void>();
 }
-if (__jakt_enum_value.index() == 1 /* Continue */) {
+if (__jakt_enum_value.__jakt_init_index() == 1 /* Continue */) {
 {
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
+return utility::IterationDecision<bool>::Continue();
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -253,18 +254,18 @@ TRY((((*this).for_each_scope_accessible_unqualified_from_scope_impl(scope_id,(([
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<typename utility::IterationDecision<bool>>>{
 auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(TRY((callback(scope_id,name_override,is_alias))));
-if (__jakt_enum_value.index() == 0 /* Break */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<ids::StructId>>::Break>();
+if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
+auto& __jakt_match_value = __jakt_enum_value.as.Break;
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
+return utility::IterationDecision<bool>::Break(true);
 }
 return JaktInternal::ExplicitValue<void>();
 }
-if (__jakt_enum_value.index() == 1 /* Continue */) {
+if (__jakt_enum_value.__jakt_init_index() == 1 /* Continue */) {
 {
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
+return utility::IterationDecision<bool>::Continue();
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -289,18 +290,18 @@ TRY((((*this).for_each_scope_accessible_unqualified_from_scope_impl(scope_id,(([
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<typename utility::IterationDecision<bool>>>{
 auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(TRY((callback(scope_id,name_override,is_alias))));
-if (__jakt_enum_value.index() == 0 /* Break */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<bool>>::Break>();
+if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
+auto& __jakt_match_value = __jakt_enum_value.as.Break;
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
+return utility::IterationDecision<bool>::Break(true);
 }
 return JaktInternal::ExplicitValue<void>();
 }
-if (__jakt_enum_value.index() == 1 /* Continue */) {
+if (__jakt_enum_value.__jakt_init_index() == 1 /* Continue */) {
 {
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
+return utility::IterationDecision<bool>::Continue();
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -325,18 +326,18 @@ TRY((((*this).for_each_scope_accessible_unqualified_from_scope_impl(scope_id,(([
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<typename utility::IterationDecision<bool>>>{
 auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(TRY((callback(scope_id,name_override,is_alias))));
-if (__jakt_enum_value.index() == 0 /* Break */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<JaktInternal::Tuple<ids::ScopeId,bool>>>::Break>();
+if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
+auto& __jakt_match_value = __jakt_enum_value.as.Break;
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
+return utility::IterationDecision<bool>::Break(true);
 }
 return JaktInternal::ExplicitValue<void>();
 }
-if (__jakt_enum_value.index() == 1 /* Continue */) {
+if (__jakt_enum_value.__jakt_init_index() == 1 /* Continue */) {
 {
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
+return utility::IterationDecision<bool>::Continue();
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -361,18 +362,18 @@ TRY((((*this).for_each_scope_accessible_unqualified_from_scope_impl(scope_id,(([
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<typename utility::IterationDecision<bool>>>{
 auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(TRY((callback(scope_id,name_override,is_alias))));
-if (__jakt_enum_value.index() == 0 /* Break */) {
-auto& __jakt_match_value = __jakt_enum_value.template get<typename JaktInternal::RemoveRefPtr<utility::IterationDecision<JaktInternal::Tuple<JaktInternal::DynamicArray<ids::FunctionId>,ids::ScopeId>>>::Break>();
+if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
+auto& __jakt_match_value = __jakt_enum_value.as.Break;
 auto& value = __jakt_match_value.value;
 {
 (result = value);
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Break(true) } ;
+return utility::IterationDecision<bool>::Break(true);
 }
 return JaktInternal::ExplicitValue<void>();
 }
-if (__jakt_enum_value.index() == 1 /* Continue */) {
+if (__jakt_enum_value.__jakt_init_index() == 1 /* Continue */) {
 {
-return  typename utility::IterationDecision<bool> { typename utility::IterationDecision<bool>::Continue() } ;
+return utility::IterationDecision<bool>::Continue();
 }
 return JaktInternal::ExplicitValue<void>();
 }

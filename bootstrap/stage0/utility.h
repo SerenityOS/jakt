@@ -9,29 +9,22 @@ public: size_t id;public: FileId(size_t a_id);
 
 public: bool equals(utility::FileId const rhs) const;
 public: ErrorOr<DeprecatedString> debug_description() const;
-};namespace IterationDecision_Details {
-template<typename T>
-struct Break {
+};template<typename T>
+struct IterationDecision {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+struct {
 T value;
-template<typename _MemberT0>
-Break(_MemberT0&& member_0):
-value{ forward<_MemberT0>(member_0)}
-{}
-};
-template<typename T>
-struct Continue {
-};
-}
-template<typename T>
-struct IterationDecision : public Variant<IterationDecision_Details::Break<T>, IterationDecision_Details::Continue<T>> {
-using Variant<IterationDecision_Details::Break<T>, IterationDecision_Details::Continue<T>>::Variant;
-    using Break = IterationDecision_Details::Break<T>;
-    using Continue = IterationDecision_Details::Continue<T>;
-ErrorOr<DeprecatedString> debug_description() const {
+} Break;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const {
 auto builder = DeprecatedStringBuilder::create();
-switch (this->index()) {case 0 /* Break */: {
+switch (this->__jakt_init_index()) {case 0 /* Break */: {
 TRY(builder.append("IterationDecision::Break"sv));
-[[maybe_unused]] auto const& that = this->template get<IterationDecision::Break>();
+[[maybe_unused]] auto const& that = this->as.Break;
 TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -46,6 +39,101 @@ break;}
 }
 return builder.to_string();
 }
+[[nodiscard]] static IterationDecision<T> Break(T value){
+IterationDecision __jakt_uninit_enum;
+__jakt_uninit_enum.__jakt_variant_index = 1;
+new (&__jakt_uninit_enum.as.Break.value) (decltype(value))(move(value));
+return __jakt_uninit_enum;
+}
+[[nodiscard]] static IterationDecision<T> Continue(){
+IterationDecision __jakt_uninit_enum;
+__jakt_uninit_enum.__jakt_variant_index = 2;
+return __jakt_uninit_enum;
+}
+IterationDecision& operator=(IterationDecision const &rhs){
+{VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
+if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
+this->__jakt_destroy_variant();
+switch (rhs.__jakt_init_index()) {
+case 0 /* Break */:
+new (&this->as.Break.value) (decltype(this->as.Break.value))(rhs.as.Break.value);
+break;
+case 1 /* Continue */:
+break;
+}
+} else {
+switch (rhs.__jakt_init_index()) {
+case 0 /* Break */:
+this->as.Break.value = rhs.as.Break.value;
+break;
+case 1 /* Continue */:
+break;
+}
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+return *this;
+}
+IterationDecision(IterationDecision const &rhs){VERIFY(rhs.__jakt_variant_index != 0);
+switch (rhs.__jakt_init_index()) {
+case 0 /* Break */:
+new (&this->as.Break.value) (decltype(this->as.Break.value))(rhs.as.Break.value);
+break;
+case 1 /* Continue */:
+break;
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+IterationDecision& operator=(IterationDecision &&rhs){
+{VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
+if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
+this->__jakt_destroy_variant();
+switch (rhs.__jakt_init_index()) {
+case 0 /* Break */:
+new (&this->as.Break.value) (decltype(this->as.Break.value))(move(rhs.as.Break.value));
+break;
+case 1 /* Continue */:
+break;
+}
+} else {
+switch (rhs.__jakt_init_index()) {
+case 0 /* Break */:
+this->as.Break.value = move(rhs.as.Break.value);
+break;
+case 1 /* Continue */:
+break;
+}
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+return *this;
+}
+IterationDecision(IterationDecision &&rhs){
+{VERIFY(rhs.__jakt_variant_index != 0);
+switch (rhs.__jakt_init_index()) {
+case 0 /* Break */:
+new (&this->as.Break.value) (decltype(this->as.Break.value))(move(rhs.as.Break.value));
+break;
+case 1 /* Continue */:
+break;
+}
+this->__jakt_variant_index = rhs.__jakt_variant_index;
+}
+}
+~IterationDecision(){
+if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant();
+}
+private: void __jakt_destroy_variant() {
+switch (this->__jakt_init_index()) {
+case 0 /* Break */:this->as.Break.value.~T();
+break;
+case 1 /* Continue */:break;
+}
+}
+public:
+private:
+IterationDecision() {};
 };
 struct Span {
   public:

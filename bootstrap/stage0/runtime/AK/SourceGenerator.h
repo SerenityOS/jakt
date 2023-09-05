@@ -39,19 +39,18 @@ public:
     // Move-assign is undefinable due to 'StringBuilder& m_builder;'
     SourceGenerator& operator=(SourceGenerator&&) = delete;
 
-    ErrorOr<SourceGenerator> fork()
+    [[nodiscard]] SourceGenerator fork()
     {
-        return SourceGenerator { m_builder, TRY(m_mapping.clone()), m_opening, m_closing };
+        return SourceGenerator { m_builder, MUST(m_mapping.clone()), m_opening, m_closing };
     }
 
-    ErrorOr<void> set(StringView key, String value)
+    void set(StringView key, String value)
     {
         if (key.contains(m_opening) || key.contains(m_closing)) {
             warnln("SourceGenerator keys cannot contain the opening/closing delimiters `{}` and `{}`. (Keys are only wrapped in these when using them, not when setting them.)", m_opening, m_closing);
             VERIFY_NOT_REACHED();
         }
-        TRY(m_mapping.try_set(key, move(value)));
-        return {};
+        m_mapping.set(key, move(value));
     }
 
     String get(StringView key) const
@@ -66,12 +65,12 @@ public:
 
     StringView as_string_view() const { return m_builder.string_view(); }
 
-    ErrorOr<void> try_append(StringView pattern)
+    void append(StringView pattern)
     {
         GenericLexer lexer { pattern };
 
         while (!lexer.is_eof()) {
-            TRY(m_builder.try_append(lexer.consume_until(m_opening)));
+            m_builder.append(lexer.consume_until(m_opening));
 
             if (lexer.consume_specific(m_opening)) {
                 auto const placeholder = lexer.consume_until(m_closing);
@@ -79,19 +78,17 @@ public:
                 if (!lexer.consume_specific(m_closing))
                     VERIFY_NOT_REACHED();
 
-                TRY(m_builder.try_append(get(placeholder)));
+                m_builder.append(get(placeholder));
             } else {
                 VERIFY(lexer.is_eof());
             }
         }
-        return {};
     }
 
-    ErrorOr<void> try_appendln(StringView pattern)
+    void appendln(StringView pattern)
     {
-        TRY(try_append(pattern));
-        TRY(m_builder.try_append('\n'));
-        return {};
+        append(pattern);
+        m_builder.append('\n');
     }
 
     template<size_t N>
@@ -101,39 +98,33 @@ public:
     }
 
     template<size_t N>
-    ErrorOr<void> set(char const (&key)[N], String value)
+    void set(char const (&key)[N], String value)
     {
-        return set(StringView { key, N - 1 }, value);
+        set(StringView { key, N - 1 }, value);
     }
 
     template<size_t N>
-    ErrorOr<void> try_append(char const (&pattern)[N])
+    void append(char const (&pattern)[N])
     {
-        return try_append(StringView { pattern, N - 1 });
+        append(StringView { pattern, N - 1 });
     }
 
     template<size_t N>
-    ErrorOr<void> try_appendln(char const (&pattern)[N])
+    void appendln(char const (&pattern)[N])
     {
-        return try_appendln(StringView { pattern, N - 1 });
+        appendln(StringView { pattern, N - 1 });
     }
 
     // FIXME: These are deprecated.
     void set(StringView key, DeprecatedString value)
     {
-        MUST(set(key, MUST(String::from_deprecated_string(value))));
+        set(key, MUST(String::from_deprecated_string(value)));
     }
     template<size_t N>
     void set(char const (&key)[N], DeprecatedString value)
     {
         set(StringView { key, N - 1 }, value);
     }
-    void append(StringView pattern) { MUST(try_append(pattern)); }
-    void appendln(StringView pattern) { MUST(try_appendln(pattern)); }
-    template<size_t N>
-    void append(char const (&pattern)[N]) { MUST(try_append(pattern)); }
-    template<size_t N>
-    void appendln(char const (&pattern)[N]) { MUST(try_appendln(pattern)); }
 
 private:
     StringBuilder& m_builder;
