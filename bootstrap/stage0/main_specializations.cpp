@@ -35,6 +35,7 @@
 #include "jakt__prelude__operators.h"
 #include "jakt__prelude__string.h"
 #include "jakt__prelude__iteration.h"
+#include "jakt__prelude__static_array.h"
 namespace Jakt {
 
 /* specialisation 0 of function value_or_throw: ["u32"] */

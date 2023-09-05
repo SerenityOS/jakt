@@ -670,7 +670,7 @@ constexpr bool is_double_dot_path_segment(StringView input)
 }
 
 // https://url.spec.whatwg.org/#string-percent-encode-after-encoding
-DeprecatedString URLParser::percent_encode_after_encoding(StringView input, URL::PercentEncodeSet percent_encode_set, bool space_as_plus)
+ErrorOr<String> URLParser::percent_encode_after_encoding(StringView input, URL::PercentEncodeSet percent_encode_set, bool space_as_plus)
 {
     // NOTE: This is written somewhat ad-hoc since we don't yet implement the Encoding spec.
 
@@ -701,7 +701,7 @@ DeprecatedString URLParser::percent_encode_after_encoding(StringView input, URL:
     }
 
     // 6. Return output.
-    return output.to_deprecated_string();
+    return output.to_string();
 }
 
 // https://url.spec.whatwg.org/#concept-basic-url-parser
@@ -784,6 +784,10 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
 
     auto get_remaining = [&input, &iterator] {
         return input.substring_view(iterator - input.begin() + iterator.underlying_code_point_length_in_bytes()).as_string();
+    };
+
+    auto remaining_starts_with_two_ascii_hex_digits = [&]() {
+        return is_ascii_hex_digit(iterator.peek(1).value_or(end_of_file)) && is_ascii_hex_digit(iterator.peek(2).value_or(end_of_file));
     };
 
     // 9. Keep running the following state machine by switching on state. If after a run pointer points to the EOF code point, go to the next step. Otherwise, increase pointer by 1 and continue with the state machine.
@@ -875,18 +879,17 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                     state = State::File;
                 }
                 // 6. Otherwise, if url is special, base is non-null, and base’s scheme is url’s scheme:
-                // 7. Otherwise, if url is special, set state to special authority slashes state.
-                // FIXME: Write this block closer to spec text.
-                else if (url->is_special()) {
-                    // FIXME: 1. Assert: base is is special (and therefore does not have an opaque path).
+                else if (url->is_special() && base_url.has_value() && base_url->scheme() == url->m_scheme) {
+                    // 1. Assert: base is is special (and therefore does not have an opaque path).
+                    VERIFY(base_url->is_special());
 
                     // 2. Set state to special relative or authority state.
-                    if (base_url.has_value() && base_url->m_scheme == url->m_scheme)
-                        state = State::SpecialRelativeOrAuthority;
-                    else
-                        state = State::SpecialAuthoritySlashes;
+                    state = State::SpecialRelativeOrAuthority;
                 }
-
+                // 7. Otherwise, if url is special, set state to special authority slashes state.
+                else if (url->is_special()) {
+                    state = State::SpecialAuthoritySlashes;
+                }
                 // 8. Otherwise, if remaining starts with an U+002F (/), set state to path or authority state and increase pointer by 1.
                 else if (get_remaining().starts_with("/"sv)) {
                     state = State::PathOrAuthority;
@@ -1529,7 +1532,9 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                 if (!is_url_code_point(code_point) && code_point != '%')
                     report_validation_error();
 
-                // FIXME: 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits, validation error.
+                // 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits, validation error.
+                if (code_point == '%' && !remaining_starts_with_two_ascii_hex_digits())
+                    report_validation_error();
 
                 // 3. UTF-8 percent-encode c using the path percent-encode set and append the result to buffer.
                 URL::append_percent_encoded_if_necessary(buffer, code_point, URL::PercentEncodeSet::Path);
@@ -1561,7 +1566,9 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                 if (code_point != end_of_file && !is_url_code_point(code_point) && code_point != '%')
                     report_validation_error();
 
-                // FIXME: 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits, validation error.
+                // 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits, validation error.
+                if (code_point == '%' && !remaining_starts_with_two_ascii_hex_digits())
+                    report_validation_error();
 
                 // 3. If c is not the EOF code point, UTF-8 percent-encode c using the C0 control percent-encode set and append the result to url’s path.
                 if (code_point != end_of_file) {
@@ -1590,7 +1597,7 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                 auto query_percent_encode_set = url->is_special() ? URL::PercentEncodeSet::SpecialQuery : URL::PercentEncodeSet::Query;
 
                 // 2. Percent-encode after encoding, with encoding, buffer, and queryPercentEncodeSet, and append the result to url’s query.
-                url->m_query = String::from_deprecated_string(percent_encode_after_encoding(buffer.string_view(), query_percent_encode_set)).release_value_but_fixme_should_propagate_errors();
+                url->m_query = percent_encode_after_encoding(buffer.string_view(), query_percent_encode_set).release_value_but_fixme_should_propagate_errors();
 
                 // 3. Set buffer to the empty string.
                 buffer.clear();
@@ -1607,7 +1614,9 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                 if (!is_url_code_point(code_point) && code_point != '%')
                     report_validation_error();
 
-                // FIXME: 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits, validation error.
+                // 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits, validation error.
+                if (code_point == '%' && !remaining_starts_with_two_ascii_hex_digits())
+                    report_validation_error();
 
                 // 3. Append c to buffer.
                 buffer.append_code_point(code_point);
@@ -1622,12 +1631,15 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                 if (!is_url_code_point(code_point) && code_point != '%')
                     report_validation_error();
 
-                // FIXME: 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits, validation error.
+                // 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits, validation error.
+                if (code_point == '%' && !remaining_starts_with_two_ascii_hex_digits())
+                    report_validation_error();
 
-                // FIXME: 3. UTF-8 percent-encode c using the fragment percent-encode set and append the result to url’s fragment.
+                // 3. UTF-8 percent-encode c using the fragment percent-encode set and append the result to url’s fragment.
+                // NOTE: The percent-encode is done on EOF on the entire buffer.
                 buffer.append_code_point(code_point);
             } else {
-                url->m_fragment = buffer.to_string().release_value_but_fixme_should_propagate_errors();
+                url->m_fragment = percent_encode_after_encoding(buffer.string_view(), URL::PercentEncodeSet::Fragment).release_value_but_fixme_should_propagate_errors();
                 buffer.clear();
             }
             break;

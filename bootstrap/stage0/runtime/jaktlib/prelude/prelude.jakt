@@ -1,3 +1,4 @@
+import jakt::prelude::static_array { StaticArray }
 import jakt::prelude::iteration { IntoIterator, IntoThrowingIterator, Iterable, ThrowingIterable }
 import jakt::prelude::string { FromStringLiteral, ThrowingFromStringLiteral }
 import jakt::prelude::operators { * }

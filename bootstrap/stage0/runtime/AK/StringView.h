@@ -330,6 +330,11 @@ public:
         return StringUtils::count(*this, needle);
     }
 
+    [[nodiscard]] size_t count(char needle) const
+    {
+        return StringUtils::count(*this, needle);
+    }
+
     template<typename... Ts>
     [[nodiscard]] ALWAYS_INLINE constexpr bool is_one_of(Ts&&... strings) const
     {
@@ -383,7 +388,7 @@ struct CaseInsensitiveASCIIStringViewTraits : public Traits<StringView> {
 #    define AK_STRING_VIEW_LITERAL_CONSTEVAL consteval
 #endif
 
-[[nodiscard]] ALWAYS_INLINE AK_STRING_VIEW_LITERAL_CONSTEVAL AK::StringView operator"" sv(char const* cstring, size_t length)
+[[nodiscard]] ALWAYS_INLINE AK_STRING_VIEW_LITERAL_CONSTEVAL AK::StringView operator""sv(char const* cstring, size_t length)
 {
     return AK::StringView(cstring, length);
 }

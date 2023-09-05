@@ -109,9 +109,9 @@ public:
         //       add 1 when we see a fract values behind the `.5`s place set,
         //       because that means they are smaller than .5
         // fract(m_value) >= .5?
-        if (m_value & (1u << (precision - 1))) {
+        if (m_value & (static_cast<Underlying>(1) << (precision - 1))) {
             // fract(m_value) > .5?
-            if (m_value & (radix_mask >> 2u)) {
+            if (m_value & (radix_mask >> 1)) {
                 // yes: round "up";
                 value += 1;
             } else {
@@ -128,13 +128,13 @@ public:
     constexpr This ceil() const
     {
         return create_raw((m_value & ~radix_mask)
-            + (m_value & radix_mask ? 1 << precision : 0));
+            + (m_value & radix_mask ? static_cast<Underlying>(1) << precision : 0));
     }
     constexpr This trunc() const
     {
         return create_raw((m_value & ~radix_mask)
             + ((m_value & radix_mask)
-                    ? (m_value > 0 ? 0 : (1 << precision))
+                    ? (m_value > 0 ? 0 : (static_cast<Underlying>(1) << precision))
                     : 0));
     }
 
@@ -157,7 +157,7 @@ public:
     constexpr This log2() const
     {
         // 0.5
-        This b = create_raw(1 << (precision - 1));
+        This b = create_raw(static_cast<Underlying>(1) << (precision - 1));
         This y = 0;
         This x = *this;
 
@@ -217,9 +217,9 @@ public:
         This ret = create_raw(value >> precision);
         // Rounding:
         // If last bit cut off is 1:
-        if (value & (1u << (precision - 1))) {
+        if (value & (static_cast<Underlying>(1) << (precision - 1))) {
             // If the bit after is 1 as well
-            if (value & (radix_mask >> 2u)) {
+            if (value & (radix_mask >> 1)) {
                 // We round away from 0
                 ret.raw() += 1;
             } else {
@@ -245,12 +245,12 @@ public:
     template<Integral I>
     constexpr This operator+(I other) const
     {
-        return create_raw(m_value + (other << precision));
+        return create_raw(m_value + (static_cast<Underlying>(other) << precision));
     }
     template<Integral I>
     constexpr This operator-(I other) const
     {
-        return create_raw(m_value - (other << precision));
+        return create_raw(m_value - (static_cast<Underlying>(other) << precision));
     }
     template<Integral I>
     constexpr This operator*(I other) const
@@ -297,13 +297,13 @@ public:
     template<Integral I>
     This& operator+=(I other)
     {
-        m_value += other << precision;
+        m_value += static_cast<Underlying>(other) << precision;
         return *this;
     }
     template<Integral I>
     This& operator-=(I other)
     {
-        m_value -= other << precision;
+        m_value -= static_cast<Underlying>(other) << precision;
         return *this;
     }
     template<Integral I>
@@ -362,7 +362,7 @@ public:
     template<Integral I>
     bool operator<(I other) const
     {
-        return (m_value >> precision) < other || m_value < (other << precision);
+        return (m_value >> precision) < other || m_value < (static_cast<Underlying>(other) << precision);
     }
     template<Integral I>
     bool operator<=(I other) const
@@ -419,19 +419,21 @@ struct Formatter<FixedPoint<precision, Underlying>> : StandardFormatter {
     ErrorOr<void> format(FormatBuilder& builder, FixedPoint<precision, Underlying> value)
     {
         u8 base;
-        bool upper_case;
-        FormatBuilder::RealNumberDisplayMode real_number_display_mode = FormatBuilder::RealNumberDisplayMode::General;
+        bool upper_case = false;
         if (m_mode == Mode::Default || m_mode == Mode::FixedPoint) {
             base = 10;
-            upper_case = false;
-            if (m_mode == Mode::FixedPoint)
-                real_number_display_mode = FormatBuilder::RealNumberDisplayMode::FixedPoint;
         } else if (m_mode == Mode::Hexfloat) {
             base = 16;
-            upper_case = false;
         } else if (m_mode == Mode::HexfloatUppercase) {
             base = 16;
             upper_case = true;
+        } else if (m_mode == Mode::Binary) {
+            base = 2;
+        } else if (m_mode == Mode::BinaryUppercase) {
+            base = 2;
+            upper_case = true;
+        } else if (m_mode == Mode::Octal) {
+            base = 8;
         } else {
             VERIFY_NOT_REACHED();
         }
@@ -446,7 +448,7 @@ struct Formatter<FixedPoint<precision, Underlying>> : StandardFormatter {
         i64 integer = value.ltrunc();
         constexpr u64 one = static_cast<Underlying>(1) << precision;
         u64 fraction_raw = value.raw() & (one - 1);
-        return builder.put_fixed_point(is_negative, integer, fraction_raw, one, base, upper_case, m_zero_pad, m_use_separator, m_align, m_width.value(), m_precision.value(), m_fill, m_sign_mode, real_number_display_mode);
+        return builder.put_fixed_point(is_negative, integer, fraction_raw, one, precision, base, upper_case, m_zero_pad, m_use_separator, m_align, m_width.value(), m_precision.value(), m_fill, m_sign_mode);
     }
 };
 
