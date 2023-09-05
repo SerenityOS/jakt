@@ -4832,7 +4832,7 @@ break;
 }
 types::CheckedMatchCase case_ = (_magic_value.value());
 {
-JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> const defaults = ((case_).common.defaults);
+JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> const defaults = ((case_).common.init_common.defaults);
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<DeprecatedString>>{
 auto&& __jakt_match_variant = case_;
@@ -7193,7 +7193,7 @@ TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY((__jakt_format((StringView::from_string_literal("\", this->common.{}));\n"sv)),TRY((((((var)->name_for_codegen())).as_name_for_use())))))))));
+(output,TRY((__jakt_format((StringView::from_string_literal("\", this->common.init_common.{}));\n"sv)),TRY((((((var)->name_for_codegen())).as_name_for_use())))))))));
 }
 else {
 TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
@@ -7896,7 +7896,7 @@ TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY(DeprecatedString::from_utf8("->common."sv)))));
+(output,TRY(DeprecatedString::from_utf8("->common.init_common."sv)))));
 }
 else {
 TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
@@ -7905,7 +7905,7 @@ TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY(DeprecatedString::from_utf8(".common."sv)))));
+(output,TRY(DeprecatedString::from_utf8(".common.init_common."sv)))));
 }
 
 }
@@ -7916,7 +7916,7 @@ TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY(DeprecatedString::from_utf8(".common."sv)))));
+(output,TRY(DeprecatedString::from_utf8(".common.init_common."sv)))));
 }
 
 }
@@ -7940,7 +7940,7 @@ TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY(DeprecatedString::from_utf8("->common."sv)))));
+(output,TRY(DeprecatedString::from_utf8("->common.init_common."sv)))));
 }
 else {
 TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
@@ -7949,7 +7949,7 @@ TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY(DeprecatedString::from_utf8(".common."sv)))));
+(output,TRY(DeprecatedString::from_utf8(".common.init_common."sv)))));
 }
 
 }
@@ -7960,7 +7960,7 @@ TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY(DeprecatedString::from_utf8(".common."sv)))));
+(output,TRY(DeprecatedString::from_utf8(".common.init_common."sv)))));
 }
 
 }
@@ -9054,13 +9054,13 @@ TRY((((generated_captures).push(({
 auto&& __jakt_match_variant = capture;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* ByValue */: {
-return JaktInternal::ExplicitValue(((capture).common.name));
+return JaktInternal::ExplicitValue(((capture).common.init_common.name));
 };/*case end*/
 case 4 /* AllByReference */: {
 return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("&"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("&{}"sv)),((capture).common.name)))));
+return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("&{}"sv)),((capture).common.init_common.name)))));
 };/*case end*/
 }/*switch end*/
 }()
@@ -10412,7 +10412,7 @@ return JaktInternal::ExplicitValue<void>();
     _jakt_value.release_value();
 });
 {
-JaktInternal::ArrayIterator<NonnullRefPtr<typename types::CheckedStatement>> _magic = ((((match_case).common.defaults)).iterator());
+JaktInternal::ArrayIterator<NonnullRefPtr<typename types::CheckedStatement>> _magic = ((((match_case).common.init_common.defaults)).iterator());
 for (;;){
 JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -10461,7 +10461,7 @@ return {};
 }
 (output,TRY(DeprecatedString::from_utf8("default: {\n"sv)))));
 {
-JaktInternal::ArrayIterator<NonnullRefPtr<typename types::CheckedStatement>> _magic = ((((match_case).common.defaults)).iterator());
+JaktInternal::ArrayIterator<NonnullRefPtr<typename types::CheckedStatement>> _magic = ((((match_case).common.init_common.defaults)).iterator());
 for (;;){
 JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -10859,7 +10859,7 @@ types::CheckedField common = (_magic_value.value());
 {
 NonnullRefPtr<types::CheckedVariable> const variable = ((((*this).program))->get_variable(((common).variable_id)));
 DeprecatedString const name = TRY((((((variable)->name_for_codegen())).as_name_for_use())));
-TRY((((output).append(TRY((placement_new(TRY((__jakt_format((StringView::from_string_literal("common.{}"sv)),name))))))))));
+TRY((((output).append(TRY((placement_new(TRY((__jakt_format((StringView::from_string_literal("common.init_common.{}"sv)),name))))))))));
 }
 
 }
@@ -10878,7 +10878,7 @@ types::CheckedField common = (_magic_value.value());
 {
 NonnullRefPtr<types::CheckedVariable> const variable = ((((*this).program))->get_variable(((common).variable_id)));
 DeprecatedString const name = TRY((((((variable)->name_for_codegen())).as_name_for_use())));
-TRY((((output).append(TRY((assign(TRY((__jakt_format((StringView::from_string_literal("common.{}"sv)),name))))))))));
+TRY((((output).append(TRY((assign(TRY((__jakt_format((StringView::from_string_literal("common.init_common.{}"sv)),name))))))))));
 }
 
 }
@@ -11105,7 +11105,7 @@ TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY(DeprecatedString::from_utf8("};\n"sv)))));
+(output,TRY(DeprecatedString::from_utf8("} init_common;\n"sv)))));
 TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 {
 (self = TRY((((self) + (rhs)))));
@@ -12067,7 +12067,7 @@ TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY((placement_new(TRY((__jakt_format((StringView::from_string_literal("{}common.{}"sv)),deref_uninit,name))),name))))));
+(output,TRY((placement_new(TRY((__jakt_format((StringView::from_string_literal("{}common.init_common.{}"sv)),deref_uninit,name))),name))))));
 }
 
 }
@@ -14600,7 +14600,7 @@ utility::panic(TRY(DeprecatedString::from_utf8("internal error: call to a constr
 ErrorOr<DeprecatedString> codegen::CodeGenerator::codegen_type_possibly_as_namespace(ids::TypeId const type_id,bool const as_namespace) {
 {
 DeprecatedString qualifiers = TRY(DeprecatedString::from_utf8(""sv));
-if (((!(as_namespace)) && ((((((((*this).program))->get_type(type_id)))->common.qualifiers)).is_immutable))){
+if (((!(as_namespace)) && ((((((((*this).program))->get_type(type_id)))->common.init_common.qualifiers)).is_immutable))){
 TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 {
 (self = TRY((((self) + (rhs)))));
@@ -14899,7 +14899,7 @@ TRY(([](DeprecatedString& self, DeprecatedString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(((output)),TRY((__jakt_format((StringView::from_string_literal("this->common.{}.~{}();\n"sv)),TRY((((((variable)->name_for_codegen())).as_name_for_use()))),name))))));
+(((output)),TRY((__jakt_format((StringView::from_string_literal("this->common.init_common.{}.~{}();\n"sv)),TRY((((((variable)->name_for_codegen())).as_name_for_use()))),name))))));
 }
 }
 

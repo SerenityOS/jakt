@@ -1354,7 +1354,7 @@ ErrorOr<DeprecatedString> types::CheckedProgram::type_name(ids::TypeId const typ
 NonnullRefPtr<typename types::Type> const type = ((*this).get_type(type_id));
 return TRY((((TRY((((({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<DeprecatedString>>{
-auto __jakt_enum_value = (((((type)->common.qualifiers)).is_immutable));
+auto __jakt_enum_value = (((((type)->common.init_common.qualifiers)).is_immutable));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("const "sv)));
 }
@@ -2219,8 +2219,8 @@ ids::ScopeId const scope_id = TRY(((((struct_like_id.value())).associated_scope_
 JaktInternal::Optional<ids::TypeId> const found_type = TRY((((*this).find_type_in_scope(scope_id,name,false))));
 if (((found_type).has_value())){
 types::GenericInferences copied_inferences = generic_inferences;
-if ((((((struct_like_id.value())).common.generic_arguments)).has_value())){
-TRY((((copied_inferences).set_all(TRY(((((struct_like_id.value())).generic_parameters_as_checked(((*this)))))),((((struct_like_id.value())).common.generic_arguments).value())))));
+if ((((((struct_like_id.value())).common.init_common.generic_arguments)).has_value())){
+TRY((((copied_inferences).set_all(TRY(((((struct_like_id.value())).generic_parameters_as_checked(((*this)))))),((((struct_like_id.value())).common.init_common.generic_arguments).value())))));
 }
 return TRY((((*this).substitute_typevars_in_type((found_type.value()),copied_inferences,module_id))));
 }
@@ -2665,7 +2665,7 @@ if ([](parser::CheckedQualifiers const& self, parser::CheckedQualifiers rhs) -> 
 return (!(((self).equals(rhs))));
 }
 }
-(qualifiers,((type)->common.qualifiers))){
+(qualifiers,((type)->common.init_common.qualifiers))){
 return TRY((((*this).find_or_add_type_id(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::Type>, ErrorOr<ids::TypeId>>{
 auto&& __jakt_match_variant = *type;
@@ -4700,7 +4700,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("name: \"{}\", ", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -4717,7 +4717,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("namespace_type: {}, ", that.namespace_type));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -4732,7 +4732,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("id: {}, ", that.id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -4747,7 +4747,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("id: {}, ", that.id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -4762,7 +4762,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("id: {}, ", that.id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -4777,7 +4777,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("id: {}, ", that.id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -4822,7 +4822,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("params: {}, ", that.params));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -4848,115 +4848,115 @@ return builder.to_string();
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Void(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 1;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Bool(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 2;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::U8(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 3;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::U16(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 4;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::U32(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 5;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::U64(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 6;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::I8(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 7;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::I16(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 8;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::I32(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 9;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::I64(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 10;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::F32(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 11;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::F64(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 12;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Usize(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 13;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::JaktString(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 14;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::CChar(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 15;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::CInt(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 16;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Unknown(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 17;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Never(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 18;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::TypeVariable(parser::CheckedQualifiers qualifiers, DeprecatedString name, JaktInternal::DynamicArray<ids::TypeId> trait_implementations, bool is_value){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 19;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.TypeVariable.name) (decltype(name))(move(name));
 new (&__jakt_uninit_enum->as.TypeVariable.trait_implementations) (decltype(trait_implementations))(move(trait_implementations));
 new (&__jakt_uninit_enum->as.TypeVariable.is_value) (decltype(is_value))(move(is_value));
@@ -4965,7 +4965,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Dependent(parser::CheckedQualifiers qualifiers, ids::TypeId namespace_type, DeprecatedString name){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 20;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Dependent.namespace_type) (decltype(namespace_type))(move(namespace_type));
 new (&__jakt_uninit_enum->as.Dependent.name) (decltype(name))(move(name));
 return __jakt_uninit_enum;
@@ -4973,7 +4973,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::GenericInstance(parser::CheckedQualifiers qualifiers, ids::StructId id, JaktInternal::DynamicArray<ids::TypeId> args){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 21;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.GenericInstance.id) (decltype(id))(move(id));
 new (&__jakt_uninit_enum->as.GenericInstance.args) (decltype(args))(move(args));
 return __jakt_uninit_enum;
@@ -4981,7 +4981,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::GenericEnumInstance(parser::CheckedQualifiers qualifiers, ids::EnumId id, JaktInternal::DynamicArray<ids::TypeId> args){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 22;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.GenericEnumInstance.id) (decltype(id))(move(id));
 new (&__jakt_uninit_enum->as.GenericEnumInstance.args) (decltype(args))(move(args));
 return __jakt_uninit_enum;
@@ -4989,7 +4989,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::GenericTraitInstance(parser::CheckedQualifiers qualifiers, ids::TraitId id, JaktInternal::DynamicArray<ids::TypeId> args){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 23;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.GenericTraitInstance.id) (decltype(id))(move(id));
 new (&__jakt_uninit_enum->as.GenericTraitInstance.args) (decltype(args))(move(args));
 return __jakt_uninit_enum;
@@ -4997,7 +4997,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::GenericResolvedType(parser::CheckedQualifiers qualifiers, ids::StructId id, JaktInternal::DynamicArray<ids::TypeId> args){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 24;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.GenericResolvedType.id) (decltype(id))(move(id));
 new (&__jakt_uninit_enum->as.GenericResolvedType.args) (decltype(args))(move(args));
 return __jakt_uninit_enum;
@@ -5005,49 +5005,49 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Struct(parser::CheckedQualifiers qualifiers, ids::StructId value){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 25;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Struct.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Enum(parser::CheckedQualifiers qualifiers, ids::EnumId value){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 26;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Enum.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::RawPtr(parser::CheckedQualifiers qualifiers, ids::TypeId value){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 27;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.RawPtr.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Trait(parser::CheckedQualifiers qualifiers, ids::TraitId value){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 28;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Trait.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Reference(parser::CheckedQualifiers qualifiers, ids::TypeId value){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 29;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Reference.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::MutableReference(parser::CheckedQualifiers qualifiers, ids::TypeId value){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 30;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.MutableReference.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Function(parser::CheckedQualifiers qualifiers, JaktInternal::DynamicArray<ids::TypeId> params, bool can_throw, ids::TypeId return_type_id, ids::FunctionId pseudo_function_id){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 31;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Function.params) (decltype(params))(move(params));
 new (&__jakt_uninit_enum->as.Function.can_throw) (decltype(can_throw))(move(can_throw));
 new (&__jakt_uninit_enum->as.Function.return_type_id) (decltype(return_type_id))(move(return_type_id));
@@ -5057,19 +5057,19 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Self(parser::CheckedQualifiers qualifiers){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 32;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ErrorOr<NonnullRefPtr<Type>> Type::Const(parser::CheckedQualifiers qualifiers, types::Value value){
 NonnullRefPtr<Type> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Type));
 __jakt_uninit_enum->__jakt_variant_index = 33;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Const.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 Type& Type::operator=(Type const &rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.qualifiers = rhs.common.qualifiers;
+this->common.init_common.qualifiers = rhs.common.init_common.qualifiers;
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -5263,7 +5263,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 return *this;
 }
 Type::Type(Type const &rhs){VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.qualifiers) (decltype(this->common.qualifiers))(rhs.common.qualifiers);
+new (&this->common.init_common.qualifiers) (decltype(this->common.init_common.qualifiers))(rhs.common.init_common.qualifiers);
 switch (rhs.__jakt_init_index()) {
 case 0 /* Void */:
 break;
@@ -5360,7 +5360,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 Type& Type::operator=(Type &&rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.qualifiers = move(rhs.common.qualifiers);
+this->common.init_common.qualifiers = move(rhs.common.init_common.qualifiers);
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -5555,7 +5555,7 @@ return *this;
 }
 Type::Type(Type &&rhs){
 {VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.qualifiers) (decltype(this->common.qualifiers))(move(rhs.common.qualifiers));
+new (&this->common.init_common.qualifiers) (decltype(this->common.init_common.qualifiers))(move(rhs.common.init_common.qualifiers));
 switch (rhs.__jakt_init_index()) {
 case 0 /* Void */:
 break;
@@ -5653,7 +5653,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 Type::~Type(){
 if (this->__jakt_variant_index == 0) return;
-this->common.qualifiers.~CheckedQualifiers();
+this->common.init_common.qualifiers.~CheckedQualifiers();
 this->__jakt_destroy_variant();
 }
 void Type::__jakt_destroy_variant() {
@@ -5769,7 +5769,7 @@ return JaktInternal::ExplicitValue(static_cast<u64>(0ULL));
 
 bool types::Type::equals(NonnullRefPtr<typename types::Type> const rhs) const {
 {
-return (((((rhs)->common.qualifiers)).equals(((*this).common.qualifiers))) && ({
+return (((((rhs)->common.init_common.qualifiers)).equals(((*this).common.init_common.qualifiers))) && ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
@@ -11082,7 +11082,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("defaults: {}, ", this->common.defaults));
+TRY(builder.appendff("defaults: {}, ", this->common.init_common.defaults));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("name: \"{}\", ", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -11107,7 +11107,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("defaults: {}, ", this->common.defaults));
+TRY(builder.appendff("defaults: {}, ", this->common.init_common.defaults));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("expression: {}, ", that.expression));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -11124,7 +11124,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("defaults: {}, ", this->common.defaults));
+TRY(builder.appendff("defaults: {}, ", this->common.init_common.defaults));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("type: {}, ", that.type));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -11143,7 +11143,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("defaults: {}, ", this->common.defaults));
+TRY(builder.appendff("defaults: {}, ", this->common.init_common.defaults));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("has_arguments: {}, ", that.has_arguments));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -11159,7 +11159,7 @@ return builder.to_string();
 [[nodiscard]] CheckedMatchCase CheckedMatchCase::EnumVariant(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, DeprecatedString name, JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> args, ids::TypeId subject_type_id, size_t index, ids::ScopeId scope_id, types::CheckedMatchBody body, utility::Span marker_span){
 CheckedMatchCase __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 1;
-new (&__jakt_uninit_enum.common.defaults) (decltype(defaults))(move(defaults));
+new (&__jakt_uninit_enum.common.init_common.defaults) (decltype(defaults))(move(defaults));
 new (&__jakt_uninit_enum.as.EnumVariant.name) (decltype(name))(move(name));
 new (&__jakt_uninit_enum.as.EnumVariant.args) (decltype(args))(move(args));
 new (&__jakt_uninit_enum.as.EnumVariant.subject_type_id) (decltype(subject_type_id))(move(subject_type_id));
@@ -11172,7 +11172,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] CheckedMatchCase CheckedMatchCase::Expression(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, NonnullRefPtr<typename types::CheckedExpression> expression, types::CheckedMatchBody body, utility::Span marker_span){
 CheckedMatchCase __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 2;
-new (&__jakt_uninit_enum.common.defaults) (decltype(defaults))(move(defaults));
+new (&__jakt_uninit_enum.common.init_common.defaults) (decltype(defaults))(move(defaults));
 new (&__jakt_uninit_enum.as.Expression.expression) (decltype(expression))(move(expression));
 new (&__jakt_uninit_enum.as.Expression.body) (decltype(body))(move(body));
 new (&__jakt_uninit_enum.as.Expression.marker_span) (decltype(marker_span))(move(marker_span));
@@ -11181,7 +11181,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] CheckedMatchCase CheckedMatchCase::ClassInstance(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, ids::TypeId type, types::CheckedMatchBody body, JaktInternal::Optional<types::ClassInstanceRebind> rebind_name, utility::Span marker_span){
 CheckedMatchCase __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 3;
-new (&__jakt_uninit_enum.common.defaults) (decltype(defaults))(move(defaults));
+new (&__jakt_uninit_enum.common.init_common.defaults) (decltype(defaults))(move(defaults));
 new (&__jakt_uninit_enum.as.ClassInstance.type) (decltype(type))(move(type));
 new (&__jakt_uninit_enum.as.ClassInstance.body) (decltype(body))(move(body));
 new (&__jakt_uninit_enum.as.ClassInstance.rebind_name) (decltype(rebind_name))(move(rebind_name));
@@ -11191,7 +11191,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] CheckedMatchCase CheckedMatchCase::CatchAll(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, bool has_arguments, types::CheckedMatchBody body, utility::Span marker_span){
 CheckedMatchCase __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 4;
-new (&__jakt_uninit_enum.common.defaults) (decltype(defaults))(move(defaults));
+new (&__jakt_uninit_enum.common.init_common.defaults) (decltype(defaults))(move(defaults));
 new (&__jakt_uninit_enum.as.CatchAll.has_arguments) (decltype(has_arguments))(move(has_arguments));
 new (&__jakt_uninit_enum.as.CatchAll.body) (decltype(body))(move(body));
 new (&__jakt_uninit_enum.as.CatchAll.marker_span) (decltype(marker_span))(move(marker_span));
@@ -11199,7 +11199,7 @@ return __jakt_uninit_enum;
 }
 CheckedMatchCase& CheckedMatchCase::operator=(CheckedMatchCase const &rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.defaults = rhs.common.defaults;
+this->common.init_common.defaults = rhs.common.init_common.defaults;
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -11263,7 +11263,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 return *this;
 }
 CheckedMatchCase::CheckedMatchCase(CheckedMatchCase const &rhs){VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.defaults) (decltype(this->common.defaults))(rhs.common.defaults);
+new (&this->common.init_common.defaults) (decltype(this->common.init_common.defaults))(rhs.common.init_common.defaults);
 switch (rhs.__jakt_init_index()) {
 case 0 /* EnumVariant */:
 new (&this->as.EnumVariant.name) (decltype(this->as.EnumVariant.name))(rhs.as.EnumVariant.name);
@@ -11295,7 +11295,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 CheckedMatchCase& CheckedMatchCase::operator=(CheckedMatchCase &&rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.defaults = move(rhs.common.defaults);
+this->common.init_common.defaults = move(rhs.common.init_common.defaults);
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -11360,7 +11360,7 @@ return *this;
 }
 CheckedMatchCase::CheckedMatchCase(CheckedMatchCase &&rhs){
 {VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.defaults) (decltype(this->common.defaults))(move(rhs.common.defaults));
+new (&this->common.init_common.defaults) (decltype(this->common.init_common.defaults))(move(rhs.common.init_common.defaults));
 switch (rhs.__jakt_init_index()) {
 case 0 /* EnumVariant */:
 new (&this->as.EnumVariant.name) (decltype(this->as.EnumVariant.name))(move(rhs.as.EnumVariant.name));
@@ -11393,7 +11393,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 CheckedMatchCase::~CheckedMatchCase(){
 if (this->__jakt_variant_index == 0) return;
-this->common.defaults.~DynamicArray();
+this->common.init_common.defaults.~DynamicArray();
 this->__jakt_destroy_variant();
 }
 void CheckedMatchCase::__jakt_destroy_variant() {
@@ -12479,42 +12479,42 @@ return builder.to_string();
 [[nodiscard]] CheckedCapture CheckedCapture::ByValue(DeprecatedString name, utility::Span span){
 CheckedCapture __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 1;
-new (&__jakt_uninit_enum.common.name) (decltype(name))(move(name));
-new (&__jakt_uninit_enum.common.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum.common.init_common.name) (decltype(name))(move(name));
+new (&__jakt_uninit_enum.common.init_common.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] CheckedCapture CheckedCapture::ByReference(DeprecatedString name, utility::Span span){
 CheckedCapture __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 2;
-new (&__jakt_uninit_enum.common.name) (decltype(name))(move(name));
-new (&__jakt_uninit_enum.common.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum.common.init_common.name) (decltype(name))(move(name));
+new (&__jakt_uninit_enum.common.init_common.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] CheckedCapture CheckedCapture::ByMutableReference(DeprecatedString name, utility::Span span){
 CheckedCapture __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 3;
-new (&__jakt_uninit_enum.common.name) (decltype(name))(move(name));
-new (&__jakt_uninit_enum.common.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum.common.init_common.name) (decltype(name))(move(name));
+new (&__jakt_uninit_enum.common.init_common.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] CheckedCapture CheckedCapture::ByComptimeDependency(DeprecatedString name, utility::Span span){
 CheckedCapture __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 4;
-new (&__jakt_uninit_enum.common.name) (decltype(name))(move(name));
-new (&__jakt_uninit_enum.common.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum.common.init_common.name) (decltype(name))(move(name));
+new (&__jakt_uninit_enum.common.init_common.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] CheckedCapture CheckedCapture::AllByReference(DeprecatedString name, utility::Span span){
 CheckedCapture __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 5;
-new (&__jakt_uninit_enum.common.name) (decltype(name))(move(name));
-new (&__jakt_uninit_enum.common.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum.common.init_common.name) (decltype(name))(move(name));
+new (&__jakt_uninit_enum.common.init_common.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
 CheckedCapture& CheckedCapture::operator=(CheckedCapture const &rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.name = rhs.common.name;
-this->common.span = rhs.common.span;
+this->common.init_common.name = rhs.common.init_common.name;
+this->common.init_common.span = rhs.common.init_common.span;
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -12548,8 +12548,8 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 return *this;
 }
 CheckedCapture::CheckedCapture(CheckedCapture const &rhs){VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.name) (decltype(this->common.name))(rhs.common.name);
-new (&this->common.span) (decltype(this->common.span))(rhs.common.span);
+new (&this->common.init_common.name) (decltype(this->common.init_common.name))(rhs.common.init_common.name);
+new (&this->common.init_common.span) (decltype(this->common.init_common.span))(rhs.common.init_common.span);
 switch (rhs.__jakt_init_index()) {
 case 0 /* ByValue */:
 break;
@@ -12566,8 +12566,8 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 CheckedCapture& CheckedCapture::operator=(CheckedCapture &&rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.name = move(rhs.common.name);
-this->common.span = move(rhs.common.span);
+this->common.init_common.name = move(rhs.common.init_common.name);
+this->common.init_common.span = move(rhs.common.init_common.span);
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -12602,8 +12602,8 @@ return *this;
 }
 CheckedCapture::CheckedCapture(CheckedCapture &&rhs){
 {VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.name) (decltype(this->common.name))(move(rhs.common.name));
-new (&this->common.span) (decltype(this->common.span))(move(rhs.common.span));
+new (&this->common.init_common.name) (decltype(this->common.init_common.name))(move(rhs.common.init_common.name));
+new (&this->common.init_common.span) (decltype(this->common.init_common.span))(move(rhs.common.init_common.span));
 switch (rhs.__jakt_init_index()) {
 case 0 /* ByValue */:
 break;
@@ -12621,8 +12621,8 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 CheckedCapture::~CheckedCapture(){
 if (this->__jakt_variant_index == 0) return;
-this->common.name.~DeprecatedString();
-this->common.span.~Span();
+this->common.init_common.name.~DeprecatedString();
+this->common.init_common.span.~Span();
 this->__jakt_destroy_variant();
 }
 void CheckedCapture::__jakt_destroy_variant() {
@@ -13164,27 +13164,27 @@ return builder.to_string();
 [[nodiscard]] StructLikeId StructLikeId::Struct(JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> generic_arguments, ids::StructId value){
 StructLikeId __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 1;
-new (&__jakt_uninit_enum.common.generic_arguments) (decltype(generic_arguments))(move(generic_arguments));
+new (&__jakt_uninit_enum.common.init_common.generic_arguments) (decltype(generic_arguments))(move(generic_arguments));
 new (&__jakt_uninit_enum.as.Struct.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] StructLikeId StructLikeId::Enum(JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> generic_arguments, ids::EnumId value){
 StructLikeId __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 2;
-new (&__jakt_uninit_enum.common.generic_arguments) (decltype(generic_arguments))(move(generic_arguments));
+new (&__jakt_uninit_enum.common.init_common.generic_arguments) (decltype(generic_arguments))(move(generic_arguments));
 new (&__jakt_uninit_enum.as.Enum.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] StructLikeId StructLikeId::Trait(JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> generic_arguments, ids::TraitId value){
 StructLikeId __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 3;
-new (&__jakt_uninit_enum.common.generic_arguments) (decltype(generic_arguments))(move(generic_arguments));
+new (&__jakt_uninit_enum.common.init_common.generic_arguments) (decltype(generic_arguments))(move(generic_arguments));
 new (&__jakt_uninit_enum.as.Trait.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 StructLikeId& StructLikeId::operator=(StructLikeId const &rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.generic_arguments = rhs.common.generic_arguments;
+this->common.init_common.generic_arguments = rhs.common.init_common.generic_arguments;
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -13216,7 +13216,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 return *this;
 }
 StructLikeId::StructLikeId(StructLikeId const &rhs){VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.generic_arguments) (decltype(this->common.generic_arguments))(rhs.common.generic_arguments);
+new (&this->common.init_common.generic_arguments) (decltype(this->common.init_common.generic_arguments))(rhs.common.init_common.generic_arguments);
 switch (rhs.__jakt_init_index()) {
 case 0 /* Struct */:
 new (&this->as.Struct.value) (decltype(this->as.Struct.value))(rhs.as.Struct.value);
@@ -13232,7 +13232,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 StructLikeId& StructLikeId::operator=(StructLikeId &&rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.generic_arguments = move(rhs.common.generic_arguments);
+this->common.init_common.generic_arguments = move(rhs.common.init_common.generic_arguments);
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -13265,7 +13265,7 @@ return *this;
 }
 StructLikeId::StructLikeId(StructLikeId &&rhs){
 {VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.generic_arguments) (decltype(this->common.generic_arguments))(move(rhs.common.generic_arguments));
+new (&this->common.init_common.generic_arguments) (decltype(this->common.init_common.generic_arguments))(move(rhs.common.init_common.generic_arguments));
 switch (rhs.__jakt_init_index()) {
 case 0 /* Struct */:
 new (&this->as.Struct.value) (decltype(this->as.Struct.value))(move(rhs.as.Struct.value));
@@ -13282,7 +13282,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 StructLikeId::~StructLikeId(){
 if (this->__jakt_variant_index == 0) return;
-this->common.generic_arguments.~Optional();
+this->common.init_common.generic_arguments.~Optional();
 this->__jakt_destroy_variant();
 }
 void StructLikeId::__jakt_destroy_variant() {

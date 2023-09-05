@@ -12818,7 +12818,7 @@ break;
 }
 types::CheckedCapture capture = (_magic_value.value());
 {
-DeprecatedString const name = ((capture).common.name);
+DeprecatedString const name = ((capture).common.init_common.name);
 if ((((capture).__jakt_init_index() == 0 /* ByValue */) || ((capture).__jakt_init_index() == 3 /* ByComptimeDependency */))){
 TRY((((resolved_captures).set(name,TRY((((scope)->must_get(name))))))));
 }
@@ -12879,7 +12879,7 @@ break;
 }
 types::CheckedCapture capture = (_magic_value.value());
 {
-DeprecatedString const name = ((capture).common.name);
+DeprecatedString const name = ((capture).common.init_common.name);
 if ((((capture).__jakt_init_index() == 0 /* ByValue */) || ((capture).__jakt_init_index() == 3 /* ByComptimeDependency */))){
 TRY((((resolved_captures).set(name,TRY((((scope)->must_get(name))))))));
 }

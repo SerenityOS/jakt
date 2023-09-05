@@ -312,7 +312,7 @@ union CommonData {
 u8 __jakt_uninit_common;
 struct {
 JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> generic_arguments;
-};
+} init_common;
 constexpr CommonData() {}
 ~CommonData() {}
 } common;
@@ -394,7 +394,7 @@ u8 __jakt_uninit_common;
 struct {
 DeprecatedString name;
 utility::Span span;
-};
+} init_common;
 constexpr CommonData() {}
 ~CommonData() {}
 } common;
@@ -593,7 +593,7 @@ union CommonData {
 u8 __jakt_uninit_common;
 struct {
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults;
-};
+} init_common;
 constexpr CommonData() {}
 ~CommonData() {}
 } common;
@@ -1123,7 +1123,7 @@ union CommonData {
 u8 __jakt_uninit_common;
 struct {
 parser::CheckedQualifiers qualifiers;
-};
+} init_common;
 constexpr CommonData() {}
 ~CommonData() {}
 } common;

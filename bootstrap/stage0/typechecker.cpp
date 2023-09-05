@@ -3670,7 +3670,7 @@ if ((!(((matched_variant).has_value())))){
 TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum '{}' does not contain a variant named '{}'"sv)),((enum_).name),((((variant_names_)[static_cast<i64>(1LL)])).template get<0>())))),((case_).marker_span)))));
 return TRY((types::CheckedExpression::Match(checked_expr,(TRY((DynamicArray<types::CheckedMatchCase>::create_with({})))),span,types::unknown_type_id(),false)));
 }
-JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>> const covered_name_checked_match_case_result_type_ = TRY((((*this).typecheck_match_variant(case_,subject_type_id,(variant_index.value()),final_result_type,(matched_variant.value()),variant_arguments,((pattern).common.defaults),arguments_span,scope_id,safety_mode))));
+JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>> const covered_name_checked_match_case_result_type_ = TRY((((*this).typecheck_match_variant(case_,subject_type_id,(variant_index.value()),final_result_type,(matched_variant.value()),variant_arguments,((pattern).common.init_common.defaults),arguments_span,scope_id,safety_mode))));
 JaktInternal::Optional<DeprecatedString> const covered_name = ((covered_name_checked_match_case_result_type_).template get<0>());
 types::CheckedMatchCase const checked_match_case = ((covered_name_checked_match_case_result_type_).template get<1>());
 JaktInternal::Optional<ids::TypeId> const result_type = ((covered_name_checked_match_case_result_type_).template get<2>());
@@ -3720,7 +3720,7 @@ types::CheckedEnumVariant variant = (_magic_value.value());
 {
 if ((!(((covered_variants).contains(((variant).name())))))){
 (expanded_catch_all = true);
-JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>> const covered_name_checked_match_case_result_type_ = TRY((((*this).typecheck_match_variant(case_,subject_type_id,variant_index,final_result_type,variant,variant_arguments,((pattern).common.defaults),arguments_span,scope_id,safety_mode))));
+JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>> const covered_name_checked_match_case_result_type_ = TRY((((*this).typecheck_match_variant(case_,subject_type_id,variant_index,final_result_type,variant,variant_arguments,((pattern).common.init_common.defaults),arguments_span,scope_id,safety_mode))));
 JaktInternal::Optional<DeprecatedString> const covered_name = ((covered_name_checked_match_case_result_type_).template get<0>());
 types::CheckedMatchCase const checked_match_case = ((covered_name_checked_match_case_result_type_).template get<1>());
 JaktInternal::Optional<ids::TypeId> const result_type = ((covered_name_checked_match_case_result_type_).template get<2>());
@@ -3742,7 +3742,7 @@ else {
 ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY(DeprecatedString::from_utf8("catch-all"sv)),true))));
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults = (TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({}))));
 {
-JaktInternal::DictionaryIterator<DeprecatedString,parser::ParsedPatternDefault> _magic = ((((pattern).common.defaults)).iterator());
+JaktInternal::DictionaryIterator<DeprecatedString,parser::ParsedPatternDefault> _magic = ((((pattern).common.init_common.defaults)).iterator());
 for (;;){
 JaktInternal::Optional<JaktInternal::Tuple<DeprecatedString,parser::ParsedPatternDefault>> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -3935,7 +3935,7 @@ if ((!(((matched_variant).has_value())))){
 TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum '{}' does not contain a variant named '{}'"sv)),((enum_).name),((((variant_names_)[static_cast<i64>(1LL)])).template get<0>())))),((case_).marker_span)))));
 return TRY((types::CheckedExpression::Match(checked_expr,(TRY((DynamicArray<types::CheckedMatchCase>::create_with({})))),span,types::unknown_type_id(),false)));
 }
-JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>> const covered_name_checked_match_case_result_type_ = TRY((((*this).typecheck_match_variant(case_,subject_type_id,(variant_index.value()),final_result_type,(matched_variant.value()),variant_arguments,((pattern).common.defaults),arguments_span,scope_id,safety_mode))));
+JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>> const covered_name_checked_match_case_result_type_ = TRY((((*this).typecheck_match_variant(case_,subject_type_id,(variant_index.value()),final_result_type,(matched_variant.value()),variant_arguments,((pattern).common.init_common.defaults),arguments_span,scope_id,safety_mode))));
 JaktInternal::Optional<DeprecatedString> const covered_name = ((covered_name_checked_match_case_result_type_).template get<0>());
 types::CheckedMatchCase const checked_match_case = ((covered_name_checked_match_case_result_type_).template get<1>());
 JaktInternal::Optional<ids::TypeId> const result_type = ((covered_name_checked_match_case_result_type_).template get<2>());
@@ -3985,7 +3985,7 @@ types::CheckedEnumVariant variant = (_magic_value.value());
 {
 if ((!(((covered_variants).contains(((variant).name())))))){
 (expanded_catch_all = true);
-JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>> const covered_name_checked_match_case_result_type_ = TRY((((*this).typecheck_match_variant(case_,subject_type_id,variant_index,final_result_type,variant,variant_arguments,((pattern).common.defaults),arguments_span,scope_id,safety_mode))));
+JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>> const covered_name_checked_match_case_result_type_ = TRY((((*this).typecheck_match_variant(case_,subject_type_id,variant_index,final_result_type,variant,variant_arguments,((pattern).common.init_common.defaults),arguments_span,scope_id,safety_mode))));
 JaktInternal::Optional<DeprecatedString> const covered_name = ((covered_name_checked_match_case_result_type_).template get<0>());
 types::CheckedMatchCase const checked_match_case = ((covered_name_checked_match_case_result_type_).template get<1>());
 JaktInternal::Optional<ids::TypeId> const result_type = ((covered_name_checked_match_case_result_type_).template get<2>());
@@ -4007,7 +4007,7 @@ else {
 ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY(DeprecatedString::from_utf8("catch-all"sv)),true))));
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults = (TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({}))));
 {
-JaktInternal::DictionaryIterator<DeprecatedString,parser::ParsedPatternDefault> _magic = ((((pattern).common.defaults)).iterator());
+JaktInternal::DictionaryIterator<DeprecatedString,parser::ParsedPatternDefault> _magic = ((((pattern).common.init_common.defaults)).iterator());
 for (;;){
 JaktInternal::Optional<JaktInternal::Tuple<DeprecatedString,parser::ParsedPatternDefault>> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -4492,7 +4492,7 @@ TRY((((((*this).compiler))->panic(TRY(DeprecatedString::from_utf8("typecheck_mat
 ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY((__jakt_format((StringView::from_string_literal("catch-enum-variant({})"sv)),variant_names))),true))));
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults = (TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({}))));
 {
-JaktInternal::DictionaryIterator<DeprecatedString,parser::ParsedPatternDefault> _magic = ((((pattern).common.defaults)).iterator());
+JaktInternal::DictionaryIterator<DeprecatedString,parser::ParsedPatternDefault> _magic = ((((pattern).common.init_common.defaults)).iterator());
 for (;;){
 JaktInternal::Optional<JaktInternal::Tuple<DeprecatedString,parser::ParsedPatternDefault>> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -4545,7 +4545,7 @@ TRY((((*this).error(TRY(DeprecatedString::from_utf8("Bindings aren't allowed in 
 ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY(DeprecatedString::from_utf8("catch-all"sv)),true))));
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults = (TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({}))));
 {
-JaktInternal::DictionaryIterator<DeprecatedString,parser::ParsedPatternDefault> _magic = ((((pattern).common.defaults)).iterator());
+JaktInternal::DictionaryIterator<DeprecatedString,parser::ParsedPatternDefault> _magic = ((((pattern).common.init_common.defaults)).iterator());
 for (;;){
 JaktInternal::Optional<JaktInternal::Tuple<DeprecatedString,parser::ParsedPatternDefault>> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -4619,7 +4619,7 @@ return JaktInternal::LoopContinue{};
 
 }
 TRY((((*this).check_types_for_compat(expression_type,subject_type_id,((((*this).generic_inferences))),((case_).marker_span)))));
-if ((!(((((pattern).common.defaults)).is_empty())))){
+if ((!(((((pattern).common.init_common.defaults)).is_empty())))){
 TRY((((*this).error(TRY(DeprecatedString::from_utf8("Expression patterns cannot have default bindings"sv)),((case_).marker_span)))));
 }
 ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY((__jakt_format((StringView::from_string_literal("catch-expression({})"sv)),expr))),true))));
@@ -11656,7 +11656,7 @@ types::CheckedCapture capture = (_magic_value.value());
 {
 JaktInternal::Optional<ids::ScopeId> scope_id = JaktInternal::OptionalNone();
 if ((((capture).__jakt_init_index() == 2 /* ByMutableReference */) || ((capture).__jakt_init_index() == 1 /* ByReference */))){
-JaktInternal::Optional<JaktInternal::Optional<ids::ScopeId>> const scope_id = ((TRY((((*this).find_var_in_scope(current_scope_id,((capture).common.name)))))).map([](auto& _value) { return _value->owner_scope; }));
+JaktInternal::Optional<JaktInternal::Optional<ids::ScopeId>> const scope_id = ((TRY((((*this).find_var_in_scope(current_scope_id,((capture).common.init_common.name)))))).map([](auto& _value) { return _value->owner_scope; }));
 }
 (final_scope_id = TRY((((*this).scope_lifetime_union(final_scope_id,scope_id)))));
 }
@@ -11684,7 +11684,7 @@ types::CheckedCapture capture = (_magic_value.value());
 {
 JaktInternal::Optional<ids::ScopeId> scope_id = JaktInternal::OptionalNone();
 if ((((capture).__jakt_init_index() == 2 /* ByMutableReference */) || ((capture).__jakt_init_index() == 1 /* ByReference */))){
-JaktInternal::Optional<JaktInternal::Optional<ids::ScopeId>> const scope_id = ((TRY((((*this).find_var_in_scope(current_scope_id,((capture).common.name)))))).map([](auto& _value) { return _value->owner_scope; }));
+JaktInternal::Optional<JaktInternal::Optional<ids::ScopeId>> const scope_id = ((TRY((((*this).find_var_in_scope(current_scope_id,((capture).common.init_common.name)))))).map([](auto& _value) { return _value->owner_scope; }));
 }
 (final_scope_id = TRY((((*this).scope_lifetime_union(final_scope_id,scope_id)))));
 }
@@ -12737,7 +12737,7 @@ if (((this_arg_type_id).has_value())){
 (type_id = (this_arg_type_id.value()));
 }
 }
-if (((((((*this).get_type(type_id)))->common.qualifiers)).is_immutable)){
+if (((((((*this).get_type(type_id)))->common.init_common.qualifiers)).is_immutable)){
 (type_id = TRY((((*this).with_qualifiers(parser::CheckedQualifiers(false),type_id)))));
 if (((((parameter).variable)).is_mutable)){
 TRY((((*this).error(TRY(DeprecatedString::from_utf8("Cannot have a mutable binding to an immutable parameter"sv)),((((parameter).variable)).span)))));
@@ -13533,8 +13533,8 @@ return true;
 }
 NonnullRefPtr<typename types::Type> const lhs_type = ((*this).get_type(lhs_type_id));
 NonnullRefPtr<typename types::Type> const rhs_type = ((*this).get_type(rhs_type_id));
-if ((((((lhs_type)->common.qualifiers)).is_immutable) && (!(((((rhs_type)->common.qualifiers)).is_immutable))))){
-return TRY((((*this).check_types_for_compat(lhs_type_id,TRY((((*this).with_qualifiers(((lhs_type)->common.qualifiers),rhs_type_id)))),generic_inferences,span))));
+if ((((((lhs_type)->common.init_common.qualifiers)).is_immutable) && (!(((((rhs_type)->common.init_common.qualifiers)).is_immutable))))){
+return TRY((((*this).check_types_for_compat(lhs_type_id,TRY((((*this).with_qualifiers(((lhs_type)->common.init_common.qualifiers),rhs_type_id)))),generic_inferences,span))));
 }
 if ((((lhs_type)->is_builtin()) && (((rhs_type)->is_builtin()) && ((((((lhs_type)->as_builtin_type())).id())) == (((((rhs_type)->as_builtin_type())).id())))))){
 return true;
@@ -15398,15 +15398,15 @@ break;
 parser::ParsedCapture capture = (_magic_value.value());
 {
 if (((capture).__jakt_init_index() == 4 /* AllByReference */)){
-TRY((((checked_captures).push(types::CheckedCapture::AllByReference(TRY(DeprecatedString::from_utf8(""sv)),((capture).common.span))))));
+TRY((((checked_captures).push(types::CheckedCapture::AllByReference(TRY(DeprecatedString::from_utf8(""sv)),((capture).common.init_common.span))))));
 if ((!(is_capturing_everything))){
 (is_capturing_everything = true);
 (lambda_scope_id = TRY((((*this).create_scope(scope_id,can_throw,TRY(DeprecatedString::from_utf8("lambda"sv)),true)))));
 }
 }
-else if (((TRY((((*this).find_var_in_scope(scope_id,((capture).common.name)))))).has_value())){
-DeprecatedString const name = ((capture).common.name);
-utility::Span const span = ((capture).common.span);
+else if (((TRY((((*this).find_var_in_scope(scope_id,((capture).common.init_common.name)))))).has_value())){
+DeprecatedString const name = ((capture).common.init_common.name);
+utility::Span const span = ((capture).common.init_common.span);
 TRY((((checked_captures).push(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::CheckedCapture, ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
 auto&& __jakt_match_variant = capture;
@@ -15448,14 +15448,14 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
     _jakt_value.release_value();
 })))));
 if ((!(is_capturing_everything))){
-NonnullRefPtr<types::CheckedVariable> const var = (TRY((((*this).find_var_in_scope(scope_id,((capture).common.name))))).value());
+NonnullRefPtr<types::CheckedVariable> const var = (TRY((((*this).find_var_in_scope(scope_id,((capture).common.init_common.name))))).value());
 bool const is_this = ((((var)->name)) == (TRY(DeprecatedString::from_utf8("this"sv))));
 ids::VarId const var_id = TRY((((module)->add_variable(TRY((types::CheckedVariable::__jakt_create(name,((var)->type_id),(((var)->is_mutable) && ((is_this || ((capture).__jakt_init_index() == 1 /* ByReference */)) || ((capture).__jakt_init_index() == 2 /* ByMutableReference */))),((var)->definition_span),((var)->type_span),((var)->visibility),((var)->owner_scope),JaktInternal::OptionalNone())))))));
 TRY((((*this).add_var_to_scope(lambda_scope_id,name,var_id,span))));
 }
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Variable '{}' not found"sv)),((capture).common.name)))),span))));
+TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Variable '{}' not found"sv)),((capture).common.init_common.name)))),span))));
 }
 
 }
@@ -16182,8 +16182,8 @@ __jakt_label_433:; __jakt_var_497.release_value(); }));
     _jakt_value.release_value();
 });
 JaktInternal::Dictionary<ids::TypeId,ids::TypeId> generic_inferences_from_parent = (TRY((Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({}))));
-if ((((parent_id).has_value()) && (((((parent_id.value())).common.generic_arguments)).has_value()))){
-JaktInternal::DynamicArray<ids::TypeId> const arguments = ((((parent_id.value())).common.generic_arguments).value());
+if ((((parent_id).has_value()) && (((((parent_id.value())).common.init_common.generic_arguments)).has_value()))){
+JaktInternal::DynamicArray<ids::TypeId> const arguments = ((((parent_id.value())).common.init_common.generic_arguments).value());
 JaktInternal::DynamicArray<ids::TypeId> const parameters = TRY(((((parent_id.value())).generic_parameters(((((*this).program)))))));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((arguments).size()))});
@@ -20061,7 +20061,7 @@ ids::TypeId const rhs_type_id = ((checked_expr)->type());
 if (((rhs_type_id).equals(types::void_type_id()))){
 TRY((((*this).error(TRY(DeprecatedString::from_utf8("Cannot assign `void` to a variable"sv)),((checked_expr)->span())))));
 }
-if (((((((*this).get_type(lhs_type_id)))->common.qualifiers)).is_immutable)){
+if (((((((*this).get_type(lhs_type_id)))->common.init_common.qualifiers)).is_immutable)){
 (lhs_type_id = TRY((((*this).with_qualifiers(parser::CheckedQualifiers(false),lhs_type_id)))));
 if (((var).is_mutable)){
 TRY((((*this).error(TRY(DeprecatedString::from_utf8("Cannot have a mutable binding to an immutable object"sv)),((var).span)))));
@@ -21796,7 +21796,7 @@ TRY((((generic_args).push(checked_arg))));
 
 JaktInternal::Optional<ids::TypeId> type_id = JaktInternal::OptionalNone();
 if (((generic_args).is_empty())){
-NonnullRefPtr<typename parser::ParsedType> const synthetic_typename = TRY((parser::ParsedType::Name(((parsed_type)->common.qualifiers),name,span)));
+NonnullRefPtr<typename parser::ParsedType> const synthetic_typename = TRY((parser::ParsedType::Name(((parsed_type)->common.init_common.qualifiers),name,span)));
 (type_id = TRY((((*this).typecheck_typename(synthetic_typename,current_namespace_scope_id,name)))));
 }
 else {
@@ -21815,7 +21815,7 @@ return JaktInternal::ExplicitValue(({ Optional<ids::TypeId> __jakt_var_568; {
 JaktInternal::Optional<JaktInternal::Tuple<ids::TypeId,ids::ScopeId>> const maybe_type_and_scope = TRY((((*this).find_type_scope(scope_id,name))));
 if (((maybe_type_and_scope).has_value())){
 if ((!((((((maybe_type_and_scope.value())).template get<1>())).equals(((*this).prelude_scope_id())))))){
-return TRY((((*this).with_qualifiers(((*this).typecheck_type_qualifiers(((parsed_type)->common.qualifiers))),(((maybe_type_and_scope.value())).template get<0>())))));
+return TRY((((*this).with_qualifiers(((*this).typecheck_type_qualifiers(((parsed_type)->common.init_common.qualifiers))),(((maybe_type_and_scope.value())).template get<0>())))));
 }
 }
 __jakt_var_568 = ({
@@ -22099,7 +22099,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-parser::CheckedQualifiers const qualifiers = ((*this).typecheck_type_qualifiers(((parsed_type)->common.qualifiers)));
+parser::CheckedQualifiers const qualifiers = ((*this).typecheck_type_qualifiers(((parsed_type)->common.init_common.qualifiers)));
 return TRY((((*this).with_qualifiers(qualifiers,output))));
 }
 }

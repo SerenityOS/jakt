@@ -9739,12 +9739,12 @@ parser::ParsedMatchPattern pattern = TRY((((*this).parse_match_pattern())));
 ScopeGuard __jakt_var_89([&] {
 MUST((((patterns).push(pattern))));
 });
-JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> defaults = ((pattern).common.defaults);
+JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> defaults = ((pattern).common.init_common.defaults);
 ((*this).skip_newlines());
 if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
 DeprecatedString const name = (((*this).current())).as.Identifier.name;
 if (((name) == (TRY(DeprecatedString::from_utf8("default"sv))))){
-JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> defaults = ((pattern).common.defaults);
+JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> defaults = ((pattern).common.init_common.defaults);
 ((((*this).index)) += (static_cast<size_t>(1ULL)));
 if ((!(((((*this).current())).__jakt_init_index() == 7 /* LParen */)))){
 TRY((((*this).error(TRY(DeprecatedString::from_utf8("Expected '(' after 'default'"sv)),((((*this).current())).span())))));
@@ -12307,7 +12307,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("defaults: {}, ", this->common.defaults));
+TRY(builder.appendff("defaults: {}, ", this->common.init_common.defaults));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("variant_names: {}, ", that.variant_names));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -12329,7 +12329,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("defaults: {}, ", this->common.defaults));
+TRY(builder.appendff("defaults: {}, ", this->common.init_common.defaults));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("variant_arguments: {}, ", that.variant_arguments));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -12346,7 +12346,7 @@ return builder.to_string();
 [[nodiscard]] ParsedMatchPattern ParsedMatchPattern::EnumVariant(JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> defaults, JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>> variant_names, JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> variant_arguments, utility::Span arguments_span){
 ParsedMatchPattern __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 1;
-new (&__jakt_uninit_enum.common.defaults) (decltype(defaults))(move(defaults));
+new (&__jakt_uninit_enum.common.init_common.defaults) (decltype(defaults))(move(defaults));
 new (&__jakt_uninit_enum.as.EnumVariant.variant_names) (decltype(variant_names))(move(variant_names));
 new (&__jakt_uninit_enum.as.EnumVariant.variant_arguments) (decltype(variant_arguments))(move(variant_arguments));
 new (&__jakt_uninit_enum.as.EnumVariant.arguments_span) (decltype(arguments_span))(move(arguments_span));
@@ -12355,14 +12355,14 @@ return __jakt_uninit_enum;
 [[nodiscard]] ParsedMatchPattern ParsedMatchPattern::Expression(JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> defaults, NonnullRefPtr<typename parser::ParsedExpression> value){
 ParsedMatchPattern __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 2;
-new (&__jakt_uninit_enum.common.defaults) (decltype(defaults))(move(defaults));
+new (&__jakt_uninit_enum.common.init_common.defaults) (decltype(defaults))(move(defaults));
 new (&__jakt_uninit_enum.as.Expression.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ParsedMatchPattern ParsedMatchPattern::CatchAll(JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> defaults, JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> variant_arguments, utility::Span arguments_span){
 ParsedMatchPattern __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 3;
-new (&__jakt_uninit_enum.common.defaults) (decltype(defaults))(move(defaults));
+new (&__jakt_uninit_enum.common.init_common.defaults) (decltype(defaults))(move(defaults));
 new (&__jakt_uninit_enum.as.CatchAll.variant_arguments) (decltype(variant_arguments))(move(variant_arguments));
 new (&__jakt_uninit_enum.as.CatchAll.arguments_span) (decltype(arguments_span))(move(arguments_span));
 return __jakt_uninit_enum;
@@ -12370,12 +12370,12 @@ return __jakt_uninit_enum;
 [[nodiscard]] ParsedMatchPattern ParsedMatchPattern::Invalid(JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> defaults){
 ParsedMatchPattern __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 4;
-new (&__jakt_uninit_enum.common.defaults) (decltype(defaults))(move(defaults));
+new (&__jakt_uninit_enum.common.init_common.defaults) (decltype(defaults))(move(defaults));
 return __jakt_uninit_enum;
 }
 ParsedMatchPattern& ParsedMatchPattern::operator=(ParsedMatchPattern const &rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.defaults = rhs.common.defaults;
+this->common.init_common.defaults = rhs.common.init_common.defaults;
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -12417,7 +12417,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 return *this;
 }
 ParsedMatchPattern::ParsedMatchPattern(ParsedMatchPattern const &rhs){VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.defaults) (decltype(this->common.defaults))(rhs.common.defaults);
+new (&this->common.init_common.defaults) (decltype(this->common.init_common.defaults))(rhs.common.init_common.defaults);
 switch (rhs.__jakt_init_index()) {
 case 0 /* EnumVariant */:
 new (&this->as.EnumVariant.variant_names) (decltype(this->as.EnumVariant.variant_names))(rhs.as.EnumVariant.variant_names);
@@ -12438,7 +12438,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 ParsedMatchPattern& ParsedMatchPattern::operator=(ParsedMatchPattern &&rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.defaults = move(rhs.common.defaults);
+this->common.init_common.defaults = move(rhs.common.init_common.defaults);
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -12481,7 +12481,7 @@ return *this;
 }
 ParsedMatchPattern::ParsedMatchPattern(ParsedMatchPattern &&rhs){
 {VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.defaults) (decltype(this->common.defaults))(move(rhs.common.defaults));
+new (&this->common.init_common.defaults) (decltype(this->common.init_common.defaults))(move(rhs.common.init_common.defaults));
 switch (rhs.__jakt_init_index()) {
 case 0 /* EnumVariant */:
 new (&this->as.EnumVariant.variant_names) (decltype(this->as.EnumVariant.variant_names))(move(rhs.as.EnumVariant.variant_names));
@@ -12503,7 +12503,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 ParsedMatchPattern::~ParsedMatchPattern(){
 if (this->__jakt_variant_index == 0) return;
-this->common.defaults.~Dictionary();
+this->common.init_common.defaults.~Dictionary();
 this->__jakt_destroy_variant();
 }
 void ParsedMatchPattern::__jakt_destroy_variant() {
@@ -12523,7 +12523,7 @@ case 3 /* Invalid */:break;
 bool parser::ParsedMatchPattern::equals(parser::ParsedMatchPattern const rhs_parsed_match_pattern) const {
 {
 if (((*this).is_equal_pattern(rhs_parsed_match_pattern))){
-if (((*this).defaults_equal(((rhs_parsed_match_pattern).common.defaults)))){
+if (((*this).defaults_equal(((rhs_parsed_match_pattern).common.init_common.defaults)))){
 if (((*this).__jakt_init_index() == 0 /* EnumVariant */)){
 JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> const lhs_variant_arguments = (*this).as.EnumVariant.variant_arguments;
 if (((rhs_parsed_match_pattern).__jakt_init_index() == 0 /* EnumVariant */)){
@@ -12665,11 +12665,11 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 
 bool parser::ParsedMatchPattern::defaults_equal(JaktInternal::Dictionary<DeprecatedString,parser::ParsedPatternDefault> const defaults) const {
 {
-if (((((defaults).size())) != (((((*this).common.defaults)).size())))){
+if (((((defaults).size())) != (((((*this).common.init_common.defaults)).size())))){
 return false;
 }
 {
-JaktInternal::DictionaryIterator<DeprecatedString,parser::ParsedPatternDefault> _magic = ((((*this).common.defaults)).iterator());
+JaktInternal::DictionaryIterator<DeprecatedString,parser::ParsedPatternDefault> _magic = ((((*this).common.init_common.defaults)).iterator());
 for (;;){
 JaktInternal::Optional<JaktInternal::Tuple<DeprecatedString,parser::ParsedPatternDefault>> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -13162,42 +13162,42 @@ return builder.to_string();
 [[nodiscard]] ParsedCapture ParsedCapture::ByValue(DeprecatedString name, utility::Span span){
 ParsedCapture __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 1;
-new (&__jakt_uninit_enum.common.name) (decltype(name))(move(name));
-new (&__jakt_uninit_enum.common.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum.common.init_common.name) (decltype(name))(move(name));
+new (&__jakt_uninit_enum.common.init_common.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ParsedCapture ParsedCapture::ByReference(DeprecatedString name, utility::Span span){
 ParsedCapture __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 2;
-new (&__jakt_uninit_enum.common.name) (decltype(name))(move(name));
-new (&__jakt_uninit_enum.common.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum.common.init_common.name) (decltype(name))(move(name));
+new (&__jakt_uninit_enum.common.init_common.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ParsedCapture ParsedCapture::ByMutableReference(DeprecatedString name, utility::Span span){
 ParsedCapture __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 3;
-new (&__jakt_uninit_enum.common.name) (decltype(name))(move(name));
-new (&__jakt_uninit_enum.common.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum.common.init_common.name) (decltype(name))(move(name));
+new (&__jakt_uninit_enum.common.init_common.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ParsedCapture ParsedCapture::ByComptimeDependency(DeprecatedString name, utility::Span span){
 ParsedCapture __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 4;
-new (&__jakt_uninit_enum.common.name) (decltype(name))(move(name));
-new (&__jakt_uninit_enum.common.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum.common.init_common.name) (decltype(name))(move(name));
+new (&__jakt_uninit_enum.common.init_common.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] ParsedCapture ParsedCapture::AllByReference(DeprecatedString name, utility::Span span){
 ParsedCapture __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 5;
-new (&__jakt_uninit_enum.common.name) (decltype(name))(move(name));
-new (&__jakt_uninit_enum.common.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum.common.init_common.name) (decltype(name))(move(name));
+new (&__jakt_uninit_enum.common.init_common.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
 ParsedCapture& ParsedCapture::operator=(ParsedCapture const &rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.name = rhs.common.name;
-this->common.span = rhs.common.span;
+this->common.init_common.name = rhs.common.init_common.name;
+this->common.init_common.span = rhs.common.init_common.span;
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -13231,8 +13231,8 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 return *this;
 }
 ParsedCapture::ParsedCapture(ParsedCapture const &rhs){VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.name) (decltype(this->common.name))(rhs.common.name);
-new (&this->common.span) (decltype(this->common.span))(rhs.common.span);
+new (&this->common.init_common.name) (decltype(this->common.init_common.name))(rhs.common.init_common.name);
+new (&this->common.init_common.span) (decltype(this->common.init_common.span))(rhs.common.init_common.span);
 switch (rhs.__jakt_init_index()) {
 case 0 /* ByValue */:
 break;
@@ -13249,8 +13249,8 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 ParsedCapture& ParsedCapture::operator=(ParsedCapture &&rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.name = move(rhs.common.name);
-this->common.span = move(rhs.common.span);
+this->common.init_common.name = move(rhs.common.init_common.name);
+this->common.init_common.span = move(rhs.common.init_common.span);
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -13285,8 +13285,8 @@ return *this;
 }
 ParsedCapture::ParsedCapture(ParsedCapture &&rhs){
 {VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.name) (decltype(this->common.name))(move(rhs.common.name));
-new (&this->common.span) (decltype(this->common.span))(move(rhs.common.span));
+new (&this->common.init_common.name) (decltype(this->common.init_common.name))(move(rhs.common.init_common.name));
+new (&this->common.init_common.span) (decltype(this->common.init_common.span))(move(rhs.common.init_common.span));
 switch (rhs.__jakt_init_index()) {
 case 0 /* ByValue */:
 break;
@@ -13304,8 +13304,8 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 ParsedCapture::~ParsedCapture(){
 if (this->__jakt_variant_index == 0) return;
-this->common.name.~DeprecatedString();
-this->common.span.~Span();
+this->common.init_common.name.~DeprecatedString();
+this->common.init_common.span.~Span();
 this->__jakt_destroy_variant();
 }
 void ParsedCapture::__jakt_destroy_variant() {
@@ -13326,7 +13326,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("name: \"{}\", ", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13341,7 +13341,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("name: \"{}\", ", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13360,7 +13360,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("name: \"{}\", ", that.name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13377,7 +13377,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("inner: {}, ", that.inner));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13392,7 +13392,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("key: {}, ", that.key));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13409,7 +13409,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("types: {}, ", that.types));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13424,7 +13424,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("inner: {}, ", that.inner));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13439,7 +13439,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("inner: {}, ", that.inner));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13454,7 +13454,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("inner: {}, ", that.inner));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13469,7 +13469,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("inner: {}, ", that.inner));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13484,7 +13484,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("inner: {}, ", that.inner));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13499,7 +13499,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("inner: {}, ", that.inner));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13514,7 +13514,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("params: {}, ", that.params));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13533,7 +13533,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("expr: {}, ", that.expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13548,7 +13548,7 @@ TRY(builder.append("("sv));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.qualifiers));
+TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("base: {}, ", that.base));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
@@ -13567,7 +13567,7 @@ return builder.to_string();
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::Name(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, DeprecatedString name, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 1;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Name.name) (decltype(name))(move(name));
 new (&__jakt_uninit_enum->as.Name.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
@@ -13575,7 +13575,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::NamespacedName(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, DeprecatedString name, JaktInternal::DynamicArray<DeprecatedString> namespaces, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> params, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 2;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.NamespacedName.name) (decltype(name))(move(name));
 new (&__jakt_uninit_enum->as.NamespacedName.namespaces) (decltype(namespaces))(move(namespaces));
 new (&__jakt_uninit_enum->as.NamespacedName.params) (decltype(params))(move(params));
@@ -13585,7 +13585,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::GenericType(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, DeprecatedString name, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> generic_parameters, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 3;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.GenericType.name) (decltype(name))(move(name));
 new (&__jakt_uninit_enum->as.GenericType.generic_parameters) (decltype(generic_parameters))(move(generic_parameters));
 new (&__jakt_uninit_enum->as.GenericType.span) (decltype(span))(move(span));
@@ -13594,7 +13594,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::JaktArray(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename parser::ParsedType> inner, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 4;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.JaktArray.inner) (decltype(inner))(move(inner));
 new (&__jakt_uninit_enum->as.JaktArray.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
@@ -13602,7 +13602,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::Dictionary(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename parser::ParsedType> key, NonnullRefPtr<typename parser::ParsedType> value, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 5;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Dictionary.key) (decltype(key))(move(key));
 new (&__jakt_uninit_enum->as.Dictionary.value) (decltype(value))(move(value));
 new (&__jakt_uninit_enum->as.Dictionary.span) (decltype(span))(move(span));
@@ -13611,7 +13611,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::JaktTuple(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> types, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 6;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.JaktTuple.types) (decltype(types))(move(types));
 new (&__jakt_uninit_enum->as.JaktTuple.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
@@ -13619,7 +13619,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::Set(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename parser::ParsedType> inner, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 7;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Set.inner) (decltype(inner))(move(inner));
 new (&__jakt_uninit_enum->as.Set.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
@@ -13627,7 +13627,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::Optional(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename parser::ParsedType> inner, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 8;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Optional.inner) (decltype(inner))(move(inner));
 new (&__jakt_uninit_enum->as.Optional.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
@@ -13635,7 +13635,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::Reference(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename parser::ParsedType> inner, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 9;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Reference.inner) (decltype(inner))(move(inner));
 new (&__jakt_uninit_enum->as.Reference.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
@@ -13643,7 +13643,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::MutableReference(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename parser::ParsedType> inner, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 10;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.MutableReference.inner) (decltype(inner))(move(inner));
 new (&__jakt_uninit_enum->as.MutableReference.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
@@ -13651,7 +13651,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::RawPtr(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename parser::ParsedType> inner, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 11;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.RawPtr.inner) (decltype(inner))(move(inner));
 new (&__jakt_uninit_enum->as.RawPtr.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
@@ -13659,7 +13659,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::WeakPtr(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename parser::ParsedType> inner, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 12;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.WeakPtr.inner) (decltype(inner))(move(inner));
 new (&__jakt_uninit_enum->as.WeakPtr.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
@@ -13667,7 +13667,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::Function(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, JaktInternal::DynamicArray<parser::ParsedParameter> params, bool can_throw, NonnullRefPtr<typename parser::ParsedType> return_type, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 13;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Function.params) (decltype(params))(move(params));
 new (&__jakt_uninit_enum->as.Function.can_throw) (decltype(can_throw))(move(can_throw));
 new (&__jakt_uninit_enum->as.Function.return_type) (decltype(return_type))(move(return_type));
@@ -13677,7 +13677,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::Const(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename parser::ParsedExpression> expr, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 14;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.Const.expr) (decltype(expr))(move(expr));
 new (&__jakt_uninit_enum->as.Const.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
@@ -13685,7 +13685,7 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::DependentType(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename parser::ParsedType> base, DeprecatedString name, utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 15;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.DependentType.base) (decltype(base))(move(base));
 new (&__jakt_uninit_enum->as.DependentType.name) (decltype(name))(move(name));
 new (&__jakt_uninit_enum->as.DependentType.span) (decltype(span))(move(span));
@@ -13694,12 +13694,12 @@ return __jakt_uninit_enum;
 [[nodiscard]] ErrorOr<NonnullRefPtr<ParsedType>> ParsedType::Empty(JaktInternal::Optional<parser::ParsedTypeQualifiers> qualifiers){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ParsedType));
 __jakt_uninit_enum->__jakt_variant_index = 16;
-new (&__jakt_uninit_enum->common.qualifiers) (decltype(qualifiers))(move(qualifiers));
+new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 return __jakt_uninit_enum;
 }
 ParsedType& ParsedType::operator=(ParsedType const &rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.qualifiers = rhs.common.qualifiers;
+this->common.init_common.qualifiers = rhs.common.init_common.qualifiers;
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -13851,7 +13851,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 return *this;
 }
 ParsedType::ParsedType(ParsedType const &rhs){VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.qualifiers) (decltype(this->common.qualifiers))(rhs.common.qualifiers);
+new (&this->common.init_common.qualifiers) (decltype(this->common.init_common.qualifiers))(rhs.common.init_common.qualifiers);
 switch (rhs.__jakt_init_index()) {
 case 0 /* Name */:
 new (&this->as.Name.name) (decltype(this->as.Name.name))(rhs.as.Name.name);
@@ -13927,7 +13927,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 ParsedType& ParsedType::operator=(ParsedType &&rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
-this->common.qualifiers = move(rhs.common.qualifiers);
+this->common.init_common.qualifiers = move(rhs.common.init_common.qualifiers);
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
 this->__jakt_destroy_variant();
 switch (rhs.__jakt_init_index()) {
@@ -14080,7 +14080,7 @@ return *this;
 }
 ParsedType::ParsedType(ParsedType &&rhs){
 {VERIFY(rhs.__jakt_variant_index != 0);
-new (&this->common.qualifiers) (decltype(this->common.qualifiers))(move(rhs.common.qualifiers));
+new (&this->common.init_common.qualifiers) (decltype(this->common.init_common.qualifiers))(move(rhs.common.init_common.qualifiers));
 switch (rhs.__jakt_init_index()) {
 case 0 /* Name */:
 new (&this->as.Name.name) (decltype(this->as.Name.name))(move(rhs.as.Name.name));
@@ -14157,7 +14157,7 @@ this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 ParsedType::~ParsedType(){
 if (this->__jakt_variant_index == 0) return;
-this->common.qualifiers.~Optional();
+this->common.init_common.qualifiers.~Optional();
 this->__jakt_destroy_variant();
 }
 void ParsedType::__jakt_destroy_variant() {
@@ -18088,7 +18088,7 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-if ((!(((((((lhs_captures)[i])).common.name)) == (((((rhs_captures)[i])).common.name)))))){
+if ((!(((((((lhs_captures)[i])).common.init_common.name)) == (((((rhs_captures)[i])).common.init_common.name)))))){
 return false;
 }
 }
