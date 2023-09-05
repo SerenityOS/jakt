@@ -1758,7 +1758,7 @@ struct CodeGenerator {
                 output += format("{} {};\n", type, field_name)
             }
 
-            output += "};\n"
+            output += "} init_common;\n"
 
             // See comment below about the constructors of `VariantData`.
             // Make sure everything's at zero value.
@@ -2007,14 +2007,14 @@ struct CodeGenerator {
                 let variable = .program.get_variable(common.variable_id)
                 let name = variable.name_for_codegen().as_name_for_use()
 
-                output.append(placement_new(accessor: format("common.{}", name)))
+                output.append(placement_new(accessor: format("common.init_common.{}", name)))
             }
         } else {
             for common in enum_.fields {
                 let variable = .program.get_variable(common.variable_id)
                 let name = variable.name_for_codegen().as_name_for_use()
 
-                output.append(assign(accessor: format("common.{}", name)))
+                output.append(assign(accessor: format("common.init_common.{}", name)))
             }
         }
 
@@ -2117,7 +2117,7 @@ struct CodeGenerator {
             for field in common_fields {
                 let name = field.0
                 output += placement_new(
-                    target: format("{}common.{}", deref_uninit, name)
+                    target: format("{}common.init_common.{}", deref_uninit, name)
                     name
                 )
             }
@@ -2315,7 +2315,7 @@ struct CodeGenerator {
             let ds: String? = .destructor_name(variable.type_id)
 
             if ds is Some(name) {
-                output += format("this->common.{}.~{}();\n", variable.name_for_codegen().as_name_for_use(), name)
+                output += format("this->common.init_common.{}.~{}();\n", variable.name_for_codegen().as_name_for_use(), name)
             }
 
         }
@@ -2422,7 +2422,7 @@ struct CodeGenerator {
                             output += ", "
                         }
                         if i < common_field_count {
-                            output += format("\", this->common.{}));\n", var.name_for_codegen().as_name_for_use())
+                            output += format("\", this->common.init_common.{}));\n", var.name_for_codegen().as_name_for_use())
                         } else {
                             output += format("\", that.{}));\n", var.name_for_codegen().as_name_for_use())
                         }
@@ -2641,9 +2641,9 @@ struct CodeGenerator {
                 Enum(id) | GenericEnumInstance(id) => {
                     let structure = .program.get_enum(id)
                     if structure.record_type is SumEnum(is_boxed) and is_boxed and object != "*this" {
-                        output += "->common."
+                        output += "->common.init_common."
                     } else {
-                        output += ".common."
+                        output += ".common.init_common."
                     }
                 }
                 else => {
