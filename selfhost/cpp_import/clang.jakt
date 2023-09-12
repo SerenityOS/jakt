@@ -35,9 +35,9 @@ import cpp_import::clang_c {
     clang_getEnumDeclIntegerType, clang_getFileName, clang_getNumArgTypes, clang_getPointeeType, clang_getResultType
     clang_getSpecializedCursorTemplate, clang_getSpellingLocation, clang_getTemplateCursorKind, clang_getTokenKind
     clang_getTokenSpelling, clang_getTranslationUnitCursor, clang_getTypeDeclaration, clang_getTypeKindSpelling
-    clang_getTypeSpelling, clang_getTypedefDeclUnderlyingType, clang_isConstQualifiedType, clang_isCursorDefinition
-    clang_isDeclaration, clang_isExpression, clang_parseTranslationUnit2, clang_saveTranslationUnit, clang_tokenize
-    clang_visitChildren
+    clang_getTypeSpelling, clang_getTypedefDeclUnderlyingType, clang_hashCursor, clang_isConstQualifiedType
+    clang_isCursorDefinition, clang_isDeclaration, clang_isExpression, clang_parseTranslationUnit2
+    clang_saveTranslationUnit, clang_tokenize, clang_visitChildren
 }
 import utility { allocate }
 import extern c "stdlib.h" {
@@ -72,59 +72,6 @@ fn string_from(anon string: CXString, dispose: bool = true) throws -> String {
         "value = { clang_getCString(string), strlen(clang_getCString(string)) };"
     } }
     return String::from_string_literal(value)
-}
-
-fn const_value_from(
-    program: &mut CheckedProgram
-    scope_id: ScopeId
-    module_id: ModuleId
-    anon cursor: CXCursor
-) throws -> Value {
-    if not clang_isExpression(clang_getCursorKind(cursor)) {
-        eprintln(
-            "[ICE] Const type input '{}' is not an expression, it's a {}"
-            name_from(cursor)
-            string_from(clang_getCursorKindSpelling(clang_getCursorKind(cursor)))
-        )
-        return Value(
-            impl: ValueImpl::Void,
-            span: empty_span()
-        )
-    }
-
-    let eval_result = clang_Cursor_Evaluate(cursor)
-    defer clang_EvalResult_dispose(eval_result)
-
-    let value_impl = match clang_EvalResult_getKind(eval_result) {
-        CXEval_Int => match clang_EvalResult_isUnsignedInt(eval_result) {
-            true => cast_to_type(clang_EvalResult_getAsUnsigned(eval_result) as! u64, clang_getCursorType(cursor))
-            false => cast_to_type(clang_EvalResult_getAsLongLong(eval_result) as! i64, clang_getCursorType(cursor))
-        }
-        CXEval_UnExposed => cast_to_type(clang_EvalResult_getAsInt(eval_result) as! i64, clang_getCursorType(cursor))
-        CXEval_Float => cast_to_type(clang_EvalResult_getAsDouble(eval_result), clang_getCursorType(cursor))
-        CXEval_StrLiteral
-        | CXEval_ObjCStrLiteral
-        | CXEval_CFStr
-        | CXEval_Other => {
-            eprintln("Const value input kind {} not supported", clang_EvalResult_getKind(eval_result) as! c_int)
-            return Value(
-                impl: ValueImpl::Void,
-                span: empty_span()
-            )
-        }
-    }
-
-    return Value(impl: value_impl, span: empty_span())
-}
-
-fn const_type_from(
-    program: &mut CheckedProgram
-    scope_id: ScopeId
-    module_id: ModuleId
-    anon cursor: CXCursor
-) throws -> TypeId {
-    let value = const_value_from(program, scope_id, module_id, cursor)
-    return program.find_or_add_type_id(type: Type::Const(value), module_id, only_in_current_module: true)
 }
 
 fn cpp_static_cast<T, U>(value: U) -> T {
@@ -194,227 +141,6 @@ fn value_or_error<T>(anon x: T?) throws -> T {
     throw Error::from_string_literal("Missing value")
 }
 
-fn type_from(
-    program: &mut CheckedProgram
-    scope_id: ScopeId
-    module_id: ModuleId
-    anon t: CXType
-) throws -> TypeId {
-    let type = match t.kind {
-        CXType_Void => builtin(BuiltinType::Void)
-        CXType_Bool => builtin(BuiltinType::Bool)
-        CXType_Char_U => builtin(BuiltinType::U8)
-        CXType_UChar => builtin(BuiltinType::U8)
-        CXType_Char16 => builtin(BuiltinType::U16)
-        CXType_Char32 => builtin(BuiltinType::U32)
-        CXType_UShort => builtin(BuiltinType::U16)
-        CXType_UInt => builtin(BuiltinType::U32)
-        CXType_ULong => builtin(BuiltinType::U32)
-        CXType_ULongLong => builtin(BuiltinType::U64)
-        CXType_Char_S => builtin(BuiltinType::CChar)
-        CXType_SChar => builtin(BuiltinType::I8)
-        CXType_Short => builtin(BuiltinType::I16)
-        CXType_Int => builtin(BuiltinType::CInt)
-        CXType_Long => builtin(BuiltinType::I32)
-        CXType_LongLong => builtin(BuiltinType::I64)
-        CXType_Float => builtin(BuiltinType::F32)
-        CXType_Double => builtin(BuiltinType::F64)
-        CXType_Typedef => {
-            let typedef_name = string_from(clang_getTypeSpelling(t))
-            let type_id = program.find_type_in_scope(
-                scope_id
-                name: typedef_name
-                ignore_mixin_scopes: true
-            )
-            if type_id.has_value() {
-                return type_id!
-            }
-
-            yield type_from(program, scope_id, module_id, clang_getCanonicalType(t))
-        }
-        CXType_Pointer => {
-            let pointee_type = clang_getPointeeType(t)
-            yield match pointee_type.kind {
-                CXType_FunctionProto | CXType_FunctionNoProto => type_from(program, scope_id, module_id, pointee_type)
-                else => program.find_or_add_type_id(
-                    type: Type::RawPtr(
-                        type_from(program, scope_id, module_id, clang_getPointeeType(t))
-                    )
-                    module_id
-                    only_in_current_module: true
-                )
-            }
-        }
-        CXType_Record => {
-            let struct_id = program.find_struct_in_scope(
-                scope_id
-                name: name_from(clang_getTypeDeclaration(t))
-                ignore_mixin_scopes: true
-            )
-            yield match struct_id.has_value() {
-                true => program.find_or_add_type_id(Type::Struct(struct_id!), module_id, only_in_current_module: true)
-                false => builtin(BuiltinType::Unknown)
-            }
-        }
-        CXType_Enum => {
-            let enum_id = program.find_enum_in_scope(
-                scope_id
-                name: name_from(clang_getTypeDeclaration(t))
-                ignore_mixin_scopes: true
-            )
-            yield match enum_id.has_value() {
-                true => program.find_or_add_type_id(Type::Enum(enum_id!), module_id, only_in_current_module: true)
-                false => builtin(BuiltinType::Unknown)
-            }
-        }
-        CXType_Elaborated => type_from(program, scope_id, module_id, clang_Type_getNamedType(t))
-        CXType_Unexposed => {
-            let name = string_from(clang_getTypeSpelling(t))
-            yield match name.is_empty() {
-                true => builtin(BuiltinType::Unknown)
-                false => program.find_type_in_scope(
-                    scope_id
-                    name
-                    ignore_mixin_scopes: true
-                ) ?? builtin(BuiltinType::Unknown)
-            }
-        }
-        CXType_LValueReference => program.find_or_add_type_id(
-            type: Type::Reference(
-                type_from(program, scope_id, module_id, clang_getPointeeType(t))
-            )
-            module_id
-            only_in_current_module: true
-        )
-        CXType_RValueReference => type_from(program, scope_id, module_id, clang_getPointeeType(t))
-        CXType_FunctionProto => {
-            let arg_count = clang_getNumArgTypes(t)
-            mut arg_types = [unknown_type_id(); arg_count]
-            for i in 0..arg_count {
-                arg_types[i] = type_from(program, scope_id, module_id, clang_getArgType(t, i))
-            }
-
-            let return_type = clang_getResultType(t)
-            let return_type_id = type_from(program, scope_id, module_id, return_type)
-
-            // Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
-            mut module = program.get_module(module_id)
-            mut function_params: [CheckedParameter] = []
-            for i in 0..arg_count {
-                let variable = CheckedVariable(
-                    name: format("arg_{}", i) // FIXME: Use the declared name if available.
-                    type_id: arg_types[i]
-                    is_mutable: false
-                    definition_span: empty_span()
-                    type_span: empty_span()
-                    visibility: CheckedVisibility::Public
-                    owner_scope: scope_id
-                )
-                function_params.push(CheckedParameter(
-                    requires_label: false
-                    variable
-                    default_value: None
-                ))
-            }
-            let function = CheckedFunction(
-                name: "pseudo_anon"
-                name_span: empty_span()
-                visibility: CheckedVisibility::Public
-                return_type_id
-                return_type_span: None
-                params: function_params
-                generics: FunctionGenerics(
-                    base_scope_id: scope_id
-                    base_params: function_params
-                    params: []
-                    specializations: []
-                )
-                block: CheckedBlock(
-                    statements: []
-                    scope_id
-                    control_flow: BlockControlFlow::MayReturn
-                    yielded_type: None
-                    yielded_none: false
-                )
-                can_throw: false
-                type: FunctionType::Normal
-                linkage: FunctionLinkage::External
-                function_scope_id: scope_id
-                struct_id: None
-                is_instantiated: true
-                parsed_function: None
-                is_comptime: false
-                is_virtual: false
-                is_override: false
-                is_unsafe: false
-                specialization_index: None
-
-                owner_scope: None
-                is_fully_checked: true
-                external_name: None
-            )
-            let pseudo_function_id = module.add_function(checked_function: function)
-            yield program.find_or_add_type_id(
-                type: Type::Function(
-                    params: arg_types
-                    can_throw: false
-                    return_type_id
-                    pseudo_function_id
-                )
-                module_id
-                only_in_current_module: true
-            )
-        }
-        CXType_ConstantArray => {
-            let element_type = clang_getArrayElementType(t)
-            let element_type_id = type_from(program, scope_id, module_id, element_type)
-            let array_size = clang_getArraySize(t)
-            let static_array_struct_id = try value_or_error(program.find_struct_in_scope(
-                scope_id
-                name: "StaticArray"
-                ignore_mixin_scopes: true
-            )) catch {
-                return builtin(BuiltinType::Unknown)
-            }
-            let generic_arguments = [
-                element_type_id
-                program.find_or_add_type_id(
-                    Type::Const(Value(
-                        impl: ValueImpl::U64(array_size)
-                        span: empty_span()
-                    ))
-                    module_id
-                    only_in_current_module: true
-                )
-            ]
-            yield program.find_or_add_type_id(
-                type: Type::GenericInstance(
-                    id: static_array_struct_id
-                    args: generic_arguments
-                )
-                module_id
-                only_in_current_module: true
-            )
-        }
-        else => {
-            let v = clang_getTypeSpelling(t)
-            eprintln("Unknown type kind: {} ({})", string_from(v), t.kind as! c_int)
-            yield builtin(BuiltinType::Unknown)
-        }
-    }
-
-    let qualifiers = CheckedQualifiers(is_immutable: clang_isConstQualifiedType(t))
-    return program.apply_qualifiers_to_type(qualifiers, type)
-}
-
-struct Context {
-    program: CheckedProgram
-    module_id: ModuleId
-    scope_id: ScopeId
-    this_type: TypeId?
-    extra: raw void
-}
-
 fn empty_span() -> Span => Span(
     file_id: FileId(id: 0)
     start: 0
@@ -427,675 +153,8 @@ enum AllowedContents {
     Everything
 }
 
-fn process_namespace_contents(
-    program: &mut CheckedProgram
-    scope_id: ScopeId
-    module_id: ModuleId
-    cursor: CXCursor
-    allowed_contents: AllowedContents
-    this_type: TypeId?
-    alias_type_name: String? = None
-) throws {
-    let extra = (allowed_contents, alias_type_name)
-    mut context = Context(
-        program: *program
-        module_id
-        scope_id
-        this_type
-        extra: bitcast<raw void>(&raw extra)
-    )
-
-    clang_visitChildren(
-        parent: cursor
-        visitor: fn(c: CXCursor, parent: CXCursor, data: CXClientData) -> CXChildVisitResult {
-            mut context = unsafe *bitcast<raw Context>(data)
-            let this_type = context.this_type
-            let (allowed_contents, alias_type_name) = unsafe *bitcast<raw (AllowedContents, String?)>(context.extra)
-
-            return match clang_getCursorKind(cursor: c) {
-                CXCursor_StructDecl | CXCursor_ClassDecl => {
-                    match allowed_contents {
-                        OnlyTypes | Everything => {
-                            try process_struct(
-                                program: &mut context.program
-                                parent_scope_id: context.scope_id
-                                module_id: context.module_id
-                                cursor: c
-                                alias_type_name
-                            )
-                        }
-                        else => {}
-                    }
-                    yield CXChildVisitResult::CXChildVisit_Continue
-                }
-                CXCursor_EnumDecl => {
-                    match allowed_contents {
-                        OnlyTypes | Everything => {
-                            try process_enum(
-                                program: &mut context.program
-                                parent_scope_id: context.scope_id
-                                module_id: context.module_id
-                                cursor: c
-                                alias_type_name
-                            )
-                        }
-                        else => {}
-                    }
-                    yield CXChildVisitResult::CXChildVisit_Continue
-                }
-                CXCursor_Namespace => {
-                    try process_namespace(
-                        program: &mut context.program
-                        parent_scope_id: context.scope_id
-                        module_id: context.module_id
-                        cursor: c
-                    )
-                    yield CXChildVisitResult::CXChildVisit_Continue
-                }
-                CXCursor_CXXMethod | CXCursor_FunctionDecl => match allowed_contents {
-                    OnlyFunctions | Everything => {
-                        try process_function(
-                            program: &mut context.program
-                            parent_scope_id: context.scope_id
-                            module_id: context.module_id
-                            this_type
-                            kind: ExternFunctionKind::Normal
-                            cursor: c
-                        )
-                        yield CXChildVisitResult::CXChildVisit_Continue
-                    }
-                    else => CXChildVisitResult::CXChildVisit_Continue
-                }
-                CXCursor_FunctionTemplate => match allowed_contents {
-                    OnlyFunctions | Everything => {
-                        try process_function_template(
-                            program: &mut context.program
-                            parent_scope_id: context.scope_id
-                            module_id: context.module_id
-                            this_type
-                            kind: ExternFunctionKind::Normal
-                            cursor: c
-                        )
-                        yield CXChildVisitResult::CXChildVisit_Continue
-                    }
-                    else => CXChildVisitResult::CXChildVisit_Continue
-                }
-                CXCursor_Constructor => match allowed_contents {
-                    OnlyFunctions | Everything => {
-                        try process_function(
-                            program: &mut context.program
-                            parent_scope_id: context.scope_id
-                            module_id: context.module_id
-                            this_type
-                            kind: ExternFunctionKind::Constructor
-                            cursor: c
-                        )
-                        yield CXChildVisitResult::CXChildVisit_Continue
-                    }
-                    else => CXChildVisitResult::CXChildVisit_Continue
-                }
-                CXCursor_Destructor => match allowed_contents {
-                    OnlyFunctions | Everything => {
-                        try process_function(
-                            program: &mut context.program
-                            parent_scope_id: context.scope_id
-                            module_id: context.module_id
-                            this_type
-                            kind: ExternFunctionKind::Destructor
-                            cursor: c
-                        )
-                        yield CXChildVisitResult::CXChildVisit_Continue
-                    }
-                    else => CXChildVisitResult::CXChildVisit_Continue
-                }
-                CXCursor_FieldDecl => match allowed_contents {
-                    OnlyFunctions | Everything => {
-                        if clang_getCursorType(c).kind is CXType_FunctionProto {
-                            try process_function(
-                                program: &mut context.program
-                                parent_scope_id: context.scope_id
-                                module_id: context.module_id
-                                this_type
-                                kind: ExternFunctionKind::Normal
-                                cursor: c
-                            )
-                        }
-                        yield CXChildVisitResult::CXChildVisit_Continue
-                    }
-                    else => CXChildVisitResult::CXChildVisit_Continue
-                }
-                CXCursor_TypeAliasDecl | CXCursor_TypedefDecl => match allowed_contents {
-                    OnlyTypes | Everything => {
-                        try process_type_alias(
-                            program: &mut context.program
-                            parent_scope_id: context.scope_id
-                            module_id: context.module_id
-                            this_type_id: this_type
-                            cursor: c
-                        )
-                        yield CXChildVisitResult::CXChildVisit_Continue
-                    }
-                    else => CXChildVisitResult::CXChildVisit_Recurse
-                }
-                CXCursor_ClassTemplate => match allowed_contents {
-                    Everything => {
-                        try process_class_template(
-                            program: &mut context.program
-                            parent_scope_id: context.scope_id
-                            module_id: context.module_id
-                            cursor: c
-                        )
-                        yield CXChildVisitResult::CXChildVisit_Continue
-                    }
-                    else => CXChildVisitResult::CXChildVisit_Continue
-                }
-                CXCursor_ClassTemplatePartialSpecialization => match allowed_contents {
-                    Everything => {
-                        try process_class_template_partial_specialization(
-                            program: &mut context.program
-                            parent_scope_id: context.scope_id
-                            module_id: context.module_id
-                            cursor: c
-                        )
-                        yield CXChildVisitResult::CXChildVisit_Continue
-                    }
-                    else => CXChildVisitResult::CXChildVisit_Continue
-                }
-                CXCursor_MacroDefinition => match allowed_contents {
-                    Everything => {
-                        try process_macro(
-                            program: &mut context.program
-                            parent_scope_id: context.scope_id
-                            module_id: context.module_id
-                            cursor: c
-                        )
-                        yield CXChildVisitResult::CXChildVisit_Continue
-                    }
-                    else => CXChildVisitResult::CXChildVisit_Continue
-                }
-                CXCursor_VarDecl => match allowed_contents {
-                    Everything => {
-                        try process_ns_variable(
-                            program: &mut context.program
-                            parent_scope_id: context.scope_id
-                            module_id: context.module_id
-                            cursor: c
-                        )
-                        yield CXChildVisitResult::CXChildVisit_Continue
-                    }
-                    else => CXChildVisitResult::CXChildVisit_Continue
-                }
-                else => CXChildVisitResult::CXChildVisit_Continue
-            }
-        }
-        client_data: CXClientData(bitcast<raw void>(&raw context))
-    )
-}
-
 unsafe fn read_at_offset<T>(anon xs: raw T, anon i: u32) -> T {
     return unsafe *bitcast<raw T>(bitcast<u64>(xs) + (i as! u64 * (sizeof T as! u64)))
-}
-
-fn process_class_template_partial_specialization(
-    program: &mut CheckedProgram
-    parent_scope_id: ScopeId
-    module_id: ModuleId
-    cursor: CXCursor
-) throws {
-    let name = name_from(cursor)
-    let template_parameters = extract_cursors_of_kinds(
-        cursor
-        kinds: {CXCursorKind::CXCursor_TemplateTypeParameter, CXCursorKind::CXCursor_NonTypeTemplateParameter}
-    )
-    let specialization_template_parameters = extract_template_parameters(program, parent_scope_id, module_id, cursor)
-
-    // Resolve arguments
-    let template_arguments = extract_matching_cursors_breaking_at_boundary(
-        cursor
-        &fn(anon kind: CXCursorKind) -> bool => not clang_isDeclaration(kind)
-        skip: template_parameters.size()
-    )
-
-    let struct_id = program.find_struct_in_scope(
-        scope_id: parent_scope_id
-        name
-        ignore_mixin_scopes: true
-    )
-    if not struct_id.has_value() {
-        eprintln("[ICE] Couldn't find struct for partial specialization named {}", name)
-        return
-    }
-
-    let base_struct = program.get_struct(struct_id!)
-
-    // Make a specialization
-    mut arguments: [TypeId] = []
-    for argument in template_arguments {
-        mut type = match clang_isExpression(clang_getCursorKind(argument)) {
-            true => const_type_from(
-                program
-                scope_id: parent_scope_id
-                module_id
-                cursor: argument
-            )
-            false => type_from(
-                program
-                scope_id: parent_scope_id
-                module_id
-                clang_getCursorType(argument)
-            )
-        }
-        arguments.push(type)
-    }
-
-    mut specialized_name = ""
-    for argument in arguments {
-        specialized_name = specialized_name + ", " + program.type_name(argument)
-    }
-    if specialized_name.length() > 0 {
-        specialized_name = specialized_name.substring(start: 2, length: specialized_name.length() - 2)
-    }
-
-    process_struct(
-        program
-        parent_scope_id
-        module_id
-        cursor
-        generic_parameters: base_struct.generic_parameters
-        generic_parameter_defaults: base_struct.generic_parameter_defaults
-        named_specialization_disambiguator: specialized_name
-    )
-
-    let base_type_id = program.find_or_add_type_id(Type::Struct(struct_id!), module_id, only_in_current_module: true)
-    let specialized_struct_id = program.find_struct_in_scope(
-        scope_id: parent_scope_id
-        name: format("{}<{}>", name, specialized_name)
-        ignore_mixin_scopes: true
-    )
-    if not specialized_struct_id.has_value() {
-        eprintln("[ICE] Couldn't find struct for partial specialization named {}", name)
-        abort()
-    }
-
-    let type_id = program.find_or_add_type_id(
-        Type::Struct(specialized_struct_id!)
-        module_id
-        only_in_current_module: true
-    )
-    let specialization = SpecializedType(
-        base_type_id
-        arguments
-        type_id
-    )
-
-    mut scope = program.get_scope(parent_scope_id)
-    scope.explicitly_specialized_types.set(name, specialization)
-}
-
-fn process_ns_variable(
-    program: &mut CheckedProgram
-    parent_scope_id: ScopeId
-    module_id: ModuleId
-    cursor: CXCursor
-) throws {
-    let name = name_from(cursor)
-    mut scope = program.get_scope(parent_scope_id)
-    mut module = program.get_module(module_id)
-    let type_id = type_from(
-        program
-        scope_id: parent_scope_id
-        module_id
-        clang_getCursorType(cursor)
-    )
-
-    let var_id = module.add_variable(CheckedVariable(
-        name
-        type_id
-        is_mutable: false
-        definition_span: empty_span()
-        type_span: None
-        visibility: CheckedVisibility::Public
-        owner_scope: parent_scope_id
-    ))
-
-    scope.vars.set(name, var_id)
-}
-
-fn process_macro(
-    program: &mut CheckedProgram
-    parent_scope_id: ScopeId
-    module_id: ModuleId
-    cursor: CXCursor
-) throws {
-    // Turn regular macros into variables in the parent scope
-    // Ignore function-like macros
-    let name = name_from(cursor)
-    if clang_Cursor_isMacroFunctionLike(cursor) {
-        return
-    }
-
-    mut scope = program.get_scope(parent_scope_id)
-    mut module = program.get_module(module_id)
-    let var_id = module.add_variable(CheckedVariable(
-        name
-        type_id: unknown_type_id()
-        is_mutable: false
-        definition_span: empty_span()
-        type_span: None
-        visibility: CheckedVisibility::Public
-        owner_scope: parent_scope_id
-        external_name: ExternalName::PreprocessorName(name)
-    ))
-
-    scope.vars.set(name, var_id)
-}
-
-struct TemplateParameters {
-    params: [CheckedGenericParameter]
-    defaults: [TypeId?]
-    packs_by_name: [String]
-}
-
-fn extract_template_parameters(
-    program: &mut CheckedProgram
-    parent_scope_id: ScopeId
-    module_id: ModuleId
-    cursor: CXCursor
-) throws -> TemplateParameters {
-    let template_parameters = extract_cursors_of_kinds(
-        cursor
-        kinds: {CXCursorKind::CXCursor_TemplateTypeParameter, CXCursorKind::CXCursor_NonTypeTemplateParameter}
-    )
-    mut params: [CheckedGenericParameter] = []
-    mut defaults: [TypeId?] = []
-    mut packs_by_name: [String] = []
-
-    for parameter in template_parameters {
-        let spelling = string_from(clang_getCursorSpelling(parameter))
-        let name = name_from(parameter)
-        mut is_variadic = false
-        // Clang-C doesn't have any API that would tell us whether this template parameter is a pack
-        // so we have to bend over backwards and figure it out ourselves:
-        // - assume the parameter spans N tokens (at minimum N = 2)
-        // - if the penultimate token in this set is '...', we have a type pack
-        // - otherwise this is a "normal" parameter.
-        {
-            let range = clang_getCursorExtent(cursor: parameter)
-            mut tokens = null<raw CXToken>()
-            mut num_tokens = 0u32
-            let tu = clang_Cursor_getTranslationUnit(cursor: parameter)
-            clang_tokenize(
-                tu
-                range
-                tokens: &raw tokens
-                num_tokens: &raw num_tokens
-            )
-            defer clang_disposeTokens(tu, tokens, num_tokens)
-
-            if num_tokens >= 1 {
-                is_variadic = string_from(clang_getTokenSpelling(tu, token: unsafe read_at_offset(tokens, num_tokens - 1))) == "..."
-            }
-            if num_tokens >= 2 {
-                is_variadic = is_variadic or string_from(clang_getTokenSpelling(tu, token: unsafe read_at_offset(tokens, num_tokens - 2))) == "..."
-            }
-        }
-
-        if is_variadic {
-            packs_by_name.push(name)
-            continue
-        }
-
-        mut constraints_and_default_value = extract_cursors_of_kinds(
-            cursor: parameter
-            kinds: {}
-        )
-        mut default_value_cursor: CXCursor? = None
-        mut constraint_cursor: CXCursor? = None
-
-        match constraints_and_default_value.size() {
-            0 => {}
-            1 => {
-                // We need to figure out if this is a constraint or a default value
-                // Thanks clang-c <3
-                let cursor = constraints_and_default_value[0]
-                if clang_getCursorType(cursor).kind is CXType_Invalid {
-                    // This is not a 'type', so it's a constraint.
-                    constraint_cursor = cursor
-                } else {
-                    default_value_cursor = cursor
-                }
-            }
-            else => {
-                // We're good, [0] is the constraint, and [1] is the default value
-                constraint_cursor = constraints_and_default_value[0]
-                default_value_cursor = constraints_and_default_value[1]
-            }
-        }
-
-        mut default_type: TypeId? = None
-        if default_value_cursor.has_value() {
-            default_type = match clang_isExpression(clang_getCursorKind(default_value_cursor!)) {
-                true => const_type_from(
-                    program
-                    scope_id: parent_scope_id
-                    module_id
-                    cursor: default_value_cursor!
-                )
-                false => type_from(
-                    program
-                    scope_id: parent_scope_id
-                    module_id
-                    clang_getCursorType(default_value_cursor!)
-                )
-            }
-
-            let name = name_from(cursor)
-            if name == "Vector" {
-                eprintln("Vector default value: {} '{}' = {}"
-                    string_from(clang_getTypeSpelling(clang_getCursorType(default_value_cursor!)))
-                    string_from(clang_getCursorSpelling(default_value_cursor!))
-                    program.type_name(default_type!, debug_mode: true)
-                )
-                for entry in constraints_and_default_value {
-                    eprintln("  {} '{}'"
-                        string_from(clang_getTypeSpelling(clang_getCursorType(entry)))
-                        string_from(clang_getCursorSpelling(entry))
-                    )
-                }
-            }
-        }
-
-        // FIXME: Constraints, etc.
-        params.push(
-            CheckedGenericParameter(
-                type_id: program.find_or_add_type_id(
-                    Type::TypeVariable(
-                        name
-                        trait_implementations: []
-                        is_value: clang_getCursorKind(parameter) is CXCursor_NonTypeTemplateParameter
-                    )
-                    module_id
-                    only_in_current_module: true
-                )
-                constraints: []
-                span: empty_span()
-            )
-        )
-        defaults.push(default_type)
-    }
-
-    if defaults.size() != params.size() {
-        eprintln("[ICE] Template parameters ({}) and defaults ({}) don't match", params, defaults)
-        abort()
-    }
-
-    return TemplateParameters(
-        params
-        defaults
-        packs_by_name
-    )
-}
-
-fn process_class_template(
-    program: &mut CheckedProgram
-    parent_scope_id: ScopeId
-    module_id: ModuleId
-    cursor: CXCursor
-) throws {
-    let name = name_from(cursor)
-    match clang_getTemplateCursorKind(cursor) {
-        CXCursor_StructDecl | CXCursor_ClassDecl => {
-            let template_parameters = extract_template_parameters(program, parent_scope_id, module_id, cursor)
-            process_struct(
-                program
-                parent_scope_id
-                module_id
-                cursor
-                generic_parameters: template_parameters.params
-                generic_parameter_defaults: template_parameters.defaults
-            )
-        }
-        else => {
-            let k = clang_getCursorKind(cursor)
-            let v = clang_getCursorKindSpelling(k)
-            eprintln("Unsupported template cursor kind: {}", string_from(v))
-        }
-    }
-}
-
-struct CursorSearchContext {
-    kinds: {CXCursorKind}
-    result: [CXCursor]
-}
-fn extract_cursors_of_kinds(
-    cursor: CXCursor
-    kinds: {CXCursorKind}
-) throws -> [CXCursor] {
-    mut context = CursorSearchContext(
-        kinds
-        result: []
-    )
-    clang_visitChildren(
-        parent: cursor
-        visitor: fn(c: CXCursor, parent: CXCursor, data: CXClientData) -> CXChildVisitResult {
-            mut ptr = bitcast<raw CursorSearchContext>(data)
-            mut context = &mut unsafe *ptr
-
-            let kind = clang_getCursorKind(c)
-            if context.kinds.is_empty() or context.kinds.contains(kind) {
-                try context.result.push(c)
-            }
-
-            return CXChildVisitResult::CXChildVisit_Continue
-        }
-        client_data: CXClientData(bitcast<raw void>(&raw context))
-    )
-    return context.result
-}
-
-fn extract_matching_cursors_breaking_at_boundary(
-    cursor: CXCursor
-    anon predicate: &fn(anon kind: CXCursorKind) -> bool
-    skip: usize = 0
-) throws -> [CXCursor] {
-    mut results: [CXCursor] = []
-    mut context = (&raw predicate, results, skip)
-
-    clang_visitChildren(
-        parent: cursor
-        visitor: fn(c: CXCursor, parent: CXCursor, data: CXClientData) -> CXChildVisitResult {
-            mut ptr = bitcast<raw (raw fn(anon kind: CXCursorKind) -> bool, [CXCursor], usize)>(data)
-            mut context = &mut unsafe *ptr
-            let predicate = &unsafe *context.0
-
-            let kind = clang_getCursorKind(c)
-            if predicate(kind) {
-                try context.1.push(c)
-            } else if context.2 == 0 {
-                return CXChildVisitResult::CXChildVisit_Break
-            } else if context.2 > 0 {
-                context.2 -= 1
-            }
-
-            return CXChildVisitResult::CXChildVisit_Continue
-        }
-        client_data: CXClientData(bitcast<raw void>(&raw context))
-    )
-
-    return results
-}
-
-fn process_type_alias(
-    program: &mut CheckedProgram
-    parent_scope_id: ScopeId
-    module_id: ModuleId
-    this_type_id: TypeId?
-    cursor: CXCursor
-) throws {
-    let name = name_from(cursor)
-    let type = clang_getTypedefDeclUnderlyingType(cursor)
-
-    process_namespace_contents(
-        program: program
-        scope_id: parent_scope_id
-        module_id: module_id
-        cursor: cursor
-        allowed_contents: AllowedContents::OnlyTypes
-        this_type: this_type_id
-        alias_type_name: name
-    )
-
-    if string_from(clang_getTypeSpelling(type)).is_empty() {
-        // This is the fun `typedef decl <unnamed> {} name;` pattern, we don't need to produce a new typename.
-        return
-    }
-
-    let type_id = type_from(program, scope_id: parent_scope_id, module_id, type)
-    mut scope = program.get_scope(parent_scope_id)
-    scope.types.set(name, type_id)
-}
-
-fn process_namespace(
-    program: &mut CheckedProgram
-    parent_scope_id: ScopeId
-    module_id: ModuleId
-    cursor: CXCursor
-) throws {
-    mut parent_scope = program.get_scope(parent_scope_id)
-
-    let name = name_from(cursor)
-    let existing_scope_id = program.find_namespace_in_immediate_children_of_scope(
-        scope_id: parent_scope_id
-        name
-    )
-    let (scope_id, scope_was_just_made) = match existing_scope_id.has_value() {
-        true => (existing_scope_id!, false)
-        false => (
-            program.create_scope(
-                parent_scope_id
-                can_throw: false
-                debug_name: format("cpp-namespace({})", name)
-                module_id
-                for_block: false
-            ),
-            true
-        )
-    }
-
-    if scope_was_just_made {
-        mut scope = program.get_scope(scope_id)
-        scope.namespace_name = name
-        parent_scope.children.push(scope_id)
-    }
-
-    process_namespace_contents(
-        program: program
-        scope_id
-        module_id
-        cursor
-        allowed_contents: AllowedContents::Everything
-        this_type: None
-    )
 }
 
 enum ExternFunctionKind {
@@ -1137,335 +196,1386 @@ fn function_names_from(cursor: CXCursor) throws -> (String, ExternalName?) {
         }
     }
 
+    if name.starts_with("__jakt") {
+        return (name.substring(start: 6, length: name.length() - 6), extern_name)
+    }
+
     return (name, extern_name)
 }
 
-fn process_function_template(
-    program: &mut CheckedProgram
-    parent_scope_id: ScopeId
-    module_id: ModuleId
-    this_type: TypeId?
-    kind: ExternFunctionKind
-    cursor: CXCursor
-) throws {
-    let template_parameters = extract_template_parameters(program, parent_scope_id, module_id, cursor)
-    process_function(
-        program
-        parent_scope_id
-        module_id
-        this_type
-        kind
-        cursor
-        template_parameters
-    )
+struct TemplateParameters {
+    params: [CheckedGenericParameter]
+    defaults: [TypeId?]
+    packs_by_name: [String]
 }
 
-fn function_generic_parameters_from(
-    anon params: [CheckedGenericParameter]?
-) throws -> [FunctionGenericParameter] {
-    mut result: [FunctionGenericParameter] = []
-    if params.has_value() {
-        for param in params! {
-            result.push(FunctionGenericParameter(
-                kind: FunctionGenericParameterKind::Parameter
-                checked_parameter: param
-            ))
+struct HashableCursor implements(Equal<HashableCursor>, Hashable) {
+    cursor: CXCursor
+    hash_value: u32
+
+    fn equals(this, anon other: HashableCursor) -> bool {
+        return clang_equalCursors(.cursor, other.cursor)
+    }
+
+    fn hash(this) -> u32 {
+        return .hash_value
+    }
+}
+
+class CppImportProcessor {
+    index: CXIndex
+    cpp_struct_cache: [String:StructId]
+    cpp_type_cache: [HashableCursor:TypeId]
+
+    public fn create() throws -> CppImportProcessor {
+        return CppImportProcessor(
+            index: clang_createIndex(excludeDeclarationsFromPCH: false, displayDiagnostics: true)
+            cpp_struct_cache: [:]
+            cpp_type_cache: [:]
+        )
+    }
+
+    destructor {
+        clang_disposeIndex(.index)
+    }
+
+    fn visit(anon cursor: CXCursor, anon visitor: fn(c: CXCursor, parent: CXCursor) throws -> CXChildVisitResult) {
+        clang_visitChildren(
+            parent: cursor
+            visitor: fn(c: CXCursor, parent: CXCursor, data: CXClientData) -> CXChildVisitResult {
+                let fn_ptr = bitcast<raw fn(c: CXCursor, parent: CXCursor) throws -> CXChildVisitResult>(data)
+                let func = &unsafe *fn_ptr
+                let result = try func(c, parent) catch e {
+                    eprintln("Error visiting cursor: {}", e)
+                    return CXChildVisitResult::CXChildVisit_Break
+                }
+                return result
+            }
+            client_data: CXClientData(bitcast<raw void>(&raw visitor))
+        )
+    }
+
+    fn cached_type_of_cursor(
+        mut this
+        anon cursor: CXCursor
+        program: &mut CheckedProgram
+        scope_id: ScopeId
+        module_id: ModuleId
+    ) throws -> TypeId {
+        let key = HashableCursor(cursor, hash_value: clang_hashCursor(cursor))
+        let cached_type = .cpp_type_cache.get(key)
+        if cached_type.has_value() {
+            return cached_type!
         }
-    }
-    return result
-}
 
-fn process_function(
-    program: &mut CheckedProgram
-    parent_scope_id: ScopeId
-    module_id: ModuleId
-    this_type: TypeId?
-    kind: ExternFunctionKind
-    cursor: CXCursor
-    template_parameters: TemplateParameters? = None
-) throws {
-    let is_declared_as_static = kind is Constructor or kind is Destructor or clang_CXXMethod_isStatic(cursor)
-
-    if not this_type.has_value() and (kind is Constructor or kind is Destructor) {
-        eprintln("[ICE] Constructor or destructor ({}) without a this type", name_from(cursor))
-        return
+        let type = .type_from(program, scope_id, module_id, clang_getCursorType(cursor))
+        .cpp_type_cache.set(key, type)
+        return type
     }
 
-    if not is_declared_as_static and not this_type.has_value() {
-        let parent_cursor = clang_getCursorSemanticParent(cursor)
-        let kind = clang_getCursorKind(parent_cursor)
-        if clang_isDeclaration(kind) {
-            // This is an out-of-line definition of a member function, we've already seen it, so it's safe to skip.
+    fn const_value_from(
+        mut this
+        program: &mut CheckedProgram
+        scope_id: ScopeId
+        module_id: ModuleId
+        anon cursor: CXCursor
+    ) throws -> Value {
+        if not clang_isExpression(clang_getCursorKind(cursor)) {
+            eprintln(
+                "[ICE] Const type input '{}' is not an expression, it's a {}"
+                name_from(cursor)
+                string_from(clang_getCursorKindSpelling(clang_getCursorKind(cursor)))
+            )
+            return Value(
+                impl: ValueImpl::Void,
+                span: empty_span()
+            )
+        }
+
+        let eval_result = clang_Cursor_Evaluate(cursor)
+        defer clang_EvalResult_dispose(eval_result)
+
+        let value_impl = match clang_EvalResult_getKind(eval_result) {
+            CXEval_Int => match clang_EvalResult_isUnsignedInt(eval_result) {
+                true => cast_to_type(clang_EvalResult_getAsUnsigned(eval_result) as! u64, clang_getCursorType(cursor))
+                false => cast_to_type(clang_EvalResult_getAsLongLong(eval_result) as! i64, clang_getCursorType(cursor))
+            }
+            CXEval_UnExposed => cast_to_type(clang_EvalResult_getAsInt(eval_result) as! i64, clang_getCursorType(cursor))
+            CXEval_Float => cast_to_type(clang_EvalResult_getAsDouble(eval_result), clang_getCursorType(cursor))
+            CXEval_StrLiteral
+            | CXEval_ObjCStrLiteral
+            | CXEval_CFStr
+            | CXEval_Other => {
+                eprintln("Const value input kind {} not supported", clang_EvalResult_getKind(eval_result) as! c_int)
+                return Value(
+                    impl: ValueImpl::Void,
+                    span: empty_span()
+                )
+            }
+        }
+
+        return Value(impl: value_impl, span: empty_span())
+    }
+
+    fn const_type_from(
+        mut this
+        program: &mut CheckedProgram
+        scope_id: ScopeId
+        module_id: ModuleId
+        anon cursor: CXCursor
+    ) throws -> TypeId {
+        let value = .const_value_from(program, scope_id, module_id, cursor)
+        return program.find_or_add_type_id(type: Type::Const(value), module_id, only_in_current_module: true)
+    }
+
+    fn type_from(
+        mut this
+        program: &mut CheckedProgram
+        scope_id: ScopeId
+        module_id: ModuleId
+        anon t: CXType
+    ) throws -> TypeId {
+        let type = match t.kind {
+            CXType_Void => builtin(BuiltinType::Void)
+            CXType_Bool => builtin(BuiltinType::Bool)
+            CXType_Char_U => builtin(BuiltinType::U8)
+            CXType_UChar => builtin(BuiltinType::U8)
+            CXType_Char16 => builtin(BuiltinType::U16)
+            CXType_Char32 => builtin(BuiltinType::U32)
+            CXType_UShort => builtin(BuiltinType::U16)
+            CXType_UInt => builtin(BuiltinType::U32)
+            CXType_ULong => builtin(BuiltinType::U32)
+            CXType_ULongLong => builtin(BuiltinType::U64)
+            CXType_Char_S => builtin(BuiltinType::CChar)
+            CXType_SChar => builtin(BuiltinType::I8)
+            CXType_Short => builtin(BuiltinType::I16)
+            CXType_Int => builtin(BuiltinType::CInt)
+            CXType_Long => builtin(BuiltinType::I32)
+            CXType_LongLong => builtin(BuiltinType::I64)
+            CXType_Float => builtin(BuiltinType::F32)
+            CXType_Double => builtin(BuiltinType::F64)
+            CXType_Typedef => {
+                let typedef_name = string_from(clang_getTypeSpelling(t))
+                let type_id = program.find_type_in_scope(
+                    scope_id
+                    name: typedef_name
+                    ignore_mixin_scopes: true
+                    ignore_parent_scopes: true
+                )
+                if type_id.has_value() {
+                    return type_id!
+                }
+
+                yield .type_from(program, scope_id, module_id, clang_getCanonicalType(t))
+            }
+            CXType_Pointer => {
+                let pointee_type = clang_getPointeeType(t)
+                yield match pointee_type.kind {
+                    CXType_FunctionProto | CXType_FunctionNoProto => .type_from(program, scope_id, module_id, pointee_type)
+                    else => program.find_or_add_type_id(
+                        type: Type::RawPtr(
+                            .type_from(program, scope_id, module_id, clang_getPointeeType(t))
+                        )
+                        module_id
+                        only_in_current_module: true
+                    )
+                }
+            }
+            CXType_Record => {
+                let struct_id = program.find_struct_in_scope(
+                    scope_id
+                    name: name_from(clang_getTypeDeclaration(t))
+                    ignore_mixin_scopes: true
+                    ignore_parent_scopes: true
+                )
+                yield match struct_id.has_value() {
+                    true => program.find_or_add_type_id(Type::Struct(struct_id!), module_id, only_in_current_module: true)
+                    false => builtin(BuiltinType::Unknown)
+                }
+            }
+            CXType_Enum => {
+                let enum_id = program.find_enum_in_scope(
+                    scope_id
+                    name: name_from(clang_getTypeDeclaration(t))
+                    ignore_mixin_scopes: true
+                    ignore_parent_scopes: true
+                )
+                yield match enum_id.has_value() {
+                    true => program.find_or_add_type_id(Type::Enum(enum_id!), module_id, only_in_current_module: true)
+                    false => builtin(BuiltinType::Unknown)
+                }
+            }
+            CXType_Elaborated => .type_from(program, scope_id, module_id, clang_Type_getNamedType(t))
+            CXType_Unexposed => {
+                let name = string_from(clang_getTypeSpelling(t))
+                yield match name.is_empty() {
+                    true => builtin(BuiltinType::Unknown)
+                    false => program.find_type_in_scope(
+                        scope_id
+                        name
+                        ignore_mixin_scopes: true
+                        ignore_parent_scopes: true
+                    ) ?? builtin(BuiltinType::Unknown)
+                }
+            }
+            CXType_LValueReference => program.find_or_add_type_id(
+                type: Type::Reference(
+                    .type_from(program, scope_id, module_id, clang_getPointeeType(t))
+                )
+                module_id
+                only_in_current_module: true
+            )
+            CXType_RValueReference => .type_from(program, scope_id, module_id, clang_getPointeeType(t))
+            CXType_FunctionProto => {
+                let arg_count = clang_getNumArgTypes(t)
+                mut arg_types = [unknown_type_id(); arg_count]
+                for i in 0..arg_count {
+                    arg_types[i] = .type_from(program, scope_id, module_id, clang_getArgType(t, i))
+                }
+
+                let return_type = clang_getResultType(t)
+                let return_type_id = .type_from(program, scope_id, module_id, return_type)
+
+                // Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
+                mut module = program.get_module(module_id)
+                mut function_params: [CheckedParameter] = []
+                for i in 0..arg_count {
+                    let variable = CheckedVariable(
+                        name: format("arg_{}", i) // FIXME: Use the declared name if available.
+                        type_id: arg_types[i]
+                        is_mutable: false
+                        definition_span: empty_span()
+                        type_span: empty_span()
+                        visibility: CheckedVisibility::Public
+                        owner_scope: scope_id
+                    )
+                    function_params.push(CheckedParameter(
+                        requires_label: false
+                        variable
+                        default_value: None
+                    ))
+                }
+                let function = CheckedFunction(
+                    name: "pseudo_anon"
+                    name_span: empty_span()
+                    visibility: CheckedVisibility::Public
+                    return_type_id
+                    return_type_span: None
+                    params: function_params
+                    generics: FunctionGenerics(
+                        base_scope_id: scope_id
+                        base_params: function_params
+                        params: []
+                        specializations: []
+                    )
+                    block: CheckedBlock(
+                        statements: []
+                        scope_id
+                        control_flow: BlockControlFlow::MayReturn
+                        yielded_type: None
+                        yielded_none: false
+                    )
+                    can_throw: false
+                    type: FunctionType::Normal
+                    linkage: FunctionLinkage::External
+                    function_scope_id: scope_id
+                    struct_id: None
+                    is_instantiated: true
+                    parsed_function: None
+                    is_comptime: false
+                    is_virtual: false
+                    is_override: false
+                    is_unsafe: false
+                    specialization_index: None
+
+                    owner_scope: None
+                    is_fully_checked: true
+                    external_name: None
+                )
+                let pseudo_function_id = module.add_function(checked_function: function)
+                yield program.find_or_add_type_id(
+                    type: Type::Function(
+                        params: arg_types
+                        can_throw: false
+                        return_type_id
+                        pseudo_function_id
+                    )
+                    module_id
+                    only_in_current_module: true
+                )
+            }
+            CXType_ConstantArray => {
+                let element_type = clang_getArrayElementType(t)
+                let element_type_id = .type_from(program, scope_id, module_id, element_type)
+                let array_size = clang_getArraySize(t)
+                let static_array_struct_id = try value_or_error(program.find_struct_in_scope(
+                    scope_id
+                    name: "StaticArray"
+                    ignore_mixin_scopes: true
+                    ignore_parent_scopes: true
+                )) catch {
+                    return builtin(BuiltinType::Unknown)
+                }
+                let generic_arguments = [
+                    element_type_id
+                    program.find_or_add_type_id(
+                        Type::Const(Value(
+                            impl: ValueImpl::U64(array_size)
+                            span: empty_span()
+                        ))
+                        module_id
+                        only_in_current_module: true
+                    )
+                ]
+                yield program.find_or_add_type_id(
+                    type: Type::GenericInstance(
+                        id: static_array_struct_id
+                        args: generic_arguments
+                    )
+                    module_id
+                    only_in_current_module: true
+                )
+            }
+            else => {
+                let v = clang_getTypeSpelling(t)
+                eprintln("Unknown type kind: {} ({})", string_from(v), t.kind as! c_int)
+                yield builtin(BuiltinType::Unknown)
+            }
+        }
+
+        let qualifiers = CheckedQualifiers(is_immutable: clang_isConstQualifiedType(t))
+        return program.apply_qualifiers_to_type(qualifiers, type)
+    }
+
+    fn process_namespace_contents(
+        mut this
+        program: &mut CheckedProgram
+        scope_id: ScopeId
+        module_id: ModuleId
+        cursor: CXCursor
+        allowed_contents: AllowedContents
+        this_type: TypeId?
+        alias_type_name: String? = None
+    ) throws {
+        let extra = (allowed_contents, alias_type_name)
+        visit(
+            cursor,
+            fn[
+                &mut program
+                module_id
+                scope_id
+                this_type
+                allowed_contents
+                alias_type_name
+                this
+            ](c: CXCursor, parent: CXCursor) throws -> CXChildVisitResult {
+                return match clang_getCursorKind(cursor: c) {
+                    CXCursor_StructDecl | CXCursor_ClassDecl => {
+                        match allowed_contents {
+                            OnlyTypes | Everything => .process_struct(
+                                program: &mut program
+                                parent_scope_id: scope_id
+                                module_id: module_id
+                                cursor: c
+                                alias_type_name
+                            )
+                            else => {}
+                        }
+                        yield CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    CXCursor_EnumDecl => {
+                        match allowed_contents {
+                            OnlyTypes | Everything => .process_enum(
+                                program: &mut program
+                                parent_scope_id: scope_id
+                                module_id: module_id
+                                cursor: c
+                                alias_type_name
+                            )
+                            else => {}
+                        }
+                        yield CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    CXCursor_Namespace => {
+                        .process_namespace(
+                            program: &mut program
+                            parent_scope_id: scope_id
+                            module_id: module_id
+                            cursor: c
+                        )
+                        yield CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    CXCursor_CXXMethod | CXCursor_FunctionDecl => match allowed_contents {
+                        OnlyFunctions | Everything => {
+                            .process_function(
+                                program: &mut program
+                                parent_scope_id: scope_id
+                                module_id: module_id
+                                this_type
+                                kind: ExternFunctionKind::Normal
+                                cursor: c
+                            )
+                            yield CXChildVisitResult::CXChildVisit_Continue
+                        }
+                        else => CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    CXCursor_FunctionTemplate => match allowed_contents {
+                        OnlyFunctions | Everything => {
+                            .process_function_template(
+                                program: &mut program
+                                parent_scope_id: scope_id
+                                module_id: module_id
+                                this_type
+                                kind: ExternFunctionKind::Normal
+                                cursor: c
+                            )
+                            yield CXChildVisitResult::CXChildVisit_Continue
+                        }
+                        else => CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    CXCursor_Constructor => match allowed_contents {
+                        OnlyFunctions | Everything => {
+                            .process_function(
+                                program: &mut program
+                                parent_scope_id: scope_id
+                                module_id: module_id
+                                this_type
+                                kind: ExternFunctionKind::Constructor
+                                cursor: c
+                            )
+                            yield CXChildVisitResult::CXChildVisit_Continue
+                        }
+                        else => CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    CXCursor_Destructor => match allowed_contents {
+                        OnlyFunctions | Everything => {
+                            .process_function(
+                                program: &mut program
+                                parent_scope_id: scope_id
+                                module_id: module_id
+                                this_type
+                                kind: ExternFunctionKind::Destructor
+                                cursor: c
+                            )
+                            yield CXChildVisitResult::CXChildVisit_Continue
+                        }
+                        else => CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    CXCursor_FieldDecl => match allowed_contents {
+                        OnlyFunctions | Everything => {
+                            if clang_getCursorType(c).kind is CXType_FunctionProto {
+                                .process_function(
+                                    program: &mut program
+                                    parent_scope_id: scope_id
+                                    module_id: module_id
+                                    this_type
+                                    kind: ExternFunctionKind::Normal
+                                    cursor: c
+                                )
+                            }
+                            yield CXChildVisitResult::CXChildVisit_Continue
+                        }
+                        else => CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    CXCursor_TypeAliasDecl | CXCursor_TypedefDecl => match allowed_contents {
+                        OnlyTypes | Everything => {
+                            .process_type_alias(
+                                program: &mut program
+                                parent_scope_id: scope_id
+                                module_id: module_id
+                                this_type_id: this_type
+                                cursor: c
+                            )
+                            yield CXChildVisitResult::CXChildVisit_Continue
+                        }
+                        else => CXChildVisitResult::CXChildVisit_Recurse
+                    }
+                    CXCursor_ClassTemplate => match allowed_contents {
+                        Everything => {
+                            .process_class_template(
+                                program: &mut program
+                                parent_scope_id: scope_id
+                                module_id: module_id
+                                cursor: c
+                            )
+                            yield CXChildVisitResult::CXChildVisit_Continue
+                        }
+                        else => CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    CXCursor_ClassTemplatePartialSpecialization => match allowed_contents {
+                        Everything => {
+                            .process_class_template_partial_specialization(
+                                program: &mut program
+                                parent_scope_id: scope_id
+                                module_id: module_id
+                                cursor: c
+                            )
+                            yield CXChildVisitResult::CXChildVisit_Continue
+                        }
+                        else => CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    CXCursor_MacroDefinition => match allowed_contents {
+                        Everything => {
+                            .process_macro(
+                                program: &mut program
+                                parent_scope_id: scope_id
+                                module_id: module_id
+                                cursor: c
+                            )
+                            yield CXChildVisitResult::CXChildVisit_Continue
+                        }
+                        else => CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    CXCursor_VarDecl => match allowed_contents {
+                        Everything => {
+                            .process_ns_variable(
+                                program: &mut program
+                                parent_scope_id: scope_id
+                                module_id: module_id
+                                cursor: c
+                            )
+                            yield CXChildVisitResult::CXChildVisit_Continue
+                        }
+                        else => CXChildVisitResult::CXChildVisit_Continue
+                    }
+                    else => CXChildVisitResult::CXChildVisit_Continue
+                }
+            }
+        )
+    }
+
+    fn process_class_template_partial_specialization(
+        mut this
+        program: &mut CheckedProgram
+        parent_scope_id: ScopeId
+        module_id: ModuleId
+        cursor: CXCursor
+    ) throws {
+        let name = name_from(cursor)
+        let template_parameters = .extract_cursors_of_kinds(
+            cursor
+            kinds: {CXCursorKind::CXCursor_TemplateTypeParameter, CXCursorKind::CXCursor_NonTypeTemplateParameter}
+        )
+        let specialization_template_parameters = .extract_template_parameters(program, parent_scope_id, module_id, cursor)
+
+        // Resolve arguments
+        let template_arguments = .extract_matching_cursors_breaking_at_boundary(
+            cursor
+            &fn(anon kind: CXCursorKind) -> bool => not clang_isDeclaration(kind)
+            skip: template_parameters.size()
+        )
+
+        let struct_id = program.find_struct_in_scope(
+            scope_id: parent_scope_id
+            name
+            ignore_mixin_scopes: true
+            ignore_parent_scopes: true
+        )
+        if not struct_id.has_value() {
+            eprintln("[ICE] Couldn't find struct for partial specialization named {}", name)
             return
         }
-    }
 
-    let struct_id = match this_type.has_value() {
-        true => match program.get_type(this_type!) {
-            Struct(id) | GenericInstance(id) => Some(id)
-            else => None
+        let base_struct = program.get_struct(struct_id!)
+
+        // Make a specialization
+        mut arguments: [TypeId] = []
+        for argument in template_arguments {
+            mut type = match clang_isExpression(clang_getCursorKind(argument)) {
+                true => .const_type_from(
+                    program
+                    scope_id: parent_scope_id
+                    module_id
+                    cursor: argument
+                )
+                false => .cached_type_of_cursor(
+                    cursor: argument
+                    program
+                    scope_id: parent_scope_id
+                    module_id
+                )
+            }
+            arguments.push(type)
         }
-        false => None
+
+        mut specialized_name = ""
+        for argument in arguments {
+            specialized_name = specialized_name + ", " + program.type_name(argument)
+        }
+        if specialized_name.length() > 0 {
+            specialized_name = specialized_name.substring(start: 2, length: specialized_name.length() - 2)
+        }
+
+        .process_struct(
+            program
+            parent_scope_id
+            module_id
+            cursor
+            generic_parameters: base_struct.generic_parameters
+            generic_parameter_defaults: base_struct.generic_parameter_defaults
+            named_specialization_disambiguator: specialized_name
+        )
+
+        let base_type_id = program.find_or_add_type_id(Type::Struct(struct_id!), module_id, only_in_current_module: true)
+        let specialized_struct_id = program.find_struct_in_scope(
+            scope_id: parent_scope_id
+            name: format("{}<{}>", name, specialized_name)
+            ignore_mixin_scopes: true
+            ignore_parent_scopes: true
+        )
+        if not specialized_struct_id.has_value() {
+            eprintln("[ICE] Couldn't find struct for partial specialization named {}", name)
+            abort()
+        }
+
+        let type_id = program.find_or_add_type_id(
+            Type::Struct(specialized_struct_id!)
+            module_id
+            only_in_current_module: true
+        )
+        let specialization = SpecializedType(
+            base_type_id
+            arguments
+            type_id
+        )
+
+        mut scope = program.get_scope(parent_scope_id)
+        scope.explicitly_specialized_types.set(name, specialization)
     }
 
-    let (name, external_name) = match kind {
-        Normal => function_names_from(cursor)
-        Constructor => (program.get_struct(struct_id!).name, None)
-        Destructor => ("destructor", None)
+    fn process_ns_variable(
+        mut this
+        program: &mut CheckedProgram
+        parent_scope_id: ScopeId
+        module_id: ModuleId
+        cursor: CXCursor
+    ) throws {
+        let name = name_from(cursor)
+        mut scope = program.get_scope(parent_scope_id)
+        mut module = program.get_module(module_id)
+        let type_id = .cached_type_of_cursor(
+            cursor
+            program
+            scope_id: parent_scope_id
+            module_id
+        )
+
+        let var_id = module.add_variable(CheckedVariable(
+            name
+            type_id
+            is_mutable: false
+            definition_span: empty_span()
+            type_span: None
+            visibility: CheckedVisibility::Public
+            owner_scope: parent_scope_id
+        ))
+
+        scope.vars.set(name, var_id)
     }
 
-    let function_scope = program.create_scope(
-        parent_scope_id
-        can_throw: false
-        debug_name: format("cpp-function({})", name)
-        module_id
-        for_block: true
-    )
+    fn process_macro(
+        mut this
+        program: &mut CheckedProgram
+        parent_scope_id: ScopeId
+        module_id: ModuleId
+        cursor: CXCursor
+    ) throws {
+        // Turn regular macros into variables in the parent scope
+        // Ignore function-like macros
+        let name = name_from(cursor)
+        if clang_Cursor_isMacroFunctionLike(cursor) {
+            return
+        }
 
-    if template_parameters is Some(parameters) {
-        mut scope = program.get_scope(function_scope)
-        for param in parameters.params {
-            let name = match program.get_type(param.type_id) {
-                TypeVariable(name) => name
-                else => {
-                    eprintln("[ICE] Non-type variable in function template parameters")
-                    abort()
+        mut scope = program.get_scope(parent_scope_id)
+        mut module = program.get_module(module_id)
+        let var_id = module.add_variable(CheckedVariable(
+            name
+            type_id: unknown_type_id()
+            is_mutable: false
+            definition_span: empty_span()
+            type_span: None
+            visibility: CheckedVisibility::Public
+            owner_scope: parent_scope_id
+            external_name: ExternalName::PreprocessorName(name)
+        ))
+
+        scope.vars.set(name, var_id)
+    }
+
+    fn extract_template_parameters(
+        mut this
+        program: &mut CheckedProgram
+        parent_scope_id: ScopeId
+        module_id: ModuleId
+        cursor: CXCursor
+    ) throws -> TemplateParameters {
+        let template_parameters = .extract_cursors_of_kinds(
+            cursor
+            kinds: {CXCursorKind::CXCursor_TemplateTypeParameter, CXCursorKind::CXCursor_NonTypeTemplateParameter}
+        )
+        mut params: [CheckedGenericParameter] = []
+        mut defaults: [TypeId?] = []
+        mut packs_by_name: [String] = []
+
+        for parameter in template_parameters {
+            let spelling = string_from(clang_getCursorSpelling(parameter))
+            let name = name_from(parameter)
+            mut is_variadic = false
+            // Clang-C doesn't have any API that would tell us whether this template parameter is a pack
+            // so we have to bend over backwards and figure it out ourselves:
+            // - assume the parameter spans N tokens (at minimum N = 2)
+            // - if the penultimate token in this set is '...', we have a type pack
+            // - otherwise this is a "normal" parameter.
+            {
+                let range = clang_getCursorExtent(cursor: parameter)
+                mut tokens = null<raw CXToken>()
+                mut num_tokens = 0u32
+                let tu = clang_Cursor_getTranslationUnit(cursor: parameter)
+                clang_tokenize(
+                    tu
+                    range
+                    tokens: &raw tokens
+                    num_tokens: &raw num_tokens
+                )
+                defer clang_disposeTokens(tu, tokens, num_tokens)
+
+                if num_tokens >= 1 {
+                    is_variadic = string_from(clang_getTokenSpelling(tu, token: unsafe read_at_offset(tokens, num_tokens - 1))) == "..."
+                }
+                if num_tokens >= 2 {
+                    is_variadic = is_variadic or string_from(clang_getTokenSpelling(tu, token: unsafe read_at_offset(tokens, num_tokens - 2))) == "..."
                 }
             }
 
-            scope.types.set(name, param.type_id)
-        }
-    }
+            if is_variadic {
+                packs_by_name.push(name)
+                continue
+            }
 
-    mut params: [CheckedParameter] = []
-    mut is_mutating = not clang_CXXMethod_isConst(cursor)
-    let is_static = is_declared_as_static or not this_type.has_value()
-
-    if not is_static {
-        let variable = CheckedVariable(
-            name: "this"
-            type_id: this_type!
-            is_mutable: is_mutating
-            definition_span: empty_span()
-            type_span: empty_span()
-            visibility: CheckedVisibility::Public
-            owner_scope: parent_scope_id
-        )
-        params.push(CheckedParameter(
-            requires_label: false
-            variable
-            default_value: None
-        ))
-    }
-
-    let parameters = extract_cursors_of_kinds(
-        cursor
-        kinds: {CXCursorKind::CXCursor_ParmDecl}
-    )
-    for parameter in parameters {
-        let arg_type = clang_getCursorType(parameter)
-        if string_from(clang_getTypeSpelling(arg_type)).ends_with("...") {
-            // Skip over expanded type packs, we're treating the function as variadic.
-            continue
-        }
-
-        mut arg_name = name_from(parameter)
-        if arg_name.is_empty() {
-            arg_name = format("anon_{}", params.size() + 1)
-        }
-        let arg_type_id = type_from(
-            program
-            scope_id: function_scope
-            module_id
-            arg_type
-        )
-        let variable = CheckedVariable(
-            name: arg_name
-            type_id: arg_type_id
-            is_mutable: false // FIXME: Const
-            definition_span: empty_span()
-            type_span: empty_span()
-            visibility: CheckedVisibility::Public
-            owner_scope: function_scope
-        )
-        params.push(CheckedParameter(
-            requires_label: false
-            variable
-            default_value: None
-        ))
-    }
-
-    let result_type = clang_getCursorResultType(cursor)
-    let (function_throws, return_type) = match kind {
-        Normal => match inherits_from_erroror(cursor: clang_getTypeDeclaration(result_type)) {
-            true => (true, type_from(
-                program
-                scope_id: function_scope
-                module_id
-                clang_Type_getTemplateArgumentAsType(result_type, 0)
-            ))
-            false => (false, type_from(
-                program
-                scope_id: function_scope
-                module_id
-                result_type
-            ))
-        }
-        Constructor => (program.get_type(this_type!).is_boxed(*program), this_type!)
-        Destructor => (false, builtin(BuiltinType::Void))
-    }
-
-    mut has_varargs = false
-    if template_parameters?.packs_by_name is Some(packs) {
-        has_varargs = not packs.is_empty()
-    }
-
-    let function = CheckedFunction(
-        name
-        name_span: empty_span()
-        visibility: CheckedVisibility::Public
-        return_type_id: return_type
-        return_type_span: None
-        params
-        generics: FunctionGenerics(
-            base_scope_id: function_scope
-            base_params: params
-            params: function_generic_parameters_from(template_parameters?.params)
-            specializations: []
-        )
-        block: CheckedBlock(
-            statements: []
-            scope_id: function_scope
-            control_flow: BlockControlFlow::MayReturn
-            yielded_type: None
-            yielded_none: false
-        )
-        can_throw: function_throws
-        type: match kind {
-            Normal => FunctionType::Normal
-            Constructor => FunctionType::ImplicitConstructor
-            Destructor => FunctionType::Destructor
-        }
-        linkage: FunctionLinkage::External
-        function_scope_id: function_scope
-        struct_id
-        is_instantiated: true
-        parsed_function: None
-        is_comptime: false
-        is_virtual: false
-        is_override: false
-        is_unsafe: false
-        has_varargs
-        specialization_index: None
-
-        owner_scope: parent_scope_id
-        is_fully_checked: true
-        external_name
-    )
-
-    mut module = program.get_module(module_id)
-    let id = module.add_function(checked_function: function)
-
-    mut scope = program.get_scope(parent_scope_id)
-    if scope.functions.contains(name) {
-        scope.functions[name].push(id)
-    } else {
-        scope.functions.set(name, [id])
-    }
-
-    if kind is Constructor and scope.parent is Some(parent_scope_id) {
-        mut parent_scope = program.get_scope(parent_scope_id)
-        if parent_scope.functions.contains(name) {
-            parent_scope.functions[name].push(id)
-        } else {
-            parent_scope.functions.set(name, [id])
-        }
-    }
-}
-
-fn debug_description_of(anon program: &CheckedProgram, anon scope_id: ScopeId) throws -> String {
-    mut ss: [String] = []
-    mut current_scope_id = scope_id
-    loop {
-        let scope = program.get_scope(current_scope_id)
-        let d = format("{} (named {})", scope.debug_name, scope.namespace_name)
-        ss.insert(before_index: 0, value: d)
-        if scope.parent.has_value() {
-            current_scope_id = scope.parent!
-        } else {
-            break
-        }
-    }
-
-    return join(ss, separator: " -> ")
-}
-
-fn process_enum(
-    program: &mut CheckedProgram
-    parent_scope_id: ScopeId
-    module_id: ModuleId
-    cursor: CXCursor
-    alias_type_name: String? = None
-) throws {
-    mut name = name_from(cursor)
-    if name.is_empty() {
-        name = alias_type_name ?? format("<anonymous@{}>", &raw cursor)
-    }
-
-    mut module = program.get_module(module_id)
-    let existing_enum_id = program.get_scope(parent_scope_id).enums.get(name)
-
-    let (enum_scope, scope_was_just_made) = match existing_enum_id.has_value() {
-        true => (program.get_enum(existing_enum_id!).scope_id, false)
-        false => {
-            let enum_scope = program.create_scope(
-                parent_scope_id
-                can_throw: false
-                debug_name: format("cpp-enum({})", name)
-                module_id
-                for_block: true
+            mut constraints_and_default_value = .extract_cursors_of_kinds(
+                cursor: parameter
+                kinds: {}
             )
-            yield (enum_scope, true)
+            mut default_value_cursor: CXCursor? = None
+            mut constraint_cursor: CXCursor? = None
+
+            match constraints_and_default_value.size() {
+                0 => {}
+                1 => {
+                    // We need to figure out if this is a constraint or a default value
+                    // Thanks clang-c <3
+                    let cursor = constraints_and_default_value[0]
+                    if clang_getCursorType(cursor).kind is CXType_Invalid {
+                        // This is not a 'type', so it's a constraint.
+                        constraint_cursor = cursor
+                    } else {
+                        default_value_cursor = cursor
+                    }
+                }
+                else => {
+                    // We're good, [0] is the constraint, and [1] is the default value
+                    constraint_cursor = constraints_and_default_value[0]
+                    default_value_cursor = constraints_and_default_value[1]
+                }
+            }
+
+            mut default_type: TypeId? = None
+            if default_value_cursor.has_value() {
+                default_type = match clang_isExpression(clang_getCursorKind(default_value_cursor!)) {
+                    true => .const_type_from(
+                        program
+                        scope_id: parent_scope_id
+                        module_id
+                        cursor: default_value_cursor!
+                    )
+                    false => .cached_type_of_cursor(
+                        cursor: default_value_cursor!
+                        program
+                        scope_id: parent_scope_id
+                        module_id
+                    )
+                }
+
+                let name = name_from(cursor)
+                if name == "Vector" {
+                    eprintln("Vector default value: {} '{}' = {}"
+                        string_from(clang_getTypeSpelling(clang_getCursorType(default_value_cursor!)))
+                        string_from(clang_getCursorSpelling(default_value_cursor!))
+                        program.type_name(default_type!, debug_mode: true)
+                    )
+                    for entry in constraints_and_default_value {
+                        eprintln("  {} '{}'"
+                            string_from(clang_getTypeSpelling(clang_getCursorType(entry)))
+                            string_from(clang_getCursorSpelling(entry))
+                        )
+                    }
+                }
+            }
+
+            // FIXME: Constraints, etc.
+            params.push(
+                CheckedGenericParameter(
+                    type_id: program.find_or_add_type_id(
+                        Type::TypeVariable(
+                            name
+                            trait_implementations: []
+                            is_value: clang_getCursorKind(parameter) is CXCursor_NonTypeTemplateParameter
+                        )
+                        module_id
+                        only_in_current_module: true
+                    )
+                    constraints: []
+                    span: empty_span()
+                )
+            )
+            defaults.push(default_type)
+        }
+
+        if defaults.size() != params.size() {
+            eprintln("[ICE] Template parameters ({}) and defaults ({}) don't match", params, defaults)
+            abort()
+        }
+
+        return TemplateParameters(
+            params
+            defaults
+            packs_by_name
+        )
+    }
+
+    fn process_class_template(
+        mut this
+        program: &mut CheckedProgram
+        parent_scope_id: ScopeId
+        module_id: ModuleId
+        cursor: CXCursor
+    ) throws {
+        let name = name_from(cursor)
+        match clang_getTemplateCursorKind(cursor) {
+            CXCursor_StructDecl | CXCursor_ClassDecl => {
+                let template_parameters = .extract_template_parameters(program, parent_scope_id, module_id, cursor)
+                .process_struct(
+                    program
+                    parent_scope_id
+                    module_id
+                    cursor
+                    generic_parameters: template_parameters.params
+                    generic_parameter_defaults: template_parameters.defaults
+                )
+            }
+            else => {
+                let k = clang_getCursorKind(cursor)
+                let v = clang_getCursorKindSpelling(k)
+                eprintln("Unsupported template cursor kind: {}", string_from(v))
+            }
         }
     }
 
-    mut scope = program.get_scope(enum_scope)
-    scope.namespace_name = name
+    fn extract_cursors_of_kinds(
+        mut this
+        cursor: CXCursor
+        kinds: {CXCursorKind}
+    ) throws -> [CXCursor] {
+        mut result: [CXCursor] = []
+        visit(
+            cursor
+            fn[&mut result, &kinds](c: CXCursor, parent: CXCursor) throws -> CXChildVisitResult {
+                let kind = clang_getCursorKind(c)
+                if kinds.is_empty() or kinds.contains(kind) {
+                    result.push(c)
+                }
 
-    mut parent_scope = program.get_scope(parent_scope_id)
-    if scope_was_just_made {
-        parent_scope.children.push(enum_scope)
+                return CXChildVisitResult::CXChildVisit_Continue
+            }
+        )
+        return result
     }
 
-    let enum_id = existing_enum_id ?? EnumId(
-        module: module_id
-        id: module.enums.size()
-    )
+    fn extract_matching_cursors_breaking_at_boundary(
+        mut this
+        cursor: CXCursor
+        anon predicate: &fn(anon kind: CXCursorKind) -> bool
+        skip: usize = 0
+    ) throws -> [CXCursor] {
+        mut results: [CXCursor] = []
+        mut skips_left = skip
 
-    let enum_type_id = program.find_or_add_type_id(
-        Type::Enum(enum_id)
-        module_id
-        only_in_current_module: true
-    )
+        visit(
+            cursor
+            fn[&predicate, &mut skips_left, &mut results](c: CXCursor, parent: CXCursor) throws -> CXChildVisitResult {
+                let kind = clang_getCursorKind(c)
+                if predicate(kind) {
+                    results.push(c)
+                } else if skips_left == 0 {
+                    return CXChildVisitResult::CXChildVisit_Break
+                } else if skips_left > 0 {
+                    skips_left -= 1
+                }
 
-    parent_scope.enums.set(name, enum_id)
-    parent_scope.types.set(name, enum_type_id)
+                return CXChildVisitResult::CXChildVisit_Continue
+            }
+        )
 
-    let underlying_type_id = type_from(
-        program
-        scope_id: enum_scope
-        module_id
-        clang_getEnumDeclIntegerType(cursor)
-    )
+        return results
+    }
 
-    if scope_was_just_made {
-        // This is a predecl, so just add an empty struct for now.
-        // We'll fill it in later.
-        let the_enum = CheckedEnum(
+    fn process_type_alias(
+        mut this
+        program: &mut CheckedProgram
+        parent_scope_id: ScopeId
+        module_id: ModuleId
+        this_type_id: TypeId?
+        cursor: CXCursor
+    ) throws {
+        let name = name_from(cursor)
+        let type = clang_getTypedefDeclUnderlyingType(cursor)
+
+        .process_namespace_contents(
+            program: program
+            scope_id: parent_scope_id
+            module_id: module_id
+            cursor: cursor
+            allowed_contents: AllowedContents::OnlyTypes
+            this_type: this_type_id
+            alias_type_name: name
+        )
+
+        if string_from(clang_getTypeSpelling(type)).is_empty() {
+            // This is the fun `typedef decl <unnamed> {} name;` pattern, we don't need to produce a new typename.
+            return
+        }
+
+        let type_id = .type_from(program, scope_id: parent_scope_id, module_id, type)
+        mut scope = program.get_scope(parent_scope_id)
+        scope.types.set(name, type_id)
+    }
+
+    fn process_namespace(
+        mut this
+        program: &mut CheckedProgram
+        parent_scope_id: ScopeId
+        module_id: ModuleId
+        cursor: CXCursor
+    ) throws {
+        mut parent_scope = program.get_scope(parent_scope_id)
+
+        let name = name_from(cursor)
+        let existing_scope_id = program.find_namespace_in_immediate_children_of_scope(
+            scope_id: parent_scope_id
+            name
+        )
+        let (scope_id, scope_was_just_made) = match existing_scope_id.has_value() {
+            true => (existing_scope_id!, false)
+            false => (
+                program.create_scope(
+                    parent_scope_id
+                    can_throw: false
+                    debug_name: format("cpp-namespace({})", name)
+                    module_id
+                    for_block: false
+                ),
+                true
+            )
+        }
+
+        if scope_was_just_made {
+            mut scope = program.get_scope(scope_id)
+            scope.namespace_name = name
+            parent_scope.children.push(scope_id)
+        }
+
+        .process_namespace_contents(
+            program: program
+            scope_id
+            module_id
+            cursor
+            allowed_contents: AllowedContents::Everything
+            this_type: None
+        )
+    }
+
+
+    fn process_function_template(
+        mut this
+        program: &mut CheckedProgram
+        parent_scope_id: ScopeId
+        module_id: ModuleId
+        this_type: TypeId?
+        kind: ExternFunctionKind
+        cursor: CXCursor
+    ) throws {
+        let template_parameters = .extract_template_parameters(program, parent_scope_id, module_id, cursor)
+        .process_function(
+            program
+            parent_scope_id
+            module_id
+            this_type
+            kind
+            cursor
+            template_parameters
+        )
+    }
+
+    fn function_generic_parameters_from(
+        mut this
+        anon params: [CheckedGenericParameter]?
+    ) throws -> [FunctionGenericParameter] {
+        mut result: [FunctionGenericParameter] = []
+        if params.has_value() {
+            for param in params! {
+                result.push(FunctionGenericParameter(
+                    kind: FunctionGenericParameterKind::Parameter
+                    checked_parameter: param
+                ))
+            }
+        }
+        return result
+    }
+
+    fn process_function(
+        mut this
+        program: &mut CheckedProgram
+        parent_scope_id: ScopeId
+        module_id: ModuleId
+        this_type: TypeId?
+        kind: ExternFunctionKind
+        cursor: CXCursor
+        template_parameters: TemplateParameters? = None
+    ) throws {
+        let is_declared_as_static = kind is Constructor or kind is Destructor or clang_CXXMethod_isStatic(cursor)
+
+        if not this_type.has_value() and (kind is Constructor or kind is Destructor) {
+            eprintln("[ICE] Constructor or destructor ({}) without a this type", name_from(cursor))
+            return
+        }
+
+        if not is_declared_as_static and not this_type.has_value() {
+            let parent_cursor = clang_getCursorSemanticParent(cursor)
+            let kind = clang_getCursorKind(parent_cursor)
+            if clang_isDeclaration(kind) {
+                // This is an out-of-line definition of a member function, we've already seen it, so it's safe to skip.
+                return
+            }
+        }
+
+        let struct_id = match this_type.has_value() {
+            true => match program.get_type(this_type!) {
+                Struct(id) | GenericInstance(id) => Some(id)
+                else => None
+            }
+            false => None
+        }
+
+        let (name, external_name) = match kind {
+            Normal => function_names_from(cursor)
+            Constructor => (program.get_struct(struct_id!).name, None)
+            Destructor => ("destructor", None)
+        }
+
+        let function_scope = program.create_scope(
+            parent_scope_id
+            can_throw: false
+            debug_name: format("cpp-function({})", name)
+            module_id
+            for_block: true
+        )
+
+        if template_parameters is Some(parameters) {
+            mut scope = program.get_scope(function_scope)
+            for param in parameters.params {
+                let name = match program.get_type(param.type_id) {
+                    TypeVariable(name) => name
+                    else => {
+                        eprintln("[ICE] Non-type variable in function template parameters")
+                        abort()
+                    }
+                }
+
+                scope.types.set(name, param.type_id)
+            }
+        }
+
+        mut params: [CheckedParameter] = []
+        mut is_mutating = not clang_CXXMethod_isConst(cursor)
+        let is_static = is_declared_as_static or not this_type.has_value()
+
+        if not is_static {
+            let variable = CheckedVariable(
+                name: "this"
+                type_id: this_type!
+                is_mutable: is_mutating
+                definition_span: empty_span()
+                type_span: empty_span()
+                visibility: CheckedVisibility::Public
+                owner_scope: parent_scope_id
+            )
+            params.push(CheckedParameter(
+                requires_label: false
+                variable
+                default_value: None
+            ))
+        }
+
+        let parameters = .extract_cursors_of_kinds(
+            cursor
+            kinds: {CXCursorKind::CXCursor_ParmDecl}
+        )
+        for parameter in parameters {
+            if string_from(clang_getTypeSpelling(clang_getCursorType(parameter))).ends_with("...") {
+                // Skip over expanded type packs, we're treating the function as variadic.
+                continue
+            }
+
+            mut arg_name = name_from(parameter)
+            if arg_name.is_empty() {
+                arg_name = format("anon_{}", params.size() + 1)
+            }
+            let arg_type_id = .cached_type_of_cursor(
+                cursor: parameter
+                program
+                scope_id: function_scope
+                module_id
+            )
+            let variable = CheckedVariable(
+                name: arg_name
+                type_id: arg_type_id
+                is_mutable: false // FIXME: Const
+                definition_span: empty_span()
+                type_span: empty_span()
+                visibility: CheckedVisibility::Public
+                owner_scope: function_scope
+            )
+            params.push(CheckedParameter(
+                requires_label: false
+                variable
+                default_value: None
+            ))
+        }
+
+        let result_type = clang_getCursorResultType(cursor)
+        let (function_throws, return_type) = match kind {
+            Normal => match .inherits_from_erroror(cursor: clang_getTypeDeclaration(result_type)) {
+                true => (true, .type_from(
+                    program
+                    scope_id: function_scope
+                    module_id
+                    clang_Type_getTemplateArgumentAsType(result_type, 0)
+                ))
+                false => (false, .type_from(
+                    program
+                    scope_id: function_scope
+                    module_id
+                    result_type
+                ))
+            }
+            Constructor => (program.get_type(this_type!).is_boxed(*program), this_type!)
+            Destructor => (false, builtin(BuiltinType::Void))
+        }
+
+        mut has_varargs = false
+        if template_parameters?.packs_by_name is Some(packs) {
+            has_varargs = not packs.is_empty()
+        }
+
+        let function = CheckedFunction(
+            name
+            name_span: empty_span()
+            visibility: CheckedVisibility::Public
+            return_type_id: return_type
+            return_type_span: None
+            params
+            generics: FunctionGenerics(
+                base_scope_id: function_scope
+                base_params: params
+                params: .function_generic_parameters_from(template_parameters?.params)
+                specializations: []
+            )
+            block: CheckedBlock(
+                statements: []
+                scope_id: function_scope
+                control_flow: BlockControlFlow::MayReturn
+                yielded_type: None
+                yielded_none: false
+            )
+            can_throw: function_throws
+            type: match kind {
+                Normal => FunctionType::Normal
+                Constructor => FunctionType::ImplicitConstructor
+                Destructor => FunctionType::Destructor
+            }
+            linkage: FunctionLinkage::External
+            function_scope_id: function_scope
+            struct_id
+            is_instantiated: true
+            parsed_function: None
+            is_comptime: false
+            is_virtual: false
+            is_override: false
+            is_unsafe: false
+            has_varargs
+            specialization_index: None
+
+            owner_scope: parent_scope_id
+            is_fully_checked: true
+            external_name
+        )
+
+        mut module = program.get_module(module_id)
+        let id = module.add_function(checked_function: function)
+
+        mut scope = program.get_scope(parent_scope_id)
+        if scope.functions.contains(name) {
+            scope.functions[name].push(id)
+        } else {
+            scope.functions.set(name, [id])
+        }
+
+        if kind is Constructor and scope.parent is Some(parent_scope_id) {
+            mut parent_scope = program.get_scope(parent_scope_id)
+            if parent_scope.functions.contains(name) {
+                parent_scope.functions[name].push(id)
+            } else {
+                parent_scope.functions.set(name, [id])
+            }
+        }
+    }
+
+    fn debug_description_of(anon program: &CheckedProgram, anon scope_id: ScopeId) throws -> String {
+        mut ss: [String] = []
+        mut current_scope_id = scope_id
+        loop {
+            let scope = program.get_scope(current_scope_id)
+            let d = format("{} (named {})", scope.debug_name, scope.namespace_name)
+            ss.insert(before_index: 0, value: d)
+            if scope.parent.has_value() {
+                current_scope_id = scope.parent!
+            } else {
+                break
+            }
+        }
+
+        return join(ss, separator: " -> ")
+    }
+
+    fn process_enum(
+        mut this
+        program: &mut CheckedProgram
+        parent_scope_id: ScopeId
+        module_id: ModuleId
+        cursor: CXCursor
+        alias_type_name: String? = None
+    ) throws {
+        mut name = name_from(cursor)
+        if name.is_empty() {
+            name = alias_type_name ?? format("<anonymous@{}>", &raw cursor)
+        }
+
+        mut module = program.get_module(module_id)
+        let existing_enum_id = program.get_scope(parent_scope_id).enums.get(name)
+
+        let (enum_scope, scope_was_just_made) = match existing_enum_id.has_value() {
+            true => (program.get_enum(existing_enum_id!).scope_id, false)
+            false => {
+                let enum_scope = program.create_scope(
+                    parent_scope_id
+                    can_throw: false
+                    debug_name: format("cpp-enum({})", name)
+                    module_id
+                    for_block: true
+                )
+                yield (enum_scope, true)
+            }
+        }
+
+        mut scope = program.get_scope(enum_scope)
+        scope.namespace_name = name
+
+        mut parent_scope = program.get_scope(parent_scope_id)
+        if scope_was_just_made {
+            parent_scope.children.push(enum_scope)
+        }
+
+        let enum_id = existing_enum_id ?? EnumId(
+            module: module_id
+            id: module.enums.size()
+        )
+
+        let enum_type_id = program.find_or_add_type_id(
+            Type::Enum(enum_id)
+            module_id
+            only_in_current_module: true
+        )
+
+        parent_scope.enums.set(name, enum_id)
+        parent_scope.types.set(name, enum_type_id)
+
+        let underlying_type_id = .type_from(
+            program
+            scope_id: enum_scope
+            module_id
+            clang_getEnumDeclIntegerType(cursor)
+        )
+
+        if scope_was_just_made {
+            // This is a predecl, so just add an empty struct for now.
+            // We'll fill it in later.
+            let the_enum = CheckedEnum(
+                name
+                name_span: empty_span()
+                generic_parameters: []
+                variants: []
+                fields: []
+                scope_id: enum_scope
+                definition_linkage: DefinitionLinkage::External
+                trait_implementations: [:]
+                record_type: RecordType::ValueEnum(
+                    underlying_type: ParsedType::Empty
+                    variants: []
+                )
+                underlying_type_id
+                type_id: enum_type_id
+                is_boxed: false
+            )
+            module.enums.push(the_enum)
+        }
+
+        if clang_isCursorDefinition(cursor) == 0 {
+            return
+        }
+
+        let variant_cursors = .extract_cursors_of_kinds(
+            cursor
+            kinds: {CXCursorKind::CXCursor_EnumConstantDecl}
+        )
+        // Untyped(enum_id: EnumId, name: String, span: Span)
+        mut variants: [CheckedEnumVariant] = []
+        for cursor in variant_cursors {
+            let variant_name = name_from(cursor)
+            let variant = CheckedEnumVariant::Untyped(
+                enum_id
+                name: variant_name
+                span: empty_span()
+            )
+            variants.push(variant)
+            let var_id = module.add_variable(CheckedVariable(
+                name: variant_name
+                type_id: enum_type_id
+                is_mutable: false
+                definition_span: empty_span()
+                type_span: None
+                visibility: CheckedVisibility::Public
+                owner_scope: enum_scope
+            ))
+            scope.vars.set(key: variant_name, value: var_id)
+        }
+
+        let existing_enum = program.get_enum(enum_id)
+        module.enums[enum_id.id] = CheckedEnum(
             name
             name_span: empty_span()
             generic_parameters: []
-            variants: []
+            variants
             fields: []
             scope_id: enum_scope
             definition_linkage: DefinitionLinkage::External
@@ -1478,287 +1588,236 @@ fn process_enum(
             type_id: enum_type_id
             is_boxed: false
         )
-        module.enums.push(the_enum)
     }
 
-    if clang_isCursorDefinition(cursor) == 0 {
-        return
+    fn inherits_from_erroror(mut this, anon cursor: CXCursor) throws -> bool {
+        return .inherits_from_any_of(cursor, {"c:@N@AK@ST>2#T#T@ErrorOr"})
     }
 
-    let variant_cursors = extract_cursors_of_kinds(
-        cursor
-        kinds: {CXCursorKind::CXCursor_EnumConstantDecl}
-    )
-    // Untyped(enum_id: EnumId, name: String, span: Span)
-    mut variants: [CheckedEnumVariant] = []
-    for cursor in variant_cursors {
-        let variant_name = name_from(cursor)
-        let variant = CheckedEnumVariant::Untyped(
-            enum_id
-            name: variant_name
-            span: empty_span()
-        )
-        variants.push(variant)
-        let var_id = module.add_variable(CheckedVariable(
-            name: variant_name
-            type_id: enum_type_id
-            is_mutable: false
-            definition_span: empty_span()
-            type_span: None
-            visibility: CheckedVisibility::Public
-            owner_scope: enum_scope
-        ))
-        scope.vars.set(key: variant_name, value: var_id)
+    fn inherits_from_refcounted_base(mut this, anon cursor: CXCursor) throws -> bool {
+        // FIXME: Figure out why ::Core::Object doesn't have any CXXBaseSpecifier children.
+        return .inherits_from_any_of(cursor, {"c:@N@AK@S@RefCountedBase", "c:@N@Core@S@Object"})
     }
 
-    let existing_enum = program.get_enum(enum_id)
-    module.enums[enum_id.id] = CheckedEnum(
-        name
-        name_span: empty_span()
-        generic_parameters: []
-        variants
-        fields: []
-        scope_id: enum_scope
-        definition_linkage: DefinitionLinkage::External
-        trait_implementations: [:]
-        record_type: RecordType::ValueEnum(
-            underlying_type: ParsedType::Empty
-            variants: []
-        )
-        underlying_type_id
-        type_id: enum_type_id
-        is_boxed: false
-    )
-}
-
-fn inherits_from_erroror(anon cursor: CXCursor) throws -> bool {
-    return inherits_from_any_of(cursor, {"c:@N@AK@ST>2#T#T@ErrorOr"})
-}
-
-fn inherits_from_refcounted_base(anon cursor: CXCursor) throws -> bool {
-    // FIXME: Figure out why ::Core::Object doesn't have any CXXBaseSpecifier children.
-    return inherits_from_any_of(cursor, {"c:@N@AK@S@RefCountedBase", "c:@N@Core@S@Object"})
-}
-
-fn inherits_from_any_of(anon cursor: CXCursor, anon usrs: {String}) throws -> bool {
-    mut definition = clang_getCursorDefinition(cursor)
-    let maybe_template = clang_getSpecializedCursorTemplate(cursor: definition)
-    if not clang_Cursor_isNull(cursor: maybe_template) {
-        definition = maybe_template
-    }
-
-    mut kind = clang_getCursorKind(definition)
-    if kind is CXCursor_ClassTemplate {
-        let def = extract_cursors_of_kinds(
-            cursor: definition
-            kinds: {CXCursorKind::CXCursor_StructDecl, CXCursorKind::CXCursor_ClassDecl}
-        ).first()
-
-        if def.has_value() {
-            definition = clang_getCanonicalCursor(clang_getCursorDefinition(cursor: def!))
-            kind = clang_getCursorKind(definition)
+    fn inherits_from_any_of(mut this, anon cursor: CXCursor, anon usrs: {String}) throws -> bool {
+        mut definition = clang_getCursorDefinition(cursor)
+        let maybe_template = clang_getSpecializedCursorTemplate(cursor: definition)
+        if not clang_Cursor_isNull(cursor: maybe_template) {
+            definition = maybe_template
         }
-    }
 
-    let usr = string_from(clang_getCursorUSR(cursor: definition))
-    if usrs.contains(usr) {
-        return true
-    }
+        mut kind = clang_getCursorKind(definition)
+        if kind is CXCursor_ClassTemplate {
+            let def = .extract_cursors_of_kinds(
+                cursor: definition
+                kinds: {CXCursorKind::CXCursor_StructDecl, CXCursorKind::CXCursor_ClassDecl}
+            ).first()
 
-    for base in extract_cursors_of_kinds(
-        cursor: definition
-        kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier}
-    ) {
-        if inherits_from_any_of(base, usrs) {
+            if def.has_value() {
+                definition = clang_getCanonicalCursor(clang_getCursorDefinition(cursor: def!))
+                kind = clang_getCursorKind(definition)
+            }
+        }
+
+        let usr = string_from(clang_getCursorUSR(cursor: definition))
+        if usrs.contains(usr) {
             return true
         }
-    }
 
-    return false
-}
-
-fn process_struct(
-    program: &mut CheckedProgram
-    parent_scope_id: ScopeId
-    module_id: ModuleId
-    cursor: CXCursor
-    generic_parameters: [CheckedGenericParameter]? = None
-    generic_parameter_defaults: [TypeId?]? = None
-    named_specialization_disambiguator: String? = None
-    alias_type_name: String? = None
-) throws {
-    if generic_parameters.has_value() and generic_parameter_defaults.has_value() {
-        if generic_parameters!.size() != generic_parameter_defaults!.size() {
-            eprintln("[ICE] Generic parameters and defaults have different lengths")
-            abort()
-        }
-    }
-
-    mut name = name_from(cursor)
-    if name.is_empty() {
-        name = alias_type_name ?? format("<anonymous@{}>", &raw cursor)
-    }
-
-    let specialized_name = match named_specialization_disambiguator.has_value() {
-        true => format("{}<{}>", name, named_specialization_disambiguator!),
-        false => name
-    }
-
-    let bases = extract_cursors_of_kinds(
-        cursor
-        kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier}
-    )
-
-    mut module = program.get_module(module_id)
-    let existing_struct_id = program.find_struct_in_scope(
-        scope_id: parent_scope_id
-        name: specialized_name
-        ignore_mixin_scopes: true
-    )
-
-    let (struct_scope, scope_was_just_made) = match existing_struct_id.has_value() {
-        true => (program.get_struct(existing_struct_id!).scope_id, false)
-        false => (
-            program.create_scope(
-                parent_scope_id
-                can_throw: false
-                debug_name: format("cpp-struct({})", specialized_name)
-                module_id
-                for_block: false
-            ),
-            true
-        )
-    }
-
-    mut scope = program.get_scope(struct_scope)
-    scope.namespace_name = specialized_name
-
-    if generic_parameters.has_value() {
-        for parameter in generic_parameters! {
-            if program.get_type(parameter.type_id) is TypeVariable(name) {
-                scope.types.set(name, parameter.type_id)
+        for base in .extract_cursors_of_kinds(
+            cursor: definition
+            kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier}
+        ) {
+            if .inherits_from_any_of(base, usrs) {
+                return true
             }
         }
+
+        return false
     }
 
-    mut parent_scope = program.get_scope(parent_scope_id)
-    if scope_was_just_made {
-        parent_scope.children.push(struct_scope)
-    }
-
-    let struct_id = existing_struct_id ?? StructId(
-        module: module_id
-        id: module.structures.size()
-    )
-
-    let struct_type_id = program.find_or_add_type_id(
-        match generic_parameters.has_value() {
-            false => Type::Struct(struct_id)
-            true => {
-                mut args: [TypeId] = []
-                for param in generic_parameters! {
-                    args.push(param.type_id)
-                }
-
-                yield Type::GenericInstance(
-                    id: struct_id
-                    args
-                )
+    fn process_struct(
+        mut this
+        program: &mut CheckedProgram
+        parent_scope_id: ScopeId
+        module_id: ModuleId
+        cursor: CXCursor
+        generic_parameters: [CheckedGenericParameter]? = None
+        generic_parameter_defaults: [TypeId?]? = None
+        named_specialization_disambiguator: String? = None
+        alias_type_name: String? = None
+    ) throws {
+        if generic_parameters.has_value() and generic_parameter_defaults.has_value() {
+            if generic_parameters!.size() != generic_parameter_defaults!.size() {
+                eprintln("[ICE] Generic parameters and defaults have different lengths")
+                abort()
             }
         }
-        module_id
-        only_in_current_module: true
-    )
 
-    parent_scope.structs.set(specialized_name, struct_id)
-    parent_scope.types.set(specialized_name, struct_type_id)
+        let usr = string_from(clang_getCursorUSR(cursor))
+        let cached_struct_id = .cpp_struct_cache.get(usr)
 
-    if scope_was_just_made {
-        // This is a predecl, so just add an empty struct for now.
-        // We'll fill it in later.
-        let empty_parameters: [CheckedGenericParameter] = []
-        let the_struct = CheckedStruct(
-            name
-            name_span: empty_span()
-            generic_parameters: generic_parameters ?? empty_parameters
-            generic_parameter_defaults
-            fields: []
-            scope_id: struct_scope
-            definition_linkage: DefinitionLinkage::External
-            trait_implementations: [:]
-            record_type: RecordType::Struct(fields: [], super_type: None)
-            type_id: struct_type_id
-            super_struct_id: None
-        )
-        module.structures.push(the_struct)
-    }
-
-    if clang_isCursorDefinition(cursor) == 0 {
-        return
-    }
-
-    // If the struct somehow inherits from AK::RefCountedBase, we'll make it boxed.
-    mut is_class = false
-    for base in bases {
-        if inherits_from_refcounted_base(base) {
-            is_class = true
-            break
+        mut name = name_from(cursor)
+        if name.is_empty() {
+            name = alias_type_name ?? format("<anonymous@{}>", &raw cursor)
         }
-    }
 
-    mut super_struct_ids: [StructId] = []
-    for base in bases {
-        match program.get_type(type_from(
-            &mut program
+        let specialized_name = match named_specialization_disambiguator.has_value() {
+            true => format("{}<{}>", name, named_specialization_disambiguator!),
+            false => name
+        }
+
+        let bases = .extract_cursors_of_kinds(
+            cursor
+            kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier}
+        )
+
+        mut module = program.get_module(module_id)
+        let existing_struct_id = program.find_struct_in_scope(
             scope_id: parent_scope_id
-            module_id
-            clang_getCursorType(base)
-        )) {
-            GenericInstance(id) | Struct(id) => { super_struct_ids.push(id) }
-            else => {}
+            name: specialized_name
+            ignore_mixin_scopes: true
+            ignore_parent_scopes: true
+        )
+
+        let struct_id = existing_struct_id ?? cached_struct_id ?? StructId(
+            module: module_id
+            id: module.structures.size()
+        )
+
+        let (struct_scope, struct_type_id, scope_was_just_made) = match existing_struct_id.has_value() {
+            true => {
+                let struct_ = program.get_struct(existing_struct_id!)
+                yield (struct_.scope_id, struct_.type_id, false)
+            }
+            false => match cached_struct_id.has_value() {
+                true => {
+                    let struct_ = program.get_struct(cached_struct_id!)
+                    yield (struct_.scope_id, struct_.type_id, false)
+                }
+                false => {
+                    let scope_id = program.create_scope(
+                        parent_scope_id
+                        can_throw: false
+                        debug_name: format("cpp-struct({})", specialized_name)
+                        module_id
+                        for_block: false
+                    )
+                    let struct_type_id = program.find_or_add_type_id(
+                        match generic_parameters.has_value() {
+                            false => Type::Struct(struct_id)
+                            true => {
+                                mut args: [TypeId] = []
+                                for param in generic_parameters! {
+                                    args.push(param.type_id)
+                                }
+
+                                yield Type::GenericInstance(
+                                    id: struct_id
+                                    args
+                                )
+                            }
+                        }
+                        module_id
+                        only_in_current_module: true
+                    )
+
+                    yield (scope_id, struct_type_id, true)
+                }
+            }
         }
-    }
 
-    process_namespace_contents(
-        program
-        scope_id: struct_scope
-        module_id
-        cursor
-        allowed_contents: AllowedContents::OnlyTypes
-        this_type: struct_type_id
-    )
+        mut scope = program.get_scope(struct_scope)
+        scope.namespace_name = specialized_name
 
-    mut fields: [CheckedField] = []
-    mut context = Context(
-        program: *program
-        module_id
-        scope_id: struct_scope
-        this_type: struct_type_id
-        extra: bitcast<raw void>(&raw fields)
-    )
+        if generic_parameters.has_value() {
+            for parameter in generic_parameters! {
+                if program.get_type(parameter.type_id) is TypeVariable(name) {
+                    scope.types.set(name, parameter.type_id)
+                }
+            }
+        }
 
-    clang_visitChildren(
-        parent: cursor
-        visitor: fn(c: CXCursor, parent: CXCursor, data: CXClientData) -> CXChildVisitResult {
-            mut context = unsafe *bitcast<raw Context>(data)
-            mut program = context.program
-            let module_id = context.module_id
-            let struct_scope = context.scope_id
-            mut fields_ptr = bitcast<raw [CheckedField]>(context.extra)
-            let fields = &mut unsafe *fields_ptr
-            mut module = program.get_module(module_id)
+        mut parent_scope = program.get_scope(parent_scope_id)
+        parent_scope.structs.set(specialized_name, struct_id)
+        parent_scope.types.set(specialized_name, struct_type_id)
 
-            let kind = clang_getCursorKind(cursor: c) as! c_int
-            try {
-                if kind == (CXCursorKind::CXCursor_FieldDecl as! c_int) {
+        if scope_was_just_made {
+            parent_scope.children.push(struct_scope)
+            // This is a predecl, so just add an empty struct for now.
+            // We'll fill it in later.
+            let empty_parameters: [CheckedGenericParameter] = []
+            let the_struct = CheckedStruct(
+                name
+                name_span: empty_span()
+                generic_parameters: generic_parameters ?? empty_parameters
+                generic_parameter_defaults
+                fields: []
+                scope_id: struct_scope
+                definition_linkage: DefinitionLinkage::External
+                trait_implementations: [:]
+                record_type: RecordType::Struct(fields: [], super_type: None)
+                type_id: struct_type_id
+                super_struct_id: None
+            )
+            module.structures.push(the_struct)
+            .cpp_struct_cache.set(usr, struct_id)
+        }
+
+        if clang_isCursorDefinition(cursor) == 0 or struct_id.module != module_id {
+            return
+        }
+
+        // If the struct somehow inherits from AK::RefCountedBase, we'll make it boxed.
+        mut is_class = false
+        for base in bases {
+            if .inherits_from_refcounted_base(base) {
+                is_class = true
+                break
+            }
+        }
+
+        mut super_struct_ids: [StructId] = []
+        for base in bases {
+            match program.get_type(.cached_type_of_cursor(
+                cursor: base
+                &mut program
+                scope_id: parent_scope_id
+                module_id
+            )) {
+                GenericInstance(id) | Struct(id) => { super_struct_ids.push(id) }
+                else => {}
+            }
+        }
+
+        .process_namespace_contents(
+            program
+            scope_id: struct_scope
+            module_id
+            cursor
+            allowed_contents: AllowedContents::OnlyTypes
+            this_type: struct_type_id
+        )
+
+        mut fields: [CheckedField] = []
+        visit(
+            cursor
+            fn[
+                &mut program
+                module_id
+                struct_scope
+                &mut fields
+                this
+            ](c: CXCursor, parent: CXCursor) throws -> CXChildVisitResult {
+                if clang_getCursorKind(cursor: c) is CXCursor_FieldDecl {
                     // if the field is a function (and not a function pointer), skip it here
                     if not (clang_getCursorType(c).kind is CXType_FunctionProto) {
                         let name = name_from(c)
-                        let type_id = type_from(
+                        let type_id = .cached_type_of_cursor(
+                            cursor: c
                             &mut program
                             scope_id: struct_scope
                             module_id
-                            clang_getCursorType(c)
                         )
                         let variable = CheckedVariable(
                             name
@@ -1770,6 +1829,7 @@ fn process_struct(
                             owner_scope: struct_scope
                         )
 
+                        mut module = program.get_module(module_id)
                         let variable_id = module.add_variable(variable)
                         let field = CheckedField(
                             variable_id
@@ -1779,278 +1839,274 @@ fn process_struct(
                         fields.push(field)
                     }
                 }
-            } catch e {
-                return CXChildVisitResult::CXChildVisit_Break
+                return CXChildVisitResult::CXChildVisit_Continue
             }
-            return CXChildVisitResult::CXChildVisit_Continue
-        }
-        client_data: CXClientData(bitcast<raw void>(&raw context))
-    )
-
-    let existing_struct = module.structures[struct_id.id]
-
-    let the_struct = CheckedStruct(
-        name
-        name_span: empty_span()
-        generic_parameters: existing_struct.generic_parameters
-        generic_parameter_defaults: existing_struct.generic_parameter_defaults
-        fields
-        scope_id: existing_struct.scope_id
-        definition_linkage: DefinitionLinkage::External
-        trait_implementations: existing_struct.trait_implementations
-        record_type: match is_class {
-            true => RecordType::Class(fields: [], super_type: None)
-            false => RecordType::Struct(fields: [], super_type: None)
-        }
-        type_id: struct_type_id
-        // FIXME: Multiple inheritance?
-        super_struct_id: super_struct_ids.first()
-    )
-    module.structures[struct_id.id] = the_struct
-
-    // Now process the functions
-    process_namespace_contents(
-        program
-        scope_id: struct_scope
-        module_id
-        cursor
-        allowed_contents: AllowedContents::OnlyFunctions
-        this_type: struct_type_id
-    )
-
-    // Don't synthesize a constructor for classes, we can't create an instance that way.
-    if is_class {
-        return
-    }
-
-    // Look for a constructor, generate one with the fields if none exist
-    let ctors = program.find_functions_with_name_in_scope(
-        parent_scope_id
-        function_name: name
-        ignore_mixin_scopes: true
-    )
-
-    if not ctors.has_value() or ctors!.is_empty() {
-        mut params: [CheckedParameter] = []
-        for field in fields {
-            let variable = program.get_variable(field.variable_id)
-            params.push(CheckedParameter(
-                requires_label: false
-                variable
-                default_value: None
-            ))
-        }
-        let function_scope = program.create_scope(
-            parent_scope_id
-            can_throw: false
-            debug_name: format("cpp-function({})", name)
-            module_id
-            for_block: true
         )
-        mut generic_params: [FunctionGenericParameter] = []
-        let empty_parameters: [CheckedGenericParameter] = []
-        for generic in generic_parameters ?? empty_parameters {
-            generic_params.push(FunctionGenericParameter(
-                kind: FunctionGenericParameterKind::InferenceGuide
-                checked_parameter: generic
-            ))
-        }
 
-        let function = CheckedFunction(
+        let existing_struct = module.structures[struct_id.id]
+
+        let the_struct = CheckedStruct(
             name
             name_span: empty_span()
-            visibility: CheckedVisibility::Public
-            return_type_id: struct_type_id
-            return_type_span: None
-            params
-            generics: FunctionGenerics(
-                base_scope_id: function_scope
-                base_params: params
-                params: generic_params
-                specializations: []
-            )
-            block: CheckedBlock(
-                statements: []
-                scope_id: function_scope
-                control_flow: BlockControlFlow::MayReturn
-                yielded_type: None
-                yielded_none: false
-            )
-            can_throw: is_class
-            type: FunctionType::ImplicitConstructor
-            linkage: FunctionLinkage::External
-            function_scope_id: function_scope
-            struct_id
-            is_instantiated: true
-            parsed_function: None
-            is_comptime: false
-            is_virtual: false
-            is_override: false
-            is_unsafe: false
-            specialization_index: None
+            generic_parameters: existing_struct.generic_parameters
+            generic_parameter_defaults: existing_struct.generic_parameter_defaults
+            fields
+            scope_id: existing_struct.scope_id
+            definition_linkage: DefinitionLinkage::External
+            trait_implementations: existing_struct.trait_implementations
+            record_type: match is_class {
+                true => RecordType::Class(fields: [], super_type: None)
+                false => RecordType::Struct(fields: [], super_type: None)
+            }
+            type_id: struct_type_id
+            // FIXME: Multiple inheritance?
+            super_struct_id: super_struct_ids.first()
+        )
+        module.structures[struct_id.id] = the_struct
 
-            owner_scope: struct_scope
-            is_fully_checked: true
+        // Now process the functions
+        .process_namespace_contents(
+            program
+            scope_id: struct_scope
+            module_id
+            cursor
+            allowed_contents: AllowedContents::OnlyFunctions
+            this_type: struct_type_id
         )
 
-        mut module = program.get_module(module_id)
-        let id = module.add_function(checked_function: function)
-
-        mut scope = program.get_scope(struct_scope)
-        if scope.functions.contains(name) {
-            scope.functions[name].push(id)
-        } else {
-            scope.functions.set(name, [id])
+        // Don't synthesize a constructor for classes, we can't create an instance that way.
+        if is_class {
+            return
         }
 
-        mut parent_scope = program.get_scope(parent_scope_id)
-        if parent_scope.functions.contains(name) {
-            parent_scope.functions[name].push(id)
-        } else {
-            parent_scope.functions.set(name, [id])
-        }
-    }
-}
-
-comptime clang_runtime_include_dir() throws -> String? {
-    return UserConfiguration::value_of("jakt.cpp_import.processor.clang.resource_dir").map(
-        fn(anon x: &StringView) throws -> String => format("{}/include", x)
-    )
-}
-
-fn process_cpp_import(
-    program: &mut CheckedProgram
-    import_path: Path
-    scope_id: ScopeId
-    is_c: bool
-    defines: [String:String]
-) throws -> ScopeId {
-    let module_id = scope_id.module_id
-    let import_scope_id = program.create_scope(
-        parent_scope_id: scope_id
-        can_throw: false
-        debug_name: format("cpp-import-module({})", import_path.to_string())
-        module_id
-        for_block: false
-    )
-
-    let dir = clang_runtime_include_dir()
-    if dir.has_value() {
-        program.compiler.include_paths.push(dir!)
-    }
-
-    let found_path = program.compiler.find_in_search_paths(import_path)
-    if not found_path.has_value() {
-        throw Error::from_string_literal(CppImportErrors::path_not_found())
-    }
-
-    let filename = real_path(path: found_path!.to_string())
-
-    mut scope = program.get_scope(import_scope_id)
-    mut parent_scope = program.get_scope(scope_id)
-    parent_scope.children.push(import_scope_id)
-    scope.import_path_if_extern = filename
-
-    let span = Span(
-        file_id: FileId(id: 0)
-        start: 0
-        end: 0
-    )
-
-    let index = clang_createIndex(excludeDeclarationsFromPCH: false, displayDiagnostics: true)
-
-    // Check if a PCH exists for this file
-    mut tu = CXTranslationUnit()
-
-    let path_separator_string = format("{:c}", get_path_separator())
-    let pch_file_path = program.compiler.binary_dir.join(
-        filename.replace(replace: path_separator_string, with: "_")
-    ).replace_extension("pch")
-
-    if pch_file_path.exists() {
-        // Parse the TU from the PCH
-        tu = clang_createTranslationUnit(index, file_name: pch_file_path.to_string().c_string())
-    }
-
-    if tu == CXTranslationUnit() {
-        mut includes = program.compiler.include_paths[..].to_array()
-
-        mut args_storage = [""; 3 + includes.size() + defines.size()]
-        if is_c {
-            args_storage[0] = "-xc"
-            args_storage[1] = "-std=c11"
-        } else {
-            args_storage[0] = "-xc++-header"
-            args_storage[1] = "-std=c++20"
-        }
-        args_storage[2] = format("--target={}", program.compiler.target_triple ?? Target::active().name())
-
-        for i in 0..includes.size() {
-            args_storage[i + 2] = format("-I{}", includes[i])
-        }
-
-        mut defines_it = defines.iterator()
-        for i in 0..defines.size() {
-            let (key, value) = defines_it.next()!
-            args_storage[i + 2 + includes.size()] = format("-D{}={}", key, value)
-        }
-
-        mut args = allocate<raw c_char>(count: args_storage.size())
-        let r = bitcast<raw c_char>(args)
-        defer free(r)
-
-        for i in 0..args_storage.size() {
-            unsafe { cpp { "args[i] = const_cast<char*>(args_storage[i].characters());" } }
-        }
-
-        let err = clang_parseTranslationUnit2(
-            index
-            source_filename: filename.c_string()
-            command_line_args: args
-            num_command_line_args: args_storage.size() as! c_int
-            unsaved_files: null<raw CXUnsavedFile>()
-            num_unsaved_files: 0
-            options: (
-                CXTranslationUnit_Flags::CXTranslationUnit_SkipFunctionBodies as! c_int |
-                CXTranslationUnit_Flags::CXTranslationUnit_DetailedPreprocessingRecord as! c_int
-            )
-            out_tu: &raw tu
+        // Look for a constructor, generate one with the fields if none exist
+        let ctors = program.find_functions_with_name_in_scope(
+            parent_scope_id
+            function_name: name
+            ignore_mixin_scopes: true
+            ignore_parent_scopes: true
         )
-        if not (err is CXError_Success) {
-            eprintln("Error: {}", match err {
-                CXError_Failure => "Failure"
-                CXError_Crashed => "Crashed"
-                CXError_InvalidArguments => "InvalidArguments"
-                CXError_ASTReadError => "ASTReadError"
-                else => "Unknown"
-            })
+
+        if not ctors.has_value() or ctors!.is_empty() {
+            mut params: [CheckedParameter] = []
+            for field in fields {
+                let variable = program.get_variable(field.variable_id)
+                params.push(CheckedParameter(
+                    requires_label: false
+                    variable
+                    default_value: None
+                ))
+            }
+            let function_scope = program.create_scope(
+                parent_scope_id
+                can_throw: false
+                debug_name: format("cpp-function({})", name)
+                module_id
+                for_block: true
+            )
+            mut generic_params: [FunctionGenericParameter] = []
+            let empty_parameters: [CheckedGenericParameter] = []
+            for generic in generic_parameters ?? empty_parameters {
+                generic_params.push(FunctionGenericParameter(
+                    kind: FunctionGenericParameterKind::InferenceGuide
+                    checked_parameter: generic
+                ))
+            }
+
+            let function = CheckedFunction(
+                name
+                name_span: empty_span()
+                visibility: CheckedVisibility::Public
+                return_type_id: struct_type_id
+                return_type_span: None
+                params
+                generics: FunctionGenerics(
+                    base_scope_id: function_scope
+                    base_params: params
+                    params: generic_params
+                    specializations: []
+                )
+                block: CheckedBlock(
+                    statements: []
+                    scope_id: function_scope
+                    control_flow: BlockControlFlow::MayReturn
+                    yielded_type: None
+                    yielded_none: false
+                )
+                can_throw: is_class
+                type: FunctionType::ImplicitConstructor
+                linkage: FunctionLinkage::External
+                function_scope_id: function_scope
+                struct_id
+                is_instantiated: true
+                parsed_function: None
+                is_comptime: false
+                is_virtual: false
+                is_override: false
+                is_unsafe: false
+                specialization_index: None
+
+                owner_scope: struct_scope
+                is_fully_checked: true
+            )
+
+            mut module = program.get_module(module_id)
+            let id = module.add_function(checked_function: function)
+
+            mut scope = program.get_scope(struct_scope)
+            if scope.functions.contains(name) {
+                scope.functions[name].push(id)
+            } else {
+                scope.functions.set(name, [id])
+            }
+
+            mut parent_scope = program.get_scope(parent_scope_id)
+            if parent_scope.functions.contains(name) {
+                parent_scope.functions[name].push(id)
+            } else {
+                parent_scope.functions.set(name, [id])
+            }
+        }
+    }
+
+    comptime clang_runtime_include_dir() throws -> String? {
+        return UserConfiguration::value_of("jakt.cpp_import.processor.clang.resource_dir").map(
+            fn(anon x: &StringView) throws -> String => format("{}/include", x)
+        )
+    }
+
+    public fn process_cpp_import(
+        mut this
+        program: &mut CheckedProgram
+        import_path: Path
+        scope_id: ScopeId
+        is_c: bool
+        defines: [String:String]
+    ) throws -> ScopeId {
+        let module_id = scope_id.module_id
+        let import_scope_id = program.create_scope(
+            parent_scope_id: scope_id
+            can_throw: false
+            debug_name: format("cpp-import-module({})", import_path.to_string())
+            module_id
+            for_block: false
+        )
+
+        let dir = clang_runtime_include_dir()
+        if dir.has_value() {
+            program.compiler.include_paths.push(dir!)
+        }
+
+        let found_path = program.compiler.find_in_search_paths(import_path)
+        if not found_path.has_value() {
             throw Error::from_string_literal(CppImportErrors::path_not_found())
         }
 
-        clang_saveTranslationUnit(
-            tu
-            file_name: pch_file_path.to_string().c_string()
-            options: 0
+        let filename = real_path(path: found_path!.to_string())
+
+        mut scope = program.get_scope(import_scope_id)
+        mut parent_scope = program.get_scope(scope_id)
+        parent_scope.children.push(import_scope_id)
+        scope.import_path_if_extern = filename
+
+        let span = Span(
+            file_id: FileId(id: 0)
+            start: 0
+            end: 0
         )
+
+        // Check if a PCH exists for this file
+        mut tu = CXTranslationUnit()
+
+        let path_separator_string = format("{:c}", get_path_separator())
+        let pch_file_path = program.compiler.binary_dir.join(
+            filename.replace(replace: path_separator_string, with: "_")
+        ).replace_extension("pch")
+
+        if pch_file_path.exists() {
+            // Parse the TU from the PCH
+            tu = clang_createTranslationUnit(index: .index, file_name: pch_file_path.to_string().c_string())
+        }
+
+        if tu == CXTranslationUnit() {
+            mut includes = program.compiler.include_paths[..].to_array()
+
+            mut args_storage = [""; 3 + includes.size() + defines.size()]
+            if is_c {
+                args_storage[0] = "-xc"
+                args_storage[1] = "-std=c11"
+            } else {
+                args_storage[0] = "-xc++-header"
+                args_storage[1] = "-std=c++20"
+            }
+            args_storage[2] = format("--target={}", program.compiler.target_triple ?? Target::active().name())
+
+            for i in 0..includes.size() {
+                args_storage[i + 2] = format("-I{}", includes[i])
+            }
+
+            mut defines_it = defines.iterator()
+            for i in 0..defines.size() {
+                let (key, value) = defines_it.next()!
+                args_storage[i + 2 + includes.size()] = format("-D{}={}", key, value)
+            }
+
+            mut args = allocate<raw c_char>(count: args_storage.size())
+            let r = bitcast<raw c_char>(args)
+            defer free(r)
+
+            for i in 0..args_storage.size() {
+                unsafe { cpp { "args[i] = const_cast<char*>(args_storage[i].characters());" } }
+            }
+
+            let err = clang_parseTranslationUnit2(
+                index: .index
+                source_filename: filename.c_string()
+                command_line_args: args
+                num_command_line_args: args_storage.size() as! c_int
+                unsaved_files: null<raw CXUnsavedFile>()
+                num_unsaved_files: 0
+                options: (
+                    CXTranslationUnit_Flags::CXTranslationUnit_SkipFunctionBodies as! c_int |
+                    CXTranslationUnit_Flags::CXTranslationUnit_DetailedPreprocessingRecord as! c_int
+                )
+                out_tu: &raw tu
+            )
+            if not (err is CXError_Success) {
+                eprintln("Error: {}", match err {
+                    CXError_Failure => "Failure"
+                    CXError_Crashed => "Crashed"
+                    CXError_InvalidArguments => "InvalidArguments"
+                    CXError_ASTReadError => "ASTReadError"
+                    else => "Unknown"
+                })
+                throw Error::from_string_literal(CppImportErrors::path_not_found())
+            }
+
+            clang_saveTranslationUnit(
+                tu
+                file_name: pch_file_path.to_string().c_string()
+                options: 0
+            )
+        }
+
+        let cursor = clang_getTranslationUnitCursor(tu)
+
+        .process_namespace_contents(
+            program
+            scope_id: import_scope_id
+            module_id
+            cursor
+            allowed_contents: AllowedContents::Everything
+            this_type: None
+        )
+
+        clang_disposeTranslationUnit(tu)
+
+        // dump_scope(import_scope_id, &program)
+
+        return import_scope_id
     }
-
-    let cursor = clang_getTranslationUnitCursor(tu)
-
-    process_namespace_contents(
-        program
-        scope_id: import_scope_id
-        module_id
-        cursor
-        allowed_contents: AllowedContents::Everything
-        this_type: None
-    )
-
-    clang_disposeTranslationUnit(tu)
-    clang_disposeIndex(index)
-
-    // dump_scope(import_scope_id, &program)
-
-    return import_scope_id
 }
 
 fn dump_scope(anon scope_id: ScopeId, anon program: &CheckedProgram, indent: i64 = 0) throws {

@@ -272,6 +272,8 @@ struct ParsedNamespace {
     generating_import_extern_before_include: [IncludeAction]
     generating_import_extern_after_include: [IncludeAction]
     forall_chunks: [([ParsedGenericParameter], ParsedNamespace)]
+    is_generated_code: bool = false
+    is_auto_extern_imported: bool = false
 
     fn is_equivalent_to(this, anon other: ParsedNamespace) -> bool =>
         .name == other.name and .import_path_if_extern == other.import_path_if_extern
@@ -1644,7 +1646,10 @@ boxed enum ParsedType {
             else => false
         }
         Empty => rhs_parsed_type is Empty
-        Const => false // FIXME: Implement this.
+        Const(expr) => match rhs_parsed_type {
+            Const(expr: rhs_expr) => expr.equals(rhs_expr)
+            else => false
+        }
     }
 }
 
@@ -1865,10 +1870,6 @@ struct Parser {
                     saw_an_entity = true
                 }
                 Namespace => {
-                    if not active_attributes.is_empty() {
-                        .error("Cannot apply attributes to namespaces", active_attributes[0].span)
-                        active_attributes = []
-                    }
                     .index++
                     let name: (String, Span)? = match .current() {
                         Identifier(name, span) => {
@@ -1893,6 +1894,10 @@ struct Parser {
                         namespace_.name = name!.0
                         namespace_.name_span = name!.1
                     }
+
+                    .apply_attributes(&mut namespace_, &active_attributes)
+                    active_attributes = []
+
                     parsed_namespace.add_child_namespace(namespace_)
                     saw_an_entity = true
                 }
@@ -1972,6 +1977,93 @@ struct Parser {
         }
 
         return parsed_namespace
+    }
+
+    fn apply_attributes(mut this, anon namespace_: &mut ParsedNamespace, active_attributes: &[ParsedAttribute]) throws {
+        for attribute in *active_attributes {
+            match attribute.name {
+                "extern_import" => {
+                    // extern_import(from: String, {[un]define_before: String}, {[un]define_after: String})
+                    guard not attribute.assigned_value.has_value() else {
+                        .error(
+                            format("The attribute '{}' does not take a value", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    for argument in attribute.arguments {
+                        match argument.name {
+                            "from" => {
+                                namespace_.import_path_if_extern = argument.assigned_value
+                            }
+                            "define_before"
+                            | "undefine_before"
+                            | "define_after"
+                            | "undefine_after" => {
+                                guard argument.assigned_value.has_value() else {
+                                    .error(
+                                        format("The argument '{}' expects a value", argument.name)
+                                        argument.span
+                                    )
+                                    continue
+                                }
+
+                                if argument.name.starts_with("define") {
+                                    let parts = argument.assigned_value!.split(c'=')
+                                    if parts.size() != 2 {
+                                        .error(
+                                            format("The argument '{}' expects a value in the form 'name=value'", argument.name)
+                                            argument.span
+                                        )
+                                        continue
+                                    }
+                                    let action = IncludeAction::Define(name: parts[0], span: attribute.span, value: parts[1])
+
+                                    if argument.name.ends_with("before") {
+                                        namespace_.generating_import_extern_before_include.push(action)
+                                    } else {
+                                        namespace_.generating_import_extern_after_include.push(action)
+                                    }
+                                } else {
+                                    let action = IncludeAction::Undefine(name: argument.assigned_value!, span: attribute.span)
+
+                                    if argument.name.ends_with("before") {
+                                        namespace_.generating_import_extern_before_include.push(action)
+                                    } else {
+                                        namespace_.generating_import_extern_after_include.push(action)
+                                    }
+                                }
+                            }
+                            else => {
+                                .error(
+                                    format("Invalid argument for attribute '{}'", attribute.name)
+                                    argument.span
+                                )
+                            }
+                        }
+                    }
+                }
+                "generated" => {
+                    // generated
+                    guard not attribute.assigned_value.has_value() else {
+                        .error(
+                            format("The attribute '{}' does not take a value", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    namespace_.is_generated_code = true
+                }
+                else => {
+                    .error(
+                        format("The attribute '{}' does not apply to namespaces", attribute.name)
+                        attribute.span
+                    )
+                }
+            }
+        }
     }
 
     fn apply_attributes(mut this, anon field: &mut ParsedField, active_attributes: &[ParsedAttribute]) throws {
@@ -2646,14 +2738,15 @@ struct Parser {
                 .error("Expected '}' to end namespace for the extern import"
                         .current().span())
             }
-
-            parent.add_child_namespace(parsed_import.assigned_namespace)
         } else {
             parsed_import.should_auto_import = true
             parsed_import.assigned_namespace.import_path_if_extern = Some(import_path)
             parsed_import.assigned_namespace.generating_import_extern_before_include = parsed_import.before_include
             parsed_import.assigned_namespace.generating_import_extern_after_include = parsed_import.after_include
+            parsed_import.assigned_namespace.is_auto_extern_imported = true
         }
+
+        parent.add_child_namespace(parsed_import.assigned_namespace)
 
         loop {
             if .current() is Identifier(name) {

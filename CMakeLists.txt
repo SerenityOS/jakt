@@ -180,14 +180,9 @@ set(SELFHOST_STDLIB_SOURCES
   jakt__arguments.cpp
   jakt__file_iterator.cpp
   jakt__platform.cpp
+  jakt__platform__utility.cpp
   jakt__path.cpp
 )
-
-if (CPP_AUTO_IMPORT_PROCESSOR STREQUAL "clang")
-  list(APPEND SELFHOST_STDLIB_SOURCES
-    jakt__platform__utility.cpp
-  )
-endif()
 
 if(CMAKE_HOST_WIN32)
   list(APPEND SELFHOST_STDLIB_SOURCES

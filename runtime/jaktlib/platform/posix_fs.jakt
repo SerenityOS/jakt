@@ -1,7 +1,7 @@
 import jakt::path { Path }
 import jakt::platform { platform_module, platform_errno }
 import platform_errno() { errno_value, erange_value }
-import utility { allocate, null }
+import jakt::platform::utility { allocate, null }
 
 import extern c "sys/stat.h" {
     extern fn mkdir(anon pathname: raw c_char, anon mode: u32) -> c_int
@@ -46,7 +46,7 @@ fn current_directory() throws -> String {
         }
 
         let buf = getcwd(buffer, buffer_size)
-        if buf == null<c_char>() {
+        if buf == null<raw c_char>() {
             let getcwd_errno = errno_value()
             if getcwd_errno == erange_value() {
                 // grow buffer and try again
@@ -64,8 +64,8 @@ fn current_directory() throws -> String {
 }
 
 fn real_path(anon path: String) throws -> String {
-    let buffer = realpath(path: path.c_string(), resolved_path: null<c_char>())
-    if buffer == null<c_char>() {
+    let buffer = realpath(path: path.c_string(), resolved_path: null<raw c_char>())
+    if buffer == null<raw c_char>() {
         throw Error::from_errno(errno_value())
     }
     defer {
@@ -84,7 +84,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
     public fn next(mut this) throws -> (Path, bool)? {
         let file = readdir(.dir_fd)
 
-        if file == null<dirent>() {
+        if file == null<raw dirent>() {
             closedir(.dir_fd)
 
             return None
@@ -117,10 +117,20 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
 
     public fn from_path(path: Path) throws -> DirectoryIterator? {
         let dir_fd = opendir(path.to_string().c_string())
-        if dir_fd == null<DIR>() {
+        if dir_fd == null<raw DIR>() {
             return None
         }
 
         return DirectoryIterator(path, dir_fd)
+    }
+}
+
+trait FSPath {
+    fn absolute(this) throws -> Path
+}
+
+type Path implements(FSPath) {
+    fn absolute(this) throws -> Path {
+        return Path::from_string(real_path(.to_string()))
     }
 }

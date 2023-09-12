@@ -3,6 +3,8 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
+import jakt::platform::utility { null, allocate }
+
 fn panic(anon message: String) -> never {
     eprintln("internal error: {}", message)
     abort()
@@ -11,30 +13,6 @@ fn panic(anon message: String) -> never {
 fn todo(anon message: String) -> never {
     eprintln("TODO: {}", message)
     abort()
-}
-
-fn null<T>() -> raw T {
-    unsafe {
-        cpp {
-            "return nullptr;"
-        }
-    }
-
-    abort()
-}
-
-fn allocate<T>(count: usize) -> raw T {
-    let alloc_impl = fn[count](anon ptr: &mut raw T) -> void {
-        unsafe {
-            cpp {
-                "ptr = static_cast<RemoveReference<decltype(ptr)>>(calloc(count, sizeof(*ptr)));"
-            }
-        }
-    }
-
-    mut ptr = null<T>()
-    alloc_impl(&mut ptr)
-    return ptr
 }
 
 fn add_arrays<T>(anon a: [T], anon b: [T]) throws -> [T] {

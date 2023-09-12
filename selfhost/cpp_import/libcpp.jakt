@@ -154,6 +154,7 @@ type Cpp::NamedType implements(DeclarationImpl) {
     }
 }
 
+
 fn maybe_type_from(
     anon t: raw Cpp::RType
     anon program: &mut CheckedProgram
@@ -240,60 +241,6 @@ fn prepare_preprocessor_for(
 
         return defs
     }
-}
-
-fn process_cpp_import(
-    program: &mut CheckedProgram
-    import_path: Path
-    scope_id: ScopeId
-    is_c: bool
-    defines: [String:String]
-) throws -> ScopeId {
-    let module_id = scope_id.module_id
-    let import_scope_id = program.create_scope(
-        parent_scope_id: scope_id
-        can_throw: false
-        debug_name: format("cpp-import-module({})", import_path.to_string())
-        module_id
-        for_block: false
-    )
-
-    let found_path = program.compiler.find_in_search_paths(import_path)
-    if not found_path.has_value() {
-        throw Error::from_string_literal(CppImportErrors::path_not_found())
-    }
-
-    let original_filename = found_path!.to_string()
-    let real_path = realpath(path: original_filename.c_string(), resolved_path: null<raw c_char>())
-    let filename = format("{}", real_path)
-    free(real_path)
-
-    let code = read_all(filename)
-    mut preprocessor = Cpp::Preprocessor(filename, program: code)
-    mut seen: {String} = {}
-    prepare_preprocessor_for(&mut preprocessor, program, import_path, &mut seen)
-
-    let tokens = preprocessor.process_and_lex()
-    mut parser = Cpp::Parser(tokens, filename)
-    let translation_unit = parser.parse()
-
-    mut scope = program.get_scope(import_scope_id)
-    mut parent_scope = program.get_scope(scope_id)
-    parent_scope.children.push(import_scope_id)
-
-    scope.import_path_if_extern = filename
-
-    let span = Span(
-        file_id: FileId(id: 0)
-        start: 0
-        end: 0
-    )
-
-    for decl in translation_unit.declarations() {
-        process_cpp_declaration(program, &decl, scope_id: import_scope_id, module_id, span, this_type: None)
-    }
-
-    return import_scope_id
 }
 
 fn process_cpp_declaration(
@@ -540,5 +487,66 @@ fn process_cpp_declaration(
         Cpp::Declaration => {
             eprintln("Ignoring declaration for {} '{}'", decl.class_name(), decl.full_name())
         }
+    }
+}
+
+struct CppImportProcessor {
+    fn create() -> CppImportProcessor {
+        return CppImportProcessor()
+    }
+
+    fn process_cpp_import(
+        mut this
+        program: &mut CheckedProgram
+        import_path: Path
+        scope_id: ScopeId
+        is_c: bool
+        defines: [String:String]
+    ) throws -> ScopeId {
+        let module_id = scope_id.module_id
+        let import_scope_id = program.create_scope(
+            parent_scope_id: scope_id
+            can_throw: false
+            debug_name: format("cpp-import-module({})", import_path.to_string())
+            module_id
+            for_block: false
+        )
+
+        let found_path = program.compiler.find_in_search_paths(import_path)
+        if not found_path.has_value() {
+            throw Error::from_string_literal(CppImportErrors::path_not_found())
+        }
+
+        let original_filename = found_path!.to_string()
+        let real_path = realpath(path: original_filename.c_string(), resolved_path: null<raw c_char>())
+        let filename = format("{}", real_path)
+        free(real_path)
+
+        let code = read_all(filename)
+        mut preprocessor = Cpp::Preprocessor(filename, program: code)
+        mut seen: {String} = {}
+        prepare_preprocessor_for(&mut preprocessor, program, import_path, &mut seen)
+
+        let tokens = preprocessor.process_and_lex()
+        mut parser = Cpp::Parser(tokens, filename)
+        let translation_unit = parser.parse()
+
+        mut scope = program.get_scope(import_scope_id)
+        mut parent_scope = program.get_scope(scope_id)
+        parent_scope.children.push(import_scope_id)
+
+        scope.import_path_if_extern = filename
+
+        let span = Span(
+            file_id: FileId(id: 0)
+            start: 0
+            end: 0
+        )
+
+        for decl in translation_unit.declarations() {
+            process_cpp_declaration(program, &decl, scope_id: import_scope_id, module_id, span, this_type: None)
+        }
+
+        return import_scope_id
     }
 }

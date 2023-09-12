@@ -1,4 +1,5 @@
-import utility { Span, allocate, null }
+import utility { Span }
+import jakt::platform::utility { allocate, null }
 import jakt::libc::io { FILE, fgets, fclose, fopen }
 import repl_backend::common { LineResult, Style, Color, XTermColor }
 
@@ -12,7 +13,7 @@ struct Editor {
         syntax_highlight_handler: &fn(anon editor: &mut Editor) throws -> void
     ) throws -> Editor {
         mut std_in = fopen(str: "/dev/stdin".c_string(), mode: "r".c_string())
-        if std_in == null<FILE>() {
+        if std_in == null<raw FILE>() {
             eprintln("Could not open /dev/stdin for reading")
             throw Error::from_errno(42)
         }
@@ -35,7 +36,7 @@ struct Editor {
                 n: 4096
                 stream: .standard_input_file)
 
-            if c_string == null<c_char>() {
+            if c_string == null<raw c_char>() {
                 return LineResult::Eof
             }
 

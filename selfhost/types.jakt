@@ -623,6 +623,7 @@ class Scope {
 
     public resolved_forall_chunks: [ResolvedForallChunk]? = None
     public explicitly_specialized_types: [String:SpecializedType]
+    public is_from_generated_code: bool = false
 
     public fn namespace_name_for_codegen(this) -> ExternalName? {
         if .external_name.has_value() { return .external_name }
@@ -1775,7 +1776,25 @@ class CheckedProgram {
         return module_id
     }
 
+    public fn debug_description_of(this, anon scope_id: ScopeId) throws -> String {
+        mut ss: [String] = []
+        mut current_scope_id = scope_id
+        loop {
+            let scope = .get_scope(current_scope_id)
+            let d = format("{} (named {})", scope.debug_name, scope.namespace_name)
+            ss.insert(before_index: 0, value: d)
+            if scope.parent.has_value() {
+                current_scope_id = scope.parent!
+            } else {
+                break
+            }
+        }
+
+        return join(ss, separator: " -> ")
+    }
+
     public fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, module_id: ModuleId, for_block: bool = true) throws -> ScopeId {
+        mut is_from_generated_code = false
         // Check that parent_scope_id is a valid ScopeId
         if parent_scope_id.has_value() {
             // Check that the ModuleId is valid
@@ -1787,6 +1806,9 @@ class CheckedProgram {
             if parent_scope_id!.id >= .modules[parent_scope_id!.module_id.id].scopes.size() {
                 .compiler.panic(format("create_scope: parent_scope_id.id is invalid! Module {} does not have a scope with id {}.", parent_scope_id!.module_id.id, parent_scope_id!.id))
             }
+
+            let scope = .get_scope(parent_scope_id!)
+            is_from_generated_code = scope.is_from_generated_code
         }
 
         let none_string: String? = None
@@ -1813,6 +1835,7 @@ class CheckedProgram {
             resolution_mixins: []
             is_block_scope: for_block
             explicitly_specialized_types: [:]
+            is_from_generated_code
         )
 
         .modules[module_id.id].scopes.push(scope)
@@ -1954,7 +1977,13 @@ class CheckedProgram {
         return .loaded_modules.get(module_name)
     }
 
-    public fn find_var_in_scope(this, scope_id: ScopeId, var: String, ignore_mixin_scopes: bool = false) throws -> CheckedVariable? {
+    public fn find_var_in_scope(
+        this
+        scope_id: ScopeId
+        var: String
+        ignore_mixin_scopes: bool = false
+        ignore_parent_scopes: bool = false
+    ) throws -> CheckedVariable? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[var, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<CheckedVariable> {
@@ -1966,10 +1995,17 @@ class CheckedProgram {
                 return IterationDecision::Continue
             }
             ignore_mixin_scopes
+            ignore_parent_scopes
         )
     }
 
-    public fn find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String, ignore_mixin_scopes: bool = false) throws -> Value? {
+    public fn find_comptime_binding_in_scope(
+        this
+        scope_id: ScopeId
+        anon name: String
+        ignore_mixin_scopes: bool = false
+        ignore_parent_scopes: bool = false
+    ) throws -> Value? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<Value> {
@@ -1981,10 +2017,17 @@ class CheckedProgram {
                 return IterationDecision::Continue
             }
             ignore_mixin_scopes
+            ignore_parent_scopes
         )
     }
 
-    public fn find_type_scope(this, scope_id: ScopeId, name: String, ignore_mixin_scopes: bool = false) throws -> (TypeId, ScopeId)? {
+    public fn find_type_scope(
+        this
+        scope_id: ScopeId
+        name: String
+        ignore_mixin_scopes: bool = false
+        ignore_parent_scopes: bool = false
+    ) throws -> (TypeId, ScopeId)? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<(TypeId, ScopeId)> {
@@ -1995,14 +2038,27 @@ class CheckedProgram {
                 return IterationDecision::Continue
             }
             ignore_mixin_scopes
+            ignore_parent_scopes
         )
     }
 
-    public fn find_type_in_scope(this, scope_id: ScopeId, name: String, ignore_mixin_scopes: bool = false) throws -> TypeId? {
-        return .find_type_scope(scope_id, name, ignore_mixin_scopes)?.0
+    public fn find_type_in_scope(
+        this
+        scope_id: ScopeId
+        name: String
+        ignore_mixin_scopes: bool = false
+        ignore_parent_scopes: bool = false
+    ) throws -> TypeId? {
+        return .find_type_scope(scope_id, name, ignore_mixin_scopes, ignore_parent_scopes)?.0
     }
 
-    public fn find_enum_in_scope(this, scope_id: ScopeId, name: String, ignore_mixin_scopes: bool = false) throws -> EnumId? {
+    public fn find_enum_in_scope(
+        this
+        scope_id: ScopeId
+        name: String
+        ignore_mixin_scopes: bool = false
+        ignore_parent_scopes: bool = false
+    ) throws -> EnumId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<EnumId> {
@@ -2014,10 +2070,17 @@ class CheckedProgram {
                 return IterationDecision::Continue
             }
             ignore_mixin_scopes
+            ignore_parent_scopes
         )
     }
 
-    public fn find_trait_in_scope(this, scope_id: ScopeId, name: String, ignore_mixin_scopes: bool = false) throws -> TraitId? {
+    public fn find_trait_in_scope(
+        this
+        scope_id: ScopeId
+        name: String
+        ignore_mixin_scopes: bool = false
+        ignore_parent_scopes: bool = false
+    ) throws -> TraitId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<TraitId> {
@@ -2029,6 +2092,7 @@ class CheckedProgram {
                 return IterationDecision::Continue
             }
             ignore_mixin_scopes
+            ignore_parent_scopes
         )
     }
 
@@ -2068,53 +2132,14 @@ class CheckedProgram {
         this
         scope_id: ScopeId
         anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
+        ignore_parent_scopes: bool
     ) throws -> bool? {
         // Only scan the direct chain of scopes, not the entire tree
-        mut current_scope = scope_id
-        loop {
-            let scope = .get_scope(current_scope)
-            let maybe_result = callback(scope_id: current_scope, name_override: None, is_alias: false)
-            match maybe_result {
-                Break(value) => {
-                    return Some(value)
-                }
-                else => {}
-            }
-
-            for child in scope.children {
-                let maybe_result = callback(scope_id: child, name_override: None, is_alias: false)
-                match maybe_result {
-                    Break(value) => {
-                        return Some(value)
-                    }
-                    else => {}
-                }
-            }
-
-            if scope.parent is Some(id) {
-                current_scope = id
-            } else {
-                break
-            }
-        }
-        return None
-    }
-
-    private fn for_each_scope_accessible_unqualified_from_scope_impl(
-        this
-        scope_id: ScopeId
-        anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
-        ignore_mixin_scopes: bool = false
-    ) throws -> bool? {
-        if ignore_mixin_scopes {
-            return .for_each_scope_accessible_unqualified_from_scope_direct_chain(scope_id, callback)
-        }
 
         mut scopes_to_check = Queue<ScopeId>()
         mut seen: {ScopeId} = {}
 
         scopes_to_check.enqueue(scope_id)
-
         for child in .get_scope(scope_id).children {
             scopes_to_check.enqueue(child)
         }
@@ -2137,19 +2162,110 @@ class CheckedProgram {
 
             let scope = .get_scope(scope_id)
 
-            for (name, alias) in scope.aliases {
-                let res = callback(scope_id: alias, name_override: name, is_alias: true)
-                match res {
-                    Break(value) => {
-                        return Some(value)
-                    }
-                    else => {}
+            if not ignore_parent_scopes and scope.parent.has_value() {
+                scopes_to_check.enqueue(scope.parent!)
+            }
+
+            if scope.namespace_name.has_value() {
+                continue
+            }
+
+            for child in scope.children {
+                scopes_to_check.enqueue(child)
+            }
+        }
+
+        return None
+    }
+
+    private fn for_each_scope_accessible_unqualified_from_scope_impl(
+        this
+        scope_id: ScopeId
+        anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
+        ignore_mixin_scopes: bool = false
+        ignore_parent_scopes: bool = false
+    ) throws -> bool? {
+        if ignore_mixin_scopes {
+            return .for_each_scope_accessible_unqualified_from_scope_direct_chain(scope_id, callback, ignore_parent_scopes)
+        }
+
+        // Effect:
+        // - (1) Visit the current scope, and all its immediate children unconditionally
+        // - (2) Visit the immediate children of any anonymous scope that has already been visited
+        // - (3) Visit the parent of any scope that has already been visited
+        // - (4) Visit all mixin scopes of any scope that has already been visited, and all their children
+        // - (5) Visit all aliases in any scope that has already been visited
+        //
+        // Example:
+        //  A (ns=None) {
+        //      B (ns=None) {
+        //          D
+        //          use H as X
+        //      }
+        //      F (ns=F) {
+        //          G
+        //      }
+        //      H (ns=H) {
+        //          I
+        //      }
+        //      C (ns=C) {
+        //          E
+        //      }
+        //  }
+        // Scanning from C:
+        // - (1) Visit C, E
+        // - (3) Visit A
+        // - (2) Visit B, F, H
+        // - (2) Visit D
+        // - (5) Visit X (alias for H)
+        // - Done
+        //
+        // Algorithm:
+        // - Add the current scope and all its children to a queue
+        // - While the queue is not empty:
+        // - - Pop the first scope from the queue -> scope
+        // - - If the scope has already been visited, skip it
+        // - - Visit the scope
+        // - - Add the scope's parent to the queue
+        // - - If the scope is anonymous, add its children to the queue
+        // - - Add the scope's mixins to the queue
+        // - - Visit the scope's aliases
+
+        mut scopes_to_check = Queue<ScopeId>()
+        mut seen: {ScopeId} = {}
+
+        scopes_to_check.enqueue(scope_id)
+        for child in .get_scope(scope_id).children {
+            scopes_to_check.enqueue(child)
+        }
+
+        while not scopes_to_check.is_empty() {
+            let scope_id = scopes_to_check.dequeue()
+            if seen.contains(scope_id) {
+                continue
+            }
+
+            seen.add(scope_id)
+
+            let res = callback(scope_id, name_override: None, is_alias: false)
+            match res {
+                Break(value) => {
+                    return Some(value)
+                }
+                else => {}
+            }
+
+            let scope = .get_scope(scope_id)
+
+            if not ignore_parent_scopes and scope.parent.has_value() {
+                scopes_to_check.enqueue(scope.parent!)
+                for child in .get_scope(scope.parent!).children {
+                    scopes_to_check.enqueue(child)
                 }
             }
 
-            if scope.parent.has_value() {
-                scopes_to_check.enqueue(scope.parent!)
-                for child in .get_scope(scope.parent!).children {
+            if not scope.namespace_name.has_value() {
+                for child in scope.children {
                     scopes_to_check.enqueue(child)
                 }
             }
@@ -2161,12 +2277,14 @@ class CheckedProgram {
                 }
             }
 
-            if scope.namespace_name.has_value() {
-                continue
-            }
-
-            for child in scope.children {
-                scopes_to_check.enqueue(child)
+            for (name, alias) in scope.aliases {
+                let res = callback(scope_id: alias, name_override: name, is_alias: true)
+                match res {
+                    Break(value) => {
+                        return Some(value)
+                    }
+                    else => {}
+                }
             }
         }
 
@@ -2195,6 +2313,7 @@ class CheckedProgram {
         scope_id: ScopeId
         anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<T>
         ignore_mixin_scopes: bool = false
+        ignore_parent_scopes: bool = false
     ) throws -> T? {
         mut result: T? = None
         .for_each_scope_accessible_unqualified_from_scope_impl(
@@ -2211,12 +2330,19 @@ class CheckedProgram {
                 }
             }
             ignore_mixin_scopes
+            ignore_parent_scopes
         )
 
         return result
     }
 
-    public fn find_struct_in_scope(this, scope_id: ScopeId, name: String, ignore_mixin_scopes: bool = false) throws -> StructId? {
+    public fn find_struct_in_scope(
+        this
+        scope_id: ScopeId
+        name: String
+        ignore_mixin_scopes: bool = false
+        ignore_parent_scopes: bool = false
+    ) throws -> StructId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<StructId> {
@@ -2229,6 +2355,7 @@ class CheckedProgram {
                 return IterationDecision::Continue
             }
             ignore_mixin_scopes
+            ignore_parent_scopes
         )
     }
 
@@ -2369,11 +2496,23 @@ class CheckedProgram {
         return None
     }
 
-    public fn find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String, ignore_mixin_scopes: bool = false) throws -> [FunctionId]? {
-        return .find_scoped_functions_with_name_in_scope(parent_scope_id, function_name, ignore_mixin_scopes)?.0
+    public fn find_functions_with_name_in_scope(
+        this
+        parent_scope_id: ScopeId
+        function_name: String
+        ignore_mixin_scopes: bool = false
+        ignore_parent_scopes: bool = false
+    ) throws -> [FunctionId]? {
+        return .find_scoped_functions_with_name_in_scope(parent_scope_id, function_name, ignore_mixin_scopes, ignore_parent_scopes)?.0
     }
 
-    public fn find_scoped_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String, ignore_mixin_scopes: bool = false) throws -> ([FunctionId], ScopeId)? {
+    public fn find_scoped_functions_with_name_in_scope(
+        this
+        parent_scope_id: ScopeId
+        function_name: String
+        ignore_mixin_scopes: bool = false
+        ignore_parent_scopes: bool = false
+    ) throws -> ([FunctionId], ScopeId)? {
         mut result_ids: [FunctionId] = []
         mut result_scope: ScopeId? = None
         .for_each_scope_accessible_unqualified_from_scope(
@@ -2395,6 +2534,7 @@ class CheckedProgram {
                 return IterationDecision::Continue
             }
             ignore_mixin_scopes
+            ignore_parent_scopes
         )
 
         if result_scope is None {

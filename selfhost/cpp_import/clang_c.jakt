@@ -496,6 +496,7 @@ import extern c "clang-c/Index.h" {
     )
     extern fn clang_getTypeSpelling(anon type: CXType) -> CXString
     extern fn clang_getCursorSpelling(anon cursor: CXCursor) -> CXString
+    extern fn clang_hashCursor(anon cursor: CXCursor) -> u32
     extern fn clang_getCursorKind(anon cursor: CXCursor) -> CXCursorKind
     extern fn clang_getCursorKindSpelling(anon kind: CXCursorKind) -> CXString
     extern fn clang_getTypeKindSpelling(anon kind: CXTypeKind) -> CXString

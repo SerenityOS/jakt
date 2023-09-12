@@ -31,7 +31,7 @@ fn allocate<T>(count: usize) -> raw T {
         }
     }
 
-    mut ptr = null<T>()
+    mut ptr = null<raw T>()
     alloc_impl(&mut ptr)
     return ptr
 }

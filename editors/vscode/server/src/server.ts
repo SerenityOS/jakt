@@ -498,12 +498,16 @@ async function runCompiler(
         // connection.console.log(e);
     }
 
+    const command = `${
+        settings.compiler.executablePath
+    } ${flags} ${settings.extraCompilerImportPaths.map(x => "-I " + x).join(" ")} ${tmpFile.name}`;
+
+    console.info(`Running command: ${command}`);
+
     let stdout = "";
     try {
         const output = await exec(
-            `${settings.compiler.executablePath} ${flags} ${settings.extraCompilerImportPaths
-                .map(x => "-I " + x)
-                .join(" ")} ${tmpFile.name}`,
+            command,
             {
                 timeout: settings.maxCompilerInvocationTime,
             }
@@ -520,6 +524,8 @@ async function runCompiler(
                 connection.console.log("Error:" + e);
             }
             throw e;
+        } else {
+            console.error(e);
         }
     }
 

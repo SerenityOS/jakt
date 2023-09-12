@@ -125,7 +125,7 @@ fn start_background_process(args: [String]) throws -> Process {
     mut pi = default_constructed<PROCESS_INFORMATION>()
 
     let command_line_string = join_arguments(args)
-    mut buffer = null<c_char>()
+    mut buffer = null<raw c_char>()
 
     unsafe {
         cpp {
@@ -134,14 +134,14 @@ fn start_background_process(args: [String]) throws -> Process {
     }
 
     if not CreateProcess(
-        lpApplicationName: null<c_char>()
+        lpApplicationName: null<raw c_char>()
         lpCommandLine: buffer
-        lpProcessAttributes: null<_SECURITY_ATTRIBUTES>()
-        lpThreadAttributes: null<_SECURITY_ATTRIBUTES>()
+        lpProcessAttributes: null<raw _SECURITY_ATTRIBUTES>()
+        lpThreadAttributes: null<raw _SECURITY_ATTRIBUTES>()
         bInheritHandles: true
         dwCreationFlags: 0
-        lpEnvironment: null<void>()
-        lpCurrentDirectory: null<c_char>()
+        lpEnvironment: null<raw void>()
+        lpCurrentDirectory: null<raw c_char>()
         lpStartupInfo: &raw si
         lpProcessInformation: &raw pi
     ) {

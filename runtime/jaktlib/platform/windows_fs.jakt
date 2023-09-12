@@ -1,6 +1,6 @@
 import jakt::path { Path }
 import jakt::platform::windows_errno { errno_value }
-import utility { allocate, null }
+import jakt::platform::utility { allocate, null }
 
 import extern c "direct.h" {
     extern fn _mkdir(path: raw c_char) -> i32
@@ -31,8 +31,8 @@ fn make_directory(path: String) throws {
 }
 
 fn real_path(anon path: String) throws -> String {
-    let buffer = _fullpath(abs_path: null<c_char>(), rel_path: path.c_string(), max_length: 0)
-    if buffer == null<c_char>() {
+    let buffer = _fullpath(abs_path: null<raw c_char>(), rel_path: path.c_string(), max_length: 0)
+    if buffer == null<raw c_char>() {
         throw Error::from_errno(errno_value())
     }
     defer {
@@ -45,8 +45,8 @@ fn real_path(anon path: String) throws -> String {
 }
 
 fn current_directory() throws -> String {
-    let buffer = _getcwd(buffer: null<c_char>(), maxlen: 0)
-    if buffer == null<c_char>() {
+    let buffer = _getcwd(buffer: null<raw c_char>(), maxlen: 0)
+    if buffer == null<raw c_char>() {
         throw Error::from_errno(errno_value())
     }
     defer {
@@ -148,4 +148,14 @@ fn default_constructed<T>() -> T {
     }
 
     abort()
+}
+
+trait FSPath {
+    fn absolute(this) throws -> Path
+}
+
+type Path implements(FSPath) {
+    fn absolute(this) throws -> Path {
+        return Path::from_string(real_path(.to_string()))
+    }
 }
