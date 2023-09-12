@@ -1,12 +1,19 @@
 import types { CheckedProgram, ScopeId }
 import jakt::path { Path }
 
-fn process_cpp_import(
-    program: &mut CheckedProgram
-    import_path: Path
-    scope_id: ScopeId
-    is_c: bool
-    defines: [String:String]
-) throws -> ScopeId {
-    throw Error::from_string_literal("Not implemented")
+struct CppImportProcessor {
+    fn create() -> CppImportProcessor {
+        return CppImportProcessor()
+    }
+
+    fn process_cpp_import(
+        mut this
+        program: &mut CheckedProgram
+        import_path: Path
+        scope_id: ScopeId
+        is_c: bool
+        defines: [String:String]
+    ) throws -> ScopeId {
+        throw Error::from_string_literal("Not implemented")
+    }
 }

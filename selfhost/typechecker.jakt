@@ -28,13 +28,16 @@ import types {
     builtin, comptime_format_impl, never_type_id, unknown_type_id, void_type_id
 }
 import types
-import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo, map }
-import jakt::path { Path }
+import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo, map, write_to_file }
+import jakt::path { Path, get_path_separator }
 import compiler { Compiler }
 import interpreter { Interpreter, InterpreterScope, ExecutionResult, value_to_checked_expression }
 
 import cpp_import::common { choose_processor, CppImportErrors }
-import choose_processor() { process_cpp_import }
+import choose_processor() { CppImportProcessor }
+
+import jakt::platform { platform_module }
+import platform_module("jakt::platform::fs")
 
 enum FunctionMatchResult {
     MatchSuccess(args: [CheckedExpression], maybe_this_type_id: TypeId?, used_generic_inferences: [TypeId:TypeId], specificity: i64)
@@ -137,6 +140,7 @@ struct Typechecker {
     in_comptime_function_call: bool = false
     had_an_error: bool = false
     cpp_import_cache: [String:ScopeId]
+    cpp_import_processor: CppImportProcessor? = None
 
     fn set_self_type_id(mut this, anon type_id: TypeId) throws {
         if .get_type(type_id) is Struct(struct_id) and .get_struct(struct_id).implements_type is Some(replacement_type_id) {
@@ -587,6 +591,10 @@ struct Typechecker {
         mut scope = .get_scope(scope_id)
         let maybe_scope_id = scope.structs.get(name)
         if maybe_scope_id.has_value() {
+            if .get_scope(scope_id).is_from_generated_code {
+                return false
+            }
+
             let existing_struct_id = maybe_scope_id!
             let definition_span = .get_struct(existing_struct_id).name_span
             .error_with_hint(
@@ -605,6 +613,10 @@ struct Typechecker {
         mut scope = .get_scope(scope_id)
         let maybe_enum_id = scope.enums.get(name)
         if maybe_enum_id.has_value() {
+            if .get_scope(scope_id).is_from_generated_code {
+                return false
+            }
+
             let existing_enum_id = maybe_enum_id!
             let definition_span = .get_enum(existing_enum_id).name_span
 
@@ -625,6 +637,10 @@ struct Typechecker {
         let found_type_id = scope.types.get(type_name)
         if found_type_id.has_value() and not found_type_id!.equals(type_id) {
             // FIXME: Show hint of the original definition, once we store the name span.
+            if .get_scope(scope_id).is_from_generated_code {
+                return false
+            }
+
             .error(
                 format(
                     "Redefinition of type ‘{}’ (duplicate: {} in {})",
@@ -669,6 +685,9 @@ struct Typechecker {
                 for existing_function_id in existing_function_binding {
                     let existing_function = .get_function(existing_function_id)
                     if function_to_add.signature_matches(existing_function) {
+                        if .get_scope(parent_scope_id).is_from_generated_code {
+                            continue
+                        }
                         .error_with_hint(
                             format("Redefinition of function ‘{}’.", function_to_add.name)
                             function_to_add.parsed_function!.name_span
@@ -888,23 +907,46 @@ struct Typechecker {
             }
         }
 
-        mut records_to_process: Queue<ParsedRecord> = Queue()
+        mut records_to_process: Queue<(ParsedRecord, ScopeId)> = Queue()
         for parsed_record in parsed_namespace.records {
-            records_to_process.enqueue(parsed_record)
+            records_to_process.enqueue((parsed_record, scope_id))
         }
 
         while not records_to_process.is_empty() {
-            let record = records_to_process.dequeue()
-            for nested_record in record.nested_records {
-                records_to_process.enqueue(nested_record)
-            }
-            if record.record_type is Struct or record.record_type is Class {
-                let struct_id = .find_struct_in_scope(scope_id, name: record.name)
-                if not struct_id.has_value() {
-                    .compiler.panic("can't find previously added struct")
+            let (record, scope_id) = records_to_process.dequeue()
+            let id = match record.record_type {
+                Struct | Class => {
+                    let struct_id = .find_struct_in_scope(scope_id, name: record.name)
+                    if not struct_id.has_value() {
+                        .compiler.panic("can't find previously added struct")
+                    }
+                    .typecheck_struct_fields(record, struct_id: struct_id!)
+                    yield StructLikeId::Struct(struct_id!)
                 }
-                .typecheck_struct_fields(record, struct_id: struct_id!)
+                ValueEnum | SumEnum => {
+                    let enum_id = .program.find_enum_in_scope(scope_id, name: record.name)
+                    if not enum_id.has_value() {
+                        .compiler.panic("can't find previously added enum")
+                    }
+                    yield StructLikeId::Enum(enum_id!)
+                }
+                else => {
+                    continue
+                }
             }
+            for nested_record in record.nested_records {
+                .warn_about_unimplemented_nested_record(nested_record)
+                records_to_process.enqueue((nested_record, id.scope_id(&.program)))
+            }
+        }
+    }
+
+    fn warn_about_unimplemented_nested_record(mut this, anon record: ParsedRecord) throws {
+        if record.definition_linkage is Internal {
+            .error(
+                "Only external nested types are currently supported"
+                record.name_span
+            )
         }
     }
 
@@ -927,11 +969,15 @@ struct Typechecker {
             }
         }
 
+        let in_generated_code = .get_scope(structure.scope_id).is_from_generated_code
+
         for unchecked_member in parsed_fields {
             let parsed_var_decl = unchecked_member.var_decl
             let checked_member_type = .typecheck_typename(parsed_type: parsed_var_decl.parsed_type, scope_id: checked_struct_scope_id, name: parsed_var_decl.name)
 
-            .check_that_type_doesnt_contain_reference(type_id: checked_member_type, span: parsed_var_decl.parsed_type.span())
+            if not in_generated_code {
+                .check_that_type_doesnt_contain_reference(type_id: checked_member_type, span: parsed_var_decl.parsed_type.span())
+            }
 
             mut module = .current_module()
             let variable_id = module.add_variable(checked_variable: CheckedVariable(
@@ -975,22 +1021,36 @@ struct Typechecker {
             }
         }
 
-        mut records_to_process: Queue<ParsedRecord> = Queue()
+        mut records_to_process: Queue<(ParsedRecord, ScopeId)> = Queue()
         for parsed_record in parsed_namespace.records {
-            records_to_process.enqueue(parsed_record)
+            records_to_process.enqueue((parsed_record, scope_id))
         }
 
         while not records_to_process.is_empty() {
-            let record = records_to_process.dequeue()
-            for nested_record in record.nested_records {
-                records_to_process.enqueue(nested_record)
-            }
-            if record.record_type is Struct or record.record_type is Class {
-                let struct_id = .find_struct_in_scope(scope_id, name: record.name)
-                if not struct_id.has_value() {
-                    .compiler.panic("can't find previously added struct")
+            let (record, scope_id) = records_to_process.dequeue()
+            let id = match record.record_type {
+                Struct | Class => {
+                    let struct_id = .find_struct_in_scope(scope_id, name: record.name)
+                    if not struct_id.has_value() {
+                        .compiler.panic("can't find previously added struct")
+                    }
+                    .typecheck_struct_default_fields(parsed_record: record, struct_id: struct_id!, scope_id)
+                    yield StructLikeId::Struct(struct_id!)
                 }
-                .typecheck_struct_default_fields(parsed_record: record, struct_id: struct_id!, scope_id)
+                ValueEnum | SumEnum => {
+                    let enum_id = .program.find_enum_in_scope(scope_id, name: record.name)
+                    if not enum_id.has_value() {
+                        .compiler.panic("can't find previously added enum")
+                    }
+                    yield StructLikeId::Enum(enum_id!)
+                }
+                else => {
+                    continue
+                }
+            }
+            for nested_record in record.nested_records {
+                .warn_about_unimplemented_nested_record(nested_record)
+                records_to_process.enqueue((nested_record, id.scope_id(&.program)))
             }
         }
     }
@@ -1211,6 +1271,7 @@ struct Typechecker {
 
             mut imported_scope = .get_scope(imported_scope_id)
             imported_scope.namespace_name = sanitized_module_name
+            imported_scope.is_from_generated_code = parsed_namespace!.is_generated_code
 
             .typecheck_module(parsed_namespace: parsed_namespace!, scope_id: imported_scope_id)
 
@@ -1420,70 +1481,25 @@ struct Typechecker {
         return found
     }
 
-    fn typecheck_extern_import(mut this, anon import_: ParsedExternImport, scope_id: ScopeId) throws {
-        if import_.should_auto_import {
-            let path = import_.get_path()
-            let existing_scope = .cpp_import_cache.get(path)
-            let base_import_scope_id = match existing_scope.has_value() {
-                true => existing_scope!
-                false => {
-                    let child_scope_id = .create_scope(
-                        parent_scope_id: .root_scope_id() // See the NOTE in `typecheck_namespace_predecl' about extern imports
-                        can_throw: false
-                        debug_name: format("extern-import({})", import_.get_path())
-                        for_block: false
-                    )
-                    mut child_scope = .get_scope(child_scope_id)
-                    child_scope.resolution_mixins.push(scope_id)
-                    yield child_scope_id
-                }
-            }
-            {
-                // Anonymous namespace to ensure imported symbols don't clash with prelude symbols.
-                // (unless the imported namespace is actually named)
-                mut scope = .get_scope(scope_id)
-                scope.children.push(base_import_scope_id)
-                if import_.assigned_namespace.name.has_value() {
-                    .get_scope(base_import_scope_id).namespace_name = import_.assigned_namespace.name!
-                    .get_scope(base_import_scope_id).external_name = ExternalName::Plain("") // global ns
-                }
-            }
-
-            guard not existing_scope.has_value() else {
-                return
-            }
-
-            let import_scope_id = try process_cpp_import(
-                program: &mut .program
-                import_path: Path::from_string(path)
-                scope_id: base_import_scope_id
-                is_c: import_.is_c
-                defines: defines_from(import_.before_include)
-            ) catch e {
-                // FIXME: StringView::equals()
-                if String::from_string_literal(e.string()) == String::from_string_literal(CppImportErrors::path_not_found()) {
-                    .error_with_hint(
-                        format("Could not find imported extern file '{}'", import_.get_path())
-                        import_.assigned_namespace.name_span!
-                        "make sure the file exists and is in the include path"
-                        import_.assigned_namespace.name_span!
-                    )
-                    return
-                } else {
-                    throw e
-                }
-            }
-
-            mut scope = .get_scope(import_scope_id)
-            scope.before_extern_include = import_.assigned_namespace.generating_import_extern_before_include
-            scope.after_extern_include =  import_.assigned_namespace.generating_import_extern_after_include
-
-            .cpp_import_cache.set(path, import_scope_id)
-
-            .typecheck_module(parsed_namespace: import_.assigned_namespace, scope_id: import_scope_id)
-            return
+    fn cache_or_process_cpp_import(
+        mut this
+        import_path: Path
+        scope_id: ScopeId
+        is_c: bool
+        defines: [String:String]
+    ) throws -> ScopeId {
+        if not .cpp_import_processor.has_value() {
+            .cpp_import_processor = CppImportProcessor::create()
         }
 
+        mut module = .program.get_module(scope_id.module_id)
+
+        let result_scope_id = .cpp_import_processor!.process_cpp_import(program: &mut .program, import_path, scope_id, is_c, defines)
+
+        return result_scope_id
+    }
+
+    fn typecheck_extern_import(mut this, anon import_: ParsedExternImport, scope_id: ScopeId) throws {
         for f in import_.assigned_namespace.functions {
             if not f.linkage is External {
                 .error("Expected all functions in an `import extern` to be be external", f.name_span)
@@ -1525,8 +1541,121 @@ struct Typechecker {
             .typecheck_module_import(module_import, scope_id)
         }
 
+        mut coalesced_imports: [ParsedExternImport] = []
+
         for extern_import in parsed_namespace.extern_imports {
-            .typecheck_extern_import(extern_import, scope_id)
+            if not extern_import.should_auto_import {
+                continue
+            }
+
+            let path = extern_import.get_path()
+            let existing_scope = .cpp_import_cache.get(path)
+            if existing_scope.has_value() {
+                let import_scope_id = existing_scope!
+                // Anonymous namespace to ensure imported symbols don't clash with prelude symbols.
+                // (unless the imported namespace is actually named)
+                mut scope = .get_scope(scope_id)
+                scope.resolution_mixins.push(import_scope_id)
+                if extern_import.assigned_namespace.name.has_value() {
+                    .get_scope(import_scope_id).namespace_name = extern_import.assigned_namespace.name!
+                    .get_scope(import_scope_id).external_name = ExternalName::Plain("") // global ns
+                }
+                continue
+            }
+
+            coalesced_imports.push(extern_import)
+        }
+
+        if not coalesced_imports.is_empty() {
+            let child_scope_id = .create_scope(
+                parent_scope_id: .root_scope_id() // See the NOTE in `typecheck_namespace_predecl' about extern imports
+                can_throw: false
+                debug_name: "coalesced-extern-imports"
+                for_block: false
+            )
+            {
+                // mut child_scope = .get_scope(child_scope_id)
+                // child_scope.resolution_mixins.push(scope_id)
+                // Anonymous namespace to ensure imported symbols don't clash with prelude symbols.
+                // (unless the imported namespace is actually named)
+                mut scope = .get_scope(scope_id)
+                scope.resolution_mixins.push(child_scope_id)
+            }
+            .typecheck_auto_extern_imports(coalesced_imports, child_scope_id)
+        }
+
+        for extern_import in parsed_namespace.extern_imports {
+            if not extern_import.should_auto_import {
+                .typecheck_extern_import(extern_import, scope_id)
+            }
+        }
+    }
+
+    fn typecheck_auto_extern_imports(mut this, anon imports: [ParsedExternImport], anon child_scope_id) throws {
+        if imports.is_empty() {
+            return
+        }
+
+        mut builder = StringBuilder::create()
+        mut path_name_builder = StringBuilder::create()
+        builder.append("#pragma once\n")
+
+        for import_ in imports {
+            path_name_builder.append("_")
+            path_name_builder.append(Path::from_string(import_.get_path()).basename(strip_extension: true))
+
+            for action in import_.before_include {
+                match action {
+                    Define(name, value) => builder.append(format("#define {} {}\n", name, value))
+                    Undefine(name) => builder.append(format("#undef {}\n", name))
+                }
+            }
+            if import_.is_c {
+                builder.append("extern \"C\" {\n")
+            }
+            builder.append(format("#include <{}>\n", import_.get_path()))
+            if import_.is_c {
+                builder.append("}\n")
+            }
+            for action in import_.after_include {
+                match action {
+                    Define(name, value) => builder.append(format("#define {} {}\n", name, value))
+                    Undefine(name) => builder.append(format("#undef {}\n", name))
+                }
+            }
+        }
+
+        let contents = builder.to_string()
+        let filename = format("jakt_autogen_{}.h", path_name_builder.to_string().hash())
+        let output = .compiler.binary_dir.absolute().join(filename)
+
+        write_to_file(data: contents, output_filename: output.to_string())
+
+        let import_scope_id = try .cache_or_process_cpp_import(
+            import_path: output
+            scope_id: child_scope_id
+            is_c: false
+            defines: [:]
+        ) catch e {
+            // FIXME: StringView::equals()
+            if String::from_string_literal(e.string()) == String::from_string_literal(CppImportErrors::path_not_found()) {
+                // FIXME: Which one?
+                for import_ in imports {
+                    .error_with_hint(
+                        format("Could not find imported extern file '{}'", import_.get_path())
+                        import_.assigned_namespace.name_span!
+                        "make sure the file exists and is in the include path"
+                        import_.assigned_namespace.name_span!
+                    )
+                }
+                return
+            } else {
+                throw e
+            }
+        }
+
+        for import_ in imports {
+            .cpp_import_cache.set(import_.get_path(), import_scope_id)
         }
     }
 
@@ -1554,23 +1683,21 @@ struct Typechecker {
             }
         }
 
-        mut records_to_process: Queue<ParsedRecord> = Queue()
+        mut records_to_process: Queue<(ParsedRecord, ScopeId)> = Queue()
         for parsed_record in parsed_namespace.records {
-            records_to_process.enqueue(parsed_record)
+            records_to_process.enqueue((parsed_record, scope_id))
         }
 
         while not records_to_process.is_empty() {
-            let record = records_to_process.dequeue()
-            for nested_record in record.nested_records {
-                records_to_process.enqueue(nested_record)
-            }
-            match record.record_type {
+            let (record, scope_id) = records_to_process.dequeue()
+            let id = match record.record_type {
                 Struct | Class => {
                     let struct_id = .find_struct_in_scope(scope_id, name: record.name)
                     if not struct_id.has_value() {
                         .compiler.panic("can't find previously added struct")
                     }
                     .typecheck_struct_constructor(parsed_record: record, struct_id: struct_id!, scope_id)
+                    yield StructLikeId::Struct(struct_id!)
                 }
                 SumEnum | ValueEnum => {
                     let enum_id = .program.find_enum_in_scope(scope_id, name: record.name)
@@ -1578,8 +1705,15 @@ struct Typechecker {
                         .compiler.panic("can't find previously added enum")
                     }
                     .typecheck_enum_constructor(parsed_record: record, enum_id: enum_id!, parent_scope_id: scope_id)
+                    yield StructLikeId::Enum(enum_id!)
                 }
-                else => {}
+                else => {
+                    continue
+                }
+            }
+            for nested_record in record.nested_records {
+                .warn_about_unimplemented_nested_record(nested_record)
+                records_to_process.enqueue((nested_record, id.scope_id(&.program)))
             }
         }
     }
@@ -1698,16 +1832,13 @@ struct Typechecker {
 
         mut module = .current_module()
 
-        mut records_to_process: Queue<ParsedRecord> = Queue()
+        mut records_to_process: Queue<(ParsedRecord, ScopeId)> = Queue()
         for parsed_record in parsed_namespace.records {
-            records_to_process.enqueue(parsed_record)
+            records_to_process.enqueue((parsed_record, scope_id))
         }
 
         while not records_to_process.is_empty() {
-            let record = records_to_process.dequeue()
-            for nested_record in record.nested_records {
-                records_to_process.enqueue(nested_record)
-            }
+            let (record, scope_id) = records_to_process.dequeue()
             let record_scope_id = match record.record_type {
                 Struct | Class => {
                     let struct_id = .find_struct_in_scope(scope_id, name: record.name)
@@ -1724,6 +1855,11 @@ struct Typechecker {
                     yield .get_enum(enum_id!).scope_id
                 }
             }
+            for nested_record in record.nested_records {
+                .warn_about_unimplemented_nested_record(nested_record)
+                records_to_process.enqueue((nested_record, record_scope_id))
+            }
+
             for method in record.methods {
                 if method.parsed_function.is_comptime != comptime_pass {
                     continue
@@ -1809,22 +1945,29 @@ struct Typechecker {
         // 1. Initialize structs
         mut struct_index: usize = 0
         mut enum_index: usize = 0
-        mut records_to_process: Queue<ParsedRecord> = Queue()
+        mut records_to_process: Queue<(ParsedRecord, ScopeId)> = Queue()
         for parsed_record in parsed_namespace.records {
-            records_to_process.enqueue(parsed_record)
+            records_to_process.enqueue((parsed_record, scope_id))
         }
 
         while not records_to_process.is_empty() {
-            let parsed_record = records_to_process.dequeue()
-            for record in parsed_record.nested_records {
-                records_to_process.enqueue(record)
-            }
-            match parsed_record.record_type {
-                Struct | Class => { .typecheck_struct_predecl_initial(parsed_record, struct_index: struct_index++, module_struct_len, scope_id) }
-                SumEnum | ValueEnum => { .typecheck_enum_predecl_initial(parsed_record, enum_index: enum_index++, module_enum_len, scope_id) }
+            let (parsed_record, scope_id) = records_to_process.dequeue()
+            let id = match parsed_record.record_type {
+                Struct | Class => {
+                    .typecheck_struct_predecl_initial(parsed_record, struct_index: struct_index++, module_struct_len, scope_id)
+                    yield StructLikeId::Struct(StructId(module: scope_id.module_id, id: struct_index - 1))
+                }
+                SumEnum | ValueEnum => {
+                    .typecheck_enum_predecl_initial(parsed_record, enum_index: enum_index++, module_enum_len, scope_id)
+                    yield StructLikeId::Enum(EnumId(module: scope_id.module_id, id: enum_index - 1))
+                }
                 Garbage => {
                     // NOTE: We've already emitted a parse error about this, no need for a separate type error.
+                    continue
                 }
+            }
+            for record in parsed_record.nested_records {
+                records_to_process.enqueue((record, id.scope_id(&.program)))
             }
         }
 
@@ -1865,6 +2008,7 @@ struct Typechecker {
             child_scope.import_path_if_extern = namespace_.import_path_if_extern
             child_scope.before_extern_include = namespace_.generating_import_extern_before_include
             child_scope.after_extern_include = namespace_.generating_import_extern_after_include
+            child_scope.is_from_generated_code = child_scope.is_from_generated_code or namespace_.is_generated_code
 
             // Make sure the imported ns can see the "logical" parent ns.
             if namespace_.import_path_if_extern.has_value() {
@@ -1885,28 +2029,31 @@ struct Typechecker {
         struct_index = 0
         enum_index = 0
         for parsed_record in parsed_namespace.records {
-            records_to_process.enqueue(parsed_record)
+            records_to_process.enqueue((parsed_record, scope_id))
         }
 
         while not records_to_process.is_empty() {
-            let parsed_record = records_to_process.dequeue()
-            match parsed_record.record_type {
+            let (parsed_record, scope_id) = records_to_process.dequeue()
+            let id = match parsed_record.record_type {
                 Struct | Class => {
                     let struct_id = StructId(module: .current_module_id, id: struct_index + module_struct_len)
                     .typecheck_struct_predecl(parsed_record, struct_id, scope_id)
                     struct_index++
+                    yield .get_struct(struct_id).scope_id
                 }
                 SumEnum | ValueEnum => {
                     let enum_id = EnumId(module: .current_module_id, id: enum_index + module_enum_len)
                     .typecheck_enum_predecl(parsed_record, enum_id, scope_id)
                     enum_index++
+                    yield .get_enum(enum_id).scope_id
                 }
                 Garbage => {
                     // NOTE: The parser has already complained about this, so we can just ignore it.
+                    continue
                 }
             }
             for record in parsed_record.nested_records {
-                records_to_process.enqueue(record)
+                records_to_process.enqueue((record, id))
             }
         }
 
@@ -2096,45 +2243,52 @@ struct Typechecker {
             .typecheck_namespace_methods_predecl(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id, comptime_pass, generic_pass)
         }
 
-        mut records_to_process: Queue<ParsedRecord> = Queue()
+        mut records_to_process: Queue<(ParsedRecord, ScopeId)> = Queue()
         for parsed_record in parsed_namespace.records {
-            records_to_process.enqueue(parsed_record)
+            records_to_process.enqueue((parsed_record, scope_id))
         }
 
         while not records_to_process.is_empty() {
-            let parsed_record = records_to_process.dequeue()
-            for record in parsed_record.nested_records {
-                records_to_process.enqueue(record)
-            }
+            let (parsed_record, scope_id) = records_to_process.dequeue()
 
-            match parsed_record.record_type {
+            let record_scope_id = match parsed_record.record_type {
                 Struct | Class => {
                     let struct_id = .find_struct_in_scope(scope_id, name: parsed_record.name)
                     if not struct_id.has_value() {
                         continue
                     }
+                    let struct_scope_id = .get_struct(struct_id!).scope_id
                     .typecheck_struct_methods_predecl(
                         parsed_record
                         struct_id: struct_id!
-                        scope_id: .get_struct(struct_id!).scope_id
+                        scope_id: struct_scope_id
                         comptime_pass
                         generic_pass
                     )
+                    yield struct_scope_id
                 }
                 SumEnum | ValueEnum => {
                     let enum_id = .program.find_enum_in_scope(scope_id, name: parsed_record.name)
                     if not enum_id.has_value() {
                         continue
                     }
+                    let enum_scope_id = .get_enum(enum_id!).scope_id
                     .typecheck_enum_methods_predecl(
                         parsed_record
                         enum_id: enum_id!
-                        scope_id: .get_enum(enum_id!).scope_id
+                        scope_id: enum_scope_id
                         comptime_pass
                         generic_pass
                     )
+                    yield enum_scope_id
                 }
-                Garbage => {}
+                Garbage => {
+                    continue
+                }
+            }
+
+            for record in parsed_record.nested_records {
+                records_to_process.enqueue((record, record_scope_id))
             }
         }
 
@@ -3361,97 +3515,93 @@ struct Typechecker {
     ) throws {
         mut checks = TraitImplCheck::make()
 
-        {
-            checks.ensure_capacity(trait_implementations.size())
+        checks.ensure_capacity(trait_implementations.size())
 
-            for (trait_name, trait_ids_and_generic_params) in trait_implementations {
-                for trait_id_and_generic_params in trait_ids_and_generic_params {
-                    checks.register_trait(
-                        trait_type_id: .find_or_add_type_id(
-                            Type::GenericTraitInstance(id: trait_id_and_generic_params.0, args: trait_id_and_generic_params.1)
+        for (trait_name, trait_ids_and_generic_params) in trait_implementations {
+            for trait_id_and_generic_params in trait_ids_and_generic_params {
+                checks.register_trait(
+                    trait_type_id: .find_or_add_type_id(
+                        Type::GenericTraitInstance(id: trait_id_and_generic_params.0, args: trait_id_and_generic_params.1)
+                    )
+                    trait_name
+                    requirements: .program.get_trait(trait_id_and_generic_params.0).requirements
+                )
+            }
+        }
+
+        for (trait_name, trait_ids_and_generic_params) in trait_implementations {
+            for trait_id_and_generic_params in trait_ids_and_generic_params {
+                let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+                defer .generic_inferences.restore(old_generic_inferences)
+
+                let (trait_id, generic_params) = trait_id_and_generic_params
+                let trait_ = .get_trait(trait_id)
+                if trait_.generic_parameters.size() != generic_params.size() {
+                    .error(
+                        format(
+                            "Trait ‘{}’ expects {} generic parameters, but {} were given"
+                            trait_name
+                            trait_.generic_parameters.size()
+                            generic_params.size()
                         )
-                        trait_name
-                        requirements: .program.get_trait(trait_id_and_generic_params.0).requirements
+                        trait_.name_span
+                    )
+                    continue
+                }
+
+                .specialize_trait(trait_id, generic_parameters: generic_params)
+
+                guard trait_.requirements is Methods(methods) else {
+                    continue
+                }
+
+                .generic_inferences.set_all(keys: trait_.generic_parameters, values: generic_params)
+
+                for (method_name, method_function_id) in methods {
+                    let method = .get_function(method_function_id)
+                    if not method.parsed_function.has_value() or method.parsed_function!.block.stmts.is_empty() {
+                        continue
+                    }
+
+                    let ids = .find_functions_with_name_in_scope(
+                        parent_scope_id: scope_id
+                        function_name: method_name
+                    )
+
+                    mut this_function: FunctionId? = None
+                    if ids.has_value() {
+                        for id in ids! {
+                            if .get_function(id).parsed_function?.id == method.parsed_function?.id {
+                                this_function = id
+                                break
+                            }
+                        }
+                        if not this_function.has_value() {
+                            continue
+                        }
+                    }
+
+                    if this_function.has_value() and .get_function(this_function!).is_fully_checked {
+                        continue
+                    }
+
+                    .typecheck_function(
+                        parsed_function: method.parsed_function!
+                        parent_scope_id: scope_id
                     )
                 }
             }
         }
 
-        {
-            for (trait_name, trait_ids_and_generic_params) in trait_implementations {
-                for trait_id_and_generic_params in trait_ids_and_generic_params {
-                    let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
-                    defer .generic_inferences.restore(old_generic_inferences)
-
-                    let (trait_id, generic_params) = trait_id_and_generic_params
-                    let trait_ = .get_trait(trait_id)
-                    if trait_.generic_parameters.size() != generic_params.size() {
-                        .error(
-                            format(
-                                "Trait ‘{}’ expects {} generic parameters, but {} were given"
-                                trait_name
-                                trait_.generic_parameters.size()
-                                generic_params.size()
-                            )
-                            trait_.name_span
-                        )
-                        continue
-                    }
-
-                    .specialize_trait(trait_id, generic_parameters: generic_params)
-
-                    guard trait_.requirements is Methods(methods) else {
-                        continue
-                    }
-
-                    .generic_inferences.set_all(keys: trait_.generic_parameters, values: generic_params)
-
-                    for (method_name, method_function_id) in methods {
-                        let method = .get_function(method_function_id)
-                        if not method.parsed_function.has_value() or method.parsed_function!.block.stmts.is_empty() {
-                            continue
-                        }
-
-                        let ids = .find_functions_with_name_in_scope(
-                            parent_scope_id: scope_id
-                            function_name: method_name
-                        )
-
-                        mut this_function: FunctionId? = None
-                        if ids.has_value() {
-                            for id in ids! {
-                                if .get_function(id).parsed_function?.id == method.parsed_function?.id {
-                                    this_function = id
-                                    break
-                                }
-                            }
-                            if not this_function.has_value() {
-                                continue
-                            }
-                        }
-
-                        if this_function.has_value() and .get_function(this_function!).is_fully_checked {
-                            continue
-                        }
-
-                        .typecheck_function(
-                            parsed_function: method.parsed_function!
-                            parent_scope_id: scope_id
-                        )
-                    }
-                }
-            }
-
-            let scope = .get_scope(scope_id)
-            for (name, overload_set) in scope.functions {
-                for function_id in overload_set {
-                    checks.register_method(
-                        self_type_id: type_id,
-                        method_name: name,
-                        method_id: function_id,
-                        typechecker: &mut this
-                    )
-                }
+        let scope = .get_scope(scope_id)
+        for (name, overload_set) in scope.functions {
+            for function_id in overload_set {
+                checks.register_method(
+                    self_type_id: type_id,
+                    method_name: name,
+                    method_id: function_id,
+                    typechecker: &mut this
+                )
             }
         }
 
@@ -3486,6 +3636,8 @@ struct Typechecker {
 
         for (_, struct_id) in scope.structs {
             let struct_ = .get_struct(struct_id)
+            if struct_.trait_implementations.is_empty() { continue }
+
             .typecheck_entity_trait_implementations(
                 scope_id: struct_.scope_id
                 type_id: struct_.type_id
@@ -3523,23 +3675,21 @@ struct Typechecker {
         }
 
         if not comptime_pass and not generic_pass {
-            mut records_to_process: Queue<ParsedRecord> = Queue()
+            mut records_to_process: Queue<(ParsedRecord, ScopeId)> = Queue()
             for parsed_record in parsed_namespace.records {
-                records_to_process.enqueue(parsed_record)
+                records_to_process.enqueue((parsed_record, scope_id))
             }
 
             while not records_to_process.is_empty() {
-                let record = records_to_process.dequeue()
-                for nested_record in record.nested_records {
-                    records_to_process.enqueue(nested_record)
-                }
-                match record.record_type {
+                let (record, scope_id) = records_to_process.dequeue()
+                let id = match record.record_type {
                     Struct | Class => {
                         let struct_id = .find_struct_in_scope(scope_id, name: record.name)
                         if not struct_id.has_value() {
                             .compiler.panic("can't find struct that has been previous added")
                         }
                         .typecheck_struct(record, struct_id: struct_id!, parent_scope_id: scope_id)
+                        yield StructLikeId::Struct(struct_id!)
                     }
                     SumEnum | ValueEnum => {
                         let enum_id = .program.find_enum_in_scope(scope_id, name: record.name)
@@ -3547,8 +3697,16 @@ struct Typechecker {
                             .compiler.panic("can't find enum that has been previous added")
                         }
                         .typecheck_enum(record, enum_id: enum_id!, parent_scope_id: scope_id)
+                        yield StructLikeId::Enum(enum_id!)
                     }
-                    else => {}
+                    else => {
+                        continue
+                    }
+                }
+
+                for nested_record in record.nested_records {
+                    .warn_about_unimplemented_nested_record(nested_record)
+                    records_to_process.enqueue((nested_record, id.scope_id(&.program)))
                 }
             }
 
@@ -4413,7 +4571,9 @@ struct Typechecker {
 
         checked_function.return_type_id = function_return_type_id
 
-        .check_that_type_doesnt_contain_reference(type_id: function_return_type_id, span: parsed_function.return_type_span)
+        if not .get_scope(parent_scope_id).is_from_generated_code {
+            .check_that_type_doesnt_contain_reference(type_id: function_return_type_id, span: parsed_function.return_type_span)
+        }
 
         if not parsed_function.generic_parameters.is_empty() and function_return_type_id.equals(unknown_type_id()) {
             let old_ignore_errors = .ignore_errors
@@ -4805,7 +4965,15 @@ struct Typechecker {
         let function_linkage = checked_function.linkage
 
         if checked_function.is_fully_checked {
-            panic(format("Internal error: function {} being checked twice", checked_function.name))
+            if not .get_scope(parent_scope_id).is_from_generated_code {
+                .error_with_hint(
+                    format("Function ‘{}’ is already defined", parsed_function.name)
+                    parsed_function.name_span
+                    "Try removing this definition"
+                    checked_function.parsed_function!.name_span
+                )
+            }
+            return
         }
 
         defer checked_function.is_fully_checked = true
@@ -5669,6 +5837,10 @@ struct Typechecker {
                     else => {
                         if maybe_type_and_scope.has_value() {
                             return maybe_type_and_scope!.0
+                        }
+
+                        if .get_scope(scope_id).is_from_generated_code and name == "unknown" {
+                            return builtin(BuiltinType::Unknown)
                         }
 
                         .error(format("Unknown type ‘{}’ in scope {}", name, .debug_description_of(scope_id)), span)
@@ -11612,4 +11784,65 @@ fn defines_from(anon actions: [IncludeAction]) throws -> [String:String] {
         }
     }
     return defines
+}
+
+fn dump_scope(anon scope_id: ScopeId, anon program: &CheckedProgram, indent: i64 = 0) throws {
+    mut scope = program.get_scope(scope_id)
+    eprintln("{: >{}}Scope (ns={}) {}", "", indent, scope.namespace_name, scope.debug_name)
+    let cindent = indent + 2
+    eprintln("{: >{}}Types:", "", cindent)
+    for (name, type_id) in scope.types {
+        let type = program.get_type(type_id)
+        eprintln("{: >{}}{}: {}", "", cindent + 2, name, program.type_name(type_id, debug_mode: true))
+    }
+    eprintln("{: >{}}Specializations:", "", cindent)
+    for (name, type) in scope.explicitly_specialized_types {
+        let type_name = program.type_name(type.type_id, debug_mode: true)
+        mut args = ""
+        for arg in type.arguments {
+            args = args + program.type_name(arg, debug_mode: true) + ", "
+        }
+
+        eprintln("{: >{}}{}<{}> = {}", "", cindent + 2, name, args, type_name)
+    }
+    eprintln("{: >{}}Variables:", "", cindent)
+    for (name, var_id) in scope.vars {
+        let var = program.get_variable(var_id)
+        eprintln("{: >{}}{}: {}", "", cindent + 2, name, program.type_name(var.type_id, debug_mode: true))
+    }
+    eprintln("{: >{}}Functions:", "", cindent)
+    for (name, ids) in scope.functions {
+        eprintln("{: >{}}{}:", "", cindent + 2, name)
+        for id in ids {
+            let function = program.get_function(id)
+            mut args = ""
+            for arg in function.params {
+                args = args + program.type_name(arg.variable.type_id, debug_mode: true) + ", "
+            }
+
+            mut generics = ""
+            for generic in function.generics.params {
+                generics = generics + program.type_name(generic.type_id(), debug_mode: true) + ", "
+            }
+            if not generics.is_empty() {
+                generics = format("<{}>", generics)
+            }
+
+            eprintln("{: >{}}fn{}({}) -> {}", "", cindent + 4, generics, args, program.type_name(function.return_type_id, debug_mode: true))
+        }
+    }
+    eprintln("{: >{}}Structs:", "", cindent)
+    for (name, id) in scope.structs {
+        let struct_ = program.get_struct(id)
+        eprintln("{: >{}}{}@{}: {}", "", cindent + 2, id.id, id.module, struct_.name)
+    }
+    eprintln("{: >{}}Aliases:", "", cindent)
+    for (name, id) in scope.aliases {
+        let scope = program.get_scope(id)
+        eprintln("{: >{}}{}: {}", "", cindent + 2, name, scope.debug_name)
+    }
+    eprintln("{: >{}}Children:", "", cindent)
+    for id in scope.children {
+        dump_scope(id, program, indent: cindent + 2)
+    }
 }

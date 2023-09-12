@@ -800,6 +800,16 @@ class InterpreterScope {
 
                 bindings.set(pair.0, pair.1)
             }
+            for mixin in scope.resolution_mixins {
+                let mixin_scope = program.get_scope(mixin)
+                for pair in mixin_scope.comptime_bindings {
+                    if bindings.contains(pair.0) {
+                        continue
+                    }
+
+                    bindings.set(pair.0, pair.1)
+                }
+            }
             current_id = scope.parent
         }
 
