@@ -888,7 +888,16 @@ struct Typechecker {
             }
         }
 
-        for record in parsed_namespace.records {
+        mut records_to_process: Queue<ParsedRecord> = Queue()
+        for parsed_record in parsed_namespace.records {
+            records_to_process.enqueue(parsed_record)
+        }
+
+        while not records_to_process.is_empty() {
+            let record = records_to_process.dequeue()
+            for nested_record in record.nested_records {
+                records_to_process.enqueue(nested_record)
+            }
             if record.record_type is Struct or record.record_type is Class {
                 let struct_id = .find_struct_in_scope(scope_id, name: record.name)
                 if not struct_id.has_value() {
@@ -966,7 +975,16 @@ struct Typechecker {
             }
         }
 
-        for record in parsed_namespace.records {
+        mut records_to_process: Queue<ParsedRecord> = Queue()
+        for parsed_record in parsed_namespace.records {
+            records_to_process.enqueue(parsed_record)
+        }
+
+        while not records_to_process.is_empty() {
+            let record = records_to_process.dequeue()
+            for nested_record in record.nested_records {
+                records_to_process.enqueue(nested_record)
+            }
             if record.record_type is Struct or record.record_type is Class {
                 let struct_id = .find_struct_in_scope(scope_id, name: record.name)
                 if not struct_id.has_value() {
@@ -1536,7 +1554,16 @@ struct Typechecker {
             }
         }
 
-        for record in parsed_namespace.records {
+        mut records_to_process: Queue<ParsedRecord> = Queue()
+        for parsed_record in parsed_namespace.records {
+            records_to_process.enqueue(parsed_record)
+        }
+
+        while not records_to_process.is_empty() {
+            let record = records_to_process.dequeue()
+            for nested_record in record.nested_records {
+                records_to_process.enqueue(nested_record)
+            }
             match record.record_type {
                 Struct | Class => {
                     let struct_id = .find_struct_in_scope(scope_id, name: record.name)
@@ -1671,7 +1698,16 @@ struct Typechecker {
 
         mut module = .current_module()
 
-        for record in parsed_namespace.records {
+        mut records_to_process: Queue<ParsedRecord> = Queue()
+        for parsed_record in parsed_namespace.records {
+            records_to_process.enqueue(parsed_record)
+        }
+
+        while not records_to_process.is_empty() {
+            let record = records_to_process.dequeue()
+            for nested_record in record.nested_records {
+                records_to_process.enqueue(nested_record)
+            }
             let record_scope_id = match record.record_type {
                 Struct | Class => {
                     let struct_id = .find_struct_in_scope(scope_id, name: record.name)
@@ -1773,7 +1809,16 @@ struct Typechecker {
         // 1. Initialize structs
         mut struct_index: usize = 0
         mut enum_index: usize = 0
+        mut records_to_process: Queue<ParsedRecord> = Queue()
         for parsed_record in parsed_namespace.records {
+            records_to_process.enqueue(parsed_record)
+        }
+
+        while not records_to_process.is_empty() {
+            let parsed_record = records_to_process.dequeue()
+            for record in parsed_record.nested_records {
+                records_to_process.enqueue(record)
+            }
             match parsed_record.record_type {
                 Struct | Class => { .typecheck_struct_predecl_initial(parsed_record, struct_index: struct_index++, module_struct_len, scope_id) }
                 SumEnum | ValueEnum => { .typecheck_enum_predecl_initial(parsed_record, enum_index: enum_index++, module_enum_len, scope_id) }
@@ -1840,9 +1885,14 @@ struct Typechecker {
         struct_index = 0
         enum_index = 0
         for parsed_record in parsed_namespace.records {
-            let struct_id = StructId(module: .current_module_id, id: struct_index + module_struct_len)
+            records_to_process.enqueue(parsed_record)
+        }
+
+        while not records_to_process.is_empty() {
+            let parsed_record = records_to_process.dequeue()
             match parsed_record.record_type {
                 Struct | Class => {
+                    let struct_id = StructId(module: .current_module_id, id: struct_index + module_struct_len)
                     .typecheck_struct_predecl(parsed_record, struct_id, scope_id)
                     struct_index++
                 }
@@ -1854,6 +1904,9 @@ struct Typechecker {
                 Garbage => {
                     // NOTE: The parser has already complained about this, so we can just ignore it.
                 }
+            }
+            for record in parsed_record.nested_records {
+                records_to_process.enqueue(record)
             }
         }
 
@@ -2043,7 +2096,17 @@ struct Typechecker {
             .typecheck_namespace_methods_predecl(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id, comptime_pass, generic_pass)
         }
 
+        mut records_to_process: Queue<ParsedRecord> = Queue()
         for parsed_record in parsed_namespace.records {
+            records_to_process.enqueue(parsed_record)
+        }
+
+        while not records_to_process.is_empty() {
+            let parsed_record = records_to_process.dequeue()
+            for record in parsed_record.nested_records {
+                records_to_process.enqueue(record)
+            }
+
             match parsed_record.record_type {
                 Struct | Class => {
                     let struct_id = .find_struct_in_scope(scope_id, name: parsed_record.name)
@@ -3460,7 +3523,16 @@ struct Typechecker {
         }
 
         if not comptime_pass and not generic_pass {
-            for record in parsed_namespace.records {
+            mut records_to_process: Queue<ParsedRecord> = Queue()
+            for parsed_record in parsed_namespace.records {
+                records_to_process.enqueue(parsed_record)
+            }
+
+            while not records_to_process.is_empty() {
+                let record = records_to_process.dequeue()
+                for nested_record in record.nested_records {
+                    records_to_process.enqueue(nested_record)
+                }
                 match record.record_type {
                     Struct | Class => {
                         let struct_id = .find_struct_in_scope(scope_id, name: record.name)
