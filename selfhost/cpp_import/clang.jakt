@@ -1249,7 +1249,7 @@ fn process_function(
             definition_span: empty_span()
             type_span: empty_span()
             visibility: CheckedVisibility::Public
-            owner_scope: function_scope
+            owner_scope: parent_scope_id
         )
         params.push(CheckedParameter(
             requires_label: false
@@ -1358,7 +1358,7 @@ fn process_function(
         has_varargs
         specialization_index: None
 
-        owner_scope: function_scope
+        owner_scope: parent_scope_id
         is_fully_checked: true
         external_name
     )
@@ -1613,7 +1613,7 @@ fn process_struct(
     let existing_struct_id = program.find_struct_in_scope(
         scope_id: parent_scope_id
         name: specialized_name
-        ignore_mixin_scope: true
+        ignore_mixin_scopes: true
     )
 
     let (struct_scope, scope_was_just_made) = match existing_struct_id.has_value() {
@@ -1889,7 +1889,7 @@ fn process_struct(
             is_unsafe: false
             specialization_index: None
 
-            owner_scope: function_scope
+            owner_scope: struct_scope
             is_fully_checked: true
         )
 
