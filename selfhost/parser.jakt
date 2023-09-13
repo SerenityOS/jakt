@@ -371,6 +371,7 @@ struct ParsedRecord {
     implements_list: [ParsedNameWithGenericParameters]?
     methods: [ParsedMethod]
     record_type: RecordType
+    nested_records: [ParsedRecord]
 
     external_name: ExternalName? = None
 }
@@ -2425,11 +2426,15 @@ struct Parser {
             return ParsedExternalTraitImplementation(for_type: type_name, traits: trait_list!, methods: [])
         }
 
-        let (fields, methods) = .parse_struct_class_body(
+        let (fields, methods, records) = .parse_struct_class_body(
             definition_linkage: DefinitionLinkage::Internal
             default_visibility: Visibility::Public
             is_class: false
         )
+
+        if not records.is_empty() {
+            .error("External trait implementations cannot have nested records", records[0].name_span)
+        }
 
         if not fields.is_empty() {
             .error("External trait implementations cannot have fields", fields[0].var_decl.span)
@@ -2554,6 +2559,7 @@ struct Parser {
                 implements_list: None,
                 methods: [],
                 record_type: RecordType::Garbage
+                nested_records: []
             )
         }
     }
@@ -3017,10 +3023,16 @@ struct Parser {
         return (variants, methods)
     }
 
-    fn parse_sum_enum_body(mut this, partial_enum: ParsedRecord, definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ([SumEnumVariant], [ParsedField], [ParsedMethod]) {
+    fn parse_sum_enum_body(
+        mut this
+        partial_enum: ParsedRecord
+        definition_linkage: DefinitionLinkage
+        is_boxed: bool
+    ) throws -> ([SumEnumVariant], [ParsedField], [ParsedMethod], [ParsedRecord]) {
         mut methods: [ParsedMethod] = []
         mut variants: [SumEnumVariant] = []
         mut fields: [ParsedField] = []
+        mut records: [ParsedRecord] = []
         mut seen_a_variant = false
 
         if .current() is LCurly {
@@ -3033,14 +3045,33 @@ struct Parser {
 
         if .eof() {
             .error("Incomplete enum definition, expected variant or field name", .previous().span())
-            return (variants, fields, methods)
+            return (variants, fields, methods, records)
         }
 
         mut last_visibility: Visibility? = None
         mut last_visibility_span: Span? = None
+        mut last_extern = false
+        mut active_attributes: [ParsedAttribute] = []
+
         while not .eof() {
             match .current() {
+                Extern => {
+                    if last_extern {
+                        .error("Multiple extern modifiers are not allowed", .current().span())
+                    }
+                    last_extern = true
+                    .index++
+                }
                 Identifier(name, span) => {
+                    if last_extern {
+                        .error("An enum variant or common field cannot be extern", span)
+                        last_extern = false
+                    }
+                    if not active_attributes.is_empty() {
+                        .error("An enum variant or common field cannot have attributes", span)
+                        active_attributes = []
+                    }
+
                     if .peek(1) is Colon {
                         let field = .parse_field(visibility: last_visibility ?? Visibility::Public)
                         if seen_a_variant {
@@ -3132,6 +3163,15 @@ struct Parser {
                 Comma | Eol => {
                     .index++
                 }
+                LSquare => {
+                    if .peek(1) is LSquare {
+                        .index += 2
+                        .parse_attribute_list(&mut active_attributes)
+                    } else {
+                        .error("Unexpected token (expected ‘[[’)", .current().span())
+                        .index += 1
+                    }
+                }
                 Private(span) => {
                     if last_visibility.has_value() {
                         .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
@@ -3151,9 +3191,12 @@ struct Parser {
                 Fn | Comptime => {
                     let is_comptime = .current() is Comptime
 
-                    let function_linkage = match definition_linkage {
-                        Internal => FunctionLinkage::Internal
-                        External => FunctionLinkage::External
+                    let function_linkage = match last_extern {
+                        true => FunctionLinkage::External
+                        false => match definition_linkage {
+                            Internal => FunctionLinkage::Internal
+                            External => FunctionLinkage::External
+                        }
                     }
 
                     if function_linkage is External and is_comptime {
@@ -3164,7 +3207,7 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(
+                    mut parsed_method = .parse_method(
                         function_linkage
                         visibility
                         is_virtual: false
@@ -3174,7 +3217,23 @@ struct Parser {
                         is_unsafe: false // FIXME: Parse unsafe methods.
                     )
 
+                    .apply_attributes(&mut parsed_method, &active_attributes)
+                    active_attributes = []
+
                     methods.push(parsed_method)
+                }
+                Struct | Enum | Boxed | Class => {
+                    if last_visibility.has_value() {
+                        .error("Nested types cannot have visibility modifiers", .current().span())
+                        last_visibility = None
+                    }
+
+                    mut parsed_record = .parse_record(
+                        match last_extern { true => DefinitionLinkage::External, false => definition_linkage }
+                    )
+                    .apply_attributes(&mut parsed_record, &active_attributes)
+                    active_attributes = []
+                    records.push(parsed_record)
                 }
                 else => {
                     .error("Expected identifier or the end of enum block", .current().span())
@@ -3185,14 +3244,14 @@ struct Parser {
 
         if not .current() is RCurly {
             .error("Invalid enum definition, expected `}`", .current().span())
-            return (variants, fields, methods)
+            return (variants, fields, methods, records)
         }
         .index++
 
         if variants.is_empty() {
             .error("Empty enums are not allowed", partial_enum.name_span)
         }
-        return (variants, fields, methods)
+        return (variants, fields, methods, records)
     }
 
     fn parse_enum(mut this, anon definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ParsedRecord {
@@ -3204,6 +3263,7 @@ struct Parser {
             implements_list: None,
             methods: [],
             record_type: RecordType::Garbage
+            nested_records: []
         )
         mut underlying_type: ParsedType? = None
         if .current() is Enum {
@@ -3268,13 +3328,18 @@ struct Parser {
                 variants
             )
         } else {
-            let (variants, fields, methods) = .parse_sum_enum_body(partial_enum: parsed_enum, definition_linkage, is_boxed)
+            let (variants, fields, methods, records) = .parse_sum_enum_body(
+                partial_enum: parsed_enum
+                definition_linkage
+                is_boxed
+            )
             parsed_enum.methods = methods
             parsed_enum.record_type = RecordType::SumEnum(
                 is_boxed: is_boxed,
                 fields,
                 variants
             )
+            parsed_enum.nested_records = records
         }
 
         return parsed_enum
@@ -3285,7 +3350,7 @@ struct Parser {
         definition_linkage: DefinitionLinkage
         default_visibility: Visibility
         is_class: bool
-    ) throws -> ([ParsedField], [ParsedMethod]) {
+    ) throws -> ([ParsedField], [ParsedMethod], [ParsedRecord]) {
         if .current() is LCurly {
             .index++
         } else {
@@ -3294,6 +3359,7 @@ struct Parser {
 
         mut fields: [ParsedField] = []
         mut methods: [ParsedMethod] = []
+        mut records: [ParsedRecord] = []
 
         // This gets reset after each loop. If someone doesn't consume it, we error out.
         mut last_visibility: Visibility? = None
@@ -3319,7 +3385,7 @@ struct Parser {
                         .error("Expected function after attribute", token.span())
                     }
                     .index++
-                    return (fields, methods)
+                    return (fields, methods, records)
                 }
                 Comma | Eol => {
                     // Treat comma as whitespace? Might require them in the future
@@ -3433,6 +3499,24 @@ struct Parser {
                     last_override = true
                     .index++
                 }
+                Struct | Enum | Boxed | Class => {
+                    if last_virtual or last_override {
+                        .error("Nested types cannot be ‘virtual’ or ‘override’", .current().span())
+                        last_virtual = false
+                        last_override = false
+                    }
+                    if last_visibility.has_value() {
+                        .error("Nested types cannot have visibility modifiers", .current().span())
+                        last_visibility = None
+                    }
+
+                    mut parsed_record = .parse_record(
+                        match last_extern { true => DefinitionLinkage::External, false => definition_linkage }
+                    )
+                    .apply_attributes(&mut parsed_record, &active_attributes)
+                    active_attributes = []
+                    records.push(parsed_record)
+                }
                 else => {
                     active_attributes = []
 
@@ -3451,7 +3535,7 @@ struct Parser {
         } else {
             .error("Incomplete struct body, expected ‘}’", .current().span())
         }
-        return (fields, methods)
+        return (fields, methods, records)
     }
 
     public fn parse_struct(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord {
@@ -3463,6 +3547,7 @@ struct Parser {
             implements_list: None,
             methods: [],
             record_type: RecordType::Garbage
+            nested_records: []
         )
         if .current() is Struct {
             .index++
@@ -3512,10 +3597,11 @@ struct Parser {
             return parsed_struct
         }
 
-        let (fields, methods) = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public, is_class: false)
+        let (fields, methods, records) = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public, is_class: false)
 
         parsed_struct.methods = methods
         parsed_struct.record_type = RecordType::Struct(fields, super_type)
+        parsed_struct.nested_records = records
 
         return parsed_struct
     }
@@ -3529,6 +3615,7 @@ struct Parser {
             implements_list: None,
             methods: [],
             record_type: RecordType::Garbage
+            nested_records: []
         )
         mut super_type: ParsedType? = None
         if .current() is Class {
@@ -3583,10 +3670,11 @@ struct Parser {
             return parsed_class
         }
 
-        let (fields, methods) = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Private, is_class: true)
+        let (fields, methods, records) = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Private, is_class: true)
 
         parsed_class.methods = methods
         parsed_class.record_type = RecordType::Class(fields, super_type)
+        parsed_class.nested_records = records
 
         return parsed_class
     }
