@@ -7066,7 +7066,7 @@ class Interpreter {
             let fixed_block = .perform_final_interpretation_pass(
                 block
                 runtime_scope: scope_id
-                scope: InterpreterScope::create(parent: scope, bindings: resolved_captures)
+                scope: InterpreterScope::create(bindings: resolved_captures, parent: scope)
             )
 
             yield StatementResult::JustValue(Value(
