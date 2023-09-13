@@ -13,7 +13,7 @@ import jakt::path { Path, get_path_separator }
 import utility { Span, join }
 import cpp_import::common { CppImportErrors, read_all }
 import jakt::platform::utility { null }
-import jakt::platform { platform_fs }
+import jakt::platform { Target, platform_fs }
 import platform_fs() { real_path }
 import cpp_import::clang_c {
     CXChildVisitResult, CXClientData, CXCursor, CXCursorKind, CXFile, CXIndex, CXSourceLocation, CXString
@@ -1975,7 +1975,7 @@ fn process_cpp_import(
     if tu == CXTranslationUnit() {
         mut includes = program.compiler.include_paths[..].to_array()
 
-        mut args_storage = [""; 2 + includes.size() + defines.size()]
+        mut args_storage = [""; 3 + includes.size() + defines.size()]
         if is_c {
             args_storage[0] = "-xc"
             args_storage[1] = "-std=c11"
@@ -1983,6 +1983,8 @@ fn process_cpp_import(
             args_storage[0] = "-xc++-header"
             args_storage[1] = "-std=c++20"
         }
+        args_storage[2] = format("--target={}", program.compiler.target_triple ?? Target::active().name())
+
         for i in 0..includes.size() {
             args_storage[i + 2] = format("-I{}", includes[i])
         }
