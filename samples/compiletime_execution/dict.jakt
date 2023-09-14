@@ -5,13 +5,13 @@ comptime is_empty() -> bool {
     let dict: Dictionary<String, u8> = [:]
     return dict.is_empty()
 }
-comptime get() => ["a":'a'].get("a")! == 'a'
+comptime get() throws => ["a":'a'].get("a")! == 'a'
 comptime set() throws -> bool {
     mut dict: Dictionary<String, u32> = [:]
     dict.set("b", 'b')
     return dict.contains("b") and dict.get("b")! == 'b'
 }
-comptime remove() -> bool {
+comptime remove() throws -> bool {
     mut dict = ["c":'c']
     dict.remove("c")
     return not dict.contains("c")
@@ -21,12 +21,12 @@ comptime capacity() throws -> bool {
     dict.ensure_capacity(5)
     return dict.capacity() == 5
 }
-comptime clear() -> bool {
+comptime clear() throws -> bool {
     mut dict = ["d":'d',"e":'e',"f":'f']
     dict.clear()
     return dict.is_empty()
 }
-comptime size() -> bool {
+comptime size() throws -> bool {
     mut dict = ["g":'g',"h":'h',"i":'i']
     return dict.size() == 3
 }
