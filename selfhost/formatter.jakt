@@ -772,6 +772,7 @@ struct Stage0 {
             .push_state(State::RestrictionList)
             yield .formatted_token(token)
         }
+        Requires => .formatted_token(token, trailing_trivia: [], preceding_trivia: [b' '])
         else => .formatted_token(token)
     }
 
