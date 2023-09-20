@@ -1,0 +1,17 @@
+/// Expect:
+/// - output: "hello Baz(5)!\n"
+
+enum Foo {
+    message: String
+
+    Baz(value: i32)
+    Bar
+}
+
+fn main() {
+    let foo = Foo::Baz(message: "hello", value: 5)
+
+    if foo is Baz(message, value) {
+        println("{} Baz({})!", message, value)
+    }
+}
