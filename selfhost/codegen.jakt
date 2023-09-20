@@ -2848,11 +2848,24 @@ struct CodeGenerator {
             if enum_variant is StructLike {
                 arg_name = arg.name ?? arg.binding
             }
-            let cpp_deref_operator = match .program.get_enum(enum_variant.enum_id()).is_boxed {
+
+            let enum_ = .program.get_enum(enum_variant.enum_id())
+
+            let cpp_deref_operator = match enum_.is_boxed {
                 true => "->"
                 else => "."
             }
-            yield format("({}){}as.{}.{}", var_name, cpp_deref_operator, variant_name, arg_name)
+
+            // use the common section if the binding uses a common field
+            mut section = format("as.{}", variant_name)
+            for field in enum_.fields {
+                let field_name = .program.get_variable(field.variable_id).name_for_codegen().as_name_for_use()
+                if field_name == arg_name {
+                    section = "common.init_common"
+                }
+            }
+
+            yield format("({}){}{}.{}", var_name, cpp_deref_operator, section, arg_name)
         }
         JaktArray(vals, repeat, span, type_id, inner_type_id) => {
             mut output = ""
