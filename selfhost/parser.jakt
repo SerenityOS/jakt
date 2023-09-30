@@ -3679,11 +3679,16 @@ struct Parser {
         return parsed_class
     }
 
-    public fn parse_function_parameters(mut this) throws -> ParsedFunctionParameters {
-        if .current() is LParen {
+    public fn parse_function_parameters(mut this, for_trailing_closure: bool = false) throws -> ParsedFunctionParameters {
+        if not for_trailing_closure and .current() is LParen {
+            .index++
+        } else if for_trailing_closure and .current() is Pipe {
             .index++
         } else {
-            .error("Expected '('", .current().span())
+            .error(
+                format("Expected '{:c}'", match for_trailing_closure { true => '|', false => ')' })
+                .current().span()
+            )
         }
 
         .skip_newlines()
@@ -3699,8 +3704,26 @@ struct Parser {
         while not .eof() {
             match .current() {
                 RParen => {
+                    if not for_trailing_closure {
+                        .index++
+                        break
+                    }
+                    if not error {
+                        .error("Expected parameter", .current().span())
+                        error = true
+                    }
                     .index++
-                    break
+                }
+                Pipe => {
+                    if for_trailing_closure {
+                        .index++
+                        break
+                    }
+                    if not error {
+                        .error("Expected parameter", .current().span())
+                        error = true
+                    }
+                    .index++
                 }
                 Comma | Eol => {
                     if not parameter_complete and not error {
@@ -6113,12 +6136,49 @@ struct Parser {
 
         // Look for a possible trailing closure. For now, this has to be a block with no parameters, which captures everything by reference.
         // FIXME: Support explicit captures, and maybe parameters.
-        if .can_have_trailing_closure and .current() is LCurly {
+        if .can_have_trailing_closure {
             let start = .current().span()
-            let block = .parse_block()
+            let start_index = .index
+
+            mut block: ParsedBlock? = None
+            mut params: [ParsedParameter] = []
+            mut has_varargs = false
+            mut errors_before = .compiler.errors.size()
+
+            match .current() {
+                LCurly => {}
+                Pipe => {
+                    let parameters = .parse_function_parameters(for_trailing_closure: true)
+                    params = parameters.parameters
+                    has_varargs = parameters.has_varargs
+                }
+                else => {
+                    return call
+                }
+            }
+
+            guard .current() is LCurly else {
+                .index = start_index
+                .compiler.errors = .compiler.errors[..errors_before].to_array()
+                return call
+            }
+
+            if has_varargs {
+                .error("Function expressions cannot have varargs", .current().span())
+            }
+
+            block = .parse_block()
             let span = merge_spans(start, .current().span())
             let captures = [ParsedCapture::AllByReference(name: "", span: .empty_span())]
-            let trailing_closure = ParsedExpression::Function(captures, params: [], can_throw: false, is_fat_arrow: false, return_type: ParsedType::Empty, block, span)
+            let trailing_closure = ParsedExpression::Function(
+                captures
+                params
+                can_throw: false
+                is_fat_arrow: false
+                return_type: ParsedType::Empty
+                block: block!
+                span
+            )
             let reference_to_closure = ParsedExpression::UnaryOp(expr: trailing_closure, op: UnaryOperator::Reference, span)
             call.args.push(("", .empty_span(), reference_to_closure))
         }
