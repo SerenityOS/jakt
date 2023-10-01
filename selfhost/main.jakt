@@ -468,6 +468,11 @@ fn find_with_extension(path: Path, extension: String) throws -> [Path] {
     return files_found
 }
 
+fn escape_for_depfile(anon input: String) throws -> String {
+    // $ -> $$, # -> \#, <space> -> \<space>
+    return input.replace(replace: "$", with: "$$").replace(replace: "#", with: "\\#").replace(replace: " ", with: "\\ ")
+}
+
 fn compiler_main(anon args: [String]) throws -> c_int {
     mut args_parser = ArgsParser::from_args(args)
 
@@ -889,6 +894,43 @@ fn compiler_main(anon args: [String]) throws -> c_int {
 
     mut depfile_builder = StringBuilder::create()
 
+    if generate_depfile.has_value() {
+        if link_archive.has_value() {
+            depfile_builder.append(escape_for_depfile(binary_dir.join(link_archive!).to_string()))
+        } else {
+            depfile_builder.append(escape_for_depfile(output_filename))
+        }
+        depfile_builder.append(" : ")
+        mut seen_files: {String} = {}
+        for (_, contents_and_path) in codegen_result {
+            let (contents, module_file_path) = contents_and_path
+            if module_file_path == "__prelude__" {
+                continue
+            }
+
+            let file = escape_for_depfile(module_file_path)
+            if seen_files.contains(file) {
+                continue
+            }
+
+            seen_files.add(file)
+            depfile_builder.append(" \\\n  ")
+            depfile_builder.append(file)
+        }
+        for (path, _) in typechecker.cpp_import_cache {
+            let full_path = compiler.find_in_search_paths(Path::from_string(path))
+            mut entry = path
+            if full_path.has_value() {
+                entry = full_path!.to_string()
+            }
+
+            depfile_builder.append(" \\\n  ")
+            depfile_builder.append(escape_for_depfile(entry))
+        }
+
+        depfile_builder.append("\n")
+    }
+
     if not binary_dir.exists() {
         make_directory(path: binary_dir.to_string())
     }
@@ -900,18 +942,6 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         try write_to_file(data: contents, output_filename: path.to_string()) catch error {
             eprintln("Error: Could not write to file: {} ({})", file, error)
             return 1
-        }
-
-        if generate_depfile.has_value() and file.ends_with(".cpp") {
-            let escaped = file.replace(replace: " ", with: "\\ ")
-            let escaped_module_file_path = module_file_path.replace(replace: " ", with: "\\ ")
-            depfile_builder.append_string(format(
-                "{} {}.h: {}"
-                escaped
-                escaped.substring(start: 0, length: file.length() - 4)
-                escaped_module_file_path
-            ))
-            depfile_builder.append(b'\n')
         }
     }
 
