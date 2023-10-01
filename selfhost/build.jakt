@@ -139,15 +139,16 @@ struct Builder {
         .files_to_compile = []
     }
 
-    fn link_into_archive(mut this, archiver: String, archive_filename: String) throws {
+    fn link_into_archive(mut this, archiver: String, archive_filename: String, extra_arguments: [String]) throws {
         mut args = [
             archiver
-            "cr"
+            match extra_arguments.size() { 0 => "cr", else => "crT" } // Make a thin archive, but only if extra files are present
             archive_filename
         ]
         for file in .linked_files {
             args.push(file)
         }
+        args.push_values(&extra_arguments)
 
         let id = .pool.run(args)
         .pool.wait_for_all_jobs_to_complete()

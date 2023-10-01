@@ -518,6 +518,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? default_compiler_path
     let archiver_path = args_parser.option(["-A", "--archiver"])
     let link_archive = args_parser.option(["-a", "--link-archive"])
+    let archive_link_support_libs = args_parser.flag(["--archive-link-support-libs"])
     let build_static = args_parser.flag(["--static"])
     let extra_include_paths = args_parser.option_multiple(["-I"])
     let extra_lib_paths = args_parser.option_multiple(["-L"])
@@ -1007,10 +1008,23 @@ fn compiler_main(anon args: [String]) throws -> c_int {
             return 1
         }
 
+        let runtime_lib_path = Path::from_string(runtime_library_path)
+        let target = match target_triple.has_value() {
+            true => Target::from_triple(target_triple!)
+            false => Target::active()
+        }
+
         if link_archive.has_value() {
+            mut extra_arguments: [String] = []
+            if archive_link_support_libs {
+                extra_arguments.push(runtime_lib_path.join(library_name_for_target("main", target)).to_string())
+                extra_arguments.push(runtime_lib_path.join(library_name_for_target("runtime", target)).to_string())
+            }
+
             try builder.link_into_archive(
                 archiver: archiver_path ?? "ar"
                 archive_filename: binary_dir.join(link_archive!).to_string()
+                extra_arguments
             ) catch {
                 return 1
             }
@@ -1021,11 +1035,6 @@ fn compiler_main(anon args: [String]) throws -> c_int {
                 extra_arguments.push(flag)
             }
 
-            let target = match target_triple.has_value() {
-                true => Target::from_triple(target_triple!)
-                false => Target::active()
-            }
-
             if target_triple.has_value() {
                 if compiler_is("clang++") and target_triple! != Target::active().name() {
                     extra_arguments.push("-target")
@@ -1033,7 +1042,6 @@ fn compiler_main(anon args: [String]) throws -> c_int {
                 }
             }
 
-            let runtime_lib_path = Path::from_string(runtime_library_path)
             extra_arguments.push(runtime_lib_path.join(library_name_for_target("main", target)).to_string())
             extra_arguments.push(runtime_lib_path.join(library_name_for_target("runtime", target)).to_string())
 
