@@ -74,6 +74,14 @@ fn join(anon strings: [String], separator: String) throws -> String {
     return output
 }
 
+fn map<T, U>(input: [T], mapper: &fn(item: T) throws -> U) throws -> [U] {
+    mut us: [U] = []
+    for t in input {
+        us.push(mapper(item: t))
+    }
+    return us
+}
+
 fn prepend_to_each(anon strings: [String], prefix: String) throws -> [String] {
     mut output: [String] = []
     for str in strings {
