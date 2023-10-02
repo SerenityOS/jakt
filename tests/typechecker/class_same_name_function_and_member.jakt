@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "Can't have a member variable and member function both named `foo`\n"
+
+struct S {
+    fn foo() => true
+    foo: i32
+}
+fn main(){}

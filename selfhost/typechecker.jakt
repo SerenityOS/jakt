@@ -28,7 +28,7 @@ import types {
     builtin, comptime_format_impl, never_type_id, unknown_type_id, void_type_id
 }
 import types
-import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo }
+import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo, map }
 import jakt::path { Path }
 import compiler { Compiler }
 import interpreter { Interpreter, InterpreterScope, ExecutionResult, value_to_checked_expression }
@@ -3144,6 +3144,40 @@ struct Typechecker {
             super_struct_id: None
             external_name: parsed_record.external_name
         ))
+
+        match parsed_record.record_type {
+            Struct(fields) | Class(fields) => {
+                let field_names_and_spans = map(
+                    input: fields
+                    mapper: &fn(item: ParsedField) throws -> (String, Span) =>
+                        (item.var_decl.name, item.var_decl.span)
+                )
+                let method_names_and_spans = map(
+                    input: parsed_record.methods
+                    mapper: &fn(item: ParsedMethod) throws -> (String, Span) =>
+                        (item.parsed_function.name,item.parsed_function.name_span)
+                )
+                for x in field_names_and_spans {
+                    for y in method_names_and_spans {
+                        if x.0 == y.0 {
+                            .error_with_hint(
+                                format(
+                                    "Can't have a member variable and member function both named `{}`"
+                                    x.0
+                                )
+                                Span::last(x.1, y.1)
+                                format(
+                                    "`{}` is first defined here"
+                                    x.0
+                                )
+                                Span::first(x.1, y.1)
+                            )
+                        }
+                    }
+                }
+            }
+            else => {}
+        }
     }
 
     fn typecheck_entity_trait_implementations_predecl(
