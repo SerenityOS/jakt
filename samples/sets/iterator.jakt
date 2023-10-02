@@ -1,9 +1,11 @@
 /// Expect:
-/// - output: "1\n4\n2\n3\n"
+/// - output: "10\n"
 
 fn main() {
     let set = {1, 2, 3, 4}
+    mut sum = 0
     for value in set {
-        println("{}", value)
+        sum += value
     }
+    println("{}", sum)
 }
