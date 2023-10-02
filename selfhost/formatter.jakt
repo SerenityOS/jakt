@@ -1513,6 +1513,22 @@ struct Stage0 {
             ))
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         }
+        Reflect => {
+            .replace_state(State::TypeContext(
+                open_parens: 0
+                open_curlies: 0
+                open_squares: 0
+                open_angles: 0
+                seen_start: false
+            ))
+
+            yield FormattedToken(
+                token
+                indent: .indent
+                trailing_trivia: [b' ']
+                preceding_trivia: []
+            )
+        }
         else => {
             .replace_state(State::StatementContext(
                 open_parens
