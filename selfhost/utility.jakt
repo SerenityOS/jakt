@@ -104,6 +104,32 @@ struct Span {
     start: usize
     end: usize
 
+    fn first(anon a: Span, anon b: Span) -> Span {
+        if a.start < b.start {
+            return a
+        }
+        if b.start < a.start {
+            return b
+        }
+        if a.end < b.end {
+            return a
+        }
+        return b
+    }
+
+    fn last(anon a: Span, anon b: Span) -> Span {
+        if a.start > b.start {
+            return a
+        }
+        if b.start > a.start {
+            return b
+        }
+        if a.end > b.end {
+            return a
+        }
+        return b
+    }
+
     fn contains(this, span: Span) -> bool {
         return .file_id.equals(span.file_id) and span.start >= .start and span.end <= .end
     }
