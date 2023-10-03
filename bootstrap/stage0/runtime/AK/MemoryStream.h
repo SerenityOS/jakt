@@ -14,9 +14,9 @@ namespace AK {
 
 /// A stream class that allows for reading/writing on a preallocated memory area
 /// using a single read/write head.
-class FixedMemoryStream final : public SeekableStream {
+class FixedMemoryStream : public SeekableStream {
 public:
-    explicit FixedMemoryStream(Bytes bytes);
+    explicit FixedMemoryStream(Bytes bytes, bool writing_enabled = true);
     explicit FixedMemoryStream(ReadonlyBytes bytes);
 
     virtual bool is_eof() const override;

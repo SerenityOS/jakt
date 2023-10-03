@@ -62,6 +62,7 @@ public:
                 append(separator);
             appendff(fmtstr, item);
         }
+        return {};
     }
 
     // FIXME: These only exist because we don't support function overloading in Jakt yet.
@@ -204,7 +205,7 @@ struct Jakt::Formatter<JaktInternal::SetIterator<T>> : Jakt::Formatter<Jakt::Str
 
         auto string_builder = Jakt::DeprecatedStringBuilder::create();
         TRY(string_builder.append("SetIterator"sv));
-        
+
         return Jakt::Formatter<Jakt::StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
@@ -264,7 +265,7 @@ struct Jakt::Formatter<JaktInternal::DictionaryIterator<K, V>> : Jakt::Formatter
 
         auto string_builder = Jakt::DeprecatedStringBuilder::create();
         TRY(string_builder.append("DictionaryIterator"sv));
-        
+
         return Jakt::Formatter<Jakt::StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };

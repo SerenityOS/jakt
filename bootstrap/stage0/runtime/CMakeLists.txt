@@ -31,38 +31,18 @@ configure_file("AK/Debug.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/AK/Debug.h")
 
 set(JAKT_AK_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "jakt_ak_source_dir")
 
-set(IMPORTED_AK_SOURCES
-    ${JAKT_AK_SOURCE_DIR}/AK/Assertions.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/Base64.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/DeprecatedFlyString.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/DeprecatedString.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/FloatingPointStringConversions.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/FlyString.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/Format.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/FuzzyMatch.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/GenericLexer.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/Hex.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/JsonParser.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/JsonPath.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/JsonValue.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/LexicalPath.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/Random.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/StackInfo.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/String.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/StringBuilder.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/StringFloatingPointConversions.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/StringImpl.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/StringUtils.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/StringView.cpp
-    # Note: Does not build on windows right now, but not needed by the runtime anyway.
-    # ${JAKT_AK_SOURCE_DIR}/AK/Time.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/URL.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/URLParser.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/UUID.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/Utf16View.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/Utf8View.cpp
-    ${JAKT_AK_SOURCE_DIR}/AK/kmalloc.cpp
-)
+# Needed by AK's CMakeLists.
+function(serenity_install_headers name)
+endfunction()
+function(serenity_install_sources name)
+endfunction()
+
+add_subdirectory(${JAKT_AK_SOURCE_DIR}/AK)
+
+if(CMAKE_HOST_WIN32)
+  list(FILTER AK_SOURCES EXCLUDE REGEX ".*Time.cpp") # None of these build on windows, but they're not necessary for the runtime anyway.
+endif()
+set(IMPORTED_AK_SOURCES ${AK_SOURCES})
 
 set(RUNTIME_SOURCES
     ${IMPORTED_AK_SOURCES}

@@ -100,6 +100,11 @@ unsigned FlyString::hash() const
     return String::fly_string_data_to_hash({}, m_data);
 }
 
+u32 FlyString::ascii_case_insensitive_hash() const
+{
+    return case_insensitive_string_hash(reinterpret_cast<char const*>(bytes().data()), bytes().size());
+}
+
 FlyString::operator String() const
 {
     return to_string();
@@ -176,6 +181,11 @@ ErrorOr<FlyString> FlyString::from_deprecated_fly_string(DeprecatedFlyString con
 unsigned Traits<FlyString>::hash(FlyString const& fly_string)
 {
     return fly_string.hash();
+}
+
+int FlyString::operator<=>(FlyString const& other) const
+{
+    return bytes_as_string_view().compare(other.bytes_as_string_view());
 }
 
 ErrorOr<void> Formatter<FlyString>::format(FormatBuilder& builder, FlyString const& fly_string)

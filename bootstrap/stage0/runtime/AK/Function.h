@@ -56,6 +56,14 @@ public:
     using FunctionType = Out(In...);
     using ReturnType = Out;
 
+#ifdef KERNEL
+    constexpr static auto AccommodateExcessiveAlignmentRequirements = false;
+    constexpr static size_t ExcessiveAlignmentThreshold = alignof(void*);
+#else
+    constexpr static auto AccommodateExcessiveAlignmentRequirements = true;
+    constexpr static size_t ExcessiveAlignmentThreshold = 16;
+#endif
+
     Function() = default;
     Function(nullptr_t)
     {
@@ -234,10 +242,17 @@ private:
     template<typename Callable>
     void init_with_callable(Callable&& callable, CallableKind callable_kind)
     {
+        if constexpr (alignof(Callable) > ExcessiveAlignmentThreshold && !AccommodateExcessiveAlignmentRequirements) {
+            static_assert(
+                alignof(Callable) <= ExcessiveAlignmentThreshold,
+                "This callable object has a very large alignment requirement, "
+                "check your capture list if it is a lambda expression, "
+                "and make sure your callable object is not excessively aligned.");
+        }
         VERIFY(m_call_nesting_level == 0);
         using WrapperType = CallableWrapper<Callable>;
 #ifndef KERNEL
-        if constexpr (sizeof(WrapperType) > inline_capacity) {
+        if constexpr (alignof(Callable) > inline_alignment || sizeof(WrapperType) > inline_capacity) {
             *bit_cast<CallableWrapperBase**>(&m_storage) = new WrapperType(forward<Callable>(callable));
             m_kind = FunctionKind::Outline;
         } else {
@@ -281,16 +296,16 @@ private:
     bool m_deferred_clear { false };
     mutable Atomic<u16> m_call_nesting_level { 0 };
 
+    static constexpr size_t inline_alignment = max(alignof(CallableWrapperBase), alignof(CallableWrapperBase*));
 #ifndef KERNEL
     // Empirically determined to fit most lambdas and functions.
     static constexpr size_t inline_capacity = 4 * sizeof(void*);
-    alignas(__BIGGEST_ALIGNMENT__) u8 m_storage[inline_capacity];
 #else
     // FIXME: Try to decrease this.
     static constexpr size_t inline_capacity = 6 * sizeof(void*);
-    // In the Kernel nothing has an alignment > alignof(void*).
-    alignas(alignof(void*)) u8 m_storage[inline_capacity];
 #endif
+
+    alignas(inline_alignment) u8 m_storage[inline_capacity];
 };
 
 }
