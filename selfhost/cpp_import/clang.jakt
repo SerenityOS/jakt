@@ -203,6 +203,13 @@ fn function_names_from(cursor: CXCursor) throws -> (String, ExternalName?) {
     return (name, extern_name)
 }
 
+enum ScopeSemanticParent {
+    name: String
+
+    Namespace
+    Record
+}
+
 struct TemplateParameters {
     params: [CheckedGenericParameter]
     defaults: [TypeId?]
@@ -1779,14 +1786,45 @@ class CppImportProcessor {
 
         mut super_struct_ids: [StructId] = []
         for base in bases {
-            match program.get_type(.cached_type_of_cursor(
+            mut base_scope_id = parent_scope_id
+            visit(
+                base
+                fn[&mut base_scope_id, &mut program](
+                    anon cursor: CXCursor
+                    anon parent: CXCursor
+                ) throws -> CXChildVisitResult {
+                    match clang_getCursorKind(cursor) {
+                        CXCursor_NamespaceRef => {
+                            let name = name_from(cursor)
+                            let scope = program.get_scope(base_scope_id)
+                            let result = program.find_namespace_in_scope(
+                                scope_id: base_scope_id
+                                name
+                            )
+                            if result.has_value() {
+                                base_scope_id = result!.0
+                            } else {
+                                // :shrug:
+                                return CXChildVisitResult::CXChildVisit_Break
+                            }
+                        }
+                        else => {}
+                    }
+                    return CXChildVisitResult::CXChildVisit_Continue
+                }
+            )
+
+            let type = program.get_type(.cached_type_of_cursor(
                 cursor: base
                 &mut program
-                scope_id: parent_scope_id
+                scope_id: base_scope_id
                 module_id
-            )) {
+            ))
+            match type {
                 GenericInstance(id) | Struct(id) => { super_struct_ids.push(id) }
-                else => {}
+                else => {
+                    eprintln("[ICE] Base type of {} is not a struct or generic instance: {}", specialized_name, type)
+                }
             }
         }
 
