@@ -91,7 +91,7 @@ fn find_symbols_in_namespace(anon namespace_: ParsedNamespace) throws -> [JaktSy
         symbols.push_values(&find_symbols_in_namespace(sub_namespace))
     }
 
-    if not namespace_.name_span.has_value() {
+    guard namespace_.name_span.has_value() and namespace_.name.has_value() else {
         // anonymous namespaces just return the symbols contained
         return symbols
     }
