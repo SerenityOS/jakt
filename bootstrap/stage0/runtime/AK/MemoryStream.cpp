@@ -12,8 +12,9 @@
 
 namespace AK {
 
-FixedMemoryStream::FixedMemoryStream(Bytes bytes)
+FixedMemoryStream::FixedMemoryStream(Bytes bytes, bool writing_enabled)
     : m_bytes(bytes)
+    , m_writing_enabled(writing_enabled)
 {
 }
 
@@ -81,10 +82,10 @@ ErrorOr<size_t> FixedMemoryStream::seek(i64 offset, SeekMode seek_mode)
         m_offset += offset;
         break;
     case SeekMode::FromEndPosition:
-        if (offset > static_cast<i64>(m_bytes.size()))
+        if (-offset > static_cast<i64>(m_bytes.size()))
             return Error::from_string_view_or_print_error_and_return_errno("Offset past the start of the stream memory"sv, EINVAL);
 
-        m_offset = m_bytes.size() - offset;
+        m_offset = m_bytes.size() + offset;
         break;
     }
     return m_offset;
@@ -92,7 +93,11 @@ ErrorOr<size_t> FixedMemoryStream::seek(i64 offset, SeekMode seek_mode)
 
 ErrorOr<size_t> FixedMemoryStream::write_some(ReadonlyBytes bytes)
 {
-    VERIFY(m_writing_enabled);
+    // MemoryStream isn't based on file-descriptors, but since most other
+    // Stream implementations are, the interface specifies EBADF as the
+    // "we don't support this particular operation" error code.
+    if (!m_writing_enabled)
+        return Error::from_errno(EBADF);
 
     // FIXME: Can this not error?
     auto const nwritten = bytes.copy_trimmed_to(m_bytes.slice(m_offset));

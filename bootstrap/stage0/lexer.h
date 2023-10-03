@@ -5,37 +5,6 @@
 #include "compiler.h"
 namespace Jakt {
 namespace lexer {
-struct LiteralSuffix {
-u8 __jakt_variant_index = 0;
-union VariantData {
-u8 __jakt_uninit_value;
-constexpr VariantData() {}
-~VariantData() {}
-} as;
-constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
-[[nodiscard]] static LiteralSuffix None();
-[[nodiscard]] static LiteralSuffix UZ();
-[[nodiscard]] static LiteralSuffix U8();
-[[nodiscard]] static LiteralSuffix U16();
-[[nodiscard]] static LiteralSuffix U32();
-[[nodiscard]] static LiteralSuffix U64();
-[[nodiscard]] static LiteralSuffix I8();
-[[nodiscard]] static LiteralSuffix I16();
-[[nodiscard]] static LiteralSuffix I32();
-[[nodiscard]] static LiteralSuffix I64();
-[[nodiscard]] static LiteralSuffix F32();
-[[nodiscard]] static LiteralSuffix F64();
-~LiteralSuffix();
-LiteralSuffix& operator=(LiteralSuffix const &);
-LiteralSuffix& operator=(LiteralSuffix &&);
-LiteralSuffix(LiteralSuffix const&);
-LiteralSuffix(LiteralSuffix &&);
-private: void __jakt_destroy_variant();
-public:
-ErrorOr<DeprecatedString> to_string() const;
-private:
-LiteralSuffix() {};
-};
 struct Lexer {
   public:
 public: size_t index;public: JaktInternal::DynamicArray<u8> input;public: NonnullRefPtr<compiler::Compiler> compiler;public: JaktInternal::Optional<JaktInternal::DynamicArray<u8>> comment_contents;public: JaktInternal::Set<DeprecatedString> illegal_cpp_keywords;public: ErrorOr<JaktInternal::Optional<DeprecatedString>> consume_comment_contents();
@@ -94,6 +63,37 @@ public:
 ErrorOr<DeprecatedString> to_string() const;
 private:
 LiteralPrefix() {};
+};
+struct LiteralSuffix {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
+[[nodiscard]] static LiteralSuffix None();
+[[nodiscard]] static LiteralSuffix UZ();
+[[nodiscard]] static LiteralSuffix U8();
+[[nodiscard]] static LiteralSuffix U16();
+[[nodiscard]] static LiteralSuffix U32();
+[[nodiscard]] static LiteralSuffix U64();
+[[nodiscard]] static LiteralSuffix I8();
+[[nodiscard]] static LiteralSuffix I16();
+[[nodiscard]] static LiteralSuffix I32();
+[[nodiscard]] static LiteralSuffix I64();
+[[nodiscard]] static LiteralSuffix F32();
+[[nodiscard]] static LiteralSuffix F64();
+~LiteralSuffix();
+LiteralSuffix& operator=(LiteralSuffix const &);
+LiteralSuffix& operator=(LiteralSuffix &&);
+LiteralSuffix(LiteralSuffix const&);
+LiteralSuffix(LiteralSuffix &&);
+private: void __jakt_destroy_variant();
+public:
+ErrorOr<DeprecatedString> to_string() const;
+private:
+LiteralSuffix() {};
 };
 struct Token {
 u8 __jakt_variant_index = 0;
@@ -574,12 +574,6 @@ Token() {};
 };
 }
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::lexer::LiteralSuffix> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralSuffix const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::lexer::Lexer> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::Lexer const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
@@ -588,6 +582,12 @@ namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::lexer::LiteralPrefix> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralPrefix const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::lexer::LiteralSuffix> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralSuffix const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

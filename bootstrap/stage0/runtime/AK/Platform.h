@@ -17,6 +17,12 @@
 #    define AK_IS_ARCH_X86_64() 0
 #endif
 
+#if defined(__i386__) && !defined(__x86_64__)
+#    define AK_IS_ARCH_I386() 1
+#else
+#    define AK_IS_ARCH_I386() 0
+#endif
+
 #ifdef __aarch64__
 #    define AK_IS_ARCH_AARCH64() 1
 #else
@@ -45,6 +51,13 @@
 #    define AK_COMPILER_CLANG
 #elif defined(__GNUC__)
 #    define AK_COMPILER_GCC
+#endif
+
+#if defined(__GLIBC__)
+#    define AK_LIBC_GLIBC
+#    define AK_LIBC_GLIBC_PREREQ(maj, min) __GLIBC_PREREQ((maj), (min))
+#else
+#    define AK_LIBC_GLIBC_PREREQ(maj, min) 0
 #endif
 
 #if defined(__serenity__)
@@ -85,6 +98,14 @@
 #    define AK_OS_SOLARIS
 #endif
 
+#if defined(__HAIKU__)
+#    define AK_OS_HAIKU
+#endif
+
+#if defined(__gnu_hurd__)
+#    define AK_OS_GNU_HURD
+#endif
+
 #if defined(_WIN32) || defined(_WIN64)
 #    define AK_OS_WINDOWS
 #endif
@@ -107,7 +128,7 @@
 
 #define ARCH(arch) (AK_IS_ARCH_##arch())
 
-#if ARCH(X86_64)
+#if ARCH(X86_64) || ARCH(I386)
 #    define VALIDATE_IS_X86()
 #else
 #    define VALIDATE_IS_X86() static_assert(false, "Trying to include x86 only header on non x86 platform");
@@ -212,7 +233,7 @@
 #    define CLOCK_MONOTONIC_COARSE CLOCK_MONOTONIC
 #endif
 
-#if defined(AK_OS_BSD_GENERIC) && !defined(AK_OS_FREEBSD)
+#if defined(AK_OS_BSD_GENERIC) && !defined(AK_OS_FREEBSD) || defined(AK_OS_HAIKU)
 #    define CLOCK_MONOTONIC_COARSE CLOCK_MONOTONIC
 #    define CLOCK_REALTIME_COARSE CLOCK_REALTIME
 #endif
