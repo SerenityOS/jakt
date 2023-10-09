@@ -31,36 +31,30 @@ fn make_directory(path: String) throws {
 }
 
 fn real_path(anon path: String) throws -> String {
-    let buffer_size : i32 = 4096; // Roughly PATH_MAX
-    mut buffer = allocate<c_char>(count: buffer_size as! usize + 1)
+    let buffer = _fullpath(abs_path: null<c_char>(), rel_path: path.c_string(), max_length: 0)
+    if buffer == null<c_char>() {
+        throw Error::from_errno(errno_value())
+    }
     defer {
         unsafe { cpp { "free(buffer);" } }
     }
 
-    let buf = _fullpath(abs_path: buffer, rel_path: path.c_string(), max_length: buffer_size)
-    if buf == null<c_char>() {
-        throw Error::from_errno(errno_value())
-    }
-
     mut b = StringBuilder::create()
-    b.append_c_string(buf)
+    b.append_c_string(buffer)
     return b.to_string()
 }
 
 fn current_directory() throws -> String {
-    let buffer_size : i32 = 4096; // Roughly PATH_MAX
-    mut buffer = allocate<c_char>(count: buffer_size as! usize + 1)
+    let buffer = _getcwd(buffer: null<c_char>(), maxlen: 0)
+    if buffer == null<c_char>() {
+        throw Error::from_errno(errno_value())
+    }
     defer {
         unsafe { cpp { "free(buffer);" } }
     }
 
-    let buf = _getcwd(buffer, buffer_size)
-    if buf == null<c_char>() {
-        throw Error::from_errno(errno_value())
-    }
-
     mut b = StringBuilder::create()
-    b.append_c_string(buf)
+    b.append_c_string(buffer)
     return b.to_string()
 }
 
