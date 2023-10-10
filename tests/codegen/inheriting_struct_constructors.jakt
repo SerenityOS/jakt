@@ -1,0 +1,15 @@
+/// Expect:
+/// - output: ""
+
+// reported by #1486.
+
+struct Base {
+    value: i32
+}
+
+struct Derived: Base {
+}
+
+fn main() {
+    let x = Derived(value: 5)
+}

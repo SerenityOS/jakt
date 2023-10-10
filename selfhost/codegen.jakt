@@ -4763,7 +4763,8 @@ struct CodeGenerator {
             output += ">\n"
         }
 
-        if structure.record_type is Class {
+
+        if structure.record_type is Class or structure.record_type is Struct {
             if is_inline {
                 output += function.name_for_codegen().as_name_for_definition()
                 output += "("
@@ -4816,64 +4817,67 @@ struct CodeGenerator {
 
             output += "{}\n"
 
-            mut class_name_with_generics = ""
-            class_name_with_generics += structure.name_for_codegen().as_name_for_definition()
+            if structure.record_type is Class {
 
-            first = true
-            for generic_parameter in structure.generic_parameters {
-                if not first {
-                    class_name_with_generics += ", "
-                } else {
-                    class_name_with_generics += "<"
-                    first = false
+                mut class_name_with_generics = ""
+                class_name_with_generics += structure.name_for_codegen().as_name_for_definition()
+
+                first = true
+                for generic_parameter in structure.generic_parameters {
+                    if not first {
+                        class_name_with_generics += ", "
+                    } else {
+                        class_name_with_generics += "<"
+                        first = false
+                    }
+
+                    class_name_with_generics += .codegen_type(generic_parameter.type_id)
+                }
+                if not structure.generic_parameters.is_empty() {
+                    class_name_with_generics += ">"
                 }
 
-                class_name_with_generics += .codegen_type(generic_parameter.type_id)
-            }
-            if not structure.generic_parameters.is_empty() {
-                class_name_with_generics += ">"
-            }
-
-            if is_inline {
-                output += "static "
-            }
-
-            let qualified_namespace = match is_inline {
-                true => ""
-                false => qualified_name + "::"
-            }
-            output += format("ErrorOr<NonnullRefPtr<{}>> {}__jakt_create", class_name_with_generics, qualified_namespace)
-            output += "("
-
-            first = true
-            for param in function.params {
-                if not first {
-                    output += ", "
-                } else {
-                    first = false
+                if is_inline {
+                    output += "static "
                 }
 
-                output += .codegen_type(param.variable.type_id)
-                output += " "
-                output += param.variable.name_for_codegen().as_name_for_definition()
-            }
+                let qualified_namespace = match is_inline {
+                    true => ""
+                    false => qualified_name + "::"
+                }
+                output += format("ErrorOr<NonnullRefPtr<{}>> {}__jakt_create", class_name_with_generics, qualified_namespace)
+                output += "("
 
-            output += format(") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", .current_error_handler(), class_name_with_generics)
+                first = true
+                for param in function.params {
+                    if not first {
+                        output += ", "
+                    } else {
+                        first = false
+                    }
 
-            first = true
-            for param in function.params {
-                if not first {
-                    output += ", "
-                } else {
-                    first = false
+                    output += .codegen_type(param.variable.type_id)
+                    output += " "
+                    output += param.variable.name_for_codegen().as_name_for_definition()
                 }
 
-                output += "move("
-                output += param.variable.name_for_codegen().as_name_for_use()
-                output += ")"
-            }
+                output += format(") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", .current_error_handler(), class_name_with_generics)
 
-            output += "))); return o; }"
+                first = true
+                for param in function.params {
+                    if not first {
+                        output += ", "
+                    } else {
+                        first = false
+                    }
+
+                    output += "move("
+                    output += param.variable.name_for_codegen().as_name_for_use()
+                    output += ")"
+                }
+
+                output += "))); return o; }"
+            }
 
             return output
         }
