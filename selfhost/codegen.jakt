@@ -2732,6 +2732,8 @@ struct CodeGenerator {
                                 cast_type = "infallible_integer_cast"
                             } else if type is Enum(enum_id) and .program.is_integer(.program.get_enum(enum_id).underlying_type_id) {
                                 cast_type = "infallible_enum_cast"
+                            } else if type is RawPtr(inner) {
+                                cast_type = "reinterpret_cast"
                             }
                             yield cast_type
                         }
