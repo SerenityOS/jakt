@@ -1,6 +1,6 @@
 import jakt::path { Path }
 import jakt::platform { platform_module, platform_errno }
-import platform_errno() { errno_value }
+import platform_errno() { errno_value, erange_value }
 import utility { allocate, null }
 
 import extern c "sys/stat.h" {
@@ -37,36 +37,43 @@ fn make_directory(path: String) throws {
 }
 
 fn current_directory() throws -> String {
-    let buffer_size : usize = 4096; // Roughly PATH_MAX
-    mut buffer = allocate<c_char>(count: buffer_size  + 1)
-    defer {
-        unsafe { cpp { "free(buffer);" } }
-    }
+    // Initial guess at path length, resembles PATH_MAX and the page-size of some systems
+    mut buffer_size : usize = 4096;
+    loop {
+        mut buffer = allocate<c_char>(count: buffer_size)
+        defer {
+            unsafe { cpp { "free(buffer);" } }
+        }
 
-    let buf = getcwd(buffer, buffer_size)
-    if buf == null<c_char>() {
-        throw Error::from_errno(errno_value())
-    }
+        let buf = getcwd(buffer, buffer_size)
+        if buf == null<c_char>() {
+            let getcwd_errno = errno_value()
+            if getcwd_errno == erange_value() {
+                // grow buffer and try again
+                buffer_size *= 2
+                continue
+            } else {
+               throw Error::from_errno(getcwd_errno)
+            }
+        }
 
-    mut b = StringBuilder::create()
-    b.append_c_string(buf)
-    return b.to_string()
+        mut b = StringBuilder::create()
+        b.append_c_string(buf)
+        return b.to_string()
+    }
 }
 
 fn real_path(anon path: String) throws -> String {
-    let buffer_size : usize = 4096; // Roughly PATH_MAX
-    mut buffer = allocate<c_char>(count: buffer_size  + 1)
+    let buffer = realpath(path: path.c_string(), resolved_path: null<c_char>())
+    if buffer == null<c_char>() {
+        throw Error::from_errno(errno_value())
+    }
     defer {
         unsafe { cpp { "free(buffer);" } }
     }
 
-    let buf = realpath(path: path.c_string(), resolved_path: buffer)
-    if buf == null<c_char>() {
-        throw Error::from_errno(errno_value())
-    }
-
     mut b = StringBuilder::create()
-    b.append_c_string(buf)
+    b.append_c_string(buffer)
     return b.to_string()
 }
 
