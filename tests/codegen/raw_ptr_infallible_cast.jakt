@@ -1,0 +1,27 @@
+/// Expect:
+/// - output: ""
+
+class Class1 {}
+struct Struct1 {}
+enum UnboxedEnum { Foo }
+boxed enum BoxedEnum { Foo }
+
+// Codegen should emit a `reinterpret_cast<Type *>(ptr)` for each of these
+// and the generated code should compile.
+fn main() {
+    // the `mut` here is sensible: output is char *, not char *const.
+    mut foo: raw c_char = 0uz as! raw c_char
+    let as_class1 = foo as! raw Class1
+    let as_struct1 = foo as! raw Struct1
+    let as_unboxed_enum = foo as! raw UnboxedEnum
+    let as_boxed_enum = foo as! raw BoxedEnum
+    unsafe {
+        cpp {
+            "static_assert(IsSame<decltype(foo), char *>);"
+            "static_assert(IsSame<decltype(as_class1), Class1 *const>);"
+            "static_assert(IsSame<decltype(as_struct1), Struct1 *const>);"
+            "static_assert(IsSame<decltype(as_unboxed_enum), UnboxedEnum *const>);"
+            "static_assert(IsSame<decltype(as_boxed_enum), BoxedEnum *const>);"
+        }
+    }
+}
