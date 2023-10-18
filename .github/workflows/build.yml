@@ -22,6 +22,6 @@ jobs:
       - run: cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-15
       - run: ls
       - uses: actions/upload-artifact@v3
-       with:
-      name: jakt
-      path: build
+        with:
+          name: jakt
+          path: build
