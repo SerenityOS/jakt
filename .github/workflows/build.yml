@@ -17,6 +17,6 @@ jobs:
       - run: sudo apt-get install gpg wget
       - run: wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
       - run: echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ focal main' | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
-      - run: sudo apt-get install libclang-14-dev
+      - run: sudo apt-get install libclang-15-dev
       - run: sudo apt-get install cmake
-      - run: cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-14 
+      - run: cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-15
