@@ -10,16 +10,16 @@ jobs:
       - run: ls
       - run: wget https://apt.llvm.org/llvm.sh
       - run: chmod +x llvm.sh
-      - run: sudo ./llvm.sh 14
+      - run: sudo ./llvm.sh 15
       - uses: actions/checkout@v2
       - run: sudo apt-get install ninja-build  
       - run: sudo apt-get update
       - run: sudo apt-get install gpg wget
       - run: wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
       - run: echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ focal main' | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
-      - run: sudo apt-get install libclang-14-dev
+      - run: sudo apt-get install libclang-15-dev
       - run: sudo apt-get install cmake
-      - run: cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-14
+      - run: cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-15
       - run: ls
       - uses: actions/upload-artifact@v3
         with:
