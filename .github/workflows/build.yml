@@ -20,6 +20,7 @@ jobs:
       - run: sudo apt-get install libclang-15-dev
       - run: sudo apt-get install cmake
       - run: cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-15
+      - run: sudo cmake --build build
       - run: tar -czvf jakt.tar.gz build
       - run: ls
       - uses: actions/upload-artifact@v3
