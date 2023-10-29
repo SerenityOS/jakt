@@ -1,4 +1,4 @@
-name: Build LibClang for Windows
+name: Build for Windows
 
 on:
   workflow_dispatch:
@@ -48,3 +48,11 @@ jobs:
       with:
         path: 'llvm-install-${{ env.LLVM_VER }}/'
         key: 'libclang-${{ runner.os }}-${{ env.LLVM_VER }}'
+    - name: build
+      uses: actions/checkout@v3
+    - run: cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-15
+    - run: cmake --build build
+    - uses: actions/upload-artifact@v3
+      with:
+          name: jakt
+          path: build
