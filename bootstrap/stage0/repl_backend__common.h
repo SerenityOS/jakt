@@ -2,29 +2,6 @@
 #include "__unified_forward.h"
 namespace Jakt {
 namespace repl_backend__common {
-struct LineResult {
-u8 __jakt_variant_index = 0;
-union VariantData {
-u8 __jakt_uninit_value;
-struct {
-DeprecatedString value;
-} Line;
-constexpr VariantData() {}
-~VariantData() {}
-} as;
-constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
-[[nodiscard]] static LineResult Line(DeprecatedString value);
-[[nodiscard]] static LineResult Eof();
-~LineResult();
-LineResult& operator=(LineResult const &);
-LineResult& operator=(LineResult &&);
-LineResult(LineResult const&);
-LineResult(LineResult &&);
-private: void __jakt_destroy_variant();
-public:
-private:
-LineResult() {};
-};
 struct XTermColor {
 u8 __jakt_variant_index = 0;
 union VariantData {
@@ -81,18 +58,35 @@ public:
 private:
 Color() {};
 };
+struct LineResult {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+struct {
+DeprecatedString value;
+} Line;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
+[[nodiscard]] static LineResult Line(DeprecatedString value);
+[[nodiscard]] static LineResult Eof();
+~LineResult();
+LineResult& operator=(LineResult const &);
+LineResult& operator=(LineResult &&);
+LineResult(LineResult const&);
+LineResult(LineResult &&);
+private: void __jakt_destroy_variant();
+public:
+private:
+LineResult() {};
+};
 struct Style {
   public:
 public: JaktInternal::Optional<repl_backend__common::Color> foreground;public: JaktInternal::Optional<repl_backend__common::Color> background;public: Style(JaktInternal::Optional<repl_backend__common::Color> a_foreground, JaktInternal::Optional<repl_backend__common::Color> a_background);
 
 public: ErrorOr<DeprecatedString> debug_description() const;
 };}
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::repl_backend__common::LineResult> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl_backend__common::LineResult const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::repl_backend__common::XTermColor> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl_backend__common::XTermColor const& value) {
@@ -102,6 +96,12 @@ namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::repl_backend__common::Color> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl_backend__common::Color const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::repl_backend__common::LineResult> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::repl_backend__common::LineResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

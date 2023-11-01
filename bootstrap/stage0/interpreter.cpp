@@ -1937,6 +1937,21 @@ TRY((((namespace_).push(((reversed_namespace)[JaktInternal::checked_sub(i,static
 }
 }
 
+NonnullRefPtr<types::CheckedFunction> const callee = ((((interpreter)->program))->get_function((constructor.value())));
+if ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) == (static_cast<u8>(2)));
+}
+}
+(((materialised_fields).size()),((((callee)->params)).size()))){
+TRY((((interpreter)->error_with_hint(TRY(DeprecatedString::from_utf8("Too many arguments for constructor"sv)),((this_value).span),TRY((__jakt_format((StringView::from_string_literal("Expected at most {} arguments, got {}"sv)),((((callee)->params)).size()),((materialised_fields).size())))),((this_value).span)))));
+return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::MismatchingArguments))));
+}
 DeprecatedString const name = ((struct_).name);
 JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,NonnullRefPtr<typename types::CheckedExpression>>> args = (TRY((DynamicArray<JaktInternal::Tuple<DeprecatedString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({}))));
 {
@@ -1949,14 +1964,13 @@ break;
 size_t i = (_magic_value.value());
 {
 NonnullRefPtr<typename types::CheckedExpression> const arg = ((materialised_fields)[i]);
-DeprecatedString const label = ((((((interpreter)->program))->get_variable(((((((struct_).fields))[i])).variable_id))))->name);
+DeprecatedString const label = ((((((((callee)->params))[i])).variable))->name);
 TRY((((args).push((Tuple{label, arg})))));
 }
 
 }
 }
 
-NonnullRefPtr<types::CheckedFunction> const callee = ((((interpreter)->program))->get_function((constructor.value())));
 types::CheckedCall const call = types::CheckedCall(namespace_,name,args,(TRY((DynamicArray<ids::TypeId>::create_with({})))),constructor,((struct_).type_id),((callee)->can_throw),JaktInternal::OptionalNone(),parser::InlineState::Default());
 __jakt_var_191 = TRY((types::CheckedExpression::Call(call,((this_value).span),((struct_).type_id)))); goto __jakt_label_177;
 
@@ -2014,6 +2028,21 @@ TRY((((namespace_).push(((reversed_namespace)[JaktInternal::checked_sub(i,static
 }
 }
 
+NonnullRefPtr<types::CheckedFunction> const callee = ((((interpreter)->program))->get_function((constructor.value())));
+if ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) == (static_cast<u8>(2)));
+}
+}
+(((materialised_fields).size()),((((callee)->params)).size()))){
+TRY((((interpreter)->error_with_hint(TRY(DeprecatedString::from_utf8("Too many arguments for constructor"sv)),((this_value).span),TRY((__jakt_format((StringView::from_string_literal("Expected at most {} arguments, got {}"sv)),((((callee)->params)).size()),((materialised_fields).size())))),((this_value).span)))));
+return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::MismatchingArguments))));
+}
 DeprecatedString const name = ((struct_).name);
 JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,NonnullRefPtr<typename types::CheckedExpression>>> args = (TRY((DynamicArray<JaktInternal::Tuple<DeprecatedString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({}))));
 {
@@ -2026,14 +2055,13 @@ break;
 size_t i = (_magic_value.value());
 {
 NonnullRefPtr<typename types::CheckedExpression> const arg = ((materialised_fields)[i]);
-DeprecatedString const label = ((((((interpreter)->program))->get_variable(((((((struct_).fields))[i])).variable_id))))->name);
+DeprecatedString const label = ((((((((callee)->params))[i])).variable))->name);
 TRY((((args).push((Tuple{label, arg})))));
 }
 
 }
 }
 
-NonnullRefPtr<types::CheckedFunction> const callee = ((((interpreter)->program))->get_function((constructor.value())));
 types::CheckedCall const call = types::CheckedCall(namespace_,name,args,(TRY((DynamicArray<ids::TypeId>::create_with({})))),constructor,((struct_).type_id),((callee)->can_throw),JaktInternal::OptionalNone(),parser::InlineState::Default());
 __jakt_var_192 = TRY((types::CheckedExpression::Call(call,((this_value).span),((struct_).type_id)))); goto __jakt_label_178;
 
@@ -2400,6 +2428,39 @@ if (((bindings).contains(((pair).template get<0>())))){
 continue;
 }
 TRY((((bindings).set(((pair).template get<0>()),((pair).template get<1>())))));
+}
+
+}
+}
+
+{
+JaktInternal::ArrayIterator<ids::ScopeId> _magic = ((((scope)->resolution_mixins)).iterator());
+for (;;){
+JaktInternal::Optional<ids::ScopeId> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+ids::ScopeId mixin = (_magic_value.value());
+{
+NonnullRefPtr<types::Scope> const mixin_scope = TRY((((program)->get_scope(mixin))));
+{
+JaktInternal::DictionaryIterator<DeprecatedString,types::Value> _magic = ((((mixin_scope)->comptime_bindings)).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<DeprecatedString,types::Value>> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<DeprecatedString,types::Value> pair = (_magic_value.value());
+{
+if (((bindings).contains(((pair).template get<0>())))){
+continue;
+}
+TRY((((bindings).set(((pair).template get<0>()),((pair).template get<1>())))));
+}
+
+}
+}
+
 }
 
 }
@@ -3769,7 +3830,7 @@ __jakt_label_194:; __jakt_var_208.release_value(); }));
 }
 else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("as_saturated"sv))) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_209; {
-NonnullRefPtr<types::CheckedFunction> const function = ((((*this).program))->get_function((((TRY((((((*this).program))->find_functions_with_name_in_scope(((((*this).program))->prelude_scope_id()),TRY(DeprecatedString::from_utf8("as_saturated"sv)),false)))).value()))[static_cast<i64>(0LL)])));
+NonnullRefPtr<types::CheckedFunction> const function = ((((*this).program))->get_function((((TRY((((((*this).program))->find_functions_with_name_in_scope(((((*this).program))->prelude_scope_id()),TRY(DeprecatedString::from_utf8("as_saturated"sv)),false,false)))).value()))[static_cast<i64>(0LL)])));
 JaktInternal::Optional<ids::TypeId> const output_type_id = ((type_bindings).get(((((((((function)->generics))->params))[static_cast<i64>(0LL)])).type_id())));
 __jakt_var_209 = interpreter::StatementResult::JustValue(TRY((interpreter::cast_value_to_type(((arguments)[static_cast<i64>(0LL)]),(output_type_id.value()),*this,true)))); goto __jakt_label_195;
 
@@ -4537,8 +4598,7 @@ return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretEr
 jakt__path::Path const path = TRY((((TRY(((((TRY((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))))).value())).parent())))).join(requested_path))));
 types::Value const path_value = types::Value(TRY((types::ValueImpl::JaktString(((path).to_string())))),call_span);
 if ((!(((path).exists())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `File::{}` could not find file at path {}"sv)),prelude_function,((path).to_string())))),call_span))));
-return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
+return interpreter::StatementResult::Throw(TRY((((*this).error_value(TRY((__jakt_format((StringView::from_string_literal("Could not find file at path {}"sv)),((path).to_string())))),call_span)))));
 }
 ids::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(TRY(DeprecatedString::from_utf8("File"sv))))));
 types::CheckedStruct const file_struct = ((((*this).program))->get_struct(file_struct_id));
@@ -4575,8 +4635,7 @@ return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretEr
 jakt__path::Path const path = TRY((((TRY(((((TRY((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))))).value())).parent())))).join(requested_path))));
 types::Value const path_value = types::Value(TRY((types::ValueImpl::JaktString(((path).to_string())))),call_span);
 if ((!(((path).exists())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `File::{}` could not find file at path {}"sv)),prelude_function,((path).to_string())))),call_span))));
-return Error::from_errno((infallible_integer_cast<i32>((interpreter::InterpretError::InvalidType))));
+return interpreter::StatementResult::Throw(TRY((((*this).error_value(TRY((__jakt_format((StringView::from_string_literal("Could not find file at path {}"sv)),((path).to_string())))),call_span)))));
 }
 ids::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(TRY(DeprecatedString::from_utf8("File"sv))))));
 types::CheckedStruct const file_struct = ((((*this).program))->get_struct(file_struct_id));
@@ -10393,7 +10452,7 @@ VERIFY_NOT_REACHED();
     _jakt_value.release_value();
 });
 ids::StructId const range_struct_id = TRY((((((*this).program))->find_struct_in_prelude(TRY(DeprecatedString::from_utf8("Range"sv))))));
-JaktInternal::DynamicArray<ids::FunctionId> const range_constructors = (TRY((((((*this).program))->find_functions_with_name_in_scope(((((((*this).program))->get_struct(range_struct_id))).scope_id),TRY(DeprecatedString::from_utf8("Range"sv)),false)))).value());
+JaktInternal::DynamicArray<ids::FunctionId> const range_constructors = (TRY((((((*this).program))->find_functions_with_name_in_scope(((((((*this).program))->get_struct(range_struct_id))).scope_id),TRY(DeprecatedString::from_utf8("Range"sv)),false,false)))).value());
 __jakt_var_348 = interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::Struct((TRY((DynamicArray<types::Value>::create_with({start, end})))),range_struct_id,((range_constructors)[static_cast<i64>(0LL)])))),span)); goto __jakt_label_334;
 
 }
@@ -12963,7 +13022,7 @@ TRY((((checked_params).push(types::CheckedParameter(((param).requires_label),TRY
 }
 }
 
-types::CheckedBlock const fixed_block = TRY((((*this).perform_final_interpretation_pass(block,scope_id,TRY((interpreter::InterpreterScope::create((TRY((Dictionary<DeprecatedString, types::Value>::create_with_entries({})))),scope,(TRY((Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({})))))))))));
+types::CheckedBlock const fixed_block = TRY((((*this).perform_final_interpretation_pass(block,scope_id,TRY((interpreter::InterpreterScope::create(resolved_captures,scope,(TRY((Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({})))))))))));
 __jakt_var_384 = interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::Function(resolved_captures,resolved_params,TRY((((((*this).program))->substitute_typevars_in_type(return_type_id,type_map,((return_type_id).module))))),TRY((((((*this).program))->substitute_typevars_in_type(type_id,type_map,((type_id).module))))),fixed_block,can_throw,checked_params,scope_id,pseudo_function_id))),span)); goto __jakt_label_368;
 
 }
@@ -13024,7 +13083,7 @@ TRY((((checked_params).push(types::CheckedParameter(((param).requires_label),TRY
 }
 }
 
-types::CheckedBlock const fixed_block = TRY((((*this).perform_final_interpretation_pass(block,scope_id,TRY((interpreter::InterpreterScope::create((TRY((Dictionary<DeprecatedString, types::Value>::create_with_entries({})))),scope,(TRY((Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({})))))))))));
+types::CheckedBlock const fixed_block = TRY((((*this).perform_final_interpretation_pass(block,scope_id,TRY((interpreter::InterpreterScope::create(resolved_captures,scope,(TRY((Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({})))))))))));
 __jakt_var_385 = interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::Function(resolved_captures,resolved_params,TRY((((((*this).program))->substitute_typevars_in_type(return_type_id,type_map,((return_type_id).module))))),TRY((((((*this).program))->substitute_typevars_in_type(type_id,type_map,((type_id).module))))),fixed_block,can_throw,checked_params,scope_id,pseudo_function_id))),span)); goto __jakt_label_369;
 
 }
@@ -20142,6 +20201,14 @@ ErrorOr<ids::TypeId> interpreter::Interpreter::tuple_type(JaktInternal::DynamicA
 ids::StructId const tuple_struct_id = TRY((((((*this).program))->find_struct_in_prelude(TRY(DeprecatedString::from_utf8("Tuple"sv))))));
 NonnullRefPtr<typename types::Type> const type = TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),tuple_struct_id,members)));
 return TRY((((*this).find_or_add_type_id(type))));
+}
+}
+
+ErrorOr<types::Value> interpreter::Interpreter::error_value(DeprecatedString const string,utility::Span const span) {
+{
+ids::StructId const struct_id = TRY((((((*this).program))->find_struct_in_prelude(TRY(DeprecatedString::from_utf8("Error"sv))))));
+ids::FunctionId const constructor = (TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_struct(struct_id))).scope_id),TRY(DeprecatedString::from_utf8("from_string_literal"sv)))))).value());
+return types::Value(TRY((types::ValueImpl::Struct((TRY((DynamicArray<types::Value>::create_with({TRY((((*this).string_value(string,span))))})))),struct_id,constructor))),span);
 }
 }
 

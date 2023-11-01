@@ -1,7 +1,7 @@
 import jakt::path { Path }
 import jakt::platform { platform_module, platform_errno }
-import platform_errno() { errno_value }
-import utility { allocate, null }
+import platform_errno() { errno_value, erange_value }
+import jakt::platform::utility { allocate, null }
 
 import extern c "sys/stat.h" {
     extern fn mkdir(anon pathname: raw c_char, anon mode: u32) -> c_int
@@ -37,36 +37,43 @@ fn make_directory(path: String) throws {
 }
 
 fn current_directory() throws -> String {
-    let buffer_size : usize = 4096; // Roughly PATH_MAX
-    mut buffer = allocate<c_char>(count: buffer_size  + 1)
-    defer {
-        unsafe { cpp { "free(buffer);" } }
-    }
+    // Initial guess at path length, resembles PATH_MAX and the page-size of some systems
+    mut buffer_size : usize = 4096;
+    loop {
+        mut buffer = allocate<c_char>(count: buffer_size)
+        defer {
+            unsafe { cpp { "free(buffer);" } }
+        }
 
-    let buf = getcwd(buffer, buffer_size)
-    if buf == null<c_char>() {
-        throw Error::from_errno(errno_value())
-    }
+        let buf = getcwd(buffer, buffer_size)
+        if buf == null<raw c_char>() {
+            let getcwd_errno = errno_value()
+            if getcwd_errno == erange_value() {
+                // grow buffer and try again
+                buffer_size *= 2
+                continue
+            } else {
+               throw Error::from_errno(getcwd_errno)
+            }
+        }
 
-    mut b = StringBuilder::create()
-    b.append_c_string(buf)
-    return b.to_string()
+        mut b = StringBuilder::create()
+        b.append_c_string(buf)
+        return b.to_string()
+    }
 }
 
 fn real_path(anon path: String) throws -> String {
-    let buffer_size : usize = 4096; // Roughly PATH_MAX
-    mut buffer = allocate<c_char>(count: buffer_size  + 1)
+    let buffer = realpath(path: path.c_string(), resolved_path: null<raw c_char>())
+    if buffer == null<raw c_char>() {
+        throw Error::from_errno(errno_value())
+    }
     defer {
         unsafe { cpp { "free(buffer);" } }
     }
 
-    let buf = realpath(path: path.c_string(), resolved_path: buffer)
-    if buf == null<c_char>() {
-        throw Error::from_errno(errno_value())
-    }
-
     mut b = StringBuilder::create()
-    b.append_c_string(buf)
+    b.append_c_string(buffer)
     return b.to_string()
 }
 
@@ -77,7 +84,7 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
     public fn next(mut this) throws -> (Path, bool)? {
         let file = readdir(.dir_fd)
 
-        if file == null<dirent>() {
+        if file == null<raw dirent>() {
             closedir(.dir_fd)
 
             return None
@@ -110,10 +117,20 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
 
     public fn from_path(path: Path) throws -> DirectoryIterator? {
         let dir_fd = opendir(path.to_string().c_string())
-        if dir_fd == null<DIR>() {
+        if dir_fd == null<raw DIR>() {
             return None
         }
 
         return DirectoryIterator(path, dir_fd)
+    }
+}
+
+trait FSPath {
+    fn absolute(this) throws -> Path
+}
+
+type Path implements(FSPath) {
+    fn absolute(this) throws -> Path {
+        return Path::from_string(real_path(.to_string()))
     }
 }

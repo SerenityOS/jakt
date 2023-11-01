@@ -76,6 +76,10 @@ namespace build {
 struct Builder;
 struct ParallelExecutionPool;
 }
+namespace jakt__platform__utility {
+ErrorOr<DeprecatedString> join(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const separator);
+
+}
 namespace utility {
 struct Span;
 struct FileId;
@@ -359,8 +363,7 @@ ErrorOr<DeprecatedString> read_all(DeprecatedString const filename);
 
 }
 namespace cpp_import__none {
-ErrorOr<ids::ScopeId> process_cpp_import(NonnullRefPtr<types::CheckedProgram>& program, jakt__path::Path const import_path, ids::ScopeId const scope_id, bool const is_c, JaktInternal::Dictionary<DeprecatedString,DeprecatedString> const defines);
-
+struct CppImportProcessor;
 }
 namespace typechecker {
 template <typename K,typename V>struct InternalDictionaryProduct;
@@ -374,6 +377,8 @@ struct NumericOrStringValue;
 struct FunctionMatchResult;
 
 ErrorOr<JaktInternal::Dictionary<DeprecatedString,DeprecatedString>> defines_from(JaktInternal::DynamicArray<parser::IncludeAction> const actions);
+
+ErrorOr<void> dump_scope(ids::ScopeId const scope_id, NonnullRefPtr<types::CheckedProgram> const& program, i64 const indent);
 
 }
 namespace codegen {
@@ -515,6 +520,8 @@ ErrorOr<DeprecatedString> usage();
 ErrorOr<JaktInternal::DynamicArray<jakt__path::Path>> find_with_extension(jakt__path::Path const path, DeprecatedString const extension);
 
 ErrorOr<int> compiler_main(JaktInternal::DynamicArray<DeprecatedString> const args);
+
+ErrorOr<DeprecatedString> escape_for_depfile(DeprecatedString const input);
 
 ErrorOr<DeprecatedString> help();
 

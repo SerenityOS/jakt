@@ -20,7 +20,7 @@ public: ErrorOr<DeprecatedString> debug_description() const;
   public:
 public: JaktInternal::DynamicArray<DeprecatedString> linked_files;public: JaktInternal::DynamicArray<DeprecatedString> files_to_compile;public: build::ParallelExecutionPool pool;public: ErrorOr<void> link_into_executable(DeprecatedString const cxx_compiler_path, DeprecatedString const output_filename, JaktInternal::DynamicArray<DeprecatedString> const extra_arguments);
 public: static ErrorOr<build::Builder> for_building(JaktInternal::DynamicArray<DeprecatedString> const files, size_t const max_concurrent);
-public: ErrorOr<void> link_into_archive(DeprecatedString const archiver, DeprecatedString const archive_filename);
+public: ErrorOr<void> link_into_archive(DeprecatedString const archiver, DeprecatedString const archive_filename, JaktInternal::DynamicArray<DeprecatedString> const extra_arguments);
 public: Builder(JaktInternal::DynamicArray<DeprecatedString> a_linked_files, JaktInternal::DynamicArray<DeprecatedString> a_files_to_compile, build::ParallelExecutionPool a_pool);
 
 public: ErrorOr<void> build_all(jakt__path::Path const binary_dir, Function<ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>(DeprecatedString, DeprecatedString)> const& compiler_invocation);

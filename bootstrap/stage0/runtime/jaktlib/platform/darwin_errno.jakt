@@ -7,3 +7,10 @@ fn errno_value() -> i32 {
         return (*__error()) as! i32
     }
 }
+
+// FIXME: hacky helper until Jakt supports importing C macros
+fn erange_value() -> i32 {
+    mut erange: i32 = 0
+    unsafe { cpp { "erange = ERANGE;" } }
+    return erange
+}

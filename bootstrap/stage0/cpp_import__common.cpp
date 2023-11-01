@@ -41,7 +41,7 @@ return (StringView::from_string_literal("Could not find import path"sv));
 }
 }
 
-cpp_import__common::CppImportErrors::CppImportErrors() {}
+cpp_import__common::CppImportErrors::CppImportErrors(){}
 
 }
 } // namespace Jakt

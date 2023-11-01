@@ -7,7 +7,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("background: {}", background));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-repl_backend__common::Style::Style(JaktInternal::Optional<repl_backend__common::Color> a_foreground, JaktInternal::Optional<repl_backend__common::Color> a_background) :foreground(move(a_foreground)), background(move(a_background)){}
+repl_backend__common::Style::Style(JaktInternal::Optional<repl_backend__common::Color> a_foreground, JaktInternal::Optional<repl_backend__common::Color> a_background): foreground(move(a_foreground)), background(move(a_background)){}
 
 ErrorOr<DeprecatedString> repl_backend__common::LineResult::debug_description() const {
 auto builder = DeprecatedStringBuilder::create();

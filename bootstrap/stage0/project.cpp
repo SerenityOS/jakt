@@ -53,7 +53,7 @@ TRY((utility::write_to_file(second_module_jakt,TRY((((project_directory) + (TRY(
 return {};
 }
 
-project::Project::Project(DeprecatedString a_name) :name(move(a_name)){}
+project::Project::Project(DeprecatedString a_name): name(move(a_name)){}
 
 }
 } // namespace Jakt

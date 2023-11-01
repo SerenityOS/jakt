@@ -229,7 +229,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-jakt__arguments::ArgsParser::ArgsParser(JaktInternal::DynamicArray<DeprecatedString> a_args, JaktInternal::DynamicArray<size_t> a_removed_indices, JaktInternal::DynamicArray<DeprecatedString> a_definitely_positional_args) :args(move(a_args)), removed_indices(move(a_removed_indices)), definitely_positional_args(move(a_definitely_positional_args)){}
+jakt__arguments::ArgsParser::ArgsParser(JaktInternal::DynamicArray<DeprecatedString> a_args, JaktInternal::DynamicArray<size_t> a_removed_indices, JaktInternal::DynamicArray<DeprecatedString> a_definitely_positional_args): args(move(a_args)), removed_indices(move(a_removed_indices)), definitely_positional_args(move(a_definitely_positional_args)){}
 
 }
 } // namespace Jakt

@@ -21,10 +21,17 @@ namespace AK {
 // NOTE: This is similar to the LibC macro EOF = -1.
 constexpr u32 end_of_file = 0xFFFFFFFF;
 
+// https://url.spec.whatwg.org/#url-code-points
 static bool is_url_code_point(u32 code_point)
 {
-    // FIXME: [...] and code points in the range U+00A0 to U+10FFFD, inclusive, excluding surrogates and noncharacters.
-    return is_ascii_alphanumeric(code_point) || code_point >= 0xA0 || "!$&'()*+,-./:;=?@_~"sv.contains(code_point);
+    // The URL code points are ASCII alphanumeric, U+0021 (!), U+0024 ($), U+0026 (&),
+    // U+0027 ('), U+0028 LEFT PARENTHESIS, U+0029 RIGHT PARENTHESIS, U+002A (*),
+    // U+002B (+), U+002C (,), U+002D (-), U+002E (.), U+002F (/), U+003A (:),
+    // U+003B (;), U+003D (=), U+003F (?), U+0040 (@), U+005F (_), U+007E (~), and code
+    // points in the range U+00A0 to U+10FFFD, inclusive, excluding surrogates and
+    // noncharacters.
+    return is_ascii_alphanumeric(code_point) || "!$&'()*+,-./:;=?@_~"sv.contains(code_point)
+        || (code_point >= 0x00A0 && code_point <= 0x10FFFD && !is_unicode_surrogate(code_point) && !is_unicode_noncharacter(code_point));
 }
 
 static void report_validation_error(SourceLocation const& location = SourceLocation::current())
@@ -32,8 +39,10 @@ static void report_validation_error(SourceLocation const& location = SourceLocat
     dbgln_if(URL_PARSER_DEBUG, "URLParser::basic_parse: Validation error! {}", location);
 }
 
+// https://url.spec.whatwg.org/#concept-opaque-host-parser
 static Optional<URL::Host> parse_opaque_host(StringView input)
 {
+    // 1. If input contains a forbidden host code point, host-invalid-code-point validation error, return failure.
     auto forbidden_host_characters_excluding_percent = "\0\t\n\r #/:<>?@[\\]^|"sv;
     for (auto character : forbidden_host_characters_excluding_percent) {
         if (input.contains(character)) {
@@ -41,8 +50,13 @@ static Optional<URL::Host> parse_opaque_host(StringView input)
             return {};
         }
     }
-    // FIXME: If input contains a code point that is not a URL code point and not U+0025 (%), validation error.
-    // FIXME: If input contains a U+0025 (%) and the two code points following it are not ASCII hex digits, validation error.
+
+    // 2. If input contains a code point that is not a URL code point and not U+0025 (%), invalid-URL-unit validation error.
+    // 3. If input contains a U+0025 (%) and the two code points following it are not ASCII hex digits, invalid-URL-unit validation error.
+    // NOTE: These steps are not implemented because they are not cheap checks and exist just to report validation errors. With how we
+    //       currently report validation errors, they are only useful for debugging efforts in the URL parsing code.
+
+    // 4. Return the result of running UTF-8 percent-encode on input using the C0 control percent-encode set.
     return String::from_deprecated_string(URL::percent_encode(input, URL::PercentEncodeSet::C0Control)).release_value_but_fixme_should_propagate_errors();
 }
 
@@ -106,18 +120,22 @@ static Optional<ParsedIPv4Number> parse_ipv4_number(StringView input)
     }
 
     // 8. Let output be the mathematical integer value that is represented by input in radix-R notation, using ASCII hex digits for digits with values 0 through 15.
-    u32 output;
+    Optional<u32> maybe_output;
     if (radix == 8)
-        output = StringUtils::convert_to_uint_from_octal(input).release_value();
+        maybe_output = StringUtils::convert_to_uint_from_octal(input);
     else if (radix == 10)
-        output = input.to_uint().release_value();
+        maybe_output = input.to_uint();
     else if (radix == 16)
-        output = StringUtils::convert_to_uint_from_hex(input).release_value();
+        maybe_output = StringUtils::convert_to_uint_from_hex(input);
     else
         VERIFY_NOT_REACHED();
 
+    // NOTE: Parsing may have failed due to overflow.
+    if (!maybe_output.has_value())
+        return {};
+
     // 9. Return (output, validationError).
-    return ParsedIPv4Number { output, validation_error };
+    return ParsedIPv4Number { maybe_output.value(), validation_error };
 }
 
 // https://url.spec.whatwg.org/#concept-ipv4-parser
@@ -669,6 +687,24 @@ constexpr bool is_double_dot_path_segment(StringView input)
     return input == ".."sv || input.equals_ignoring_ascii_case(".%2e"sv) || input.equals_ignoring_ascii_case("%2e."sv) || input.equals_ignoring_ascii_case("%2e%2e"sv);
 }
 
+// https://url.spec.whatwg.org/#shorten-a-urls-path
+void URLParser::shorten_urls_path(URL& url)
+{
+    // 1. Assert: url does not have an opaque path.
+    VERIFY(!url.cannot_be_a_base_url());
+
+    // 2. Let path be url’s path.
+    auto& path = url.m_paths;
+
+    // 3. If url’s scheme is "file", path’s size is 1, and path[0] is a normalized Windows drive letter, then return.
+    if (url.scheme() == "file" && path.size() == 1 && is_normalized_windows_drive_letter(path[0]))
+        return;
+
+    // 4. Remove path’s last item, if any.
+    if (!path.is_empty())
+        path.take_last();
+}
+
 // https://url.spec.whatwg.org/#string-percent-encode-after-encoding
 ErrorOr<String> URLParser::percent_encode_after_encoding(StringView input, URL::PercentEncodeSet percent_encode_set, bool space_as_plus)
 {
@@ -1011,8 +1047,7 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                     url->m_query = {};
 
                     // 2. Shorten url’s path.
-                    if (url->m_paths.size())
-                        url->m_paths.remove(url->m_paths.size() - 1);
+                    shorten_urls_path(*url);
 
                     // 3. Set state to path state and decrease pointer by 1.
                     state = State::Path;
@@ -1323,8 +1358,7 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                     // 2. If the code point substring from pointer to the end of input does not start with a Windows drive letter, then shorten url’s path.
                     auto substring_from_pointer = input.substring_view(iterator - input.begin()).as_string();
                     if (!starts_with_windows_drive_letter(substring_from_pointer)) {
-                        if (!url->m_paths.is_empty() && !(url->scheme() == "file" && url->m_paths.size() == 1 && is_normalized_windows_drive_letter(url->m_paths[0])))
-                            url->m_paths.remove(url->m_paths.size() - 1);
+                        shorten_urls_path(*url);
                     }
                     // 3. Otherwise:
                     else {
@@ -1363,6 +1397,9 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                 // 1. If base is non-null and base’s scheme is "file", then:
                 if (base_url.has_value() && base_url->m_scheme == "file") {
                     // 1. Set url’s host to base’s host.
+                    url->m_host = base_url->m_host;
+
+                    // FIXME: The spec does not seem to mention these steps.
                     url->m_paths = base_url->m_paths;
                     url->m_paths.remove(url->m_paths.size() - 1);
 
@@ -1488,8 +1525,7 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                 // 2. If buffer is a double-dot URL path segment, then:
                 if (is_double_dot_path_segment(buffer.string_view())) {
                     // 1. Shorten url’s path.
-                    if (!url->m_paths.is_empty())
-                        url->m_paths.remove(url->m_paths.size() - 1);
+                    shorten_urls_path(*url);
 
                     // 2. If neither c is U+002F (/), nor url is special and c is U+005C (\), append the empty string to url’s path.
                     if (code_point != '/' && !(url->is_special() && code_point == '\\'))
@@ -1509,7 +1545,7 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                         buffer.append(':');
                     }
                     // 2. Append buffer to url’s path.
-                    url->m_paths.append(buffer.string_view());
+                    url->m_paths.append(buffer.to_string().release_value_but_fixme_should_propagate_errors());
                 }
 
                 // 5. Set buffer to the empty string.
@@ -1547,7 +1583,7 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
 
             // 1. If c is U+003F (?), then set url’s query to the empty string and state to query state.
             if (code_point == '?') {
-                url->m_paths[0] = buffer.string_view();
+                url->m_paths[0] = buffer.to_string().release_value_but_fixme_should_propagate_errors();
                 url->m_query = String {};
                 buffer.clear();
                 state = State::Query;
@@ -1555,7 +1591,7 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
             // 2. Otherwise, if c is U+0023 (#), then set url’s fragment to the empty string and state to fragment state.
             else if (code_point == '#') {
                 // NOTE: This needs to be percent decoded since the member variables contain decoded data.
-                url->m_paths[0] = buffer.string_view();
+                url->m_paths[0] = buffer.to_string().release_value_but_fixme_should_propagate_errors();
                 url->m_fragment = String {};
                 buffer.clear();
                 state = State::Fragment;
@@ -1574,7 +1610,7 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                 if (code_point != end_of_file) {
                     URL::append_percent_encoded_if_necessary(buffer, code_point, URL::PercentEncodeSet::C0Control);
                 } else {
-                    url->m_paths[0] = buffer.string_view();
+                    url->m_paths[0] = buffer.to_string().release_value_but_fixme_should_propagate_errors();
                     buffer.clear();
                 }
             }

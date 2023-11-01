@@ -1,6 +1,7 @@
 #pragma once
 #include "__unified_forward.h"
 #include "utility.h"
+#include "jakt__platform__utility.h"
 #include "jakt__libc__io.h"
 #include "repl_backend__common.h"
 namespace Jakt {
