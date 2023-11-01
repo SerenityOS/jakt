@@ -105,7 +105,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("abi: \"{}\"", abi));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-jakt__platform::Target::Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi) :arch(move(a_arch)), platform(move(a_platform)), os(move(a_os)), abi(move(a_abi)){}
+jakt__platform::Target::Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi): arch(move(a_arch)), platform(move(a_platform)), os(move(a_os)), abi(move(a_abi)){}
 
 ErrorOr<jakt__platform::Target> jakt__platform::Target::from_triple(DeprecatedString const triple) {
 {

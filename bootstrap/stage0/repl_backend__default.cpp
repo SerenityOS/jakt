@@ -21,11 +21,11 @@ free(line_pointer);
 ErrorOr<repl_backend__default::Editor> repl_backend__default::Editor::create(DeprecatedString const prompt,Function<ErrorOr<void>(repl_backend__default::Editor&)> const& syntax_highlight_handler) {
 {
 FILE* std_in = fopen(((TRY(DeprecatedString::from_utf8("/dev/stdin"sv))).characters()),((TRY(DeprecatedString::from_utf8("r"sv))).characters()));
-if ((std_in == utility::null<FILE>())){
+if ((std_in == jakt__platform__utility::null<FILE*>())){
 warnln((StringView::from_string_literal("Could not open /dev/stdin for reading"sv)));
 return Error::from_errno(static_cast<i32>(42));
 }
-repl_backend__default::Editor const editor = repl_backend__default::Editor(std_in,utility::allocate<char>(static_cast<size_t>(4096ULL)),prompt);
+repl_backend__default::Editor const editor = repl_backend__default::Editor(std_in,jakt__platform__utility::allocate<char>(static_cast<size_t>(4096ULL)),prompt);
 return editor;
 }
 }
@@ -36,7 +36,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Activ
 }
 }
 
-repl_backend__default::Editor::Editor(FILE* a_standard_input_file, char* a_line_pointer, DeprecatedString a_prompt) :standard_input_file(move(a_standard_input_file)), line_pointer(move(a_line_pointer)), prompt(move(a_prompt)){}
+repl_backend__default::Editor::Editor(FILE* a_standard_input_file, char* a_line_pointer, DeprecatedString a_prompt): standard_input_file(move(a_standard_input_file)), line_pointer(move(a_line_pointer)), prompt(move(a_prompt)){}
 
 ErrorOr<repl_backend__common::LineResult> repl_backend__default::Editor::get_line(JaktInternal::Optional<DeprecatedString> const prompt) {
 {
@@ -44,7 +44,7 @@ warn((StringView::from_string_literal("{}"sv)),prompt.value_or_lazy_evaluated([&
 DeprecatedStringBuilder builder = DeprecatedStringBuilder::create();
 {
 char* const c_string = fgets(((*this).line_pointer),static_cast<size_t>(4096ULL),((*this).standard_input_file));
-if ((c_string == utility::null<char>())){
+if ((c_string == jakt__platform__utility::null<char*>())){
 return repl_backend__common::LineResult::Eof();
 }
 TRY((((builder).append_c_string(c_string))));

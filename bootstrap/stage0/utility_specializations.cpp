@@ -22,6 +22,7 @@
 #include "compiler.h"
 #include "error.h"
 #include "utility.h"
+#include "jakt__platform__utility.h"
 #include "build.h"
 #include "jakt__platform__unknown_process.h"
 #include "jakt__file_iterator.h"
@@ -44,15 +45,6 @@ template<> ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedStri
 
 /* specialisation 1 of function map: ["parser::ParsedMethod", "JaktInternal::Tuple<DeprecatedString,utility::Span>"] */
 template<> ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>>> map<parser::ParsedMethod, JaktInternal::Tuple<DeprecatedString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedMethod> const input,Function<ErrorOr<JaktInternal::Tuple<DeprecatedString,utility::Span>>(parser::ParsedMethod)> const& mapper);
-
-/* specialisation 0 of function null: ["FILE"] */
-template<> FILE* null<FILE>();
-
-/* specialisation 1 of function null: ["char"] */
-template<> char* null<char>();
-
-/* specialisation 0 of function allocate: ["char"] */
-template<> char* allocate<char>(size_t const count);
 template<>
 ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,utility::Span>>> map<parser::ParsedField, JaktInternal::Tuple<DeprecatedString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedField> const input,Function<ErrorOr<JaktInternal::Tuple<DeprecatedString,utility::Span>>(parser::ParsedField)> const& mapper) {
 {
@@ -95,43 +87,6 @@ TRY((((us).push(TRY((mapper(t)))))));
 }
 
 return us;
-}
-}
-template<>
-FILE* null<FILE>() {
-{
-{
-return nullptr;
-}
-
-abort();
-}
-}
-template<>
-char* null<char>() {
-{
-{
-return nullptr;
-}
-
-abort();
-}
-}
-template<>
-char* allocate<char>(size_t const count) {
-{
-Function<void(char*&)> const alloc_impl = [count](char*& ptr) -> void {
-{
-{
-ptr = static_cast<RemoveReference<decltype(ptr)>>(calloc(count, sizeof(*ptr)));
-}
-
-}
-}
-;
-char* ptr = utility::null<char>();
-alloc_impl(((ptr)));
-return ptr;
 }
 }
 }

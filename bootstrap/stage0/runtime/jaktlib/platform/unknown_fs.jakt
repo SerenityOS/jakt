@@ -31,3 +31,13 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
         throw Error::from_errno(38)
     }
 }
+
+trait FSPath {
+    fn absolute(this) throws -> Path
+}
+
+type Path implements(FSPath) {
+    fn absolute(this) throws -> Path {
+        return this
+    }
+}

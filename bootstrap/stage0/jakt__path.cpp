@@ -6,6 +6,12 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("path: \"{}\"", path));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
+ErrorOr<jakt__path::Path> jakt__path::Path::absolute() const {
+{
+return *this;
+}
+}
+
 ErrorOr<DeprecatedString> jakt__path::Path::extension() const {
 {
 {
@@ -33,7 +39,7 @@ return TRY(DeprecatedString::from_utf8(""sv));
 }
 }
 
-jakt__path::Path::Path(DeprecatedString a_path) :path(move(a_path)){}
+jakt__path::Path::Path(DeprecatedString a_path): path(move(a_path)){}
 
 ErrorOr<DeprecatedString> jakt__path::Path::basename(bool const strip_extension) const {
 {

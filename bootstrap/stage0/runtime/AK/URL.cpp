@@ -62,14 +62,6 @@ DeprecatedString URL::basename() const
     return percent_decode(last_segment);
 }
 
-// NOTE: This only exists for compatibility with the existing URL tests which check for both .is_null() and .is_empty().
-static DeprecatedString deprecated_string_percent_encode(DeprecatedString const& input, URL::PercentEncodeSet set = URL::PercentEncodeSet::Userinfo, URL::SpaceAsPlus space_as_plus = URL::SpaceAsPlus::No)
-{
-    if (input.is_null() || input.is_empty())
-        return input;
-    return URL::percent_encode(input.view(), set, space_as_plus);
-}
-
 void URL::set_scheme(String scheme)
 {
     m_scheme = move(scheme);
@@ -80,7 +72,7 @@ void URL::set_scheme(String scheme)
 ErrorOr<void> URL::set_username(StringView username)
 {
     // To set the username given a url and username, set url’s username to the result of running UTF-8 percent-encode on username using the userinfo percent-encode set.
-    m_username = TRY(String::from_deprecated_string(deprecated_string_percent_encode(username, PercentEncodeSet::Userinfo)));
+    m_username = TRY(String::from_deprecated_string(percent_encode(username, PercentEncodeSet::Userinfo)));
     m_valid = compute_validity();
     return {};
 }
@@ -89,7 +81,7 @@ ErrorOr<void> URL::set_username(StringView username)
 ErrorOr<void> URL::set_password(StringView password)
 {
     // To set the password given a url and password, set url’s password to the result of running UTF-8 percent-encode on password using the userinfo percent-encode set.
-    m_password = TRY(String::from_deprecated_string(deprecated_string_percent_encode(password, PercentEncodeSet::Userinfo)));
+    m_password = TRY(String::from_deprecated_string(percent_encode(password, PercentEncodeSet::Userinfo)));
     m_valid = compute_validity();
     return {};
 }
@@ -121,21 +113,20 @@ void URL::set_paths(Vector<DeprecatedString> const& paths)
     m_paths.clear_with_capacity();
     m_paths.ensure_capacity(paths.size());
     for (auto const& segment : paths)
-        m_paths.unchecked_append(deprecated_string_percent_encode(segment, PercentEncodeSet::Path));
+        m_paths.unchecked_append(String::from_deprecated_string(percent_encode(segment, PercentEncodeSet::Path)).release_value_but_fixme_should_propagate_errors());
     m_valid = compute_validity();
 }
 
 void URL::append_path(StringView path)
 {
-    m_paths.append(deprecated_string_percent_encode(path, PercentEncodeSet::Path));
+    m_paths.append(String::from_deprecated_string(percent_encode(path, PercentEncodeSet::Path)).release_value_but_fixme_should_propagate_errors());
 }
 
 // https://url.spec.whatwg.org/#cannot-have-a-username-password-port
 bool URL::cannot_have_a_username_or_password_or_port() const
 {
     // A URL cannot have a username/password/port if its host is null or the empty string, or its scheme is "file".
-    // FIXME: The spec does not mention anything to do with 'cannot be a base URL'.
-    return m_host.has<Empty>() || m_host == String {} || m_cannot_be_a_base_url || m_scheme == "file"sv;
+    return m_host.has<Empty>() || m_host == String {} || m_scheme == "file"sv;
 }
 
 // FIXME: This is by no means complete.
@@ -199,13 +190,11 @@ URL URL::create_with_file_scheme(DeprecatedString const& path, DeprecatedString 
 
     URL url;
     url.set_scheme("file"_string);
-    // NOTE: If the hostname is localhost (or null, which implies localhost), it should be set to the empty string.
-    //       This is because a file URL always needs a non-null hostname.
-    url.set_host(hostname.is_null() || hostname == "localhost" ? String {} : String::from_deprecated_string(hostname).release_value_but_fixme_should_propagate_errors());
+    url.set_host(hostname == "localhost" ? String {} : String::from_deprecated_string(hostname).release_value_but_fixme_should_propagate_errors());
     url.set_paths(lexical_path.parts());
     if (path.ends_with('/'))
         url.append_slash();
-    if (!fragment.is_null())
+    if (!fragment.is_empty())
         url.set_fragment(String::from_deprecated_string(fragment).release_value_but_fixme_should_propagate_errors());
     return url;
 }
@@ -216,14 +205,12 @@ URL URL::create_with_help_scheme(DeprecatedString const& path, DeprecatedString 
 
     URL url;
     url.set_scheme("help"_string);
-    // NOTE: If the hostname is localhost (or null, which implies localhost), it should be set to the empty string.
-    //       This is because a file URL always needs a non-null hostname.
-    url.set_host(hostname.is_null() || hostname == "localhost" ? String {} : String::from_deprecated_string(hostname).release_value_but_fixme_should_propagate_errors());
+    url.set_host(hostname == "localhost" ? String {} : String::from_deprecated_string(hostname).release_value_but_fixme_should_propagate_errors());
 
     url.set_paths(lexical_path.parts());
     if (path.ends_with('/'))
         url.append_slash();
-    if (!fragment.is_null())
+    if (!fragment.is_empty())
         url.set_fragment(String::from_deprecated_string(fragment).release_value_but_fixme_should_propagate_errors());
     return url;
 }
@@ -266,7 +253,7 @@ DeprecatedString URL::serialize_path(ApplyPercentDecoding apply_percent_decoding
     // 1. If url has an opaque path, then return url’s path.
     // FIXME: Reimplement this step once we modernize the URL implementation to meet the spec.
     if (cannot_be_a_base_url())
-        return m_paths[0];
+        return m_paths[0].to_deprecated_string();
 
     // 2. Let output be the empty string.
     StringBuilder output;
@@ -274,7 +261,7 @@ DeprecatedString URL::serialize_path(ApplyPercentDecoding apply_percent_decoding
     // 3. For each segment of url’s path: append U+002F (/) followed by segment to output.
     for (auto const& segment : m_paths) {
         output.append('/');
-        output.append(apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(segment) : segment);
+        output.append(apply_percent_decoding == ApplyPercentDecoding::Yes ? percent_decode(segment) : segment.to_deprecated_string());
     }
 
     // 4. Return output.

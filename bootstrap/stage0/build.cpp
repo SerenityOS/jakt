@@ -57,9 +57,22 @@ return build::Builder((TRY((DynamicArray<DeprecatedString>::create_with({})))),f
 }
 }
 
-ErrorOr<void> build::Builder::link_into_archive(DeprecatedString const archiver,DeprecatedString const archive_filename) {
+ErrorOr<void> build::Builder::link_into_archive(DeprecatedString const archiver,DeprecatedString const archive_filename,JaktInternal::DynamicArray<DeprecatedString> const extra_arguments) {
 {
-JaktInternal::DynamicArray<DeprecatedString> args = (TRY((DynamicArray<DeprecatedString>::create_with({archiver, TRY(DeprecatedString::from_utf8("cr"sv)), archive_filename}))));
+JaktInternal::DynamicArray<DeprecatedString> args = (TRY((DynamicArray<DeprecatedString>::create_with({archiver, ({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<void>>{
+auto __jakt_enum_value = (((extra_arguments).size()));
+if (__jakt_enum_value == static_cast<size_t>(0ULL)) {
+return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("cr"sv)));
+}
+else {
+return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("crT"sv)));
+}
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    _jakt_value.release_value();
+}), archive_filename}))));
 {
 JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).linked_files)).iterator());
 for (;;){
@@ -75,6 +88,7 @@ TRY((((args).push(file))));
 }
 }
 
+TRY((((args).push_values(((extra_arguments))))));
 size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
 if ((((((((((*this).pool)).status(id)).value())).exit_code)) != (static_cast<i32>(0)))){
@@ -85,7 +99,7 @@ return Error::from_errno(static_cast<i32>(1));
 return {};
 }
 
-build::Builder::Builder(JaktInternal::DynamicArray<DeprecatedString> a_linked_files, JaktInternal::DynamicArray<DeprecatedString> a_files_to_compile, build::ParallelExecutionPool a_pool) :linked_files(move(a_linked_files)), files_to_compile(move(a_files_to_compile)), pool(move(a_pool)){}
+build::Builder::Builder(JaktInternal::DynamicArray<DeprecatedString> a_linked_files, JaktInternal::DynamicArray<DeprecatedString> a_files_to_compile, build::ParallelExecutionPool a_pool): linked_files(move(a_linked_files)), files_to_compile(move(a_files_to_compile)), pool(move(a_pool)){}
 
 ErrorOr<void> build::Builder::build_all(jakt__path::Path const binary_dir,Function<ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>(DeprecatedString, DeprecatedString)> const& compiler_invocation) {
 {
@@ -184,7 +198,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-build::ParallelExecutionPool::ParallelExecutionPool(JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::Process> a_pids, JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::ExitPollResult> a_completed, size_t a_pid_index, size_t a_max_concurrent) :pids(move(a_pids)), completed(move(a_completed)), pid_index(move(a_pid_index)), max_concurrent(move(a_max_concurrent)){}
+build::ParallelExecutionPool::ParallelExecutionPool(JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::Process> a_pids, JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::ExitPollResult> a_completed, size_t a_pid_index, size_t a_max_concurrent): pids(move(a_pids)), completed(move(a_completed)), pid_index(move(a_pid_index)), max_concurrent(move(a_max_concurrent)){}
 
 ErrorOr<void> build::ParallelExecutionPool::wait_for_any_job_to_complete() {
 {

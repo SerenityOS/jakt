@@ -6,7 +6,8 @@ namespace Jakt {
 namespace jakt__path {
 struct Path {
   public:
-private: DeprecatedString path;public: ErrorOr<DeprecatedString> extension() const;
+private: DeprecatedString path;public: ErrorOr<jakt__path::Path> absolute() const;
+public: ErrorOr<DeprecatedString> extension() const;
 public: Path(DeprecatedString a_path);
 
 public: ErrorOr<DeprecatedString> basename(bool const strip_extension) const;

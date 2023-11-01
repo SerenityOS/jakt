@@ -22,6 +22,7 @@
 #include "compiler.h"
 #include "error.h"
 #include "utility.h"
+#include "jakt__platform__utility.h"
 #include "build.h"
 #include "jakt__platform__unknown_process.h"
 #include "jakt__file_iterator.h"

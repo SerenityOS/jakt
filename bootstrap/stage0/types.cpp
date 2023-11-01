@@ -769,7 +769,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("scope: {}", scope));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::CheckedNamespace::CheckedNamespace(DeprecatedString a_name, ids::ScopeId a_scope) :name(move(a_name)), scope(move(a_scope)){}
+types::CheckedNamespace::CheckedNamespace(DeprecatedString a_name, ids::ScopeId a_scope): name(move(a_name)), scope(move(a_scope)){}
 
 ErrorOr<DeprecatedString> types::Module::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Module("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -911,7 +911,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-types::GenericInferences::GenericInferences(JaktInternal::Dictionary<ids::TypeId,ids::TypeId> a_values) :values(move(a_values)){}
+types::GenericInferences::GenericInferences(JaktInternal::Dictionary<ids::TypeId,ids::TypeId> a_values): values(move(a_values)){}
 
 void types::GenericInferences::restore(JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const checkpoint) {
 {
@@ -1084,7 +1084,7 @@ return JaktInternal::OptionalNone();
 ErrorOr<ids::StructId> types::CheckedProgram::find_struct_in_prelude(DeprecatedString const name) const {
 {
 ids::ScopeId const scope_id = ((*this).prelude_scope_id());
-JaktInternal::Optional<ids::StructId> const struct_id = TRY((((*this).find_struct_in_scope(scope_id,name,true))));
+JaktInternal::Optional<ids::StructId> const struct_id = TRY((((*this).find_struct_in_scope(scope_id,name,true,false))));
 if (((struct_id).has_value())){
 return ((struct_id).value());
 }
@@ -1140,7 +1140,7 @@ return JaktInternal::ExplicitValue(false);
 
 ErrorOr<JaktInternal::Optional<ids::FunctionId>> types::CheckedProgram::find_default_constructors_in_scope(ids::ScopeId const parent_scope_id,DeprecatedString const function_name) const {
 {
-JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const results = TRY((((*this).find_functions_with_name_in_scope(parent_scope_id,function_name,false))));
+JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const results = TRY((((*this).find_functions_with_name_in_scope(parent_scope_id,function_name,false,false))));
 if ((!(((results).has_value())))){
 return JaktInternal::OptionalNone();
 }
@@ -1166,7 +1166,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-ErrorOr<JaktInternal::Optional<ids::StructId>> types::CheckedProgram::find_struct_in_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes) const {
+ErrorOr<JaktInternal::Optional<ids::StructId>> types::CheckedProgram::find_struct_in_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes,bool const ignore_parent_scopes) const {
 {
 return TRY((((*this).template for_each_scope_accessible_unqualified_from_scope<ids::StructId>(scope_id,(([name, this](ids::ScopeId scope_id, JaktInternal::Optional<DeprecatedString> name_override, bool is_alias) -> ErrorOr<typename utility::IterationDecision<ids::StructId>> {
 {
@@ -1178,13 +1178,13 @@ return utility::IterationDecision<ids::StructId>::Break((maybe_struct.value()));
 return utility::IterationDecision<ids::StructId>::Continue();
 }
 }
-)),ignore_mixin_scopes))));
+)),ignore_mixin_scopes,ignore_parent_scopes))));
 }
 }
 
-ErrorOr<JaktInternal::Optional<ids::TypeId>> types::CheckedProgram::find_type_in_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes) const {
+ErrorOr<JaktInternal::Optional<ids::TypeId>> types::CheckedProgram::find_type_in_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes,bool const ignore_parent_scopes) const {
 {
-return ((TRY((((*this).find_type_scope(scope_id,name,ignore_mixin_scopes))))).map([](auto& _value) { return _value.template get<0>(); }));
+return ((TRY((((*this).find_type_scope(scope_id,name,ignore_mixin_scopes,ignore_parent_scopes))))).map([](auto& _value) { return _value.template get<0>(); }));
 }
 }
 
@@ -1308,6 +1308,7 @@ return JaktInternal::ExplicitValue(false);
 
 ErrorOr<ids::ScopeId> types::CheckedProgram::create_scope(JaktInternal::Optional<ids::ScopeId> const parent_scope_id,bool const can_throw,DeprecatedString const debug_name,ids::ModuleId const module_id,bool const for_block) {
 {
+bool is_from_generated_code = false;
 if (((parent_scope_id).has_value())){
 if ([](size_t const& self, size_t rhs) -> bool {
 {
@@ -1335,9 +1336,11 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 ((((parent_scope_id.value())).id),((((((((*this).modules))[(((((parent_scope_id.value())).module_id)).id)]))->scopes)).size()))){
 TRY((((((*this).compiler))->panic(TRY((__jakt_format((StringView::from_string_literal("create_scope: parent_scope_id.id is invalid! Module {} does not have a scope with id {}."sv)),(((((parent_scope_id.value())).module_id)).id),(((parent_scope_id.value())).id))))))));
 }
+NonnullRefPtr<types::Scope> const scope = TRY((((*this).get_scope((parent_scope_id.value())))));
+(is_from_generated_code = ((scope)->is_from_generated_code));
 }
 JaktInternal::Optional<DeprecatedString> const none_string = JaktInternal::OptionalNone();
-NonnullRefPtr<types::Scope> const scope = TRY((types::Scope::__jakt_create(none_string,JaktInternal::OptionalNone(),(TRY((Dictionary<DeprecatedString, ids::VarId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, types::Value>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::StructId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, JaktInternal::DynamicArray<ids::FunctionId>>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::EnumId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::TypeId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::TraitId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::ModuleId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::ScopeId>::create_with_entries({})))),parent_scope_id,JaktInternal::OptionalNone(),(TRY((DynamicArray<ids::ScopeId>::create_with({})))),can_throw,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))),debug_name,(TRY((DynamicArray<ids::ScopeId>::create_with({})))),for_block,JaktInternal::OptionalNone(),(TRY((Dictionary<DeprecatedString, types::SpecializedType>::create_with_entries({})))))));
+NonnullRefPtr<types::Scope> const scope = TRY((types::Scope::__jakt_create(none_string,JaktInternal::OptionalNone(),(TRY((Dictionary<DeprecatedString, ids::VarId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, types::Value>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::StructId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, JaktInternal::DynamicArray<ids::FunctionId>>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::EnumId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::TypeId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::TraitId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::ModuleId>::create_with_entries({})))),(TRY((Dictionary<DeprecatedString, ids::ScopeId>::create_with_entries({})))),parent_scope_id,JaktInternal::OptionalNone(),(TRY((DynamicArray<ids::ScopeId>::create_with({})))),can_throw,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))),(TRY((DynamicArray<parser::IncludeAction>::create_with({})))),debug_name,(TRY((DynamicArray<ids::ScopeId>::create_with({})))),for_block,JaktInternal::OptionalNone(),(TRY((Dictionary<DeprecatedString, types::SpecializedType>::create_with_entries({})))),is_from_generated_code)));
 TRY((((((((((*this).modules))[((module_id).id)]))->scopes)).push(scope))));
 return ids::ScopeId(module_id,JaktInternal::checked_sub(((((((((*this).modules))[((module_id).id)]))->scopes)).size()),static_cast<size_t>(1ULL)));
 }
@@ -1840,10 +1843,10 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 }
 
-ErrorOr<JaktInternal::Optional<bool>> types::CheckedProgram::for_each_scope_accessible_unqualified_from_scope_impl(ids::ScopeId const scope_id,Function<ErrorOr<typename utility::IterationDecision<bool>>(ids::ScopeId, JaktInternal::Optional<DeprecatedString>, bool)> const& callback,bool const ignore_mixin_scopes) const {
+ErrorOr<JaktInternal::Optional<bool>> types::CheckedProgram::for_each_scope_accessible_unqualified_from_scope_impl(ids::ScopeId const scope_id,Function<ErrorOr<typename utility::IterationDecision<bool>>(ids::ScopeId, JaktInternal::Optional<DeprecatedString>, bool)> const& callback,bool const ignore_mixin_scopes,bool const ignore_parent_scopes) const {
 {
 if (ignore_mixin_scopes){
-return TRY((((*this).for_each_scope_accessible_unqualified_from_scope_direct_chain(scope_id,callback))));
+return TRY((((*this).for_each_scope_accessible_unqualified_from_scope_direct_chain(scope_id,callback,ignore_parent_scopes))));
 }
 AK::Queue<ids::ScopeId> scopes_to_check = AK::Queue<ids::ScopeId>();
 JaktInternal::Set<ids::ScopeId> seen = (TRY((Set<ids::ScopeId>::create_with_values({}))));
@@ -1897,55 +1900,27 @@ return JaktInternal::ExplicitValue<void>();
     _jakt_value.release_value();
 });
 NonnullRefPtr<types::Scope> const scope = TRY((((*this).get_scope(scope_id))));
-{
-JaktInternal::DictionaryIterator<DeprecatedString,ids::ScopeId> _magic = ((((scope)->aliases)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<DeprecatedString,ids::ScopeId>> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<DeprecatedString,ids::ScopeId> name__alias__ = (_magic_value.value());
-{
-JaktInternal::Tuple<DeprecatedString,ids::ScopeId> const jakt__name__alias__ = name__alias__;
-DeprecatedString const name = ((jakt__name__alias__).template get<0>());
-ids::ScopeId const alias = ((jakt__name__alias__).template get<1>());
-
-typename utility::IterationDecision<bool> const res = TRY((callback(alias,name,true)));
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<JaktInternal::Optional<bool>>>{
-auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(res);
-if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
-auto& __jakt_match_value = __jakt_enum_value.as.Break;
-auto& value = __jakt_match_value.value;
-{
-return static_cast<JaktInternal::Optional<bool>>(value);
-}
-return JaktInternal::ExplicitValue<void>();
-}
-else {
-{
-}
-return JaktInternal::ExplicitValue<void>();
-}
-return JaktInternal::ExplicitValue<void>();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    if (_jakt_value.is_loop_break())
-        break;
-    if (_jakt_value.is_loop_continue())
-        continue;
-    _jakt_value.release_value();
-});
-}
-
-}
-}
-
-if (((((scope)->parent)).has_value())){
+if (((!(ignore_parent_scopes)) && ((((scope)->parent)).has_value()))){
 ((scopes_to_check).enqueue((((scope)->parent).value())));
 {
 JaktInternal::ArrayIterator<ids::ScopeId> _magic = ((((TRY((((*this).get_scope((((scope)->parent).value()))))))->children)).iterator());
+for (;;){
+JaktInternal::Optional<ids::ScopeId> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+ids::ScopeId child = (_magic_value.value());
+{
+((scopes_to_check).enqueue(child));
+}
+
+}
+}
+
+}
+if ((!(((((scope)->namespace_name)).has_value())))){
+{
+JaktInternal::ArrayIterator<ids::ScopeId> _magic = ((((scope)->children)).iterator());
 for (;;){
 JaktInternal::Optional<ids::ScopeId> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -1990,19 +1965,46 @@ ids::ScopeId child = (_magic_value.value());
 }
 }
 
-if (((((scope)->namespace_name)).has_value())){
-continue;
-}
 {
-JaktInternal::ArrayIterator<ids::ScopeId> _magic = ((((scope)->children)).iterator());
+JaktInternal::DictionaryIterator<DeprecatedString,ids::ScopeId> _magic = ((((scope)->aliases)).iterator());
 for (;;){
-JaktInternal::Optional<ids::ScopeId> const _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<DeprecatedString,ids::ScopeId>> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-ids::ScopeId child = (_magic_value.value());
+JaktInternal::Tuple<DeprecatedString,ids::ScopeId> name__alias__ = (_magic_value.value());
 {
-((scopes_to_check).enqueue(child));
+JaktInternal::Tuple<DeprecatedString,ids::ScopeId> const jakt__name__alias__ = name__alias__;
+DeprecatedString const name = ((jakt__name__alias__).template get<0>());
+ids::ScopeId const alias = ((jakt__name__alias__).template get<1>());
+
+typename utility::IterationDecision<bool> const res = TRY((callback(alias,name,true)));
+({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<JaktInternal::Optional<bool>>>{
+auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(res);
+if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
+auto& __jakt_match_value = __jakt_enum_value.as.Break;
+auto& value = __jakt_match_value.value;
+{
+return static_cast<JaktInternal::Optional<bool>>(value);
+}
+return JaktInternal::ExplicitValue<void>();
+}
+else {
+{
+}
+return JaktInternal::ExplicitValue<void>();
+}
+return JaktInternal::ExplicitValue<void>();
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    if (_jakt_value.is_loop_break())
+        break;
+    if (_jakt_value.is_loop_continue())
+        continue;
+    _jakt_value.release_value();
+});
 }
 
 }
@@ -2072,7 +2074,27 @@ return utility::IterationDecision<bool>::Break(true);
 return utility::IterationDecision<bool>::Continue();
 }
 }
-)),ignore_mixin_scopes)))).value_or_lazy_evaluated([&] { return false; });
+)),ignore_mixin_scopes,false)))).value_or_lazy_evaluated([&] { return false; });
+}
+}
+
+ErrorOr<DeprecatedString> types::CheckedProgram::debug_description_of(ids::ScopeId const scope_id) const {
+{
+JaktInternal::DynamicArray<DeprecatedString> ss = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
+ids::ScopeId current_scope_id = scope_id;
+for (;;){
+NonnullRefPtr<types::Scope> const scope = TRY((((*this).get_scope(current_scope_id))));
+DeprecatedString const d = TRY((__jakt_format((StringView::from_string_literal("{} (named {})"sv)),((scope)->debug_name),((scope)->namespace_name))));
+TRY((((ss).insert(static_cast<size_t>(0ULL),d))));
+if (((((scope)->parent)).has_value())){
+(current_scope_id = (((scope)->parent).value()));
+}
+else {
+break;
+}
+
+}
+return TRY((utility::join(ss,TRY(DeprecatedString::from_utf8(" -> "sv)))));
 }
 }
 
@@ -2138,7 +2160,7 @@ return ((((((((*this).modules))[((((id).module)).id)]))->functions))[((id).id)])
 }
 }
 
-ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<ids::TypeId,ids::ScopeId>>> types::CheckedProgram::find_type_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes) const {
+ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<ids::TypeId,ids::ScopeId>>> types::CheckedProgram::find_type_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes,bool const ignore_parent_scopes) const {
 {
 return TRY((((*this).template for_each_scope_accessible_unqualified_from_scope<JaktInternal::Tuple<ids::TypeId,ids::ScopeId>>(scope_id,(([name, this](ids::ScopeId scope_id, JaktInternal::Optional<DeprecatedString> name_override, bool is_alias) -> ErrorOr<typename utility::IterationDecision<JaktInternal::Tuple<ids::TypeId,ids::ScopeId>>> {
 {
@@ -2149,7 +2171,7 @@ return utility::IterationDecision<JaktInternal::Tuple<ids::TypeId,ids::ScopeId>>
 return utility::IterationDecision<JaktInternal::Tuple<ids::TypeId,ids::ScopeId>>::Continue();
 }
 }
-)),ignore_mixin_scopes))));
+)),ignore_mixin_scopes,ignore_parent_scopes))));
 }
 }
 
@@ -2172,7 +2194,7 @@ return struct_id;
 }
 }
 
-ErrorOr<JaktInternal::Optional<types::Value>> types::CheckedProgram::find_comptime_binding_in_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes) const {
+ErrorOr<JaktInternal::Optional<types::Value>> types::CheckedProgram::find_comptime_binding_in_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes,bool const ignore_parent_scopes) const {
 {
 return TRY((((*this).template for_each_scope_accessible_unqualified_from_scope<types::Value>(scope_id,(([name, this](ids::ScopeId scope_id, JaktInternal::Optional<DeprecatedString> name_override, bool is_alias) -> ErrorOr<typename utility::IterationDecision<types::Value>> {
 {
@@ -2184,7 +2206,7 @@ return utility::IterationDecision<types::Value>::Break((maybe_binding.value()));
 return utility::IterationDecision<types::Value>::Continue();
 }
 }
-)),ignore_mixin_scopes))));
+)),ignore_mixin_scopes,ignore_parent_scopes))));
 }
 }
 
@@ -2216,7 +2238,7 @@ return TRY((((*this).find_or_add_type_id(TRY((types::Type::Dependent(parser::Che
 JaktInternal::Optional<types::StructLikeId> const struct_like_id = TRY((types::StructLikeId::from_type_id(mapped_type_id,((*this)))));
 if (((struct_like_id).has_value())){
 ids::ScopeId const scope_id = TRY(((((struct_like_id.value())).associated_scope_id(((*this))))));
-JaktInternal::Optional<ids::TypeId> const found_type = TRY((((*this).find_type_in_scope(scope_id,name,false))));
+JaktInternal::Optional<ids::TypeId> const found_type = TRY((((*this).find_type_in_scope(scope_id,name,false,false))));
 if (((found_type).has_value())){
 types::GenericInferences copied_inferences = generic_inferences;
 if ((((((struct_like_id.value())).common.init_common.generic_arguments)).has_value())){
@@ -2459,15 +2481,36 @@ return type_id;
 }
 }
 
-ErrorOr<JaktInternal::Optional<bool>> types::CheckedProgram::for_each_scope_accessible_unqualified_from_scope_direct_chain(ids::ScopeId const scope_id,Function<ErrorOr<typename utility::IterationDecision<bool>>(ids::ScopeId, JaktInternal::Optional<DeprecatedString>, bool)> const& callback) const {
+ErrorOr<JaktInternal::Optional<bool>> types::CheckedProgram::for_each_scope_accessible_unqualified_from_scope_direct_chain(ids::ScopeId const scope_id,Function<ErrorOr<typename utility::IterationDecision<bool>>(ids::ScopeId, JaktInternal::Optional<DeprecatedString>, bool)> const& callback,bool const ignore_parent_scopes) const {
 {
-ids::ScopeId current_scope = scope_id;
+AK::Queue<ids::ScopeId> scopes_to_check = AK::Queue<ids::ScopeId>();
+JaktInternal::Set<ids::ScopeId> seen = (TRY((Set<ids::ScopeId>::create_with_values({}))));
+((scopes_to_check).enqueue(scope_id));
+{
+JaktInternal::ArrayIterator<ids::ScopeId> _magic = ((((TRY((((*this).get_scope(scope_id)))))->children)).iterator());
 for (;;){
-NonnullRefPtr<types::Scope> const scope = TRY((((*this).get_scope(current_scope))));
-typename utility::IterationDecision<bool> const maybe_result = TRY((callback(current_scope,JaktInternal::OptionalNone(),false)));
+JaktInternal::Optional<ids::ScopeId> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+ids::ScopeId child = (_magic_value.value());
+{
+((scopes_to_check).enqueue(child));
+}
+
+}
+}
+
+while ((!(((scopes_to_check).is_empty())))){
+ids::ScopeId const scope_id = ((scopes_to_check).dequeue());
+if (((seen).contains(scope_id))){
+continue;
+}
+TRY((((seen).add(scope_id))));
+typename utility::IterationDecision<bool> const res = TRY((callback(scope_id,JaktInternal::OptionalNone(),false)));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<JaktInternal::Optional<bool>>>{
-auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(maybe_result);
+auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(res);
 if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
 auto& __jakt_match_value = __jakt_enum_value.as.Break;
 auto& value = __jakt_match_value.value;
@@ -2491,6 +2534,13 @@ return JaktInternal::ExplicitValue<void>();
         continue;
     _jakt_value.release_value();
 });
+NonnullRefPtr<types::Scope> const scope = TRY((((*this).get_scope(scope_id))));
+if (((!(ignore_parent_scopes)) && ((((scope)->parent)).has_value()))){
+((scopes_to_check).enqueue((((scope)->parent).value())));
+}
+if (((((scope)->namespace_name)).has_value())){
+continue;
+}
 {
 JaktInternal::ArrayIterator<ids::ScopeId> _magic = ((((scope)->children)).iterator());
 for (;;){
@@ -2500,44 +2550,10 @@ break;
 }
 ids::ScopeId child = (_magic_value.value());
 {
-typename utility::IterationDecision<bool> const maybe_result = TRY((callback(child,JaktInternal::OptionalNone(),false)));
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<JaktInternal::Optional<bool>>>{
-auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(maybe_result);
-if (__jakt_enum_value.__jakt_init_index() == 0 /* Break */) {
-auto& __jakt_match_value = __jakt_enum_value.as.Break;
-auto& value = __jakt_match_value.value;
-{
-return static_cast<JaktInternal::Optional<bool>>(value);
-}
-return JaktInternal::ExplicitValue<void>();
-}
-else {
-{
-}
-return JaktInternal::ExplicitValue<void>();
-}
-return JaktInternal::ExplicitValue<void>();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    if (_jakt_value.is_loop_break())
-        break;
-    if (_jakt_value.is_loop_continue())
-        continue;
-    _jakt_value.release_value();
-});
+((scopes_to_check).enqueue(child));
 }
 
 }
-}
-
-if (((((scope)->parent)).has_value())){
-ids::ScopeId const id = (((scope)->parent).value());
-(current_scope = id);
-}
-else {
-break;
 }
 
 }
@@ -2631,11 +2647,11 @@ return utility::IterationDecision<JaktInternal::Tuple<ids::ScopeId,bool>>::Break
 return utility::IterationDecision<JaktInternal::Tuple<ids::ScopeId,bool>>::Continue();
 }
 }
-)),ignore_mixin_scopes))));
+)),ignore_mixin_scopes,false))));
 }
 }
 
-ErrorOr<JaktInternal::Optional<ids::TraitId>> types::CheckedProgram::find_trait_in_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes) const {
+ErrorOr<JaktInternal::Optional<ids::TraitId>> types::CheckedProgram::find_trait_in_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes,bool const ignore_parent_scopes) const {
 {
 return TRY((((*this).template for_each_scope_accessible_unqualified_from_scope<ids::TraitId>(scope_id,(([name, this](ids::ScopeId scope_id, JaktInternal::Optional<DeprecatedString> name_override, bool is_alias) -> ErrorOr<typename utility::IterationDecision<ids::TraitId>> {
 {
@@ -2647,7 +2663,7 @@ return utility::IterationDecision<ids::TraitId>::Break((maybe_trait.value()));
 return utility::IterationDecision<ids::TraitId>::Continue();
 }
 }
-)),ignore_mixin_scopes))));
+)),ignore_mixin_scopes,ignore_parent_scopes))));
 }
 }
 
@@ -2808,13 +2824,13 @@ return type_id;
 }
 }
 
-ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>>> types::CheckedProgram::find_functions_with_name_in_scope(ids::ScopeId const parent_scope_id,DeprecatedString const function_name,bool const ignore_mixin_scopes) const {
+ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>>> types::CheckedProgram::find_functions_with_name_in_scope(ids::ScopeId const parent_scope_id,DeprecatedString const function_name,bool const ignore_mixin_scopes,bool const ignore_parent_scopes) const {
 {
-return ((TRY((((*this).find_scoped_functions_with_name_in_scope(parent_scope_id,function_name,ignore_mixin_scopes))))).map([](auto& _value) { return _value.template get<0>(); }));
+return ((TRY((((*this).find_scoped_functions_with_name_in_scope(parent_scope_id,function_name,ignore_mixin_scopes,ignore_parent_scopes))))).map([](auto& _value) { return _value.template get<0>(); }));
 }
 }
 
-ErrorOr<JaktInternal::Optional<NonnullRefPtr<types::CheckedVariable>>> types::CheckedProgram::find_var_in_scope(ids::ScopeId const scope_id,DeprecatedString const var,bool const ignore_mixin_scopes) const {
+ErrorOr<JaktInternal::Optional<NonnullRefPtr<types::CheckedVariable>>> types::CheckedProgram::find_var_in_scope(ids::ScopeId const scope_id,DeprecatedString const var,bool const ignore_mixin_scopes,bool const ignore_parent_scopes) const {
 {
 return TRY((((*this).template for_each_scope_accessible_unqualified_from_scope<NonnullRefPtr<types::CheckedVariable>>(scope_id,(([var, this](ids::ScopeId scope_id, JaktInternal::Optional<DeprecatedString> name_override, bool is_alias) -> ErrorOr<typename utility::IterationDecision<NonnullRefPtr<types::CheckedVariable>>> {
 {
@@ -2826,13 +2842,13 @@ return utility::IterationDecision<NonnullRefPtr<types::CheckedVariable>>::Break(
 return utility::IterationDecision<NonnullRefPtr<types::CheckedVariable>>::Continue();
 }
 }
-)),ignore_mixin_scopes))));
+)),ignore_mixin_scopes,ignore_parent_scopes))));
 }
 }
 
 ErrorOr<JaktInternal::Optional<ids::FunctionId>> types::CheckedProgram::find_function_in_scope(ids::ScopeId const parent_scope_id,DeprecatedString const function_name) const {
 {
-JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const results = TRY((((*this).find_functions_with_name_in_scope(parent_scope_id,function_name,false))));
+JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const results = TRY((((*this).find_functions_with_name_in_scope(parent_scope_id,function_name,false,false))));
 if ((!(((results).has_value())))){
 return JaktInternal::OptionalNone();
 }
@@ -2872,7 +2888,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-ErrorOr<JaktInternal::Optional<ids::EnumId>> types::CheckedProgram::find_enum_in_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes) const {
+ErrorOr<JaktInternal::Optional<ids::EnumId>> types::CheckedProgram::find_enum_in_scope(ids::ScopeId const scope_id,DeprecatedString const name,bool const ignore_mixin_scopes,bool const ignore_parent_scopes) const {
 {
 return TRY((((*this).template for_each_scope_accessible_unqualified_from_scope<ids::EnumId>(scope_id,(([name, this](ids::ScopeId scope_id, JaktInternal::Optional<DeprecatedString> name_override, bool is_alias) -> ErrorOr<typename utility::IterationDecision<ids::EnumId>> {
 {
@@ -2884,7 +2900,7 @@ return utility::IterationDecision<ids::EnumId>::Break((maybe_enum.value()));
 return utility::IterationDecision<ids::EnumId>::Continue();
 }
 }
-)),ignore_mixin_scopes))));
+)),ignore_mixin_scopes,ignore_parent_scopes))));
 }
 }
 
@@ -2894,7 +2910,7 @@ return ((((*this).loaded_modules)).get(module_name));
 }
 }
 
-ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<JaktInternal::DynamicArray<ids::FunctionId>,ids::ScopeId>>> types::CheckedProgram::find_scoped_functions_with_name_in_scope(ids::ScopeId const parent_scope_id,DeprecatedString const function_name,bool const ignore_mixin_scopes) const {
+ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<JaktInternal::DynamicArray<ids::FunctionId>,ids::ScopeId>>> types::CheckedProgram::find_scoped_functions_with_name_in_scope(ids::ScopeId const parent_scope_id,DeprecatedString const function_name,bool const ignore_mixin_scopes,bool const ignore_parent_scopes) const {
 {
 JaktInternal::DynamicArray<ids::FunctionId> result_ids = (TRY((DynamicArray<ids::FunctionId>::create_with({}))));
 JaktInternal::Optional<ids::ScopeId> result_scope = JaktInternal::OptionalNone();
@@ -2911,7 +2927,7 @@ if ((!(((result_scope).has_value())))){
 return utility::IterationDecision<JaktInternal::Tuple<JaktInternal::DynamicArray<ids::FunctionId>,ids::ScopeId>>::Continue();
 }
 }
-)),ignore_mixin_scopes))));
+)),ignore_mixin_scopes,ignore_parent_scopes))));
 if ((!(result_scope).has_value())){
 return JaktInternal::OptionalNone();
 }
@@ -2939,11 +2955,11 @@ if ((!(((maybe_namespace).has_value())))){
 TRY((((((*this).compiler))->panic(TRY((__jakt_format((StringView::from_string_literal("internal error: builtin namespace 'Reflect' not found"sv)))))))));
 }
 ids::ScopeId const reflect_namespace_scope_id = (((maybe_namespace.value())).template get<0>());
-JaktInternal::Optional<ids::EnumId> const enum_id = TRY((((*this).find_enum_in_scope(reflect_namespace_scope_id,primitive,false))));
+JaktInternal::Optional<ids::EnumId> const enum_id = TRY((((*this).find_enum_in_scope(reflect_namespace_scope_id,primitive,false,false))));
 if (((enum_id).has_value())){
 return types::StructOrEnumId::Enum((enum_id.value()));
 }
-JaktInternal::Optional<ids::StructId> const struct_id = TRY((((*this).find_struct_in_scope(reflect_namespace_scope_id,primitive,false))));
+JaktInternal::Optional<ids::StructId> const struct_id = TRY((((*this).find_struct_in_scope(reflect_namespace_scope_id,primitive,false,false))));
 if (((struct_id).has_value())){
 return types::StructOrEnumId::Struct((struct_id.value()));
 }
@@ -2969,7 +2985,7 @@ return ((((*this).checked_parameter)).type_id);
 }
 }
 
-types::FunctionGenericParameter::FunctionGenericParameter(types::FunctionGenericParameterKind a_kind, types::CheckedGenericParameter a_checked_parameter) :kind(move(a_kind)), checked_parameter(move(a_checked_parameter)){}
+types::FunctionGenericParameter::FunctionGenericParameter(types::FunctionGenericParameterKind a_kind, types::CheckedGenericParameter a_checked_parameter): kind(move(a_kind)), checked_parameter(move(a_checked_parameter)){}
 
 ErrorOr<DeprecatedString> types::ResolvedNamespace::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ResolvedNamespace("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -2978,7 +2994,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("generic_parameters: {}", generic_parameters));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::ResolvedNamespace::ResolvedNamespace(DeprecatedString a_name, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> a_generic_parameters) :name(move(a_name)), external_name(move(a_external_name)), generic_parameters(move(a_generic_parameters)){}
+types::ResolvedNamespace::ResolvedNamespace(DeprecatedString a_name, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> a_generic_parameters): name(move(a_name)), external_name(move(a_external_name)), generic_parameters(move(a_generic_parameters)){}
 
 parser::ExternalName types::ResolvedNamespace::name_for_codegen() const {
 {
@@ -2992,7 +3008,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("field_id: {}", field_id));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::FieldRecord::FieldRecord(ids::StructId a_struct_id, ids::VarId a_field_id) :struct_id(move(a_struct_id)), field_id(move(a_field_id)){}
+types::FieldRecord::FieldRecord(ids::StructId a_struct_id, ids::VarId a_field_id): struct_id(move(a_struct_id)), field_id(move(a_field_id)){}
 
 ErrorOr<DeprecatedString> types::CheckedCall::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedCall("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3007,7 +3023,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("force_inline: {}", force_inline));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::CheckedCall::CheckedCall(JaktInternal::DynamicArray<types::ResolvedNamespace> a_namespace_, DeprecatedString a_name, JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,NonnullRefPtr<typename types::CheckedExpression>>> a_args, JaktInternal::DynamicArray<ids::TypeId> a_type_args, JaktInternal::Optional<ids::FunctionId> a_function_id, ids::TypeId a_return_type, bool a_callee_throws, JaktInternal::Optional<parser::ExternalName> a_external_name, parser::InlineState a_force_inline) :namespace_(move(a_namespace_)), name(move(a_name)), args(move(a_args)), type_args(move(a_type_args)), function_id(move(a_function_id)), return_type(move(a_return_type)), callee_throws(move(a_callee_throws)), external_name(move(a_external_name)), force_inline(move(a_force_inline)){}
+types::CheckedCall::CheckedCall(JaktInternal::DynamicArray<types::ResolvedNamespace> a_namespace_, DeprecatedString a_name, JaktInternal::DynamicArray<JaktInternal::Tuple<DeprecatedString,NonnullRefPtr<typename types::CheckedExpression>>> a_args, JaktInternal::DynamicArray<ids::TypeId> a_type_args, JaktInternal::Optional<ids::FunctionId> a_function_id, ids::TypeId a_return_type, bool a_callee_throws, JaktInternal::Optional<parser::ExternalName> a_external_name, parser::InlineState a_force_inline): namespace_(move(a_namespace_)), name(move(a_name)), args(move(a_args)), type_args(move(a_type_args)), function_id(move(a_function_id)), return_type(move(a_return_type)), callee_throws(move(a_callee_throws)), external_name(move(a_external_name)), force_inline(move(a_force_inline)){}
 
 parser::ExternalName types::CheckedCall::name_for_codegen() const {
 {
@@ -3024,7 +3040,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("yielded_none: {}", yielded_none));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::CheckedBlock::CheckedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> a_statements, ids::ScopeId a_scope_id, types::BlockControlFlow a_control_flow, JaktInternal::Optional<ids::TypeId> a_yielded_type, bool a_yielded_none) :statements(move(a_statements)), scope_id(move(a_scope_id)), control_flow(move(a_control_flow)), yielded_type(move(a_yielded_type)), yielded_none(move(a_yielded_none)){}
+types::CheckedBlock::CheckedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> a_statements, ids::ScopeId a_scope_id, types::BlockControlFlow a_control_flow, JaktInternal::Optional<ids::TypeId> a_yielded_type, bool a_yielded_none): statements(move(a_statements)), scope_id(move(a_scope_id)), control_flow(move(a_control_flow)), yielded_type(move(a_yielded_type)), yielded_none(move(a_yielded_none)){}
 
 ErrorOr<DeprecatedString> types::OperatorTraitImplementation::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("OperatorTraitImplementation("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3033,7 +3049,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("call_expression: {}", call_expression));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::OperatorTraitImplementation::OperatorTraitImplementation(ids::TraitId a_trait_id, JaktInternal::DynamicArray<ids::TypeId> a_trait_generic_arguments, types::CheckedCall a_call_expression) :trait_id(move(a_trait_id)), trait_generic_arguments(move(a_trait_generic_arguments)), call_expression(move(a_call_expression)){}
+types::OperatorTraitImplementation::OperatorTraitImplementation(ids::TraitId a_trait_id, JaktInternal::DynamicArray<ids::TypeId> a_trait_generic_arguments, types::CheckedCall a_call_expression): trait_id(move(a_trait_id)), trait_generic_arguments(move(a_trait_generic_arguments)), call_expression(move(a_call_expression)){}
 
 ErrorOr<DeprecatedString> types::LoadedModule::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("LoadedModule("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3041,7 +3057,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("file_id: {}", file_id));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::LoadedModule::LoadedModule(ids::ModuleId a_module_id, utility::FileId a_file_id) :module_id(move(a_module_id)), file_id(move(a_file_id)){}
+types::LoadedModule::LoadedModule(ids::ModuleId a_module_id, utility::FileId a_file_id): module_id(move(a_module_id)), file_id(move(a_file_id)){}
 
 ErrorOr<DeprecatedString> types::ResolvedForallChunk::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ResolvedForallChunk("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3050,7 +3066,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("generated_scopes: {}", generated_scopes));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::ResolvedForallChunk::ResolvedForallChunk(JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> a_parameters, parser::ParsedNamespace a_parsed_namespace, JaktInternal::DynamicArray<ids::ScopeId> a_generated_scopes) :parameters(move(a_parameters)), parsed_namespace(move(a_parsed_namespace)), generated_scopes(move(a_generated_scopes)){}
+types::ResolvedForallChunk::ResolvedForallChunk(JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> a_parameters, parser::ParsedNamespace a_parsed_namespace, JaktInternal::DynamicArray<ids::ScopeId> a_generated_scopes): parameters(move(a_parameters)), parsed_namespace(move(a_parsed_namespace)), generated_scopes(move(a_generated_scopes)){}
 
 ErrorOr<DeprecatedString> types::SpecializedType::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("SpecializedType("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3059,7 +3075,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("type_id: {}", type_id));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::SpecializedType::SpecializedType(ids::TypeId a_base_type_id, JaktInternal::DynamicArray<ids::TypeId> a_arguments, ids::TypeId a_type_id) :base_type_id(move(a_base_type_id)), arguments(move(a_arguments)), type_id(move(a_type_id)){}
+types::SpecializedType::SpecializedType(ids::TypeId a_base_type_id, JaktInternal::DynamicArray<ids::TypeId> a_arguments, ids::TypeId a_type_id): base_type_id(move(a_base_type_id)), arguments(move(a_arguments)), type_id(move(a_type_id)){}
 
 ErrorOr<DeprecatedString> types::Scope::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Scope("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3086,11 +3102,12 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("resolution_mixins: {}, ", resolution_mixins));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_block_scope: {}, ", is_block_scope));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("resolved_forall_chunks: {}, ", resolved_forall_chunks));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("explicitly_specialized_types: {}", explicitly_specialized_types));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("explicitly_specialized_types: {}, ", explicitly_specialized_types));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_from_generated_code: {}", is_from_generated_code));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::Scope::Scope(JaktInternal::Optional<DeprecatedString> a_namespace_name, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Dictionary<DeprecatedString,ids::VarId> a_vars, JaktInternal::Dictionary<DeprecatedString,types::Value> a_comptime_bindings, JaktInternal::Dictionary<DeprecatedString,ids::StructId> a_structs, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<ids::FunctionId>> a_functions, JaktInternal::Dictionary<DeprecatedString,ids::EnumId> a_enums, JaktInternal::Dictionary<DeprecatedString,ids::TypeId> a_types, JaktInternal::Dictionary<DeprecatedString,ids::TraitId> a_traits, JaktInternal::Dictionary<DeprecatedString,ids::ModuleId> a_imports, JaktInternal::Dictionary<DeprecatedString,ids::ScopeId> a_aliases, JaktInternal::Optional<ids::ScopeId> a_parent, JaktInternal::Optional<ids::ScopeId> a_alias_scope, JaktInternal::DynamicArray<ids::ScopeId> a_children, bool a_can_throw, JaktInternal::Optional<DeprecatedString> a_import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> a_alias_path, JaktInternal::DynamicArray<parser::IncludeAction> a_after_extern_include, JaktInternal::DynamicArray<parser::IncludeAction> a_before_extern_include, DeprecatedString a_debug_name, JaktInternal::DynamicArray<ids::ScopeId> a_resolution_mixins, bool a_is_block_scope, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedForallChunk>> a_resolved_forall_chunks, JaktInternal::Dictionary<DeprecatedString,types::SpecializedType> a_explicitly_specialized_types): namespace_name(move(a_namespace_name)), external_name(move(a_external_name)), vars(move(a_vars)), comptime_bindings(move(a_comptime_bindings)), structs(move(a_structs)), functions(move(a_functions)), enums(move(a_enums)), types(move(a_types)), traits(move(a_traits)), imports(move(a_imports)), aliases(move(a_aliases)), parent(move(a_parent)), alias_scope(move(a_alias_scope)), children(move(a_children)), can_throw(move(a_can_throw)), import_path_if_extern(move(a_import_path_if_extern)), alias_path(move(a_alias_path)), after_extern_include(move(a_after_extern_include)), before_extern_include(move(a_before_extern_include)), debug_name(move(a_debug_name)), resolution_mixins(move(a_resolution_mixins)), is_block_scope(move(a_is_block_scope)), resolved_forall_chunks(move(a_resolved_forall_chunks)), explicitly_specialized_types(move(a_explicitly_specialized_types)){}
-ErrorOr<NonnullRefPtr<Scope>> types::Scope::__jakt_create(JaktInternal::Optional<DeprecatedString> namespace_name, JaktInternal::Optional<parser::ExternalName> external_name, JaktInternal::Dictionary<DeprecatedString,ids::VarId> vars, JaktInternal::Dictionary<DeprecatedString,types::Value> comptime_bindings, JaktInternal::Dictionary<DeprecatedString,ids::StructId> structs, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<ids::FunctionId>> functions, JaktInternal::Dictionary<DeprecatedString,ids::EnumId> enums, JaktInternal::Dictionary<DeprecatedString,ids::TypeId> types, JaktInternal::Dictionary<DeprecatedString,ids::TraitId> traits, JaktInternal::Dictionary<DeprecatedString,ids::ModuleId> imports, JaktInternal::Dictionary<DeprecatedString,ids::ScopeId> aliases, JaktInternal::Optional<ids::ScopeId> parent, JaktInternal::Optional<ids::ScopeId> alias_scope, JaktInternal::DynamicArray<ids::ScopeId> children, bool can_throw, JaktInternal::Optional<DeprecatedString> import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> alias_path, JaktInternal::DynamicArray<parser::IncludeAction> after_extern_include, JaktInternal::DynamicArray<parser::IncludeAction> before_extern_include, DeprecatedString debug_name, JaktInternal::DynamicArray<ids::ScopeId> resolution_mixins, bool is_block_scope, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedForallChunk>> resolved_forall_chunks, JaktInternal::Dictionary<DeprecatedString,types::SpecializedType> explicitly_specialized_types) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Scope (move(namespace_name), move(external_name), move(vars), move(comptime_bindings), move(structs), move(functions), move(enums), move(types), move(traits), move(imports), move(aliases), move(parent), move(alias_scope), move(children), move(can_throw), move(import_path_if_extern), move(alias_path), move(after_extern_include), move(before_extern_include), move(debug_name), move(resolution_mixins), move(is_block_scope), move(resolved_forall_chunks), move(explicitly_specialized_types)))); return o; }
+types::Scope::Scope(JaktInternal::Optional<DeprecatedString> a_namespace_name, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Dictionary<DeprecatedString,ids::VarId> a_vars, JaktInternal::Dictionary<DeprecatedString,types::Value> a_comptime_bindings, JaktInternal::Dictionary<DeprecatedString,ids::StructId> a_structs, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<ids::FunctionId>> a_functions, JaktInternal::Dictionary<DeprecatedString,ids::EnumId> a_enums, JaktInternal::Dictionary<DeprecatedString,ids::TypeId> a_types, JaktInternal::Dictionary<DeprecatedString,ids::TraitId> a_traits, JaktInternal::Dictionary<DeprecatedString,ids::ModuleId> a_imports, JaktInternal::Dictionary<DeprecatedString,ids::ScopeId> a_aliases, JaktInternal::Optional<ids::ScopeId> a_parent, JaktInternal::Optional<ids::ScopeId> a_alias_scope, JaktInternal::DynamicArray<ids::ScopeId> a_children, bool a_can_throw, JaktInternal::Optional<DeprecatedString> a_import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> a_alias_path, JaktInternal::DynamicArray<parser::IncludeAction> a_after_extern_include, JaktInternal::DynamicArray<parser::IncludeAction> a_before_extern_include, DeprecatedString a_debug_name, JaktInternal::DynamicArray<ids::ScopeId> a_resolution_mixins, bool a_is_block_scope, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedForallChunk>> a_resolved_forall_chunks, JaktInternal::Dictionary<DeprecatedString,types::SpecializedType> a_explicitly_specialized_types, bool a_is_from_generated_code): namespace_name(move(a_namespace_name)), external_name(move(a_external_name)), vars(move(a_vars)), comptime_bindings(move(a_comptime_bindings)), structs(move(a_structs)), functions(move(a_functions)), enums(move(a_enums)), types(move(a_types)), traits(move(a_traits)), imports(move(a_imports)), aliases(move(a_aliases)), parent(move(a_parent)), alias_scope(move(a_alias_scope)), children(move(a_children)), can_throw(move(a_can_throw)), import_path_if_extern(move(a_import_path_if_extern)), alias_path(move(a_alias_path)), after_extern_include(move(a_after_extern_include)), before_extern_include(move(a_before_extern_include)), debug_name(move(a_debug_name)), resolution_mixins(move(a_resolution_mixins)), is_block_scope(move(a_is_block_scope)), resolved_forall_chunks(move(a_resolved_forall_chunks)), explicitly_specialized_types(move(a_explicitly_specialized_types)), is_from_generated_code(move(a_is_from_generated_code)){}
+ErrorOr<NonnullRefPtr<Scope>> types::Scope::__jakt_create(JaktInternal::Optional<DeprecatedString> namespace_name, JaktInternal::Optional<parser::ExternalName> external_name, JaktInternal::Dictionary<DeprecatedString,ids::VarId> vars, JaktInternal::Dictionary<DeprecatedString,types::Value> comptime_bindings, JaktInternal::Dictionary<DeprecatedString,ids::StructId> structs, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<ids::FunctionId>> functions, JaktInternal::Dictionary<DeprecatedString,ids::EnumId> enums, JaktInternal::Dictionary<DeprecatedString,ids::TypeId> types, JaktInternal::Dictionary<DeprecatedString,ids::TraitId> traits, JaktInternal::Dictionary<DeprecatedString,ids::ModuleId> imports, JaktInternal::Dictionary<DeprecatedString,ids::ScopeId> aliases, JaktInternal::Optional<ids::ScopeId> parent, JaktInternal::Optional<ids::ScopeId> alias_scope, JaktInternal::DynamicArray<ids::ScopeId> children, bool can_throw, JaktInternal::Optional<DeprecatedString> import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> alias_path, JaktInternal::DynamicArray<parser::IncludeAction> after_extern_include, JaktInternal::DynamicArray<parser::IncludeAction> before_extern_include, DeprecatedString debug_name, JaktInternal::DynamicArray<ids::ScopeId> resolution_mixins, bool is_block_scope, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedForallChunk>> resolved_forall_chunks, JaktInternal::Dictionary<DeprecatedString,types::SpecializedType> explicitly_specialized_types, bool is_from_generated_code) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Scope (move(namespace_name), move(external_name), move(vars), move(comptime_bindings), move(structs), move(functions), move(enums), move(types), move(traits), move(imports), move(aliases), move(parent), move(alias_scope), move(children), move(can_throw), move(import_path_if_extern), move(alias_path), move(after_extern_include), move(before_extern_include), move(debug_name), move(resolution_mixins), move(is_block_scope), move(resolved_forall_chunks), move(explicitly_specialized_types), move(is_from_generated_code)))); return o; }
 JaktInternal::Optional<parser::ExternalName> types::Scope::namespace_name_for_codegen() const {
 {
 if (((((*this).external_name)).has_value())){
@@ -3111,7 +3128,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("type_id: {}", type_id));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::CheckedVarDecl::CheckedVarDecl(DeprecatedString a_name, bool a_is_mutable, utility::Span a_span, ids::TypeId a_type_id) :name(move(a_name)), is_mutable(move(a_is_mutable)), span(move(a_span)), type_id(move(a_type_id)){}
+types::CheckedVarDecl::CheckedVarDecl(DeprecatedString a_name, bool a_is_mutable, utility::Span a_span, ids::TypeId a_type_id): name(move(a_name)), is_mutable(move(a_is_mutable)), span(move(a_span)), type_id(move(a_type_id)){}
 
 ErrorOr<DeprecatedString> types::CheckedEnum::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedEnum("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3129,7 +3146,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_boxed: {}", is_boxed));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::CheckedEnum::CheckedEnum(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<types::CheckedGenericParameter> a_generic_parameters, JaktInternal::DynamicArray<types::CheckedEnumVariant> a_variants, JaktInternal::DynamicArray<types::CheckedField> a_fields, ids::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> a_trait_implementations, parser::RecordType a_record_type, ids::TypeId a_underlying_type_id, ids::TypeId a_type_id, bool a_is_boxed) :name(move(a_name)), name_span(move(a_name_span)), generic_parameters(move(a_generic_parameters)), variants(move(a_variants)), fields(move(a_fields)), scope_id(move(a_scope_id)), definition_linkage(move(a_definition_linkage)), trait_implementations(move(a_trait_implementations)), record_type(move(a_record_type)), underlying_type_id(move(a_underlying_type_id)), type_id(move(a_type_id)), is_boxed(move(a_is_boxed)){}
+types::CheckedEnum::CheckedEnum(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<types::CheckedGenericParameter> a_generic_parameters, JaktInternal::DynamicArray<types::CheckedEnumVariant> a_variants, JaktInternal::DynamicArray<types::CheckedField> a_fields, ids::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> a_trait_implementations, parser::RecordType a_record_type, ids::TypeId a_underlying_type_id, ids::TypeId a_type_id, bool a_is_boxed): name(move(a_name)), name_span(move(a_name_span)), generic_parameters(move(a_generic_parameters)), variants(move(a_variants)), fields(move(a_fields)), scope_id(move(a_scope_id)), definition_linkage(move(a_definition_linkage)), trait_implementations(move(a_trait_implementations)), record_type(move(a_record_type)), underlying_type_id(move(a_underlying_type_id)), type_id(move(a_type_id)), is_boxed(move(a_is_boxed)){}
 
 ErrorOr<DeprecatedString> types::CheckedStruct::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedStruct("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3148,7 +3165,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("implements_type: {}", implements_type));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::CheckedStruct::CheckedStruct(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<types::CheckedGenericParameter> a_generic_parameters, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<ids::TypeId>>> a_generic_parameter_defaults, JaktInternal::DynamicArray<types::CheckedField> a_fields, ids::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> a_trait_implementations, parser::RecordType a_record_type, ids::TypeId a_type_id, JaktInternal::Optional<ids::StructId> a_super_struct_id, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<ids::TypeId> a_implements_type) :name(move(a_name)), name_span(move(a_name_span)), generic_parameters(move(a_generic_parameters)), generic_parameter_defaults(move(a_generic_parameter_defaults)), fields(move(a_fields)), scope_id(move(a_scope_id)), definition_linkage(move(a_definition_linkage)), trait_implementations(move(a_trait_implementations)), record_type(move(a_record_type)), type_id(move(a_type_id)), super_struct_id(move(a_super_struct_id)), external_name(move(a_external_name)), implements_type(move(a_implements_type)){}
+types::CheckedStruct::CheckedStruct(DeprecatedString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<types::CheckedGenericParameter> a_generic_parameters, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<ids::TypeId>>> a_generic_parameter_defaults, JaktInternal::DynamicArray<types::CheckedField> a_fields, ids::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> a_trait_implementations, parser::RecordType a_record_type, ids::TypeId a_type_id, JaktInternal::Optional<ids::StructId> a_super_struct_id, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<ids::TypeId> a_implements_type): name(move(a_name)), name_span(move(a_name_span)), generic_parameters(move(a_generic_parameters)), generic_parameter_defaults(move(a_generic_parameter_defaults)), fields(move(a_fields)), scope_id(move(a_scope_id)), definition_linkage(move(a_definition_linkage)), trait_implementations(move(a_trait_implementations)), record_type(move(a_record_type)), type_id(move(a_type_id)), super_struct_id(move(a_super_struct_id)), external_name(move(a_external_name)), implements_type(move(a_implements_type)){}
 
 parser::ExternalName types::CheckedStruct::name_for_codegen() const {
 {
@@ -3163,7 +3180,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("default_value_expression: {}", default_value_expression));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::CheckedField::CheckedField(ids::VarId a_variable_id, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> a_default_value, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_value_expression) :variable_id(move(a_variable_id)), default_value(move(a_default_value)), default_value_expression(move(a_default_value_expression)){}
+types::CheckedField::CheckedField(ids::VarId a_variable_id, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> a_default_value, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_value_expression): variable_id(move(a_variable_id)), default_value(move(a_default_value)), default_value_expression(move(a_default_value_expression)){}
 
 ErrorOr<DeprecatedString> types::CheckedParameter::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedParameter("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3178,7 +3195,7 @@ return types::CheckedParameter(((*this).requires_label),TRY((((((*this).variable
 }
 }
 
-types::CheckedParameter::CheckedParameter(bool a_requires_label, NonnullRefPtr<types::CheckedVariable> a_variable, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> a_default_value) :requires_label(move(a_requires_label)), variable(move(a_variable)), default_value(move(a_default_value)){}
+types::CheckedParameter::CheckedParameter(bool a_requires_label, NonnullRefPtr<types::CheckedVariable> a_variable, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> a_default_value): requires_label(move(a_requires_label)), variable(move(a_variable)), default_value(move(a_default_value)){}
 
 ErrorOr<DeprecatedString> types::CheckedBinaryOperator::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedBinaryOperator("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3186,7 +3203,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("trait_implementation: {}", trait_implementation));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::CheckedBinaryOperator::CheckedBinaryOperator(parser::BinaryOperator a_op, JaktInternal::Optional<types::OperatorTraitImplementation> a_trait_implementation) :op(move(a_op)), trait_implementation(move(a_trait_implementation)){}
+types::CheckedBinaryOperator::CheckedBinaryOperator(parser::BinaryOperator a_op, JaktInternal::Optional<types::OperatorTraitImplementation> a_trait_implementation): op(move(a_op)), trait_implementation(move(a_trait_implementation)){}
 
 ErrorOr<DeprecatedString> types::Value::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Value("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3300,7 +3317,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 }
 
-types::Value::Value(NonnullRefPtr<typename types::ValueImpl> a_impl, utility::Span a_span) :impl(move(a_impl)), span(move(a_span)){}
+types::Value::Value(NonnullRefPtr<typename types::ValueImpl> a_impl, utility::Span a_span): impl(move(a_impl)), span(move(a_span)){}
 
 ErrorOr<types::Value> types::Value::cast(types::Value const expected,utility::Span const span) const {
 {
@@ -3849,7 +3866,7 @@ return types::CheckedGenericParameter(type_id,(TRY((DynamicArray<ids::TraitId>::
 }
 }
 
-types::CheckedGenericParameter::CheckedGenericParameter(ids::TypeId a_type_id, JaktInternal::DynamicArray<ids::TraitId> a_constraints, utility::Span a_span) :type_id(move(a_type_id)), constraints(move(a_constraints)), span(move(a_span)){}
+types::CheckedGenericParameter::CheckedGenericParameter(ids::TypeId a_type_id, JaktInternal::DynamicArray<ids::TraitId> a_constraints, utility::Span a_span): type_id(move(a_type_id)), constraints(move(a_constraints)), span(move(a_span)){}
 
 ErrorOr<DeprecatedString> types::CheckedEnumVariantBinding::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedEnumVariantBinding("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3859,7 +3876,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}", span));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::CheckedEnumVariantBinding::CheckedEnumVariantBinding(JaktInternal::Optional<DeprecatedString> a_name, DeprecatedString a_binding, ids::TypeId a_type_id, utility::Span a_span) :name(move(a_name)), binding(move(a_binding)), type_id(move(a_type_id)), span(move(a_span)){}
+types::CheckedEnumVariantBinding::CheckedEnumVariantBinding(JaktInternal::Optional<DeprecatedString> a_name, DeprecatedString a_binding, ids::TypeId a_type_id, utility::Span a_span): name(move(a_name)), binding(move(a_binding)), type_id(move(a_type_id)), span(move(a_span)){}
 
 ErrorOr<DeprecatedString> types::CheckedTrait::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedTrait("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3885,7 +3902,7 @@ return ((((*this).value)).to_string());
 }
 }
 
-types::CheckedStringLiteral::CheckedStringLiteral(types::StringLiteral a_value, ids::TypeId a_type_id, bool a_may_throw) :value(move(a_value)), type_id(move(a_type_id)), may_throw(move(a_may_throw)){}
+types::CheckedStringLiteral::CheckedStringLiteral(types::StringLiteral a_value, ids::TypeId a_type_id, bool a_may_throw): value(move(a_value)), type_id(move(a_type_id)), may_throw(move(a_may_throw)){}
 
 ErrorOr<DeprecatedString> types::CheckedVariable::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CheckedVariable("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3921,7 +3938,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_reference: {}", is_reference));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-types::ClassInstanceRebind::ClassInstanceRebind(DeprecatedString a_name, utility::Span a_name_span, bool a_is_mutable, bool a_is_reference) :name(move(a_name)), name_span(move(a_name_span)), is_mutable(move(a_is_mutable)), is_reference(move(a_is_reference)){}
+types::ClassInstanceRebind::ClassInstanceRebind(DeprecatedString a_name, utility::Span a_name_span, bool a_is_mutable, bool a_is_reference): name(move(a_name)), name_span(move(a_name_span)), is_mutable(move(a_is_mutable)), is_reference(move(a_is_reference)){}
 
 ErrorOr<DeprecatedString> types::CheckedUnaryOperator::debug_description() const {
 auto builder = DeprecatedStringBuilder::create();
@@ -8331,7 +8348,7 @@ case 12 /* USize */: {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::Usize()));
 };/*case end*/
 case 13 /* JaktString */: {
-return JaktInternal::ExplicitValue((TRY((((((program)))->find_type_in_scope(((((program)))->prelude_scope_id()),TRY(DeprecatedString::from_utf8("String"sv)),false)))).value()));
+return JaktInternal::ExplicitValue((TRY((((((program)))->find_type_in_scope(((((program)))->prelude_scope_id()),TRY(DeprecatedString::from_utf8("String"sv)),false,false)))).value()));
 };/*case end*/
 case 14 /* StringView */: {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::JaktString()));
@@ -12996,13 +13013,13 @@ ids::ScopeId const parent_scope_id = (parent)->as.Resolved.value;
 ids::ScopeId const scope = parent_scope_id;
 JaktInternal::Optional<ids::ScopeId> scope_id = JaktInternal::OptionalNone();
 if ((!(((scope_id).has_value())))){
-JaktInternal::Optional<ids::StructId> const struct_ = TRY((((program)->find_struct_in_scope(scope,relative_name,false))));
+JaktInternal::Optional<ids::StructId> const struct_ = TRY((((program)->find_struct_in_scope(scope,relative_name,false,false))));
 if (((struct_).has_value())){
 (scope_id = ((((program)->get_struct((struct_.value())))).scope_id));
 }
 }
 if ((!(((scope_id).has_value())))){
-JaktInternal::Optional<ids::EnumId> const enum_ = TRY((((program)->find_enum_in_scope(scope,relative_name,false))));
+JaktInternal::Optional<ids::EnumId> const enum_ = TRY((((program)->find_enum_in_scope(scope,relative_name,false,false))));
 if (((enum_).has_value())){
 (scope_id = ((((program)->get_enum((enum_.value())))).scope_id));
 }
@@ -13014,7 +13031,7 @@ if (((ns).has_value())){
 }
 }
 if ((!(((scope_id).has_value())))){
-JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const ids = TRY((((program)->find_functions_with_name_in_scope(scope,relative_name,false))));
+JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const ids = TRY((((program)->find_functions_with_name_in_scope(scope,relative_name,false,false))));
 if (((ids).has_value())){
 (scope_id = ((((program)->get_function((((ids.value()))[static_cast<i64>(0LL)]))))->function_scope_id));
 }

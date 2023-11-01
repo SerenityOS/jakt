@@ -5,7 +5,7 @@ ErrorOr<DeprecatedString> jakt__prelude__configuration::UserConfiguration::debug
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-jakt__prelude__configuration::UserConfiguration::UserConfiguration() {}
+jakt__prelude__configuration::UserConfiguration::UserConfiguration(){}
 
 }
 } // namespace Jakt

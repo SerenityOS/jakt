@@ -41,7 +41,7 @@ ALWAYS_INLINE void dump_backtrace()
 {
     // Grab symbols and dso name for up to 256 frames
     void* trace[256] = {};
-    int const num_frames = backtrace(trace, sizeof(trace));
+    int const num_frames = backtrace(trace, array_size(trace));
     char** syms = backtrace_symbols(trace, num_frames);
 
     for (auto i = 0; i < num_frames; ++i) {
@@ -89,7 +89,19 @@ extern "C" {
 
 void ak_verification_failed(char const* message)
 {
-    ERRORLN("VERIFICATION FAILED: {}", message);
+#    if defined(AK_OS_SERENITY) || defined(AK_OS_ANDROID)
+    bool colorize_output = true;
+#    elif defined(AK_OS_WINDOWS)
+    bool colorize_output = false;
+#    else
+    bool colorize_output = isatty(STDERR_FILENO) == 1;
+#    endif
+
+    if (colorize_output)
+        ERRORLN("\033[31;1mVERIFICATION FAILED\033[0m: {}", message);
+    else
+        ERRORLN("VERIFICATION FAILED: {}", message);
+
 #    if defined(EXECINFO_BACKTRACE)
     dump_backtrace();
 #    endif

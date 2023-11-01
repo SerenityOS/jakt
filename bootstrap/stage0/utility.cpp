@@ -509,7 +509,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 
-utility::Span::Span(utility::FileId a_file_id, size_t a_start, size_t a_end) :file_id(move(a_file_id)), start(move(a_start)), end(move(a_end)){}
+utility::Span::Span(utility::FileId a_file_id, size_t a_start, size_t a_end): file_id(move(a_file_id)), start(move(a_start)), end(move(a_end)){}
 
 utility::Span utility::Span::first(utility::Span const a,utility::Span const b) {
 {
@@ -632,7 +632,7 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-utility::FileId::FileId(size_t a_id) :id(move(a_id)){}
+utility::FileId::FileId(size_t a_id): id(move(a_id)){}
 
 bool utility::FileId::equals(utility::FileId const rhs) const {
 {

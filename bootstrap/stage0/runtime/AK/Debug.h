@@ -38,6 +38,10 @@
 #    define CANVAS_RENDERING_CONTEXT_2D_DEBUG 0
 #endif
 
+#ifndef CFF_DEBUG
+#    define CFF_DEBUG 0
+#endif
+
 #ifndef CMAKE_DEBUG
 #    define CMAKE_DEBUG 0
 #endif

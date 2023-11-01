@@ -1,6 +1,7 @@
 #pragma once
 #include "__unified_forward.h"
 #include <AK/Queue.h>
+#include "jakt__platform__utility.h"
 namespace Jakt {
 namespace utility {
 struct FileId {
@@ -146,10 +147,6 @@ IterationDecision() {};
 };
 template <typename T,typename U>
 ErrorOr<JaktInternal::DynamicArray<U>> map(JaktInternal::DynamicArray<T> const input, Function<ErrorOr<U>(T)> const& mapper);
-template <typename T>
-T* null();
-template <typename T>
-T* allocate(size_t const count);
 template <typename T>
 ErrorOr<JaktInternal::DynamicArray<T>> add_arrays(JaktInternal::DynamicArray<T> const a, JaktInternal::DynamicArray<T> const b);
 }
