@@ -262,7 +262,12 @@ struct Typechecker {
     fn get_enum(this, anon id: EnumId) -> CheckedEnum => .program.get_enum(id)
     fn get_struct(this, anon id: StructId) -> CheckedStruct => .program.get_struct(id)
     fn get_scope(this, anon id: ScopeId) throws -> Scope => .program.get_scope(id)
-    fn find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? => .program.find_var_in_scope(scope_id, var)
+    fn find_var_in_scope(
+        this
+        scope_id: ScopeId
+        var: String
+        root_scope_id: ScopeId? = None
+    ) throws -> CheckedVariable? => .program.find_var_in_scope(scope_id, var, root_scope_id)
 
     fn lookup_struct_field(this, struct_id: StructId, name: String) throws -> FieldRecord? {
         mut chain: [StructId] = []
@@ -583,8 +588,8 @@ struct Typechecker {
 
     // Find the namespace in the current scope, or one of its parents,
     // and whether the found scope was an import.
-    fn find_namespace_in_scope(this, scope_id: ScopeId, name: String, treat_aliases_as_imports: bool = false) throws -> (ScopeId, bool)? {
-        return .program.find_namespace_in_scope(scope_id, name, treat_aliases_as_imports)
+    fn find_namespace_in_scope(this, scope_id: ScopeId, name: String, treat_aliases_as_imports: bool = false, root_scope: ScopeId? = None) throws -> (ScopeId, bool)? {
+        return .program.find_namespace_in_scope(scope_id, name, treat_aliases_as_imports, root_scope)
     }
 
     fn add_struct_to_scope(mut this, scope_id: ScopeId, name: String, struct_id: StructId, span: Span) throws -> bool {
@@ -749,12 +754,22 @@ struct Typechecker {
         return true
     }
 
-    fn find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
-        return .program.find_functions_with_name_in_scope(parent_scope_id, function_name)
+    fn find_functions_with_name_in_scope(
+        this
+        parent_scope_id: ScopeId
+        function_name: String
+        root_scope_id: ScopeId? = None
+    ) throws -> [FunctionId]? {
+        return .program.find_functions_with_name_in_scope(parent_scope_id, function_name, root_scope_id)
     }
 
-    fn find_scoped_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> ([FunctionId], ScopeId)? {
-        return .program.find_scoped_functions_with_name_in_scope(parent_scope_id, function_name)
+    fn find_scoped_functions_with_name_in_scope(
+        this
+        parent_scope_id: ScopeId
+        function_name: String
+        root_scope_id: ScopeId? = None
+    ) throws -> ([FunctionId], ScopeId)? {
+        return .program.find_scoped_functions_with_name_in_scope(parent_scope_id, function_name, root_scope_id)
     }
 
     fn find_function_matching_signature_in_scope(this, parent_scope_id: ScopeId, prototype: ParsedFunction) throws -> FunctionId? {
@@ -810,8 +825,8 @@ struct Typechecker {
         return None
     }
 
-    fn find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? =>
-        .program.find_struct_in_scope(scope_id, name)
+    fn find_struct_in_scope(this, scope_id: ScopeId, name: String, root_scope: ScopeId? = None) throws -> StructId? =>
+        .program.find_struct_in_scope(scope_id, name, root_scope)
 
     fn unwrap_type_from_optional_if_needed(this, type: Type) throws -> Type {
         let optional_struct_id = .find_struct_in_prelude("Optional")
@@ -1867,42 +1882,53 @@ struct Typechecker {
             }
             debug_name += ")"
 
-            if namespace_.import_path_if_extern.has_value() {
-                debug_name += " (extern "
-                debug_name += namespace_.import_path_if_extern!
-                debug_name += ")"
+            mut existing_scope_id = match namespace_.name.has_value() {
+                true => .find_namespace_in_scope(scope_id: scope_id, name: namespace_.name!)?.0
+                false => None
             }
 
-            // Note: The back link formed by parent_scope_id and the forward link formed by scope.children
-            //       do not necessarily link exactly two distinct scopes together, while that is the case for
-            //       regular scope relationships, scopes created by extern imports all have the same global back link
-            //       while they're children of their respective modules at the same time.
-            let parent_scope_id = match namespace_.import_path_if_extern.has_value() {
-                true => ScopeId(module_id: ModuleId(id: 1), id: 0)
-                else => scope_id
-            }
+            mut namespace_scope_id = existing_scope_id
+            if not existing_scope_id.has_value() {
+                if namespace_.import_path_if_extern.has_value() {
+                    debug_name += " (extern "
+                    debug_name += namespace_.import_path_if_extern!
+                    debug_name += ")"
+                }
 
-            let namespace_scope_id = .create_scope(
-                parent_scope_id
-                can_throw: false
-                debug_name
-                for_block: false
-            )
-            mut child_scope = .get_scope(namespace_scope_id)
-            child_scope.namespace_name = namespace_.name
-            child_scope.import_path_if_extern = namespace_.import_path_if_extern
-            child_scope.before_extern_include = namespace_.generating_import_extern_before_include
-            child_scope.after_extern_include = namespace_.generating_import_extern_after_include
-            child_scope.is_from_generated_code = child_scope.is_from_generated_code or namespace_.is_generated_code
+                // Note: The back link formed by parent_scope_id and the forward link formed by scope.children
+                //       do not necessarily link exactly two distinct scopes together, while that is the case for
+                //       regular scope relationships, scopes created by extern imports all have the same global back link
+                //       while they're children of their respective modules at the same time.
+                let parent_scope_id = match namespace_.import_path_if_extern.has_value() {
+                    true => ScopeId(module_id: ModuleId(id: 1), id: 0)
+                    else => scope_id
+                }
 
-            // Make sure the imported ns can see the "logical" parent ns.
-            if namespace_.import_path_if_extern.has_value() {
-                child_scope.resolution_mixins.push(scope_id)
+                let child_scope_id = .create_scope(
+                    parent_scope_id
+                    can_throw: false
+                    debug_name
+                    for_block: false
+                )
+                mut child_scope = .get_scope(child_scope_id)
+
+                child_scope.namespace_name = namespace_.name
+                child_scope.import_path_if_extern = namespace_.import_path_if_extern
+                child_scope.before_extern_include = namespace_.generating_import_extern_before_include
+                child_scope.after_extern_include = namespace_.generating_import_extern_after_include
+                child_scope.is_from_generated_code = child_scope.is_from_generated_code or namespace_.is_generated_code
+
+                // Make sure the imported ns can see the "logical" parent ns.
+                if namespace_.import_path_if_extern.has_value() {
+                    child_scope.resolution_mixins.push(scope_id)
+                }
+
+                namespace_scope_id = child_scope_id
             }
 
             mut parent_scope = .get_scope(scope_id)
-            parent_scope.children.push(namespace_scope_id)
-            .typecheck_namespace_predecl(parsed_namespace: namespace_, scope_id: namespace_scope_id)
+            parent_scope.children.push(namespace_scope_id!)
+            .typecheck_namespace_predecl(parsed_namespace: namespace_, scope_id: namespace_scope_id!)
         }
 
         // 3. Register traits
@@ -10223,7 +10249,10 @@ struct Typechecker {
 
         for namespace_index in 0..call.namespace_.size() {
             let scope_name = call.namespace_[namespace_index]
-            let maybe_ns_scope = .find_namespace_in_scope(scope_id: current_scope_id, name: scope_name)
+            let maybe_ns_scope = .find_namespace_in_scope(
+                scope_id: current_scope_id
+                name: scope_name
+            )
             if maybe_ns_scope.has_value() {
                 let (scope_id, is_import) = maybe_ns_scope!
                 if is_import {
@@ -10231,7 +10260,13 @@ struct Typechecker {
                 }
                 namespaces[namespace_index].external_name = .get_scope(scope_id).external_name
 
-                is_base_ns_alias_or_import[namespace_index] = .find_namespace_in_scope(scope_id: current_scope_id, name: scope_name, treat_aliases_as_imports: true)!.1
+                is_base_ns_alias_or_import[
+                    namespace_index
+                ] = .find_namespace_in_scope(
+                    scope_id: current_scope_id
+                    name: scope_name
+                    treat_aliases_as_imports: true
+                )!.1
 
                 current_scope_id = scope_id
                 continue
@@ -10317,7 +10352,7 @@ struct Typechecker {
         }
 
         // 1. Look for a variable in the current scope with this name.
-        let maybe_var = .find_var_in_scope(scope_id: current_scope_id, var: call.name)
+        let maybe_var = .find_var_in_scope(scope_id: current_scope_id, var: call.name, root_scope: current_scope_id)
         if maybe_var.has_value()  {
             let inner_type = match .get_type(maybe_var!.type_id) {
                 Reference(type_id) | MutableReference(type_id) => type_id
@@ -10330,7 +10365,11 @@ struct Typechecker {
         }
 
         // 2. Look for a function with this name.
-        let maybe_overload_set = .find_scoped_functions_with_name_in_scope(parent_scope_id: current_scope_id, function_name: call.name)
+        let maybe_overload_set = .find_scoped_functions_with_name_in_scope(
+            parent_scope_id: current_scope_id
+            function_name: call.name
+            root_scope_id: current_scope_id
+        )
         if maybe_overload_set.has_value() {
             let function = .get_function(maybe_overload_set!.0[0])
             if not must_be_enum_constructor or function.type is ImplicitEnumConstructor {
@@ -10346,12 +10385,21 @@ struct Typechecker {
         }
 
         // 3. Look for a struct, class or enum constructor with this name.
-        let maybe_struct_id = .find_struct_in_scope(scope_id: current_scope_id, name: call.name)
+        let maybe_struct_id = .find_struct_in_scope(
+            scope_id: current_scope_id
+            name: call.name
+            root_scope_id: current_scope_id
+        )
         if maybe_struct_id.has_value() {
             let struct_id = maybe_struct_id!
             let structure = .get_struct(struct_id)
-            let maybe_function_id = .find_scoped_functions_with_name_in_scope(parent_scope_id: structure.scope_id, function_name: structure.name)
+            let maybe_function_id = .find_scoped_functions_with_name_in_scope(
+                parent_scope_id: structure.scope_id
+                function_name: structure.name
+                root_scope_id: structure.scope_id
+            )
             if maybe_function_id.has_value() {
+                owning_scope = .get_function(maybe_function_id!.0[0]).owner_scope
                 current_scope_id = maybe_function_id!.1
                 return maybe_function_id!.0
             }
