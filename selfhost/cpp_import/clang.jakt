@@ -267,6 +267,7 @@ class CppImportProcessor {
         anon cursor: CXCursor
         program: &mut CheckedProgram
         scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
     ) throws -> TypeId {
         let key = HashableCursor(cursor, hash_value: clang_hashCursor(cursor))
@@ -275,7 +276,7 @@ class CppImportProcessor {
             return cached_type!
         }
 
-        let type = .type_from(program, scope_id, module_id, clang_getCursorType(cursor))
+        let type = .type_from(program, scope_id, root_scope_id, module_id, clang_getCursorType(cursor))
         .cpp_type_cache.set(key, type)
         return type
     }
@@ -339,6 +340,7 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         anon t: CXType
     ) throws -> TypeId {
@@ -367,21 +369,21 @@ class CppImportProcessor {
                     scope_id
                     name: typedef_name
                     ignore_mixin_scopes: true
-                    ignore_parent_scopes: true
+                    root_scope: root_scope_id
                 )
                 if type_id.has_value() {
                     return type_id!
                 }
 
-                yield .type_from(program, scope_id, module_id, clang_getCanonicalType(t))
+                yield .type_from(program, scope_id, root_scope_id, module_id, clang_getCanonicalType(t))
             }
             CXType_Pointer => {
                 let pointee_type = clang_getPointeeType(t)
                 yield match pointee_type.kind {
-                    CXType_FunctionProto | CXType_FunctionNoProto => .type_from(program, scope_id, module_id, pointee_type)
+                    CXType_FunctionProto | CXType_FunctionNoProto => .type_from(program, scope_id, root_scope_id, module_id, pointee_type)
                     else => program.find_or_add_type_id(
                         type: Type::RawPtr(
-                            .type_from(program, scope_id, module_id, clang_getPointeeType(t))
+                            .type_from(program, scope_id, root_scope_id, module_id, clang_getPointeeType(t))
                         )
                         module_id
                         only_in_current_module: true
@@ -393,7 +395,7 @@ class CppImportProcessor {
                     scope_id
                     name: name_from(clang_getTypeDeclaration(t))
                     ignore_mixin_scopes: true
-                    ignore_parent_scopes: true
+                    root_scope: root_scope_id
                 )
                 yield match struct_id.has_value() {
                     true => program.find_or_add_type_id(Type::Struct(struct_id!), module_id, only_in_current_module: true)
@@ -405,14 +407,14 @@ class CppImportProcessor {
                     scope_id
                     name: name_from(clang_getTypeDeclaration(t))
                     ignore_mixin_scopes: true
-                    ignore_parent_scopes: true
+                    root_scope: root_scope_id
                 )
                 yield match enum_id.has_value() {
                     true => program.find_or_add_type_id(Type::Enum(enum_id!), module_id, only_in_current_module: true)
                     false => builtin(BuiltinType::Unknown)
                 }
             }
-            CXType_Elaborated => .type_from(program, scope_id, module_id, clang_Type_getNamedType(t))
+            CXType_Elaborated => .type_from(program, scope_id, root_scope_id, module_id, clang_Type_getNamedType(t))
             CXType_Unexposed => {
                 let name = string_from(clang_getTypeSpelling(t))
                 yield match name.is_empty() {
@@ -421,27 +423,27 @@ class CppImportProcessor {
                         scope_id
                         name
                         ignore_mixin_scopes: true
-                        ignore_parent_scopes: true
+                        root_scope: root_scope_id
                     ) ?? builtin(BuiltinType::Unknown)
                 }
             }
             CXType_LValueReference => program.find_or_add_type_id(
                 type: Type::Reference(
-                    .type_from(program, scope_id, module_id, clang_getPointeeType(t))
+                    .type_from(program, scope_id, root_scope_id, module_id, clang_getPointeeType(t))
                 )
                 module_id
                 only_in_current_module: true
             )
-            CXType_RValueReference => .type_from(program, scope_id, module_id, clang_getPointeeType(t))
+            CXType_RValueReference => .type_from(program, scope_id, root_scope_id, module_id, clang_getPointeeType(t))
             CXType_FunctionProto => {
                 let arg_count = clang_getNumArgTypes(t)
                 mut arg_types = [unknown_type_id(); arg_count]
                 for i in 0..arg_count {
-                    arg_types[i] = .type_from(program, scope_id, module_id, clang_getArgType(t, i))
+                    arg_types[i] = .type_from(program, scope_id, root_scope_id, module_id, clang_getArgType(t, i))
                 }
 
                 let return_type = clang_getResultType(t)
-                let return_type_id = .type_from(program, scope_id, module_id, return_type)
+                let return_type_id = .type_from(program, scope_id, root_scope_id, module_id, return_type)
 
                 // Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
                 mut module = program.get_module(module_id)
@@ -513,13 +515,13 @@ class CppImportProcessor {
             }
             CXType_ConstantArray => {
                 let element_type = clang_getArrayElementType(t)
-                let element_type_id = .type_from(program, scope_id, module_id, element_type)
+                let element_type_id = .type_from(program, scope_id, root_scope_id, module_id, element_type)
                 let array_size = clang_getArraySize(t)
                 let static_array_struct_id = try value_or_error(program.find_struct_in_scope(
                     scope_id
                     name: "StaticArray"
                     ignore_mixin_scopes: true
-                    ignore_parent_scopes: true
+                    root_scope: root_scope_id
                 )) catch {
                     return builtin(BuiltinType::Unknown)
                 }
@@ -558,6 +560,7 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         cursor: CXCursor
         allowed_contents: AllowedContents
@@ -571,6 +574,7 @@ class CppImportProcessor {
                 &mut program
                 module_id
                 scope_id
+                root_scope_id
                 this_type
                 allowed_contents
                 alias_type_name
@@ -582,6 +586,7 @@ class CppImportProcessor {
                             OnlyTypes | Everything => .process_struct(
                                 program: &mut program
                                 parent_scope_id: scope_id
+                                root_scope_id
                                 module_id: module_id
                                 cursor: c
                                 alias_type_name
@@ -595,6 +600,7 @@ class CppImportProcessor {
                             OnlyTypes | Everything => .process_enum(
                                 program: &mut program
                                 parent_scope_id: scope_id
+                                root_scope_id
                                 module_id: module_id
                                 cursor: c
                                 alias_type_name
@@ -607,6 +613,7 @@ class CppImportProcessor {
                         .process_namespace(
                             program: &mut program
                             parent_scope_id: scope_id
+                            root_scope_id
                             module_id: module_id
                             cursor: c
                         )
@@ -617,6 +624,7 @@ class CppImportProcessor {
                             .process_function(
                                 program: &mut program
                                 parent_scope_id: scope_id
+                                root_scope_id
                                 module_id: module_id
                                 this_type
                                 kind: ExternFunctionKind::Normal
@@ -631,6 +639,7 @@ class CppImportProcessor {
                             .process_function_template(
                                 program: &mut program
                                 parent_scope_id: scope_id
+                                root_scope_id
                                 module_id: module_id
                                 this_type
                                 kind: ExternFunctionKind::Normal
@@ -645,6 +654,7 @@ class CppImportProcessor {
                             .process_function(
                                 program: &mut program
                                 parent_scope_id: scope_id
+                                root_scope_id
                                 module_id: module_id
                                 this_type
                                 kind: ExternFunctionKind::Constructor
@@ -659,6 +669,7 @@ class CppImportProcessor {
                             .process_function(
                                 program: &mut program
                                 parent_scope_id: scope_id
+                                root_scope_id
                                 module_id: module_id
                                 this_type
                                 kind: ExternFunctionKind::Destructor
@@ -674,6 +685,7 @@ class CppImportProcessor {
                                 .process_function(
                                     program: &mut program
                                     parent_scope_id: scope_id
+                                    root_scope_id
                                     module_id: module_id
                                     this_type
                                     kind: ExternFunctionKind::Normal
@@ -689,6 +701,7 @@ class CppImportProcessor {
                             .process_type_alias(
                                 program: &mut program
                                 parent_scope_id: scope_id
+                                root_scope_id
                                 module_id: module_id
                                 this_type_id: this_type
                                 cursor: c
@@ -702,6 +715,7 @@ class CppImportProcessor {
                             .process_class_template(
                                 program: &mut program
                                 parent_scope_id: scope_id
+                                root_scope_id
                                 module_id: module_id
                                 cursor: c
                             )
@@ -714,6 +728,7 @@ class CppImportProcessor {
                             .process_class_template_partial_specialization(
                                 program: &mut program
                                 parent_scope_id: scope_id
+                                root_scope_id
                                 module_id: module_id
                                 cursor: c
                             )
@@ -738,6 +753,7 @@ class CppImportProcessor {
                             .process_ns_variable(
                                 program: &mut program
                                 parent_scope_id: scope_id
+                                root_scope_id
                                 module_id: module_id
                                 cursor: c
                             )
@@ -755,6 +771,7 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         parent_scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         cursor: CXCursor
     ) throws {
@@ -763,7 +780,13 @@ class CppImportProcessor {
             cursor
             kinds: {CXCursorKind::CXCursor_TemplateTypeParameter, CXCursorKind::CXCursor_NonTypeTemplateParameter}
         )
-        let specialization_template_parameters = .extract_template_parameters(program, parent_scope_id, module_id, cursor)
+        let specialization_template_parameters = .extract_template_parameters(
+            program
+            parent_scope_id
+            root_scope_id
+            module_id
+            cursor
+        )
 
         // Resolve arguments
         let template_arguments = .extract_matching_cursors_breaking_at_boundary(
@@ -776,7 +799,7 @@ class CppImportProcessor {
             scope_id: parent_scope_id
             name
             ignore_mixin_scopes: true
-            ignore_parent_scopes: true
+            root_scope: root_scope_id
         )
         if not struct_id.has_value() {
             eprintln("[ICE] Couldn't find struct for partial specialization named {}", name)
@@ -799,6 +822,7 @@ class CppImportProcessor {
                     cursor: argument
                     program
                     scope_id: parent_scope_id
+                    root_scope_id
                     module_id
                 )
             }
@@ -816,6 +840,7 @@ class CppImportProcessor {
         .process_struct(
             program
             parent_scope_id
+            root_scope_id
             module_id
             cursor
             generic_parameters: base_struct.generic_parameters
@@ -828,7 +853,7 @@ class CppImportProcessor {
             scope_id: parent_scope_id
             name: format("{}<{}>", name, specialized_name)
             ignore_mixin_scopes: true
-            ignore_parent_scopes: true
+            root_scope: root_scope_id
         )
         if not specialized_struct_id.has_value() {
             eprintln("[ICE] Couldn't find struct for partial specialization named {}", name)
@@ -854,6 +879,7 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         parent_scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         cursor: CXCursor
     ) throws {
@@ -864,6 +890,7 @@ class CppImportProcessor {
             cursor
             program
             scope_id: parent_scope_id
+            root_scope_id
             module_id
         )
 
@@ -914,6 +941,7 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         parent_scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         cursor: CXCursor
     ) throws -> TemplateParameters {
@@ -1000,6 +1028,7 @@ class CppImportProcessor {
                         cursor: default_value_cursor!
                         program
                         scope_id: parent_scope_id
+                        root_scope_id
                         module_id
                     )
                 }
@@ -1055,16 +1084,18 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         parent_scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         cursor: CXCursor
     ) throws {
         let name = name_from(cursor)
         match clang_getTemplateCursorKind(cursor) {
             CXCursor_StructDecl | CXCursor_ClassDecl => {
-                let template_parameters = .extract_template_parameters(program, parent_scope_id, module_id, cursor)
+                let template_parameters = .extract_template_parameters(program, parent_scope_id, root_scope_id, module_id, cursor)
                 .process_struct(
                     program
                     parent_scope_id
+                    root_scope_id
                     module_id
                     cursor
                     generic_parameters: template_parameters.params
@@ -1131,6 +1162,7 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         parent_scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         this_type_id: TypeId?
         cursor: CXCursor
@@ -1141,6 +1173,7 @@ class CppImportProcessor {
         .process_namespace_contents(
             program: program
             scope_id: parent_scope_id
+            root_scope_id
             module_id: module_id
             cursor: cursor
             allowed_contents: AllowedContents::OnlyTypes
@@ -1153,7 +1186,7 @@ class CppImportProcessor {
             return
         }
 
-        let type_id = .type_from(program, scope_id: parent_scope_id, module_id, type)
+        let type_id = .type_from(program, scope_id: parent_scope_id, root_scope_id, module_id, type)
         mut scope = program.get_scope(parent_scope_id)
         scope.types.set(name, type_id)
     }
@@ -1162,6 +1195,7 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         parent_scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         cursor: CXCursor
     ) throws {
@@ -1195,6 +1229,7 @@ class CppImportProcessor {
         .process_namespace_contents(
             program: program
             scope_id
+            root_scope_id
             module_id
             cursor
             allowed_contents: AllowedContents::Everything
@@ -1207,15 +1242,17 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         parent_scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         this_type: TypeId?
         kind: ExternFunctionKind
         cursor: CXCursor
     ) throws {
-        let template_parameters = .extract_template_parameters(program, parent_scope_id, module_id, cursor)
+        let template_parameters = .extract_template_parameters(program, parent_scope_id, root_scope_id, module_id, cursor)
         .process_function(
             program
             parent_scope_id
+            root_scope_id
             module_id
             this_type
             kind
@@ -1244,6 +1281,7 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         parent_scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         this_type: TypeId?
         kind: ExternFunctionKind
@@ -1342,6 +1380,7 @@ class CppImportProcessor {
                 cursor: parameter
                 program
                 scope_id: function_scope
+                root_scope_id
                 module_id
             )
             let variable = CheckedVariable(
@@ -1366,12 +1405,14 @@ class CppImportProcessor {
                 true => (true, .type_from(
                     program
                     scope_id: function_scope
+                    root_scope_id
                     module_id
                     clang_Type_getTemplateArgumentAsType(result_type, 0)
                 ))
                 false => (false, .type_from(
                     program
                     scope_id: function_scope
+                    root_scope_id
                     module_id
                     result_type
                 ))
@@ -1469,6 +1510,7 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         parent_scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         cursor: CXCursor
         alias_type_name: String? = None
@@ -1520,6 +1562,7 @@ class CppImportProcessor {
         let underlying_type_id = .type_from(
             program
             scope_id: enum_scope
+            root_scope_id
             module_id
             clang_getEnumDeclIntegerType(cursor)
         )
@@ -1647,6 +1690,7 @@ class CppImportProcessor {
         mut this
         program: &mut CheckedProgram
         parent_scope_id: ScopeId
+        root_scope_id: ScopeId
         module_id: ModuleId
         cursor: CXCursor
         generic_parameters: [CheckedGenericParameter]? = None
@@ -1684,7 +1728,7 @@ class CppImportProcessor {
             scope_id: parent_scope_id
             name: specialized_name
             ignore_mixin_scopes: true
-            ignore_parent_scopes: true
+            root_scope: root_scope_id
         )
 
         let struct_id = existing_struct_id ?? cached_struct_id ?? StructId(
@@ -1818,6 +1862,7 @@ class CppImportProcessor {
                 cursor: base
                 &mut program
                 scope_id: base_scope_id
+                root_scope_id
                 module_id
             ))
             match type {
@@ -1831,6 +1876,7 @@ class CppImportProcessor {
         .process_namespace_contents(
             program
             scope_id: struct_scope
+            root_scope_id
             module_id
             cursor
             allowed_contents: AllowedContents::OnlyTypes
@@ -1844,6 +1890,7 @@ class CppImportProcessor {
                 &mut program
                 module_id
                 struct_scope
+                root_scope_id
                 &mut fields
                 this
             ](c: CXCursor, parent: CXCursor) throws -> CXChildVisitResult {
@@ -1855,6 +1902,7 @@ class CppImportProcessor {
                             cursor: c
                             &mut program
                             scope_id: struct_scope
+                            root_scope_id
                             module_id
                         )
                         let variable = CheckedVariable(
@@ -1905,6 +1953,7 @@ class CppImportProcessor {
         .process_namespace_contents(
             program
             scope_id: struct_scope
+            root_scope_id
             module_id
             cursor
             allowed_contents: AllowedContents::OnlyFunctions
@@ -1921,7 +1970,7 @@ class CppImportProcessor {
             parent_scope_id
             function_name: name
             ignore_mixin_scopes: true
-            ignore_parent_scopes: true
+            root_scope: root_scope_id
         )
 
         if not ctors.has_value() or ctors!.is_empty() {
@@ -2132,6 +2181,7 @@ class CppImportProcessor {
         .process_namespace_contents(
             program
             scope_id: import_scope_id
+            root_scope_id: import_scope_id
             module_id
             cursor
             allowed_contents: AllowedContents::Everything
