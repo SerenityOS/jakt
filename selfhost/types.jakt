@@ -82,8 +82,7 @@ struct GenericInferences {
 
     fn set(mut this, anon key: TypeId, anon value: TypeId) throws {
         if key == value {
-            println("Warning: Generic parameter {} is being bound to itself", key)
-            abort()
+            return
         }
 
         let mapped_value = .map(value)
