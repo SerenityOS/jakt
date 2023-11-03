@@ -1758,7 +1758,7 @@ struct CodeGenerator {
 
             output += "struct {\n"
 
-            // Make common fields available 
+            // Make common fields available
             for (field_name, type) in common_fields {
                 output += format("{} {};\n", type, field_name)
             }
@@ -1775,7 +1775,7 @@ struct CodeGenerator {
 
 
         output += "union VariantData {\n"
-        
+
         // We need to have some way to initialize the union if any of the other fields is non default constructible.
         output += "u8 __jakt_uninit_value;\n"
 
@@ -1909,7 +1909,7 @@ struct CodeGenerator {
         }
 
         let has_common_fields = not common_fields.is_empty()
-            
+
         // arguments
         if has_common_fields {
             let (first_name, first_type) = common_fields[0]
@@ -2287,7 +2287,7 @@ struct CodeGenerator {
                         let ds: String? = .destructor_name(variable.type_id)
 
                         if ds is Some(name) {
-                            output += format("this->as.{}.{}.~{}();\n", 
+                            output += format("this->as.{}.{}.~{}();\n",
                                 variant_name
                                 variable.name_for_codegen().as_name_for_use()
                                 name
@@ -4004,7 +4004,6 @@ struct CodeGenerator {
                             GenericInstance(id, args) => {
                                 let struct_ = .program.get_struct(id)
                                 if struct_.record_type is Class {
-                                    output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
                                     output += struct_.name_for_codegen().as_name_for_use()
                                     output += "<"
                                     mut first = true
