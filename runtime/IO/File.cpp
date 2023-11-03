@@ -76,6 +76,16 @@ ErrorOr<DynamicArray<u8>> File::read_all()
 {
     auto entire_file = TRY(DynamicArray<u8>::create_empty());
 
+    // Try to guess the file size so we can pre-allocate the buffer.
+    size_t file_size = 0;
+    if (fseek(m_stdio_file, 0, SEEK_END) == 0) {
+        file_size = ftell(m_stdio_file);
+        fseek(m_stdio_file, 0, SEEK_SET);
+    }
+
+    if (file_size > 0)
+        TRY(entire_file.ensure_capacity(file_size));
+
     while (true) {
         u8 buffer[4096];
         auto nread = fread(buffer, 1, sizeof(buffer), m_stdio_file);
@@ -133,7 +143,7 @@ ErrorOr<DeprecatedString> File::current_executable_path()
     char path[4096] {};
 #ifdef _WIN32
     DWORD ret = GetModuleFileName(nullptr, path, sizeof(path));
-    if (ret < 0) 
+    if (ret < 0)
         return Error::from_errno(GetLastError());
 #else
     const char* path_to_readlink = nullptr;
