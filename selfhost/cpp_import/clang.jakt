@@ -696,7 +696,7 @@ class CppImportProcessor {
                         }
                         else => CXChildVisitResult::CXChildVisit_Continue
                     }
-                    CXCursor_TypeAliasDecl | CXCursor_TypedefDecl => match allowed_contents {
+                    CXCursor_TypeAliasDecl | CXCursor_TypedefDecl | CXCursor_UsingDirective | CXCursor_UsingDeclaration => match allowed_contents {
                         OnlyTypes | Everything => {
                             .process_type_alias(
                                 program: &mut program
@@ -761,6 +761,7 @@ class CppImportProcessor {
                         }
                         else => CXChildVisitResult::CXChildVisit_Continue
                     }
+                    CXCursor_LinkageSpec => CXChildVisitResult::CXChildVisit_Recurse
                     else => CXChildVisitResult::CXChildVisit_Continue
                 }
             }
@@ -1168,7 +1169,7 @@ class CppImportProcessor {
         cursor: CXCursor
     ) throws {
         let name = name_from(cursor)
-        let type = clang_getTypedefDeclUnderlyingType(cursor)
+        mut type = clang_getTypedefDeclUnderlyingType(cursor)
 
         .process_namespace_contents(
             program: program
@@ -1181,12 +1182,46 @@ class CppImportProcessor {
             alias_type_name: name
         )
 
-        if string_from(clang_getTypeSpelling(type)).is_empty() {
+        mut resolved_type: TypeId? = None
+
+        let should_skip = match clang_getCursorKind(cursor) {
+            CXCursor_UsingDeclaration | CXCursor_UsingDirective => {
+                // These just bring in names from other namespaces, the referenced type is the same as the alias.
+                let ns_cursor = .extract_cursors_of_kinds(cursor, kinds: {CXCursorKind::CXCursor_NamespaceRef})
+                mut ns_scope = parent_scope_id
+                for cursor in ns_cursor {
+                    let name = name_from(cursor)
+                    let ns_id = program.find_namespace_in_scope(
+                        scope_id: ns_scope
+                        name
+                        root_scope: root_scope_id
+                    )?.0
+
+                    if ns_id is Some(id) {
+                        ns_scope = id
+                    } else {
+                        break
+                    }
+                }
+
+                resolved_type = program.find_type_in_scope(
+                    scope_id: ns_scope
+                    name
+                    ignore_mixin_scopes: true
+                    root_scope: root_scope_id
+                )
+                yield not resolved_type.has_value()
+            }
             // This is the fun `typedef decl <unnamed> {} name;` pattern, we don't need to produce a new typename.
+            else => string_from(clang_getTypeSpelling(type)).is_empty()
+        }
+
+        if should_skip {
             return
         }
 
-        let type_id = .type_from(program, scope_id: parent_scope_id, root_scope_id, module_id, type)
+        let type_id = resolved_type ?? .type_from(program, scope_id: parent_scope_id, root_scope_id, module_id, type)
+
         mut scope = program.get_scope(parent_scope_id)
         scope.types.set(name, type_id)
     }
@@ -1288,7 +1323,15 @@ class CppImportProcessor {
         cursor: CXCursor
         template_parameters: TemplateParameters? = None
     ) throws {
-        let is_declared_as_static = kind is Constructor or kind is Destructor or clang_CXXMethod_isStatic(cursor)
+        let is_method = match clang_getCursorKind(cursor) {
+            CXCursor_CXXMethod => true
+            CXCursor_FunctionTemplate => this_type.has_value()
+            else => false
+        }
+
+        let is_declared_as_static = kind is Constructor or kind is Destructor or (
+            is_method and clang_CXXMethod_isStatic(cursor)
+        ) or not is_method
 
         if not this_type.has_value() and (kind is Constructor or kind is Destructor) {
             eprintln("[ICE] Constructor or destructor ({}) without a this type", name_from(cursor))
