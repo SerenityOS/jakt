@@ -86,7 +86,7 @@ struct ControlFlowState {
     // which it doesn't know how to do.
     fn nested_release_return_expr(func_return_type: TypeId, func_can_throw: bool, cpp_match_result_type: String) throws -> String {
 
-        let returns_void = func_return_type.equals(void_type_id()) or func_return_type.equals(unknown_type_id())
+        let returns_void = func_return_type == void_type_id() or func_return_type == unknown_type_id() or func_return_type == never_type_id()
 
         // The C++ function won't return 'void' if it can throw, but rather
         // `ErrorOr`.
@@ -229,7 +229,12 @@ struct CodeGenerator {
 
     // noreturn functions may not throw, so let them crash instead.
     fn current_error_handler(this) throws -> String {
-        if .inside_defer or (.current_function.has_value() and .current_function!.return_type_id.equals(never_type_id()) and not .control_flow_state.passes_through_try) {
+        if .inside_defer or (
+            .current_function.has_value() and
+            .current_function!.return_type_id == never_type_id() and
+            not .control_flow_state.passes_through_try
+        ) {
+
             return "MUST"
         }
 
@@ -787,7 +792,7 @@ struct CodeGenerator {
                 args
             )
             output += "\ntemplate<> "
-            if function.return_type_id.equals(never_type_id()) {
+            if function.return_type_id == never_type_id() {
                 output += "[[noreturn]] "
             }
 
@@ -1173,7 +1178,7 @@ struct CodeGenerator {
                 continue
             }
 
-            if enum_.underlying_type_id.equals(void_type_id()) {
+            if enum_.underlying_type_id == void_type_id() {
                 output += .codegen_enum_debug_description_getter(enum_)
                 let (common_fields, variant_field_list) = .codegen_enum_field_lists(enum_)
                 output += .codegen_enum_constructors(
@@ -1398,7 +1403,7 @@ struct CodeGenerator {
 
         output += .codegen_function_generic_parameters(function)
 
-        if function.return_type_id.equals(never_type_id()) {
+        if function.return_type_id == never_type_id() {
             output += "[[noreturn]] "
         }
 
@@ -1649,7 +1654,7 @@ struct CodeGenerator {
     fn codegen_enum_predecl(mut this, enum_: CheckedEnum) throws -> String {
         mut output = ""
 
-        if not enum_.underlying_type_id.equals(void_type_id()) {
+        if enum_.underlying_type_id != void_type_id() {
             if .program.is_integer(enum_.underlying_type_id) {
                 return format("enum class {}: {};", enum_.name, .codegen_type(enum_.underlying_type_id))
             } else {
@@ -1670,7 +1675,7 @@ struct CodeGenerator {
 
     fn codegen_enum(mut this, enum_: CheckedEnum) throws -> String {
         mut output = ""
-        if not enum_.underlying_type_id.equals(void_type_id()) {
+        if enum_.underlying_type_id != void_type_id() {
             if .program.is_integer(enum_.underlying_type_id) {
                 output += "enum class " + enum_.name + ": " + .codegen_type(enum_.underlying_type_id) + " {\n"
                 for variant in enum_.variants {
@@ -2536,7 +2541,7 @@ struct CodeGenerator {
         QuotedString(val) => {
             let original_string = val.to_string()
             let escaped_value = original_string.replace(replace: "\n", with: "\\n")
-            yield match val.type_id.equals(builtin(BuiltinType::JaktString)) {
+            yield match val.type_id == builtin(BuiltinType::JaktString) {
                 true => "Jakt::DeprecatedString(\"" + escaped_value + "\"sv)"
                 false => {
                     let ids = .program.find_functions_with_name_in_scope(
@@ -3034,7 +3039,7 @@ struct CodeGenerator {
         Try(expr, catch_block, catch_name, span, type_id, inner_type_id) => {
             mut output = ""
             let fresh_var = .fresh_var()
-            let is_void = inner_type_id.equals(void_type_id())
+            let is_void = inner_type_id == void_type_id()
             let try_var = .fresh_var()
 
             let last_control_flow = .control_flow_state
@@ -3294,7 +3299,7 @@ struct CodeGenerator {
             }
             first = false
         }
-        if return_type_id.equals(void_type_id()) or return_type_id.equals(unknown_type_id()) {
+        if return_type_id == void_type_id() or return_type_id == unknown_type_id() {
             output += "return JaktInternal::ExplicitValue<void>();\n"
         } else if not has_default {
             output += "VERIFY_NOT_REACHED();\n"
@@ -3318,7 +3323,7 @@ struct CodeGenerator {
 
         let cpp_match_result_type = .codegen_type(type_id)
 
-        if enum_.underlying_type_id.equals(void_type_id()) {
+        if enum_.underlying_type_id == void_type_id() {
             output += "([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
             output += cpp_match_result_type
             output += ", "
@@ -3466,12 +3471,16 @@ struct CodeGenerator {
             Block(block) => {
                 output += .codegen_block(block)
 
-                if return_type_id.equals(void_type_id()) or return_type_id.equals(unknown_type_id()) {
+                if return_type_id == void_type_id() or return_type_id == unknown_type_id() {
                     output += "return JaktInternal::ExplicitValue<void>();\n"
                 }
             }
             Expression(expr) => {
-                if expr.type().equals(void_type_id()) or (expr.type().equals(unknown_type_id()) and not expr is OptionalNone) {
+                if expr.type() == void_type_id() or expr.type() == never_type_id() or (
+                    expr.type() == unknown_type_id() and
+                    not expr is OptionalNone
+                ) {
+
                     output += "return ("
                     output += .codegen_expression(expr)
                     output += "), JaktInternal::ExplicitValue<void>();\n"
@@ -4957,7 +4966,7 @@ struct CodeGenerator {
             output += "__attribute__((always_inline)) inline "
         }
 
-        if function.return_type_id.equals(never_type_id()) {
+        if function.return_type_id == never_type_id() {
             output += "[[noreturn]] "
         }
         if is_main {
@@ -5063,7 +5072,7 @@ struct CodeGenerator {
         if is_main {
             output += "return 0;\n"
         } else {
-            if function.can_throw and function.return_type_id.equals(builtin(BuiltinType::Void)) {
+            if function.can_throw and function.return_type_id == builtin(BuiltinType::Void) {
                 output += "return {};\n"
             }
         }
@@ -5078,7 +5087,7 @@ struct CodeGenerator {
 
         output += .codegen_block(block)
 
-        if can_throw and return_type_id.equals(builtin(BuiltinType::Void)) {
+        if can_throw and return_type_id == builtin(BuiltinType::Void) {
             output += "return {};\n"
         }
 
