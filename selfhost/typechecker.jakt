@@ -4875,10 +4875,11 @@ struct Typechecker {
         parsed_function.must_instantiate = true
         checked_function.is_instantiated = true
 
+        let previous_function_id = .current_function_id
         .current_function_id = Some(new_function_id)
         .typecheck_function_predecl(parsed_function, parent_scope_id: scope_id, this_arg_type_id: this_type_id, generics: checked_function.generics)
         .typecheck_function(parsed_function, parent_scope_id: scope_id)
-        .current_function_id = None
+        .current_function_id = previous_function_id
 
         mut base_scope = .get_scope(.get_scope(checked_function.generics.base_scope_id).parent!)
         base_scope.functions.get(checked_function.name)!.push(new_function_id)
@@ -4890,7 +4891,7 @@ struct Typechecker {
     }
 
     fn typecheck_jakt_main(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
-        let param_type_error = "Main function  must take a single array of strings as its parameter"
+        let param_type_error = "Main function must take a single array of strings as its parameter"
 
         let func_ids = .find_functions_with_name_in_scope(parent_scope_id, function_name: "main")
         if func_ids!.size() > 1 {
@@ -4915,7 +4916,7 @@ struct Typechecker {
             }
         }
 
-        let return_type_error = "Main function  must return c_int"
+        let return_type_error = "Main function must return c_int"
         match parsed_function.return_type {
             ParsedType::Empty => {}
             ParsedType::Name(name, span) => {
@@ -5024,7 +5025,7 @@ struct Typechecker {
             // FIXME: Use better span
             if return_type_id.equals(never_type_id()) and not block.control_flow.never_returns() {
                 .error("Control reaches end of never-returning function", parsed_function.name_span)
-            } else if not block.control_flow.never_returns() {
+            } else if not block.control_flow.never_returns() and not parsed_function.is_jakt_main {
                 .error("Control reaches end of non-void function", parsed_function.name_span)
             }
         }

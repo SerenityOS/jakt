@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘void’, but got ‘i64’\n"
+
+fn test<T>() -> void {}
+fn foo() -> void {
+    test<i32>()
+    return 42
+}
+
+fn main() {
+    foo()
+}

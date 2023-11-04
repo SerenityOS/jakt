@@ -786,9 +786,8 @@ fn compiler_main(anon args: [String]) throws -> c_int {
 
         match main_result {
             Return(x) => match x.impl {
-                // FIXME: I64 should not be accepted here, we're just not performing implicit type conversions in the interpreter.
                 CInt(ret_val) | I64(ret_val) => {
-                    return ret_val
+                    return ret_val as! c_int
                 }
                 Void => {
                     return 0
