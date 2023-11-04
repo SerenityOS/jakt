@@ -3793,7 +3793,7 @@ struct CodeGenerator {
                 CheckedParameter(
                     requires_label: false
                     variable: var
-                    default_value: None
+                    default_value_expression: None
                 )
             ]
             for param in function.params[1..] {
@@ -4388,6 +4388,7 @@ struct CodeGenerator {
                             parent_scope_id: ScopeId
                             safety_mode: SafetyMode
                             yield_type_hint: TypeId?
+                            containing_function_id: FunctionId? = None
                         ) throws -> CheckedBlock {
                             throw Error::from_string_literal("Cannot typecheck a const block")
                         }

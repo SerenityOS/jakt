@@ -459,7 +459,7 @@ class CppImportProcessor {
                     function_params.push(CheckedParameter(
                         requires_label: false
                         variable
-                        default_value: None
+                        default_value_expression: None
                     ))
                 }
                 let function = CheckedFunction(
@@ -1320,7 +1320,7 @@ class CppImportProcessor {
             params.push(CheckedParameter(
                 requires_label: false
                 variable
-                default_value: None
+                default_value_expression: None
             ))
         }
 
@@ -1356,7 +1356,7 @@ class CppImportProcessor {
             params.push(CheckedParameter(
                 requires_label: false
                 variable
-                default_value: None
+                default_value_expression: None
             ))
         }
 
@@ -1871,7 +1871,6 @@ class CppImportProcessor {
                         let variable_id = module.add_variable(variable)
                         let field = CheckedField(
                             variable_id
-                            default_value: None
                             default_value_expression: None
                         )
                         fields.push(field)
@@ -1932,7 +1931,7 @@ class CppImportProcessor {
                 params.push(CheckedParameter(
                     requires_label: false
                     variable
-                    default_value: None
+                    default_value_expression: None
                 ))
             }
             let function_scope = program.create_scope(

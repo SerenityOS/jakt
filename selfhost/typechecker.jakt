@@ -850,7 +850,6 @@ struct Typechecker {
         .typecheck_namespace_function_predecl(parsed_namespace, scope_id, comptime_pass: true, generic_pass: true)
         .typecheck_namespace_function_predecl(parsed_namespace, scope_id, comptime_pass: false, generic_pass: true)
         .typecheck_namespace_aliases(parsed_namespace, scope_id, allow: ImportRestrictions(functions: true))
-        .typecheck_namespace_default_fields(parsed_namespace, scope_id)
         .typecheck_namespace_declarations(parsed_namespace, scope_id, comptime_pass: true, generic_pass: false)
         .typecheck_namespace_declarations(parsed_namespace, scope_id, comptime_pass: true, generic_pass: true)
         .typecheck_namespace_declarations(parsed_namespace, scope_id, comptime_pass: false, generic_pass: false)
@@ -990,127 +989,13 @@ struct Typechecker {
                 external_name: parsed_var_decl.external_name
             ))
 
-            structure.fields.push(
-                CheckedField(variable_id, default_value: None, default_value_expression: unchecked_member.default_value)
-            )
-        }
-    }
-
-    fn typecheck_namespace_default_fields(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
-        let children = .get_scope(id: scope_id).children
-        for i in 0..parsed_namespace.namespaces.size() {
-            let child_namespace = parsed_namespace.namespaces[i]
-            let child_namespace_scope_id = children[i]
-            .typecheck_namespace_default_fields(parsed_namespace: child_namespace,
-                scope_id: child_namespace_scope_id)
-        }
-
-        // Check the forall chunks
-        if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
-            for chunk in chunks {
-                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
-                mut i = 0uz
-                for stuff in all_types {
-                    defer i += 1
-
-                    .typecheck_namespace_default_fields(
-                        parsed_namespace: chunk.parsed_namespace
-                        scope_id: chunk.generated_scopes[i]
-                    )
-                }
-            }
-        }
-
-        mut records_to_process: Queue<(ParsedRecord, ScopeId)> = Queue()
-        for parsed_record in parsed_namespace.records {
-            records_to_process.enqueue((parsed_record, scope_id))
-        }
-
-        while not records_to_process.is_empty() {
-            let (record, scope_id) = records_to_process.dequeue()
-            let id = match record.record_type {
-                Struct | Class => {
-                    let struct_id = .find_struct_in_scope(scope_id, name: record.name)
-                    if not struct_id.has_value() {
-                        .compiler.panic("can't find previously added struct")
-                    }
-                    .typecheck_struct_default_fields(parsed_record: record, struct_id: struct_id!, scope_id)
-                    yield StructLikeId::Struct(struct_id!)
-                }
-                ValueEnum | SumEnum => {
-                    let enum_id = .program.find_enum_in_scope(scope_id, name: record.name)
-                    if not enum_id.has_value() {
-                        .compiler.panic("can't find previously added enum")
-                    }
-                    yield StructLikeId::Enum(enum_id!)
-                }
-                else => {
-                    continue
-                }
-            }
-            for nested_record in record.nested_records {
-                .warn_about_unimplemented_nested_record(nested_record)
-                records_to_process.enqueue((nested_record, id.scope_id(&.program)))
-            }
-        }
-    }
-
-    fn typecheck_struct_default_fields(mut this, parsed_record: ParsedRecord, struct_id: StructId, scope_id: ScopeId) throws {
-        mut structure = .get_struct(struct_id)
-
-        let checked_struct_scope_id = structure.scope_id
-        let struct_type_id = .find_or_add_type_id(Type::Struct(struct_id))
-        let previous_struct_type_id = .current_struct_type_id
-        .current_struct_type_id = struct_type_id
-        defer {
-            .current_struct_type_id = previous_struct_type_id
-        }
-
-        let old_self_type_id = .self_type_id
-        .set_self_type_id(struct_type_id)
-        defer .self_type_id = old_self_type_id
-
-        let parsed_fields = match parsed_record.record_type {
-            Struct(fields) => fields
-            Class(fields) => fields
-            else => {
-                .compiler.panic("typecheck_struct_default_fields cannot handle non-structs")
-            }
-        }
-
-        guard .program.find_default_constructors_in_scope(
-            parent_scope_id: checked_struct_scope_id
-            function_name: parsed_record.name
-        ) is Some(constructor_id) else {
-            return // no constructor, no default parameters to check!
-        }
-
-        mut constructor = .get_function(constructor_id)
-
-
-        mut index = 0uz
-        for unchecked_member in parsed_fields {
-            defer index += 1
-
-            if not unchecked_member.default_value.has_value() {
-                continue
+            let default_value_expression = match unchecked_member.default_value.has_value() {
+                true => Some(unchecked_member.default_value!, checked_struct_scope_id)
+                false => None
             }
 
-            let variable = .get_variable(structure.fields[index].variable_id)
-            let type_hint = variable.type_id
+            structure.fields.push(CheckedField(variable_id, default_value_expression))
 
-            let checked_def_value = .typecheck_expression(
-                unchecked_member.default_value!
-                scope_id: checked_struct_scope_id
-                safety_mode: SafetyMode::Safe
-                type_hint
-            )
-
-            structure.fields[index].default_value = checked_def_value
-            constructor.set_param_default_value(
-                param_index: index
-                default_value: checked_def_value
-            )
         }
     }
 
@@ -2650,15 +2535,6 @@ struct Typechecker {
                     visibility: .typecheck_visibility(visibility: field.visibility, scope_id: enum_scope_id)
                     external_name: var_decl.external_name
                 )
-                mut default_value: CheckedExpression? = None
-                if field.default_value.has_value() {
-                    default_value = .typecheck_expression(
-                        expr: field.default_value!
-                        scope_id: enum_scope_id
-                        safety_mode: SafetyMode::Safe
-                        type_hint: type_id
-                    )
-                }
 
                 if .dump_type_hints and var_decl.parsed_type is Empty {
                     .dump_type_hint(type_id, span: var_decl.span)
@@ -2666,7 +2542,12 @@ struct Typechecker {
 
                 mut module = .current_module()
                 let variable_id = module.add_variable(checked_var)
-                checked_fields.push(CheckedField(variable_id, default_value, default_value_expression: field.default_value))
+
+                let default_value_expression = match field.default_value.has_value() {
+                    true => Some(field.default_value!, enum_scope_id)
+                    false => None
+                }
+                checked_fields.push(CheckedField(variable_id, default_value_expression))
             }
         }
 
@@ -2851,7 +2732,7 @@ struct Typechecker {
                     checked_function.add_param(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
-                        default_value: None
+                        default_value_expression: None
                     ))
                 } else {
                     let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id, name: param.variable.name)
@@ -2865,16 +2746,13 @@ struct Typechecker {
                         visibility: CheckedVisibility::Public
                     )
 
-                    mut default_value: CheckedExpression? = None
-                    if param.default_argument.has_value() {
-                        let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id, name: param.variable.name)
-                        default_value = .typecheck_expression(param.default_argument!, scope_id, safety_mode: SafetyMode::Safe, type_hint: param_type)
-                    }
-
                     checked_function.add_param(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
-                        default_value
+                        default_value_expression: match param.default_argument.has_value() {
+                            true => (param.default_argument!, method_scope_id)
+                            false => None
+                        }
                     ))
                 }
             }
@@ -2974,17 +2852,10 @@ struct Typechecker {
                 } else {
                     for field in .get_struct(parent_struct_id).fields {
                         let variable = .get_variable(field.variable_id)
-                        mut default_value = field.default_value
-                        if not default_value.has_value() and field.default_value_expression.has_value() {
-                            field.default_value = CheckedExpression::Garbage(
-                                span: variable.definition_span
-                                type_id: variable.type_id
-                            )
-                        }
                         constructor_parameters.push(CheckedParameter(
                             requires_label: true
                             variable: variable
-                            default_value: field.default_value
+                            default_value_expression: field.default_value_expression
                         ))
                     }
                 }
@@ -3799,7 +3670,8 @@ struct Typechecker {
             common_params.push(CheckedParameter(
                 requires_label: true,
                 variable,
-                default_value: field.default_value))
+                default_value_expression: field.default_value_expression
+            ))
 
             common_seen_fields.add(variable.name)
             common_fields.push(field.variable_id)
@@ -3902,15 +3774,14 @@ struct Typechecker {
                                     visibility: CheckedVisibility::Public
                                 )
 
-                                mut checked_default_value: CheckedExpression? = None
-
-                                if default_value is Some(expression) {
-                                    // FIXME: The typechecker can't find expressions that are outside the scope of the enum.
-                                    // FIXME: Get the real safety mode from somewhere, right now it assumes it is safe.
-                                    checked_default_value = .typecheck_expression(expression, scope_id: enum_.scope_id, safety_mode: SafetyMode::Safe, type_hint: type_id)
-                                }
-
-                                params.push(CheckedParameter(requires_label: true, variable: checked_var, default_value: checked_default_value))
+                                params.push(CheckedParameter(
+                                    requires_label: true
+                                    variable: checked_var
+                                    default_value_expression: match default_value.has_value() {
+                                        true => (default_value!, enum_.scope_id)
+                                        false => None
+                                    }
+                                ))
 
                                 if .dump_type_hints and param.parsed_type is Empty {
                                     .dump_type_hint(type_id, span: param.span)
@@ -3990,7 +3861,9 @@ struct Typechecker {
                                 type_span: None
                                 visibility: CheckedVisibility::Public
                             )
-                            params.push(CheckedParameter(requires_label: false, variable, default_value: None))
+                            params.push(
+                                CheckedParameter(requires_label: false, variable, default_value_expression: None)
+                            )
 
                             let checked_function = CheckedFunction(
                                 name: variant.name
@@ -4289,31 +4162,13 @@ struct Typechecker {
             visibility: CheckedVisibility::Public
         )
 
-        mut checked_default_value: CheckedExpression? = None
-        if parameter.default_argument.has_value() {
-            //FIXME: Get the real safety mode from somewhere, right now it assumes it is safe
-            mut checked_default_value_expr = .typecheck_expression(parameter.default_argument!, scope_id, safety_mode: SafetyMode::Safe, type_hint: type_id)
-
-            if checked_default_value_expr is OptionalNone(span: expr_span) {
-                checked_default_value_expr = CheckedExpression::OptionalNone(span: expr_span, type_id)
-            }
-
-            let default_value_type_id = checked_default_value_expr.type()
-            checked_default_value = checked_default_value_expr
-            if not .check_types_for_compat(
-                lhs_type_id: type_id
-                rhs_type_id: default_value_type_id
-                generic_inferences: &mut .generic_inferences
-                span: checked_default_value_expr.span()
-            ) {
-                checked_default_value = None
-            }
-        }
-
         let checked_parameter = CheckedParameter(
             requires_label: parameter.requires_label
             variable
-            default_value: checked_default_value
+            default_value_expression: match parameter.default_argument.has_value() {
+                true => (parameter.default_argument!, scope_id)
+                false => None
+            }
         )
 
         if check_scope.has_value() {
@@ -7069,7 +6924,14 @@ struct Typechecker {
                 parent_scope_id: ScopeId
                 safety_mode: SafetyMode
                 yield_type_hint: TypeId?
+                containing_function_id: FunctionId? = None
             ) throws -> CheckedBlock {
+                let previous_function_id = .current_function_id
+                .current_function_id = containing_function_id
+                defer {
+                    .current_function_id = previous_function_id
+                }
+
                 return .typecheck_block(parsed_block, parent_scope_id, safety_mode, yield_type_hint)
             }
 
@@ -10691,7 +10553,7 @@ struct Typechecker {
             builder.append(param.variable.name)
             builder.append(": ")
             builder.append(.type_name(param.variable.type_id))
-            if param.default_value.has_value() {
+            if param.default_value_expression.has_value() {
                 builder.append(" = ...")
             }
         }
@@ -11214,7 +11076,7 @@ struct Typechecker {
         mut params_with_default_value = 0uz
 
         for param in params {
-            if param.default_value.has_value() {
+            if param.default_value_expression.has_value() {
                 params_with_default_value++
             }
         }
@@ -11235,11 +11097,23 @@ struct Typechecker {
             mut maybe_checked_expr: CheckedExpression? = None
             if not param.requires_label {
                 if args.size() <= consumed_arg {
-                    if not param.default_value.has_value() {
+                    if not param.default_value_expression.has_value() {
                         .error(format("Missing argument for function parameter {}", param.variable.name), span)
                         continue
                     }
-                    maybe_checked_expr = param.default_value
+                    if param.default_value_expression is Some(default_value) {
+                        // Ensure the default value is typechecked with access to the scope it's declared in.
+                        mut scope = .get_scope(scope_id)
+                        let (expression, default_scope_id) = default_value
+                        scope.resolution_mixins.push(default_scope_id)
+                        defer scope.resolution_mixins.pop()
+                        maybe_checked_expr = .typecheck_expression(
+                            expr: expression
+                            scope_id
+                            safety_mode
+                            type_hint: param.variable.type_id
+                        )
+                    }
                 } else {
                     let (name, span, expr) = args[consumed_arg]
 
@@ -11253,7 +11127,18 @@ struct Typechecker {
                 }
 
             } else {
-                maybe_checked_expr = param.default_value
+                if param.default_value_expression is Some(default_value) {
+                    mut scope = .get_scope(scope_id)
+                    let (expression, default_scope_id) = default_value
+                    scope.resolution_mixins.push(default_scope_id)
+                    defer scope.resolution_mixins.pop()
+                    maybe_checked_expr = .typecheck_expression(
+                        expr: expression
+                        scope_id
+                        safety_mode
+                        type_hint: param.variable.type_id
+                    )
+                }
 
                 if args.size() > consumed_arg {
                     let (name, span, expr) = args[consumed_arg]
