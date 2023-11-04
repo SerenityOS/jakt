@@ -8291,6 +8291,10 @@ struct Typechecker {
                         rhs_span: span
                     )
 
+                    if may_throw and not .get_scope(scope_id).can_throw {
+                        .error("Operation that may throw needs to be in a try statement or a function marked as throws", span)
+                    }
+
                     yield CheckedExpression::QuotedString(
                         val: CheckedStringLiteral(
                             value: StringLiteral::Static(val)
