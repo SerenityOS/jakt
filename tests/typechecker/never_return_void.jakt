@@ -1,0 +1,20 @@
+/// Expect:
+/// - output: ""
+
+fn panic(anon msg: String) -> never {
+    eprintln("{}", msg)
+    abort()
+}
+
+fn verify(anon x: i32) throws {
+    match x {
+        1 => panic("this should not cause any errors")
+        else => {
+            return
+        }
+    }
+}
+
+fn main() {
+    verify(2)
+}

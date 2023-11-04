@@ -6,7 +6,22 @@
 
 #pragma once
 
+namespace JaktInternal {
+template<typename T>
+struct ExtractThrownReturnType {
+    using Type = T;
+};
+template<typename T, typename E>
+struct ExtractThrownReturnType<Jakt::ErrorOr<T, E>> {
+    using Type = T;
+};
+
+template<typename T>
+static inline constexpr auto IsThrowsyVoid = Jakt::IsVoid<T> || Jakt::IsVoid<typename ExtractThrownReturnType<T>::Type>;
+}
+
 namespace Jakt {
+
 template<typename Value>
 struct ExplicitValue {
     ExplicitValue(Value&& v)
@@ -50,7 +65,7 @@ struct ExplicitValueOrControlFlow {
     {
     }
 
-    ExplicitValueOrControlFlow(void) requires(IsVoid<Return>)
+    ExplicitValueOrControlFlow(void) requires(JaktInternal::IsThrowsyVoid<Return>)
         : value(Empty {})
     {
     }
@@ -129,3 +144,4 @@ struct ExplicitValueOrControlFlow {
     _jakt_value.release_value();                                               \
 })
 }
+
