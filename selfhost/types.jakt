@@ -906,15 +906,6 @@ class CheckedFunction {
         return first_param_variable.name == "this" and first_param_variable.is_mutable
     }
 
-    public fn set_param_default_value(
-        mut this
-        param_index: usize
-        default_value: CheckedExpression
-    ) {
-        .params[param_index].default_value = default_value
-        .generics.base_params[param_index].default_value = default_value
-    }
-
     public fn add_param(mut this, anon checked_param: CheckedParameter) throws {
         .params.push(checked_param)
         .generics.base_params.push(checked_param)
@@ -972,13 +963,13 @@ class FunctionGenerics {
 struct CheckedParameter {
     requires_label: bool
     variable: CheckedVariable
-    default_value: CheckedExpression?
+    default_value_expression: (ParsedExpression, ScopeId)?
 
     public fn map_types(this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws -> CheckedParameter {
         return CheckedParameter(
             requires_label: .requires_label
             variable: .variable.map_types(map)
-            default_value: .default_value
+            default_value_expression: .default_value_expression
         )
     }
 }
@@ -1233,8 +1224,7 @@ struct FieldRecord {
 
 struct CheckedField {
     variable_id: VarId
-    default_value: CheckedExpression?
-    default_value_expression: ParsedExpression?
+    default_value_expression: (ParsedExpression, ScopeId)?
 }
 
 struct CheckedStruct {
@@ -2937,7 +2927,7 @@ class CheckedProgram {
                             type_span: param.variable.type_span
                             visibility: param.variable.visibility
                         )
-                        default_value: param.default_value
+                        default_value_expression: param.default_value_expression
                     )
                     replacement_params.push(new_param)
                 }
@@ -3006,7 +2996,7 @@ boxed enum ValueImpl {
     JaktTuple(fields: [Value], type_id: TypeId)
     Function(
         captures: [String: Value]
-        params: [String: (TypeId, CheckedExpression?)]
+        params: [String: (TypeId, (ParsedExpression, ScopeId)?)]
         return_type_id: TypeId
         type_id: TypeId
         block: CheckedBlock
@@ -3259,6 +3249,7 @@ class TypecheckFunctions {
         parent_scope_id: ScopeId
         safety_mode: SafetyMode
         yield_type_hint: TypeId? = None
+        containing_function_id: FunctionId? = None
     ) throws -> CheckedBlock
 
     public register_function: fn(

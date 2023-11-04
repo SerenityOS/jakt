@@ -7,7 +7,7 @@ import types {
     StructId, Type, TypeId, TypecheckFunctions, Value, ValueImpl, VarId, builtin, comptime_format_impl
     unknown_type_id, void_type_id
 }
-import parser { FunctionLinkage, FunctionType, ParsedBlock }
+import parser { FunctionLinkage, FunctionType, ParsedBlock, ParsedExpression }
 import utility { escape_for_quotes, interpret_escapes, panic }
 import error { JaktError }
 import compiler { Compiler }
@@ -987,10 +987,11 @@ class Interpreter {
         block: CheckedBlock
         runtime_scope: ScopeId? = None
         scope: InterpreterScope
+        function_id: FunctionId?
     ) throws -> CheckedBlock {
         mut statements: [CheckedStatement] = []
         for statement in block.statements {
-            let new_statement = .perform_final_interpretation_pass(statement, scope)
+            let new_statement = .perform_final_interpretation_pass(statement, scope, function_id)
             statements.push(new_statement)
         }
         return CheckedBlock(
@@ -1002,16 +1003,23 @@ class Interpreter {
         )
     }
 
-    private fn typecheck_block(mut this, block: ParsedBlock, scope: ScopeId) throws -> CheckedBlock {
-        return invoke_typecheck_block(&.typecheck_functions.block, block, scope)
+    private fn typecheck_block(mut this, block: ParsedBlock, scope: ScopeId, function_id: FunctionId?) throws -> CheckedBlock {
+        return invoke_typecheck_block(&.typecheck_functions.block, block, scope, function_id)
     }
 
     private fn invoke_typecheck_block(
-        anon function: &fn(parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode, yield_type_hint: TypeId?) throws -> CheckedBlock
+        anon function: &fn(
+            parsed_block: ParsedBlock
+            parent_scope_id: ScopeId
+            safety_mode: SafetyMode
+            yield_type_hint: TypeId?
+            function_id: FunctionId?
+        ) throws -> CheckedBlock
         anon block: ParsedBlock
         anon parent_scope_id: ScopeId
+        anon function_id: FunctionId?
     ) throws -> CheckedBlock {
-        return function(parsed_block: block, parent_scope_id, safety_mode: SafetyMode::Safe, yield_type_hint: None)
+        return function(parsed_block: block, parent_scope_id, safety_mode: SafetyMode::Safe, yield_type_hint: None, function_id)
     }
 
 
@@ -1020,6 +1028,7 @@ class Interpreter {
         block: ParsedBlock
         runtime_scope: ScopeId
         scope: InterpreterScope
+        function_id: FunctionId?
     ) throws -> CheckedBlock {
         mut rscope = .program.get_scope(runtime_scope)
         for (name, value) in scope.all_bindings() {
@@ -1027,9 +1036,10 @@ class Interpreter {
         }
 
         return .perform_final_interpretation_pass(
-            block: .typecheck_block(block, scope: runtime_scope)
+            block: .typecheck_block(block, scope: runtime_scope, function_id)
             runtime_scope
             scope
+            function_id
         )
     }
 
@@ -1037,16 +1047,17 @@ class Interpreter {
         mut this
         statement: CheckedStatement
         scope: InterpreterScope
+        function_id: FunctionId?
     ) throws -> CheckedStatement => match statement {
-        Expression(expr, span) => CheckedStatement::Expression(expr: .perform_final_interpretation_expr_pass(expr, scope), span)
-        Defer(statement, span) => CheckedStatement::Defer(statement: .perform_final_interpretation_pass(statement, scope), span)
-        DestructuringAssignment(vars, var_decl, span) => CheckedStatement::DestructuringAssignment(vars: vars, var_decl: .perform_final_interpretation_pass(statement: var_decl, scope), span)
-        VarDecl(var_id, init, span) => CheckedStatement::VarDecl(var_id, init: .perform_final_interpretation_expr_pass(expr: init, scope), span)
+        Expression(expr, span) => CheckedStatement::Expression(expr: .perform_final_interpretation_expr_pass(expr, scope, function_id), span)
+        Defer(statement, span) => CheckedStatement::Defer(statement: .perform_final_interpretation_pass(statement, scope, function_id), span)
+        DestructuringAssignment(vars, var_decl, span) => CheckedStatement::DestructuringAssignment(vars: vars, var_decl: .perform_final_interpretation_pass(statement: var_decl, scope, function_id), span)
+        VarDecl(var_id, init, span) => CheckedStatement::VarDecl(var_id, init: .perform_final_interpretation_expr_pass(expr: init, scope, function_id), span)
         If(condition, then_block, else_statement, span) => {
-            let new_condition = .perform_final_interpretation_expr_pass(expr: condition, scope)
+            let new_condition = .perform_final_interpretation_expr_pass(expr: condition, scope, function_id)
             mut then_statements: [CheckedStatement] = []
             for statement in then_block.statements.iterator() {
-                then_statements.push(.perform_final_interpretation_pass(statement, scope))
+                then_statements.push(.perform_final_interpretation_pass(statement, scope, function_id))
             }
             let new_then_block = CheckedBlock(
                 statements: then_statements
@@ -1056,7 +1067,7 @@ class Interpreter {
                 yielded_none: then_block.yielded_none
             )
             let new_else_statement = match else_statement.has_value() {
-                true => Some(.perform_final_interpretation_pass(statement: else_statement!, scope))
+                true => Some(.perform_final_interpretation_pass(statement: else_statement!, scope, function_id))
                 else => None
             }
             yield CheckedStatement::If(
@@ -1068,7 +1079,7 @@ class Interpreter {
         Block(block, span) => {
             mut statements: [CheckedStatement] = []
             for statement in block.statements.iterator() {
-                statements.push(.perform_final_interpretation_pass(statement, scope))
+                statements.push(.perform_final_interpretation_pass(statement, scope, function_id))
             }
             let new_block = CheckedBlock(
                 statements: statements
@@ -1082,7 +1093,7 @@ class Interpreter {
         Loop(block, span) => {
             mut statements: [CheckedStatement] = []
             for statement in block.statements.iterator() {
-                statements.push(.perform_final_interpretation_pass(statement, scope))
+                statements.push(.perform_final_interpretation_pass(statement, scope, function_id))
             }
             let new_block = CheckedBlock(
                 statements: statements
@@ -1094,10 +1105,10 @@ class Interpreter {
             yield CheckedStatement::Loop(block: new_block, span)
         }
         While(condition, block, span) => {
-            let new_condition = .perform_final_interpretation_expr_pass(expr: condition, scope)
+            let new_condition = .perform_final_interpretation_expr_pass(expr: condition, scope, function_id)
             mut statements: [CheckedStatement] = []
             for statement in block.statements.iterator() {
-                statements.push(.perform_final_interpretation_pass(statement, scope))
+                statements.push(.perform_final_interpretation_pass(statement, scope, function_id))
             }
             let new_block = CheckedBlock(
                 statements: statements
@@ -1112,15 +1123,20 @@ class Interpreter {
                 span)
         }
         Return(val, span) => match val.has_value() {
-            true => CheckedStatement::Return(val: .perform_final_interpretation_expr_pass(expr: val!, scope), span)
+            true => CheckedStatement::Return(val: .perform_final_interpretation_expr_pass(expr: val!, scope, function_id), span)
             false => statement
         }
         Break | Continue | InlineCpp | Garbage => statement
-        Throw(expr, span) => CheckedStatement::Throw(expr: .perform_final_interpretation_expr_pass(expr, scope), span)
-        Yield(expr, span) => CheckedStatement::Yield(expr: .perform_final_interpretation_expr_pass(expr, scope), span)
+        Throw(expr, span) => CheckedStatement::Throw(expr: .perform_final_interpretation_expr_pass(expr, scope, function_id), span)
+        Yield(expr, span) => CheckedStatement::Yield(expr: .perform_final_interpretation_expr_pass(expr, scope, function_id), span)
     }
 
-    public fn perform_final_interpretation_expr_pass(mut this, expr: CheckedExpression, scope: InterpreterScope) throws  -> CheckedExpression {
+    public fn perform_final_interpretation_expr_pass(
+        mut this
+        expr: CheckedExpression
+        scope: InterpreterScope
+        function_id: FunctionId?
+    ) throws -> CheckedExpression {
         if expr is UnaryOp(op) and op is TypeCast {
             eprintln("{0:c}[31mFixup{0:c}[0m {1}", 0x1b, expr)
         }
@@ -1232,7 +1248,7 @@ class Interpreter {
             }
         }
         UnaryOp(expr, op, span, type_id) => CheckedExpression::UnaryOp(
-            expr: .perform_final_interpretation_expr_pass(expr, scope),
+            expr: .perform_final_interpretation_expr_pass(expr, scope, function_id),
             op: match op {
                 TypeCast(cast) => CheckedUnaryOperator::TypeCast(match cast {
                     Fallible(type_id) => CheckedTypeCast::Fallible(scope.map_type(type_id))
@@ -1244,9 +1260,9 @@ class Interpreter {
             type_id: scope.map_type(type_id)
         )
         BinaryOp(lhs, op, rhs, span, type_id) => CheckedExpression::BinaryOp(
-            lhs: .perform_final_interpretation_expr_pass(expr: lhs, scope),
+            lhs: .perform_final_interpretation_expr_pass(expr: lhs, scope, function_id),
             op: op,
-            rhs: .perform_final_interpretation_expr_pass(expr: rhs, scope),
+            rhs: .perform_final_interpretation_expr_pass(expr: rhs, scope, function_id),
             span: span,
             type_id: scope.map_type(type_id)
         )
@@ -1255,7 +1271,7 @@ class Interpreter {
             for arg in call.args.iterator() {
                 new_args.push((
                     arg.0,
-                    .perform_final_interpretation_expr_pass(expr: arg.1, scope)
+                    .perform_final_interpretation_expr_pass(expr: arg.1, scope, function_id)
                 ))
             }
             yield CheckedExpression::Call(
@@ -1278,11 +1294,11 @@ class Interpreter {
             for arg in call.args.iterator() {
                 new_args.push((
                     arg.0,
-                    .perform_final_interpretation_expr_pass(expr: arg.1, scope)
+                    .perform_final_interpretation_expr_pass(expr: arg.1, scope, function_id)
                 ))
             }
             yield CheckedExpression::MethodCall(
-                expr: .perform_final_interpretation_expr_pass(expr, scope)
+                expr: .perform_final_interpretation_expr_pass(expr, scope, function_id)
                 call: CheckedCall(
                     namespace_: call.namespace_
                     name: call.name
@@ -3252,7 +3268,7 @@ class Interpreter {
                         mut first = true
                         for declared_param in checked_params {
                             let name = declared_param.variable.name
-                            let (param_type_id, default_value) = params[name]
+                            let (param_type_id, _) = params[name]
                             if first {
                                 first = false
                                 scope.bindings.set(
@@ -3260,12 +3276,8 @@ class Interpreter {
                                     value: cast_value_to_type(value, param_type_id, interpreter: this)
                                 )
                             } else {
-                                let expr_value = .execute_expression(expr: default_value!, scope)
-                                if expr_value is JustValue(default_) {
-                                    scope.bindings.set(name, value: default_)
-                                } else {
-                                    return expr_value
-                                }
+                                // FIXME: Should probably evaluate the default arguments somehow
+                                break
                             }
                         }
 
@@ -7039,7 +7051,7 @@ class Interpreter {
 
             // Next, resolve the parameters
             let type_map = scope.type_map_for_substitution()
-            mut resolved_params: [String:(TypeId, CheckedExpression?)] = [:]
+            mut resolved_params: [String:(TypeId, (ParsedExpression, ScopeId)?)] = [:]
             mut checked_params: [CheckedParameter] = []
             for param in params {
                 let param_type_id = .program.substitute_typevars_in_type(
@@ -7051,7 +7063,7 @@ class Interpreter {
                     param.variable.name
                     (
                         param_type_id,
-                        param.default_value
+                        param.default_value_expression
                     )
                 )
 
@@ -7065,7 +7077,7 @@ class Interpreter {
                         type_span: param.variable.type_span
                         visibility: param.variable.visibility
                     )
-                    default_value: param.default_value
+                    default_value_expression: param.default_value_expression
                 ))
             }
 
@@ -7073,6 +7085,7 @@ class Interpreter {
                 block
                 runtime_scope: scope_id
                 scope: InterpreterScope::create(bindings: resolved_captures, parent: scope)
+                function_id: pseudo_function_id
             )
 
             yield StatementResult::JustValue(Value(
