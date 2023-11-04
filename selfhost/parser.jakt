@@ -417,6 +417,7 @@ struct ParsedFunction {
     is_fat_arrow: bool
     is_unsafe: bool
     has_varargs: bool = false
+    is_jakt_main: bool = false
 
     external_name: ExternalName? = None
     deprecated_message: String? = None // if not None, the function is deprecated
@@ -4026,7 +4027,9 @@ struct Parser {
         }
 
         // NOTE: main() always throws
-        mut can_throw = parsed_function.name == "main"
+        // FIXME: _correctly_ detect main :P
+        parsed_function.is_jakt_main = parsed_function.name == "main"
+        mut can_throw = parsed_function.is_jakt_main
         if .current() is Throws {
             if is_destructor {
                 .error("Destructor cannot throw", .current().span())
@@ -4043,6 +4046,9 @@ struct Parser {
             parsed_function.return_type = .parse_typename()
             parsed_function.return_type_span = merge_spans(start, .previous().span())
         } else {
+            if parsed_function.is_jakt_main {
+                parsed_function.return_type = ParsedType::Name(name: "c_int", span: .previous().span())
+            }
             parsed_function.return_type_span = .previous().span()
         }
 
