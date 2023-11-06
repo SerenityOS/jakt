@@ -29,7 +29,11 @@ find_package(Clang CONFIG)
 set(JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT none)
 if (Clang_FOUND)
   set(JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT clang)
-  find_program(CLANG_PATH clang REQUIRED)
+
+  string(REPLACE "." ";" CLANG_VERSION_LIST ${Clang_VERSION})
+  list(GET CLANG_VERSION_LIST 0 CLANG_MAJOR)
+  find_program(CLANG_PATH REQUIRED NAMES clang-${CLANG_MAJOR} clang)
+
   execute_process(
     COMMAND
       ${CLANG_PATH} -print-resource-dir
