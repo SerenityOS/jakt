@@ -708,24 +708,8 @@ struct Typechecker {
             scope.functions.set(key: name, value: overload_set)
         }
 
-        .set_owner_scope_if_needed(parent_scope_id, overload_set)
+        .program.set_owner_scope_if_needed(parent_scope_id, overload_set, span)
         return true
-    }
-
-    fn set_owner_scope_if_needed(mut this, parent_scope_id: ScopeId, overload_set: [FunctionId]) throws {
-        for overload in overload_set {
-            mut function = .get_function(overload)
-            if not function.owner_scope.has_value() {
-                function.owner_scope = parent_scope_id
-            }
-        }
-    }
-
-    fn set_owner_scope_if_needed(mut this, parent_scope_id: ScopeId, var_id: VarId) throws {
-        mut variable = .get_variable(var_id)
-        if not variable.owner_scope.has_value() {
-            variable.owner_scope = parent_scope_id
-        }
     }
 
     fn add_var_to_scope(mut this, scope_id: ScopeId, name: String, var_id: VarId, span: Span) throws -> bool {
@@ -736,7 +720,7 @@ struct Typechecker {
             .error_with_hint(message: format("Redefinition of variable ‘{}’", name), span, hint: "previous definition here", hint_span: variable_.definition_span)
         }
         scope.vars.set(key: name, value: var_id)
-        .set_owner_scope_if_needed(parent_scope_id: scope_id, var_id)
+        .program.set_owner_scope_if_needed(parent_scope_id: scope_id, var_id)
         return true
     }
 
@@ -2374,6 +2358,9 @@ struct Typechecker {
             span: parsed_trait.name_span
         )
 
+        mut trait_scope = .get_scope(trait_scope_id)
+        trait_scope.relevant_type_id = trait_type_id
+
         mut generic_parameters: [CheckedGenericParameter] = module.traits[trait_id.id].generic_parameters
         generic_parameters.ensure_capacity(parsed_trait.generic_parameters.size())
 
@@ -2528,6 +2515,7 @@ struct Typechecker {
         let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("enum({})", parsed_record.name), for_block: false)
         mut scope = .get_scope(enum_scope_id)
         scope.namespace_name = parsed_record.name
+        scope.relevant_type_id = enum_type_id
 
         .add_enum_to_scope(scope_id, name: parsed_record.name, enum_id, span: parsed_record.name_span)
 
@@ -3252,6 +3240,7 @@ struct Typechecker {
 
         scope.namespace_name = parsed_record.name
         scope.external_name = parsed_record.external_name
+        scope.relevant_type_id = struct_type_id
 
         // Add a placeholder entry, this will be replaced later.
         module.structures.push(CheckedStruct(
@@ -10798,6 +10787,7 @@ struct Typechecker {
                 }
 
                 return CheckedExpression::Call(
+                    generic_inferences: .generic_inferences.perform_checkpoint(reset: false),
                     call: CheckedCall(
                         namespace_: resolved_namespaces,
                         name: call.name,
@@ -10977,6 +10967,7 @@ struct Typechecker {
             force_inline
         )
         let checked_call = CheckedExpression::Call(
+            generic_inferences: .generic_inferences.perform_checkpoint(reset: false),
             call: function_call
             span
             type_id: return_type
