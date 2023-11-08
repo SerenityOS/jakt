@@ -17,7 +17,7 @@ struct ExtractThrownReturnType<Jakt::ErrorOr<T, E>> {
 };
 
 template<typename T>
-static inline constexpr auto IsThrowsyVoid = Jakt::IsVoid<T> || Jakt::IsVoid<typename ExtractThrownReturnType<T>::Type>;
+static inline constexpr auto IsThrowsyVoid = Jakt::Detail::IsVoid<T> || Jakt::Detail::IsVoid<typename ExtractThrownReturnType<T>::Type>;
 }
 
 namespace Jakt {
