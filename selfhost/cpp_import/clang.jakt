@@ -902,8 +902,9 @@ class CppImportProcessor {
             definition_span: empty_span()
             type_span: None
             visibility: CheckedVisibility::Public
-            owner_scope: parent_scope_id
         ))
+
+        program.set_owner_scope_if_needed(parent_scope_id, var_id)
 
         scope.vars.set(name, var_id)
     }
@@ -931,9 +932,9 @@ class CppImportProcessor {
             definition_span: empty_span()
             type_span: None
             visibility: CheckedVisibility::Public
-            owner_scope: parent_scope_id
             external_name: ExternalName::PreprocessorName(name)
         ))
+        program.set_owner_scope_if_needed(parent_scope_id, var_id)
 
         scope.vars.set(name, var_id)
     }
@@ -1507,13 +1508,14 @@ class CppImportProcessor {
             has_varargs
             specialization_index: None
 
-            owner_scope: parent_scope_id
             is_fully_checked: true
             external_name
         )
 
         mut module = program.get_module(module_id)
         let id = module.add_function(checked_function: function)
+
+        program.set_owner_scope_if_needed(parent_scope_id, overload_set: [id], span: empty_span())
 
         mut scope = program.get_scope(parent_scope_id)
         if scope.functions.contains(name) {
@@ -1601,6 +1603,7 @@ class CppImportProcessor {
 
         parent_scope.enums.set(name, enum_id)
         parent_scope.types.set(name, enum_type_id)
+        scope.relevant_type_id = enum_type_id
 
         let underlying_type_id = .type_from(
             program
@@ -1660,6 +1663,7 @@ class CppImportProcessor {
                 visibility: CheckedVisibility::Public
                 owner_scope: enum_scope
             ))
+            program.set_owner_scope_if_needed(parent_scope_id: enum_scope, var_id)
             scope.vars.set(key: variant_name, value: var_id)
         }
 
@@ -1816,6 +1820,9 @@ class CppImportProcessor {
                         only_in_current_module: true
                     )
 
+                    mut scope = program.get_scope(scope_id)
+                    scope.relevant_type_id = struct_type_id
+
                     yield (scope_id, struct_type_id, true)
                 }
             }
@@ -1955,11 +1962,12 @@ class CppImportProcessor {
                             definition_span: empty_span()
                             type_span: None
                             visibility: CheckedVisibility::Public
-                            owner_scope: struct_scope
                         )
 
                         mut module = program.get_module(module_id)
                         let variable_id = module.add_variable(variable)
+                        program.set_owner_scope_if_needed(parent_scope_id: struct_scope, var_id: variable_id)
+
                         let field = CheckedField(
                             variable_id
                             default_value_expression: None
@@ -2075,12 +2083,12 @@ class CppImportProcessor {
                 is_unsafe: false
                 specialization_index: None
 
-                owner_scope: struct_scope
                 is_fully_checked: true
             )
 
             mut module = program.get_module(module_id)
             let id = module.add_function(checked_function: function)
+            program.set_owner_scope_if_needed(parent_scope_id, overload_set: [id], span: empty_span())
 
             mut scope = program.get_scope(struct_scope)
             if scope.functions.contains(name) {

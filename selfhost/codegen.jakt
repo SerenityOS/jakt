@@ -226,6 +226,7 @@ struct CodeGenerator {
     fresh_var_counter: usize
     fresh_label_counter: usize
     this_replacement: String? = None
+    generic_inferences: [TypeId:TypeId]? = None
 
     // noreturn functions may not throw, so let them crash instead.
     fn current_error_handler(this) throws -> String {
@@ -2500,399 +2501,461 @@ struct CodeGenerator {
         else => .codegen_expression(expression)
     }
 
-    fn codegen_expression(mut this, anon expression: CheckedExpression) throws -> String => match expression {
-        Reflect(span) => {
-            panic(format("Unexpected reflect expression at {}", span))
-        }
-        Range(from, to, type_id) => {
-            mut output = ""
-            let type = .program.get_type(type_id)
-            let index_type = match type {
-                GenericInstance(id, args) => args[0]
-                else => {
-                    panic("Internal error: range expression doesn't have Range type")
-                }
+    fn codegen_expression(mut this, anon expression: CheckedExpression) throws -> String {
+        .generic_inferences = expression.generic_inferences ?? .generic_inferences
+        defer .generic_inferences = None
+
+        return match expression {
+            Reflect(span) => {
+                panic(format("Unexpected reflect expression at {}", span))
             }
-            output += "("
-            output += .codegen_type(type_id)
-            output += "{"
-            output += "static_cast<"
-            output += .codegen_type(index_type)
-            output += ">("
-            if from.has_value() {
-                output += .codegen_expression(from!)
-            } else {
-                output += "0LL"
-            }
-            output += "),static_cast<"
-            output += .codegen_type(index_type)
-            output += ">("
-            if to.has_value() {
-                output += .codegen_expression(to!)
-            } else {
-                output += "9223372036854775807LL"
-            }
-            output += ")})"
-            yield output
-        }
-        OptionalNone => "JaktInternal::OptionalNone()"
-        OptionalSome(expr, type_id) => "static_cast<" + .codegen_type(type_id) + ">(" + .codegen_expression(expr) + ")"
-        ForcedUnwrap(expr, type_id) => "(" + .codegen_expression(expr) + ".value())"
-        QuotedString(val) => {
-            let original_string = val.to_string()
-            let escaped_value = original_string.replace(replace: "\n", with: "\\n")
-            yield match val.type_id == builtin(BuiltinType::JaktString) {
-                true => "Jakt::DeprecatedString(\"" + escaped_value + "\"sv)"
-                false => {
-                    let ids = .program.find_functions_with_name_in_scope(
-                        parent_scope_id: .program.find_type_scope_id(val.type_id)
-                        function_name: "from_string_literal"
-                    )
-                    if not ids.has_value() or ids!.is_empty() {
-                        panic("Internal error: couldn't find a 'from_string_literal' function despite passing typecheck")
+            Range(from, to, type_id) => {
+                mut output = ""
+                let type = .program.get_type(type_id)
+                let index_type = match type {
+                    GenericInstance(id, args) => args[0]
+                    else => {
+                        panic("Internal error: range expression doesn't have Range type")
                     }
+                }
+                output += "("
+                output += .codegen_type(type_id)
+                output += "{"
+                output += "static_cast<"
+                output += .codegen_type(index_type)
+                output += ">("
+                if from.has_value() {
+                    output += .codegen_expression(from!)
+                } else {
+                    output += "0LL"
+                }
+                output += "),static_cast<"
+                output += .codegen_type(index_type)
+                output += ">("
+                if to.has_value() {
+                    output += .codegen_expression(to!)
+                } else {
+                    output += "9223372036854775807LL"
+                }
+                output += ")})"
+                yield output
+            }
+            OptionalNone => "JaktInternal::OptionalNone()"
+            OptionalSome(expr, type_id) => "static_cast<" + .codegen_type(type_id) + ">(" + .codegen_expression(expr) + ")"
+            ForcedUnwrap(expr, type_id) => "(" + .codegen_expression(expr) + ".value())"
+            QuotedString(val) => {
+                let original_string = val.to_string()
+                let escaped_value = original_string.replace(replace: "\n", with: "\\n")
+                yield match val.type_id == builtin(BuiltinType::JaktString) {
+                    true => "Jakt::DeprecatedString(\"" + escaped_value + "\"sv)"
+                    false => {
+                        let ids = .program.find_functions_with_name_in_scope(
+                            parent_scope_id: .program.find_type_scope_id(val.type_id)
+                            function_name: "from_string_literal"
+                        )
+                        if not ids.has_value() or ids!.is_empty() {
+                            panic("Internal error: couldn't find a 'from_string_literal' function despite passing typecheck")
+                        }
 
-                    let name = .program.get_function(ids![0]).name_for_codegen().as_name_for_use()
+                        let name = .program.get_function(ids![0]).name_for_codegen().as_name_for_use()
 
-                    let error_handler = match val.may_throw { true => .current_error_handler(), else => "" }
-                    yield format(
-                        "{}({}::{}(\"{}\"sv))"
-                        error_handler
-                        .codegen_type(val.type_id)
-                        name
-                        escaped_value
-                    )
+                        let error_handler = match val.may_throw { true => .current_error_handler(), else => "" }
+                        yield format(
+                            "{}({}::{}(\"{}\"sv))"
+                            error_handler
+                            .codegen_type(val.type_id)
+                            name
+                            escaped_value
+                        )
+                    }
                 }
             }
-        }
-        ByteConstant(val) => "static_cast<u8>(u8'" + val + "')"
-        CCharacterConstant(val) => "'" + val + "'"
-        CharacterConstant(val) => "static_cast<u32>(U'" + val + "')"
-        Var(var) => {
-            let name = var.name_for_codegen().as_name_for_use()
-            yield match name {
-                "this" => .this_replacement ?? "*this"
-                else => name
-            }
-        }
-        IndexedExpression(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
-        IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
-        IndexedTuple(expr, index, is_optional) => match is_optional {
-            true => format("(({}).map([](auto& _value) {{ return _value.template get<{}>(); }}))", .codegen_expression(expr), index)
-            false => format("(({}).template get<{}>())", .codegen_expression(expr), index)
-        }
-        IndexedStruct(expr, name, index, is_optional) => {
-            mut output = ""
-            let object = .codegen_expression(expression: expr)
-            output += "(("
-            output += object
-            output += ")"
-
-            let var_name = match index.has_value() {
-                true => .program.get_variable(index!).name_for_codegen().as_name_for_use()
-                false => name
-            }
-
-            let expression_type = .program.get_type(expr.type())
-            match expression_type {
-                RawPtr => {
-                    output += "->"
+            ByteConstant(val) => "static_cast<u8>(u8'" + val + "')"
+            CCharacterConstant(val) => "'" + val + "'"
+            CharacterConstant(val) => "static_cast<u32>(U'" + val + "')"
+            Var(var) => {
+                let name = var.name_for_codegen().as_name_for_use()
+                yield match name {
+                    "this" => .this_replacement ?? "*this"
+                    else => name
                 }
-                Struct(id) | GenericInstance(id) => {
-                    let structure = .program.get_struct(id)
-                    if structure.record_type is Class and object != "*this" {
+            }
+            IndexedExpression(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
+            IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
+            IndexedTuple(expr, index, is_optional) => match is_optional {
+                true => format("(({}).map([](auto& _value) {{ return _value.template get<{}>(); }}))", .codegen_expression(expr), index)
+                false => format("(({}).template get<{}>())", .codegen_expression(expr), index)
+            }
+            IndexedStruct(expr, name, index, is_optional) => {
+                mut output = ""
+                let object = .codegen_expression(expression: expr)
+                output += "(("
+                output += object
+                output += ")"
+
+                let var_name = match index.has_value() {
+                    true => .program.get_variable(index!).name_for_codegen().as_name_for_use()
+                    false => name
+                }
+
+                let expression_type = .program.get_type(expr.type())
+                match expression_type {
+                    RawPtr => {
                         output += "->"
-                    } else {
+                    }
+                    Struct(id) | GenericInstance(id) => {
+                        let structure = .program.get_struct(id)
+                        if structure.record_type is Class and object != "*this" {
+                            output += "->"
+                        } else {
+                            output += "."
+                        }
+                    }
+                    else => {
                         output += "."
                     }
                 }
-                else => {
-                    output += "."
+                if is_optional {
+                    output += "map([](auto& _value) { return _value"
+                    mut access_operator = "."
+                    if expression_type is GenericInstance(args) and args.size() > 0 {
+                        match .program.get_type(args[0]) {
+                            Struct(id) | GenericInstance(id) => {
+                                if .program.get_struct(id).record_type is Class {
+                                    access_operator = "->"
+                                }
+                            }
+                            else => {}
+                        }
+                    }
+                    output += access_operator
+                    output += var_name
+                    output += "; })"
+                } else {
+                    output += var_name
                 }
+                output += ")"
+                yield output
             }
-            if is_optional {
-                output += "map([](auto& _value) { return _value"
-                mut access_operator = "."
-                if expression_type is GenericInstance(args) and args.size() > 0 {
-                    match .program.get_type(args[0]) {
-                        Struct(id) | GenericInstance(id) => {
-                            if .program.get_struct(id).record_type is Class {
-                                access_operator = "->"
+            IndexedCommonEnumMember(expr, index, is_optional) => {
+                mut output = ""
+                let object = .codegen_expression(expression: expr)
+                output += "(("
+                output += object
+                output += ")"
+
+                match .program.get_type(expr.type()) {
+                    RawPtr => {
+                        output += "->"
+                    }
+                    Enum(id) | GenericEnumInstance(id) => {
+                        let structure = .program.get_enum(id)
+                        if structure.record_type is SumEnum(is_boxed) and is_boxed and object != "*this" {
+                            output += "->common.init_common."
+                        } else {
+                            output += ".common.init_common."
+                        }
+                    }
+                    else => {
+                        output += "."
+                    }
+                }
+                if is_optional {
+                    output += "map([](auto& _value) { return _value."
+                    output += index
+                    output += "; })"
+                } else {
+                    output += index
+                }
+                output += ")"
+                yield output
+            }
+            ComptimeIndex() => {
+                panic("Internal error: ComptimeIndex should have been replaced by now")
+            }
+            Block(block) => .codegen_block(block)
+            Call(call) => .codegen_call(call)
+            MethodCall(expr, call, is_optional) => .codegen_method_call(expr, call, is_optional)
+            Boolean(val) => match val {
+                true => "true"
+                else => "false"
+            }
+            UnaryOp(expr, op, type_id) => {
+                mut output = "("
+                output += match op {
+                    PreIncrement => "++"
+                    PreDecrement => "--"
+                    Negate => "-"
+                    Dereference => match .program.get_type(expr.type()) {
+                        RawPtr => "*"
+                        else => ""
+                    }
+                    // FIXME: Remove this once we have proper type mutability support
+                    RawAddress => match .program.get_type(expr.type()).is_boxed(program: .program) {
+                        true => "const_cast<" + .codegen_type_possibly_as_namespace(type_id, as_namespace: true) + ">(" + "&*"
+                        false => "const_cast<" + .codegen_type(type_id) + ">(" + "&"
+                    }
+                    LogicalNot => "!"
+                    BitwiseNot => "~"
+                    Sizeof => "sizeof"
+                    Is(type_id) => {
+                        let is_type = match .program.get_type(type_id) {
+                            Struct(id) => {
+                                let struct_ = .program.get_struct(id)
+                                yield .codegen_namespace_qualifier(scope_id: struct_.scope_id) + struct_.name_for_codegen().as_name_for_use()
+                            }
+                            else => .codegen_type(type_id)
+                        }
+                        yield "is<" + is_type + ">("
+                    }
+                    IsNone => "!"
+                    TypeCast(cast) => {
+                        mut final_type_id = cast.type_id();
+                        let type = .program.get_type(final_type_id)
+                        let cast_type = match cast {
+                            Fallible => {
+                                let type_id = match type {
+                                    GenericInstance(args) => args[0]
+                                    else => {
+                                        panic("Fallible type cast must have Optional result.")
+                                    }
+                                }
+                                mut cast_type = "dynamic_cast"
+                                if .program.get_type(type_id) is Struct(struct_id)
+                                    and .program.get_struct(struct_id).record_type is Class {
+                                        final_type_id = type_id
+                                    cast_type = "fallible_class_cast"
+                                } else if .program.is_integer(type_id) {
+                                    final_type_id = type_id
+                                    cast_type = "fallible_integer_cast"
+                                }
+
+                                yield cast_type
+                            }
+                            Infallible => {
+                                mut cast_type = "verify_cast"
+                                if expr.type() == unknown_type_id() {
+                                    cast_type = "assert_type"
+                                } else if type.is_boxed(program: .program) {
+                                    cast_type = "infallible_class_cast"
+                                } else if .program.is_integer(type_id) {
+                                    cast_type = "infallible_integer_cast"
+                                } else if type is Enum(enum_id) and .program.is_integer(.program.get_enum(enum_id).underlying_type_id) {
+                                    cast_type = "infallible_enum_cast"
+                                } else if type is RawPtr(inner) {
+                                    cast_type = "reinterpret_cast"
+                                }
+                                yield cast_type
                             }
                         }
-                        else => {}
+                        yield cast_type + "<" + .codegen_type(final_type_id) + ">("
                     }
-                }
-                output += access_operator
-                output += var_name
-                output += "; })"
-            } else {
-                output += var_name
-            }
-            output += ")"
-            yield output
-        }
-        IndexedCommonEnumMember(expr, index, is_optional) => {
-            mut output = ""
-            let object = .codegen_expression(expression: expr)
-            output += "(("
-            output += object
-            output += ")"
-
-            match .program.get_type(expr.type()) {
-                RawPtr => {
-                    output += "->"
-                }
-                Enum(id) | GenericEnumInstance(id) => {
-                    let structure = .program.get_enum(id)
-                    if structure.record_type is SumEnum(is_boxed) and is_boxed and object != "*this" {
-                        output += "->common.init_common."
-                    } else {
-                        output += ".common.init_common."
-                    }
-                }
-                else => {
-                    output += "."
-                }
-            }
-            if is_optional {
-                output += "map([](auto& _value) { return _value."
-                output += index
-                output += "; })"
-            } else {
-                output += index
-            }
-            output += ")"
-            yield output
-        }
-        ComptimeIndex() => {
-            panic("Internal error: ComptimeIndex should have been replaced by now")
-        }
-        Block(block) => .codegen_block(block)
-        Call(call) => .codegen_call(call)
-        MethodCall(expr, call, is_optional) => .codegen_method_call(expr, call, is_optional)
-        Boolean(val) => match val {
-            true => "true"
-            else => "false"
-        }
-        UnaryOp(expr, op, type_id) => {
-            mut output = "("
-            output += match op {
-                PreIncrement => "++"
-                PreDecrement => "--"
-                Negate => "-"
-                Dereference => match .program.get_type(expr.type()) {
-                    RawPtr => "*"
                     else => ""
                 }
-                // FIXME: Remove this once we have proper type mutability support
-                RawAddress => match .program.get_type(expr.type()).is_boxed(program: .program) {
-                    true => "const_cast<" + .codegen_type_possibly_as_namespace(type_id, as_namespace: true) + ">(" + "&*"
-                    false => "const_cast<" + .codegen_type(type_id) + ">(" + "&"
+                output += "("
+                let object = match op {
+                    Sizeof(type_id) => .codegen_type(type_id)
+                    else => .codegen_expression(expr)
                 }
-                LogicalNot => "!"
-                BitwiseNot => "~"
-                Sizeof => "sizeof"
-                Is(type_id) => {
-                    let is_type = match .program.get_type(type_id) {
-                        Struct(id) => {
-                            let struct_ = .program.get_struct(id)
-                            yield .codegen_namespace_qualifier(scope_id: struct_.scope_id) + struct_.name_for_codegen().as_name_for_use()
-                        }
-                        else => .codegen_type(type_id)
-                    }
-                    yield "is<" + is_type + ">("
-                }
-                IsNone => "!"
-                TypeCast(cast) => {
-                    mut final_type_id = cast.type_id();
-                    let type = .program.get_type(final_type_id)
-                    let cast_type = match cast {
-                        Fallible => {
-                            let type_id = match type {
-                                GenericInstance(args) => args[0]
-                                else => {
-                                    panic("Fallible type cast must have Optional result.")
+                output += object
+                output += match op {
+                    PostIncrement => "++)"
+                    PostDecrement => "--)"
+                    TypeCast | Is => "))"
+                    IsEnumVariant(enum_variant, type_id: enum_type_id) => {
+                        let name = enum_variant.name()
+                        mut suffix = ")"
+                        let enum_ = .program.get_enum(match .program.get_type(enum_type_id) {
+                            Enum(enum_id) => enum_id
+                            GenericEnumInstance(id) => id
+                            else => {
+                                panic(format("Unexpected type in IsEnumVariant: {}", .program.get_type(enum_type_id)))
+                            }
+                        })
+                        match enum_.record_type {
+                            SumEnum => {
+                                let is_boxed = enum_.is_boxed
+                                if is_boxed and object != "*this"{
+                                    suffix += "->"
+                                } else {
+                                    suffix += "."
                                 }
-                            }
-                            mut cast_type = "dynamic_cast"
-                            if .program.get_type(type_id) is Struct(struct_id)
-                                and .program.get_struct(struct_id).record_type is Class {
-                                    final_type_id = type_id
-                                cast_type = "fallible_class_cast"
-                            } else if .program.is_integer(type_id) {
-                                final_type_id = type_id
-                                cast_type = "fallible_integer_cast"
-                            }
 
-                            yield cast_type
-                        }
-                        Infallible => {
-                            mut cast_type = "verify_cast"
-                            if expr.type() == unknown_type_id() {
-                                cast_type = "assert_type"
-                            } else if type.is_boxed(program: .program) {
-                                cast_type = "infallible_class_cast"
-                            } else if .program.is_integer(type_id) {
-                                cast_type = "infallible_integer_cast"
-                            } else if type is Enum(enum_id) and .program.is_integer(.program.get_enum(enum_id).underlying_type_id) {
-                                cast_type = "infallible_enum_cast"
-                            } else if type is RawPtr(inner) {
-                                cast_type = "reinterpret_cast"
-                            }
-                            yield cast_type
-                        }
-                    }
-                    yield cast_type + "<" + .codegen_type(final_type_id) + ">("
-                }
-                else => ""
-            }
-            output += "("
-            let object = match op {
-                Sizeof(type_id) => .codegen_type(type_id)
-                else => .codegen_expression(expr)
-            }
-            output += object
-            output += match op {
-                PostIncrement => "++)"
-                PostDecrement => "--)"
-                TypeCast | Is => "))"
-                IsEnumVariant(enum_variant, type_id: enum_type_id) => {
-                    let name = enum_variant.name()
-                    mut suffix = ")"
-                    let enum_ = .program.get_enum(match .program.get_type(enum_type_id) {
-                        Enum(enum_id) => enum_id
-                        GenericEnumInstance(id) => id
-                        else => {
-                            panic(format("Unexpected type in IsEnumVariant: {}", .program.get_type(enum_type_id)))
-                        }
-                    })
-                    match enum_.record_type {
-                        SumEnum => {
-                            let is_boxed = enum_.is_boxed
-                            if is_boxed and object != "*this"{
-                                suffix += "->"
-                            } else {
-                                suffix += "."
-                            }
-
-                            // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
-                            mut variant_index = 0;
-                            for variant in enum_.variants {
-                                if variant.name() == name {
-                                    break
+                                // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
+                                mut variant_index = 0;
+                                for variant in enum_.variants {
+                                    if variant.name() == name {
+                                        break
+                                    }
+                                    variant_index++
                                 }
-                                variant_index++
+                                suffix += format("__jakt_init_index() == {} /* {} */", variant_index, name)
                             }
-                            suffix += format("__jakt_init_index() == {} /* {} */", variant_index, name)
+                            ValueEnum => {
+                                suffix += format("== {}{}::{}", .codegen_namespace_qualifier(scope_id: enum_.scope_id), enum_.name, name)
+                            }
+                            else => {
+                                panic(format("Unexpected enum record type in IsEnumVariant: {}", enum_.record_type))
+                            }
                         }
-                        ValueEnum => {
-                            suffix += format("== {}{}::{}", .codegen_namespace_qualifier(scope_id: enum_.scope_id), enum_.name, name)
-                        }
-                        else => {
-                            panic(format("Unexpected enum record type in IsEnumVariant: {}", enum_.record_type))
+                        yield suffix
+                    }
+                    IsSome | IsNone => ").has_value()"
+                    RawAddress => "))"
+                    else => ")"
+                }
+                output += ")"
+                yield output
+            }
+            BinaryOp(lhs, rhs, op, type_id) => .codegen_binary_expression(expression, type_id, lhs, rhs, op)
+            NumericConstant(val, type_id) => {
+                let suffix = match val {
+                    I64 => "LL"
+                    U64 | USize => "ULL"
+                    else => ""
+                }
+
+                let type_name = match val {
+                    USize => "size_t"
+                    else => .codegen_type(type_id)
+                }
+
+                yield match val {
+                    F32(val)
+                    | F64(val)
+                    | I8(val)
+                    | I16(val)
+                    | I32(val)
+                    | I64(val)
+                    | U8(val)
+                    | U16(val)
+                    | U32(val)
+                    | U64(val)
+                    | USize(val)
+                    => format("static_cast<{}>({}{})", type_name, val, suffix)
+                }
+            }
+            NamespacedVar(namespaces, var) => {
+                mut output = ""
+                if var.name_for_codegen().is_scopable() {
+                    if var.owner_scope.has_value() {
+                        output = .codegen_namespace_qualifier(
+                            scope_id: var.owner_scope!
+                            skip_current: false
+                        )
+                    } else {
+                        for ns in namespaces {
+                            output += ns.name + "::"
                         }
                     }
-                    yield suffix
                 }
-                IsSome | IsNone => ").has_value()"
-                RawAddress => "))"
-                else => ")"
+                yield output + var.name_for_codegen().as_name_for_use()
             }
-            output += ")"
-            yield output
-        }
-        BinaryOp(lhs, rhs, op, type_id) => .codegen_binary_expression(expression, type_id, lhs, rhs, op)
-        NumericConstant(val, type_id) => {
-            let suffix = match val {
-                I64 => "LL"
-                U64 | USize => "ULL"
-                else => ""
-            }
+            Match(expr, match_cases, type_id, all_variants_constant) => .codegen_match(expr, match_cases, type_id, all_variants_constant)
+            EnumVariantArg(expr, arg, enum_variant) => {
+                let var_name = .codegen_expression(expr)
+                let enum_type = .codegen_type_possibly_as_namespace(type_id: expr.type(), as_namespace: true)
+                let variant_name = enum_variant.name()
+                mut arg_name = "value"
+                if enum_variant is StructLike {
+                    arg_name = arg.name ?? arg.binding
+                }
 
-            let type_name = match val {
-                USize => "size_t"
-                else => .codegen_type(type_id)
-            }
+                let enum_ = .program.get_enum(enum_variant.enum_id())
 
-            yield match val {
-                F32(val)
-                | F64(val)
-                | I8(val)
-                | I16(val)
-                | I32(val)
-                | I64(val)
-                | U8(val)
-                | U16(val)
-                | U32(val)
-                | U64(val)
-                | USize(val)
-                => format("static_cast<{}>({}{})", type_name, val, suffix)
+                let cpp_deref_operator = match enum_.is_boxed {
+                    true => "->"
+                    else => "."
+                }
+
+                // use the common section if the binding uses a common field
+                mut section = format("as.{}", variant_name)
+                for field in enum_.fields {
+                    let field_name = .program.get_variable(field.variable_id).name_for_codegen().as_name_for_use()
+                    if field_name == arg_name {
+                        section = "common.init_common"
+                    }
+                }
+
+                yield format("({}){}{}.{}", var_name, cpp_deref_operator, section, arg_name)
             }
-        }
-        NamespacedVar(namespaces, var) => {
-            mut output = ""
-            if var.name_for_codegen().is_scopable() {
-                if var.owner_scope.has_value() {
-                    output = .codegen_namespace_qualifier(
-                        scope_id: var.owner_scope!
-                        skip_current: false
-                    )
+            JaktArray(vals, repeat, span, type_id, inner_type_id) => {
+                mut output = ""
+                if repeat.has_value() {
+                    let repeat_val = repeat.value()
+                    output += "("
+                    output += .current_error_handler()
+                    output += "((DynamicArray<"
+                    output += .codegen_type(inner_type_id)
+                    output += ">::filled("
+                    output += .codegen_expression(repeat_val)
+                    output += ", "
+                    output += .codegen_expression(vals[0])
+                    output += "))))"
                 } else {
-                    for ns in namespaces {
-                        output += ns.name + "::"
+                    output += "("
+                    output += .current_error_handler()
+                    output += "((DynamicArray<"
+                    output += .codegen_type(inner_type_id)
+                    output += ">::create_with({"
+                    mut first = true
+                    for val in vals {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
+
+                        output += .codegen_expression(val)
                     }
+                    output += "}))))"
                 }
-            }
-            yield output + var.name_for_codegen().as_name_for_use()
-        }
-        Match(expr, match_cases, type_id, all_variants_constant) => .codegen_match(expr, match_cases, type_id, all_variants_constant)
-        EnumVariantArg(expr, arg, enum_variant) => {
-            let var_name = .codegen_expression(expr)
-            let enum_type = .codegen_type_possibly_as_namespace(type_id: expr.type(), as_namespace: true)
-            let variant_name = enum_variant.name()
-            mut arg_name = "value"
-            if enum_variant is StructLike {
-                arg_name = arg.name ?? arg.binding
-            }
 
-            let enum_ = .program.get_enum(enum_variant.enum_id())
-
-            let cpp_deref_operator = match enum_.is_boxed {
-                true => "->"
-                else => "."
+                yield output
             }
+            JaktDictionary(vals, span, type_id, key_type_id, value_type_id) => {
+                mut output = format("({}((Dictionary<{}, {}>::create_with_entries({{",
+                    .current_error_handler(),
+                    .codegen_type(key_type_id),
+                    .codegen_type(value_type_id))
 
-            // use the common section if the binding uses a common field
-            mut section = format("as.{}", variant_name)
-            for field in enum_.fields {
-                let field_name = .program.get_variable(field.variable_id).name_for_codegen().as_name_for_use()
-                if field_name == arg_name {
-                    section = "common.init_common"
+                mut first = true
+                for (key, value) in vals {
+                    if not first {
+                        output += ", "
+                    } else {
+                        first = false
+                    }
+
+                    output += "{"
+                    output += .codegen_expression(key)
+                    output += ", "
+                    output += .codegen_expression(value)
+                    output += "}"
                 }
-            }
 
-            yield format("({}){}{}.{}", var_name, cpp_deref_operator, section, arg_name)
-        }
-        JaktArray(vals, repeat, span, type_id, inner_type_id) => {
-            mut output = ""
-            if repeat.has_value() {
-                let repeat_val = repeat.value()
-                output += "("
-                output += .current_error_handler()
-                output += "((DynamicArray<"
-                output += .codegen_type(inner_type_id)
-                output += ">::filled("
-                output += .codegen_expression(repeat_val)
-                output += ", "
-                output += .codegen_expression(vals[0])
-                output += "))))"
-            } else {
-                output += "("
-                output += .current_error_handler()
-                output += "((DynamicArray<"
-                output += .codegen_type(inner_type_id)
-                output += ">::create_with({"
+                output += "}))))"
+
+                yield output
+            }
+            JaktSet(vals, span, type_id, inner_type_id) => {
+                mut output = ""
+                output += format("({}((Set<{}>::create_with_values({{", .current_error_handler(), .codegen_type(inner_type_id))
+                mut first = true
+                for value in vals {
+                    if not first {
+                        output += ", "
+                    } else {
+                        first = false
+                    }
+                    output += .codegen_expression(value)
+                }
+                output += "}))))"
+                yield output
+            }
+            JaktTuple(vals, span, type_id) => {
+                mut output = ""
+                output += "(Tuple{"
                 mut first = true
                 for val in vals {
                     if not first {
@@ -2903,222 +2966,165 @@ struct CodeGenerator {
 
                     output += .codegen_expression(val)
                 }
-                output += "}))))"
+                output += "})"
+
+                yield output
             }
-
-            yield output
-        }
-        JaktDictionary(vals, span, type_id, key_type_id, value_type_id) => {
-            mut output = format("({}((Dictionary<{}, {}>::create_with_entries({{",
-                .current_error_handler(),
-                .codegen_type(key_type_id),
-                .codegen_type(value_type_id))
-
-            mut first = true
-            for (key, value) in vals {
-                if not first {
-                    output += ", "
-                } else {
-                    first = false
+            DependentFunction => {
+                .compiler.panic("Dependent functions should have been resolved by now")
+            }
+            Function(captures, params, can_throw, block, return_type_id, pseudo_function_id) => {
+                mut generated_captures: [String] = []
+                for capture in captures {
+                    generated_captures.push(match capture {
+                        ByValue => capture.name
+                        AllByReference => "&"
+                        else => format("&{}", capture.name)
+                    })
+                }
+                mut generated_params: [String] = []
+                for param in params {
+                    generated_params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name_for_codegen().as_name_for_definition()))
+                }
+                let return_type = match can_throw {
+                    true => format("ErrorOr<{}>", .codegen_type(return_type_id))
+                    false => .codegen_type(return_type_id)
                 }
 
-                output += "{"
-                output += .codegen_expression(key)
-                output += ", "
-                output += .codegen_expression(value)
-                output += "}"
-            }
+                let last_control_flow = .control_flow_state
+                .control_flow_state = last_control_flow.enter_function()
+                defer .control_flow_state = last_control_flow
 
-            output += "}))))"
+                mut block_output = ""
+                if pseudo_function_id.has_value() {
+                    let function = .program.get_function(pseudo_function_id!)
 
-            yield output
-        }
-        JaktSet(vals, span, type_id, inner_type_id) => {
-            mut output = ""
-            output += format("({}((Set<{}>::create_with_values({{", .current_error_handler(), .codegen_type(inner_type_id))
-            mut first = true
-            for value in vals {
-                if not first {
-                    output += ", "
+                    let previous_function = .current_function
+                    .current_function = function
+                    defer .current_function = previous_function
+
+                    block_output = .codegen_lambda_block(can_throw, block, return_type_id)
                 } else {
-                    first = false
-                }
-                output += .codegen_expression(value)
-            }
-            output += "}))))"
-            yield output
-        }
-        JaktTuple(vals, span, type_id) => {
-            mut output = ""
-            output += "(Tuple{"
-            mut first = true
-            for val in vals {
-                if not first {
-                    output += ", "
-                } else {
-                    first = false
+                    block_output = .codegen_lambda_block(can_throw, block, return_type_id)
                 }
 
-                output += .codegen_expression(val)
+                yield format("[{}]({}) -> {} {}", join(generated_captures, separator: ", "), join(generated_params, separator: ", "), return_type, block_output)
             }
-            output += "})"
+            TryBlock(stmt, error_name, catch_block, span) => {
+                mut output = ""
+                let try_var = .fresh_var()
 
-            yield output
-        }
-        DependentFunction => {
-            .compiler.panic("Dependent functions should have been resolved by now")
-        }
-        Function(captures, params, can_throw, block, return_type_id, pseudo_function_id) => {
-            mut generated_captures: [String] = []
-            for capture in captures {
-                generated_captures.push(match capture {
-                    ByValue => capture.name
-                    AllByReference => "&"
-                    else => format("&{}", capture.name)
-                })
-            }
-            mut generated_params: [String] = []
-            for param in params {
-                generated_params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name_for_codegen().as_name_for_definition()))
-            }
-            let return_type = match can_throw {
-                true => format("ErrorOr<{}>", .codegen_type(return_type_id))
-                false => .codegen_type(return_type_id)
-            }
-
-            let last_control_flow = .control_flow_state
-            .control_flow_state = last_control_flow.enter_function()
-            defer .control_flow_state = last_control_flow
-
-            mut block_output = ""
-            if pseudo_function_id.has_value() {
-                let function = .program.get_function(pseudo_function_id!)
-
-                let previous_function = .current_function
-                .current_function = function
-                defer .current_function = previous_function
-
-                block_output = .codegen_lambda_block(can_throw, block, return_type_id)
-            } else {
-                block_output = .codegen_lambda_block(can_throw, block, return_type_id)
-            }
-
-            yield format("[{}]({}) -> {} {}", join(generated_captures, separator: ", "), join(generated_params, separator: ", "), return_type, block_output)
-        }
-        TryBlock(stmt, error_name, catch_block, span) => {
-            mut output = ""
-            let try_var = .fresh_var()
-
-            output += "auto "
-            output += try_var
-            output += " = [&]() -> ErrorOr<void> {"
-            let last_control_flow = .control_flow_state
-            .control_flow_state.passes_through_match = false
-            .control_flow_state.passes_through_try = true
-            output += .codegen_statement(statement: stmt)
-            output += ";"
-            output += "return {};"
-            output += "}();\n"
-
-            output += "if ("
-            output += try_var
-            output += ".is_error()) {"
-            if not error_name.is_empty() {
                 output += "auto "
-                output += error_name
-                output += " = "
                 output += try_var
-                output += ".release_error();"
-            }
-            output += .codegen_block(block: catch_block)
-            .control_flow_state = last_control_flow
-            output += "}"
+                output += " = [&]() -> ErrorOr<void> {"
+                let last_control_flow = .control_flow_state
+                .control_flow_state.passes_through_match = false
+                .control_flow_state.passes_through_try = true
+                output += .codegen_statement(statement: stmt)
+                output += ";"
+                output += "return {};"
+                output += "}();\n"
 
-            yield output
-        }
-        Try(expr, catch_block, catch_name, span, type_id, inner_type_id) => {
-            mut output = ""
-            let fresh_var = .fresh_var()
-            let is_void = inner_type_id == void_type_id()
-            let try_var = .fresh_var()
-
-            let last_control_flow = .control_flow_state
-            .control_flow_state.passes_through_match = false
-            .control_flow_state.passes_through_try = true
-            defer {
-                .control_flow_state = last_control_flow
-            }
-
-            if not is_void {
-                output += "({ Optional<"
-                output += .codegen_type(inner_type_id)
-                output += "> "
-                output += fresh_var
-                output += ";\n"
-            }
-
-            output += "auto "
-            output += try_var
-            output += " = [&]() -> ErrorOr<"
-            output += .codegen_type(inner_type_id)
-            output += "> { return "
-            output += .codegen_expression(expr)
-            if is_void {
-                output += ", ErrorOr<void>{}"
-            }
-            output += "; }();\n"
-
-            if catch_block.has_value() {
                 output += "if ("
                 output += try_var
                 output += ".is_error()) {"
-                if catch_name.has_value() {
+                if not error_name.is_empty() {
                     output += "auto "
-                    output += catch_name!
+                    output += error_name
                     output += " = "
                     output += try_var
-                    output += ".release_error();\n"
+                    output += ".release_error();"
                 }
+                output += .codegen_block(block: catch_block)
+                .control_flow_state = last_control_flow
+                output += "}"
 
-                if catch_block!.yielded_type.has_value() {
-                    output += fresh_var
-                    output += " = ("
-                    output += .codegen_block(block: catch_block!)
-                    output += ");\n"
-                } else {
-                    output += .codegen_block(block: catch_block!)
+                yield output
+            }
+            Try(expr, catch_block, catch_name, span, type_id, inner_type_id) => {
+                mut output = ""
+                let fresh_var = .fresh_var()
+                let is_void = inner_type_id == void_type_id()
+                let try_var = .fresh_var()
+
+                let last_control_flow = .control_flow_state
+                .control_flow_state.passes_through_match = false
+                .control_flow_state.passes_through_try = true
+                defer {
+                    .control_flow_state = last_control_flow
                 }
 
                 if not is_void {
-                    output += "} else {"
+                    output += "({ Optional<"
+                    output += .codegen_type(inner_type_id)
+                    output += "> "
+                    output += fresh_var
+                    output += ";\n"
+                }
+
+                output += "auto "
+                output += try_var
+                output += " = [&]() -> ErrorOr<"
+                output += .codegen_type(inner_type_id)
+                output += "> { return "
+                output += .codegen_expression(expr)
+                if is_void {
+                    output += ", ErrorOr<void>{}"
+                }
+                output += "; }();\n"
+
+                if catch_block.has_value() {
+                    output += "if ("
+                    output += try_var
+                    output += ".is_error()) {"
+                    if catch_name.has_value() {
+                        output += "auto "
+                        output += catch_name!
+                        output += " = "
+                        output += try_var
+                        output += ".release_error();\n"
+                    }
+
+                    if catch_block!.yielded_type.has_value() {
+                        output += fresh_var
+                        output += " = ("
+                        output += .codegen_block(block: catch_block!)
+                        output += ");\n"
+                    } else {
+                        output += .codegen_block(block: catch_block!)
+                    }
+
+                    if not is_void {
+                        output += "} else {"
+                        output += fresh_var
+                        output += " = "
+                        output += try_var
+                        output += ".release_value();\n"
+                    }
+                    output += "}\n"
+                } else if not is_void {
+                    output += "if (!"
+                    output += try_var
+                    output += ".is_error()) "
                     output += fresh_var
                     output += " = "
                     output += try_var
                     output += ".release_value();\n"
                 }
-                output += "}\n"
-            } else if not is_void {
-                output += "if (!"
-                output += try_var
-                output += ".is_error()) "
-                output += fresh_var
-                output += " = "
-                output += try_var
-                output += ".release_value();\n"
-            }
 
-            if not is_void {
-                output += fresh_var
-                if catch_block.has_value() {
-                    output += ".release_value()"
+                if not is_void {
+                    output += fresh_var
+                    if catch_block.has_value() {
+                        output += ".release_value()"
+                    }
+                    output += "; })"
                 }
-                output += "; })"
-            }
 
-            yield output
-        }
-        Garbage(span) => {
-            todo(format("codegen_expression of bad AST node in {} at {}..{}", this.compiler.get_file_path(span.file_id), span.start, span.end))
+                yield output
+            }
+            Garbage(span) => {
+                todo(format("codegen_expression of bad AST node in {} at {}..{}", this.compiler.get_file_path(span.file_id), span.start, span.end))
+            }
         }
     }
 
@@ -4088,12 +4094,13 @@ struct CodeGenerator {
 
     fn codegen_namespace_path(mut this, call: CheckedCall) throws -> String {
         if call.function_id.has_value() {
-            let scope = .program.get_function(call.function_id!).owner_scope
-            if scope.has_value() {
+            let func = .program.get_function(call.function_id!)
+            if func.owner_scope.has_value() {
                 return .codegen_namespace_qualifier(
-                    scope_id: scope!
+                    scope_id: func.owner_scope!
                     skip_current: false
                     possible_constructor_name: call.name_for_codegen().as_name_for_use()
+                    generic_mappings: func.owner_scope_generics
                 )
             }
         }
@@ -4359,6 +4366,12 @@ struct CodeGenerator {
             qualifiers += " const"
         }
 
+        if .generic_inferences is Some(mappings) {
+            if mappings.get(type_id) is Some(id) {
+                return .codegen_type_possibly_as_namespace(type_id: id, as_namespace) + qualifiers
+            }
+        }
+
         return match .program.get_type(type_id) {
             Void => "void"
             Bool => "bool"
@@ -4548,10 +4561,11 @@ struct CodeGenerator {
     }
 
     fn codegen_namespace_qualifier(
-        this
+        mut this
         scope_id: ScopeId
         skip_current: bool = true
         possible_constructor_name: String? = None
+        generic_mappings: [TypeId:TypeId]? = None
     ) throws -> String {
         mut output = ""
         mut current_scope_id = match skip_current {
@@ -4578,10 +4592,49 @@ struct CodeGenerator {
                     continue
                 }
 
-                output = format("{}::{}", name!, output)
+                let args = match scope.relevant_type_id.has_value() {
+                    false => ""
+                    true => {
+                        let parameters = .program.get_type(scope.relevant_type_id!).generic_parameters(program: .program)
+                        mut res = StringBuilder::create()
+
+                        if parameters is Some(params) and generic_mappings is Some(mappings) and not params.is_empty() {
+                            res.append("<")
+                            mut first = true
+                            for parameter in params {
+                                let mapping = mappings.get(parameter.type_id)!
+                                if .program.get_type(mapping) is TypeVariable and .map_type(mapping) == mapping {
+                                    // We couldn't resolve this somehow, so just...bail.
+                                    // FIXME: We should make sure this can't happen?
+                                    //        Or at least error out when it does.
+                                    break
+                                }
+
+                                if first {
+                                    first = false
+                                } else {
+                                    res.append(", ")
+                                }
+
+                                res.append(.codegen_type(mapping))
+                            }
+                            res.append(">")
+                        }
+
+                        yield res.to_string()
+                    }
+                }
+                output = format("{}{}::{}", name!, args, output)
             }
         }
         return output
+    }
+
+    fn map_type(this, anon type_id: TypeId) -> TypeId {
+        if .generic_inferences is Some(mapping) {
+            return mapping.get(type_id) ?? type_id
+        }
+        return type_id
     }
 
     fn codegen_function(mut this, anon function: CheckedFunction, as_method: bool = false) throws -> String {
@@ -4592,7 +4645,7 @@ struct CodeGenerator {
         return .codegen_function_in_namespace(function, containing_struct: None, as_method)
     }
 
-    fn codegen_struct_type(this, id: StructId, as_namespace: bool) throws -> String {
+    fn codegen_struct_type(mut this, id: StructId, as_namespace: bool) throws -> String {
         mut output = ""
         let type_module = .program.get_module(id.module)
         let checked_struct = .program.get_struct(id)
@@ -4610,7 +4663,7 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_enum_type(this, id: EnumId, as_namespace: bool) throws -> String {
+    fn codegen_enum_type(mut this, id: EnumId, as_namespace: bool) throws -> String {
         mut output = ""
         let type_module = .program.get_module(id.module)
         let checked_enum = .program.get_enum(id)

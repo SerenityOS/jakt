@@ -267,6 +267,13 @@ boxed enum Type {
     Self
     Const(Value)
 
+    fn generic_parameters(this, program: CheckedProgram) -> [CheckedGenericParameter]? => match this {
+        Struct(id) | GenericInstance(id) | GenericResolvedType(id) => Some(program.get_struct(id).generic_parameters)
+        Enum(id) | GenericEnumInstance(id) => Some(program.get_enum(id).generic_parameters)
+        Trait(id) | GenericTraitInstance(id) => Some(program.get_trait(id).generic_parameters)
+        else => None
+    }
+
     fn is_boxed(this, program: CheckedProgram) -> bool => match this {
         Struct(struct_id) | GenericInstance(id: struct_id) => program.get_struct(struct_id).record_type is Class
         Enum(enum_id) | GenericEnumInstance(id: enum_id) => program.get_enum(enum_id).is_boxed
@@ -618,6 +625,9 @@ class Scope {
     public debug_name: String
     public resolution_mixins: [ScopeId]
 
+    // Set if this scope corresponds to a type, as opposed to a block or a namespace.
+    public relevant_type_id: TypeId? = None
+
     public is_block_scope: bool = true
 
     public resolved_forall_chunks: [ResolvedForallChunk]? = None
@@ -794,6 +804,7 @@ class CheckedFunction {
     public specialization_index: usize? = None
 
     public owner_scope: ScopeId? = None
+    public owner_scope_generics: [TypeId:TypeId]? = None
     public is_fully_checked: bool = false
 
     public external_name: ExternalName? = None
@@ -835,6 +846,7 @@ class CheckedFunction {
         has_varargs: .has_varargs
         specialization_index: .specialization_index
         owner_scope: .owner_scope
+        owner_scope_generics: .owner_scope_generics
         is_fully_checked: .is_fully_checked
         external_name: .external_name
         deprecated_message: .deprecated_message
@@ -1013,6 +1025,7 @@ class CheckedVariable {
     public type_span: Span?
     public visibility: CheckedVisibility
     public owner_scope: ScopeId? = None
+    public owner_scope_generics: [TypeId:TypeId]? = None
     public external_name: ExternalName? = None
 
     public fn map_types(this, anon map: &fn(anon type_id: TypeId) throws -> TypeId) throws -> CheckedVariable {
@@ -1024,6 +1037,7 @@ class CheckedVariable {
             type_span: .type_span
             visibility: .visibility
             owner_scope: .owner_scope
+            owner_scope_generics: .owner_scope_generics
             external_name: .external_name
         )
     }
@@ -1491,6 +1505,8 @@ struct CheckedBinaryOperator {
 }
 
 boxed enum CheckedExpression {
+    generic_inferences: [TypeId:TypeId]? = None
+
     Boolean(val: bool, span: Span)
     NumericConstant(val: CheckedNumericConstant, span: Span, type_id: TypeId)
     QuotedString(val: CheckedStringLiteral, span: Span)
@@ -1782,7 +1798,14 @@ class CheckedProgram {
         return join(ss, separator: " -> ")
     }
 
-    public fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, module_id: ModuleId, for_block: bool = true) throws -> ScopeId {
+    public fn create_scope(
+        mut this
+        parent_scope_id: ScopeId?
+        can_throw: bool
+        debug_name: String
+        module_id: ModuleId
+        for_block: bool = true
+    ) throws -> ScopeId {
         mut is_from_generated_code = false
         // Check that parent_scope_id is a valid ScopeId
         if parent_scope_id.has_value() {
@@ -1964,6 +1987,66 @@ class CheckedProgram {
     }
     public fn get_loaded_module(this, anon module_name: String) -> LoadedModule? {
         return .loaded_modules.get(module_name)
+    }
+
+    public fn set_owner_scope_if_needed(mut this, parent_scope_id: ScopeId, overload_set: [FunctionId], span: Span) throws {
+        for overload in overload_set {
+            mut function = .get_function(overload)
+            if not function.owner_scope.has_value() {
+                function.owner_scope = parent_scope_id
+                // If the owner scope is generic, record the relevant inferences.
+                let scope = .get_scope(parent_scope_id)
+
+                if scope.relevant_type_id is Some(type_id) {
+                    let no_defaults: [TypeId?]? = None
+                    let no_args: [TypeId] = []
+
+                    let maybe_generics = match .get_type(type_id) {
+                        GenericInstance(id, args) | GenericResolvedType(id, args) => {
+                            let struct_ = .get_struct(id)
+                            yield Some((struct_.generic_parameters, struct_.generic_parameter_defaults, args))
+                        }
+                        Struct(id) => {
+                            let struct_ = .get_struct(id)
+                            yield Some((struct_.generic_parameters, struct_.generic_parameter_defaults, no_args))
+                        }
+                        GenericEnumInstance(id, args) => Some((.get_enum(id).generic_parameters, no_defaults, args))
+                        Enum(id) => Some((.get_enum(id).generic_parameters, no_defaults, no_args))
+                        GenericTraitInstance(id, args) => Some((.get_trait(id).generic_parameters, no_defaults, args))
+                        Trait(id) => Some((.get_trait(id).generic_parameters, no_defaults, no_args))
+                        else => None
+                    }
+                    guard maybe_generics is Some(generics) else {
+                        return
+                    }
+
+                    mut inferences: [TypeId:TypeId] = [:]
+                    let (parameters, declared_defaults, args) = generics
+
+                    let no_type_id: TypeId? = None
+                    let empty_defaults = [no_type_id; parameters.size()]
+                    let defaults = declared_defaults ?? empty_defaults
+
+                    for i in 0..parameters.size() {
+                        let parameter = &parameters[i]
+                        let arg = match i < args.size() {
+                            true => Some(args[i])
+                            false => defaults[i]
+                        } ?? parameter.type_id
+
+                        inferences.set(parameter.type_id, arg)
+                    }
+                    function.owner_scope_generics = inferences
+                }
+            }
+        }
+    }
+
+    public fn set_owner_scope_if_needed(mut this, parent_scope_id: ScopeId, var_id: VarId) throws {
+        mut variable = .get_variable(var_id)
+        if not variable.owner_scope.has_value() {
+            variable.owner_scope = parent_scope_id
+        }
     }
 
     public fn find_var_in_scope(
