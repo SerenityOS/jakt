@@ -446,7 +446,7 @@ fn cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter:
 fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Interpreter) throws -> CheckedExpression => match this_value.impl {
     Void => {
         interpreter.error("Cannot convert void to expression", this_value.span)
-        throw Error::from_errno(InterpretError::InvalidType as! i32)
+        throw Error::from_string_literal("Invalid type")
     }
     Bool(x)  => CheckedExpression::Boolean(val: x, span: this_value.span)
     U8(x)    => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(x), span: this_value.span, type_id: builtin(BuiltinType::U8))
@@ -507,7 +507,7 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
             interpreter.error_with_hint(
                 "Cannot convert struct to expression without constructor", this_value.span,
                 "Given struct cannot be created from its contents in any known way", this_value.span)
-            throw Error::from_errno(InterpretError::InvalidType as! i32)
+            throw Error::from_string_literal("Invalid type")
         }
 
         mut materialised_fields: [CheckedExpression] = []
@@ -535,7 +535,7 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
             interpreter.error_with_hint(
                 "Too many arguments for constructor", this_value.span,
                 format("Expected at most {} arguments, got {}", callee.params.size(), materialised_fields.size()), this_value.span)
-            throw Error::from_errno(InterpretError::MismatchingArguments as! i32)
+            throw Error::from_string_literal("Invalid type")
         }
 
         let name = struct_.name
@@ -768,7 +768,7 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
             format("Cannot materialise the type {}", this_value.impl)
             this_value.span
         )
-        throw Error::from_errno(InterpretError::Unimplemented as! i32);
+        throw Error::from_string_literal("Not yet implemented")
     }
 }
 
@@ -841,8 +841,7 @@ class InterpreterScope {
         }
 
         // How did this pass typecheck?
-        panic(format("Could not find binding for {}", name))
-        // throw Error::from_errno(InterpretError::UnknownVariable as! i32);
+        throw Error::from_string_literal("Could not find binding")
     }
 
     public fn set(mut this, anon name: String, anon value: Value) throws {
@@ -861,8 +860,7 @@ class InterpreterScope {
         }
 
         // How did this pass typecheck?
-        panic(format("Could not find binding for {}", name))
-        // throw Error::from_errno(InterpretError::UnknownVariable as! i32);
+        throw Error::from_string_literal("Could not find binding")
     }
 
     public fn all_bindings(this) throws -> [String:Value] {
@@ -1172,7 +1170,7 @@ class Interpreter {
                             if is_optional {
                                 if not id.equals(optional_struct_id) {
                                     .error("Optional chaining is only allowed on optional types", span)
-                                    throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                                    throw Error::from_string_literal("Invalid operation")
                                 }
 
                                 type_id = args[0]
@@ -1201,18 +1199,18 @@ class Interpreter {
                                     }
 
                                     .error(format("unknown member of struct: {}.{}", structure.name, field), span)
-                                    throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                                    throw Error::from_string_literal("Invalid operation")
                                 }
                                 else => {
                                     .error(format("Member field access on value of non-struct type ‘{}’", .program.type_name(checked_expr_type_id)), span)
-                                    throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                                    throw Error::from_string_literal("Invalid operation")
                                 }
                             }
                         }
                         Type::Struct(struct_id) => {
                             if is_optional {
                                 .error("Optional chaining is not allowed on non-optional types", span)
-                                throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                                throw Error::from_string_literal("Invalid operation")
                             }
 
                             let structure = .program.get_struct(struct_id)
@@ -1233,17 +1231,17 @@ class Interpreter {
                             }
 
                             .error(format("unknown member of struct: {}.{}", structure.name, field), span)
-                            throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                            throw Error::from_string_literal("Invalid operation")
                         }
                         else => {
                             .error(format("Member field access on value of non-struct type ‘{}’", .program.type_name(checked_expr_type_id)), span)
-                            throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                            throw Error::from_string_literal("Invalid operation")
                         }
                     }
                 }
                 UnsignedNumericValue(val) | SignedNumericValue(val) => {
                     .error("Unimplemented expression", span)
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
         }
@@ -1370,7 +1368,7 @@ class Interpreter {
                                 format("Expected string as first argument to format, got {}", arguments[0].impl),
                                 call_span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32);
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     yield StatementResult::JustValue(
@@ -1387,7 +1385,7 @@ class Interpreter {
                         JaktString(x) => x
                         else => {
                             .error(format( "println expects a string as its first argument, but got {}", arguments[0].impl), call_span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32);
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     let formatted_string = comptime_format_impl(format_string, arguments: arguments[1..], program: &.program)
@@ -1427,82 +1425,82 @@ class Interpreter {
                                     U8(y) => ValueImpl::U8(unchecked_mul(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 U16(x) => match rhs_value.impl {
                                     U16(y) => ValueImpl::U16(unchecked_mul(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 U32(x) => match rhs_value.impl {
                                     U32(y) => ValueImpl::U32(unchecked_mul(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 U64(x) => match rhs_value.impl {
                                     U64(y) => ValueImpl::U64(unchecked_mul(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 I8(x) => match rhs_value.impl {
                                     I8(y) => ValueImpl::I8(unchecked_mul(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 I16(x) => match rhs_value.impl {
                                     I16(y) => ValueImpl::I16(unchecked_mul(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 I32(x) => match rhs_value.impl {
                                     I32(y) => ValueImpl::I32(unchecked_mul(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 I64(x) => match rhs_value.impl {
                                     I64(y) => ValueImpl::I64(unchecked_mul(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 F32(x) => match rhs_value.impl {
                                     F32(y) => ValueImpl::F32(unchecked_mul(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 F64(x) => match rhs_value.impl {
                                     F64(y) => ValueImpl::F64(unchecked_mul(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 USize(x) => match rhs_value.impl {
                                     USize(y) => ValueImpl::USize(unchecked_mul(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 else => {
                                     .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                    throw Error::from_string_literal("Invalid type")
                                 }
                             }
                             span
@@ -1521,82 +1519,82 @@ class Interpreter {
                                     U8(y) => ValueImpl::U8(unchecked_add(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 U16(x) => match rhs_value.impl {
                                     U16(y) => ValueImpl::U16(unchecked_add(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 U32(x) => match rhs_value.impl {
                                     U32(y) => ValueImpl::U32(unchecked_add(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 U64(x) => match rhs_value.impl {
                                     U64(y) => ValueImpl::U64(unchecked_add(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 I8(x) => match rhs_value.impl {
                                     I8(y) => ValueImpl::I8(unchecked_add(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 I16(x) => match rhs_value.impl {
                                     I16(y) => ValueImpl::I16(unchecked_add(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 I32(x) => match rhs_value.impl {
                                     I32(y) => ValueImpl::I32(unchecked_add(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 I64(x) => match rhs_value.impl {
                                     I64(y) => ValueImpl::I64(unchecked_add(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 F32(x) => match rhs_value.impl {
                                     F32(y) => ValueImpl::F32(unchecked_add(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 F64(x) => match rhs_value.impl {
                                     F64(y) => ValueImpl::F64(unchecked_add(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 USize(x) => match rhs_value.impl {
                                     USize(y) => ValueImpl::USize(unchecked_add(x, y))
                                     else => {
                                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                        throw Error::from_string_literal("Invalid type")
                                     }
                                 }
                                 else => {
                                     .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                    throw Error::from_string_literal("Invalid type")
                                 }
                             }
                             span
@@ -1623,7 +1621,7 @@ class Interpreter {
                 "Set" => {
                     if type_bindings.size() != 1 {
                         .error("Set constructor expects one generic argument", call_span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                     let set_struct_id = .program.find_struct_in_prelude("Set")
                     let type_id = .find_or_add_type_id(Type::GenericInstance(id: set_struct_id, args: [type_bindings.get(type_bindings.keys()[0])!]))
@@ -1636,7 +1634,7 @@ class Interpreter {
                 "Dictionary" => {
                     if type_bindings.size() != 2 {
                         .error("Dictionary constructor expects two generic argumenst", call_span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                     let dictionary_struct_id = .program.find_struct_in_prelude("Dictionary")
                     let type_id = .find_or_add_type_id(Type::GenericInstance(id: dictionary_struct_id, args: [
@@ -1657,7 +1655,7 @@ class Interpreter {
                         format("Prelude function {}::{} is not implemented yet", namespace_, prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
         }
@@ -1710,7 +1708,7 @@ class Interpreter {
                                 format("Error should have `i32` as its code, but got {}", fields[0].impl),
                                 call_span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -1718,7 +1716,7 @@ class Interpreter {
                             format("Prelude function `Error::code` expects an Error as its this argument, but got {}", this_argument!.impl),
                             call_span
                         )
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 else => {
@@ -1726,7 +1724,7 @@ class Interpreter {
                         format("Prelude function `Error::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             "File" => match prelude_function {
@@ -1738,7 +1736,7 @@ class Interpreter {
                                 format("Prelude function `File::{}` expects a string as its first argument, but got {}", prelude_function, arguments[0].impl),
                                 call_span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     let path = .program.compiler.get_file_path(call_span.file_id)!.parent().join(requested_path)
@@ -1774,7 +1772,7 @@ class Interpreter {
                                 format("Prelude function `File::{}` expects a string as its first argument, but got {}", prelude_function, arguments[0].impl),
                                 call_span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     let path = .program.compiler.get_file_path(call_span.file_id)!.parent().join(requested_path)
@@ -1815,7 +1813,7 @@ class Interpreter {
                                 format("Prelude function `File::read_all` expects a `File` as its this argument, but got {}", this_argument!.impl),
                                 call_span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     let file_struct_id = .program.find_struct_in_prelude("File")
@@ -1829,7 +1827,7 @@ class Interpreter {
                                     "Cannot read from a file not opened for reading"
                                     call_span
                                 )
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         }
                         else => {
@@ -1870,7 +1868,7 @@ class Interpreter {
                                 format("Prelude function `File::read` expects a `File` as its this argument, but got {}", this_argument!.impl),
                                 call_span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     let file_struct_id = .program.find_struct_in_prelude("File")
@@ -1884,7 +1882,7 @@ class Interpreter {
                                     "Cannot read from a file not opened for reading"
                                     call_span
                                 )
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         }
                         else => {
@@ -1899,7 +1897,7 @@ class Interpreter {
                                 format("Prelude function `File::read` expects a `[u8]` as its argument, but got {}", arguments[0].impl),
                                 call_span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     mut byte_buffer: [u8] = [0; values_buffer.size()]
@@ -1927,7 +1925,7 @@ class Interpreter {
                                 format("Prelude function `File::{}` expects a string as its first argument, but got {}", prelude_function, arguments[0].impl),
                                 call_span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     let path = .program.compiler.get_file_path(call_span.file_id)!.parent().join(requested_path)
@@ -1951,7 +1949,7 @@ class Interpreter {
                                 format("Prelude function `File::write` expects a `File` as its this argument, but got {}", this_argument!.impl),
                                 call_span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     let file_struct_id = .program.find_struct_in_prelude("File")
@@ -1965,7 +1963,7 @@ class Interpreter {
                                     "Cannot write to a file not opened for writing"
                                     call_span
                                 )
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         }
                         else => {
@@ -1980,7 +1978,7 @@ class Interpreter {
                                 format("Prelude function `File::write` expects a `[u8]` as its argument, but got {}", arguments[0].impl),
                                 call_span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     mut data: [u8] = []
@@ -2004,7 +2002,7 @@ class Interpreter {
                         format("Prelude function `File::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             "StringBuilder" => match prelude_function {
@@ -2034,7 +2032,7 @@ class Interpreter {
                                 format("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument", prelude_function),
                                 call_span
                             )
-                            throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                            throw Error::from_string_literal("Not yet implemented")
                         }
                     }
 
@@ -2048,28 +2046,28 @@ class Interpreter {
                             // FIXME: When we can represent raw pointers in the interpreter, implement the 2 arg overload
                             else => {
                                 .error(format("Invalid use of StringBuilder::append({})", arguments[0].impl), call_span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         }
                         "append_string" => builder.append_string(match arguments[0].impl {
                             JaktString(value) => value
                             else => {
                                 .error("Invalid use of StringBuilder::append_string()", call_span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         })
                         "append_escaped_for_json" => builder.append_escaped_for_json(match arguments[0].impl {
                             JaktString(value) => value
                             else => {
                                 .error("Invalid use of StringBuilder::append_escaped_for_json()", call_span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         })
                         "append_code_point" => builder.append_code_point(match arguments[0].impl {
                             U32(value) => value
                             else => {
                                 .error("Invalid use of StringBuilder::append_code_point()", call_span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         })
                         else => {
@@ -2093,7 +2091,7 @@ class Interpreter {
                             format("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument", prelude_function),
                             call_span
                         )
-                        throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                        throw Error::from_string_literal("Not yet implemented")
                     }
                 }
                 "is_empty" => match this_argument!.impl {
@@ -2108,7 +2106,7 @@ class Interpreter {
                             format("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument", prelude_function),
                             call_span
                         )
-                        throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                        throw Error::from_string_literal("Not yet implemented")
                     }
                 }
                 "length" => match this_argument!.impl {
@@ -2123,7 +2121,7 @@ class Interpreter {
                             format("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument", prelude_function),
                             call_span
                         )
-                        throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                        throw Error::from_string_literal("Not yet implemented")
                     }
                 }
                 "clear" => match this_argument!.impl {
@@ -2137,7 +2135,7 @@ class Interpreter {
                             format("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument", prelude_function),
                             call_span
                         )
-                        throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                        throw Error::from_string_literal("Not yet implemented")
                     }
                 }
                 else => {
@@ -2145,14 +2143,14 @@ class Interpreter {
                         format("Prelude function `StringBuilder::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             "Dictionary" => match prelude_function {
                 "Dictionary" => {
                     if type_bindings.size() != 2 {
                         .error("Dictionary constructor expects two generic argumenst", call_span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                     let dictionary_struct_id = .program.find_struct_in_prelude("Dictionary")
                     let type_id = .find_or_add_type_id(Type::GenericInstance(id: dictionary_struct_id, args: [
@@ -2305,7 +2303,7 @@ class Interpreter {
                         }
                         else => {
                             .error("Dictionary::ensure_capacity must be called with a usize", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -2396,7 +2394,7 @@ class Interpreter {
                         format("Prelude function `Dictionary::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             "Array" => match prelude_function {
@@ -2568,7 +2566,7 @@ class Interpreter {
                         }
                         else => {
                             .error("Array::ensure_capacity must be called with a usize", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -2589,7 +2587,7 @@ class Interpreter {
                         }
                         else => {
                             .error("Array::add_capacity must be called with a usize", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -2610,7 +2608,7 @@ class Interpreter {
                         }
                         else => {
                             .error("Array::shrink must be called with a usize", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -2622,7 +2620,7 @@ class Interpreter {
                         format("Prelude function `Array::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             "ArrayIterator" => match prelude_function {
@@ -2660,7 +2658,7 @@ class Interpreter {
                         format("Prelude function `ArrayIterator::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             // Note: This does _not_ share the same layout in the rt, but we can just increment/decrement the start value.
@@ -2740,7 +2738,7 @@ class Interpreter {
                         format("Prelude function `Range::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             "String" => match prelude_function {
@@ -2781,12 +2779,12 @@ class Interpreter {
                             }
                             else => {
                                 .error("String::substring must be called with unsigned arguments", arguments[1].span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         }
                         else => {
                             .error("String::substring must be called with unsigned arguments", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -2804,11 +2802,11 @@ class Interpreter {
                     => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(String::number(number as! i64)), span: call_span))
                     USize() | U64() => {
                         .error("String::number must not be called with a usize or u64", arguments[0].span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                     else => {
                         .error("String::number must be called with an integer", arguments[0].span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 "to_uint" => match this_argument!.impl {
@@ -2852,7 +2850,7 @@ class Interpreter {
                         JaktString(arg) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.contains(arg)), span: call_span))
                         else => {
                             .error("String::contains must be called with a string", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -2865,12 +2863,12 @@ class Interpreter {
                             JaktString(with) => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(value.replace(replace, with)), span: call_span))
                             else => {
                                 .error("String::replace must be called with strings", arguments[1].span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         }
                         else => {
                             .error("String::replace must be called with strings", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -2887,7 +2885,7 @@ class Interpreter {
                         => StatementResult::JustValue(Value(impl: ValueImpl::U8(value.byte_at(index as! usize)), span: call_span))
                         else => {
                             .error("String::byte_at must be called with an unsigned integer", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -2915,7 +2913,7 @@ class Interpreter {
                         }
                         else => {
                             .error("String::split must be called with a c_char", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -2927,7 +2925,7 @@ class Interpreter {
                         JaktString(arg) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.starts_with(arg)), span: call_span))
                         else => {
                             .error("String::starts_with must be called with a string", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -2939,7 +2937,7 @@ class Interpreter {
                         JaktString(arg) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.ends_with(arg)), span: call_span))
                         else => {
                             .error("String::ends_with must be called with a string", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -2949,19 +2947,19 @@ class Interpreter {
                 "repeated" => {
                     if arguments.size() != 2 {
                         .error("String::repeated must be called with a c_char and a usize", call_span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                     let (character, count) = match arguments[0].impl {
                         CChar(arg) => match arguments[1].impl {
                             USize(c) => (arg, c)
                             else => {
                                 .error("String::repeated must be called with a usize", arguments[1].span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         }
                         else => {
                             .error("String::repeated must be called with a c_char", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     yield StatementResult::JustValue(Value(impl: ValueImpl::JaktString(String::repeated(character, count)), span: call_span))
@@ -2971,14 +2969,14 @@ class Interpreter {
                         format("Prelude function `String::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             "Set" => match prelude_function {
                 "Set" => {
                     if type_bindings.size() != 1 {
                         .error("Set constructor expects one generic argument", call_span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                     let set_struct_id = .program.find_struct_in_prelude("Set")
                     let type_id = .find_or_add_type_id(Type::GenericInstance(id: set_struct_id, args: [type_bindings.get(type_bindings.keys()[0])!]))
@@ -3102,7 +3100,7 @@ class Interpreter {
                         }
                         else => {
                             .error("Set::ensure_capacity must be called with a usize", arguments[0].span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -3138,7 +3136,7 @@ class Interpreter {
                         format("Prelude function `Set::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             "SetIterator" => match prelude_function {
@@ -3176,7 +3174,7 @@ class Interpreter {
                         format("Prelude function `ArrayIterator::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             "DictionaryIterator" => match prelude_function {
@@ -3234,7 +3232,7 @@ class Interpreter {
                         format("Prelude function `DictionaryIterator::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             "Optional" => match prelude_function {
@@ -3252,7 +3250,7 @@ class Interpreter {
                             format("Cannot unwrap optional none", prelude_function),
                             call_span
                         )
-                        throw Error::from_errno(InterpretError::UnwrapOptionalNone as! i32)
+                        throw Error::from_string_literal("Attempt to unwrap None")
                     }
                     else => {
                         panic("Invalid Optional configuration")
@@ -3305,7 +3303,7 @@ class Interpreter {
                         format("Prelude function `Optional::{}` is not implemented", prelude_function),
                         call_span
                     )
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             else => {
@@ -3313,7 +3311,7 @@ class Interpreter {
                     format("Prelude function `{}::{}` is not implemented", namespace_[0].name, prelude_function),
                     call_span
                 )
-                throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                throw Error::from_string_literal("Not yet implemented")
             }
         }
     }
@@ -3348,7 +3346,7 @@ class Interpreter {
                     format("Cannot call external function '{}'", function_to_run.name)
                     call_span
                 )
-                throw Error::from_errno(InterpretError::CallToExternalFunction as! i32)
+                throw Error::from_string_literal("Attempt to call external function")
             }
 
             is_prelude_function = true
@@ -3369,7 +3367,7 @@ class Interpreter {
                 message: format("function call {} a this argument, yet one was{} provided", expected, not_provided),
                 span: function_to_run.name_span
             ));
-            throw Error::from_errno(InterpretError::InvalidThisArgument as! i32)
+            throw Error::from_string_literal("Invalid this argument")
         }
 
         mut this_offset = 0uz
@@ -3382,7 +3380,7 @@ class Interpreter {
                 message: format("Function called with wrong number of arguments, expected {} but got {}", function_to_run.params.size(), arguments.size()),
                 span: call_span
             )
-            throw Error::from_errno(InterpretError::MismatchingArguments as! i32)
+            throw Error::from_string_literal("Mismatching arguments")
         }
 
         if is_prelude_function {
@@ -3398,7 +3396,7 @@ class Interpreter {
                             GenericInstance(args) => args
                             else => {
                                 .error("Attempted to call a prelude function  on a non-generic array", call_span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         }
                         effective_namespace.push(ResolvedNamespace(name: "Array", generic_parameters))
@@ -3408,7 +3406,7 @@ class Interpreter {
                             GenericInstance(args) => args
                             else => {
                                 .error("Attempted to call a prelude function  on a non-generic dictionary", call_span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         }
                         effective_namespace.push(ResolvedNamespace(name: "Dictionary", generic_parameters))
@@ -3416,7 +3414,7 @@ class Interpreter {
                     JaktSet(type_id) => {
                         guard .program.get_type(id: type_id) is GenericInstance(args: generic_parameters) else {
                             .error("Attempted to call a prelude function  on a non-generic set", call_span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                         effective_namespace.push(ResolvedNamespace(name: "Set", generic_parameters))
                     }
@@ -3437,7 +3435,7 @@ class Interpreter {
                     }
                     else => {
                         .error("Attempted to call an instance method on a non-struct/enum type", call_span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
 
@@ -3547,7 +3545,7 @@ class Interpreter {
                                     format("Cannot create instance of non-struct type {}", struct_.name),
                                     call_span
                                 )
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         }
                         return ExecutionResult::Return(Value(
@@ -3560,7 +3558,7 @@ class Interpreter {
                             format("Implicit constructor can only return a struct or a generic instance"),
                             call_span
                         )
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
             }
@@ -3585,7 +3583,7 @@ class Interpreter {
                             format("Implicit enum constructor can only return an enum or a generic instance of one"),
                             call_span
                         )
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
             }
@@ -3596,7 +3594,7 @@ class Interpreter {
             format("Function type {} is not implemented", function_to_run.type),
             call_span
         )
-        throw Error::from_errno(InterpretError::Unimplemented as! i32)
+        throw Error::from_string_literal("Not yet implemented")
     }
 
     public fn execute_statement(mut this, statement: CheckedStatement, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
@@ -3692,7 +3690,7 @@ class Interpreter {
                                 format("if condition must be a boolean, but got {}", value.impl),
                                 span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     Return(value) => {
@@ -3930,89 +3928,89 @@ class Interpreter {
                         U8(y) => ValueImpl::U8(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::U16(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::U32(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::U64(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::I8(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::I16(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::I32(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::I64(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F32(x) => match rhs_value.impl {
                         F32(y) => ValueImpl::F32(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F64(x) => match rhs_value.impl {
                         F64(y) => ValueImpl::F64(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::USize(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     JaktString(x) => match rhs_value.impl {
                         JaktString(y) => ValueImpl::JaktString(x + y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -4025,82 +4023,82 @@ class Interpreter {
                         U8(y) => ValueImpl::U8(x - y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::U16(x - y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::U32(x - y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::U64(x - y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::I8(x - y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::I16(x - y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::I32(x - y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::I64(x - y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F32(x) => match rhs_value.impl {
                         F32(y) => ValueImpl::F32(x - y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F64(x) => match rhs_value.impl {
                         F64(y) => ValueImpl::F64(x - y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::USize(x - y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -4113,82 +4111,82 @@ class Interpreter {
                         U8(y) => ValueImpl::U8(x * y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::U16(x * y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::U32(x * y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::U64(x * y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::I8(x * y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::I16(x * y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::I32(x * y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::I64(x * y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F32(x) => match rhs_value.impl {
                         F32(y) => ValueImpl::F32(x * y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F64(x) => match rhs_value.impl {
                         F64(y) => ValueImpl::F64(x * y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::USize(x * y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -4201,82 +4199,82 @@ class Interpreter {
                         U8(y) => ValueImpl::U8(x / y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::U16(x / y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::U32(x / y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::U64(x / y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::I8(x / y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::I16(x / y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::I32(x / y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::I64(x / y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F32(x) => match rhs_value.impl {
                         F32(y) => ValueImpl::F32(x / y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F64(x) => match rhs_value.impl {
                         F64(y) => ValueImpl::F64(x / y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::USize(x / y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -4289,103 +4287,103 @@ class Interpreter {
                         U8(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F32(x) => match rhs_value.impl {
                         F32(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F64(x) => match rhs_value.impl {
                         F64(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     CInt(x) => match rhs_value.impl {
                         CInt(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     CChar(x) => match rhs_value.impl {
                         CChar(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     JaktString(x) => match rhs_value.impl {
                         JaktString(y) => ValueImpl::Bool(x == y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -4398,103 +4396,103 @@ class Interpreter {
                         U8(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F32(x) => match rhs_value.impl {
                         F32(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F64(x) => match rhs_value.impl {
                         F64(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     CInt(x) => match rhs_value.impl {
                         CInt(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     CChar(x) => match rhs_value.impl {
                         CChar(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     JaktString(x) => match rhs_value.impl {
                         JaktString(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -4507,89 +4505,89 @@ class Interpreter {
                         U8(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F32(x) => match rhs_value.impl {
                         F32(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F64(x) => match rhs_value.impl {
                         F64(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     JaktString(x) => match rhs_value.impl {
                         JaktString(y) => ValueImpl::Bool(x < y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -4602,89 +4600,89 @@ class Interpreter {
                         U8(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F32(x) => match rhs_value.impl {
                         F32(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F64(x) => match rhs_value.impl {
                         F64(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     JaktString(x) => match rhs_value.impl {
                         JaktString(y) => ValueImpl::Bool(x <= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -4697,89 +4695,89 @@ class Interpreter {
                         U8(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F32(x) => match rhs_value.impl {
                         F32(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F64(x) => match rhs_value.impl {
                         F64(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     JaktString(x) => match rhs_value.impl {
                         JaktString(y) => ValueImpl::Bool(x > y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -4792,89 +4790,89 @@ class Interpreter {
                         U8(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F32(x) => match rhs_value.impl {
                         F32(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     F64(x) => match rhs_value.impl {
                         F64(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     JaktString(x) => match rhs_value.impl {
                         JaktString(y) => ValueImpl::Bool(x >= y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -4887,68 +4885,68 @@ class Interpreter {
                         U8(y) => ValueImpl::U8((x & y) as! u8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::U16((x & y) as! u16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::U32(x & y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::U64(x & y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::I8((x & y) as! i8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::I16((x & y) as! i16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::I32(x & y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::I64(x & y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::USize(x & y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -4961,68 +4959,68 @@ class Interpreter {
                         U8(y) => ValueImpl::U8((x | y) as! u8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::U16((x | y) as! u16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::U32(x | y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::U64(x | y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::I8((x | y) as! i8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::I16((x | y) as! i16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::I32(x | y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::I64(x | y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::USize(x | y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -5035,68 +5033,68 @@ class Interpreter {
                         U8(y) => ValueImpl::U8((x ^ y) as! u8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::U16((x ^ y) as! u16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::U32(x ^ y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::U64(x ^ y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::I8((x ^ y) as! i8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::I16((x ^ y) as! i16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::I32(x ^ y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::I64(x ^ y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::USize(x ^ y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -5109,68 +5107,68 @@ class Interpreter {
                         U8(y) => ValueImpl::U8((x << y) as! u8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::U16((x << y) as! u16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::U32(x << y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::U64(x << y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::I8((x << y) as! i8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::I16((x << y) as! i16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::I32(x << y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::I64(x << y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::USize(x << y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -5183,68 +5181,68 @@ class Interpreter {
                         U8(y) => ValueImpl::U8((x >> y) as! u8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::U16((x >> y) as! u16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::U32(x >> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::U64(x >> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::I8((x >> y) as! i8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::I16((x >> y) as! i16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::I32(x >> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::I64(x >> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::USize(x >> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -5257,68 +5255,68 @@ class Interpreter {
                         U8(y) => ValueImpl::U8((x <<< y) as! u8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::U16((x <<< y) as! u16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::U32(x <<< y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::U64(x <<< y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::I8((x <<< y) as! i8)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::I16((x <<< y) as! i16)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::I32(x <<< y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::I64(x <<< y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::USize(x <<< y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -5331,68 +5329,68 @@ class Interpreter {
                         U8(y) => ValueImpl::U8(x >>> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U16(x) => match rhs_value.impl {
                         U16(y) => ValueImpl::U16(x >>> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U32(x) => match rhs_value.impl {
                         U32(y) => ValueImpl::U32(x >>> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     U64(x) => match rhs_value.impl {
                         U64(y) => ValueImpl::U64(x >>> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I8(x) => match rhs_value.impl {
                         I8(y) => ValueImpl::I8(x >>> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I16(x) => match rhs_value.impl {
                         I16(y) => ValueImpl::I16(x >>> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I32(x) => match rhs_value.impl {
                         I32(y) => ValueImpl::I32(x >>> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     I64(x) => match rhs_value.impl {
                         I64(y) => ValueImpl::I64(x >>> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::USize(x >>> y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -5405,12 +5403,12 @@ class Interpreter {
                         Bool(y) => ValueImpl::Bool(x or y),
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -5423,12 +5421,12 @@ class Interpreter {
                         Bool(y) => ValueImpl::Bool(x and y),
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
                         .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
                 span
@@ -5450,7 +5448,7 @@ class Interpreter {
                 format("Unimplemented binary operator '{}'", op),
                 span
             )
-            throw Error::from_errno(InterpretError::Unimplemented as! i32)
+            throw Error::from_string_literal("Not yet implemented")
         }
     }
 
@@ -5523,7 +5521,7 @@ class Interpreter {
                     format("Invalid left-hand side of assignment {}", binding),
                     span
                 )
-                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                throw Error::from_string_literal("Invalid type")
             }
         }
     }
@@ -5609,7 +5607,7 @@ class Interpreter {
                     }
                     else => {
                         .error(format("Invalid operand '{}' to binary operation", lhs_value.type_name()), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 })
                 else => {
@@ -5693,7 +5691,7 @@ class Interpreter {
                                 format("Invalid type for unary operator"),
                                 span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     PostIncrement => StatementResult::JustValue(match value.impl {
@@ -5746,7 +5744,7 @@ class Interpreter {
                                 format("Invalid type for unary operator"),
                                 span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     })
                     PreIncrement => StatementResult::JustValue(match value.impl {
@@ -5810,7 +5808,7 @@ class Interpreter {
                                 format("Invalid type for unary operator"),
                                 span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     })
                     PostDecrement => StatementResult::JustValue(match value.impl {
@@ -5863,7 +5861,7 @@ class Interpreter {
                                 format("Invalid type for unary operator"),
                                 span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     })
                     PreDecrement => StatementResult::JustValue(match value.impl {
@@ -5927,7 +5925,7 @@ class Interpreter {
                                 format("Invalid type for unary operator"),
                                 span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     })
                     TypeCast(cast) => match cast {
@@ -5966,7 +5964,7 @@ class Interpreter {
                             //             format("Unimplemented value enum for unary operator '{}'", op),
                             //             span
                             //         )
-                            //         throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                            //         throw Error::from_string_literal("Not yet implemented")
                             //     }
                             // }
 
@@ -5982,7 +5980,7 @@ class Interpreter {
                                 format("Invalid value for unary operator '{}'", op),
                                 span
                             )
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     else => {
@@ -5990,7 +5988,7 @@ class Interpreter {
                             format("Unimplemented unary operator '{}'", op),
                             span
                         )
-                        throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                        throw Error::from_string_literal("Not yet implemented")
                     }
                 }
             }
@@ -6017,7 +6015,7 @@ class Interpreter {
                 }
                 false => {
                     .error("Partial ranges are not implemented", span)
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
             let end = match to.has_value() {
@@ -6041,7 +6039,7 @@ class Interpreter {
                 }
                 false => {
                     .error("Partial ranges are not implemented", span)
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
             }
 
@@ -6099,7 +6097,7 @@ class Interpreter {
                     format("Cannot call a closure (nyi)"),
                     span
                 )
-                throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                throw Error::from_string_literal("Not yet implemented")
             }
             mut this_argument: Value? = None
             mut arguments: [Value] = []
@@ -6180,7 +6178,7 @@ class Interpreter {
                         GenericInstance(args) => args
                         else => {
                             .error("Attempted to call a prelude function  on a non-generic array", this_argument.span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     effective_namespace.push(ResolvedNamespace(name: "Array", generic_parameters))
@@ -6190,7 +6188,7 @@ class Interpreter {
                         GenericInstance(args) => args
                         else => {
                             .error("Attempted to call a prelude function  on a non-generic dictionary", this_argument.span)
-                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            throw Error::from_string_literal("Invalid type")
                         }
                     }
                     effective_namespace.push(ResolvedNamespace(name: "Dictionary", generic_parameters))
@@ -6198,7 +6196,7 @@ class Interpreter {
                 JaktSet(type_id) => {
                     guard .program.get_type(id: type_id) is GenericInstance(args: generic_parameters) else {
                         .error("Attempted to call a prelude function  on a non-generic set", this_argument.span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                     effective_namespace.push(ResolvedNamespace(name: "Set", generic_parameters))
                 }
@@ -6219,7 +6217,7 @@ class Interpreter {
                 }
                 else => {
                     .error("Attempted to call an instance method on a non-struct/enum type", this_argument.span)
-                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    throw Error::from_string_literal("Invalid type")
                 }
             }
 
@@ -6314,14 +6312,14 @@ class Interpreter {
 
             if value.impl is OptionalNone {
                 .error("Attempted to unwrap an optional value that was None", value.span)
-                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                throw Error::from_string_literal("Invalid type")
             }
 
             yield match value.impl {
                 OptionalSome(value) => StatementResult::JustValue(value)
                 else => {
                     .error("Invalid type for unwrap", value.span)
-                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    throw Error::from_string_literal("Invalid type")
                 }
             }
         }
@@ -6382,14 +6380,14 @@ class Interpreter {
                         .error(
                             format("Index {} out of bounds (max={})", numeric_index, values.size())
                             span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
 
                     yield StatementResult::JustValue(values[numeric_index])
                 }
                 else => {
                     .error("Invalid or unsupported indexed expression", span)
-                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    throw Error::from_string_literal("Invalid type")
                 }
             }
         }
@@ -6428,14 +6426,14 @@ class Interpreter {
                     }
                     if not found_index.has_value() {
                         .error("Attempted to access a field that does not exist", value.span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
 
                     yield StatementResult::JustValue(fields[found_index!])
                 }
                 else => {
                     .error("Attempted to access a field on a non-struct/enum type", value.span)
-                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    throw Error::from_string_literal("Invalid type")
                 }
             }
         }
@@ -6472,14 +6470,14 @@ class Interpreter {
                     }
                     if not found_index.has_value() {
                         .error("Attempted to access a field that does not exist", value.span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
 
                     yield StatementResult::JustValue(fields[found_index!])
                 }
                 else => {
                     .error("Attempted to access a field on a non-struct/enum type", value.span)
-                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    throw Error::from_string_literal("Invalid type")
                 }
             }
         }
@@ -6577,7 +6575,7 @@ class Interpreter {
                     }
                     else => {
                         .error(format("Invalid type {} for string literal", .program.get_type(val.type_id)), span)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                 }
 
@@ -6604,7 +6602,7 @@ class Interpreter {
             let code_point = code_points.next()
             if not code_point.has_value() {
                 .error("Invalid character constant", span)
-                throw Error::from_errno(InterpretError::InvalidCharacterConstant as! i32)
+                throw Error::from_string_literal("Invalid character constant")
             }
 
             yield StatementResult::JustValue(Value(impl: ValueImpl::U32(code_point!), span: span))
@@ -6768,7 +6766,7 @@ class Interpreter {
                             }
                             ClassInstance(marker_span) | Expression(marker_span) => {
                                 .error("Value matches are not allowed on enums", marker_span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                             CatchAll(body, marker_span) => {
                                 catch_all_case = body
@@ -6780,7 +6778,7 @@ class Interpreter {
 
                     if not catch_all_case.has_value() and not found_body.has_value() {
                         .error("Match is not exhaustive", span!)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
 
                     found_body = found_body ?? catch_all_case!
@@ -6881,13 +6879,13 @@ class Interpreter {
                             ClassInstance(marker_span) => {
                                 // FIXME: Implement this
                                 .error("Class instance matches are not implemented yet", marker_span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                             EnumVariant(marker_span) => {
                                 .error(
                                     format("Value matches cannot have enum variant arms (matching on {})", value.type_name()),
                                     marker_span)
-                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                throw Error::from_string_literal("Invalid type")
                             }
                         }
                     }
@@ -6896,7 +6894,7 @@ class Interpreter {
                         .error(
                             format("No match found for value of type {}", value.type_name()),
                             .spans.last()!)
-                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        throw Error::from_string_literal("Invalid type")
                     }
                     found_body = found_body ?? catch_all_case!
                     mut new_scope = InterpreterScope::create(parent: scope)
@@ -6971,7 +6969,7 @@ class Interpreter {
                     .error(
                         format("Value matches cannot have enum variant arms (matching on {})", value.type_name()),
                         span)
-                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    throw Error::from_string_literal("Invalid type")
                 }
             }
         }
@@ -7043,7 +7041,7 @@ class Interpreter {
                     .error(
                         format("Cannot capture by reference in a comptime function (nyi)"),
                         span)
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 }
 
                 resolved_captures.set(name, scope.must_get(name))
@@ -7149,7 +7147,7 @@ class Interpreter {
         Reflect(type: type_id, span) => StatementResult::JustValue(.reflect_type(type_id, span, scope))
         else => {
             .error(format("expression not implemented: {}", expr), expr.span())
-            throw Error::from_errno(InterpretError::Unimplemented as! i32)
+            throw Error::from_string_literal("Not yet implemented")
         }
     }
 
@@ -7236,7 +7234,7 @@ class Interpreter {
         JaktString(x) => x
         else => {
             .error("Expected string value", value.span)
-            throw Error::from_errno(InterpretError::InvalidType as! i32)
+            throw Error::from_string_literal("Invalid type")
         }
     }
 
@@ -7545,7 +7543,7 @@ class Interpreter {
 
                 if not constructor.has_value() {
                     .error("Attempted to access a variant that does not exist", span)
-                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    throw Error::from_string_literal("Invalid type")
                 }
 
                 yield constructor!
@@ -7557,7 +7555,7 @@ class Interpreter {
 
                 if not constructor.has_value() {
                     .error("Attempted to access a variant that does not exist", span)
-                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    throw Error::from_string_literal("Invalid type")
                 }
 
                 fields = [.string_value(name, span)]
@@ -7580,7 +7578,7 @@ class Interpreter {
 
                 if not constructor.has_value() {
                     .error("Attempted to access a variant that does not exist", span)
-                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    throw Error::from_string_literal("Invalid type")
                 }
 
                 let record_struct_id = match .program.find_reflected_primitive("Record") {
@@ -7695,7 +7693,7 @@ class Interpreter {
 
                 if not constructor.has_value() {
                     .error("Attempted to access a variant that does not exist", span)
-                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    throw Error::from_string_literal("Invalid type")
                 }
 
                 let record_struct_id = match .program.find_reflected_primitive("Record") {
@@ -7763,7 +7761,7 @@ class Interpreter {
                 mut record_type_fields: [Value] = []
                 if is_value_enum {
                     .error("Unimplemented reflected type: value enum", span)
-                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    throw Error::from_string_literal("Not yet implemented")
                 } else {
                     record_type_fields = .reflect_sum_enum_variants(subject_enum, span, scope)
                 }
@@ -7821,7 +7819,7 @@ class Interpreter {
 
                 if not constructor.has_value() {
                     .error("Attempted to access a variant that does not exist", span)
-                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    throw Error::from_string_literal("Invalid type")
                 }
 
                 fields = []
@@ -7829,7 +7827,7 @@ class Interpreter {
             }
             else => {
                 .error(format("Type reflection not implemented: {}", type), span)
-                throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                throw Error::from_string_literal("Not yet implemented")
             }
         }
 
