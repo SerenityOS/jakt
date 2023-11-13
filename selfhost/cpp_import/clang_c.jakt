@@ -517,6 +517,7 @@ import extern c "clang-c/Index.h" {
     extern fn clang_getTypedefDeclUnderlyingType(anon cursor: CXCursor) -> CXType
     extern fn clang_getTypeDeclaration(anon type: CXType) -> CXCursor
     extern fn clang_Type_getNamedType(anon type: CXType) -> CXType
+    extern fn clang_Type_getNumTemplateArguments(anon type: CXType) -> c_int
     extern fn clang_Type_getTemplateArgumentAsType(anon type: CXType, anon i: u32) -> CXType
     extern fn clang_getTemplateCursorKind(anon cursor: CXCursor) -> CXCursorKind
     extern fn clang_getCursorPrettyPrinted(cursor: CXCursor, policy: CXPrintingPolicy) -> CXString

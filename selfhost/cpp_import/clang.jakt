@@ -3,7 +3,7 @@ import types {
     CheckedGenericParameter, CheckedParameter, CheckedProgram, CheckedQualifiers, CheckedStruct, CheckedVariable
     CheckedVisibility, DefinitionLinkage, EnumId, ExternalName, FileId, FunctionGenericParameter
     FunctionGenericParameterKind, FunctionGenerics, FunctionLinkage, ModuleId, ScopeId, SpecializedType, StructId
-    Type, TypeId, Value, ValueImpl, builtin, unknown_type_id
+    Type, TypeId, Value, ValueImpl, builtin, unknown_type_id, void_type_id
 }
 import parser {
     FunctionType, ParsedField, ParsedVarDecl, RecordType, ParsedType
@@ -25,19 +25,19 @@ import cpp_import::clang_c {
     clang_Cursor_getTranslationUnit, clang_Cursor_isMacroFunctionLike, clang_Cursor_isNull, clang_EvalResult_dispose
     clang_EvalResult_getAsDouble, clang_EvalResult_getAsInt, clang_EvalResult_getAsLongLong
     clang_EvalResult_getAsStr, clang_EvalResult_getAsUnsigned, clang_EvalResult_getKind
-    clang_EvalResult_isUnsignedInt, clang_Type_getNamedType, clang_Type_getTemplateArgumentAsType, clang_createIndex
-    clang_createTranslationUnit, clang_disposeIndex, clang_disposeString, clang_disposeTokens
-    clang_disposeTranslationUnit, clang_equalCursors, clang_getArgType, clang_getArrayElementType
-    clang_getArraySize, clang_getCString, clang_getCanonicalCursor, clang_getCanonicalType
-    clang_getCursorDefinition, clang_getCursorExtent, clang_getCursorKind, clang_getCursorKindSpelling
-    clang_getCursorLocation, clang_getCursorPrettyPrinted, clang_getCursorPrintingPolicy, clang_getCursorResultType
-    clang_getCursorSemanticParent, clang_getCursorSpelling, clang_getCursorType, clang_getCursorUSR
-    clang_getEnumDeclIntegerType, clang_getFileName, clang_getNumArgTypes, clang_getPointeeType, clang_getResultType
-    clang_getSpecializedCursorTemplate, clang_getSpellingLocation, clang_getTemplateCursorKind, clang_getTokenKind
-    clang_getTokenSpelling, clang_getTranslationUnitCursor, clang_getTypeDeclaration, clang_getTypeKindSpelling
-    clang_getTypeSpelling, clang_getTypedefDeclUnderlyingType, clang_hashCursor, clang_isConstQualifiedType
-    clang_isCursorDefinition, clang_isDeclaration, clang_isExpression, clang_parseTranslationUnit2
-    clang_saveTranslationUnit, clang_tokenize, clang_visitChildren
+    clang_EvalResult_isUnsignedInt, clang_Type_getNamedType, clang_Type_getNumTemplateArguments
+    clang_Type_getTemplateArgumentAsType, clang_createIndex, clang_createTranslationUnit, clang_disposeIndex
+    clang_disposeString, clang_disposeTokens, clang_disposeTranslationUnit, clang_equalCursors, clang_getArgType
+    clang_getArrayElementType, clang_getArraySize, clang_getCString, clang_getCanonicalCursor
+    clang_getCanonicalType, clang_getCursorDefinition, clang_getCursorExtent, clang_getCursorKind
+    clang_getCursorKindSpelling, clang_getCursorLocation, clang_getCursorPrettyPrinted
+    clang_getCursorPrintingPolicy, clang_getCursorResultType, clang_getCursorSemanticParent, clang_getCursorSpelling
+    clang_getCursorType, clang_getCursorUSR, clang_getEnumDeclIntegerType, clang_getFileName, clang_getNumArgTypes
+    clang_getPointeeType, clang_getResultType, clang_getSpecializedCursorTemplate, clang_getSpellingLocation
+    clang_getTemplateCursorKind, clang_getTokenKind, clang_getTokenSpelling, clang_getTranslationUnitCursor
+    clang_getTypeDeclaration, clang_getTypeKindSpelling, clang_getTypeSpelling, clang_getTypedefDeclUnderlyingType
+    clang_hashCursor, clang_isConstQualifiedType, clang_isCursorDefinition, clang_isDeclaration, clang_isExpression
+    clang_parseTranslationUnit2, clang_saveTranslationUnit, clang_tokenize, clang_visitChildren
 }
 import utility { allocate }
 import extern c "stdlib.h" {
@@ -414,7 +414,70 @@ class CppImportProcessor {
                     false => builtin(BuiltinType::Unknown)
                 }
             }
-            CXType_Elaborated => .type_from(program, scope_id, root_scope_id, module_id, clang_Type_getNamedType(t))
+            CXType_Elaborated => {
+                let definition_cursor = clang_getTypeDeclaration(t)
+                let template_argument_count = clang_Type_getNumTemplateArguments(t)
+
+                let base_type = match template_argument_count {
+                    0 => Some(.cached_type_of_cursor(
+                        cursor: definition_cursor
+                        program
+                        scope_id: scope_id
+                        root_scope_id: root_scope_id
+                        module_id: module_id
+                    ))
+                    else => program.find_type_in_scope(
+                        scope_id
+                        name: name_from(definition_cursor)
+                        ignore_mixin_scopes: true
+                        root_scope: root_scope_id
+                    )
+                }
+
+                yield match base_type.has_value() {
+                    false => unknown_type_id()
+                    true => {
+                        mut type_id = base_type!
+                        let base_usr = string_from(clang_getCursorUSR(cursor: definition_cursor))
+
+                        // NonnullRefPtr<T> where T is a class -> T
+                        let is_nnrp_class_type = base_usr.starts_with("c:@N@AK@S@NonnullRefPtr>") or base_usr == "c:@N@AK@ST>1#T@NonnullRefPtr"
+                        // Function<T> -> T
+                        let is_ak_function = base_usr.starts_with("c:@N@AK@S@Function>")
+
+                        // Check template params
+                        if template_argument_count > 0 {
+                            let count = template_argument_count as! u32
+                            mut args: [TypeId] = []
+                            for i in 0..count {
+                                let type = clang_Type_getTemplateArgumentAsType(t, i)
+                                args.push(.type_from(program, scope_id, root_scope_id, module_id, type))
+                            }
+
+                            if count == 1 and (is_nnrp_class_type or is_ak_function) {
+                                // Special case: Treat NNRP<T> as T when T is a class type
+                                // Special case: Treat Function<Fn> as Fn.
+                                type_id = args[0]
+                            } else {
+                                type_id = program.find_or_add_type_id(
+                                    type: match program.get_type(base_type!) {
+                                        Struct(id) | GenericInstance(id) | GenericResolvedType(id) => Type::GenericInstance(id, args)
+                                        Enum(id) | GenericEnumInstance(id) => Type::GenericEnumInstance(id, args)
+                                        else => {
+                                            eprintln("ICE: Elaborated type is not a struct or enum: {}", program.type_name(base_type!, debug_mode: true))
+                                            yield Type::Unknown
+                                        }
+                                    }
+                                    module_id
+                                    only_in_current_module: true
+                                )
+                            }
+                        }
+
+                        yield type_id
+                    }
+                }
+            }
             CXType_Unexposed => {
                 let name = string_from(clang_getTypeSpelling(t))
                 yield match name.is_empty() {
@@ -954,6 +1017,7 @@ class CppImportProcessor {
         mut params: [CheckedGenericParameter] = []
         mut defaults: [TypeId?] = []
         mut packs_by_name: [String] = []
+        mut seen_default = false
 
         for parameter in template_parameters {
             let spelling = string_from(clang_getCursorSpelling(parameter))
@@ -1017,7 +1081,12 @@ class CppImportProcessor {
                 }
             }
 
-            mut default_type: TypeId? = None
+            // If we've seen a default value, all subsequent parameters must have a default value (C++)
+            mut default_type = match seen_default {
+                true => Some(void_type_id())
+                false => None
+            }
+
             if default_value_cursor.has_value() {
                 default_type = match clang_isExpression(clang_getCursorKind(default_value_cursor!)) {
                     true => .const_type_from(
@@ -1033,21 +1102,6 @@ class CppImportProcessor {
                         root_scope_id
                         module_id
                     )
-                }
-
-                let name = name_from(cursor)
-                if name == "Vector" {
-                    eprintln("Vector default value: {} '{}' = {}"
-                        string_from(clang_getTypeSpelling(clang_getCursorType(default_value_cursor!)))
-                        string_from(clang_getCursorSpelling(default_value_cursor!))
-                        program.type_name(default_type!, debug_mode: true)
-                    )
-                    for entry in constraints_and_default_value {
-                        eprintln("  {} '{}'"
-                            string_from(clang_getTypeSpelling(clang_getCursorType(entry)))
-                            string_from(clang_getCursorSpelling(entry))
-                        )
-                    }
                 }
             }
 
@@ -1068,6 +1122,7 @@ class CppImportProcessor {
                 )
             )
             defaults.push(default_type)
+            seen_default = seen_default or default_type.has_value()
         }
 
         if defaults.size() != params.size() {
@@ -1445,7 +1500,7 @@ class CppImportProcessor {
 
         let result_type = clang_getCursorResultType(cursor)
         let (function_throws, return_type) = match kind {
-            Normal => match .inherits_from_erroror(cursor: clang_getTypeDeclaration(result_type)) {
+            Normal => match .is_erroror(result_type) {
                 true => (true, .type_from(
                     program
                     scope_id: function_scope
@@ -1687,8 +1742,10 @@ class CppImportProcessor {
         )
     }
 
-    fn inherits_from_erroror(mut this, anon cursor: CXCursor) throws -> bool {
-        return .inherits_from_any_of(cursor, {"c:@N@AK@ST>2#T#T@ErrorOr"})
+    fn is_erroror(mut this, anon type: CXType) throws -> bool {
+        let declaration_cursor = clang_getTypeDeclaration(type)
+        let usr = string_from(clang_getCursorUSR(cursor: declaration_cursor))
+        return usr.starts_with("c:@N@AK@S@ErrorOr>")
     }
 
     fn inherits_from_refcounted_base(mut this, anon cursor: CXCursor) throws -> bool {
@@ -1916,7 +1973,7 @@ class CppImportProcessor {
                 module_id
             ))
             match type {
-                GenericInstance(id) | Struct(id) => { super_struct_ids.push(id) }
+                GenericInstance(id) | Struct(id) | GenericResolvedType(id) => { super_struct_ids.push(id) }
                 else => {
                     eprintln("[ICE] Base type of {} is not a struct or generic instance: {}", specialized_name, type)
                 }
