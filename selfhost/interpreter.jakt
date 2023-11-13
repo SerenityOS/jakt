@@ -7608,7 +7608,7 @@ class Interpreter {
                 let generic_parameters = .array_value_of_type(
                     values: match type {
                         GenericInstance(args) => {
-                            mut i = 0
+                            mut i = 0uz
                             mut result: [Value] = []
                             for generic_parameter in subject_struct.generic_parameters {
                                 let name = match .program.get_type(generic_parameter.type_id) {
@@ -7617,10 +7617,14 @@ class Interpreter {
                                         panic("Unknown kind of generic parameter in struct definition")
                                     }
                                 }
+                                let t = match i < args.size() {
+                                    true => args[i]
+                                    false => builtin(BuiltinType::Unknown)
+                                }
                                 result.push(.tuple_value(
                                     members: [
                                         .string_value(name, span)
-                                        .reflect_type(type_id: args[i], span, scope)
+                                        .reflect_type(type_id: t, span, scope)
                                     ]
                                     type: tuple_type
                                     span))
@@ -7727,7 +7731,7 @@ class Interpreter {
                 let generic_parameters = .array_value_of_type(
                     values: match type {
                         GenericInstance(args) => {
-                            mut i = 0
+                            mut i = 0uz
                             mut result: [Value] = []
                             for generic_parameter in subject_enum.generic_parameters {
                                 let name = match .program.get_type(generic_parameter.type_id) {
@@ -7736,10 +7740,14 @@ class Interpreter {
                                         panic("Unknown kind of generic parameter in struct definition")
                                     }
                                 }
+                                let t = match i < args.size() {
+                                    true => args[i]
+                                    false => builtin(BuiltinType::Unknown)
+                                }
                                 result.push(.tuple_value(
                                     members: [
                                         .string_value(name, span)
-                                        .reflect_type(type_id: args[i], span, scope)
+                                        .reflect_type(type_id: t, span, scope)
                                     ]
                                     type: tuple_type
                                     span))
