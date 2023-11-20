@@ -1,8 +1,8 @@
 include(FetchContent)
 
 FetchContent_Declare(Serenity
-    GIT_REPOSITORY https://github.com/serenityos/serenity.git
-    GIT_TAG origin/master
+	GIT_REPOSITORY https://github.com/DanShaders/serenity.git
+    GIT_TAG origin/ak-libc-includes
     GIT_SHALLOW TRUE
     SOURCE_DIR serenity
     EXCLUDE_FROM_ALL
