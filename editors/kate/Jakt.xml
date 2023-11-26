@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language name="Jakt" version="2" kateversion="5.*" section="Sources" extensions="*.jakt;*.Jakt" mimetype="text/x-jakt" author="Vahid Heidari (vahid-heidari@hotmail.com)" license="MIT" priority="9">
+    <highlighting>
+
+        <!-- jaktConditional keywords  -->
+        <list name="jaktConditional">
+            <item>if</item>
+            <item>else</item>
+            <item>match</item>
+            <item>guard</item>
+        </list>
+        
+        <!-- jaktRepeat keywords  -->
+        <list name="jaktRepeat">
+            <item>while</item>
+            <item>for</item>
+            <item>loop</item>
+        </list>
+        
+        <!-- jaktExecution keywords -->
+        <list name="jaktExecution">
+            <item>return</item>
+            <item>break</item>
+            <item>continue</item>
+            <item>throw</item>
+            <item>yield</item>
+        </list>
+        
+        <!-- jaktBoolean keywords -->
+        <list name="jaktBoolean">
+            <item>true</item>
+            <item>false</item>
+        </list>
+        
+        <!-- jaktKeyword keywords  -->
+        <list name="jaktKeyword">
+            <item>extern</item>
+            <item>import</item>
+            <item>comptime</item>
+            <item>fn</item>
+            <item>boxed</item>
+            <item>virtual</item>
+            <item>override</item>
+            <item>destructor</item>
+        </list>
+        
+        <!-- jaktException keywords  -->
+        <list name="jaktException">
+            <item>throws</item>
+        </list>
+        
+        <!-- jaktMacro keywords  -->
+        <list name="jaktMacro">
+            <item>defer</item>
+            <item>unsafe</item>
+            <item>try</item>
+            <item>catch</item>
+            <item>cpp</item>
+            <item>weak</item>
+            <item>reflect</item>
+            <item>restricted</item>
+            <item>implements</item>
+            <item>requires</item>
+        </list>
+        
+        <!-- jaktWordOperator keywords  -->
+        <list name="jaktWordOperator">
+            <item>and</item>
+            <item>or</item>
+            <item>is</item>
+            <item>not</item>
+            <item>as</item>
+            <item>in</item>
+        </list>
+        
+        <!-- jaktVarDecl keywords  -->
+        <list name="jaktVarDecl">
+            <item>mut</item>
+            <item>let</item>
+            <item>anon</item>
+            <item>raw</item>
+        </list>
+        
+        <!-- jaktType keywords  -->
+        <list name="jaktType">
+            <item>String</item>
+            <item>never</item>
+            <item>None</item>
+            <item>void</item>
+            <item>bool</item>
+            <item>usize</item>
+            <item>uz</item>
+            <item>i8</item>
+            <item>i16</item>
+            <item>i32</item>
+            <item>i64</item>
+            <item>u8</item>
+            <item>u16</item>
+            <item>u32</item>
+            <item>u64</item>
+            <item>f32</item>
+            <item>f64</item>
+            <item>c_int</item>
+            <item>c_char</item>
+        </list>
+        
+        <!-- jaktConstant keywords  -->
+        <list name="jaktConstant">
+            <item>this</item>
+        </list>
+        
+        <!-- jaktStructure keywords  -->
+        <list name="jaktStructure">
+            <item>struct</item>
+            <item>class</item>
+            <item>enum</item>
+            <item>namespace</item>
+            <item>trait</item>
+        </list>
+
+        <!-- jaktVisModifier keywords -->
+        <list name="jaktVisModifier">
+            <item>public</item>
+            <item>private</item>
+        </list>
+        
+        
+        <!-- Start Contexts -->
+        <contexts>
+            <!-- Normal text context -->
+            <context attribute="NormalText" lineEndContext="#pop" name="NormalText">
+                <DetectSpaces />
+                
+                <!-- Start handling single-line comment -->
+                <RegExpr attribute="Comment" context="assign" String="\/\/.*" firstNonSpace="false" />
+                
+                <!-- Start handling multiple-line string : jaktDoubleQuot -->               
+                <DetectChar attribute="String" context="jaktDoubleQuot" char="&quot;" />
+                
+                <!-- Start handling multiple-line string : jaktSingleQuot -->
+                <DetectChar attribute="String" context="jaktSingleQuot" char="'" />
+                
+                <!--  Start handling JaktBCCharSingleQuot  -->
+                <RegExpr attribute="JaktBCCharSingleQuot" context="assign" String="(b(?=\'))|(c(?=\'))" firstNonSpace="false" />
+                
+                <!-- Start handling JaktFunction -->
+                <RegExpr attribute="JaktFunction" context="assign" String="(\b(?!(let|restricted|implements|requires|fn)\b)[a-z-A-Z0-9_]+(?=\s*\())|(\b(?!(let|restricted|implements|requires|fn)\b)[a-z-A-Z0-9_]+(?=\s*\&lt;.*\&gt;\s*\())" firstNonSpace="false" />
+                
+                <!-- Start handling JaktLables -->
+                <RegExpr attribute="JaktLables" context="assign" String="(\b(?&lt;!class\b\s)[a-z_]\w+(?=\s*:)(?!::))|\b(?&lt;!class\b\s)[a-z_](?=\s*:)(?!::)" firstNonSpace="false" />
+                
+                <!-- Start handling JaktSymbols -->
+                <RegExpr attribute="JaktSymbols" context="assign" String="(\[|\]|\&lt;(?!=)|\&gt;(?!=))|(=\&gt;|-\&gt;|\&gt;=|\&lt;=|\=\=|\!\=|\^|\&amp;|\||\+\=|\-\=|\*\=|\/\=|\=|\+\+|\-\-|\:\:|\:|\.\.\.|\.\.|\!|\+|\*|\/|\-|\?|\%|\~)" firstNonSpace="false" />
+                
+                <!-- Start handling JaktNumericLiteralSuffixes -->
+                <RegExpr attribute="JaktNumericLiteralSuffixes" context="assign" String="(i(8|16|32|64)|u(8|16|32|64)|f(32|64)|u(z))" firstNonSpace="false" />
+                
+                <!-- Start handling JaktHexBinaryOctalNumbers -->
+                <RegExpr attribute="JaktHexBinaryOctalNumbers" context="assign" String="(0x(\d+[a-f0-9_]+|[a-f0-9_]+))|(0b[0-1_]+)|(0o(\d+[0-7_]+|[0-7_]+))" firstNonSpace="false" />
+                
+                <!-- Start handling lists -->
+                <keyword attribute="JaktVisModifier" context="#stay" String="jaktVisModifier" />
+                <keyword attribute="JaktStructure" context="#stay" String="jaktStructure" />
+                <keyword attribute="JaktConstant" context="#stay" String="jaktConstant" />
+                <keyword attribute="JaktType" context="#stay" String="jaktType" />
+                <keyword attribute="JaktVarDecl" context="#stay" String="jaktVarDecl" />
+                <keyword attribute="JaktWordOperator" context="#stay" String="jaktWordOperator" />
+                <keyword attribute="JaktMacro" context="#stay" String="jaktMacro" />
+                <keyword attribute="JaktException" context="#stay" String="jaktException" />
+                <keyword attribute="JaktKeyword" context="#stay" String="jaktKeyword" />
+                <keyword attribute="JaktBoolean" context="#stay" String="jaktBoolean" />
+                <keyword attribute="JaktExecution" context="#stay" String="jaktExecution" />
+                <keyword attribute="JaktRepeat" context="#stay" String="jaktRepeat" />
+                <keyword attribute="JaktConditional" context="#stay" String="jaktConditional" />
+                
+            </context>
+            
+            <!-- End handling multiple-line string : jaktDoubleQuot -->
+            <context attribute="String" lineEndContext="#stay" name="jaktDoubleQuot">
+                <RegExpr attribute="String" context="#stay" String="\\&quot;"/>
+                <RegExpr attribute="String" context="#stay" String="\\\\"/>
+                <DetectChar attribute="String" context="#pop" char="&quot;" />
+            </context>
+            
+            <!-- End handling multiple-line string : jaktSingleQuot -->
+            <context attribute="String" lineEndContext="#stay" name="jaktSingleQuot">
+                <RegExpr attribute="String" context="#stay" String="\\'"/>
+                <RegExpr attribute="String" context="#stay" String="\\\\"/>
+                <DetectChar attribute="String" context="#pop" char="'" />
+            </context>
+            
+        </contexts>
+        <!-- End Contexts -->
+
+        <itemDatas>
+            <itemData name="NormalText" defStyleNum="dsNormal" />
+            <itemData name="JaktFunction" defStyleNum="dsFunction" />
+            <itemData name="JaktLables" defStyleNum="dsRegionMarker" />
+            <itemData name="JaktType" defStyleNum="dsDataType" />
+            <itemData name="JaktNumericLiteralSuffixes" defStyleNum="dsDataType"/>
+            <itemData name="JaktWordOperator" defStyleNum="dsKeyword" />
+            <itemData name="JaktKeyword" defStyleNum="dsKeyword" />
+            <itemData name="JaktException" defStyleNum="dsSpecialChar" />
+            <itemData name="JaktVarDecl" defStyleNum="dsBuiltIn" />
+            <itemData name="JaktHexBinaryOctalNumbers" defStyleNum="dsAnnotation" bold="0" />
+            <itemData name="JaktStructure" defStyleNum="dsKeyword" />
+            <itemData name="JaktVisModifier" defStyleNum="dsKeyword" />
+            <itemData name="JaktConstant" defStyleNum="dsKeyword" />
+            <itemData name="JaktMacro" defStyleNum="dsSpecialChar" />
+            <itemData name="JaktKeyword" defStyleNum="dsKeyword" />
+            <itemData name="JaktBoolean" defStyleNum="dsBuiltIn" />
+            <itemData name="JaktExecution" defStyleNum="dsSpecialChar" />
+            <itemData name="JaktRepeat" defStyleNum="dsKeyword" />
+            <itemData name="JaktConditional" defStyleNum="dsKeyword" />
+            <itemData name="JaktSymbols" defStyleNum="dsSpecialChar" />
+            <itemData name="String" defStyleNum="dsString" />
+            <itemData name="JaktBCCharSingleQuot" defStyleNum="dsString" />
+            <itemData name="Comment" defStyleNum="dsComment" />
+        </itemDatas>
+    </highlighting>
+
+    <!-- Start General -->
+    <general>
+        <keywords casesensitive="1" />
+        <folding indentationsensitive="1" />
+        <emptyLines>
+            <emptyLine regexpr="\s+" />
+            <emptyLine regexpr="\s*#.*" />
+        </emptyLines>
+    </general>
+    <!-- End General -->
+</language>
+
