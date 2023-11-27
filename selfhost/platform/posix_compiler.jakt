@@ -36,6 +36,7 @@ fn run_compiler(
         "-Wno-unqualified-std-cast-call"
         "-Wno-user-defined-literals"
         "-Wno-deprecated-declarations"
+        "-Wno-invalid-offsetof"
         "-g"
     ]
 
