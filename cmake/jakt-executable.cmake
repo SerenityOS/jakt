@@ -37,6 +37,8 @@ function(add_jakt_compiler_flags target)
     # Silence warning about `no_unique_address`;
     # It does not apply on windows, and clang-cl just warns about it.
     -Wno-unknown-attributes
+    # LibJS JIT fallout; invalid offset_of on WeakLink (ignored in serenity proper)
+    -Wno-invalid-offsetof
   )
   if (MSVC)
     # For clang-cl, which shows up to CMake as MSVC and accepts both kinds of arguments
