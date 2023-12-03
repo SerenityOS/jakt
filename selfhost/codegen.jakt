@@ -2853,7 +2853,7 @@ struct CodeGenerator {
                     }
                     IsNone => "!"
                     TypeCast(cast) => {
-                        mut final_type_id = cast.type_id();
+                        mut final_type_id = cast.type_id()
                         let type = .program.get_type(final_type_id)
                         let cast_type = match cast {
                             Fallible => {
@@ -2871,6 +2871,9 @@ struct CodeGenerator {
                                 } else if .program.is_integer(type_id) {
                                     final_type_id = type_id
                                     cast_type = "fallible_integer_cast"
+                                } else if .program.is_floating(type_id) {
+                                    final_type_id = type_id
+                                    cast_type = "fallible_float_cast"
                                 }
 
                                 yield cast_type
@@ -2887,9 +2890,15 @@ struct CodeGenerator {
                                     cast_type = "infallible_enum_cast"
                                 } else if type is RawPtr(inner) {
                                     cast_type = "reinterpret_cast"
+                                } else if (.program.is_integer(expr.type()) and .program.is_floating(type_id)) or
+                                    (.program.is_floating(expr.type()) and .program.is_integer(type_id)) or
+                                    (.program.is_floating(expr.type()) and .program.is_floating(type_id)) {
+
+                                    cast_type = "infallible_float_cast"
                                 }
                                 yield cast_type
                             }
+                            Identity => "static_cast"
                         }
                         yield cast_type + "<" + .codegen_type(final_type_id) + ">("
                     }
