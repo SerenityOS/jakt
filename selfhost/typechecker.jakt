@@ -8307,6 +8307,24 @@ struct Typechecker {
             let checked_expr = match op {
                 Dereference => .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
                 Negate => .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint, span)
+                TypeCast(cast) => match cast {
+                    Infallible => {
+                        let type_hint = .typecheck_typename(parsed_type: cast.parsed_type(), scope_id, name: None)
+                        // The passed hint may be an actual cast, it may also just be a hint (None as! Foo?)
+                        // First try it as a hint, then try it as a cast.
+                        let old_ignore_errors = .ignore_errors
+                        .had_an_error = false
+                        .ignore_errors = true
+                        mut result = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint, span)
+                        .ignore_errors = old_ignore_errors
+                        if .had_an_error {
+                            result = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
+                            .had_an_error = false
+                        }
+                        yield result
+                    }
+                    else => .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
+                }
                 else => .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
             }
 
@@ -8333,7 +8351,12 @@ struct Typechecker {
                         }
                         Infallible => CheckedTypeCast::Infallible(type_id)
                     }
-                    yield CheckedUnaryOperator::TypeCast(checked_cast)
+                    mut result = CheckedUnaryOperator::TypeCast(checked_cast)
+                    if checked_cast.type_id() == checked_expr.type() {
+                        // Redundant cast
+                        result = CheckedUnaryOperator::TypeCast(CheckedTypeCast::Identity(type_id))
+                    }
+                    yield result
                 }
                 Sizeof(unchecked_type) => {
                     let type_id = .typecheck_typename(parsed_type: unchecked_type, scope_id, name: None)

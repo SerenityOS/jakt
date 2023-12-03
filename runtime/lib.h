@@ -218,6 +218,30 @@ ALWAYS_INLINE Optional<OutputType> fallible_integer_cast(InputType input)
     }
 }
 
+template<typename OutputType, typename InputType>
+ALWAYS_INLINE Optional<OutputType> fallible_float_cast(InputType input)
+{
+    if constexpr (IsEnum<InputType>) {
+        return fallible_float_cast<OutputType>(to_underlying(input));
+    } else {
+        static_assert(IsFloatingPoint<InputType> || IsFloatingPoint<OutputType>);
+        // FIXME: Check whether input is representable as OutputType:
+        //        - What should happen if input isn't a whole number? (truncate or None?)
+        //        - What should happen if input is not exactly representable as OutputType? (None or closest representable value?)
+        if constexpr (IsFloatingPoint<InputType> && IsIntegral<OutputType>) {
+            if (isnan(input) || isinf(input))
+                return {};
+            // FIXME: Fractionals...?
+        } else if constexpr (IsIntegral<InputType> && IsFloatingPoint<OutputType>) {
+            // FIXME: Numbers that are not exactly representable?
+        } else if constexpr (IsFloatingPoint<InputType> && IsFloatingPoint<OutputType>) {
+            // FIXME: Numbers that are not exactly representable?
+        }
+
+        return static_cast<OutputType>(input);
+    }
+}
+
 template<typename... Ts>
 void compiletime_fail(Ts...) { }
 
@@ -242,6 +266,35 @@ template<typename OutputType, typename InputType>
 ALWAYS_INLINE constexpr OutputType infallible_enum_cast(InputType input)
 {
     return static_cast<OutputType>(infallible_integer_cast<UnderlyingType<OutputType>>(input));
+}
+
+template<typename OutputType, typename InputType>
+ALWAYS_INLINE constexpr OutputType infallible_float_cast(InputType input)
+{
+    if constexpr (IsEnum<InputType>) {
+        return infallible_float_cast<OutputType>(to_underlying(input));
+    } else {
+        static_assert(IsFloatingPoint<InputType> || IsFloatingPoint<OutputType>);
+
+        // FIXME: Check whether input is representable as OutputType:
+        //        - What should happen if input isn't a whole number? (truncate or None?)
+        //        - What should happen if input is not exactly representable as OutputType? (None or closest representable value?)
+        if constexpr (IsFloatingPoint<InputType> && IsIntegral<OutputType>) {
+            if (is_constant_evaluated()) {
+                if (isnan(input) || isinf(input))
+                    compiletime_fail("Invalid floating point to integer cast");
+            } else {
+                VERIFY(!isnan(input) && !isinf(input));
+            }
+            // FIXME: Fractionals...?
+        } else if constexpr (IsIntegral<InputType> && IsFloatingPoint<OutputType>) {
+            // FIXME: Numbers that are not exactly representable?
+        } else if constexpr (IsFloatingPoint<InputType> && IsFloatingPoint<OutputType>) {
+            // FIXME: Numbers that are not exactly representable?
+        }
+
+        return static_cast<OutputType>(input);
+    }
 }
 
 template<AK::Concepts::SpecializationOf<AK::NonnullRefPtr> T, AK::Concepts::SpecializationOf<AK::NonnullRefPtr> U>
@@ -381,9 +434,11 @@ using JaktInternal::as_saturated;
 using JaktInternal::as_truncated;
 using JaktInternal::assert_type;
 using JaktInternal::fallible_class_cast;
+using JaktInternal::fallible_float_cast;
 using JaktInternal::fallible_integer_cast;
 using JaktInternal::infallible_class_cast;
 using JaktInternal::infallible_enum_cast;
+using JaktInternal::infallible_float_cast;
 using JaktInternal::infallible_integer_cast;
 using JaktInternal::Range;
 using JaktInternal::unchecked_add;
