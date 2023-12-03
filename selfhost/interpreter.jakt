@@ -1242,6 +1242,7 @@ class Interpreter {
                 TypeCast(cast) => CheckedUnaryOperator::TypeCast(match cast {
                     Fallible(type_id) => CheckedTypeCast::Fallible(scope.map_type(type_id))
                     Infallible(type_id) => CheckedTypeCast::Infallible(scope.map_type(type_id))
+                    Identity(type_id) => CheckedTypeCast::Identity(scope.map_type(type_id))
                 })
                 else => op
             },
@@ -5914,7 +5915,7 @@ class Interpreter {
                         }
                     })
                     TypeCast(cast) => match cast {
-                        Infallible(type_id) => StatementResult::JustValue(cast_value_to_type(value, type_id, interpreter: this))
+                        Identity(type_id) | Infallible(type_id) => StatementResult::JustValue(cast_value_to_type(value, type_id, interpreter: this))
                         Fallible(type_id) => {
                             // FIXME: Actually implement this :)
                             yield StatementResult::JustValue(
@@ -5923,7 +5924,6 @@ class Interpreter {
                                     span
                                 )
                             )
-
                         }
                     }
                     IsEnumVariant(enum_variant, bindings) => match value.impl {

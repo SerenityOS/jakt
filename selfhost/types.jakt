@@ -1445,10 +1445,10 @@ struct CheckedStringLiteral {
 enum CheckedTypeCast {
     Fallible(TypeId)
     Infallible(TypeId)
+    Identity(TypeId)
 
     fn type_id(this) -> TypeId => match this {
-        Fallible(type_id) => type_id
-        Infallible(type_id) => type_id
+        else(type_id) => type_id
     }
 }
 
