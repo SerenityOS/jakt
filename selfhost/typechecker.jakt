@@ -1000,7 +1000,6 @@ struct Typechecker {
 
     fn typecheck_module_import(mut this, anon import_: ParsedModuleImport, scope_id: ScopeId) throws {
         // load the module if not present
-        // FIXME: use match
         let module_names_and_spans = match import_.module_name {
             Literal(name, span) => Some([(name, span)])
             Comptime(expression) => {
@@ -4966,7 +4965,6 @@ struct Typechecker {
         false => other_branch.partial()
     }
 
-    // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
     fn check_types_for_compat(
         mut this
         lhs_type_id: TypeId
