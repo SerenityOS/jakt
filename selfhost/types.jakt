@@ -2853,7 +2853,6 @@ class CheckedProgram {
         return TypeId(module: module_id, id: .modules[module_id.id].types.size() - 1)
     }
 
-    // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
     public fn substitute_typevars_in_type(
         mut this
         type_id: TypeId
@@ -2875,7 +2874,6 @@ class CheckedProgram {
         return result
     }
 
-    // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
     fn substitute_typevars_in_type_helper(
         mut this
         type_id: TypeId

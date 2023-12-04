@@ -4467,7 +4467,6 @@ struct CodeGenerator {
     }
 
     fn codegen_generic_type_instance(mut this, id: StructId, args: [TypeId], as_namespace: bool) throws -> String {
-        // FIXME: Handle WeakPtr
         mut output = ""
         let type_module = .program.get_module(id.module)
 
