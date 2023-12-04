@@ -114,6 +114,7 @@ fn help() throws -> String {
     output += "  --runtime-library-path PATH\t\tSpecify the path to the runtime library.\n"
     output += "  --runtime-path PATH\t\t\tSpecify the path to the host runtime headers.\n"
     output += "  -R,--runtime-path PATH\t\tPath of the Jakt runtime headers.\n\t\t\t\t\tDefaults to $PWD/runtime.\n"
+    output += "  --assume-main-file-path PATH\t\tAssume the main file is at PATH.\n"
     output += "\nCross mode:\n"
     output += "All other given options and flags will be passed to the compiler invocation verbatim.\n"
     output += "  --source-file PATH\t\t\tSpecify the path to the source file to compile.\n"
@@ -522,6 +523,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
 
     let clang_format_path = args_parser.option(["-F", "--clang-format-path"]) ?? "clang-format"
     let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? default_runtime_path.to_string()
+    let assume_main_file_path = args_parser.option(["--assume-main-file-path"])
     let binary_dir = Path::from_string(args_parser.option(["-B", "--binary-dir"]) ?? "build")
     let dot_clang_format_path = args_parser.option(["-D", "--dot-clang-format-path"])
     let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? default_compiler_path
@@ -660,6 +662,10 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         target_triple
         user_configuration
         binary_dir
+        assume_main_file_path: match assume_main_file_path.has_value() {
+            true => Some(Path::from_string(assume_main_file_path!))
+            false => None
+        }
     )
 
     compiler.load_prelude()

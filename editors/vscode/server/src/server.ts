@@ -201,7 +201,9 @@ connection.onDocumentSymbol(async (request): Promise<DocumentSymbol[]> => {
         const stdout = await runCompiler(
             text,
             "--print-symbols " + includeFlagForPath(request.textDocument.uri),
-            settings
+            settings,
+            {},
+            fileURLToPath(document.uri)
         );
         const toSymbolDefinition = (symbol: JaktSymbol): DocumentSymbol => {
             const kind_map = {
@@ -253,7 +255,9 @@ connection.onDefinition(async request => {
                 "-g " +
                     convertPosition(request.position, text) +
                     includeFlagForPath(request.textDocument.uri),
-                settings
+                settings,
+                {},
+                fileURLToPath(document.uri)
             );
             return goToDefinition(document, stdout);
         }
@@ -277,7 +281,9 @@ connection.onTypeDefinition(async (request: TypeDefinitionParams) => {
                 "-t " +
                     convertPosition(request.position, text) +
                     includeFlagForPath(request.textDocument.uri),
-                settings
+                settings,
+                {},
+                fileURLToPath(document.uri)
             );
             return goToDefinition(document, stdout);
         }
@@ -301,7 +307,9 @@ connection.onHover(async (request: HoverParams) => {
             "-e " +
                 convertPosition(request.position, text) +
                 includeFlagForPath(request.textDocument.uri),
-            settings
+            settings,
+            {},
+            document ? fileURLToPath(document.uri) : undefined
         );
 
         const lines = stdout.split("\n").filter(l => l.length > 0);
@@ -487,7 +495,8 @@ async function runCompiler(
     text: string,
     flags: string,
     settings: ExampleSettings,
-    options: { allowErrors?: boolean } = {}
+    options: { allowErrors?: boolean } = {},
+    path?: string
 ): Promise<string> {
     const allowErrors = options.allowErrors === undefined ? true : options.allowErrors;
 
@@ -498,9 +507,12 @@ async function runCompiler(
         // connection.console.log(e);
     }
 
+    const assume_main_file = path ? `--assume-main-file-path ${path}` : ``;
     const command = `${
         settings.compiler.executablePath
-    } ${flags} ${settings.extraCompilerImportPaths.map(x => "-I " + x).join(" ")} ${tmpFile.name}`;
+    } ${assume_main_file} ${flags} ${settings.extraCompilerImportPaths
+        .map(x => "-I " + x)
+        .join(" ")} ${tmpFile.name}`;
 
     console.info(`Running command: ${command}`);
 
@@ -563,7 +575,9 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
         const stdout = await runCompiler(
             text,
             "-c --type-hints --try-hints -j" + includeFlagForPath(textDocument.uri),
-            settings
+            settings,
+            {},
+            fileURLToPath(textDocument.uri)
         );
 
         textDocument.jaktInlayHints = [];
@@ -683,7 +697,9 @@ connection.onCompletion(async (request: TextDocumentPositionParams): Promise<Com
                 const stdout = await runCompiler(
                     text,
                     "-m " + index + includeFlagForPath(request.textDocument.uri),
-                    settings
+                    settings,
+                    {},
+                    document ? fileURLToPath(document.uri) : undefined
                 );
                 // connection.console.log("got: " + stdout);
 
@@ -728,7 +744,8 @@ connection.onDocumentFormatting(async params => {
                 text,
                 "-f " + includeFlagForPath(params.textDocument.uri),
                 settings,
-                { allowErrors: false }
+                { allowErrors: false },
+                fileURLToPath(document.uri)
             );
             const formatted = stdout;
             return [
@@ -760,7 +777,8 @@ connection.onDocumentRangeFormatting(async params => {
                     text
                 )} -f ${includeFlagForPath(params.textDocument.uri)}`,
                 settings,
-                { allowErrors: false }
+                { allowErrors: false },
+                document ? fileURLToPath(document.uri) : undefined
             );
             const formatted = stdout;
             return [
