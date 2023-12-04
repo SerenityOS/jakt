@@ -780,7 +780,8 @@ fn main(args: [String]) -> c_int {
     println("{} skipped", skipped_count)
     println("==============================")
 
-    // FIXME: translate ANSI color codes to constants for easier comprehension
+    let ANSI_RESET = "\x1b[m"
+    let ANSI_BOLD = "\x1b[1m"
 
     if run_result.failed_reasons.has_value() and run_result.failed_count > 0 {
         eprintln("Showing why tests failed:")
@@ -792,7 +793,7 @@ fn main(args: [String]) -> c_int {
             } else {
                 is_first = false
             }
-            eprintln("\x1b[1m{}\x1b[m:", file)
+            eprintln("{}{}{}:", ANSI_RESET, file, ANSI_BOLD)
             mut output = ""
             match reasons[file] {
                 CompilerErrorUnmatched(had, expected) => {
@@ -854,7 +855,7 @@ fn main(args: [String]) -> c_int {
             //        that can't be iterated in Jakt.
             let lines = output.split(c'\n')
             for line in lines {
-                eprintln("\x1b[m\x1b[1m|\x1b[m\t{}", line)
+                eprintln("{}{}|{}\t{}", ANSI_RESET, ANSI_BOLD, ANSI_RESET, line)
             }
         }
 
