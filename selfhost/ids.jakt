@@ -66,11 +66,8 @@ struct TypeId implements(Hashable, Equal<TypeId>) {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
 
-    // FIXME: Using .id.pair_hash_with(&.module) here causes a compiler crash.
     [[inline(make_available)]]
-    fn hash(this) -> u32 {
-        return pair_int_hash(.id.hash(), .module.hash())
-    }
+    fn hash(this) -> u32 => .id.pair_hash_with(&.module)
 }
 
 struct TraitId {
