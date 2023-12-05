@@ -48,27 +48,26 @@ import extern "fs.h" {
         // StatResults.exists to false.
         extern fn stat_silencing_enoent(path: String) throws -> StatResults?
 
+        extern fn is_directory(path: String) throws -> bool
+
 
     }
 }
 
-// FIXME: These three functions should be under a `namespace fs`, but due to
-// #1008 it will ignore the stuff from the import extern if I do.
-fn is_directory(path: String) throws -> bool {
-    let stat = fs::stat_silencing_enoent(path)
-    return stat.has_value() and stat!.is_directory()
-}
+namespace fs {
 
-fn mkdir_if_not_present(path: String) throws {
-    let stat = fs::stat_silencing_enoent(path)
-    if not stat.has_value() or not stat!.is_directory() {
-        fs::mkdir(path)
+    fn mkdir_if_not_present(path: String) throws {
+        let stat = fs::stat_silencing_enoent(path)
+        if not stat.has_value() or not stat!.is_directory() {
+            fs::mkdir(path)
+        }
     }
-}
 
-fn path_exists(path: String) throws -> bool {
-    let stat = fs::stat_silencing_enoent(path)
-    return stat.has_value()
+    fn path_exists(path: String) throws -> bool {
+        let stat = fs::stat_silencing_enoent(path)
+        return stat.has_value()
+    }
+
 }
 
 fn has_jakt_extension(name: String) throws -> bool {
@@ -93,7 +92,7 @@ fn get_jakt_files_under(directory: String, results: &mut [String]) throws -> [St
                 continue
             }
             let full_child_path = current + "/" + child_name
-            if is_directory(path: full_child_path) {
+            if fs::is_directory(path: full_child_path) {
                 // add it to the stack so we traverse it
                 path_stack.push(full_child_path)
             } else if has_jakt_extension(name: child_name) {
@@ -327,9 +326,9 @@ struct Options {
             }
 
             // positional argument: file path
-            if is_directory(path: args[index]) {
+            if fs::is_directory(path: args[index]) {
                 get_jakt_files_under(directory: args[index], results: &mut options.files)
-            } else if path_exists(path: args[index]) {
+            } else if fs::path_exists(path: args[index]) {
                 options.files.push(args[index])
             } else {
                 options.errors.push(format("File/ Directory isn't readable: {}", args[index]))
@@ -537,7 +536,7 @@ struct TestScheduler {
         mut result_output: [u8] = []
         if not output_filename.is_empty() {
             let file_to_check = format("{}/{}", directory, output_filename)
-            if path_exists(path: file_to_check) {
+            if fs::path_exists(path: file_to_check) {
                 mut file = File::open_for_reading(file_to_check)
                 result_output = file.read_all()
             }
@@ -546,7 +545,7 @@ struct TestScheduler {
         mut error_output: [u8] = []
         if not error_filename.is_empty() {
             let file_to_check = format("{}/{}", directory, error_filename)
-            if path_exists(path: file_to_check) {
+            if fs::path_exists(path: file_to_check) {
                 mut file = File::open_for_reading(file_to_check)
                 error_output = file.read_all()
             }
@@ -747,10 +746,10 @@ fn main(args: [String]) -> c_int {
     // TODO: wrap logic in a TestScheduler class
     mut directories: [String] = []
     directories.ensure_capacity(parsed_options.job_count as! usize)
-    mkdir_if_not_present(path: parsed_options.temp_dir)
+    fs::mkdir_if_not_present(path: parsed_options.temp_dir)
     for i in 0..parsed_options.job_count {
         let path = format("{}/jakttest-tmp-{}",  parsed_options.temp_dir, i)
-        mkdir_if_not_present(path)
+        fs::mkdir_if_not_present(path)
         directories.push(path)
     }
 
