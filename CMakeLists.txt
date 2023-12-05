@@ -310,7 +310,6 @@ if (JAKT_BUILD_TESTING AND NOT CMAKE_CROSSCOMPILING)
       jakttest/jakttest.jakt
     MODULE_SOURCES
       jakttest/error.jakt
-      jakttest/lexer.jakt
       jakttest/parser.jakt
       jakttest/utility.jakt
     INCLUDES
