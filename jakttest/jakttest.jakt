@@ -7,7 +7,6 @@
 
 import error { JaktError, print_error }
 import parser { Parser }
-import lexer { Lexer }
 import utility { panic }
 
 // needed for sigaction() stuff
