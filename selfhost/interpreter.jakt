@@ -5516,6 +5516,38 @@ class Interpreter {
 
                 fields[field_index] = value
             }
+            IndexedExpression(expr, index) => {
+                let index_span = index.span()
+                // FIXME: This should not be evaluated twice.
+                let idx = match .execute_expression(index, scope) {
+                    JustValue(value) => try value.assert_nonnegative_integer() catch e {
+                        .error(format("{}", e.string()), index_span)
+                        throw e
+                    }
+                    else => {
+                        panic("Should not be happening here")
+                    }
+                }
+                // FIXME: This should not be evaluated twice.
+                mut values = match .execute_expression(expr, scope) {
+                    JustValue(value) => match value.impl {
+                        JaktArray(values) => values
+                        else => {
+                            panic("Invalid left-hand side in assignment")
+                        }
+                    }
+                    else => {
+                        panic("Should not be happening here")
+                    }
+                }
+                if idx as! usize >= values.size() {
+                    .error(
+                        format("Index {} out of bounds (max={})", idx, values.size() - 1)
+                        index_span)
+                    throw Error::from_string_literal("Invalid type")
+                }
+                values[idx] = value
+            }
             else => {
                 .error(
                     format("Invalid left-hand side of assignment {}", binding),
