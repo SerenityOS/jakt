@@ -6369,16 +6369,15 @@ class Interpreter {
 
             yield match value.impl {
                 JaktArray(values) => {
-                    let numeric_index = match index.impl {
-                        I8(x) | I16(x) | I32(x) | I64(x) | U8(x) | U16(x) | U32(x) | U64(x) | USize(x) => x as! u64
-                        else => {
-                            panic("Invalid type for repeat")
-                        }
+                    let numeric_index = try index.assert_nonnegative_integer() catch e {
+                        let index_span = index_expr.span()
+                        .error(format("{}", e.string()), index_span)
+                        throw e
                     }
 
                     if numeric_index >= (values.size() as! u64) {
                         .error(
-                            format("Index {} out of bounds (max={})", numeric_index, values.size())
+                            format("Index {} out of bounds (max={})", numeric_index, values.size() - 1)
                             span)
                         throw Error::from_string_literal("Invalid type")
                     }
@@ -6616,11 +6615,10 @@ class Interpreter {
                     Throw(value) => {
                         return StatementResult::Throw(value)
                     }
-                    JustValue(value) => match value.impl {
-                        I8(x) | I16(x) | I32(x) | I64(x) | U8(x) | U16(x) | U32(x) | U64(x) | USize(x) => x as! usize
-                        else => {
-                            panic("Invalid type for repeat")
-                        }
+                    JustValue(value) => try value.assert_nonnegative_integer() catch e {
+                        let repeat_span = repeat!.span()
+                        .error(format("{}", e.string()), repeat_span)
+                        throw e
                     }
                     Continue => {
                         return StatementResult::Continue

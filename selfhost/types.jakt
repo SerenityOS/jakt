@@ -3332,6 +3332,19 @@ struct Value {
             else => this
         }
     }
+
+    fn assert_nonnegative_integer(this) throws -> u64 => match .impl {
+        I8(x) | I16(x) | I32(x) | I64(x) => {
+            if x < 0 {
+                throw Error::from_string_literal("Expected value to be nonnegative")
+            }
+            yield x as! u64
+        }
+        U8(x) | U16(x) | U32(x) | U64(x) | USize(x) => x as! u64
+        else => {
+            throw Error::from_string_literal("Invalid type")
+        }
+    }
 }
 
 enum NumericOrStringValue {
