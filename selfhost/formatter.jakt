@@ -15,6 +15,13 @@ fn collapse<T>(anon x: Optional<T>?) -> T? => match x.has_value() {
     false => None
 }
 
+fn absolute_difference<T>(anon x: T, anon y: T) -> T {
+    if x > y {
+        return x - y
+    }
+    return y - x
+}
+
 enum Entity {
     Struct
     Enum
@@ -45,7 +52,7 @@ enum State {
         is_extern: bool
     )
     Extern
-    Import(is_extern: bool)
+    Import(is_extern: bool, is_comptime: bool)
     ImportList(emitted_comma: bool)
     EntityDeclaration(
         entity: Entity
@@ -70,6 +77,7 @@ enum State {
         allow_eol: usize?
         inserted_comma: bool
         expression_mode: ExpressionMode
+        previous_expression_mode: ExpressionMode?
         dedents_on_open_curly: usize
     )
     MatchPattern(
@@ -441,6 +449,9 @@ struct Stage0 {
                 ))
                 return .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
             }
+            if name == "use" {
+                return .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            }
             yield .formatted_token(token)
         }
         Enum | Class | Struct | Trait | Fn | Comptime | Namespace => {
@@ -547,8 +558,14 @@ struct Stage0 {
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         }
         Import => {
+            mut relative_offset = 0
+            if .peek() is Identifier(name) and name == "relative" {
+                relative_offset = 1
+            }
+
             .push_state(State::Import(
                 is_extern: .peek() is Extern
+                is_comptime: .peek(offset: 1 + relative_offset) is Identifier and .peek(offset: 2 + relative_offset) is LParen
             ))
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         }
@@ -567,6 +584,7 @@ struct Stage0 {
                 allow_eol: 0uz
                 inserted_comma: false
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: None
                 dedents_on_open_curly: 0
             ))
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [b' '])
@@ -577,15 +595,12 @@ struct Stage0 {
     private fn next_in_import_context(
         mut this
         is_extern: bool
+        is_comptime: bool
         token: Token
     ) throws -> FormattedToken? => match token {
         Extern | As => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
-        Identifier => {
-            if not is_extern and .peek() is LParen {
-                return .formatted_token(token)
-            }
-
-            if .peek() is ColonColon {
+        Identifier(name) => {
+            if is_comptime or .peek() is ColonColon {
                 return .formatted_token(token)
             }
 
@@ -593,9 +608,40 @@ struct Stage0 {
                 .pop_state()
             }
 
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            if is_extern and name == "c" {
+                // import extern c
+                return .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            }
+
+            yield .formatted_token(token)
         }
-        LParen => .formatted_token(token)
+        LParen => {
+            if is_comptime {
+                .push_state(State::StatementContext(
+                    open_parens: 0
+                    open_curlies: 0
+                    open_squares: 0
+                    arrow_indents: 0
+                    allow_eol: None
+                    inserted_comma: false
+                    expression_mode: ExpressionMode::BeforeExpressions
+                    previous_expression_mode: None
+                    dedents_on_open_curly: 0
+                ))
+            }
+            yield .formatted_token(token)
+        }
+        RParen => match .peek() {
+            LCurly | ColonColon => .formatted_token(token)
+            else => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        }
+        Eol => {
+            if is_comptime {
+                .pop_state()
+                return .formatted_token(token)
+            }
+            yield .formatted_token(token, trailing_trivia: [], preceding_trivia: [])
+        }
         LCurly => {
             if is_extern {
                 .push_state(State::Toplevel(
@@ -608,7 +654,7 @@ struct Stage0 {
                 .push_state(State::ImportList(emitted_comma: true))
             }
 
-            yield .formatted_token(token)
+            yield .formatted_token(token, trailing_trivia: [], preceding_trivia: [b' '])
         }
         RCurly => {
             .pop_state()
@@ -625,7 +671,7 @@ struct Stage0 {
             )
         }
         ColonColon => .formatted_token(token)
-        else => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        else => .formatted_token(token)
     }
 
     private fn next_in_implements_context(
@@ -849,6 +895,7 @@ struct Stage0 {
                     allow_eol: eols_allowed
                     inserted_comma: false
                     expression_mode: ExpressionMode::BeforeExpressions
+                    previous_expression_mode: None
                     dedents_on_open_curly: 0
                 ))
 
@@ -887,6 +934,7 @@ struct Stage0 {
                     allow_eol: None
                     inserted_comma: false
                     expression_mode: ExpressionMode::OutsideExpression
+                    previous_expression_mode: None
                     dedents_on_open_curly: 0
                 ))
                 yield .formatted_token(token, trailing_trivia: [], preceding_trivia: [b' '])
@@ -929,6 +977,7 @@ struct Stage0 {
         allow_eol: usize?
         inserted_comma: bool
         expression_mode: ExpressionMode
+        previous_expression_mode: ExpressionMode?
         dedents_on_open_curly: usize
         indent_change: &mut i64
         token: Token
@@ -942,6 +991,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::OutsideExpression
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -959,6 +1009,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -989,6 +1040,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly: dedents_on_open_curly + added_indent
             ))
             indent_change += (added_indent as! i64)
@@ -1004,6 +1056,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::OutsideExpression
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1014,7 +1067,7 @@ struct Stage0 {
                     else => [b' ']
                 }
                 preceding_trivia: match .peek(offset: -1) {
-                    Eol | Pipe => []
+                    Eol | Pipe | Comma => []
                     else => [b' ']
                 }
             )
@@ -1065,6 +1118,7 @@ struct Stage0 {
                 allow_eol: new_allow_eol
                 inserted_comma
                 expression_mode: new_expression_mode
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
             yield .formatted_token(token)
@@ -1085,6 +1139,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1103,6 +1158,7 @@ struct Stage0 {
                     allow_eol
                     inserted_comma
                     expression_mode: ExpressionMode::OutsideExpression
+                    previous_expression_mode: expression_mode
                     dedents_on_open_curly
                 ))
                 yield .formatted_token(token)
@@ -1116,6 +1172,7 @@ struct Stage0 {
                     allow_eol
                     inserted_comma
                     expression_mode: ExpressionMode::AtExpressionStart
+                    previous_expression_mode: expression_mode
                     dedents_on_open_curly
                 ))
 
@@ -1147,6 +1204,7 @@ struct Stage0 {
                     LCurly => ExpressionMode::OutsideExpression
                     else => ExpressionMode::BeforeExpressions
                 }
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1161,6 +1219,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
             yield .formatted_token(token)
@@ -1180,6 +1239,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1194,6 +1254,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1214,6 +1275,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::InExpression
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1233,6 +1295,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly: dedents_on_open_curly - dedented
             ))
 
@@ -1246,8 +1309,22 @@ struct Stage0 {
                     }
                 }
                 preceding_trivia: match .peek(offset: -1) {
-                    Else | Try | Catch | Equal | FatArrow | Loop | Defer => []
-                    else => [b' ']
+                    Else | Try | Catch | Equal | FatArrow | Loop | Defer | Unsafe => []
+                    else => match expression_mode {
+                        OutsideExpression | InExpression => [b' ']
+                        // If we're immediately following the previous expression, we can't be an expression
+                        // (e.g. `foo {` is not two expressions, it's just `foo` followed by syntax)
+                        // place a space before the curly only in that case.
+                        AtExpressionStart => match previous_expression_mode ?? ExpressionMode::OutsideExpression {
+                            AtExpressionStart | BeforeExpressions | OutsideExpression => []
+                            InExpression => match .peek(offset: -1) {
+                                // `{}` in `foo: {}` _is_ an expression.
+                                Colon => []
+                                else => [b' ']
+                            }
+                        }
+                        else => []
+                    }
                 }
             )
         }
@@ -1266,15 +1343,30 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::InExpression
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
             yield .formatted_token(
                 token
-                trailing_trivia: []
-                preceding_trivia: match .peek(offset: -1) {
-                    Eol | LCurly => []
-                    else => [b' ']
+                trailing_trivia: match expression_mode {
+                    AtExpressionStart => [b' ']
+                    else => []
+                }
+                preceding_trivia: match expression_mode {
+                    OutsideExpression | InExpression => [b' ']
+                    // If we're immediately following the previous expression, we can't be an expression
+                    // (e.g. `foo {` is not two expressions, it's just `foo` followed by syntax)
+                    // place a space before the curly only in that case.
+                    AtExpressionStart => match previous_expression_mode ?? ExpressionMode::OutsideExpression {
+                        AtExpressionStart | BeforeExpressions | OutsideExpression => []
+                        InExpression => match .peek(offset: -1) {
+                            // `{}` in `foo: {}` _is_ an expression.
+                            Colon => []
+                            else => [b' ']
+                        }
+                    }
+                    else => []
                 }
             )
         }
@@ -1287,6 +1379,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1304,6 +1397,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1329,6 +1423,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1338,6 +1433,7 @@ struct Stage0 {
             }
             yield .formatted_token(token, trailing_trivia: trivia, preceding_trivia: trivia)
         }
+        Unsafe => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         // Binary ops
         PercentSign
         | Plus
@@ -1379,6 +1475,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1416,6 +1513,7 @@ struct Stage0 {
                     allow_eol
                     inserted_comma: true
                     expression_mode: ExpressionMode::InExpression
+                    previous_expression_mode: expression_mode
                     dedents_on_open_curly
                 ))
                 return .formatted_token(token: Token::Comma(token.span()), trailing_trivia: [b' '], preceding_trivia: [])
@@ -1428,6 +1526,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma: false
                 expression_mode: ExpressionMode::InExpression
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1510,6 +1609,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
@@ -1539,6 +1639,7 @@ struct Stage0 {
                 allow_eol
                 inserted_comma
                 expression_mode: ExpressionMode::InExpression
+                previous_expression_mode: expression_mode
                 dedents_on_open_curly
             ))
 
@@ -1674,6 +1775,7 @@ struct Stage0 {
                 allow_eol: 0uz
                 inserted_comma: false
                 expression_mode: ExpressionMode::AtExpressionStart
+                previous_expression_mode: None
                 dedents_on_open_curly: 0
             ))
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [b' '])
@@ -1727,7 +1829,7 @@ struct Stage0 {
                 open_curlies
                 open_squares
                 open_angles: open_angles + 1
-                seen_start
+                seen_start: false
             ))
             yield .formatted_token(token)
         }
@@ -1743,7 +1845,7 @@ struct Stage0 {
                 open_curlies
                 open_squares
                 open_angles: open_angles - 1
-                seen_start
+                seen_start: true
             ))
             yield .formatted_token(token)
         }
@@ -2060,6 +2162,7 @@ struct Stage0 {
                 allow_eol: 0
                 inserted_comma: false
                 expression_mode: ExpressionMode::OutsideExpression
+                previous_expression_mode: None
                 dedents_on_open_curly: 0
             ))
             yield .formatted_token(token)
@@ -2168,12 +2271,12 @@ struct Stage0 {
         return match .state() {
             Toplevel(open_parens, open_curlies, open_squares, is_extern) => .next_in_toplevel_context(open_parens, open_curlies, open_squares, is_extern, token)
             Extern => .next_in_extern_context(token)
-            Import(is_extern) => .next_in_import_context(is_extern, token)
+            Import(is_extern, is_comptime) => .next_in_import_context(is_extern, is_comptime, token)
             ImportList(emitted_comma) => .next_in_import_list_context(emitted_comma, token)
             Implements => .next_in_implements_context(token)
             EntityDeclaration(entity, accept_generics, has_generics, generic_nesting, is_extern) => .next_in_entity_declaration_context(entity, accept_generics, has_generics, generic_nesting, is_extern, token)
             EntityDefinition(entity, is_extern) => .next_in_entity_definition_context(entity, is_extern, &mut indent_change, token)
-            StatementContext(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, dedents_on_open_curly) => .next_in_statement_context(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, dedents_on_open_curly, &mut indent_change, token)
+            StatementContext(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, previous_expression_mode,, dedents_on_open_curly) => .next_in_statement_context(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, previous_expression_mode, dedents_on_open_curly, &mut indent_change, token)
             GenericCallTypeParams(open_angles) => .next_in_generic_call_type_params_context(open_angles, token)
             VariableDeclaration(open_parens) => .next_in_variable_declaration_context(open_parens, token)
             RestrictionList => .next_in_restriction_list_context(token)
@@ -2306,18 +2409,20 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         line[0].token.preceding_trivia = []
 
         mut enclosure_run_length = 0uz
-        for i in (line.size() - 1)..0uz {
+        for k in 0..line.size() {
+            let i = line.size() - k - 1
+
             match line[i].token.token {
                 RParen | RCurly | RSquare => {
                     enclosure_run_length += 1
                 }
                 else => {
                     for j in 0..enclosure_run_length {
-                        line[i - j].token = FormattedToken(
-                            token: line[i - j].token.token
-                            indent: line[i - enclosure_run_length].token.indent
-                            trailing_trivia: line[i - j].token.trailing_trivia
-                            preceding_trivia: line[i - j].token.preceding_trivia
+                        line[i + j].token = FormattedToken(
+                            token: line[i + j].token.token
+                            indent: line[i + enclosure_run_length].token.indent
+                            trailing_trivia: line[i + j].token.trailing_trivia
+                            preceding_trivia: line[i + j].token.preceding_trivia
                         )
                     }
                     enclosure_run_length = 0
@@ -2339,8 +2444,20 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
     }
 
     private fn pick_breaking_point_index(this) -> usize {
-        // Leftmost point.
-        return 0
+        // Try to split the line at the middle
+        mut closest_difference = .current_line_length
+        mut selected_index = 0uz
+
+        for i in 0...breakable_points_in_current_line.size() {
+            let point = .breakable_points_in_current_line[i]
+            let difference = absolute_difference(point.point(), .current_line_length / 2)
+            if difference < closest_difference {
+                closest_difference = difference
+                selected_index = i
+            }
+        }
+
+        return selected_index
     }
 
     private fn should_ignore_state(anon state: State) -> bool {
