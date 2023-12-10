@@ -2149,7 +2149,7 @@ struct CodeGenerator {
             output += format("{0}& {0}::operator=({0} const &rhs)", enum_.name)
         }
         output += "{\n"
-        output += .codegen_enum_assignment_body(enum_,is_constructor: false use_move: false)
+        output += .codegen_enum_assignment_body(enum_,is_constructor: false, use_move: false)
         output += "return *this;\n"
         output += "}\n"
 
