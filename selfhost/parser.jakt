@@ -8,9 +8,9 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 
-import error { JaktError, print_error}
-import lexer { Token, LiteralPrefix, LiteralSuffix }
-import utility { panic, todo, FileId, Span, join }
+import error { JaktError, print_error }
+import lexer { LiteralPrefix, LiteralSuffix, Token }
+import utility { FileId, Span, join, panic, todo }
 import compiler { Compiler }
 
 struct ParsedFunctionParameters {
@@ -72,7 +72,7 @@ enum NumericConstant {
         UnknownSigned(num) => num as! usize
         UnknownUnsigned(num) => num as! usize
         // FIXME: handle floats properly - if the function is used at all?
-        else =>  0 as! usize
+        else => 0 as! usize
     }
 }
 
@@ -190,7 +190,7 @@ struct ParsedModuleImport {
         .import_list.is_empty() == other.import_list.is_empty()
 
 
-    fn has_same_alias_than(this, anon other: ParsedModuleImport) -> bool  {
+    fn has_same_alias_than(this, anon other: ParsedModuleImport) -> bool {
         if .alias_name.has_value() {
             return other.alias_name.has_value() and other.alias_name!.equals(.alias_name!)
         } else {
@@ -429,9 +429,9 @@ struct ParsedFunction {
 
     fn equals(this, anon other: ParsedFunction, ignore_block: bool = false) -> bool {
         if this.name != other.name or
-        this.can_throw != other.can_throw or
-        this.is_comptime != other.is_comptime or
-        this.is_fat_arrow != other.is_fat_arrow {
+            this.can_throw != other.can_throw or
+            this.is_comptime != other.is_comptime or
+            this.is_fat_arrow != other.is_fat_arrow {
             return false
         }
 
@@ -444,7 +444,7 @@ struct ParsedFunction {
         }
 
         for param_index in 0..this.params.size() {
-            if not this.params[param_index].equals(other.params[param_index])  {
+            if not this.params[param_index].equals(other.params[param_index]) {
                 return false
             }
         }
@@ -684,11 +684,11 @@ boxed enum ParsedStatement {
             Throw(expr: rhs_expr) => lhs_expr.equals(rhs_expr)
             else => false
         }
-        Yield(expr: lhs_expr) =>  match rhs_statement {
+        Yield(expr: lhs_expr) => match rhs_statement {
             Yield(expr: rhs_expr) => lhs_expr.equals(rhs_expr)
             else => false
         }
-        InlineCpp(block: lhs_block) =>  match rhs_statement {
+        InlineCpp(block: lhs_block) => match rhs_statement {
             InlineCpp(block) => lhs_block.equals(block)
             else => false
         }
@@ -829,7 +829,7 @@ enum UnaryOperator {
 
     fn equals(this, anon rhs_op: UnaryOperator) -> bool => match this {
         PreIncrement => rhs_op is PreIncrement
-        PostIncrement =>  rhs_op is PostIncrement
+        PostIncrement => rhs_op is PostIncrement
         PreDecrement => rhs_op is PreDecrement
         PostDecrement => rhs_op is PostDecrement
         Negate => rhs_op is Negate
@@ -956,7 +956,7 @@ enum ParsedMatchPattern {
 
             // compare name & namespaces in reverse order
             // -> when one is a subset of the other they are treated equal
-            mut namespace_count = lhs_variant_names.size();
+            mut namespace_count = lhs_variant_names.size()
             if rhs_variant_names.size() < namespace_count {
                 namespace_count = rhs_variant_names.size()
             }
@@ -1101,7 +1101,15 @@ boxed enum ParsedExpression {
     Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, marker_span: Span)
     EnumVariantArg(expr: ParsedExpression, arg: EnumVariantPatternArgument, enum_variant: ParsedType, span: Span)
     NamespacedVar(name: String, namespace_: [String], span: Span)
-    Function(captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, is_fat_arrow: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
+    Function(
+        captures: [ParsedCapture]
+        params: [ParsedParameter]
+        can_throw: bool
+        is_fat_arrow: bool
+        return_type: ParsedType
+        block: ParsedBlock
+        span: Span
+    )
     Try(expr: ParsedExpression, catch_block: ParsedBlock?, catch_span: Span?, catch_name: String?, span: Span)
     TryBlock(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, span: Span)
     Reflect(type: ParsedType, span: Span)
@@ -1181,19 +1189,35 @@ boxed enum ParsedExpression {
             else => false
         }
         MethodCall(expr: lhs_expr, call: lhs_call, is_optional: lhs_optional) => match rhs_expression {
-            MethodCall(expr: rhs_expr, call: rhs_call, is_optional: rhs_optional) => lhs_optional == rhs_optional and lhs_expr.equals(rhs_expr) and lhs_call.equals(rhs_call)
+            MethodCall(
+                expr: rhs_expr
+                call: rhs_call
+                is_optional: rhs_optional
+            ) => lhs_optional == rhs_optional and lhs_expr.equals(rhs_expr) and lhs_call.equals(rhs_call)
             else => false
         }
         IndexedTuple(expr: lhs_expr, index: lhs_index, is_optional: lhs_optional) => match rhs_expression {
-            IndexedTuple(expr: rhs_expr, index: rhs_index, is_optional: rhs_optional) => lhs_optional == rhs_optional and lhs_expr.equals(rhs_expr) and lhs_index == rhs_index
+            IndexedTuple(
+                expr: rhs_expr
+                index: rhs_index
+                is_optional: rhs_optional
+            ) => lhs_optional == rhs_optional and lhs_expr.equals(rhs_expr) and lhs_index == rhs_index
             else => false
         }
         IndexedStruct(expr: lhs_expr, field_name: lhs_field, is_optional: lhs_optional) => match rhs_expression {
-            IndexedStruct(expr: rhs_expr, field_name: rhs_field, is_optional: rhs_optional) => lhs_optional == rhs_optional and lhs_expr.equals(rhs_expr) and lhs_field == rhs_field
+            IndexedStruct(
+                expr: rhs_expr
+                field_name: rhs_field
+                is_optional: rhs_optional
+            ) => lhs_optional == rhs_optional and lhs_expr.equals(rhs_expr) and lhs_field == rhs_field
             else => false
         }
         ComptimeIndex(expr: lhs_expr, index: lhs_index, is_optional: lhs_optional) => match rhs_expression {
-            ComptimeIndex(expr: rhs_expr, index: rhs_index, is_optional: rhs_optional) => lhs_optional == rhs_optional and lhs_expr.equals(rhs_expr) and lhs_index.equals(rhs_index)
+            ComptimeIndex(
+                expr: rhs_expr
+                index: rhs_index
+                is_optional: rhs_optional
+            ) => lhs_optional == rhs_optional and lhs_expr.equals(rhs_expr) and lhs_index.equals(rhs_index)
             else => false
         }
         Var(name: lhs_name) => match rhs_expression {
@@ -1209,7 +1233,9 @@ boxed enum ParsedExpression {
             else => false
         }
         BinaryOp(lhs: lhs_lhs, op: lhs_op, rhs: lhs_rhs) => match rhs_expression {
-            BinaryOp(lhs: rhs_lhs, op: rhs_op, rhs: rhs_rhs) => lhs_lhs.equals(rhs_lhs) and lhs_op.equals(rhs_op) and lhs_rhs.equals(rhs_rhs)
+            BinaryOp(lhs: rhs_lhs, op: rhs_op, rhs: rhs_rhs) => lhs_lhs.equals(rhs_lhs) and lhs_op.equals(
+                rhs_op
+            ) and lhs_rhs.equals(rhs_rhs)
             else => false
         }
         Operator(op: lhs_op) => match rhs_expression {
@@ -1301,7 +1327,7 @@ boxed enum ParsedExpression {
                     if lhs_from.has_value() and lhs_to.has_value() {
                         equal = lhs_from!.equals(rhs_from!) and lhs_to!.equals(rhs_to!)
                     } else {
-                        equal = true;
+                        equal = true
                     }
                 }
 
@@ -1375,10 +1401,13 @@ boxed enum ParsedExpression {
             else => false
         }
         TryBlock(stmt: lhs_stmt, error_name: lhs_error_name, catch_block: lhs_catch_block) => match rhs_expression {
-            TryBlock(stmt: rhs_stmt, error_name: rhs_error_name, catch_block: rhs_catch_block) => lhs_stmt.equals(rhs_stmt) and (lhs_error_name == rhs_error_name) and lhs_catch_block.equals(rhs_catch_block)
+            TryBlock(stmt: rhs_stmt, error_name: rhs_error_name, catch_block: rhs_catch_block) => lhs_stmt.equals(rhs_stmt) and (
+                lhs_error_name == rhs_error_name
+            ) and lhs_catch_block.equals(rhs_catch_block)
             else => false
         }
-        Function(captures: lhs_captures, params: lhs_params, can_throw: lhs_can_throw, return_type: lhs_return_type) => match rhs_expression {
+        Function(
+            captures: lhs_captures, params: lhs_params, can_throw: lhs_can_throw, return_type: lhs_return_type) => match rhs_expression {
             Function(captures: rhs_captures, params: rhs_params, can_throw: rhs_can_throw, return_type: rhs_return_type) => {
                 guard lhs_return_type.equals(rhs_return_type) and
                     lhs_can_throw == rhs_can_throw and
@@ -1457,7 +1486,7 @@ struct ParsedVariable {
     fn equals(this, anon rhs_parsed_varible: ParsedVariable) -> bool {
         return .name == rhs_parsed_varible.name and
         .parsed_type.equals(rhs_parsed_varible.parsed_type) and
-        .is_mutable ==  rhs_parsed_varible.is_mutable
+        .is_mutable == rhs_parsed_varible.is_mutable
     }
 }
 
@@ -1721,7 +1750,7 @@ struct Parser {
     fn eol(this) -> bool => .eof() or .tokens[.index] is Eol
 
     fn peek(this, anon steps: usize) -> Token {
-        if .eof() or (steps + .index) >= .tokens.size()  {
+        if .eof() or (steps + .index) >= .tokens.size() {
             return .tokens.last()!
         }
         return .tokens[.index + steps]
@@ -2095,7 +2124,10 @@ struct Parser {
                         let operator_name = attribute.assigned_value!.substring(start: 9, length: attribute.assigned_value!.length() - 10)
                         field.var_decl.external_name = ExternalName::Operator(name: operator_name)
                     } else if attribute.assigned_value!.starts_with("prefix-operator(") and attribute.assigned_value!.ends_with(")") {
-                        let operator_name = attribute.assigned_value!.substring(start: 16, length: attribute.assigned_value!.length() - 17)
+                        let operator_name = attribute.assigned_value!.substring(
+                            start: 16
+                            length: attribute.assigned_value!.length() - 17
+                        )
                         field.var_decl.external_name = ExternalName::Operator(name: operator_name, is_prefix: true)
                     } else {
                         field.var_decl.external_name = ExternalName::Plain(attribute.assigned_value!)
@@ -2135,7 +2167,10 @@ struct Parser {
                         let operator_name = attribute.assigned_value!.substring(start: 9, length: attribute.assigned_value!.length() - 10)
                         parsed_function.external_name = ExternalName::Operator(name: operator_name)
                     } else if attribute.assigned_value!.starts_with("prefix-operator(") and attribute.assigned_value!.ends_with(")") {
-                        let operator_name = attribute.assigned_value!.substring(start: 16, length: attribute.assigned_value!.length() - 17)
+                        let operator_name = attribute.assigned_value!.substring(
+                            start: 16
+                            length: attribute.assigned_value!.length() - 17
+                        )
                         parsed_function.external_name = ExternalName::Operator(name: operator_name, is_prefix: true)
                     } else {
                         parsed_function.external_name = ExternalName::Plain(attribute.assigned_value!)
@@ -2150,7 +2185,10 @@ struct Parser {
                         continue
                     }
 
-                    let message = attribute.arguments.first()?.name ?? format("The function '{}' is marked as deprecated", parsed_function.name)
+                    let message = attribute.arguments.first()?.name ?? format(
+                        "The function '{}' is marked as deprecated"
+                        parsed_function.name
+                    )
                     parsed_function.deprecated_message = message
                 }
                 "inline" => {
@@ -2660,7 +2698,7 @@ struct Parser {
         }
     }
 
-    fn parse_import(mut this, parent: &mut ParsedNamespace) throws  {
+    fn parse_import(mut this, parent: &mut ParsedNamespace) throws {
         // import . <extern <extern-import> | <module-import>>
         if .current() is Extern {
             .index++
@@ -2700,7 +2738,7 @@ struct Parser {
                 parsed_import.is_c = true
             } else {
                 .error("Expected 'c' or path after `import extern`"
-                       .current().span())
+                    .current().span())
             }
         }
         parsed_import.assigned_namespace.name_span = .current().span()
@@ -2712,7 +2750,7 @@ struct Parser {
             }
             else => {
                 .error("Expected path after `import extern`"
-                       .current().span())
+                    .current().span())
                 yield ""
             }
         }
@@ -2725,7 +2763,7 @@ struct Parser {
                 parsed_import.assigned_namespace.name_span = span
             } else {
                 .error("Expected name after 'as' keyword to name the extern import"
-                        .current().span())
+                    .current().span())
             }
         }
 
@@ -2740,7 +2778,7 @@ struct Parser {
                 .index++
             } else {
                 .error("Expected '}' to end namespace for the extern import"
-                        .current().span())
+                    .current().span())
             }
         } else {
             parsed_import.should_auto_import = true
@@ -2882,11 +2920,11 @@ struct Parser {
             }
 
             .error("Expected 'define' or 'undefine' in include action"
-                    .current().span())
+                .current().span())
             return None
         } else {
             .error("Expected 'define' or 'undefine' in include action"
-                    .current().span())
+                .current().span())
             return None
         }
     }
@@ -3005,7 +3043,7 @@ struct Parser {
             if .current() is Identifier(name, span) {
                 .index++
                 parsed_import.alias_name = ImportName::Literal(name, span)
-            } else  {
+            } else {
                 .error("Expected name", .current().span())
                 .index++
             }
@@ -3110,7 +3148,12 @@ struct Parser {
                 }
                 Private(span) => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint(
+                            "Multiple visibility modifiers on one field or method are not allowed"
+                            span
+                            "Previous modifier is here"
+                            last_visibility_span!
+                        )
                     }
                     last_visibility = Visibility::Private
                     last_visibility_span = span
@@ -3118,7 +3161,12 @@ struct Parser {
                 }
                 Public(span) => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint(
+                            "Multiple visibility modifiers on one field or method are not allowed"
+                            span
+                            "Previous modifier is here"
+                            last_visibility_span!
+                        )
                     }
                     last_visibility = Visibility::Public
                     last_visibility_span = span
@@ -3258,7 +3306,7 @@ struct Parser {
                             mut var_decl = .parse_variable_declaration(is_mutable: false)
                             if var_decl.parsed_type is Name(name, span) {
                                 var_decl.inlay_span = span
-                                if name == partial_enum.name and not is_boxed{
+                                if name == partial_enum.name and not is_boxed {
                                     .error("use 'boxed enum' to make the enum recursive", var_decl.span)
                                 }
                             }
@@ -3299,8 +3347,11 @@ struct Parser {
                                 .index++
                             }
                             else => {
-                                .error(format("Incomplete enum variant definition, expected `,` or `)`; got ‘{}’", .current()), .current().span())
-                                break;
+                                .error(format(
+                                    "Incomplete enum variant definition, expected `,` or `)`; got ‘{}’"
+                                    .current()
+                                    ), .current().span())
+                                break
                             }
                         }
                     }
@@ -3323,7 +3374,12 @@ struct Parser {
                 }
                 Private(span) => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint(
+                            "Multiple visibility modifiers on one field or method are not allowed"
+                            span
+                            "Previous modifier is here"
+                            last_visibility_span!
+                        )
                     }
                     last_visibility = Visibility::Private
                     last_visibility_span = span
@@ -3331,7 +3387,12 @@ struct Parser {
                 }
                 Public(span) => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint(
+                            "Multiple visibility modifiers on one field or method are not allowed"
+                            span
+                            "Previous modifier is here"
+                            last_visibility_span!
+                        )
                     }
                     last_visibility = Visibility::Public
                     last_visibility_span = span
@@ -3450,7 +3511,7 @@ struct Parser {
         }
 
         if .eof() {
-            .error("Incomplete enum definition, expected underlying type or body", .current(). span())
+            .error("Incomplete enum definition, expected underlying type or body", .current().span())
             return parsed_enum
         }
 
@@ -3518,7 +3579,7 @@ struct Parser {
         mut last_extern = false
 
         // Have we already found an error?
-        mut error = false;
+        mut error = false
 
         // Attributes being parsed for the next entity
         mut active_attributes: [ParsedAttribute] = []
@@ -3546,7 +3607,12 @@ struct Parser {
                 }
                 Public(span) => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint(
+                            "Multiple visibility modifiers on one field or method are not allowed"
+                            span
+                            "Previous modifier is here"
+                            last_visibility_span!
+                        )
                     }
                     last_visibility = Visibility::Public
                     last_visibility_span = span
@@ -3554,7 +3620,12 @@ struct Parser {
                 }
                 Private(span) => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint(
+                            "Multiple visibility modifiers on one field or method are not allowed"
+                            span
+                            "Previous modifier is here"
+                            last_visibility_span!
+                        )
                     }
                     last_visibility = Visibility::Private
                     last_visibility_span = span
@@ -3562,7 +3633,12 @@ struct Parser {
                 }
                 Restricted(span) => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint(
+                            "Multiple visibility modifiers on one field or method are not allowed"
+                            span
+                            "Previous modifier is here"
+                            last_visibility_span!
+                        )
                     }
                     last_visibility = .parse_restricted_visibility_modifier()
                     last_visibility_span = span
@@ -3738,7 +3814,6 @@ struct Parser {
             super_type = .parse_typename()
         }
 
-
         .skip_newlines()
 
         if .eof() {
@@ -3746,7 +3821,11 @@ struct Parser {
             return parsed_struct
         }
 
-        let (fields, methods, records) = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public, is_class: false)
+        let (fields, methods, records) = .parse_struct_class_body(
+            definition_linkage
+            default_visibility: Visibility::Public
+            is_class: false
+        )
 
         parsed_struct.methods = methods
         parsed_struct.record_type = RecordType::Struct(fields, super_type)
@@ -3800,7 +3879,6 @@ struct Parser {
             parsed_class.implements_list = .parse_trait_list()
         }
 
-
         if .eof() {
             .error("Incomplete class definition, expected super class or body", .current().span())
             return parsed_class
@@ -3819,7 +3897,11 @@ struct Parser {
             return parsed_class
         }
 
-        let (fields, methods, records) = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Private, is_class: true)
+        let (fields, methods, records) = .parse_struct_class_body(
+            definition_linkage
+            default_visibility: Visibility::Private
+            is_class: true
+        )
 
         parsed_class.methods = methods
         parsed_class.record_type = RecordType::Class(fields, super_type)
@@ -3909,15 +3991,15 @@ struct Parser {
                         .error("A variadic argument may only appear at the end of a parameter list", .current().span())
                         error = true
                     }
-                    if parameter_complete and not error  {
+                    if parameter_complete and not error {
                         .error("‘anon’ must appear at start of parameter declaration, not the end", .current().span())
                         error = true
                     }
-                    if current_param_is_mutable and not error  {
+                    if current_param_is_mutable and not error {
                         .error("‘anon’ must appear before ‘mut’", .current().span())
                         error = true
                     }
-                    if not current_param_requires_label and not error  {
+                    if not current_param_requires_label and not error {
                         .error("‘anon’ cannot appear multiple times in one parameter declaration", .current().span())
                         error = true
                     }
@@ -3929,11 +4011,11 @@ struct Parser {
                         .error("A variadic argument may only appear at the end of a parameter list", .current().span())
                         error = true
                     }
-                    if parameter_complete and not error  {
+                    if parameter_complete and not error {
                         .error("‘mut’ must appear at start of parameter declaration, not the end", .current().span())
                         error = true
                     }
-                    if current_param_is_mutable and not error  {
+                    if current_param_is_mutable and not error {
                         .error("‘mut’ cannot appear multiple times in one parameter declaration", .current().span())
                         error = true
                     }
@@ -4155,7 +4237,16 @@ struct Parser {
         )
     }
 
-    fn parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_virtual: bool, is_override: bool, is_comptime: bool, is_destructor: bool, is_unsafe: bool) throws -> ParsedMethod {
+    fn parse_method(
+        mut this
+        anon linkage: FunctionLinkage
+        anon visibility: Visibility
+        is_virtual: bool
+        is_override: bool
+        is_comptime: bool
+        is_destructor: bool
+        is_unsafe: bool
+    ) throws -> ParsedMethod {
         mut parsed_function = .parse_function(linkage, visibility, is_comptime, is_destructor, is_unsafe)
 
         if linkage is External {
@@ -4638,7 +4729,10 @@ struct Parser {
                 .index++
                 yield match .current() {
                     Eol | Eof | RCurly => ParsedStatement::Return(expr: None, span: start)
-                    else => ParsedStatement::Return(expr: .parse_expression(allow_assignments: false, allow_newlines: false), span: merge_spans(start, .previous().span()))
+                    else => ParsedStatement::Return(expr: .parse_expression(
+                        allow_assignments: false
+                        allow_newlines: false
+                        ), span: merge_spans(start, .previous().span()))
                 }
             }
             Let | Mut => {
@@ -4679,11 +4773,18 @@ struct Parser {
                     }
                 }
 
-                mut return_statement = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(start, .previous().span()))
+                mut return_statement = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(
+                    start
+                    .previous().span()
+                ))
 
                 if is_destructuring_assingment {
                     let old_return_statement = return_statement
-                    return_statement = ParsedStatement::DestructuringAssignment(vars, var_decl: old_return_statement, span: merge_spans(start, .previous().span()))
+                    return_statement = ParsedStatement::DestructuringAssignment(
+                        vars
+                        var_decl: old_return_statement
+                        span: merge_spans(start, .previous().span())
+                    )
                 }
                 yield return_statement
             }
@@ -4753,7 +4854,10 @@ struct Parser {
         }
 
         let catch_block = .parse_block()
-        return ParsedExpression::TryBlock(stmt, error_name, error_span, catch_block, span: merge_spans(start_span, .previous().span()))
+        return ParsedExpression::TryBlock(stmt, error_name, error_span, catch_block, span: merge_spans(
+            start_span
+            .previous().span()
+        ))
     }
 
     fn parse_for_statement(mut this) throws -> ParsedStatement {
@@ -4800,7 +4904,7 @@ struct Parser {
         .can_have_trailing_closure = previous_can_have_trailing_closure
 
         mut is_destructuring = false
-        mut block = .parse_block();
+        mut block = .parse_block()
 
         if destructured_var_decls.size() > 0 {
             is_destructuring = true
@@ -4815,14 +4919,21 @@ struct Parser {
             )
             let init = ParsedExpression::Var(name: iterator_name, span: merge_spans(start_span, .previous().span()))
             let var_decl = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(start_span, .previous().span()))
-            let destructured_vars_stmt = ParsedStatement::DestructuringAssignment(vars: destructured_var_decls, var_decl, span: merge_spans(start_span, .previous().span()))
+            let destructured_vars_stmt = ParsedStatement::DestructuringAssignment(
+                vars: destructured_var_decls
+                var_decl
+                span: merge_spans(start_span, .previous().span())
+            )
             mut block_stmts: [ParsedStatement] = []
             block_stmts.push(destructured_vars_stmt)
             block_stmts.push_values(&block.stmts)
             block.stmts = block_stmts
         }
 
-        return ParsedStatement::For(iterator_name, name_span, is_destructuring, range, block, span: merge_spans(start_span, .previous().span()))
+        return ParsedStatement::For(iterator_name, name_span, is_destructuring, range, block, span: merge_spans(
+            start_span
+            .previous().span()
+        ))
     }
 
     fn parse_if_statement(mut this) throws -> ParsedStatement {
@@ -4888,13 +4999,13 @@ struct Parser {
                 }
             }
 
-            let parsed_operator = .parse_operator(allow_assignments);
+            let parsed_operator = .parse_operator(allow_assignments)
 
             if parsed_operator is Garbage {
                 break
             }
 
-            let precedence = parsed_operator.precedence();
+            let precedence = parsed_operator.precedence()
 
             .skip_newlines()
 
@@ -5096,7 +5207,7 @@ struct Parser {
                     }
 
                     if .eof() {
-                        .error("Expected ')'", .current().span());
+                        .error("Expected ')'", .current().span())
                     }
 
                     expr = ParsedExpression::JaktTuple(
@@ -5281,7 +5392,7 @@ struct Parser {
 
         let constant_value = match suffix {
             LiteralSuffix::F32 | LiteralSuffix::F64 => {
-                let number: f64 = u64_to_float<f64>(total) + u64_to_float<f64>(fraction_nominator)/u64_to_float<f64>(fraction_denominator)
+                let number: f64 = u64_to_float<f64>(total) + u64_to_float<f64>(fraction_nominator) / u64_to_float<f64>(fraction_denominator)
                 yield .make_float_numeric_constant(number, suffix, span)
             }
             else => .make_integer_numeric_constant(number: total, suffix, span)
@@ -5382,7 +5493,8 @@ struct Parser {
         return None
     }
 
-    fn make_float_numeric_constant(mut this, number: f64, suffix: LiteralSuffix, span: Span) throws -> NumericConstant? => match suffix {
+    fn make_float_numeric_constant(
+        mut this, number: f64, suffix: LiteralSuffix, span: Span) throws -> NumericConstant? => match suffix {
         // FIXME: consider unifying with make_integer_numeric_constant() to a single function
         LiteralSuffix::F32 => NumericConstant::F32(f64_to_f32(number))
         LiteralSuffix::F64 => NumericConstant::F64(number)
@@ -5651,7 +5763,12 @@ struct Parser {
                             yield TypeCast::Fallible(.parse_typename())
                         }
                         else => {
-                            .error_with_hint("Invalid cast syntax", cast_span, "Use `as!` for an infallible cast, or `as?` for a fallible cast", .previous().span())
+                            .error_with_hint(
+                                "Invalid cast syntax"
+                                cast_span
+                                "Use `as!` for an infallible cast, or `as?` for a fallible cast"
+                                .previous().span()
+                            )
                             yield TypeCast::Fallible(.parse_typename())
                         }
                     }
@@ -5670,7 +5787,10 @@ struct Parser {
                     mut unary_operator_is: ParsedExpression? = None
                     if .current() is LParen and ((parsed_type is NamespacedName) or (parsed_type is Name)) {
                         bindings = .parse_variant_arguments()
-                        unary_operator_is = ParsedExpression::UnaryOp(expr: result, op: UnaryOperator::IsEnumVariant(inner: parsed_type, bindings), span)
+                        unary_operator_is = ParsedExpression::UnaryOp(expr: result, op: UnaryOperator::IsEnumVariant(
+                            inner: parsed_type
+                            bindings
+                            ), span)
                     } else {
                         unary_operator_is = ParsedExpression::UnaryOp(expr: result, op: UnaryOperator::Is(parsed_type), span)
                     }
@@ -5868,12 +5988,12 @@ struct Parser {
             GreaterThanOrEqual => BinaryOperator::GreaterThanOrEqual
             Ampersand => BinaryOperator::BitwiseAnd
             AmpersandAmpersand => {
-                .error("‘&&’ is not allowed, use ‘and’ instead", span);
+                .error("‘&&’ is not allowed, use ‘and’ instead", span)
                 yield BinaryOperator::LogicalAnd
             }
             Pipe => BinaryOperator::BitwiseOr
             PipePipe => {
-                .error("‘||’ is not allowed, use ‘or’ instead", span);
+                .error("‘||’ is not allowed, use ‘or’ instead", span)
                 yield BinaryOperator::LogicalOr
             }
             Caret => BinaryOperator::BitwiseXor
@@ -5917,7 +6037,6 @@ struct Parser {
         let expr = .parse_expression(allow_assignments: false, allow_newlines: true)
         .can_have_trailing_closure = previous_can_have_trailing_closure
         let cases = .parse_match_cases()
-
 
         if cases.size() > 1 {
             for i in ..(cases.size() - 1) {
@@ -6249,7 +6368,7 @@ struct Parser {
                         let inner_type = .parse_typename()
                         if index_before == .index {
                             // Can't parse further, this is not a generic call.
-                            .index = index_reset;
+                            .index = index_reset
                             break
                         }
                         inner_types.push(inner_type)
@@ -6549,7 +6668,7 @@ struct Parser {
         let start = .current().span()
 
         if not .current() is LSquare {
-            .error("Expected ‘[’", .current().span());
+            .error("Expected ‘[’", .current().span())
             return ParsedExpression::Garbage(.current().span())
         }
         .index++
@@ -6625,7 +6744,9 @@ struct Parser {
         if is_dictionary {
             return ParsedExpression::JaktDictionary(values: dict_output, span: merge_spans(start, .tokens[end].span()))
         } else {
-            return ParsedExpression::JaktArray(values: output, fill_size: fill_size_expr, span: merge_spans(start, .tokens[end].span()))
+            return ParsedExpression::JaktArray(values: output, fill_size: fill_size_expr, span: merge_spans(start, .tokens[
+                end
+                ].span()))
         }
     }
 }

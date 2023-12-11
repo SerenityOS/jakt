@@ -1,9 +1,9 @@
 import parser {
-    ArgumentStoreLevel, BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, ExternalName, FunctionLinkage
-    FunctionType, IncludeAction, InlineState, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression
-    ParsedExternImport, ParsedField, ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedModuleImport
-    ParsedNamespace, ParsedParameter, ParsedRecord, ParsedStatement, ParsedType, ParsedVarDecl, Parser, RecordType
-    TypeCast, UnaryOperator, CheckedQualifiers
+    ArgumentStoreLevel, BinaryOperator, CheckedQualifiers, DefinitionLinkage, EnumVariantPatternArgument, ExternalName
+    FunctionLinkage, FunctionType, IncludeAction, InlineState, ParsedBlock, ParsedCall, ParsedCapture
+    ParsedExpression, ParsedExternImport, ParsedField, ParsedFunction, ParsedMatchBody, ParsedMatchCase
+    ParsedModuleImport, ParsedNamespace, ParsedParameter, ParsedRecord, ParsedStatement, ParsedType, ParsedVarDecl
+    Parser, RecordType, TypeCast, UnaryOperator
 }
 import utility { FileId, IterationDecision, Queue, Span, join, panic, todo }
 import compiler { Compiler }
@@ -60,12 +60,12 @@ enum StructLikeId {
 
     fn from_type_id(anon type_id: TypeId, anon program: &CheckedProgram) throws -> StructLikeId? {
         return match program.get_type(type_id) {
-            GenericInstance(id: struct_id, args) | Struct(struct_id) default(args: [TypeId] = [])
-                => StructLikeId::Struct(generic_arguments: args, struct_id)
-            GenericEnumInstance(id: enum_id, args) | Enum(enum_id) default(args: [TypeId] = [])
-                => StructLikeId::Enum(generic_arguments: args, enum_id)
-            GenericTraitInstance(id: trait_id, args) | Trait(trait_id) default(args: [TypeId] = [])
-                => StructLikeId::Trait(generic_arguments: args, trait_id)
+            GenericInstance(id: struct_id, args) | Struct(struct_id)default(args: [TypeId] = [])
+            => StructLikeId::Struct(generic_arguments: args, struct_id)
+            GenericEnumInstance(id: enum_id, args) | Enum(enum_id)default(args: [TypeId] = [])
+            => StructLikeId::Enum(generic_arguments: args, enum_id)
+            GenericTraitInstance(id: trait_id, args) | Trait(trait_id)default(args: [TypeId] = [])
+            => StructLikeId::Trait(generic_arguments: args, trait_id)
             else => None
         }
     }
@@ -285,7 +285,7 @@ boxed enum Type {
         else => true
     }
 
-    fn specificity(this, program: CheckedProgram, base_specificity: i64 = 1<<31) -> i64 => match this {
+    fn specificity(this, program: CheckedProgram, base_specificity: i64 = 1 << 31) -> i64 => match this {
         TypeVariable => 0
         Dependent => 0
         Const => base_specificity
@@ -293,7 +293,7 @@ boxed enum Type {
             mut specificity = base_specificity / 2
             for subtype_id in args.iterator() {
                 let subtype = program.get_type(subtype_id)
-                specificity += subtype.specificity(program, base_specificity: base_specificity/4)
+                specificity += subtype.specificity(program, base_specificity: base_specificity / 4)
             }
             yield specificity
         }
@@ -301,7 +301,7 @@ boxed enum Type {
             mut specificity = base_specificity / 2
             for subtype_id in args.iterator() {
                 let subtype = program.get_type(subtype_id)
-                specificity += subtype.specificity(program, base_specificity: base_specificity/4)
+                specificity += subtype.specificity(program, base_specificity: base_specificity / 4)
             }
             yield specificity
         }
@@ -309,7 +309,7 @@ boxed enum Type {
             mut specificity = base_specificity / 2
             for subtype_id in args.iterator() {
                 let subtype = program.get_type(subtype_id)
-                specificity += subtype.specificity(program, base_specificity: base_specificity/4)
+                specificity += subtype.specificity(program, base_specificity: base_specificity / 4)
             }
             yield specificity
         }
@@ -317,7 +317,7 @@ boxed enum Type {
             mut specificity = base_specificity / 2
             for subtype_id in params.iterator() {
                 let subtype = program.get_type(subtype_id)
-                specificity += subtype.specificity(program, base_specificity: base_specificity/4)
+                specificity += subtype.specificity(program, base_specificity: base_specificity / 4)
             }
             yield specificity
         }
@@ -604,15 +604,15 @@ class Scope {
     public namespace_name: String?
     public external_name: ExternalName?
 
-    public vars: [String: VarId]
-    public comptime_bindings: [String: Value]
-    public structs: [String: StructId]
-    public functions: [String: [FunctionId]]
-    public enums: [String: EnumId]
-    public types: [String: TypeId]
-    public traits: [String: TraitId]
-    public imports: [String: ModuleId] // FIXME: Span
-    public aliases: [String: ScopeId]
+    public vars: [String:VarId]
+    public comptime_bindings: [String:Value]
+    public structs: [String:StructId]
+    public functions: [String:[FunctionId]]
+    public enums: [String:EnumId]
+    public types: [String:TypeId]
+    public traits: [String:TraitId]
+    public imports: [String:ModuleId] // FIXME: Span
+    public aliases: [String:ScopeId]
     public parent: ScopeId?
     public alias_scope: ScopeId? = None
     public children: [ScopeId]
@@ -699,7 +699,7 @@ class Module {
 
 enum CheckedTraitRequirements {
     Nothing
-    Methods([String:FunctionId])
+    Methods([String: FunctionId])
     ComptimeExpression(CheckedExpression)
 }
 
@@ -895,7 +895,6 @@ class CheckedFunction {
             }
         }
 
-
         return true
     }
 
@@ -1087,21 +1086,27 @@ enum BlockControlFlow {
         }
         PartialAlwaysReturns(might_break: lhs) => match second {
             PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: lhs or might_break)
-            PartialAlwaysTransfersControl(might_break) | PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
+            PartialAlwaysTransfersControl(might_break) | PartialNeverReturns(
+                might_break
+            ) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
             AlwaysReturns => BlockControlFlow::AlwaysReturns
             NeverReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
             AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
             MayReturn => BlockControlFlow::MayReturn
         }
         PartialAlwaysTransfersControl(might_break: lhs) => match second {
-            PartialAlwaysTransfersControl(might_break) | PartialAlwaysReturns(might_break) | PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
+            PartialAlwaysTransfersControl(might_break) | PartialAlwaysReturns(might_break) | PartialNeverReturns(
+                might_break
+            ) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
             AlwaysReturns | NeverReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
             AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
             MayReturn => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs)
         }
         PartialNeverReturns(might_break: lhs) => match second {
             PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break: lhs or might_break)
-            PartialAlwaysTransfersControl(might_break) | PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
+            PartialAlwaysTransfersControl(might_break) | PartialAlwaysReturns(
+                might_break
+            ) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
             AlwaysReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
             AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
             MayReturn => BlockControlFlow::PartialNeverReturns(might_break: lhs)
@@ -1130,34 +1135,66 @@ enum BlockControlFlow {
         PartialNeverReturns(might_break: this_might_break) => match second {
             NeverReturns | AlwaysReturns => BlockControlFlow::PartialNeverReturns(might_break: this_might_break)
             MayReturn => BlockControlFlow::PartialNeverReturns(might_break: this_might_break)
-            AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
-            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break: might_break or this_might_break)
-            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or this_might_break)
-            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(
+                might_break: might_break or this_might_break
+            )
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(
+                might_break: might_break or this_might_break
+            )
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(
+                might_break: might_break or this_might_break
+            )
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(
+                might_break: might_break or this_might_break
+            )
         }
         PartialAlwaysReturns(might_break: this_might_break) => match second {
             NeverReturns | AlwaysReturns => BlockControlFlow::PartialAlwaysReturns(might_break: this_might_break)
             MayReturn => BlockControlFlow::PartialAlwaysReturns(might_break: this_might_break)
-            AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
-            PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or this_might_break)
-            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or this_might_break)
-            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(
+                might_break: might_break or this_might_break
+            )
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(
+                might_break: might_break or this_might_break
+            )
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(
+                might_break: might_break or this_might_break
+            )
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(
+                might_break: might_break or this_might_break
+            )
         }
         PartialAlwaysTransfersControl(might_break: this_might_break) => match second {
             NeverReturns | AlwaysReturns => BlockControlFlow::PartialAlwaysTransfersControl(might_break: this_might_break)
             MayReturn => BlockControlFlow::PartialAlwaysTransfersControl(might_break: this_might_break)
-            AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
-            PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
-            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
-            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(
+                might_break: might_break or this_might_break
+            )
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(
+                might_break: might_break or this_might_break
+            )
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(
+                might_break: might_break or this_might_break
+            )
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(
+                might_break: might_break or this_might_break
+            )
         }
         AlwaysTransfersControl(might_break: this_might_break) => match second {
             NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysTransfersControl(might_break: this_might_break)
             MayReturn => BlockControlFlow::PartialAlwaysTransfersControl(might_break: this_might_break)
-            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: might_break or this_might_break)
-            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break: might_break or this_might_break)
-            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: might_break or this_might_break)
-            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: might_break or this_might_break)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(
+                might_break: might_break or this_might_break
+            )
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(
+                might_break: might_break or this_might_break
+            )
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(
+                might_break: might_break or this_might_break
+            )
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(
+                might_break: might_break or this_might_break
+            )
         }
     }
 
@@ -1321,7 +1358,7 @@ enum CheckedEnumVariant {
         Untyped(name) => name
         Typed(name) => name
         WithValue(name) => name
-        StructLike(name)  => name
+        StructLike(name) => name
     }
 }
 
@@ -1408,19 +1445,19 @@ enum CheckedNumericConstant {
     F64(f64)
 
     fn number_constant(this) -> NumberConstant? => match this {
-        I8(value) =>  NumberConstant::Signed(value as! i64)
-        I16(value) =>  NumberConstant::Signed(value as! i64)
-        I32(value) =>  NumberConstant::Signed(value as! i64)
-        I64(value) =>  NumberConstant::Signed(value as! i64)
-        U8(value) =>  NumberConstant::Unsigned(value as! u64)
-        U16(value) =>  NumberConstant::Unsigned(value as! u64)
-        U32(value) =>  NumberConstant::Unsigned(value as! u64)
-        U64(value) =>  NumberConstant::Unsigned(value as! u64)
-        USize(value) =>  NumberConstant::Unsigned(value as! u64)
+        I8(value) => NumberConstant::Signed(value as! i64)
+        I16(value) => NumberConstant::Signed(value as! i64)
+        I32(value) => NumberConstant::Signed(value as! i64)
+        I64(value) => NumberConstant::Signed(value as! i64)
+        U8(value) => NumberConstant::Unsigned(value as! u64)
+        U16(value) => NumberConstant::Unsigned(value as! u64)
+        U32(value) => NumberConstant::Unsigned(value as! u64)
+        U64(value) => NumberConstant::Unsigned(value as! u64)
+        USize(value) => NumberConstant::Unsigned(value as! u64)
 
         // FIXME: add a case for F32 once we can cast f32 to f64
 
-        F64(value) =>  NumberConstant::Floating(value)
+        F64(value) => NumberConstant::Floating(value)
         else => None
     }
 }
@@ -1486,7 +1523,15 @@ struct ClassInstanceRebind {
 enum CheckedMatchCase {
     defaults: [CheckedStatement]
 
-    EnumVariant(name: String, args: [EnumVariantPatternArgument], subject_type_id: TypeId, index: usize, scope_id: ScopeId, body: CheckedMatchBody, marker_span: Span)
+    EnumVariant(
+        name: String
+        args: [EnumVariantPatternArgument]
+        subject_type_id: TypeId
+        index: usize
+        scope_id: ScopeId
+        body: CheckedMatchBody
+        marker_span: Span
+    )
     Expression(expression: CheckedExpression, body: CheckedMatchBody, marker_span: Span)
     ClassInstance(type: TypeId, body: CheckedMatchBody, rebind_name: ClassInstanceRebind?, marker_span: Span)
     CatchAll(has_arguments: bool, body: CheckedMatchBody, marker_span: Span)
@@ -1519,7 +1564,13 @@ boxed enum CheckedExpression {
     Range(from: CheckedExpression?, to: CheckedExpression?, span: Span, type_id: TypeId)
     JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: Span, type_id: TypeId, inner_type_id: TypeId)
     JaktSet(vals: [CheckedExpression], span: Span, type_id: TypeId, inner_type_id: TypeId)
-    JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: Span, type_id: TypeId, key_type_id: TypeId, value_type_id: TypeId)
+    JaktDictionary(
+        vals: [(CheckedExpression, CheckedExpression)]
+        span: Span
+        type_id: TypeId
+        key_type_id: TypeId
+        value_type_id: TypeId
+    )
     IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
     IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, is_optional: bool, type_id: TypeId)
@@ -1737,7 +1788,7 @@ fn builtin(anon builtin: BuiltinType) -> TypeId {
 class CheckedProgram {
     public compiler: Compiler
     public modules: [Module]
-    public loaded_modules: [String: LoadedModule]
+    public loaded_modules: [String:LoadedModule]
 
     public fn create_module(mut this, name: String, is_root: bool, path: String? = None) throws -> ModuleId {
         let new_id = .modules.size()
@@ -1811,12 +1862,19 @@ class CheckedProgram {
         if parent_scope_id.has_value() {
             // Check that the ModuleId is valid
             if parent_scope_id!.module_id.id >= .modules.size() {
-                .compiler.panic(format("create_scope: parent_scope_id.module is invalid! No module with id {}.", parent_scope_id!.module_id.id))
+                .compiler.panic(format(
+                    "create_scope: parent_scope_id.module is invalid! No module with id {}."
+                    parent_scope_id!.module_id.id
+                ))
             }
 
             // Check that ScopeId.id is valid in the module
             if parent_scope_id!.id >= .modules[parent_scope_id!.module_id.id].scopes.size() {
-                .compiler.panic(format("create_scope: parent_scope_id.id is invalid! Module {} does not have a scope with id {}.", parent_scope_id!.module_id.id, parent_scope_id!.id))
+                .compiler.panic(format(
+                    "create_scope: parent_scope_id.id is invalid! Module {} does not have a scope with id {}."
+                    parent_scope_id!.module_id.id
+                    parent_scope_id!.id
+                ))
             }
 
             let scope = .get_scope(parent_scope_id!)
@@ -1885,7 +1943,12 @@ class CheckedProgram {
             CInt => Type::CInt(qualifiers)
             Unknown => Type::Unknown
             Never => Type::Never
-            TypeVariable(name, trait_implementations, is_value) => Type::TypeVariable(qualifiers, name, trait_implementations, is_value)
+            TypeVariable(name, trait_implementations, is_value) => Type::TypeVariable(
+                qualifiers
+                name
+                trait_implementations
+                is_value
+            )
             Dependent(namespace_type, name) => Type::Dependent(qualifiers, namespace_type, name)
             GenericInstance(id, args) => Type::GenericInstance(qualifiers, id, args)
             GenericEnumInstance(id, args) => Type::GenericEnumInstance(qualifiers, id, args)
@@ -1906,9 +1969,9 @@ class CheckedProgram {
             )
             Self => Type::Self(qualifiers)
             Const(value) => Type::Const(qualifiers, value)
-        }
-        module_id: type_id.module
-        only_in_current_module: true)
+            }
+            module_id: type_id.module
+            only_in_current_module: true)
     }
 
     public fn builtin_implementation_struct(mut this, builtin: BuiltinType, for_module: ModuleId) throws -> StructId {
@@ -2058,7 +2121,7 @@ class CheckedProgram {
     ) throws -> CheckedVariable? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[var, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<CheckedVariable> {
+            &fn[var, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<CheckedVariable>{
                 let scope = .get_scope(scope_id)
                 let maybe_var = scope.vars.get(var)
                 if maybe_var.has_value() {
@@ -2080,7 +2143,7 @@ class CheckedProgram {
     ) throws -> Value? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<Value> {
+            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<Value>{
                 let scope = .get_scope(scope_id)
                 let maybe_binding = scope.comptime_bindings.get(name)
                 if maybe_binding.has_value() {
@@ -2102,7 +2165,7 @@ class CheckedProgram {
     ) throws -> (TypeId, ScopeId)? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<(TypeId, ScopeId)> {
+            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<(TypeId, ScopeId)>{
                 let maybe_type = .get_scope(scope_id).types.get(name)
                 if maybe_type.has_value() {
                     return IterationDecision::Break(value: (maybe_type!, scope_id))
@@ -2133,7 +2196,7 @@ class CheckedProgram {
     ) throws -> EnumId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<EnumId> {
+            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<EnumId>{
                 let scope = .get_scope(scope_id)
                 let maybe_enum = scope.enums.get(name)
                 if maybe_enum.has_value() {
@@ -2155,7 +2218,7 @@ class CheckedProgram {
     ) throws -> TraitId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<TraitId> {
+            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<TraitId>{
                 let scope = .get_scope(scope_id)
                 let maybe_trait = scope.traits.get(name)
                 if maybe_trait.has_value() {
@@ -2385,7 +2448,7 @@ class CheckedProgram {
         mut result: T? = None
         .for_each_scope_accessible_unqualified_from_scope_impl(
             scope_id
-            &fn[&mut callback, &mut result](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
+            &fn[&mut callback, &mut result](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>{
                 match callback(scope_id, name_override, is_alias) {
                     Break(value) => {
                         result = value
@@ -2412,7 +2475,7 @@ class CheckedProgram {
     ) throws -> StructId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<StructId> {
+            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<StructId>{
                 let scope = .get_scope(scope_id)
                 let maybe_struct = scope.structs.get(name)
                 if maybe_struct.has_value() {
@@ -2437,10 +2500,15 @@ class CheckedProgram {
         .compiler.panic(format("internal error: {} builtin definition not found", name))
     }
 
-    public fn is_scope_directly_accessible_from(this, check_scope_id: ScopeId, scope_id: ScopeId, ignore_mixin_scopes: bool = false) throws -> bool {
+    public fn is_scope_directly_accessible_from(
+        this
+        check_scope_id: ScopeId
+        scope_id: ScopeId
+        ignore_mixin_scopes: bool = false
+    ) throws -> bool {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[check_scope_id](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
+            &fn[check_scope_id](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>{
                 if check_scope_id.equals(scope_id) {
                     return IterationDecision::Break(value: true)
                 }
@@ -2479,7 +2547,10 @@ class CheckedProgram {
             Enum(enum_id) | GenericEnumInstance(id: enum_id) => .get_enum(enum_id).scope_id
             Trait(trait_id) | GenericTraitInstance(id: trait_id) => .get_trait(trait_id).scope_id
             else => match type.is_builtin() {
-                true => .get_struct(.builtin_implementation_struct(builtin: type.as_builtin_type(), for_module: .prelude_module_id())).scope_id
+                true => .get_struct(.builtin_implementation_struct(
+                    builtin: type.as_builtin_type()
+                    for_module: .prelude_module_id()
+                )).scope_id
                 false => .prelude_scope_id()
             }
         }
@@ -2520,7 +2591,7 @@ class CheckedProgram {
                 scope_id: ScopeId
                 name_override: String?
                 is_alias: bool
-            ) throws -> IterationDecision<(ScopeId, bool)> {
+            ) throws -> IterationDecision<(ScopeId, bool)>{
                 let scope = .get_scope(scope_id)
                 let effective_name = name_override ?? scope.namespace_name
                 let is_import = name_override.has_value() and not is_alias
@@ -2556,7 +2627,11 @@ class CheckedProgram {
 
         let functions = results.value()
         if functions.size() != 1 {
-            .compiler.panic(format("internal error: found {} functions with name '{}', but expected 1", functions.size(), function_name))
+            .compiler.panic(format(
+                "internal error: found {} functions with name '{}', but expected 1"
+                functions.size()
+                function_name
+            ))
         }
 
         return functions[0]
@@ -2608,7 +2683,7 @@ class CheckedProgram {
                 scope_id: ScopeId
                 name_override: String?
                 is_alias: bool
-            ) throws -> IterationDecision<([FunctionId], ScopeId)> {
+            ) throws -> IterationDecision<([FunctionId], ScopeId)>{
                 let scope = .get_scope(scope_id)
                 let maybe_functions = scope.functions.get(function_name)
                 if maybe_functions.has_value() {
@@ -2830,7 +2905,8 @@ class CheckedProgram {
         }
     }
 
-    public fn find_or_add_type_id(mut this, anon type: Type, module_id: ModuleId, only_in_current_module: bool = false) throws -> TypeId {
+    public fn find_or_add_type_id(
+        mut this, anon type: Type, module_id: ModuleId, only_in_current_module: bool = false) throws -> TypeId {
         if only_in_current_module {
             let types = &.get_module(module_id).types
             for id in 0..types.size() {
@@ -2934,7 +3010,7 @@ class CheckedProgram {
                 return .find_or_add_type_id(Type::GenericTraitInstance(id, args: new_args), module_id)
             }
             GenericInstance(id, args) => {
-                mut new_args:[TypeId] = []
+                mut new_args: [TypeId] = []
                 new_args.ensure_capacity(args.size())
                 for arg in args {
                     new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
@@ -2943,7 +3019,7 @@ class CheckedProgram {
                 return .find_or_add_type_id(Type::GenericInstance(id, args: new_args), module_id)
             }
             GenericEnumInstance(id, args) => {
-                mut new_args:[TypeId] = []
+                mut new_args: [TypeId] = []
                 new_args.ensure_capacity(args.size())
                 for arg in args {
                     new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
@@ -2953,7 +3029,7 @@ class CheckedProgram {
             Struct(struct_id) => {
                 let struct_ = .get_struct(struct_id)
                 if not struct_.generic_parameters.is_empty() {
-                    mut new_args:[TypeId] = []
+                    mut new_args: [TypeId] = []
                     new_args.ensure_capacity(struct_.generic_parameters.size())
                     for arg in struct_.generic_parameters {
                         new_args.push(.substitute_typevars_in_type(type_id: arg.type_id, generic_inferences, module_id))
@@ -2964,7 +3040,7 @@ class CheckedProgram {
             Enum(enum_id) => {
                 let enum_ = .get_enum(enum_id)
                 if not enum_.generic_parameters.is_empty() {
-                    mut new_args:[TypeId] = []
+                    mut new_args: [TypeId] = []
                     new_args.ensure_capacity(enum_.generic_parameters.size())
                     for arg in enum_.generic_parameters {
                         new_args.push(.substitute_typevars_in_type(type_id: arg.type_id, generic_inferences, module_id))
@@ -2991,7 +3067,7 @@ class CheckedProgram {
                 return .find_or_add_type_id(ref_type, module_id)
             }
             Function(params, can_throw, return_type_id, pseudo_function_id) => {
-                mut new_params:[TypeId] = []
+                mut new_params: [TypeId] = []
                 new_params.ensure_capacity(params.size())
                 mut is_different = false
                 for param in params {
@@ -3051,7 +3127,12 @@ class CheckedProgram {
 
                 let new_function_id = .modules[module_id.id].add_function(checked_function: new_function)
 
-                return .find_or_add_type_id(Type::Function(params: new_params, can_throw, return_type_id: return_type_substitute, pseudo_function_id: new_function_id), module_id)
+                return .find_or_add_type_id(Type::Function(
+                    params: new_params
+                    can_throw
+                    return_type_id: return_type_substitute
+                    pseudo_function_id: new_function_id
+                    ), module_id)
             }
             else => {
                 return type_id
@@ -3090,8 +3171,8 @@ boxed enum ValueImpl {
     OptionalNone
     JaktTuple(fields: [Value], type_id: TypeId)
     Function(
-        captures: [String: Value]
-        params: [String: (TypeId, (ParsedExpression, ScopeId)?)]
+        captures: [String:Value]
+        params: [String:(TypeId, (ParsedExpression, ScopeId)?)]
         return_type_id: TypeId
         type_id: TypeId
         block: CheckedBlock
@@ -3146,24 +3227,24 @@ boxed enum ValueImpl {
         CChar(x) => ValueImpl::CChar(x)
         CInt(x) => ValueImpl::CInt(x)
         Struct(fields, struct_id, constructor) => {
-            mut fields_copy: [Value] = [];
+            mut fields_copy: [Value] = []
             for field in fields {
-                fields_copy.push(field.copy());
+                fields_copy.push(field.copy())
             }
             yield ValueImpl::Struct(fields: fields_copy, struct_id, constructor)
         }
         Class(fields, struct_id, constructor) => ValueImpl::Class(fields, struct_id, constructor)
         Enum(fields, enum_id, constructor) => {
-            mut fields_copy: [Value] = [];
+            mut fields_copy: [Value] = []
             for field in fields {
-                fields_copy.push(field.copy());
+                fields_copy.push(field.copy())
             }
             yield ValueImpl::Enum(fields: fields_copy, enum_id, constructor)
         }
         JaktArray(values, type_id) => {
-            mut values_copy: [Value] = [];
+            mut values_copy: [Value] = []
             for value in values {
-                values_copy.push(value.copy());
+                values_copy.push(value.copy())
             }
             yield ValueImpl::JaktArray(values: values_copy, type_id)
         }
@@ -3189,9 +3270,9 @@ boxed enum ValueImpl {
         OptionalSome(value) => ValueImpl::OptionalSome(value: value.copy())
         OptionalNone => ValueImpl::OptionalNone
         JaktTuple(fields, type_id) => {
-            mut values_copy: [Value] = [];
+            mut values_copy: [Value] = []
             for value in fields {
-                values_copy.push(value.copy());
+                values_copy.push(value.copy())
             }
             yield ValueImpl::JaktTuple(fields: values_copy, type_id)
         }
@@ -3352,7 +3433,8 @@ class TypecheckFunctions {
     ) throws -> FunctionId
 }
 
-fn format_value_impl(anon format_string: String, anon value: Value, program: &CheckedProgram) throws -> String => match value.impl {
+fn format_value_impl(
+    anon format_string: String, anon value: Value, program: &CheckedProgram) throws -> String => match value.impl {
     Bool(v)
     | U8(v)
     | U16(v)

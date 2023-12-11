@@ -34,7 +34,7 @@ struct Project
         println("Done!")
     }
 
-    fn create_template_cmake_lists(this, project_directory : String) throws {
+    fn create_template_cmake_lists(this, project_directory: String) throws {
         let cml_contents = "cmake_minimum_required(VERSION 3.20)
 project(" + .name + "
    VERSION 1.0.0

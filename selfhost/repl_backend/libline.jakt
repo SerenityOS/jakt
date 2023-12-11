@@ -1,4 +1,4 @@
-import repl_backend::common { LineResult, Style, Color, XTermColor }
+import repl_backend::common { Color, LineResult, Style, XTermColor }
 import utility { Span }
 
 import extern "LibLine/Editor.h" {
@@ -14,14 +14,14 @@ import extern "LibLine/Editor.h" {
     }
     namespace Line {
         namespace Editor {
-            enum Error : u8 {
+            enum Error: u8 {
                 ReadFailure
                 Empty
                 Eof
             }
         }
         namespace Style {
-            enum XtermColor : u8 {
+            enum XtermColor: u8 {
                 Default
                 Black
                 Red
@@ -54,7 +54,7 @@ import extern "LibLine/Editor.h" {
         extern class Editor {
             public on_display_refresh: fn(anon _: &mut Core::Object) -> void
 
-            [[name=try_create]]
+            [[name = try_create]]
             public fn Editor() throws -> Editor
             public fn initialize(mut this) -> void
             public fn get_line(mut this, prompt: String) -> AK::Result<String, Editor::Error>

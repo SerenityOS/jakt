@@ -2,7 +2,7 @@ import extern "AK/Vector.h" {
     namespace AK {
         extern struct Vector<T> {
             fn Vector<S>() -> Vector<S>
-            [[name=try_append]]
+            [[name = try_append]]
             fn append(mut this, value: T) throws
             fn at(this, anon index: usize) -> T
             fn size(this) -> usize
@@ -13,7 +13,7 @@ import extern "AK/Vector.h" {
 
 use AK::Vector
 
-struct VectorIterator<T> implements(Iterable<T>) {
+struct VectorIterator<T>implements ( Iterable< T> )  {
     vector: Vector<T>
     index: usize
 

@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import jakt::platform::utility { null, allocate }
+import jakt::platform::utility { allocate, null }
 
 fn panic(anon message: String) -> never {
     eprintln("internal error: {}", message)
@@ -135,10 +135,10 @@ fn escape_for_quotes(anon s: String) throws -> String {
     mut builder = StringBuilder::create()
     for cp in s.code_points() {
         match cp {
-            b'"' as! u32 =>  { builder.append_string("\\\"") }
+            b'"' as! u32 => { builder.append_string("\\\"") }
             b'\\' as! u32 => { builder.append_string("\\\\") }
             b'\n' as! u32 => { builder.append_string("\\n") }
-            else =>  { builder.append_code_point(cp) }
+            else => { builder.append_code_point(cp) }
         }
     }
 

@@ -1,4 +1,4 @@
-import parser { ParsedNamespace, ParsedRecord, ParsedFunction, BinaryOperator, FunctionLinkage, merge_spans }
+import parser { BinaryOperator, FunctionLinkage, ParsedFunction, ParsedNamespace, ParsedRecord, merge_spans }
 import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedEnum, CheckedEnumVariant, CheckedExpression, CheckedFunction
     CheckedMatchBody, CheckedMatchCase, CheckedProgram, CheckedStatement, CheckedStruct, CheckedVariable, EnumId
@@ -6,7 +6,7 @@ import typechecker {
     void_type_id
 }
 import types { comptime_format_impl }
-import utility { panic, todo, join, prepend_to_each, Span }
+import utility { Span, join, panic, prepend_to_each, todo }
 import compiler { Compiler }
 
 enum Mutability {
@@ -65,8 +65,12 @@ struct JaktSymbol {
         }
         json_builder.append_string(format("\"kind\": \"{}\",", this.kind))
         json_builder.append_string(format("\"range\": {{\"start\": {}, \"end\": {}}},", this.range.start, this.range.end))
-        json_builder.append_string(format("\"selection_range\": {{\"start\": {}, \"end\": {}}},", this.selection_range.start, this.selection_range.end))
-        mut child_symbols : [String] = []
+        json_builder.append_string(format(
+            "\"selection_range\": {{\"start\": {}, \"end\": {}}},"
+            this.selection_range.start
+            this.selection_range.end
+        ))
+        mut child_symbols: [String] = []
         child_symbols.ensure_capacity(this.children.size())
         for child in this.children {
             child_symbols.push(child.to_json())
@@ -101,13 +105,13 @@ fn find_symbols_in_namespace(anon namespace_: ParsedNamespace) throws -> [JaktSy
         namespace_span = merge_spans(namespace_.name_span!, child.range)
     }
     return [JaktSymbol(
-            name: namespace_.name!
-            detail: None
-            kind: "namespace"
-            range: namespace_span
-            selection_range: namespace_.name_span!
-            children: symbols
-        )]
+        name: namespace_.name!
+        detail: None
+        kind: "namespace"
+        range: namespace_span
+        selection_range: namespace_.name_span!
+        children: symbols
+    )]
 }
 
 fn record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
@@ -117,19 +121,40 @@ fn record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
     let record_kind = match record.record_type {
         Struct(fields) => {
             for field in fields {
-                children.push(JaktSymbol(name: field.var_decl.name, detail: None, kind: "field", range: field.var_decl.span, selection_range: field.var_decl.span, children: []))
+                children.push(JaktSymbol(
+                    name: field.var_decl.name
+                    detail: None
+                    kind: "field"
+                    range: field.var_decl.span
+                    selection_range: field.var_decl.span
+                    children: []
+                ))
             }
             yield "struct"
         }
         Class(fields) => {
             for field in fields {
-                children.push(JaktSymbol(name: field.var_decl.name, detail: None, kind: "field", range: field.var_decl.span, selection_range: field.var_decl.span, children: []))
+                children.push(JaktSymbol(
+                    name: field.var_decl.name
+                    detail: None
+                    kind: "field"
+                    range: field.var_decl.span
+                    selection_range: field.var_decl.span
+                    children: []
+                ))
             }
             yield "class"
         }
         ValueEnum(variants) => {
             for variant in variants {
-                children.push(JaktSymbol(name: variant.name, detail: None, kind: "enum-member", range: variant.span, selection_range: variant.span, children: []))
+                children.push(JaktSymbol(
+                    name: variant.name
+                    detail: None
+                    kind: "enum-member"
+                    range: variant.span
+                    selection_range: variant.span
+                    children: []
+                ))
             }
             yield "enum"
         }
@@ -139,11 +164,25 @@ fn record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
                 if variant.params.has_value() {
                     for param in variant.params! {
                         if param.name != "" {
-                            variant_children.push(JaktSymbol(name: param.name, detail: None, kind: "field", range: param.span, selection_range: param.span, children: []))
+                            variant_children.push(JaktSymbol(
+                                name: param.name
+                                detail: None
+                                kind: "field"
+                                range: param.span
+                                selection_range: param.span
+                                children: []
+                            ))
                         }
                     }
                 }
-                children.push(JaktSymbol(name: variant.name, detail: None, kind: "enum-member", range: variant.span, selection_range: variant.span, children: variant_children))
+                children.push(JaktSymbol(
+                    name: variant.name
+                    detail: None
+                    kind: "enum-member"
+                    range: variant.span
+                    selection_range: variant.span
+                    children: variant_children
+                ))
             }
             yield "enum"
         }
@@ -232,7 +271,10 @@ fn find_type_definition_for_type_id(program: CheckedProgram, type_id: TypeId, sp
         Const(value) => value.span
         GenericInstance(id: struct_id, args) => {
             mut output = span
-            if struct_id.equals(array_struct_id) or struct_id.equals(optional_struct_id) or struct_id.equals(range_struct_id) or struct_id.equals(set_struct_id) or struct_id.equals(tuple_struct_id) or struct_id.equals(weak_ptr_struct_id) {
+            if struct_id.equals(array_struct_id) or struct_id.equals(optional_struct_id) or struct_id.equals(range_struct_id) or
+                struct_id.equals(set_struct_id) or
+                struct_id.equals(tuple_struct_id) or
+                struct_id.equals(weak_ptr_struct_id) {
                 output = find_type_definition_for_type_id(program, type_id: args[0], span)
             } else if struct_id.equals(dictionary_struct_id) {
                 output = find_type_definition_for_type_id(program, type_id: args[1], span)
@@ -240,6 +282,7 @@ fn find_type_definition_for_type_id(program: CheckedProgram, type_id: TypeId, sp
                 output = program.get_struct(struct_id).name_span
             }
             yield output
+
         }
         Struct(struct_id) => program.get_struct(struct_id).name_span
         GenericEnumInstance(id) => program.get_enum(id).name_span
@@ -259,7 +302,7 @@ fn find_type_definition_in_program(program: CheckedProgram, span: Span) throws -
     if result.has_value() {
         return match result! {
             Variable(span, type_id) => {
-               yield find_type_definition_for_type_id(program, type_id, span)
+                yield find_type_definition_for_type_id(program, type_id, span)
             }
             Call(function_id) => {
                 yield program.get_function(function_id).name_span
@@ -281,7 +324,15 @@ fn find_typename_in_program(program: CheckedProgram, span: Span) throws -> Strin
     if result.has_value() {
         return match result! {
             Variable(name, type_id, mutability, var_type, visibility, struct_type_id) => {
-                let result = get_var_signature(program, name, var_type_id: type_id, mutability, var_type, visibility, struct_type_id)
+                let result = get_var_signature(
+                    program
+                    name
+                    var_type_id: type_id
+                    mutability
+                    var_type
+                    visibility
+                    struct_type_id
+                )
                 yield Some(result)
             }
             Call(function_id) => {
@@ -484,17 +535,35 @@ fn find_span_in_enum(program: CheckedProgram, checked_enum: CheckedEnum, span: S
             }
             Typed(name, span: variant_span) => {
                 if variant_span.contains(span) {
-                    return Some(Usage::EnumVariant(span: variant_span, name, type_id: checked_enum.type_id, variants: enum_variant_fields(program, checked_enum_variant: variant), number_constant: None))
+                    return Some(Usage::EnumVariant(
+                        span: variant_span
+                        name
+                        type_id: checked_enum.type_id
+                        variants: enum_variant_fields(program, checked_enum_variant: variant)
+                        number_constant: None
+                    ))
                 }
             }
             Untyped(name, span: variant_span) => {
                 if variant_span.contains(span) {
-                    return Some(Usage::EnumVariant(span: variant_span, name, type_id: checked_enum.type_id, variants: [], number_constant: None))
+                    return Some(Usage::EnumVariant(
+                        span: variant_span
+                        name
+                        type_id: checked_enum.type_id
+                        variants: []
+                        number_constant: None
+                    ))
                 }
             }
             WithValue(name, expr, span: variant_span) => {
                 if variant_span.contains(span) {
-                    return Some(Usage::EnumVariant(span: variant_span, name, type_id: checked_enum.type_id, variants: enum_variant_fields(program, checked_enum_variant: variant), number_constant: expr.to_number_constant(program)))
+                    return Some(Usage::EnumVariant(
+                        span: variant_span
+                        name
+                        type_id: checked_enum.type_id
+                        variants: enum_variant_fields(program, checked_enum_variant: variant)
+                        number_constant: expr.to_number_constant(program)
+                    ))
                 }
             }
         }
@@ -597,13 +666,13 @@ fn find_span_in_statement(program: CheckedProgram, statement: CheckedStatement, 
                 }
 
                 return Some(Usage::Variable(
-                        span: checked_var.definition_span
-                        name: checked_var.name
-                        type_id: checked_var.type_id
-                        mutability
-                        var_type: VarType::Variable
-                        visibility: VarVisibility::DoesNotApply
-                        struct_type_id: None))
+                    span: checked_var.definition_span
+                    name: checked_var.name
+                    type_id: checked_var.type_id
+                    mutability
+                    var_type: VarType::Variable
+                    visibility: VarVisibility::DoesNotApply
+                    struct_type_id: None))
             }
             yield none
         }
@@ -738,9 +807,9 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
                         if marker_span.contains(span) {
                             // FIXME: return Some(get_enum_variant_usage_from_type_id_and_name(program, type_id: subject_type_id, variant_index))
                             return Some(get_enum_variant_usage_from_type_id_and_name(
-                                    program
-                                    type_id: subject_type_id
-                                    name))
+                                program
+                                type_id: subject_type_id
+                            name))
                         }
 
                         yield match body {
@@ -772,7 +841,7 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
                                     yield names
                                 }
                                 else => {
-                                    yield {format("else ({})", program.type_name(type_id))}
+                                    yield {format("else ({})", program.type_name(type_id)) }
                                 }
                             }
 
@@ -842,19 +911,19 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
                     else => Mutability::Immutable
                 }
                 return Some(Usage::Variable(
-                        span: var.definition_span
-                        name: var.name
-                        type_id: var.type_id
-                        mutability
-                        var_type: VarType::Variable
-                        visibility: VarVisibility::DoesNotApply
-                        struct_type_id: none_type_id))
+                    span: var.definition_span
+                    name: var.name
+                    type_id: var.type_id
+                    mutability
+                    var_type: VarType::Variable
+                    visibility: VarVisibility::DoesNotApply
+                    struct_type_id: none_type_id))
             }
             return none
         }
 
         NamespacedVar(namespaces, var, span: var_span) => {
-            if var_span.contains(span) and not namespaces.is_empty()  {
+            if var_span.contains(span) and not namespaces.is_empty() {
                 let last_ns = namespaces.last()!
                 if program.get_scope(last_ns.scope).namespace_name.has_value() {
                     let enum_id = program.find_enum_in_scope(scope_id:
@@ -862,7 +931,7 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
 
                     if enum_id.has_value() {
                         let enum_ = program.get_enum(enum_id!)
-                        return Some(get_enum_variant_usage_from_type_id_and_name(program, type_id: enum_.type_id name: var.name))
+                        return Some(get_enum_variant_usage_from_type_id_and_name(program, type_id: enum_.type_id, name: var.name))
                     }
 
                 }
@@ -992,7 +1061,15 @@ fn get_function_signature(program: CheckedProgram, function_id: FunctionId) thro
     return format("fn {}{}({}){}{}", checked_function.name, generic_parameters, parameters, throws_str, returns)
 }
 
-fn get_var_signature(program: CheckedProgram, name: String, var_type_id: TypeId, mutability: Mutability, var_type: VarType, visibility: VarVisibility, struct_type_id: TypeId?) throws -> String {
+fn get_var_signature(
+    program: CheckedProgram
+    name: String
+    var_type_id: TypeId
+    mutability: Mutability
+    var_type: VarType
+    visibility: VarVisibility
+    struct_type_id: TypeId?
+) throws -> String {
     return match var_type {
         Variable => {
             let mut_string = match mutability {
@@ -1213,7 +1290,13 @@ fn get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> String
     }
 }
 
-fn get_enum_variant_signature(program: CheckedProgram, name: String, type_id: TypeId, variants: [(String?, TypeId)], number_constant: NumberConstant?) throws -> String {
+fn get_enum_variant_signature(
+    program: CheckedProgram
+    name: String
+    type_id: TypeId
+    variants: [(String?, TypeId)]
+    number_constant: NumberConstant?
+) throws -> String {
     mut output = get_type_signature(program, type_id)
     output += "::"
     output += name
@@ -1331,7 +1414,7 @@ fn get_enum_variant_usage_from_type_id_and_name(program: CheckedProgram, type_id
                     name
                     type_id
                     variants
-                    number_constant)
+                number_constant)
             }
         }
         panic("unreachable: should have found variant")

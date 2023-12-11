@@ -28,19 +28,24 @@ import types {
     builtin, comptime_format_impl, never_type_id, unknown_type_id, void_type_id
 }
 import types
-import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo, map, write_to_file }
+import utility { FileId, Span, add_arrays, escape_for_quotes, join, map, panic, todo, write_to_file }
 import jakt::path { Path, get_path_separator }
 import compiler { Compiler }
-import interpreter { Interpreter, InterpreterScope, ExecutionResult, value_to_checked_expression }
+import interpreter { ExecutionResult, Interpreter, InterpreterScope, value_to_checked_expression }
 
-import cpp_import::common { choose_processor, CppImportErrors }
+import cpp_import::common { CppImportErrors, choose_processor }
 import choose_processor() { CppImportProcessor }
 
 import jakt::platform { platform_module }
 import platform_module("jakt::platform::fs")
 
 enum FunctionMatchResult {
-    MatchSuccess(args: [CheckedExpression], maybe_this_type_id: TypeId?, used_generic_inferences: [TypeId:TypeId], specificity: i64)
+    MatchSuccess(
+        args: [CheckedExpression]
+        maybe_this_type_id: TypeId?
+        used_generic_inferences: [TypeId:TypeId]
+        specificity: i64
+    )
     MatchError(errors: [JaktError])
 }
 
@@ -76,7 +81,7 @@ enum NumericOrStringValue {
 
 // [foo:[1,2], bar:[4,5]] -> [foo:1,bar:4], [foo:1,bar:5], [foo:2,bar:4], [foo:2,bar:5]
 // [K:[V]] -> [K:V]
-struct InternalDictionaryProduct<K, V> implements(ThrowingIterable<[K:V]>) {
+struct InternalDictionaryProduct<K, V>implements ( ThrowingIterable< [ K: V] > )  {
     dict: [K:[V]]
     current: [K:V]
     current_index: [K:usize]
@@ -160,12 +165,12 @@ struct Typechecker {
 
     fn dump_type_hint(this, type_id: TypeId, span: Span) throws {
         println("{{\"type\":\"hint\",\"file_id\":{},\"position\":{},\"typename\":\"{}\"}}"
-                span.file_id.id, span.end, .type_name(type_id))
+            span.file_id.id, span.end, .type_name(type_id))
     }
 
-    fn dump_try_hint( this, span: Span) throws {
+    fn dump_try_hint(this, span: Span) throws {
         println("{{\"type\":\"try\",\"file_id\":{},\"position\":{}}}"
-                span.file_id.id, span.start)
+            span.file_id.id, span.start)
     }
 
     fn typecheck(mut compiler: Compiler, parsed_namespace: ParsedNamespace) throws -> Typechecker {
@@ -200,7 +205,6 @@ struct Typechecker {
 
         typechecker.include_prelude()
 
-
         let root_module_id = typechecker.create_module(name: root_module_name, is_root: true)
         typechecker.current_module_id = root_module_id
         compiler.set_current_file(input_file!)
@@ -215,7 +219,12 @@ struct Typechecker {
         )
 
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
-        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: false, debug_name: "root", for_block: false)
+        let root_scope_id = typechecker.create_scope(
+            parent_scope_id: PRELUDE_SCOPE_ID
+            can_throw: false
+            debug_name: "root"
+            for_block: false
+        )
         typechecker.typecheck_module_import(
             import_: ParsedModuleImport(
                 module_name: ImportName::Literal(
@@ -297,7 +306,11 @@ struct Typechecker {
         return None
     }
 
-    fn find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? => .program.find_comptime_binding_in_scope(scope_id, name)
+    fn find_comptime_binding_in_scope(
+        this
+        scope_id: ScopeId
+        anon name: String
+    ) throws -> Value? => .program.find_comptime_binding_in_scope(scope_id, name)
 
     fn get_root_path(this) throws -> Path {
         let root_module = .program.get_loaded_module(.root_module_name)
@@ -349,7 +362,19 @@ struct Typechecker {
     fn is_floating(this, anon type_id: TypeId) -> bool => .program.is_floating(type_id)
     fn is_numeric(this, anon type_id: TypeId) -> bool => .program.is_numeric(type_id)
 
-    fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, for_block: bool = true) throws -> ScopeId => .program.create_scope(parent_scope_id, can_throw, debug_name, module_id: .current_module_id, for_block)
+    fn create_scope(
+        mut this
+        parent_scope_id: ScopeId?
+        can_throw: bool
+        debug_name: String
+        for_block: bool = true
+    ) throws -> ScopeId => .program.create_scope(
+        parent_scope_id
+        can_throw
+        debug_name
+        module_id: .current_module_id
+        for_block
+    )
 
     fn create_module(mut this, name: String, is_root: bool, path: String? = None) throws -> ModuleId {
         let new_id = .program.modules.size()
@@ -427,7 +452,7 @@ struct Typechecker {
             loaded_module: LoadedModule(
                 module_id: prelude_module_id
                 file_id
-         ))
+        ))
 
         let prelude_scope_id = .create_scope(
             parent_scope_id: None
@@ -502,7 +527,12 @@ struct Typechecker {
     }
 
     fn unify(mut this, lhs: TypeId, lhs_span: Span, rhs: TypeId, rhs_span: Span) throws -> TypeId? {
-        if not .check_types_for_compat(lhs_type_id: lhs, rhs_type_id: rhs, generic_inferences: &mut .generic_inferences, span: lhs_span) {
+        if not .check_types_for_compat(
+            lhs_type_id: lhs
+            rhs_type_id: rhs
+            generic_inferences: &mut .generic_inferences
+            span: lhs_span
+        ) {
             return None
         }
 
@@ -516,14 +546,22 @@ struct Typechecker {
         if expected_type!.equals(unknown_type_id()) {
             return found_type
         }
-        if .check_types_for_compat(lhs_type_id: expected_type!, rhs_type_id: found_type, generic_inferences: &mut .generic_inferences, span) {
+        if .check_types_for_compat(
+            lhs_type_id: expected_type!
+            rhs_type_id: found_type
+            generic_inferences: &mut .generic_inferences
+            span
+        ) {
             return found_type
         }
 
         return .substitute_typevars_in_type(type_id: found_type, generic_inferences: .generic_inferences)
     }
 
-    fn find_or_add_type_id(mut this, anon type: Type) throws -> TypeId => .program.find_or_add_type_id(type, module_id: .current_module_id)
+    fn find_or_add_type_id(mut this, anon type: Type) throws -> TypeId => .program.find_or_add_type_id(
+        type
+        module_id: .current_module_id
+    )
 
     fn find_type_in_scope(this, scope_id: ScopeId, name: String) throws -> TypeId? {
         return .program.find_type_in_scope(scope_id, name)
@@ -553,7 +591,11 @@ struct Typechecker {
 
         if trait_impls.size() > 1 {
             .error(
-                message: format("type ‘{}’ implements trait ‘{}’ more than once, but a singular implementation is allowed", .type_name(type_id), trait_name)
+                message: format(
+                    "type ‘{}’ implements trait ‘{}’ more than once, but a singular implementation is allowed"
+                    .type_name(type_id)
+                    trait_name
+                )
                 span
             )
         }
@@ -590,7 +632,13 @@ struct Typechecker {
 
     // Find the namespace in the current scope, or one of its parents,
     // and whether the found scope was an import.
-    fn find_namespace_in_scope(this, scope_id: ScopeId, name: String, treat_aliases_as_imports: bool = false, root_scope: ScopeId? = None) throws -> (ScopeId, bool)? {
+    fn find_namespace_in_scope(
+        this
+        scope_id: ScopeId
+        name: String
+        treat_aliases_as_imports: bool = false
+        root_scope: ScopeId? = None
+    ) throws -> (ScopeId, bool)? {
         return .program.find_namespace_in_scope(scope_id, name, treat_aliases_as_imports, root_scope)
     }
 
@@ -681,7 +729,8 @@ struct Typechecker {
         return true
     }
 
-    fn add_function_to_scope(mut this, parent_scope_id: ScopeId, name: String, overload_set: [FunctionId], span: Span) throws -> bool {
+    fn add_function_to_scope(
+        mut this, parent_scope_id: ScopeId, name: String, overload_set: [FunctionId], span: Span) throws -> bool {
         mut scope = .get_scope(id: parent_scope_id)
 
         if scope.functions.contains(name) {
@@ -719,7 +768,10 @@ struct Typechecker {
         let existing_var = scope.vars.get(name)
         if existing_var.has_value() {
             let variable_ = .get_variable(existing_var!)
-            .error_with_hint(message: format("Redefinition of variable ‘{}’", name), span, hint: "previous definition here", hint_span: variable_.definition_span)
+            .error_with_hint(message: format(
+                "Redefinition of variable ‘{}’"
+                name
+                ), span, hint: "previous definition here", hint_span: variable_.definition_span)
         }
         scope.vars.set(key: name, value: var_id)
         .program.set_owner_scope_if_needed(parent_scope_id: scope_id, var_id)
@@ -759,7 +811,7 @@ struct Typechecker {
     }
 
     fn find_function_matching_signature_in_scope(this, parent_scope_id: ScopeId, prototype: ParsedFunction) throws -> FunctionId? {
-        let function_name  = prototype.name
+        let function_name = prototype.name
         let candidate_ids = .program.find_functions_with_name_in_scope(parent_scope_id, function_name)
         if candidate_ids.has_value() {
             for candidate_id in candidate_ids!.iterator() {
@@ -791,7 +843,6 @@ struct Typechecker {
         guard .program.find_functions_with_name_in_scope(parent_scope_id, function_name) is Some(candidate_ids) else {
             return None
         }
-
 
         let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
         defer {
@@ -843,7 +894,13 @@ struct Typechecker {
         .typecheck_namespace_methods_predecl(parsed_namespace, scope_id, comptime_pass: false, generic_pass: false)
         .typecheck_namespace_methods_predecl(parsed_namespace, scope_id, comptime_pass: true, generic_pass: true)
         .typecheck_namespace_methods_predecl(parsed_namespace, scope_id, comptime_pass: false, generic_pass: true)
-        .typecheck_namespace_aliases(parsed_namespace, scope_id, allow: ImportRestrictions(structs: true, enums: true, types: true, traits: true, namespaces: true))
+        .typecheck_namespace_aliases(parsed_namespace, scope_id, allow: ImportRestrictions(
+            structs: true
+            enums: true
+            types: true
+            traits: true
+            namespaces: true
+        ))
         .typecheck_namespace_fields(parsed_namespace, scope_id)
         .typecheck_namespace_constructors(parsed_namespace, scope_id)
         .typecheck_namespace_function_predecl(parsed_namespace, scope_id, comptime_pass: true, generic_pass: false)
@@ -973,7 +1030,11 @@ struct Typechecker {
 
         for unchecked_member in parsed_fields {
             let parsed_var_decl = unchecked_member.var_decl
-            let checked_member_type = .typecheck_typename(parsed_type: parsed_var_decl.parsed_type, scope_id: checked_struct_scope_id, name: parsed_var_decl.name)
+            let checked_member_type = .typecheck_typename(
+                parsed_type: parsed_var_decl.parsed_type
+                scope_id: checked_struct_scope_id
+                name: parsed_var_decl.name
+            )
 
             if not in_generated_code {
                 .check_that_type_doesnt_contain_reference(type_id: checked_member_type, span: parsed_var_decl.parsed_type.span())
@@ -1090,7 +1151,11 @@ struct Typechecker {
 
             mut maybe_loaded_module = .program.get_loaded_module(name_and_span.0)
             if not maybe_loaded_module.has_value() {
-                let maybe_file_name = .compiler.search_for_path(input_module_name: name_and_span.0, relative_import: import_is_relative, parent_path_count: parent_path_count)
+                let maybe_file_name = .compiler.search_for_path(
+                    input_module_name: name_and_span.0
+                    relative_import: import_is_relative
+                    parent_path_count: parent_path_count
+                )
                 let file_name = match maybe_file_name.has_value() {
                     true => maybe_file_name!
                     false => .get_root_path().parent().join(name_and_span.0).replace_extension("jakt")
@@ -1120,7 +1185,11 @@ struct Typechecker {
         mut imported_module_id = ModuleId(id: 0)
         mut maybe_loaded_module = .program.get_loaded_module(sanitized_module_name)
         if not maybe_loaded_module.has_value() {
-            let maybe_file_name = .compiler.search_for_path(input_module_name: module_name, relative_import: import_is_relative, parent_path_count: parent_path_count)
+            let maybe_file_name = .compiler.search_for_path(
+                input_module_name: module_name
+                relative_import: import_is_relative
+                parent_path_count: parent_path_count
+            )
             let file_name = match maybe_file_name.has_value() {
                 true => maybe_file_name!
                 false => .get_root_path().parent().join(module_name).replace_extension("jakt")
@@ -1145,7 +1214,7 @@ struct Typechecker {
                 loaded_module: LoadedModule(
                     module_id: imported_module_id
                     file_id
-                ))
+            ))
 
             .current_module_id = imported_module_id
 
@@ -1381,7 +1450,13 @@ struct Typechecker {
 
         mut module = .program.get_module(scope_id.module_id)
 
-        let result_scope_id = .cpp_import_processor!.process_cpp_import(program: &mut .program, import_path, scope_id, is_c, defines)
+        let result_scope_id = .cpp_import_processor!.process_cpp_import(
+            program: &mut .program
+            import_path
+            scope_id
+            is_c
+            defines
+        )
 
         return result_scope_id
     }
@@ -1402,14 +1477,14 @@ struct Typechecker {
 
             if not f.block.stmts.is_empty() {
                 .error("imported extern function is not allowed to have a body"
-                        f.name_span)
+                    f.name_span)
             }
         }
 
         for record in import_.assigned_namespace.records {
             if not record.definition_linkage is External {
                 .error("Expected all records in an `import extern` to be external"
-                        record.name_span)
+                    record.name_span)
             }
             if import_.is_c and not record.generic_parameters.is_empty() {
                 .error_with_hint(
@@ -1605,7 +1680,8 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_namespace_aliases(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId, allow: ImportRestrictions) throws {
+    fn typecheck_namespace_aliases(
+        mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId, allow: ImportRestrictions) throws {
         let children = .get_scope(id: scope_id).children
         for i in 0..parsed_namespace.namespaces.size() {
             let child_namespace = parsed_namespace.namespaces[i]
@@ -1708,7 +1784,12 @@ struct Typechecker {
         for i in 0..parsed_namespace.namespaces.size() {
             let child_namespace = parsed_namespace.namespaces[i]
             let child_namespace_scope_id = children[i]
-            .typecheck_namespace_function_predecl(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id, comptime_pass, generic_pass)
+            .typecheck_namespace_function_predecl(
+                parsed_namespace: child_namespace
+                scope_id: child_namespace_scope_id
+                comptime_pass
+                generic_pass
+            )
         }
 
         for fun in parsed_namespace.functions {
@@ -1968,7 +2049,7 @@ struct Typechecker {
                 if type.is_builtin() {
                     type = .get_type(.get_struct(
                         .program.builtin_implementation_struct(builtin: type.as_builtin_type(), for_module: .program.prelude_module_id())
-                    ).type_id)
+                        ).type_id)
                 }
                 match type {
                     Struct(struct_id) | GenericInstance(id: struct_id) => {
@@ -2133,12 +2214,23 @@ struct Typechecker {
         return results
     }
 
-    fn typecheck_namespace_methods_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId, comptime_pass: bool, generic_pass: bool) throws {
+    fn typecheck_namespace_methods_predecl(
+        mut this
+        parsed_namespace: ParsedNamespace
+        scope_id: ScopeId
+        comptime_pass: bool
+        generic_pass: bool
+    ) throws {
         let children = .get_scope(id: scope_id).children
         for i in 0..parsed_namespace.namespaces.size() {
             let child_namespace = parsed_namespace.namespaces[i]
             let child_namespace_scope_id = children[i]
-            .typecheck_namespace_methods_predecl(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id, comptime_pass, generic_pass)
+            .typecheck_namespace_methods_predecl(
+                parsed_namespace: child_namespace
+                scope_id: child_namespace_scope_id
+                comptime_pass
+                generic_pass
+            )
         }
 
         mut records_to_process: Queue<(ParsedRecord, ScopeId)> = Queue()
@@ -2212,7 +2304,7 @@ struct Typechecker {
         mut this
         implementation: ParsedExternalTraitImplementation
         entity_scope_id: ScopeId
-        trait_implementations: &mut [String:[(TraitId, [TypeId])]]
+        trait_implementations: &mut [String: [(TraitId, [TypeId])]]
         for_type: TypeId
         scope_id: ScopeId
         default_pass: bool
@@ -2251,7 +2343,7 @@ struct Typechecker {
                     }
 
                     let inferences = .generic_inferences
-                    function.map_types(&fn[inferences](anon type_id: TypeId) throws -> TypeId {
+                    function.map_types(&fn[inferences](anon type_id: TypeId) throws -> TypeId{
                         return inferences.map(type_id)
                     })
 
@@ -2314,7 +2406,10 @@ struct Typechecker {
     }
 
     fn typecheck_trait_predecl(mut this, parsed_trait: ParsedTrait, scope_id: ScopeId) throws {
-        let trait_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("trait({})", parsed_trait.name), for_block: false)
+        let trait_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format(
+            "trait({})"
+            parsed_trait.name
+            ), for_block: false)
         .add_type_to_scope(
             scope_id: trait_scope_id
             type_name: "Self"
@@ -2340,7 +2435,6 @@ struct Typechecker {
         let trait_type_id = .find_or_add_type_id(Type::Trait(trait_id))
 
         .program.modules[.current_module_id.id].traits.push(checked_trait)
-
 
         let old_self_type_id = .self_type_id
         .set_self_type_id(trait_type_id)
@@ -2450,7 +2544,13 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_trait(mut this, parsed_trait: ParsedTrait, trait_id: TraitId, scope_id: ScopeId, comptime_pass: bool = false) throws {
+    fn typecheck_trait(
+        mut this
+        parsed_trait: ParsedTrait
+        trait_id: TraitId
+        scope_id: ScopeId
+        comptime_pass: bool = false
+    ) throws {
         mut checked_trait = .program.modules[trait_id.module.id].traits[trait_id.id]
 
         let old_self_type_id = .self_type_id
@@ -2474,7 +2574,13 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_enum_predecl_initial(mut this, parsed_record: ParsedRecord, enum_index: usize, module_enum_len: usize, scope_id: ScopeId) throws {
+    fn typecheck_enum_predecl_initial(
+        mut this
+        parsed_record: ParsedRecord
+        enum_index: usize
+        module_enum_len: usize
+        scope_id: ScopeId
+    ) throws {
         let module_id = .current_module_id
         let enum_id = EnumId(module: .current_module_id, id: enum_index + module_enum_len)
         mut module = .current_module()
@@ -2515,7 +2621,10 @@ struct Typechecker {
         .set_self_type_id(enum_type_id)
         defer .self_type_id = old_self_type_id
 
-        let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("enum({})", parsed_record.name), for_block: false)
+        let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format(
+            "enum({})"
+            parsed_record.name
+            ), for_block: false)
         mut scope = .get_scope(enum_scope_id)
         scope.namespace_name = parsed_record.name
         scope.relevant_type_id = enum_type_id
@@ -2596,7 +2705,11 @@ struct Typechecker {
             mut checked_param = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
 
             mut trait_implementations: [TypeId] = []
-            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations, is_value: gen_parameter.is_value))
+            module.types.push(Type::TypeVariable(
+                name: gen_parameter.name
+                trait_implementations
+                is_value: gen_parameter.is_value
+            ))
 
             if gen_parameter.requires_list.has_value() {
                 .fill_trait_requirements(
@@ -2609,7 +2722,12 @@ struct Typechecker {
 
             generic_parameters.push(checked_param)
 
-            .add_type_to_scope(scope_id: enum_scope_id, type_name: gen_parameter.name, type_id: parameter_type_id, span: gen_parameter.span)
+            .add_type_to_scope(
+                scope_id: enum_scope_id
+                type_name: gen_parameter.name
+                type_id: parameter_type_id
+                span: gen_parameter.span
+            )
         }
 
         if parsed_record.implements_list.has_value() {
@@ -2752,7 +2870,11 @@ struct Typechecker {
                         default_value_expression: None
                     ))
                 } else {
-                    let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id, name: param.variable.name)
+                    let param_type = .typecheck_typename(
+                        parsed_type: param.variable.parsed_type
+                        scope_id: method_scope_id
+                        name: param.variable.name
+                    )
 
                     let checked_variable = CheckedVariable(
                         name: param.variable.name
@@ -2781,7 +2903,11 @@ struct Typechecker {
                 span: parsed_record.name_span
             )
 
-            let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: method_scope_id, name: None)
+            let function_return_type_id = .typecheck_typename(
+                parsed_type: func.return_type
+                scope_id: method_scope_id
+                name: None
+            )
             checked_function.return_type_id = function_return_type_id
         }
     }
@@ -2832,7 +2958,10 @@ struct Typechecker {
 
         let struct_ = .get_struct(struct_id)
 
-        let constructor_ids = .find_functions_with_name_in_scope(parent_scope_id: struct_.scope_id, function_name: parsed_record.name)
+        let constructor_ids = .find_functions_with_name_in_scope(
+            parent_scope_id: struct_.scope_id
+            function_name: parsed_record.name
+        )
         if constructor_ids.has_value() {
             if parsed_record.record_type is Class and parsed_record.definition_linkage is External {
                 // XXX: The parser always sets the linkage type of an extern class'
@@ -2848,8 +2977,16 @@ struct Typechecker {
             // No constructor found, so let's make one
 
             let constructor_can_throw = parsed_record.record_type is Class
-            let function_scope_id = .create_scope(parent_scope_id: struct_.scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor({})", parsed_record.name))
-            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor-block({})", parsed_record.name))
+            let function_scope_id = .create_scope(
+                parent_scope_id: struct_.scope_id
+                can_throw: constructor_can_throw
+                debug_name: format("generated-constructor({})", parsed_record.name)
+            )
+            let block_scope_id = .create_scope(
+                parent_scope_id: function_scope_id
+                can_throw: constructor_can_throw
+                debug_name: format("generated-constructor-block({})", parsed_record.name)
+            )
 
             let inheritance_chain = .struct_inheritance_chain(struct_id)
             mut constructor_parameters: [CheckedParameter] = []
@@ -2945,7 +3082,7 @@ struct Typechecker {
     fn fill_trait_implementation_list(
         mut this
         anon parsed_impl_list: [ParsedNameWithGenericParameters]
-        anon trait_implementations: &mut [String:[(TraitId, [TypeId])]]
+        anon trait_implementations: &mut [String: [(TraitId, [TypeId])]]
         scope_id: ScopeId
         trait_name_scope_id_override: ScopeId? = None
     ) throws -> [(TraitId, [TypeId])] {
@@ -3028,7 +3165,6 @@ struct Typechecker {
         let old_self_type_id = .self_type_id
         .set_self_type_id(.find_or_add_type_id(Type::GenericTraitInstance(id: trait_id, args: generic_parameters)))
         defer .self_type_id = old_self_type_id
-
 
         for i in 0..trait_.generic_parameters.size() {
             let parameter = trait_.generic_parameters[i]
@@ -3119,7 +3255,11 @@ struct Typechecker {
 
             mut parameter = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
             mut trait_implementations: [TypeId] = []
-            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations, is_value: gen_parameter.is_value))
+            module.types.push(Type::TypeVariable(
+                name: gen_parameter.name
+                trait_implementations
+                is_value: gen_parameter.is_value
+            ))
 
             if gen_parameter.requires_list.has_value() {
                 .fill_trait_requirements(
@@ -3130,10 +3270,14 @@ struct Typechecker {
                 )
             }
 
-
             generic_parameters.push(parameter)
 
-            .add_type_to_scope(scope_id: struct_scope_id, type_name: gen_parameter.name, type_id: parameter_type_id, span: gen_parameter.span)
+            .add_type_to_scope(
+                scope_id: struct_scope_id
+                type_name: gen_parameter.name
+                type_id: parameter_type_id
+                span: gen_parameter.span
+            )
         }
 
         let is_extern = parsed_record.definition_linkage is External
@@ -3176,7 +3320,11 @@ struct Typechecker {
                 continue
             }
 
-            let function_id = .typecheck_function_predecl(parsed_function: method.parsed_function, parent_scope_id: struct_scope_id, this_arg_type_id: struct_type_id)
+            let function_id = .typecheck_function_predecl(
+                parsed_function: method.parsed_function
+                parent_scope_id: struct_scope_id
+                this_arg_type_id: struct_type_id
+            )
             mut checked_function = .get_function(function_id)
 
             checked_function.is_override = method.is_override
@@ -3229,7 +3377,13 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_struct_predecl_initial(mut this, parsed_record: ParsedRecord, struct_index: usize, module_struct_len: usize, scope_id: ScopeId) throws {
+    fn typecheck_struct_predecl_initial(
+        mut this
+        parsed_record: ParsedRecord
+        struct_index: usize
+        module_struct_len: usize
+        scope_id: ScopeId
+    ) throws {
         let module_id = .current_module_id
         let struct_id = StructId(module: .current_module_id, id: struct_index + module_struct_len)
         mut module = .current_module()
@@ -3238,7 +3392,10 @@ struct Typechecker {
         let struct_type_id = TypeId(module: module_id, id: .current_module().types.size() - 1)
         .add_type_to_scope(scope_id, type_name: parsed_record.name, type_id: struct_type_id, span: parsed_record.name_span)
 
-        let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("struct({})", parsed_record.name), for_block: false)
+        let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format(
+            "struct({})"
+            parsed_record.name
+            ), for_block: false)
         mut scope = .get_scope(struct_scope_id)
 
         scope.namespace_name = parsed_record.name
@@ -3270,7 +3427,7 @@ struct Typechecker {
                 let method_names_and_spans = map(
                     input: parsed_record.methods
                     mapper: &fn(item: ParsedMethod) throws -> (String, Span) =>
-                        (item.parsed_function.name,item.parsed_function.name_span)
+                        (item.parsed_function.name, item.parsed_function.name_span)
                 )
                 for x in field_names_and_spans {
                     for y in method_names_and_spans {
@@ -3537,12 +3694,23 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_namespace_declarations(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId, comptime_pass: bool, generic_pass: bool) throws {
+    fn typecheck_namespace_declarations(
+        mut this
+        parsed_namespace: ParsedNamespace
+        scope_id: ScopeId
+        comptime_pass: bool
+        generic_pass: bool
+    ) throws {
         let children = .get_scope(id: scope_id).children
         for i in 0..parsed_namespace.namespaces.size() {
             let child_namespace = parsed_namespace.namespaces[i]
             let child_namespace_scope_id = children[i]
-            .typecheck_namespace_declarations(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id, comptime_pass, generic_pass)
+            .typecheck_namespace_declarations(
+                parsed_namespace: child_namespace
+                scope_id: child_namespace_scope_id
+                comptime_pass
+                generic_pass
+            )
         }
 
         // Check the forall chunks
@@ -3660,7 +3828,7 @@ struct Typechecker {
                             }
                         }
                     }
-                    else => { }
+                    else => {}
                 }
             }
         }
@@ -3707,7 +3875,11 @@ struct Typechecker {
 
                         let expr = match variant.value.has_value() {
                             true => {
-                                let value_expression = .cast_to_underlying(variant.value!, scope_id: parent_scope_id, parsed_type: underlying_type)
+                                let value_expression = .cast_to_underlying(
+                                    variant.value!
+                                    scope_id: parent_scope_id
+                                    parsed_type: underlying_type
+                                )
                                 let number_constant = value_expression.to_number_constant(program: .program)
                                 match number_constant.has_value() {
                                     true => {
@@ -3720,7 +3892,12 @@ struct Typechecker {
                                         }
                                     }
                                     else => {
-                                        .error(format("Enum variant '{}' in enum '{}' has a non-constant value: {}", variant.name, enum_.name, value_expression), variant.span)
+                                        .error(format(
+                                            "Enum variant '{}' in enum '{}' has a non-constant value: {}"
+                                            variant.name
+                                            enum_.name
+                                            value_expression
+                                            ), variant.span)
                                     }
                                 }
                                 yield value_expression
@@ -3778,7 +3955,11 @@ struct Typechecker {
                                 let default_value = variant_default_values[i]
 
                                 if seen_fields.contains(param.name) {
-                                    .error(format("Enum variant '{}' has a member named '{}' more than once", variant.name, param.name), param.span)
+                                    .error(format(
+                                        "Enum variant '{}' has a member named '{}' more than once"
+                                        variant.name
+                                        param.name
+                                        ), param.span)
                                     continue
                                 }
                                 seen_fields.add(param.name)
@@ -3811,11 +3992,22 @@ struct Typechecker {
                             }
                         }
                         enum_.variants.push(CheckedEnumVariant::StructLike(enum_id, name: variant.name, fields, span: variant.span))
-                        let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
+                        let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(
+                            parent_scope_id: enum_.scope_id
+                            function_name: variant.name
+                        )
                         if not maybe_enum_variant_constructor.has_value() {
                             let can_function_throw = is_boxed
-                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
-                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format(
+                                "enum-variant-constructor({}::{})"
+                                enum_.name
+                                variant.name
+                            ))
+                            let block_scope_id = .create_scope(
+                                parent_scope_id: function_scope_id
+                                can_throw: can_function_throw
+                                debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name)
+                            )
                             let checked_function = CheckedFunction(
                                 name: variant.name
                                 name_span: variant.span
@@ -3866,11 +4058,22 @@ struct Typechecker {
                         let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id, name: param.name)
                         enum_.variants.push(CheckedEnumVariant::Typed(enum_id, name: variant.name, type_id, span: variant.span))
 
-                        let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
+                        let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(
+                            parent_scope_id: enum_.scope_id
+                            function_name: variant.name
+                        )
                         if not maybe_enum_variant_constructor.has_value() {
                             let can_function_throw = is_boxed
-                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
-                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format(
+                                "enum-variant-constructor({}::{})"
+                                enum_.name
+                                variant.name
+                            ))
+                            let block_scope_id = .create_scope(
+                                parent_scope_id: function_scope_id
+                                can_throw: can_function_throw
+                                debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name)
+                            )
                             let variable = CheckedVariable(
                                 name: "value"
                                 type_id
@@ -3930,11 +4133,22 @@ struct Typechecker {
                         }
 
                         enum_.variants.push(CheckedEnumVariant::Untyped(enum_id, name: variant.name, span: variant.span))
-                        let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
+                        let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(
+                            parent_scope_id: enum_.scope_id
+                            function_name: variant.name
+                        )
                         if not maybe_enum_variant_constructor.has_value() {
                             let can_function_throw = is_boxed
-                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
-                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format(
+                                "enum-variant-constructor({}::{})"
+                                enum_.name
+                                variant.name
+                            ))
+                            let block_scope_id = .create_scope(
+                                parent_scope_id: function_scope_id
+                                can_throw: can_function_throw
+                                debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name)
+                            )
                             let checked_function = CheckedFunction(
                                 name: variant.name
                                 name_span: variant.span
@@ -3996,7 +4210,9 @@ struct Typechecker {
     }
 
     fn cast_to_underlying(mut this, anon expr: ParsedExpression, scope_id: ScopeId, parsed_type: ParsedType) throws -> CheckedExpression {
-        let cast_expression = ParsedExpression::UnaryOp(expr, op: UnaryOperator::TypeCast(TypeCast::Infallible(parsed_type)), span: expr.span())
+        let cast_expression = ParsedExpression::UnaryOp(expr, op: UnaryOperator::TypeCast(TypeCast::Infallible(
+            parsed_type
+            )), span: expr.span())
         return .typecheck_expression(cast_expression, scope_id, safety_mode: SafetyMode::Safe, type_hint: None)
     }
 
@@ -4009,7 +4225,7 @@ struct Typechecker {
         .set_self_type_id(struct_type_id)
         defer .self_type_id = old_self_type_id
 
-        mut all_virtuals: [String: [CheckedFunction]] = [:]
+        mut all_virtuals: [String:[CheckedFunction]] = [:]
         mut super_struct_id = .get_struct(struct_id).super_struct_id
         while super_struct_id.has_value() {
             let super_struct = .get_struct(super_struct_id!)
@@ -4020,7 +4236,7 @@ struct Typechecker {
                     if function.is_virtual {
                         if not all_virtuals.contains(function.name) {
                             all_virtuals[function.name] = [function]
-                        }else {
+                        } else {
                             all_virtuals[function.name].push(function)
                         }
                     }
@@ -4041,7 +4257,8 @@ struct Typechecker {
         .current_struct_type_id = None
     }
 
-    fn typecheck_override(mut this, method: ParsedMethod, parent_scope_id: ScopeId, all_virtuals: [String: [CheckedFunction]]) throws {
+    fn typecheck_override(
+        mut this, method: ParsedMethod, parent_scope_id: ScopeId, all_virtuals: [String:[CheckedFunction]]) throws {
         guard method.is_override else {
             if all_virtuals.contains(method.parsed_function.name) {
                 .error("Missing override keyword on function that is virtual", method.parsed_function.name_span)
@@ -4153,8 +4370,19 @@ struct Typechecker {
         return method_id!
     }
 
-    fn typecheck_parameter(mut this, parameter: ParsedParameter, scope_id: ScopeId, first: bool, this_arg_type_id: TypeId?, check_scope: ScopeId?) throws -> CheckedParameter {
-        mut type_id = .typecheck_typename(parsed_type: parameter.variable.parsed_type, scope_id, name: parameter.variable.name)
+    fn typecheck_parameter(
+        mut this
+        parameter: ParsedParameter
+        scope_id: ScopeId
+        first: bool
+        this_arg_type_id: TypeId?
+        check_scope: ScopeId?
+    ) throws -> CheckedParameter {
+        mut type_id = .typecheck_typename(
+            parsed_type: parameter.variable.parsed_type
+            scope_id
+            name: parameter.variable.name
+        )
 
         if first and parameter.variable.name == "this" {
             if this_arg_type_id.has_value() {
@@ -4247,14 +4475,21 @@ struct Typechecker {
         mut generics: FunctionGenerics? = None
         scope_mixin: ScopeId? = None
     ) throws -> FunctionId {
-        let function_scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: format("fn({})", parsed_function.name))
+        let function_scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: format(
+            "fn({})"
+            parsed_function.name
+        ))
         if scope_mixin.has_value() {
             mut function_scope = .get_scope(function_scope_id)
             function_scope.resolution_mixins.push(scope_mixin!)
         }
 
         let scope_debug_name = format("function-block({})", parsed_function.name)
-        let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: parsed_function.can_throw, debug_name: scope_debug_name)
+        let block_scope_id = .create_scope(
+            parent_scope_id: function_scope_id
+            can_throw: parsed_function.can_throw
+            debug_name: scope_debug_name
+        )
         let module_id = .current_module_id.id
 
         mut base_definition = false
@@ -4270,7 +4505,9 @@ struct Typechecker {
         }
 
         let is_generic_function = not parsed_function.generic_parameters.is_empty()
-        let is_generic = is_generic_function or (this_arg_type_id.has_value() and .get_type(this_arg_type_id!) is GenericInstance)
+        let is_generic = is_generic_function or (this_arg_type_id.has_value() and .get_type(
+            this_arg_type_id!
+            ) is GenericInstance)
 
         mut has_varargs = parsed_function.has_varargs
         if has_varargs and parsed_function.linkage is Internal {
@@ -4378,7 +4615,13 @@ struct Typechecker {
         mut first = true
         mut module = .current_module()
         for parameter in parsed_function.params {
-            let checked_param = .typecheck_parameter(parameter, scope_id: checked_function_scope_id, first, this_arg_type_id, check_scope)
+            let checked_param = .typecheck_parameter(
+                parameter
+                scope_id: checked_function_scope_id
+                first
+                this_arg_type_id
+                check_scope
+            )
 
             checked_function.params.push(checked_param)
             if base_definition {
@@ -4411,7 +4654,11 @@ struct Typechecker {
         checked_function.stores_arguments = parsed_function.stores_arguments
 
         // Check return type
-        mut function_return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id, name: None)
+        mut function_return_type_id = .typecheck_typename(
+            parsed_type: parsed_function.return_type
+            scope_id: checked_function_scope_id
+            name: None
+        )
         if parsed_function.return_type is Empty {
             if parsed_function.is_fat_arrow {
                 let old_ignore_errors = .ignore_errors
@@ -4676,7 +4923,7 @@ struct Typechecker {
                 .check_type_argument_requirements(
                     generic_argument: generic_arguments[i],
                     constraints: checked_function.generics.params[i].checked_parameter.constraints,
-                    arg_span)
+                arg_span)
             }
         }
 
@@ -4750,7 +4997,12 @@ struct Typechecker {
 
         let previous_function_id = .current_function_id
         .current_function_id = Some(new_function_id)
-        .typecheck_function_predecl(parsed_function, parent_scope_id: scope_id, this_arg_type_id: this_type_id, generics: checked_function.generics)
+        .typecheck_function_predecl(
+            parsed_function
+            parent_scope_id: scope_id
+            this_arg_type_id: this_type_id
+            generics: checked_function.generics
+        )
         .typecheck_function(parsed_function, parent_scope_id: scope_id)
         .current_function_id = previous_function_id
 
@@ -4884,7 +5136,7 @@ struct Typechecker {
 
         if block.yielded_type.has_value() {
             .error_with_hint("Functions are not allowed to yield values", parsed_function.block.find_yield_span()!,
-                            "You might want to return instead", parsed_function.block.find_yield_keyword_span()!)
+                "You might want to return instead", parsed_function.block.find_yield_keyword_span()!)
         }
 
         // Infer return type if necessary
@@ -4894,7 +5146,8 @@ struct Typechecker {
             else => .resolve_type_var(type_var_type_id: function_return_type_id, scope_id: function_scope_id)
         }
 
-        if not function_linkage is External and not return_type_id.equals(void_type_id()) and not block.control_flow.always_transfers_control() {
+        if not function_linkage is External and not return_type_id.equals(void_type_id()) and
+            not block.control_flow.always_transfers_control() {
             // FIXME: Use better span
             if return_type_id.equals(never_type_id()) and not block.control_flow.never_returns() {
                 .error("Control reaches end of never-returning function", parsed_function.name_span)
@@ -4906,6 +5159,7 @@ struct Typechecker {
         checked_function.block = block
         checked_function.return_type_id = return_type_id
         .current_function_id = None
+
     }
 
     fn statement_control_flow(this, anon statement: CheckedStatement) throws -> BlockControlFlow => match statement {
@@ -4923,7 +5177,10 @@ struct Typechecker {
                 }
             }
             // Note that a missing 'else' branch produces a partial result.
-            else => then_block.control_flow.branch_unify_with(.maybe_statement_control_flow(else_statement, then_block.control_flow))
+            else => then_block.control_flow.branch_unify_with(.maybe_statement_control_flow(
+                else_statement
+                then_block.control_flow
+            ))
         }
         Block(block) => block.control_flow
         // Note that 'while' blocks, which conditions are not always true,
@@ -4964,7 +5221,8 @@ struct Typechecker {
         else => BlockControlFlow::MayReturn
     }
 
-    fn maybe_statement_control_flow(this, anon statement: CheckedStatement?, anon other_branch: BlockControlFlow) throws -> BlockControlFlow => match statement.has_value() {
+    fn maybe_statement_control_flow(
+        this, anon statement: CheckedStatement?, anon other_branch: BlockControlFlow) throws -> BlockControlFlow => match statement.has_value() {
         true => .statement_control_flow(statement!)
         false => other_branch.partial()
     }
@@ -5074,15 +5332,15 @@ struct Typechecker {
 
         match lhs_type {
             TypeVariable => {
-				// Unpack one layer of inference at a time
+                // Unpack one layer of inference at a time
                 let maybe_resolved_inference = generic_inferences.get(lhs_type_id)
                 if maybe_resolved_inference is Some(resolved_inference) {
-					return .check_types_for_compat(
-						lhs_type_id: resolved_inference
-						rhs_type_id
-						generic_inferences
-						span
-					)
+                    return .check_types_for_compat(
+                        lhs_type_id: resolved_inference
+                        rhs_type_id
+                        generic_inferences
+                        span
+                    )
                 } else {
                     generic_inferences.set(key: lhs_type_id, value: rhs_type_id)
                 }
@@ -5119,10 +5377,10 @@ struct Typechecker {
                         mut idx: usize = 0
                         while idx < lhs_args.size() {
                             if not .check_types_for_compat(
-                                lhs_type_id: lhs_args[idx]
-                                rhs_type_id: rhs_args[idx]
-                                generic_inferences
-                                span
+                                    lhs_type_id: lhs_args[idx]
+                                    rhs_type_id: rhs_args[idx]
+                                    generic_inferences
+                                    span
                             ) {
                                 // FIXME: maybe emit secondary error?
                                 return false
@@ -5168,17 +5426,21 @@ struct Typechecker {
 
                 if not (lhs_params.size() == rhs_params.size()) {
                     .error(
-                        format("Function parameter count mismatch: expected ‘{}’, but got ‘{}’", lhs_params.size(), rhs_params.size())
+                        format(
+                            "Function parameter count mismatch: expected ‘{}’, but got ‘{}’"
+                            lhs_params.size()
+                            rhs_params.size()
+                        )
                         span
                     )
                     return false
                 }
 
                 if not .check_types_for_compat(
-                    lhs_type_id: lhs_return_type_id
-                    rhs_type_id: rhs_return_type_id
-                    generic_inferences
-                    span
+                        lhs_type_id: lhs_return_type_id
+                        rhs_type_id: rhs_return_type_id
+                        generic_inferences
+                        span
                 ) {
                     .error_with_hint(
                         format("Function type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
@@ -5191,15 +5453,17 @@ struct Typechecker {
 
                 for i in ..lhs_params.size() {
                     if not .check_types_for_compat(
-                        lhs_type_id: lhs_params[i]
-                        rhs_type_id: rhs_params[i]
-                        generic_inferences
-                        span
+                            lhs_type_id: lhs_params[i]
+                            rhs_type_id: rhs_params[i]
+                            generic_inferences
+                            span
                     ) {
                         .error_with_hint(
                             format("Function type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                             span
-                            format("The parameter types differ at argument {}: expected ‘{}’, but got ‘{}’", (i + 1), .type_name(lhs_params[i]), .type_name(rhs_params[i]))
+                            format("The parameter types differ at argument {}: expected ‘{}’, but got ‘{}’", (i + 1), .type_name(lhs_params[
+                                i
+                                ]), .type_name(rhs_params[i]))
                             hint_span: span
                         )
                         return false
@@ -5255,10 +5519,10 @@ struct Typechecker {
                         mut idx: usize = 0
                         while idx < args.size() {
                             if not .check_types_for_compat(
-                                lhs_type_id: lhs_args[idx]
-                                rhs_type_id: rhs_args[idx]
-                                generic_inferences
-                                span
+                                    lhs_type_id: lhs_args[idx]
+                                    rhs_type_id: rhs_args[idx]
+                                    generic_inferences
+                                    span
                             ) {
                                 // FIXME: maybe emit secondary error?
                                 return false
@@ -5309,10 +5573,10 @@ struct Typechecker {
                             mut idx: usize = 0
                             while idx < args.size() {
                                 if not .check_types_for_compat(
-                                    lhs_type_id: lhs_enum.generic_parameters[idx].type_id
-                                    rhs_type_id: args[idx]
-                                    generic_inferences
-                                    span
+                                        lhs_type_id: lhs_enum.generic_parameters[idx].type_id
+                                        rhs_type_id: args[idx]
+                                        generic_inferences
+                                        span
                                 ) {
                                     // FIXME: maybe emit secondary error?
                                     return false
@@ -5358,7 +5622,9 @@ struct Typechecker {
                 match rhs_type {
                     GenericInstance(id, args) => {
                         if not lhs_struct_id.equals(id) {
-                            .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
+                            .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(
+                                rhs_type_id
+                                )), span)
                             return false
                         }
 
@@ -5371,10 +5637,10 @@ struct Typechecker {
                         mut idx: usize = 0
                         while idx < args.size() {
                             if not .check_types_for_compat(
-                                lhs_type_id: lhs_struct.generic_parameters[idx].type_id
-                                rhs_type_id: args[idx]
-                                generic_inferences
-                                span
+                                    lhs_type_id: lhs_struct.generic_parameters[idx].type_id
+                                    rhs_type_id: args[idx]
+                                    generic_inferences
+                                    span
                             ) {
                                 // FIXME: maybe emit secondary error?
                                 return false
@@ -5426,10 +5692,10 @@ struct Typechecker {
 
                 if rhs_type is RawPtr(rhs_rawptr_type_id) {
                     if not .check_types_for_compat(
-                        lhs_type_id: lhs_rawptr_type_id
-                        rhs_type_id: rhs_rawptr_type_id
-                        generic_inferences
-                        span
+                            lhs_type_id: lhs_rawptr_type_id
+                            rhs_type_id: rhs_rawptr_type_id
+                            generic_inferences
+                            span
                     ) {
                         // FIXME: maybe emit secondary error?
                         return false
@@ -5447,10 +5713,10 @@ struct Typechecker {
             Reference(lhs_inner_type_id) => {
                 if rhs_type is Reference(rhs_inner_type_id) {
                     if not .check_types_for_compat(
-                        lhs_type_id: lhs_inner_type_id
-                        rhs_type_id: rhs_inner_type_id
-                        generic_inferences
-                        span
+                            lhs_type_id: lhs_inner_type_id
+                            rhs_type_id: rhs_inner_type_id
+                            generic_inferences
+                            span
                     ) {
                         // FIXME: maybe emit secondary error?
                         return false
@@ -5466,10 +5732,10 @@ struct Typechecker {
             MutableReference(lhs_inner_type_id) => {
                 if rhs_type is MutableReference(rhs_inner_type_id) {
                     if not .check_types_for_compat(
-                        lhs_type_id: lhs_inner_type_id
-                        rhs_type_id: rhs_inner_type_id
-                        generic_inferences
-                        span
+                            lhs_type_id: lhs_inner_type_id
+                            rhs_type_id: rhs_inner_type_id
+                            generic_inferences
+                            span
                     ) {
                         // FIXME: maybe emit secondary error?
                         return false
@@ -5522,9 +5788,20 @@ struct Typechecker {
         return false
     }
 
-    fn substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: GenericInferences) throws -> TypeId => .program.substitute_typevars_in_type(type_id, generic_inferences, module_id: .current_module_id)
+    fn substitute_typevars_in_type(
+        mut this, type_id: TypeId, generic_inferences: GenericInferences) throws -> TypeId => .program.substitute_typevars_in_type(
+        type_id
+        generic_inferences
+        module_id: .current_module_id
+    )
 
-    fn typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode, yield_type_hint: TypeId? = None) throws -> CheckedBlock {
+    fn typecheck_block(
+        mut this
+        anon parsed_block: ParsedBlock
+        parent_scope_id: ScopeId
+        safety_mode: SafetyMode
+        yield_type_hint: TypeId? = None
+    ) throws -> CheckedBlock {
         let parent_throws = .get_scope(parent_scope_id).can_throw
         let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws, debug_name: "block")
         mut checked_block = CheckedBlock(
@@ -5559,7 +5836,7 @@ struct Typechecker {
 
             if yield_span.has_value() and checked_yield_expression.has_value() {
                 let type_var_type_id = checked_yield_expression!.type()
-                let type_ = .resolve_type_var(type_var_type_id , scope_id: block_scope_id)
+                let type_ = .resolve_type_var(type_var_type_id, scope_id: block_scope_id)
 
                 if checked_yield_expression! is OptionalNone {
                     checked_block.yielded_none = true
@@ -5677,7 +5954,12 @@ struct Typechecker {
                     // TODO: add and generic support
                     type_id = .typecheck_typename(parsed_type: synthetic_typename, scope_id: current_namespace_scope_id, name)
                 } else {
-                    type_id = .typecheck_generic_resolved_type(name, checked_inner_types: generic_args, scope_id: current_namespace_scope_id, span)
+                    type_id = .typecheck_generic_resolved_type(
+                        name
+                        checked_inner_types: generic_args
+                        scope_id: current_namespace_scope_id
+                        span
+                    )
                 }
 
                 yield type_id!
@@ -5829,7 +6111,13 @@ struct Typechecker {
                 }
 
                 for param in params {
-                    checked_params.push(.typecheck_parameter(parameter: param, scope_id, first, this_arg_type_id: None, check_scope: None))
+                    checked_params.push(.typecheck_parameter(
+                        parameter: param
+                        scope_id
+                        first
+                        this_arg_type_id: None
+                        check_scope: None
+                    ))
                     first = false
                 }
 
@@ -5937,7 +6225,7 @@ struct Typechecker {
                 &arguments
                 &span
                 this
-            ](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
+            ](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>{
                 let scope = .get_scope(scope_id)
                 if not scope.explicitly_specialized_types.contains(name) {
                     return IterationDecision::Continue
@@ -5960,10 +6248,10 @@ struct Typechecker {
                     .ignore_errors = true
 
                     if not .check_types_for_compat(
-                        lhs_type_id: specialized_arg
-                        rhs_type_id: given_arg
-                        generic_inferences: &mut .generic_inferences
-                        span
+                            lhs_type_id: specialized_arg
+                            rhs_type_id: given_arg
+                            generic_inferences: &mut .generic_inferences
+                            span
                     ) {
                         is_okay = false
                         break
@@ -6076,9 +6364,9 @@ struct Typechecker {
             }
             LogicalNot => {
                 if not .check_types_for_compat(
-                    lhs_type_id: builtin(BuiltinType::Bool)
-                    rhs_type_id: checked_expr.type()
-                    generic_inferences: &mut .generic_inferences
+                        lhs_type_id: builtin(BuiltinType::Bool)
+                        rhs_type_id: checked_expr.type()
+                        generic_inferences: &mut .generic_inferences
                     span) {
                     .error("Cannot use a logical Not on a value of non-boolean type", span)
                 }
@@ -6101,16 +6389,22 @@ struct Typechecker {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: builtin(BuiltinType::Usize))
             }
             RawAddress => {
-                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(Type::RawPtr(expr_type_id)))
+                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(
+                    Type::RawPtr(expr_type_id)
+                ))
             }
             Reference => {
-                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(Type::Reference(expr_type_id)))
+                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(
+                    Type::Reference(expr_type_id)
+                ))
             }
             MutableReference => {
                 if not checked_expr.is_mutable(program: .program) {
                     .error("Cannot make mutable reference to immutable value", span)
                 }
-                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(Type::MutableReference(expr_type_id)))
+                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(
+                    Type::MutableReference(expr_type_id)
+                ))
             }
             Dereference => {
                 match expr_type {
@@ -6149,8 +6443,8 @@ struct Typechecker {
 
         let number = constant.number_constant()!
         let raw_number = number.to_usize()
-        let max_signed = Type::I64.max() as! usize;
-        mut negated_number = 0;
+        let max_signed = Type::I64.max() as! usize
+        mut negated_number = 0
         if raw_number == max_signed + 1 {
             negated_number = Type::I64.min()
         }
@@ -6159,7 +6453,10 @@ struct Typechecker {
         }
         let negated_number_constant = NumberConstant::Signed(negated_number as! i64)
 
-        if raw_number > (max_signed + 1) or not negated_number_constant.can_fit_number(type_id: flipped_sign_type, program: .program) {
+        if raw_number > (max_signed + 1) or not negated_number_constant.can_fit_number(
+            type_id: flipped_sign_type
+            program: .program
+        ) {
             .error(
                 format(
                     "Negative literal -{} too small for type ‘{}’"
@@ -6181,7 +6478,11 @@ struct Typechecker {
             }
         }
 
-        return CheckedExpression::UnaryOp(expr: CheckedExpression::NumericConstant(val: new_constant, span, type_id), op: CheckedUnaryOperator::Negate, span, type_id: flipped_sign_type)
+        return CheckedExpression::UnaryOp(expr: CheckedExpression::NumericConstant(
+            val: new_constant
+            span
+            type_id
+            ), op: CheckedUnaryOperator::Negate, span, type_id: flipped_sign_type)
     }
 
     fn typecheck_binary_operation(
@@ -6217,7 +6518,12 @@ struct Typechecker {
                 if op is NoneCoalescingAssign {
                     if checked_lhs is Var(var, span) {
                         if not var.is_mutable {
-                            .error_with_hint(message: "left-hand side of ??= must be a mutable variable", span, hint: "This variable isn't marked as mutable", hint_span: var.definition_span)
+                            .error_with_hint(
+                                message: "left-hand side of ??= must be a mutable variable"
+                                span
+                                hint: "This variable isn't marked as mutable"
+                                hint_span: var.definition_span
+                            )
                             return (checked_operator, unknown_type_id())
                         }
                     } else {
@@ -6245,8 +6551,8 @@ struct Typechecker {
                         "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
                         .type_name(lhs_type_id),
                         .type_name(rhs_type_id),
-                    ), span,
-                    "Left side of ?? must be an Optional but isn't",
+                        ), span,
+                        "Left side of ?? must be an Optional but isn't",
                     lhs_span)
                 }
 
@@ -6254,7 +6560,7 @@ struct Typechecker {
                     "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
                     .type_name(lhs_type_id),
                     .type_name(rhs_type_id),
-                ), span)
+                    ), span)
 
                 return (checked_operator, lhs_type_id)
             }
@@ -6303,7 +6609,9 @@ struct Typechecker {
 
                 let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: effective_lhs_type_id, rhs_span: lhs_span)
                 if not result.has_value() {
-                    .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
+                    .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .type_name(lhs_type_id), .type_name(
+                        rhs_type_id
+                        )), span)
                 }
                 return (checked_operator, result.value_or(lhs_type_id))
             }
@@ -6426,8 +6734,8 @@ struct Typechecker {
                         )
                         type_id = unknown_type_id()
                     }
-                // FIXME: We should be able to generically implement traits on e.g. `raw T`
-                //        but until we add that, let's add a small escape hatch here.
+                    // FIXME: We should be able to generically implement traits on e.g. `raw T`
+                    //        but until we add that, let's add a small escape hatch here.
                 } else if not is_assignment and
                     .get_type(lhs_type_id) is RawPtr(lhs_deref_type_id) and
                     .get_type(rhs_type_id) is RawPtr(rhs_deref_type_id) and
@@ -6462,10 +6770,30 @@ struct Typechecker {
         return (checked_operator, type_id)
     }
 
-    fn typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId? = None) throws -> CheckedStatement => match statement {
-        Expression(expr, span) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: TypeId::none()), span)
-        UnsafeBlock(block, span) => CheckedStatement::Block(block: .typecheck_block(block, parent_scope_id: scope_id, safety_mode: SafetyMode::Unsafe), span)
-        Yield(expr, span) => CheckedStatement::Yield(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: type_hint), span)
+    fn typecheck_statement(
+        mut this
+        anon statement: ParsedStatement
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        type_hint: TypeId? = None
+    ) throws -> CheckedStatement => match statement {
+        Expression(expr, span) => CheckedStatement::Expression(expr: .typecheck_expression(
+            expr
+            scope_id
+            safety_mode
+            type_hint: TypeId::none()
+            ), span)
+        UnsafeBlock(block, span) => CheckedStatement::Block(block: .typecheck_block(
+            block
+            parent_scope_id: scope_id
+            safety_mode: SafetyMode::Unsafe
+            ), span)
+        Yield(expr, span) => CheckedStatement::Yield(expr: .typecheck_expression(
+            expr
+            scope_id
+            safety_mode
+            type_hint: type_hint
+            ), span)
         Return(expr, span) => .typecheck_return(expr, span, scope_id, safety_mode)
         Block(block, span) => .typecheck_block_statement(parsed_block: block, scope_id, safety_mode, span)
         InlineCpp(block, span) => .typecheck_inline_cpp(block, span, safety_mode)
@@ -6476,14 +6804,51 @@ struct Typechecker {
         Continue(span) => CheckedStatement::Continue(span)
         Break(span) => CheckedStatement::Break(span)
         VarDecl(var, init, span) => .typecheck_var_decl(var, init, scope_id, safety_mode, span)
-        DestructuringAssignment(vars, var_decl, span) => .typecheck_destructuring_assignment(vars, var_decl, scope_id, safety_mode, span)
-        If(condition, then_block, else_statement, span) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode, span)
+        DestructuringAssignment(vars, var_decl, span) => .typecheck_destructuring_assignment(
+            vars
+            var_decl
+            scope_id
+            safety_mode
+            span
+        )
+        If(condition, then_block, else_statement, span) => .typecheck_if(
+            condition
+            then_block
+            else_statement
+            scope_id
+            safety_mode
+            span
+        )
         Garbage(span) => CheckedStatement::Garbage(span)
-        For(iterator_name, name_span, is_destructuring, range, block, span) => .typecheck_for(iterator_name, name_span, is_destructuring, range, block, scope_id, safety_mode, span)
-        Guard(expr, else_block, remaining_code, span) => .typecheck_guard(expr, else_block, remaining_code, scope_id, safety_mode, span)
+        For(iterator_name, name_span, is_destructuring, range, block, span) => .typecheck_for(
+            iterator_name
+            name_span
+            is_destructuring
+            range
+            block
+            scope_id
+            safety_mode
+            span
+        )
+        Guard(expr, else_block, remaining_code, span) => .typecheck_guard(
+            expr
+            else_block
+            remaining_code
+            scope_id
+            safety_mode
+            span
+        )
     }
 
-    fn typecheck_guard(mut this, expr: ParsedExpression, else_block: ParsedBlock, remaining_code: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+    fn typecheck_guard(
+        mut this
+        expr: ParsedExpression
+        else_block: ParsedBlock
+        remaining_code: ParsedBlock
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        span: Span
+    ) throws -> CheckedStatement {
         mut seen_scope_exit = false
         for statement in else_block.stmts {
             match statement {
@@ -6510,7 +6875,13 @@ struct Typechecker {
             scope_id
             span
         )
-        let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
+        let checked_condition = .typecheck_expression_and_dereference_if_needed(
+            new_condition
+            scope_id
+            safety_mode
+            type_hint: None
+            span
+        )
         if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", new_condition.span())
         }
@@ -6529,7 +6900,11 @@ struct Typechecker {
                         CheckedMatchCase::Expression(
                             defaults: []
                             expression: CheckedExpression::Boolean(val: true, span)
-                            body: CheckedMatchBody::Expression(CheckedExpression::Block(block: checked_block, span, type_id: checked_block.yielded_type!))
+                            body: CheckedMatchBody::Expression(CheckedExpression::Block(
+                                block: checked_block
+                                span
+                                type_id: checked_block.yielded_type!
+                            ))
                             marker_span: span
                         ),
                         CheckedMatchCase::CatchAll(
@@ -6547,7 +6922,12 @@ struct Typechecker {
             )
         }
 
-        return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
+        return CheckedStatement::If(
+            condition: checked_condition
+            then_block: checked_block
+            else_statement: checked_else
+            span
+        )
     }
 
     fn typecheck_for(
@@ -6583,7 +6963,13 @@ struct Typechecker {
         // failing that, if it implements the IntoIterator (or IntoThrowingIterable) trait, we will automatically call the `.iterator()` method
         // and use the result as our iterable.
 
-        mut iterable_expr = .typecheck_expression_and_dereference_if_needed(range, scope_id, safety_mode, type_hint: None, span)
+        mut iterable_expr = .typecheck_expression_and_dereference_if_needed(
+            range
+            scope_id
+            safety_mode
+            type_hint: None
+            span
+        )
         mut resolved_iterable_result_type = unknown_type_id()
 
         mut expression_to_iterate = range
@@ -6735,32 +7121,32 @@ struct Typechecker {
                                     else_statement: None
                                     span
                                 ),
-                            // let iterator_name = _magic_value!
-                            ParsedStatement::VarDecl(
-                                var: ParsedVarDecl(
-                                    name: iterator_name,
-                                    parsed_type: ParsedType::Empty,
-                                    // FIXME: loop variable mutability should be independent
-                                    // of iterable mutability
-                                    is_mutable: true,
-                                    inlay_span: match is_destructuring {
-                                        // No need for a type hint on the tuple as a whole when destructuring,
-                                        // as each of its constituents already gets one.
-                                        true => None
-                                        false => name_span
-                                    },
-                                    span: name_span
-                                ),
-                                init: ParsedExpression::ForcedUnwrap(
-                                    expr: ParsedExpression::Var(
-                                        name: "_magic_value",
+                                // let iterator_name = _magic_value!
+                                ParsedStatement::VarDecl(
+                                    var: ParsedVarDecl(
+                                        name: iterator_name,
+                                        parsed_type: ParsedType::Empty,
+                                        // FIXME: loop variable mutability should be independent
+                                        // of iterable mutability
+                                        is_mutable: true,
+                                        inlay_span: match is_destructuring {
+                                            // No need for a type hint on the tuple as a whole when destructuring,
+                                            // as each of its constituents already gets one.
+                                            true => None
+                                            false => name_span
+                                        },
+                                        span: name_span
+                                    ),
+                                    init: ParsedExpression::ForcedUnwrap(
+                                        expr: ParsedExpression::Var(
+                                            name: "_magic_value",
+                                            span: name_span
+                                        )
                                         span: name_span
                                     )
-                                    span: name_span
-                                )
-                                span
-                            ),
-                            ParsedStatement::Block(block, span)
+                                    span
+                                ),
+                                ParsedStatement::Block(block, span)
                             ]
                         )
                         span
@@ -6867,7 +7253,15 @@ struct Typechecker {
         return (base_condition, then_block, else_statement)
     }
 
-    fn typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+    fn typecheck_if(
+        mut this
+        condition: ParsedExpression
+        then_block: ParsedBlock
+        else_statement: ParsedStatement?
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        span: Span
+    ) throws -> CheckedStatement {
         let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
             condition
             acc: None
@@ -6876,7 +7270,13 @@ struct Typechecker {
             scope_id
             span
         )
-        let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
+        let checked_condition = .typecheck_expression_and_dereference_if_needed(
+            new_condition
+            scope_id
+            safety_mode
+            type_hint: None
+            span
+        )
 
         if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", new_condition.span())
@@ -6891,10 +7291,22 @@ struct Typechecker {
         if new_else_statement.has_value() {
             checked_else = .typecheck_statement(new_else_statement!, scope_id, safety_mode)
         }
-        return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
+        return CheckedStatement::If(
+            condition: checked_condition
+            then_block: checked_block
+            else_statement: checked_else
+            span
+        )
     }
 
-    fn typecheck_destructuring_assignment(mut this, vars: [ParsedVarDecl], var_decl: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+    fn typecheck_destructuring_assignment(
+        mut this
+        vars: [ParsedVarDecl]
+        var_decl: ParsedStatement
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        span: Span
+    ) throws -> CheckedStatement {
         mut var_decls: [CheckedStatement] = []
         let checked_tuple_var_decl = .typecheck_statement(statement: var_decl, scope_id, safety_mode)
         mut expr_type_id: TypeId = unknown_type_id()
@@ -6922,7 +7334,7 @@ struct Typechecker {
                     expr: ParsedExpression::Var(name: tuple_variable.name, span)
                     index: i
                     is_optional: false
-                    span)
+                span)
                 var_decls.push(.typecheck_var_decl(var: vars[i], init, scope_id, safety_mode, span))
             }
         } else {
@@ -6985,7 +7397,7 @@ struct Typechecker {
         // equal to or a child of the parent, assume the smaller one is a
         // subscope.
         mut scope_id = .program.get_scope(smaller_id).parent
-        while(scope_id.has_value()) {
+        while (scope_id.has_value()) {
             if scope_id!.equals(larger_id) {
                 return true
             }
@@ -7046,7 +7458,8 @@ struct Typechecker {
         return None
     }
 
-    fn required_scope_id_in_hierarchy_for(mut this, anon expr: CheckedExpression, current_scope_id: ScopeId) throws -> (ScopeId?, CheckedExpression) => match expr {
+    fn required_scope_id_in_hierarchy_for(
+        mut this, anon expr: CheckedExpression, current_scope_id: ScopeId) throws -> (ScopeId?, CheckedExpression) => match expr {
         Boolean
         | NumericConstant
         | QuotedString
@@ -7129,7 +7542,14 @@ struct Typechecker {
         Garbage => (None, expr)
     }
 
-    fn typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+    fn typecheck_var_decl(
+        mut this
+        var: ParsedVarDecl
+        init: ParsedExpression
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        span: Span
+    ) throws -> CheckedStatement {
         mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id, name: var.name)
         mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode, type_hint: lhs_type_id)
         let rhs_type_id = checked_expr.type()
@@ -7153,7 +7573,6 @@ struct Typechecker {
 
         let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
         let optional_struct_id = .find_struct_in_prelude("Optional")
-
 
         if .type_contains_reference(type_id: lhs_type_id) {
             // If the variable type is a reference, we need to make sure that this scope does not outlive the reference.
@@ -7182,17 +7601,23 @@ struct Typechecker {
         if lhs_type is GenericInstance(id, args) {
             if id.equals(weak_ptr_struct_id) {
                 if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id())
-                   and not .is_subclass_of(ancestor_type_id: args[0], child_type_id: rhs_type_id) {
-                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
+                    and not .is_subclass_of(ancestor_type_id: args[0], child_type_id: rhs_type_id) {
+                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(
+                        rhs_type_id
+                        )), checked_expr.span())
                 }
             } else if id.equals(optional_struct_id) {
                 if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id())
-                   and not .is_subclass_of(ancestor_type_id: args[0], child_type_id: rhs_type_id) {
-                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
+                    and not .is_subclass_of(ancestor_type_id: args[0], child_type_id: rhs_type_id) {
+                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(
+                        rhs_type_id
+                        )), checked_expr.span())
                 }
             } else {
                 if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
+                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(
+                        rhs_type_id
+                        )), checked_expr.span())
                 }
             }
         } else if lhs_type.is_builtin() {
@@ -7208,13 +7633,17 @@ struct Typechecker {
             }
 
             if not (.is_numeric(lhs_type_id) and is_rhs_zero) and (.is_integer(lhs_type_id) ^ .is_integer(rhs_type_id)) {
-                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
+                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(
+                    rhs_type_id
+                    )), checked_expr.span())
                 return CheckedStatement::Garbage(span)
             }
         } else {
             if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id())
-               and not .is_subclass_of(ancestor_type_id: lhs_type_id, child_type_id: rhs_type_id) {
-                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
+                and not .is_subclass_of(ancestor_type_id: lhs_type_id, child_type_id: rhs_type_id) {
+                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(
+                    rhs_type_id
+                    )), checked_expr.span())
             }
         }
 
@@ -7238,8 +7667,21 @@ struct Typechecker {
         return CheckedStatement::VarDecl(var_id, init: checked_expr, span)
     }
 
-    fn typecheck_while(mut this, condition: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        let checked_condition = .typecheck_expression_and_dereference_if_needed(condition, scope_id, safety_mode, type_hint: None, span)
+    fn typecheck_while(
+        mut this
+        condition: ParsedExpression
+        block: ParsedBlock
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        span: Span
+    ) throws -> CheckedStatement {
+        let checked_condition = .typecheck_expression_and_dereference_if_needed(
+            condition
+            scope_id
+            safety_mode
+            type_hint: None
+            span
+        )
         if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", condition.span())
         }
@@ -7252,7 +7694,16 @@ struct Typechecker {
         return CheckedStatement::While(condition: checked_condition, block: checked_block, span)
     }
 
-    fn typecheck_try_block(mut this, stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
+    fn typecheck_try_block(
+        mut this
+        stmt: ParsedStatement
+        error_name: String
+        error_span: Span
+        catch_block: ParsedBlock
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        span: Span
+    ) throws -> CheckedExpression {
         let try_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "try")
         let checked_stmt = .typecheck_statement(stmt, scope_id: try_scope_id, safety_mode)
         let error_struct_id = .find_struct_in_prelude("Error")
@@ -7276,10 +7727,27 @@ struct Typechecker {
             .error("A ‘catch’ block as part of a try block is not allowed to yield values", catch_block.find_yield_span()!)
         }
 
-        return CheckedExpression::TryBlock(stmt: checked_stmt, catch_block: checked_catch_block, error_name, error_span, span, type_id: void_type_id())
+        return CheckedExpression::TryBlock(
+            stmt: checked_stmt
+            catch_block: checked_catch_block
+            error_name
+            error_span
+            span
+            type_id: void_type_id()
+        )
     }
 
-    fn typecheck_try(mut this, expr: ParsedExpression, catch_block: ParsedBlock?, catch_span: Span?, catch_name: String?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span, type_hint: TypeId?) throws -> CheckedExpression {
+    fn typecheck_try(
+        mut this
+        expr: ParsedExpression
+        catch_block: ParsedBlock?
+        catch_span: Span?
+        catch_name: String?
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        span: Span
+        type_hint: TypeId?
+    ) throws -> CheckedExpression {
         let try_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "try")
         let checked_expr = .typecheck_expression(expr, scope_id: try_scope_id, safety_mode, type_hint)
         let error_struct_id = .find_struct_in_prelude("Error")
@@ -7314,7 +7782,9 @@ struct Typechecker {
             if block.control_flow.always_transfers_control() or block.yielded_type.has_value() {
                 if not (block.yielded_type ?? expression_type_id).equals(expression_type_id) {
                     .error_with_hint(
-                        message: format("Expected a value of type ‘{}’, but got ‘{}’", .type_name(expression_type_id), .type_name(block.yielded_type!)),
+                        message: format("Expected a value of type ‘{}’, but got ‘{}’", .type_name(expression_type_id), .type_name(
+                            block.yielded_type!
+                        )),
                         span
                         hint: format("Expression 'catch' block must either yield the same type as the expression it is catching, or yield nothing"),
                         hint_span: span
@@ -7324,13 +7794,24 @@ struct Typechecker {
                 }
             } else {
                 if not expression_type_id.equals(builtin(BuiltinType::Void)) {
-                    .error(message: "In a try expression that returns a value, 'catch' block must either yield a value or transfer control flow", span: catch_span ?? span)
+                    .error(
+                        message: "In a try expression that returns a value, 'catch' block must either yield a value or transfer control flow"
+                        span: catch_span ?? span
+                    )
                 }
             }
             checked_catch_block = block
         }
 
-        return CheckedExpression::Try(expr: checked_expr, catch_block: checked_catch_block, catch_span, catch_name, span, type_id, inner_type_id: expression_type_id)
+        return CheckedExpression::Try(
+            expr: checked_expr
+            catch_block: checked_catch_block
+            catch_span
+            catch_name
+            span
+            type_id
+            inner_type_id: expression_type_id
+        )
     }
 
     fn typecheck_throw(mut this, expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
@@ -7368,10 +7849,14 @@ struct Typechecker {
         return CheckedStatement::Defer(statement: checked_statement, span)
     }
 
-    fn typecheck_block_statement(mut this, parsed_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+    fn typecheck_block_statement(
+        mut this, parsed_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         let checked_block = .typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode)
         if checked_block.yielded_type.has_value() {
-            .error("A block used as a statement cannot yield values, as the value cannot be observed in any way", parsed_block.find_yield_span()!)
+            .error(
+                "A block used as a statement cannot yield values, as the value cannot be observed in any way"
+                parsed_block.find_yield_span()!
+            )
         }
         return CheckedStatement::Block(block: checked_block, span)
     }
@@ -7404,10 +7889,10 @@ struct Typechecker {
                 let return_type = .get_type(current_function.return_type_id)
                 if (not return_type is Void) and (not return_type is Unknown) {
                     .error_with_hint(format("’return’ with no value in function ’{}’ returning ’{}’",
-                                            current_function.name,
-                                            .type_name(current_function.return_type_id)),
-                                    span,
-                                    format("Add return value of type ’{}’ here", .type_name(current_function.return_type_id)), span)
+                        current_function.name,
+                        .type_name(current_function.return_type_id)),
+                        span,
+                        format("Add return value of type ’{}’ here", .type_name(current_function.return_type_id)), span)
                 }
             }
             return CheckedStatement::Return(val: None, span)
@@ -7430,7 +7915,13 @@ struct Typechecker {
             scope_id
             span
         )
-        let checked_expr = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint, span)
+        let checked_expr = .typecheck_expression_and_dereference_if_needed(
+            new_condition
+            scope_id
+            safety_mode
+            type_hint
+            span
+        )
 
         if type_hint.has_value() {
             if checked_expr is OptionalNone(span) {
@@ -7501,7 +7992,15 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_indexed_struct(mut this, expr: ParsedExpression, field_name: String, scope_id: ScopeId, is_optional: bool, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
+    fn typecheck_indexed_struct(
+        mut this
+        expr: ParsedExpression
+        field_name: String
+        scope_id: ScopeId
+        is_optional: bool
+        safety_mode: SafetyMode
+        span: Span
+    ) throws -> CheckedExpression {
         let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
         let checked_expr_type_id = checked_expr.type()
         let checked_expr_type = .get_type(checked_expr_type_id)
@@ -7580,7 +8079,9 @@ struct Typechecker {
 
                         .error(format("unknown common member of enum: {}.{}", enum_.name, field_name), span)
                     }
-                    else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
+                    else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(
+                        checked_expr_type_id
+                        )), span)
                 }
             }
             Type::Struct(struct_id) => {
@@ -7606,7 +8107,7 @@ struct Typechecker {
                 }
                 .error(format("unknown member of struct: {}.{}", structure.name, field_name), span)
             }
-            Type::GenericEnumInstance(id: enum_id, args) | Type::Enum(enum_id) default(args: [TypeId] = []) => {
+            Type::GenericEnumInstance(id: enum_id, args) | Type::Enum(enum_id)default(args: [TypeId] = []) => {
                 if is_optional {
                     .error("Optional chaining is not allowed on non-optional types", span)
                 }
@@ -7638,7 +8139,9 @@ struct Typechecker {
 
                 .error(format("unknown common member of enum: {}.{}", enum_.name, field_name), span)
             }
-            else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
+            else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(
+                checked_expr_type_id
+                )), span)
         }
 
         // FIXME: Unify with type
@@ -7651,7 +8154,15 @@ struct Typechecker {
             type_id: unknown_type_id())
     }
 
-    fn typecheck_indexed_tuple(mut this, expr: ParsedExpression, index: usize, scope_id: ScopeId, is_optional: bool, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
+    fn typecheck_indexed_tuple(
+        mut this
+        expr: ParsedExpression
+        index: usize
+        scope_id: ScopeId
+        is_optional: bool
+        safety_mode: SafetyMode
+        span: Span
+    ) throws -> CheckedExpression {
         let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
 
         let tuple_struct_id = .find_struct_in_prelude("Tuple")
@@ -7663,7 +8174,7 @@ struct Typechecker {
                 if is_optional {
                     .error("Optional chaining is not allowed on a non-optional tuple type", span)
                 }
-                if (index >= args.size()){
+                if (index >= args.size()) {
                     .error("Tuple index past the end of the tuple", span)
                 } else {
                     expr_type_id = args[index]
@@ -7672,7 +8183,7 @@ struct Typechecker {
                 let inner_type_id = args[0]
                 if .get_type(inner_type_id) is GenericInstance(id, args) {
                     if id.equals(tuple_struct_id) {
-                        if (index >= args.size()){
+                        if (index >= args.size()) {
                             .error("Optional-chained tuple index past the end of the tuple", span)
                         } else {
                             expr_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [args[index]]))
@@ -7696,7 +8207,15 @@ struct Typechecker {
             type_id: expr_type_id)
     }
 
-    fn typecheck_comptime_index(mut this, expr: ParsedExpression, index: ParsedExpression, scope_id: ScopeId, is_optional: bool, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
+    fn typecheck_comptime_index(
+        mut this
+        expr: ParsedExpression
+        index: ParsedExpression
+        scope_id: ScopeId
+        is_optional: bool
+        safety_mode: SafetyMode
+        span: Span
+    ) throws -> CheckedExpression {
         let checked_index = .typecheck_expression(index, scope_id, safety_mode, type_hint: None)
         mut interpreter = .interpreter()
         mut scope = InterpreterScope::from_runtime_scope(scope_id, program: .program)
@@ -7730,7 +8249,14 @@ struct Typechecker {
 
         return match index_constant {
             StringValue(val) => .typecheck_indexed_struct(expr, field_name: val, scope_id, is_optional, safety_mode, span)
-            UnsignedNumericValue(val) | SignedNumericValue(val) => .typecheck_indexed_tuple(expr, index: val as! usize, scope_id, is_optional, safety_mode, span)
+            UnsignedNumericValue(val) | SignedNumericValue(val) => .typecheck_indexed_tuple(
+                expr
+                index: val as! usize
+                scope_id
+                is_optional
+                safety_mode
+                span
+            )
         }
     }
 
@@ -7770,7 +8296,15 @@ struct Typechecker {
         }
     }
 
-    fn check_restricted_access(mut this, accessor: ScopeId, accessee_kind: String, accessee: ScopeId, name: String, whitelist: [MaybeResolvedScope], span: Span) throws -> bool {
+    fn check_restricted_access(
+        mut this
+        accessor: ScopeId
+        accessee_kind: String
+        accessee: ScopeId
+        name: String
+        whitelist: [MaybeResolvedScope]
+        span: Span
+    ) throws -> bool {
         let most_specific_active_scope_id = match .current_function_id.has_value() {
             true => .get_function(.current_function_id!).function_scope_id
             else => {
@@ -7818,7 +8352,9 @@ struct Typechecker {
     }
 
     fn infer_signed_int(mut this, val: i64, span: Span, type_hint: TypeId?) throws -> CheckedExpression {
-        mut expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(val), span, type_id: builtin(BuiltinType::I64))
+        mut expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(val), span, type_id: builtin(
+            BuiltinType::I64
+        ))
         if type_hint.has_value() {
             let hint = type_hint!
 
@@ -7826,81 +8362,151 @@ struct Typechecker {
                 let builtin_typeid = builtin(BuiltinType::I8)
                 let type_ = .get_type(builtin_typeid)
                 if val < type_.min() or val > (type_.max() as! i64) {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(val as! i8), span, type_id: builtin(BuiltinType::I8))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(val as! i8), span, type_id: builtin(
+                        BuiltinType::I8
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::I16)) {
                 let builtin_typeid = builtin(BuiltinType::I16)
                 let type_ = .get_type(builtin_typeid)
                 if val < type_.min() or val > (type_.max() as! i64) {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(val as! i16), span, type_id: builtin(BuiltinType::I16))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(val as! i16), span, type_id: builtin(
+                        BuiltinType::I16
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::I32)) {
                 let builtin_typeid = builtin(BuiltinType::I32)
                 let type_ = .get_type(builtin_typeid)
                 if val < type_.min() or val > (type_.max() as! i64) {
-                        .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val as! i32), span, type_id: builtin(BuiltinType::I32))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val as! i32), span, type_id: builtin(
+                        BuiltinType::I32
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::U8)) {
                 let builtin_typeid = builtin(BuiltinType::U8)
                 let type_ = .get_type(builtin_typeid)
                 if val < type_.min() or val > (type_.max() as! i64) {
-                        .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(BuiltinType::U8))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(
+                        BuiltinType::U8
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::U16)) {
                 let builtin_typeid = builtin(BuiltinType::U16)
                 let type_ = .get_type(builtin_typeid)
                 if val < type_.min() or val > (type_.max() as! i64) {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(val as! u16), span, type_id: builtin(BuiltinType::U16))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(val as! u16), span, type_id: builtin(
+                        BuiltinType::U16
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::U32)) {
                 let builtin_typeid = builtin(BuiltinType::U32)
                 let type_ = .get_type(builtin_typeid)
                 if val < type_.min() or val > (type_.max() as! i64) {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(val as! u32), span, type_id: builtin(BuiltinType::U32))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(val as! u32), span, type_id: builtin(
+                        BuiltinType::U32
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::U64)) {
                 let builtin_typeid = builtin(BuiltinType::Usize)
                 let type_ = .get_type(builtin_typeid)
                 if val < 0 {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val as! u64), span, type_id: builtin(BuiltinType::U64))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val as! u64), span, type_id: builtin(
+                        BuiltinType::U64
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::Usize)) {
                 let builtin_typeid = builtin(BuiltinType::Usize)
                 let type_ = .get_type(builtin_typeid)
                 if val < 0 {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val as! u64), span, type_id: builtin(BuiltinType::Usize))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val as! u64), span, type_id: builtin(
+                        BuiltinType::Usize
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::CInt)) {
                 let builtin_typeid = builtin(BuiltinType::CInt)
                 let type_ = .get_type(builtin_typeid)
                 if val < 0 {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val as! i32), span, type_id: builtin(BuiltinType::CInt))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val as! i32), span, type_id: builtin(
+                        BuiltinType::CInt
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::CChar)) {
                 let builtin_typeid = builtin(BuiltinType::CChar)
                 let type_ = .get_type(builtin_typeid)
                 if val < 0 or val > 255 {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(BuiltinType::CChar))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(
+                        BuiltinType::CChar
+                    ))
                 }
             }
         }
@@ -7908,7 +8514,9 @@ struct Typechecker {
     }
 
     fn infer_unsigned_int(mut this, val: u64, span: Span, type_hint: TypeId?) throws -> CheckedExpression {
-        mut expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val), span, type_id: builtin(BuiltinType::U64))
+        mut expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val), span, type_id: builtin(
+            BuiltinType::U64
+        ))
         if type_hint.has_value() {
             let hint = type_hint!
 
@@ -7916,63 +8524,118 @@ struct Typechecker {
                 let builtin_typeid = builtin(BuiltinType::I8)
                 let type_ = .get_type(builtin_typeid)
                 if type_.max() < val {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(val as! i8), span, type_id: builtin(BuiltinType::I8))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(val as! i8), span, type_id: builtin(
+                        BuiltinType::I8
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::I16)) {
                 let builtin_typeid = builtin(BuiltinType::I16)
                 let type_ = .get_type(builtin_typeid)
                 if type_.max() < val {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(val as! i16), span, type_id: builtin(BuiltinType::I16))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(val as! i16), span, type_id: builtin(
+                        BuiltinType::I16
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::I32)) {
                 let builtin_typeid = builtin(BuiltinType::I32)
                 let type_ = .get_type(builtin_typeid)
                 if type_.max() < val {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val as! i32), span, type_id: builtin(BuiltinType::I32))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val as! i32), span, type_id: builtin(
+                        BuiltinType::I32
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::U8)) {
                 let builtin_typeid = builtin(BuiltinType::U8)
                 let type_ = .get_type(builtin_typeid)
                 if type_.max() < val {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(BuiltinType::U8))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(
+                        BuiltinType::U8
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::U16)) {
                 let builtin_typeid = builtin(BuiltinType::U16)
                 let type_ = .get_type(builtin_typeid)
                 if type_.max() < val {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(val as! u16), span, type_id: builtin(BuiltinType::U16))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(val as! u16), span, type_id: builtin(
+                        BuiltinType::U16
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::U32)) {
                 let builtin_typeid = builtin(BuiltinType::U32)
                 let type_ = .get_type(builtin_typeid)
                 if type_.max() < val {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(val as! u32), span, type_id: builtin(BuiltinType::U32))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(val as! u32), span, type_id: builtin(
+                        BuiltinType::U32
+                    ))
                 }
             } else if hint.equals(builtin(BuiltinType::U64)) {
-                expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val as! u64), span, type_id: builtin(BuiltinType::U64))
+                expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val as! u64), span, type_id: builtin(
+                    BuiltinType::U64
+                ))
             } else if hint.equals(builtin(BuiltinType::Usize)) {
-                expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val as! u64), span, type_id: builtin(BuiltinType::Usize))
+                expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val as! u64), span, type_id: builtin(
+                    BuiltinType::Usize
+                ))
             } else if hint.equals(builtin(BuiltinType::CInt)) {
-                expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val as! u64), span, type_id: builtin(BuiltinType::CInt))
+                expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val as! u64), span, type_id: builtin(
+                    BuiltinType::CInt
+                ))
             } else if hint.equals(builtin(BuiltinType::CChar)) {
                 let builtin_typeid = builtin(BuiltinType::CChar)
                 let type_ = .get_type(builtin_typeid)
                 if val > 255 {
-                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                    .error_with_hint("Integer promotion failed", span, format(
+                        "Cannot fit value into range [{}, {}] of type {}."
+                        type_.min()
+                        type_.max()
+                        .type_name(builtin_typeid)
+                        ), span)
                 } else {
-                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(BuiltinType::CChar))
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(
+                        BuiltinType::CChar
+                    ))
                 }
             }
         }
@@ -8088,8 +8751,22 @@ struct Typechecker {
         safety_mode: SafetyMode
         type_hint: TypeId?
     ) throws -> CheckedExpression => match expr {
-        IndexedStruct(expr, field_name, span, is_optional) => .typecheck_indexed_struct(expr, field_name, scope_id, is_optional, safety_mode, span)
-        ComptimeIndex(expr, index, span, is_optional) => .typecheck_comptime_index(expr, index, scope_id, is_optional, safety_mode, span)
+        IndexedStruct(expr, field_name, span, is_optional) => .typecheck_indexed_struct(
+            expr
+            field_name
+            scope_id
+            is_optional
+            safety_mode
+            span
+        )
+        ComptimeIndex(expr, index, span, is_optional) => .typecheck_comptime_index(
+            expr
+            index
+            scope_id
+            is_optional
+            safety_mode
+            span
+        )
         Boolean(val, span) => {
             .unify_with_type(found_type: builtin(BuiltinType::Bool), expected_type: type_hint, span)
             yield CheckedExpression::Boolean(val, span)
@@ -8104,17 +8781,39 @@ struct Typechecker {
             }
 
             yield match val {
-                I8(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(val), span, type_id: builtin(BuiltinType::I8))
-                I16(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(val), span, type_id: builtin(BuiltinType::I16))
-                I32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val), span, type_id: builtin(BuiltinType::I32))
-                I64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(val), span, type_id: builtin(BuiltinType::I64))
-                U8(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val), span, type_id: builtin(BuiltinType::U8))
-                U16(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(val), span, type_id: builtin(BuiltinType::U16))
-                U32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(val), span, type_id: builtin(BuiltinType::U32))
-                U64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val), span, type_id: builtin(BuiltinType::U64))
-                USize(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val), span, type_id: builtin(BuiltinType::Usize))
-                F32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F32(val), span, type_id: builtin(BuiltinType::F32))
-                F64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F64(val), span, type_id: builtin(BuiltinType::F64))
+                I8(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(val), span, type_id: builtin(
+                    BuiltinType::I8
+                ))
+                I16(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(val), span, type_id: builtin(
+                    BuiltinType::I16
+                ))
+                I32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val), span, type_id: builtin(
+                    BuiltinType::I32
+                ))
+                I64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(val), span, type_id: builtin(
+                    BuiltinType::I64
+                ))
+                U8(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val), span, type_id: builtin(
+                    BuiltinType::U8
+                ))
+                U16(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(val), span, type_id: builtin(
+                    BuiltinType::U16
+                ))
+                U32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(val), span, type_id: builtin(
+                    BuiltinType::U32
+                ))
+                U64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val), span, type_id: builtin(
+                    BuiltinType::U64
+                ))
+                USize(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val), span, type_id: builtin(
+                    BuiltinType::Usize
+                ))
+                F32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F32(val), span, type_id: builtin(
+                    BuiltinType::F32
+                ))
+                F64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F64(val), span, type_id: builtin(
+                    BuiltinType::F64
+                ))
                 UnknownSigned(val) => .infer_signed_int(val, span, type_hint: type_hint_unwrapped)
                 UnknownUnsigned(val) => .infer_unsigned_int(val, span, type_hint: type_hint_unwrapped)
             }
@@ -8199,10 +8898,25 @@ struct Typechecker {
             }
         }
         Call(call, span) => {
-            yield .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: false)
+            yield .typecheck_call(
+                call
+                caller_scope_id: scope_id
+                span
+                this_expr: None
+                parent_id: None
+                safety_mode
+                type_hint
+                must_be_enum_constructor: false
+            )
         }
         MethodCall(expr, call, span, is_optional) => {
-            let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
+            let checked_expr = .typecheck_expression_and_dereference_if_needed(
+                expr
+                scope_id
+                safety_mode
+                type_hint: None
+                span
+            )
             let checked_expr_type_id = checked_expr.type()
 
             let final_type_id = .final_type_resolution_form(checked_expr_type_id, scope_id)
@@ -8215,10 +8929,21 @@ struct Typechecker {
             )
 
             if is_optional and not found_optional {
-                .error(message: format("Optional chain mismatch: expected optional chain, found {}", .type_name(type_id: checked_expr_type_id)), span: checked_expr.span())
+                .error(message: format("Optional chain mismatch: expected optional chain, found {}", .type_name(
+                    type_id: checked_expr_type_id
+                    )), span: checked_expr.span())
             }
 
-            let checked_call_expr = .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: checked_expr, parent_id, safety_mode, type_hint, must_be_enum_constructor: false)
+            let checked_call_expr = .typecheck_call(
+                call
+                caller_scope_id: scope_id
+                span
+                this_expr: checked_expr
+                parent_id
+                safety_mode
+                type_hint
+                must_be_enum_constructor: false
+            )
             let type_id = checked_call_expr.type()
             yield match checked_call_expr {
                 Call(call) => {
@@ -8241,17 +8966,19 @@ struct Typechecker {
         }
         Range(from, to, span) => {
             mut checked_from: CheckedExpression? = None
-            mut from_type: TypeId? = None;
+            mut from_type: TypeId? = None
             mut from_span = span
 
-            if from.has_value() and not from! is NumericConstant(val: UnknownSigned) and not from! is NumericConstant(val: UnknownUnsigned) {
+            if from.has_value() and not from! is NumericConstant(val: UnknownSigned) and not from! is NumericConstant(
+                val: UnknownUnsigned
+            ) {
                 checked_from = .typecheck_expression(from!, scope_id, safety_mode, type_hint: None)
                 from_type = checked_from!.type()
                 from_span = checked_from!.span()
             }
 
             mut checked_to: CheckedExpression? = None
-            mut to_type = unknown_type_id();
+            mut to_type = unknown_type_id()
             mut to_span = span
 
             if to.has_value() {
@@ -8260,7 +8987,9 @@ struct Typechecker {
                 to_span = checked_to!.span()
             }
 
-            if from.has_value() and (from! is NumericConstant(val: UnknownSigned) or from! is NumericConstant(val: UnknownUnsigned)) {
+            if from.has_value() and (from! is NumericConstant(val: UnknownSigned) or from! is NumericConstant(
+                val: UnknownUnsigned
+            )) {
                 // recheck the first value with the hint we get from the rhs
                 checked_from = .typecheck_expression(from!, scope_id, safety_mode, type_hint: to_type)
                 from_type = checked_from!.type()
@@ -8473,7 +9202,13 @@ struct Typechecker {
                 span
             )
 
-            yield CheckedExpression::BinaryOp(lhs: checked_lhs!, op: checked_operator, rhs: checked_rhs!, span, type_id: output_type)
+            yield CheckedExpression::BinaryOp(
+                lhs: checked_lhs!
+                op: checked_operator
+                rhs: checked_rhs!
+                span
+                type_id: output_type
+            )
         }
         OptionalNone(span) => {
             mut type_hint_unwrapped = type_hint
@@ -8514,7 +9249,13 @@ struct Typechecker {
             }
         }
         ForcedUnwrap(expr, span) => {
-            let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
+            let checked_expr = .typecheck_expression_and_dereference_if_needed(
+                expr
+                scope_id
+                safety_mode
+                type_hint: None
+                span
+            )
             let type = .get_type(checked_expr.type())
 
             let optional_struct_id = .find_struct_in_prelude("Optional")
@@ -8523,7 +9264,7 @@ struct Typechecker {
             let type_id: TypeId = match type {
                 GenericInstance(id, args) => {
                     mut inner_type_id = unknown_type_id()
-                    if  id.equals(optional_struct_id) or id.equals(weakptr_struct_id) {
+                    if id.equals(optional_struct_id) or id.equals(weakptr_struct_id) {
                         inner_type_id = args[0]
                     } else {
                         .error("Forced unwrap only works on Optional", span)
@@ -8602,8 +9343,20 @@ struct Typechecker {
             yield CheckedExpression::JaktTuple(vals: checked_values, span, type_id)
         }
         IndexedExpression(base, index, span) => {
-            let checked_base = .typecheck_expression_and_dereference_if_needed(base, scope_id, safety_mode, type_hint: None, span)
-            let checked_index = .typecheck_expression_and_dereference_if_needed(index, scope_id, safety_mode, type_hint: None, span)
+            let checked_base = .typecheck_expression_and_dereference_if_needed(
+                base
+                scope_id
+                safety_mode
+                type_hint: None
+                span
+            )
+            let checked_index = .typecheck_expression_and_dereference_if_needed(
+                index
+                scope_id
+                safety_mode
+                type_hint: None
+                span
+            )
 
             yield match .get_type(checked_base.type()) {
                 GenericInstance(id, args) => {
@@ -8637,12 +9390,32 @@ struct Typechecker {
                 }
             }
         }
-        IndexedTuple(expr, index, is_optional, span) => .typecheck_indexed_tuple(expr, index, scope_id, is_optional, safety_mode, span)
+        IndexedTuple(expr, index, is_optional, span) => .typecheck_indexed_tuple(
+            expr
+            index
+            scope_id
+            is_optional
+            safety_mode
+            span
+        )
         Garbage(span) => CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
-        NamespacedVar(name, namespace_, span) => .typecheck_namespaced_var_or_simple_enum_constructor_call(name, namespace_, scope_id, safety_mode, type_hint, span)
+        NamespacedVar(name, namespace_, span) => .typecheck_namespaced_var_or_simple_enum_constructor_call(
+            name
+            namespace_
+            scope_id
+            safety_mode
+            type_hint
+            span
+        )
         Match(expr, cases, marker_span) => .typecheck_match(expr, cases, span: marker_span, scope_id, safety_mode, type_hint)
         EnumVariantArg(expr: inner_expr, arg, enum_variant, span) => {
-            let checked_expr = .typecheck_expression_and_dereference_if_needed(inner_expr, scope_id, safety_mode, type_hint: None, span)
+            let checked_expr = .typecheck_expression_and_dereference_if_needed(
+                inner_expr
+                scope_id
+                safety_mode
+                type_hint: None
+                span
+            )
             mut checked_binding = CheckedEnumVariantBinding(name: "", binding: "", type_id: unknown_type_id(), span)
             mut checked_enum_variant: CheckedEnumVariant? = None
             match enum_variant {
@@ -8669,22 +9442,60 @@ struct Typechecker {
             }
             mut output = CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
             if checked_enum_variant.has_value() {
-                output = CheckedExpression::EnumVariantArg(expr: checked_expr, arg: checked_binding, enum_variant: checked_enum_variant!, span)
+                output = CheckedExpression::EnumVariantArg(
+                    expr: checked_expr
+                    arg: checked_binding
+                    enum_variant: checked_enum_variant!
+                    span
+                )
             }
             yield output
         }
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
         Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode, type_hint)
-        Function(captures, params, can_throw, is_fat_arrow, return_type, block, span) => .typecheck_lambda(captures, params, can_throw, is_fat_arrow, return_type, block, span, scope_id, safety_mode)
-        Try(expr, catch_block, catch_span, catch_name, span) => .typecheck_try(expr, catch_block, catch_span, catch_name, scope_id, safety_mode, span, type_hint)
-        TryBlock(stmt, catch_block, error_name, error_span, span) => .typecheck_try_block(stmt, error_name, error_span, catch_block, scope_id, safety_mode, span)
+        Function(captures, params, can_throw, is_fat_arrow, return_type, block, span) => .typecheck_lambda(
+            captures
+            params
+            can_throw
+            is_fat_arrow
+            return_type
+            block
+            span
+            scope_id
+            safety_mode
+        )
+        Try(expr, catch_block, catch_span, catch_name, span) => .typecheck_try(
+            expr
+            catch_block
+            catch_span
+            catch_name
+            scope_id
+            safety_mode
+            span
+            type_hint
+        )
+        TryBlock(stmt, catch_block, error_name, error_span, span) => .typecheck_try_block(
+            stmt
+            error_name
+            error_span
+            catch_block
+            scope_id
+            safety_mode
+            span
+        )
         Unsafe(expr) => .typecheck_expression(expr, scope_id, safety_mode: SafetyMode::Unsafe, type_hint)
         Operator => {
             .compiler.panic("idk how to handle this thing")
         }
     }
 
-    fn typecheck_is_enum_variant(mut this, checked_expr: CheckedExpression, inner: ParsedType, bindings: [EnumVariantPatternArgument], scope_id: ScopeId) throws -> CheckedUnaryOperator {
+    fn typecheck_is_enum_variant(
+        mut this
+        checked_expr: CheckedExpression
+        inner: ParsedType
+        bindings: [EnumVariantPatternArgument]
+        scope_id: ScopeId
+    ) throws -> CheckedUnaryOperator {
         let old_ignore_errors = .ignore_errors
         .ignore_errors = true
         let type_id = .typecheck_typename(parsed_type: inner, scope_id, name: None)
@@ -8726,7 +9537,8 @@ struct Typechecker {
         return None
     }
 
-    fn typecheck_enum_variant_bindings(mut this, variant: CheckedEnumVariant, bindings: [EnumVariantPatternArgument], span: Span) throws -> [CheckedEnumVariantBinding]? {
+    fn typecheck_enum_variant_bindings(
+        mut this, variant: CheckedEnumVariant, bindings: [EnumVariantPatternArgument], span: Span) throws -> [CheckedEnumVariantBinding]? {
         if variant is Typed(type_id) {
             if bindings.size() != 1 {
                 .error(format("Enum variant ‘{}’ must have exactly one argument", variant.name()), span)
@@ -8749,7 +9561,12 @@ struct Typechecker {
                 let binding_name = binding.name ?? binding.binding
                 let type_id = var.type_id
                 if binding_name == var.name {
-                    checked_enum_variant_bindings.push(CheckedEnumVariantBinding(name: binding.name, binding: binding.binding, type_id, span))
+                    checked_enum_variant_bindings.push(CheckedEnumVariantBinding(
+                        name: binding.name
+                        binding: binding.binding
+                        type_id
+                        span
+                    ))
                     found = true
                     break
                 }
@@ -8812,7 +9629,11 @@ struct Typechecker {
             effective_namespace_parent_scope = .get_scope(effective_namespace_parent_scope_id)
         }
 
-        mut lambda_scope_id = .create_scope(parent_scope_id: effective_namespace_parent_scope_id, can_throw, debug_name: "lambda")
+        mut lambda_scope_id = .create_scope(
+            parent_scope_id: effective_namespace_parent_scope_id
+            can_throw
+            debug_name: "lambda"
+        )
         mut is_capturing_everything = false
         mut checked_captures: [CheckedCapture] = []
         mut has_dependent_capture = false
@@ -8878,10 +9699,21 @@ struct Typechecker {
         mut checked_params: [CheckedParameter] = []
         mut first = true
         for param in params {
-            let checked_param = .typecheck_parameter(parameter: param, scope_id, first, this_arg_type_id: None, check_scope: None)
+            let checked_param = .typecheck_parameter(
+                parameter: param
+                scope_id
+                first
+                this_arg_type_id: None
+                check_scope: None
+            )
             checked_params.push(checked_param)
             let var_id = module.add_variable(checked_param.variable)
-            .add_var_to_scope(scope_id: lambda_scope_id, name: checked_param.variable.name, var_id, span: checked_param.variable.definition_span)
+            .add_var_to_scope(
+                scope_id: lambda_scope_id
+                name: checked_param.variable.name
+                var_id
+                span: checked_param.variable.definition_span
+            )
 
             first = false
         }
@@ -8993,7 +9825,16 @@ struct Typechecker {
         }
 
         let implicit_constructor_call = ParsedCall(namespace_, name, args: [], type_args: [])
-        let call_expression = .typecheck_call(call: implicit_constructor_call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: true)
+        let call_expression = .typecheck_call(
+            call: implicit_constructor_call
+            caller_scope_id: scope_id
+            span
+            this_expr: None
+            parent_id: None
+            safety_mode
+            type_hint
+            must_be_enum_constructor: true
+        )
         let type_id = call_expression.type()
         let call = match call_expression {
             Call(call) => call
@@ -9019,7 +9860,15 @@ struct Typechecker {
         )
     }
 
-    fn typecheck_array(mut this, scope_id: ScopeId, values: [ParsedExpression], fill_size: ParsedExpression?, span: Span, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+    fn typecheck_array(
+        mut this
+        scope_id: ScopeId
+        values: [ParsedExpression]
+        fill_size: ParsedExpression?
+        span: Span
+        safety_mode: SafetyMode
+        type_hint: TypeId?
+    ) throws -> CheckedExpression {
         if .dump_try_hints {
             .dump_try_hint(span)
         }
@@ -9041,11 +9890,20 @@ struct Typechecker {
             // Check fill size is an integer.
             // TODO: Check fill size is positive when possible.
             let fill_size_value = fill_size.value()
-            let fill_size_checked = .typecheck_expression_and_dereference_if_needed(fill_size_value, scope_id, safety_mode, type_hint: None, span)
+            let fill_size_checked = .typecheck_expression_and_dereference_if_needed(
+                fill_size_value
+                scope_id
+                safety_mode
+                type_hint: None
+                span
+            )
             let fill_size_type = fill_size_checked.type()
             if not .is_integer(fill_size_type) {
                 .error(
-                    format("Type '{}' is not convertible to an integer. Only integer values can be array fill size expressions.", .type_name(fill_size_type)),
+                    format(
+                        "Type '{}' is not convertible to an integer. Only integer values can be array fill size expressions."
+                        .type_name(fill_size_type)
+                    ),
                     fill_size_value.span()
                 )
             }
@@ -9056,7 +9914,10 @@ struct Typechecker {
         mut inferred_type_span: Span? = None
 
         mut inner_hint: TypeId? = None
-        let type_hint_ids: [TypeId]? = .get_type_ids_from_type_hint_if_struct_ids_match(type_hint, expected_struct_id: array_struct_id)
+        let type_hint_ids: [TypeId]? = .get_type_ids_from_type_hint_if_struct_ids_match(
+            type_hint
+            expected_struct_id: array_struct_id
+        )
         if type_hint_ids.has_value() {
             inner_hint = type_hint_ids![0]
         }
@@ -9074,7 +9935,9 @@ struct Typechecker {
                 inferred_type_span = value.span()
             } else if not inner_type_id.equals(current_value_type_id) {
                 .error_with_hint(
-                    format("Type '{}' does not match type '{}' of previous values in array", .type_name(current_value_type_id), .type_name(inner_type_id)),
+                    format("Type '{}' does not match type '{}' of previous values in array", .type_name(
+                        current_value_type_id
+                        ), .type_name(inner_type_id)),
                     value.span(),
                     format("Array was inferred to store type '{}' here", .type_name(inner_type_id))
                     inferred_type_span!
@@ -9105,7 +9968,14 @@ struct Typechecker {
         return CheckedExpression::JaktArray(vals, repeat, span, type_id, inner_type_id)
     }
 
-    fn typecheck_set(mut this, values: [ParsedExpression], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+    fn typecheck_set(
+        mut this
+        values: [ParsedExpression]
+        span: Span
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        type_hint: TypeId?
+    ) throws -> CheckedExpression {
         if .dump_try_hints {
             .dump_try_hint(span)
         }
@@ -9119,7 +9989,10 @@ struct Typechecker {
         let set_struct_id = .find_struct_in_prelude("Set")
 
         mut inner_hint: TypeId? = None
-        let type_hint_ids: [TypeId]? = .get_type_ids_from_type_hint_if_struct_ids_match(type_hint, expected_struct_id: set_struct_id)
+        let type_hint_ids: [TypeId]? = .get_type_ids_from_type_hint_if_struct_ids_match(
+            type_hint
+            expected_struct_id: set_struct_id
+        )
         if type_hint_ids.has_value() {
             inner_hint = type_hint_ids![0]
         }
@@ -9186,7 +10059,15 @@ struct Typechecker {
         return CheckedExpression::JaktSet(vals: output, span, type_id, inner_type_id)
     }
 
-    fn typecheck_generic_arguments_method_call(mut this, checked_expr: CheckedExpression, call: ParsedCall, scope_id: ScopeId, span: Span, is_optional: bool, safety_mode: SafetyMode) throws -> CheckedExpression {
+    fn typecheck_generic_arguments_method_call(
+        mut this
+        checked_expr: CheckedExpression
+        call: ParsedCall
+        scope_id: ScopeId
+        span: Span
+        is_optional: bool
+        safety_mode: SafetyMode
+    ) throws -> CheckedExpression {
         mut checked_args: [(String, CheckedExpression)] = []
         checked_args.ensure_capacity(call.args.size())
         for (name, _, expr) in call.args {
@@ -9324,7 +10205,10 @@ struct Typechecker {
                     }
 
                     if matched_field_variable.has_value() {
-                        let substituted_type_id = .substitute_typevars_in_type(type_id: matched_field_variable!.type_id, generic_inferences: .generic_inferences)
+                        let substituted_type_id = .substitute_typevars_in_type(
+                            type_id: matched_field_variable!.type_id
+                            generic_inferences: .generic_inferences
+                        )
                         let matched_span = matched_field_variable!.definition_span
                         if .dump_type_hints {
                             .dump_type_hint(type_id: matched_field_variable!.type_id, span: arg.span)
@@ -9340,7 +10224,11 @@ struct Typechecker {
                         ))
                         .add_var_to_scope(scope_id: new_scope_id, name: arg.binding, var_id, span: matched_span)
                     } else {
-                        .error(format("Match case argument '{}' does not exist in struct-like enum variant '{}'", arg_name, name), arg.span)
+                        .error(format(
+                            "Match case argument '{}' does not exist in struct-like enum variant '{}'"
+                            arg_name
+                            name
+                            ), arg.span)
                     }
                 }
             }
@@ -9448,7 +10336,9 @@ struct Typechecker {
                                 }
 
                                 if variant_names_[0].0 != enum_.name {
-                                    .error(format("Match case '{}' does not match enum '{}'", variant_names_[0].0, enum_.name), variant_names_[0].1)
+                                    .error(format("Match case '{}' does not match enum '{}'", variant_names_[0].0, enum_.name), variant_names_[
+                                        0
+                                        ].1)
                                     continue
                                 }
 
@@ -9464,9 +10354,17 @@ struct Typechecker {
                                 }
 
                                 if not matched_variant.has_value() {
-                                    .error(format("Enum '{}' does not contain a variant named '{}'", enum_.name, variant_names_[1].0), case_.marker_span)
+                                    .error(format("Enum '{}' does not contain a variant named '{}'", enum_.name, variant_names_[
+                                        1
+                                        ].0), case_.marker_span)
 
-                                    return CheckedExpression::Match(expr: checked_expr, match_cases: [], span, type_id: unknown_type_id(), all_variants_constant: false)
+                                    return CheckedExpression::Match(
+                                        expr: checked_expr
+                                        match_cases: []
+                                        span
+                                        type_id: unknown_type_id()
+                                        all_variants_constant: false
+                                    )
                                 }
 
                                 let (covered_name, checked_match_case, result_type) = .typecheck_match_variant(
@@ -9589,7 +10487,10 @@ struct Typechecker {
 
                 if missing_variants.size() > 0 {
                     if not seen_catch_all {
-                        .error(format("Match expression is not exhaustive, missing variants are: {}", join(missing_variants, separator: ", ")), span)
+                        .error(format("Match expression is not exhaustive, missing variants are: {}", join(
+                            missing_variants
+                            separator: ", "
+                            )), span)
                     }
                 } else if seen_catch_all and not expanded_catch_all {
                     .error("All variants are covered, but an irrefutable pattern is also present", span)
@@ -9649,7 +10550,7 @@ struct Typechecker {
                                             if .struct_inherits_from(
                                                     struct_id: id
                                                     super_struct_id: covered_case
-                                                ) {
+                                            ) {
                                                 .error_with_hint(
                                                     format(
                                                         "Type ‘{}’ used as a match case at this position is redundant"
@@ -9681,12 +10582,12 @@ struct Typechecker {
                                         match .get_type(type) {
                                             Struct(id) | GenericInstance(id) => {
                                                 if not .struct_inherits_from(
-                                                    struct_id: struct_to_match_on
-                                                    super_struct_id: id
-                                                    struct_inheritance_chain
-                                                ) and not .struct_inherits_from(
-                                                    struct_id: id
-                                                    super_struct_id: struct_to_match_on
+                                                        struct_id: struct_to_match_on
+                                                        super_struct_id: id
+                                                        struct_inheritance_chain
+                                                    ) and not .struct_inherits_from(
+                                                        struct_id: id
+                                                        super_struct_id: struct_to_match_on
                                                 ) {
                                                     .error_with_hint(
                                                         format(
@@ -9888,7 +10789,9 @@ struct Typechecker {
 
                                     // We don't know what the enum type is, but we have the type var for it, so generate a generic enum match.
                                     // note that this will be fully checked when this match expression is actually instantiated.
-                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
+                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(
+                                        scope_id
+                                        ).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
                                     mut defaults: [CheckedStatement] = []
                                     for (_, default_) in pattern.defaults {
                                         let checked_var_decl = .typecheck_var_decl(
@@ -9944,7 +10847,9 @@ struct Typechecker {
                                         .had_an_error = false
                                     }
 
-                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
+                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(
+                                        scope_id
+                                        ).can_throw, debug_name: "catch-all")
                                     mut defaults: [CheckedStatement] = []
                                     for (_, default_) in pattern.defaults {
                                         let checked_var_decl = .typecheck_var_decl(
@@ -9993,7 +10898,13 @@ struct Typechecker {
                                         scope_id
                                         span
                                     )
-                                    let checked_expression = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: Some(subject_type_id), span)
+                                    let checked_expression = .typecheck_expression_and_dereference_if_needed(
+                                        new_condition
+                                        scope_id
+                                        safety_mode
+                                        type_hint: Some(subject_type_id)
+                                        span
+                                    )
 
                                     if is_boolean_match and checked_expression is Boolean(val) {
                                         if val {
@@ -10037,7 +10948,9 @@ struct Typechecker {
                                         .error("Expression patterns cannot have default bindings", case_.marker_span)
                                     }
 
-                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-expression({})", expr))
+                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(
+                                        scope_id
+                                        ).can_throw, debug_name: format("catch-expression({})", expr))
                                     let (checked_body, result_type) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
@@ -10077,14 +10990,33 @@ struct Typechecker {
             }
         }
 
-        return CheckedExpression::Match(expr: checked_expr, match_cases: checked_cases, span, type_id: final_result_type ?? void_type_id(), all_variants_constant: true)
+        return CheckedExpression::Match(
+            expr: checked_expr
+            match_cases: checked_cases
+            span
+            type_id: final_result_type ?? void_type_id()
+            all_variants_constant: true
+        )
     }
 
-    fn typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: &mut GenericInferences, final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId?) {
+    fn typecheck_match_body(
+        mut this
+        body: ParsedMatchBody
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        generic_inferences: &mut GenericInferences
+        final_result_type: TypeId?
+        span: Span
+    ) throws -> (CheckedMatchBody, TypeId?) {
         mut result_type = final_result_type
         let checked_match_body = match body {
             Block(block) => {
-                let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode, yield_type_hint: final_result_type)
+                let checked_block = .typecheck_block(
+                    parsed_block: block
+                    parent_scope_id: scope_id
+                    safety_mode
+                    yield_type_hint: final_result_type
+                )
 
                 if checked_block.control_flow.may_return() or checked_block.yielded_type.has_value() {
                     let block_type_id = checked_block.yielded_type ?? void_type_id()
@@ -10134,7 +11066,14 @@ struct Typechecker {
         return (checked_match_body, result_type)
     }
 
-    fn typecheck_dictionary(mut this, values: [(ParsedExpression, ParsedExpression)], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+    fn typecheck_dictionary(
+        mut this
+        values: [(ParsedExpression, ParsedExpression)]
+        span: Span
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        type_hint: TypeId?
+    ) throws -> CheckedExpression {
         if .dump_try_hints {
             .dump_try_hint(span)
         }
@@ -10147,7 +11086,10 @@ struct Typechecker {
 
         mut key_hint: TypeId? = None
         mut value_hint: TypeId? = None
-        let type_hint_ids: [TypeId]? = .get_type_ids_from_type_hint_if_struct_ids_match(type_hint, expected_struct_id: dictionary_struct_id)
+        let type_hint_ids: [TypeId]? = .get_type_ids_from_type_hint_if_struct_ids_match(
+            type_hint
+            expected_struct_id: dictionary_struct_id
+        )
         if type_hint_ids.has_value() {
             key_hint = type_hint_ids![0]
             value_hint = type_hint_ids![1]
@@ -10177,7 +11119,11 @@ struct Typechecker {
                     let key_type_name = .type_name(key_type_id)
                     let current_key_type_name = .type_name(current_key_type_id)
                     .error_with_hint(
-                        message: format("Type '{}' does not match type '{}' of previous keys in dictionary", current_key_type_name, key_type_name)
+                        message: format(
+                            "Type '{}' does not match type '{}' of previous keys in dictionary"
+                            current_key_type_name
+                            key_type_name
+                        )
                         span: key.span()
                         hint: format("Dictionary was inferred to store keys of type '{}' here", key_type_name)
                         hint_span: key_type_span!
@@ -10187,7 +11133,11 @@ struct Typechecker {
                     let value_type_name = .type_name(value_type_id)
                     let current_value_type_name = .type_name(current_value_type_id)
                     .error_with_hint(
-                        message: format("Type '{}' does not match type '{}' of previous values in dictionary", current_value_type_name, value_type_name)
+                        message: format(
+                            "Type '{}' does not match type '{}' of previous values in dictionary"
+                            current_value_type_name
+                            value_type_name
+                        )
                         span: value.span()
                         hint: format("Dictionary was inferred to store values of type '{}' here", value_type_name)
                         hint_span: value_type_span!
@@ -10367,7 +11317,7 @@ struct Typechecker {
 
         // 1. Look for a variable in the current scope with this name.
         let maybe_var = .find_var_in_scope(scope_id: current_scope_id, var: call.name, root_scope: current_scope_id)
-        if maybe_var.has_value()  {
+        if maybe_var.has_value() {
             let inner_type = match .get_type(maybe_var!.type_id) {
                 Reference(type_id) | MutableReference(type_id) => type_id
                 else => maybe_var!.type_id
@@ -10543,7 +11493,7 @@ struct Typechecker {
         if params_to_compare.size() <= resolved_args.size() + arg_offset {
             for i in 0..(params_to_compare.size() - arg_offset) {
                 let (name, span, checked_arg) = resolved_args[i]
-                let type_to = .get_type(params_to_compare[i+arg_offset])
+                let type_to = .get_type(params_to_compare[i + arg_offset])
                 total_function_specificity += type_to.specificity(program: .program)
 
                 if is_specialized_comptime_function {
@@ -10555,7 +11505,7 @@ struct Typechecker {
                     )
                 }
                 .check_types_for_compat(
-                    lhs_type_id: params_to_compare[i+arg_offset]
+                    lhs_type_id: params_to_compare[i + arg_offset]
                     rhs_type_id: checked_arg.type()
                     generic_inferences: &mut .generic_inferences
                     span: checked_arg.span()
@@ -10681,7 +11631,13 @@ struct Typechecker {
                     while resolved_function_id_candidates.is_empty() {
                         let old_ignore_errors = .ignore_errors
                         .ignore_errors = true
-                        resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
+                        resolved_function_id_candidates = .resolve_call(
+                            call
+                            namespaces: resolved_namespaces
+                            span
+                            scope_id
+                            must_be_enum_constructor
+                        )
                         .ignore_errors = old_ignore_errors
                         .had_an_error = false
 
@@ -10701,18 +11657,36 @@ struct Typechecker {
                 }
                 Enum(id) => {
                     let scope_id = .get_enum(id).scope_id
-                    resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
+                    resolved_function_id_candidates = .resolve_call(
+                        call
+                        namespaces: resolved_namespaces
+                        span
+                        scope_id
+                        must_be_enum_constructor
+                    )
                     yield scope_id
                 }
                 Trait(id) => {
                     let scope_id = .get_trait(id).scope_id
-                    resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
+                    resolved_function_id_candidates = .resolve_call(
+                        call
+                        namespaces: resolved_namespaces
+                        span
+                        scope_id
+                        must_be_enum_constructor
+                    )
                     yield scope_id
                 }
             }
             else => {
                 if not is_print_like {
-                    resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: caller_scope_id, must_be_enum_constructor)
+                    resolved_function_id_candidates = .resolve_call(
+                        call
+                        namespaces: resolved_namespaces
+                        span
+                        scope_id: caller_scope_id
+                        must_be_enum_constructor
+                    )
                 }
                 yield caller_scope_id
             }
@@ -10886,7 +11860,9 @@ struct Typechecker {
                 }
             }
 
-            if not callee.is_instantiated or (not callee.linkage is External and not callee.generics.is_specialized_for_types(types: generic_arguments)) {
+            if not callee.is_instantiated or (not callee.linkage is External and not callee.generics.is_specialized_for_types(
+                types: generic_arguments
+            )) {
                 generic_checked_function_to_instantiate = Some(resolved_function_id!)
             } else if callee.is_instantiated {
                 if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
@@ -10912,7 +11888,10 @@ struct Typechecker {
         if generic_checked_function_to_instantiate.has_value() {
             // Clear the generic parameters and typecheck in the fully specialized scope.
             if maybe_this_type_id.has_value() {
-                maybe_this_type_id = .substitute_typevars_in_type(type_id: maybe_this_type_id!, generic_inferences: .generic_inferences)
+                maybe_this_type_id = .substitute_typevars_in_type(
+                    type_id: maybe_this_type_id!
+                    generic_inferences: .generic_inferences
+                )
             }
 
             resolved_function_id = .typecheck_and_specialize_generic_function(
@@ -10963,7 +11942,9 @@ struct Typechecker {
                     let arg_scope_id = .required_scope_id_in_hierarchy_for(resolve_arg(index), current_scope_id: caller_scope_id).0
                     let stored_scope_id = match level {
                         InStaticStorage => Some(.root_scope_id())
-                        InObject(argument_index) => .required_scope_id_in_hierarchy_for(resolve_arg(argument_index), current_scope_id: caller_scope_id).0
+                        InObject(argument_index) => .required_scope_id_in_hierarchy_for(resolve_arg(
+                            argument_index
+                            ), current_scope_id: caller_scope_id).0
                     }
 
                     if .scope_lifetime_subsumes(stored_scope_id, arg_scope_id) {
@@ -10998,7 +11979,8 @@ struct Typechecker {
             type_id: return_type
         )
 
-        let in_comptime_function = .current_function_id.has_value() and .get_function(.current_function_id.value()).is_comptime
+        let in_comptime_function = .current_function_id.has_value() and .get_function(
+            .current_function_id.value()).is_comptime
 
         if not in_comptime_function and resolved_function_id.has_value() and .get_function(resolved_function_id!).is_comptime {
             let resolved_function = .get_function(resolved_function_id!)
@@ -11062,7 +12044,6 @@ struct Typechecker {
                 call_args.push(evaluated_value)
             }
 
-
             mut type_bindings: [TypeId:TypeId] = [:]
             for i in 0uz..resolved_function.generics.params.size() {
                 let param = resolved_function.generics.params[i]
@@ -11111,15 +12092,20 @@ struct Typechecker {
         return checked_call
     }
 
-    fn check_implicit_constructor_argument_access(mut this, caller_scope_id: ScopeId, call: ParsedCall, struct_: CheckedStruct)  throws {
-        if not .scope_can_access(accessor:caller_scope_id, accessee:struct_.scope_id) {
+    fn check_implicit_constructor_argument_access(
+        mut this, caller_scope_id: ScopeId, call: ParsedCall, struct_: CheckedStruct) throws {
+        if not .scope_can_access(accessor: caller_scope_id, accessee: struct_.scope_id) {
             for arg in call.args {
                 for field in struct_.fields {
                     let variable = .get_variable(field.variable_id)
 
                     let name = .get_argument_name(arg)
                     if (variable.name == name and variable.visibility is Private) {
-                        .error(format("Can't access field '{}' when calling implicit constructor of '{}' because it is marked private", variable.name, struct_.name), arg.1)
+                        .error(format(
+                            "Can't access field '{}' when calling implicit constructor of '{}' because it is marked private"
+                            variable.name
+                            struct_.name
+                            ), arg.1)
                         return
                     }
                 }
@@ -11148,7 +12134,9 @@ struct Typechecker {
         let max_number_of_valid_arguments = params.size() - arg_offset
         let min_number_of_valid_arguments = max_number_of_valid_arguments - params_with_default_value
 
-        guard args.size() >= min_number_of_valid_arguments and (args.size() <= max_number_of_valid_arguments or has_varargs) else {
+        guard args.size() >= min_number_of_valid_arguments and (args.size() <= max_number_of_valid_arguments or
+            has_varargs
+        ) else {
             .error("Wrong number of arguments", span)
             return []
         }
@@ -11183,7 +12171,11 @@ struct Typechecker {
 
                     // The label is not required, but if it is present regardless, it has to match the parameter name
                     if not name.is_empty() and name != param.variable.name {
-                        .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", name, param.variable.name), span)
+                        .error(format(
+                            "Wrong parameter name in argument label (got '{}', expected '{}')"
+                            name
+                            param.variable.name
+                            ), span)
                     }
 
                     maybe_checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: param.variable.type_id)
@@ -11251,7 +12243,14 @@ struct Typechecker {
         return current_type_id
     }
 
-    fn validate_argument_label(mut this, param: CheckedParameter, label: String, span: Span, expr: ParsedExpression, default_value: CheckedExpression?) throws -> bool {
+    fn validate_argument_label(
+        mut this
+        param: CheckedParameter
+        label: String
+        span: Span
+        expr: ParsedExpression
+        default_value: CheckedExpression?
+    ) throws -> bool {
         let name = .get_argument_name(arg: (label, span, expr))
         if name == param.variable.name {
             return true
@@ -11319,12 +12318,11 @@ struct Typechecker {
                 let generic = generics[i]
                 let generic_to_match = generics_to_match[i]
 
-
                 if not .check_types_for_compat(
-                    lhs_type_id: generic
-                    rhs_type_id: generic_to_match
-                    generic_inferences: &mut .generic_inferences
-                    span: Span(file_id: FileId(id: 0), start: 0, end: 0) // NOTE: This won't show up anywhere (as the errors are ignored)
+                        lhs_type_id: generic
+                        rhs_type_id: generic_to_match
+                        generic_inferences: &mut .generic_inferences
+                        span: Span(file_id: FileId(id: 0), start: 0, end: 0) // NOTE: This won't show up anywhere (as the errors are ignored)
                 ) {
                     return false
                 }
@@ -11337,11 +12335,11 @@ struct Typechecker {
         if type.is_builtin() {
             type = .get_type(.get_struct(
                 .program.builtin_implementation_struct(builtin: type.as_builtin_type(), for_module: .program.prelude_module_id())
-            ).type_id)
+                ).type_id)
         }
 
         return match type {
-            Struct(struct_id) default(args: [TypeId] = []) | GenericInstance(id: struct_id, args) => {
+            Struct(struct_id)default(args: [TypeId] = []) | GenericInstance(id: struct_id, args) => {
                 let struct_ = .get_struct(struct_id)
                 .generic_inferences.set_all(keys: struct_.generic_parameters, values: args)
 
@@ -11454,7 +12452,11 @@ struct Typechecker {
                     generic_inferences: &mut typechecker.generic_inferences
                     span: Span(file_id: FileId(id: 0), start: 0, end: 0) // NOTE: This won't show up anywhere (as the errors are ignored)
                 )
-                GenericTraitInstance(id, args) => typechecker.implements_trait(type_id: mapped_b, trait_id: id, generic_arguments: args)
+                GenericTraitInstance(id, args) => typechecker.implements_trait(
+                    type_id: mapped_b
+                    trait_id: id
+                    generic_arguments: args
+                )
                 else => typechecker.check_types_for_compat(
                     lhs_type_id: mapped_a
                     rhs_type_id: mapped_b
@@ -11589,7 +12591,6 @@ struct TraitImplCheck {
         mut missing_methods: [String:FunctionId] = [:]
         missing_methods.ensure_capacity(trait_methods.size())
 
-
         for (method_name, method_id) in trait_methods {
             missing_methods.set(method_name, method_id)
         }
@@ -11600,7 +12601,7 @@ struct TraitImplCheck {
     fn throw_errors(mut this, record_decl_span: Span, typechecker: &mut Typechecker) throws {
         for (trait_type_id, missing_methods) in .missing_methods {
             let (trait_id, trait_generic_arguments) = match typechecker.get_type(trait_type_id) {
-                GenericTraitInstance(id: trait_id, args) | Trait(trait_id) default(args: [TypeId] = []) => (trait_id, args)
+                GenericTraitInstance(id: trait_id, args) | Trait(trait_id)default(args: [TypeId] = []) => (trait_id, args)
                 else => {
                     // unreachable
                     abort()
@@ -11629,7 +12630,7 @@ struct TraitImplCheck {
                             method_name, trait_name),
                         span,
                         "Consider adding ‘public’ to make the method accessible",
-                        span)
+                    span)
                 } else {
                     // The user didn't add an implementation for the desired method.
                     // Check if we found an unmatching signature to report that to the user.
@@ -11647,7 +12648,7 @@ struct TraitImplCheck {
                                 method_name, trait_name, typechecker.type_name(trait_type_id)),
                             record_decl_span,
                             "The method is declared here, but its signature doesn't match",
-                            method_span)
+                        method_span)
                         typechecker.compiler.errors.push_values(&errors)
                     } else {
                         let trait_method_span = typechecker.get_function(trait_method_id).name_span
@@ -11656,7 +12657,7 @@ struct TraitImplCheck {
                                 method_name, trait_name),
                             record_decl_span,
                             "Consider implementing the method with the signature specified here",
-                            trait_method_span)
+                        trait_method_span)
                     }
 
                 }
@@ -11664,7 +12665,13 @@ struct TraitImplCheck {
         }
     }
 
-    fn register_method(mut this, self_type_id: TypeId, method_name: String, method_id: FunctionId, typechecker: &mut Typechecker) throws {
+    fn register_method(
+        mut this
+        self_type_id: TypeId
+        method_name: String
+        method_id: FunctionId
+        typechecker: &mut Typechecker
+    ) throws {
         let method = typechecker.get_function(method_id)
 
         // search for a matching method
@@ -11677,7 +12684,7 @@ struct TraitImplCheck {
             let trait_method = typechecker.get_function(trait_method_id!)
 
             let (trait_id, trait_generic_arguments) = match typechecker.get_type(trait_type_id) {
-                GenericTraitInstance(id: trait_id, args) | Trait(trait_id) default(args: [TypeId] = []) => (trait_id, args)
+                GenericTraitInstance(id: trait_id, args) | Trait(trait_id)default(args: [TypeId] = []) => (trait_id, args)
                 else => {
                     // unreachable
                     abort()
@@ -11694,7 +12701,11 @@ struct TraitImplCheck {
                     (
                         method.name_span,
                         [JaktError::Message(
-                            message: format("Expected {} generic arguments, but got {}", trait_.generic_parameters.size(), trait_generic_arguments.size())
+                            message: format(
+                                "Expected {} generic arguments, but got {}"
+                                trait_.generic_parameters.size()
+                                trait_generic_arguments.size()
+                            )
                             span: method.name_span
                         )]
                     )
@@ -11723,7 +12734,10 @@ struct TraitImplCheck {
             // that needed a similar method know that the method was already implementing
             // one trait.
             .missing_methods[trait_type_id].remove(method_name)
-            .already_implemented_for[method_name] = AlreadyImplementedFor(trait_name: trait_.name, encounter_span: method.name_span)
+            .already_implemented_for[method_name] = AlreadyImplementedFor(
+                trait_name: trait_.name
+                encounter_span: method.name_span
+            )
             break
         }
     }
@@ -11782,7 +12796,10 @@ fn dump_scope(anon scope_id: ScopeId, anon program: &CheckedProgram, indent: i64
                 generics = format("<{}>", generics)
             }
 
-            eprintln("{: >{}}fn{}({}) -> {}", "", cindent + 4, generics, args, program.type_name(function.return_type_id, debug_mode: true))
+            eprintln("{: >{}}fn{}({}) -> {}", "", cindent + 4, generics, args, program.type_name(
+                function.return_type_id
+                debug_mode: true
+            ))
         }
     }
     eprintln("{: >{}}Structs:", "", cindent)

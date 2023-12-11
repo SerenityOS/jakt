@@ -97,7 +97,13 @@ struct ControlFlowState {
         }
     }
 
-    fn apply_control_flow_macro(this, anon x: String, func_return_type: TypeId, func_can_throw: bool, cpp_match_result_type: String) throws -> String {
+    fn apply_control_flow_macro(
+        this
+        anon x: String
+        func_return_type: TypeId
+        func_can_throw: bool
+        cpp_match_result_type: String
+    ) throws -> String {
         if are_loop_exits_allowed(.allowed_exits) {
             if .is_match_nested() {
 
@@ -154,7 +160,7 @@ struct LineSpan {
 struct CodegenDebugInfo {
     // FIXME: Add support for multiple source files
     compiler: Compiler
-    line_spans: [usize: [LineSpan]]
+    line_spans: [usize:[LineSpan]]
     statement_span_comments: bool
 
     fn span_to_source_location(mut this, anon span: Span) throws -> String {
@@ -172,7 +178,7 @@ struct CodegenDebugInfo {
         while line_index < .line_spans[file_idx].size() {
             if span.start >= .line_spans[file_idx][line_index].start and span.start <= .line_spans[file_idx][line_index].end {
                 let column_index = span.start - .line_spans[file_idx][line_index].start
-                return format("{} \"{}\"", line_index+1, .compiler.get_file_path(span.file_id)!.to_string())
+                return format("{} \"{}\"", line_index + 1, .compiler.get_file_path(span.file_id)!.to_string())
             }
             line_index += 1
         }
@@ -231,9 +237,9 @@ struct CodeGenerator {
     // noreturn functions may not throw, so let them crash instead.
     fn current_error_handler(this) throws -> String {
         if .inside_defer or (
-            .current_function.has_value() and
-            .current_function!.return_type_id == never_type_id() and
-            not .control_flow_state.passes_through_try
+                .current_function.has_value() and
+                .current_function!.return_type_id == never_type_id() and
+                not .control_flow_state.passes_through_try
         ) {
 
             return "MUST"
@@ -301,7 +307,7 @@ struct CodeGenerator {
             deferred_output: ""
             current_function: None
             inside_defer: false
-            //TODO: use program.loaded_modules
+            // TODO: use program.loaded_modules
             debug_info: CodegenDebugInfo(
                 compiler
                 line_spans: [:]
@@ -399,13 +405,11 @@ struct CodeGenerator {
 
         output += "} // namespace Jakt\n"
 
-
         // FIXME: Try and get rid of this header if possible.
         result.set(
             "__unified_forward.h",
             (output, compiler.current_file_path()!.to_string()),
         )
-
 
         for as_forward in [true, false] {
             for idx in sorted_modules.size()..0 {
@@ -417,7 +421,12 @@ struct CodeGenerator {
                 }
 
                 let module = generator.program.modules[i]
-                generator.compiler.dbg_println(format("generate: module idx: {}, module.name {} - forward: {}", i, module.name, as_forward))
+                generator.compiler.dbg_println(format(
+                    "generate: module idx: {}, module.name {} - forward: {}"
+                    i
+                    module.name
+                    as_forward
+                ))
 
                 let header_name = format("{}.h", module.name)
                 let impl_name = format("{}.cpp", module.name)
@@ -552,7 +561,13 @@ struct CodeGenerator {
         return result
     }
 
-    fn postorder_traversal(this, type_id: TypeId, mut visited: {TypeId}, dependency_graph: [TypeId: [TypeId]], mut output: [TypeId]) throws {
+    fn postorder_traversal(
+        this
+        type_id: TypeId
+        mut visited: {TypeId}
+        dependency_graph: [TypeId:[TypeId]]
+        mut output: [TypeId]
+    ) throws {
         if visited.contains(type_id) {
             return
         }
@@ -617,7 +632,11 @@ struct CodeGenerator {
         }
         dependencies.push(enum_.type_id)
         if enum_.underlying_type_id != unknown_type_id() {
-            let inner_dependencies = .extract_dependencies_from(type_id: enum_.underlying_type_id, dependency_graph, top_level: false)
+            let inner_dependencies = .extract_dependencies_from(
+                type_id: enum_.underlying_type_id
+                dependency_graph
+                top_level: false
+            )
             for dependency in inner_dependencies {
                 dependencies.push(dependency)
             }
@@ -684,7 +703,12 @@ struct CodeGenerator {
         mut super_struct_id = struct_.super_struct_id
         while super_struct_id.has_value() {
             let super_struct = .program.get_struct(super_struct_id!)
-            let super_dependencies = .extract_dependencies_from_struct(struct_id: super_struct_id!, dependency_graph, top_level: true, args: [])
+            let super_dependencies = .extract_dependencies_from_struct(
+                struct_id: super_struct_id!
+                dependency_graph
+                top_level: true
+                args: []
+            )
             dependencies.push_values(&super_dependencies)
             super_struct_id = super_struct.super_struct_id
         }
@@ -878,7 +902,13 @@ struct CodeGenerator {
         for define_pass in [false, true] {
             for (_, overload_set) in scope.functions {
                 for function_id in overload_set {
-                    let value = .codegen_namespace_specialization(function_id, containing_struct: None, scope, current_module, define_pass)
+                    let value = .codegen_namespace_specialization(
+                        function_id
+                        containing_struct: None
+                        scope
+                        current_module
+                        define_pass
+                    )
                     if value.has_value() {
                         output += value!
                     }
@@ -1003,7 +1033,7 @@ struct CodeGenerator {
                                 output += struct_output
                             }
                         }
-                        Trait => { }
+                        Trait => {}
                         else => {
                             panic(format("Unexpected type in dependency graph: {}", type_))
                         }
@@ -1379,7 +1409,12 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_function_predecl(mut this, function: CheckedFunction, as_method: bool = false, allow_generics: bool = false) throws -> String {
+    fn codegen_function_predecl(
+        mut this
+        function: CheckedFunction
+        as_method: bool = false
+        allow_generics: bool = false
+    ) throws -> String {
         mut output = ""
 
         if (allow_generics or not function.generics.params.is_empty()) and function.linkage is External {
@@ -1630,7 +1665,7 @@ struct CodeGenerator {
                         output += .codegen_function(function, as_method: true)
                     }
                 } else if function.generics.params.is_empty() or not function.specialization_index.has_value() {
-                        output += .codegen_function_predecl(function, as_method: true)
+                    output += .codegen_function_predecl(function, as_method: true)
                 }
             }
         }
@@ -1698,7 +1733,6 @@ struct CodeGenerator {
         mut generic_parameter_names: [String] = []
         mut template_args = .codegen_template_parameter_names(enum_.generic_parameters, names: &mut generic_parameter_names)
 
-
         let generic_parameter_list = join(generic_parameter_names, separator: ", ")
 
         if is_generic {
@@ -1709,7 +1743,7 @@ struct CodeGenerator {
             output += format(": public RefCounted<{}", enum_.name)
             if is_generic {
                 output += format("<{}>", join(generic_parameter_names, separator: ", "))
-        }
+            }
             output += ">"
         }
         output += " {\n"
@@ -1745,7 +1779,6 @@ struct CodeGenerator {
         // We'll use a getter for the variant index, so that the outputted C++ doesn't
         // have implicit "off-by-one" calculations.
 
-
         output += format("{} __jakt_variant_index = 0;\n", index_type, max_index_value)
 
         if not common_fields.is_empty() {
@@ -1775,7 +1808,6 @@ struct CodeGenerator {
             output += "} common;\n"
         }
 
-
         output += "union VariantData {\n"
 
         // We need to have some way to initialize the union if any of the other fields is non default constructible.
@@ -1803,14 +1835,11 @@ struct CodeGenerator {
         output += "} as;\n"
         output += format("constexpr {} __jakt_init_index() const noexcept {{ return __jakt_variant_index - 1; }}", index_type)
 
-
         if enum_.generic_parameters.is_empty() {
             output += "ErrorOr<DeprecatedString> debug_description() const;\n"
         } else {
             output += .codegen_enum_debug_description_getter(enum_, is_inline: true)
         }
-
-
 
         if is_generic {
             // produce constructors that initialize the correct parts of the union
@@ -1848,7 +1877,6 @@ struct CodeGenerator {
                 output += ";\n"
             }
 
-
             // Forward declare destructor, move assignment and copy assignment
             // operators/constructors.
             output += format("~{}();\n", enum_.name)
@@ -1859,7 +1887,6 @@ struct CodeGenerator {
             output += "private: void __jakt_destroy_variant();\n"
             output += "public:\n"
         }
-
 
         let enum_scope = .program.get_scope(enum_.scope_id)
         for (_, overload_set) in enum_scope.functions {
@@ -1938,7 +1965,9 @@ struct CodeGenerator {
         output += ")"
     }
 
-    fn codegen_for_enum_variants(this, anon enum_: &CheckedEnum, anon stmt_fmt: &fn(accessor: String) throws -> String, index_expr: String, output: &mut StringBuilder) throws {
+    fn codegen_for_enum_variants(this, anon enum_: &CheckedEnum, anon stmt_fmt: &fn(
+        accessor: String
+        ) throws -> String, index_expr: String, output: &mut StringBuilder) throws {
         // Adding to output here in a loop was causing a 30% slowdown, so using
         // a StringBuilder to mitigate it.
         output.append(format("switch ({}) {{\n", index_expr))
@@ -2025,7 +2054,6 @@ struct CodeGenerator {
             }
         }
 
-
         if is_constructor {
             // In a constructor, everything needs placement new since it's uninitialized.
             .codegen_for_enum_variants(&enum_, &placement_new, index_expr: "rhs.__jakt_init_index()", &mut output)
@@ -2078,7 +2106,7 @@ struct CodeGenerator {
             false => enum_.name
         }
 
-            // NOTE: these statements should compile because a default constructor is provided privately.
+        // NOTE: these statements should compile because a default constructor is provided privately.
         let (declare_uninit, deref_uninit) = match enum_.is_boxed {
             true => (
                 format("NonnullRefPtr<{0}> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {0}));\n", ctor_type),
@@ -2097,7 +2125,6 @@ struct CodeGenerator {
         let placement_new = fn[](target: String, name: String) throws -> String {
             return format("new (&{0}) (decltype({1}))(move({1}));\n", target, name)
         }
-
 
         // Variant constructors
         for variant_index in 0..variant_field_list.size() {
@@ -2149,7 +2176,7 @@ struct CodeGenerator {
             output += format("{0}& {0}::operator=({0} const &rhs)", enum_.name)
         }
         output += "{\n"
-        output += .codegen_enum_assignment_body(enum_,is_constructor: false, use_move: false)
+        output += .codegen_enum_assignment_body(enum_, is_constructor: false, use_move: false)
         output += "return *this;\n"
         output += "}\n"
 
@@ -2184,7 +2211,7 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_enum_field_lists(mut this, anon enum_: CheckedEnum) throws -> ( [(String, String)], [(String, [(String, String)])]) {
+    fn codegen_enum_field_lists(mut this, anon enum_: CheckedEnum) throws -> ([(String, String)], [(String, [(String, String)])]) {
         mut common_fields: [(String, String)] = []
         mut common_field_names: {String} = {}
         for field in enum_.fields {
@@ -2414,13 +2441,13 @@ struct CodeGenerator {
                     output += format("TRY(builder.append(\"{}::{}\"sv));\n", enum_.name, name)
                     output += format("[[maybe_unused]] auto const& that = this->as.{};\n", name)
                     output += "TRY(builder.append(\"(\"sv));\n"
-                    output += "{\n";
+                    output += "{\n"
                     output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
                     mut i = 0uz
                     for field in fields {
                         output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));\n"
                         let var = .program.get_variable(field)
-                        if .program.is_string(var.type_id){
+                        if .program.is_string(var.type_id) {
                             output += format("TRY(builder.appendff(\"{}: \\\"{{}}\\\"", var.name_for_codegen().as_name_for_use())
                         } else {
                             output += format("TRY(builder.appendff(\"{}: {{}}", var.name_for_codegen().as_name_for_use())
@@ -2441,7 +2468,7 @@ struct CodeGenerator {
                 Typed(type_id) => {
                     output += format("TRY(builder.append(\"{}::{}\"sv));\n", enum_.name, name)
                     output += format("[[maybe_unused]] auto const& that = this->as.{};\n", name)
-                    if .program.is_string(type_id){
+                    if .program.is_string(type_id) {
                         output += "TRY(builder.appendff(\"(\\\"{}\\\")\", that.value));\n"
                     } else {
                         output += "TRY(builder.appendff(\"({})\", that.value));\n"
@@ -2481,7 +2508,10 @@ struct CodeGenerator {
         output += format("template<{}>", template_args)
         output += format("struct Jakt::Formatter<Jakt::{}> : Jakt::Formatter<Jakt::StringView>", qualified_name)
         output += "{\n"
-        output += format("Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::{} const& value) {{\n", qualified_name)
+        output += format(
+            "Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::{} const& value) {{\n"
+            qualified_name
+        )
         output += "JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };"
         output += "Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));"
         output += "return format_error;"
@@ -2497,7 +2527,10 @@ struct CodeGenerator {
     ) throws -> String => match .program.get_type(expression.type()) {
         TypeVariable => {
             let contents = .codegen_expression(expression)
-            yield format("(*([]<typename V>(V&& value) {{ if constexpr (IsSpecializationOf<V, NonnullRefPtr>) return &*value; else return &value; }})({}))", contents)
+            yield format(
+                "(*([]<typename V>(V&& value) {{ if constexpr (IsSpecializationOf<V, NonnullRefPtr>) return &*value; else return &value; }})({}))"
+                contents
+            )
         }
         else => .codegen_expression(expression)
     }
@@ -2584,7 +2617,9 @@ struct CodeGenerator {
             IndexedExpression(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
             IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
             IndexedTuple(expr, index, is_optional) => match is_optional {
-                true => format("(({}).map([](auto& _value) {{ return _value.template get<{}>(); }}))", .codegen_expression(expr), index)
+                true => format("(({}).map([](auto& _value) {{ return _value.template get<{}>(); }}))", .codegen_expression(
+                    expr
+                    ), index)
                 false => format("(({}).template get<{}>())", .codegen_expression(expr), index)
             }
             IndexedStruct(expr, name, index, is_optional) => {
@@ -2724,7 +2759,7 @@ struct CodeGenerator {
                                 mut cast_type = "dynamic_cast"
                                 if .program.get_type(type_id) is Struct(struct_id)
                                     and .program.get_struct(struct_id).record_type is Class {
-                                        final_type_id = type_id
+                                    final_type_id = type_id
                                     cast_type = "fallible_class_cast"
                                 } else if .program.is_integer(type_id) {
                                     final_type_id = type_id
@@ -2785,14 +2820,14 @@ struct CodeGenerator {
                         match enum_.record_type {
                             SumEnum => {
                                 let is_boxed = enum_.is_boxed
-                                if is_boxed and object != "*this"{
+                                if is_boxed and object != "*this" {
                                     suffix += "->"
                                 } else {
                                     suffix += "."
                                 }
 
                                 // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
-                                mut variant_index = 0;
+                                mut variant_index = 0
                                 for variant in enum_.variants {
                                     if variant.name() == name {
                                         break
@@ -2861,7 +2896,12 @@ struct CodeGenerator {
                 }
                 yield output + var.name_for_codegen().as_name_for_use()
             }
-            Match(expr, match_cases, type_id, all_variants_constant) => .codegen_match(expr, match_cases, type_id, all_variants_constant)
+            Match(expr, match_cases, type_id, all_variants_constant) => .codegen_match(
+                expr
+                match_cases
+                type_id
+                all_variants_constant
+            )
             EnumVariantArg(expr, arg, enum_variant) => {
                 let var_name = .codegen_expression(expr)
                 let enum_type = .codegen_type_possibly_as_namespace(type_id: expr.type(), as_namespace: true)
@@ -2994,7 +3034,9 @@ struct CodeGenerator {
                 }
                 mut generated_params: [String] = []
                 for param in params {
-                    generated_params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name_for_codegen().as_name_for_definition()))
+                    generated_params.push(format("{} {}", .codegen_type(
+                        param.variable.type_id
+                        ), param.variable.name_for_codegen().as_name_for_definition()))
                 }
                 let return_type = match can_throw {
                     true => format("ErrorOr<{}>", .codegen_type(return_type_id))
@@ -3018,7 +3060,10 @@ struct CodeGenerator {
                     block_output = .codegen_lambda_block(can_throw, block, return_type_id)
                 }
 
-                yield format("[{}]({}) -> {} {}", join(generated_captures, separator: ", "), join(generated_params, separator: ", "), return_type, block_output)
+                yield format("[{}]({}) -> {} {}", join(generated_captures, separator: ", "), join(
+                    generated_params
+                    separator: ", "
+                    ), return_type, block_output)
             }
             TryBlock(stmt, error_name, catch_block, span) => {
                 mut output = ""
@@ -3133,12 +3178,20 @@ struct CodeGenerator {
                 yield output
             }
             Garbage(span) => {
-                todo(format("codegen_expression of bad AST node in {} at {}..{}", this.compiler.get_file_path(span.file_id), span.start, span.end))
+                todo(format("codegen_expression of bad AST node in {} at {}..{}", this.compiler.get_file_path(
+                    span.file_id
+                    ), span.start, span.end))
             }
         }
     }
 
-    fn codegen_match(mut this, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
+    fn codegen_match(
+        mut this
+        expr: CheckedExpression
+        match_cases: [CheckedMatchCase]
+        type_id: TypeId
+        all_variants_constant: bool
+    ) throws -> String {
         let last_control_flow = .control_flow_state
         .control_flow_state = .control_flow_state.enter_match()
         mut output = ""
@@ -3164,7 +3217,13 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_generic_match(mut this, expr: CheckedExpression, cases: [CheckedMatchCase], return_type_id: TypeId, all_variants_constant: bool) throws -> String {
+    fn codegen_generic_match(
+        mut this
+        expr: CheckedExpression
+        cases: [CheckedMatchCase]
+        return_type_id: TypeId
+        all_variants_constant: bool
+    ) throws -> String {
         mut output = ""
 
         mut is_generic_enum: bool = false
@@ -3208,7 +3267,7 @@ struct CodeGenerator {
                         }
                     })
                     // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
-                    mut variant_index = 0;
+                    mut variant_index = 0
                     for variant in enum_.variants {
                         if variant.name() == name {
                             break
@@ -3331,7 +3390,14 @@ struct CodeGenerator {
         )
     }
 
-    fn codegen_enum_match(mut this, enum_: CheckedEnum, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
+    fn codegen_enum_match(
+        mut this
+        enum_: CheckedEnum
+        expr: CheckedExpression
+        match_cases: [CheckedMatchCase]
+        type_id: TypeId
+        all_variants_constant: bool
+    ) throws -> String {
         mut output = ""
 
         let subject = .codegen_expression(expr)
@@ -3391,7 +3457,7 @@ struct CodeGenerator {
                                 if not args.is_empty() {
                                     output += format(
                                         "auto&& __jakt_match_value = __jakt_match_variant.as.{};",
-                                        name)
+                                    name)
 
                                     for arg in args {
                                         let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
@@ -3493,8 +3559,8 @@ struct CodeGenerator {
             }
             Expression(expr) => {
                 if expr.type() == void_type_id() or expr.type() == never_type_id() or (
-                    expr.type() == unknown_type_id() and
-                    not expr is OptionalNone
+                        expr.type() == unknown_type_id() and
+                        not expr is OptionalNone
                 ) {
 
                     output += "return ("
@@ -3550,11 +3616,13 @@ struct CodeGenerator {
             }
 
             output += .codegen_expression(lhs)
-            if rhs_type is GenericInstance(id) and .program.get_struct(id).name_for_codegen().as_name_for_definition() == "Optional" {
+            if rhs_type is GenericInstance(id) and .program.get_struct(
+                id
+            ).name_for_codegen().as_name_for_definition() == "Optional" {
                 if rhs_can_throw {
-                    output += ".try_value_or_lazy_evaluated_optional";
+                    output += ".try_value_or_lazy_evaluated_optional"
                 } else {
-                    output += ".value_or_lazy_evaluated_optional";
+                    output += ".value_or_lazy_evaluated_optional"
                 }
             } else {
                 if rhs_can_throw {
@@ -3571,7 +3639,6 @@ struct CodeGenerator {
             } else {
                 output += "([&] { return "
             }
-
 
             output += .codegen_expression(rhs)
             output += "; })"
@@ -3629,7 +3696,7 @@ struct CodeGenerator {
                         return "(" + .codegen_checked_binary_op_assignment(lhs, rhs, op.op, type_id) + ")"
                     }
                 }
-                else => { }
+                else => {}
             }
         }
 
@@ -3677,7 +3744,13 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_unchecked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, anon op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_unchecked_binary_op(
+        mut this
+        lhs: CheckedExpression
+        rhs: CheckedExpression
+        anon op: BinaryOperator
+        type_id: TypeId
+    ) throws -> String {
         mut output = "static_cast<"
         output += .codegen_type(type_id)
         output += ">("
@@ -3697,7 +3770,13 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_checked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, anon op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_checked_binary_op(
+        mut this
+        lhs: CheckedExpression
+        rhs: CheckedExpression
+        anon op: BinaryOperator
+        type_id: TypeId
+    ) throws -> String {
         mut output = ""
         output += "JaktInternal::"
 
@@ -3723,7 +3802,13 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_unchecked_binary_op_assignment(mut this, lhs: CheckedExpression, rhs: CheckedExpression, anon op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_unchecked_binary_op_assignment(
+        mut this
+        lhs: CheckedExpression
+        rhs: CheckedExpression
+        anon op: BinaryOperator
+        type_id: TypeId
+    ) throws -> String {
         mut output = ""
 
         output += "{"
@@ -3749,7 +3834,13 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_checked_binary_op_assignment(mut this, lhs: CheckedExpression, rhs: CheckedExpression, anon op: BinaryOperator, type_id: TypeId) throws -> String {
+    fn codegen_checked_binary_op_assignment(
+        mut this
+        lhs: CheckedExpression
+        rhs: CheckedExpression
+        anon op: BinaryOperator
+        type_id: TypeId
+    ) throws -> String {
         mut output = ""
 
         output += "{"
@@ -3898,7 +3989,9 @@ struct CodeGenerator {
             }
         }
 
-        let is_called_as_method = not name.is_prefix() and (not field_accessor.is_empty() or (not is_optional and name is Operator))
+        let is_called_as_method = not name.is_prefix() and (not field_accessor.is_empty() or (
+            not is_optional and name is Operator
+        ))
 
         if is_called_as_method {
             output += "(("
@@ -4834,7 +4927,6 @@ struct CodeGenerator {
             output += ">\n"
         }
 
-
         if structure.record_type is Class or structure.record_type is Struct {
             if is_inline {
                 output += function.name_for_codegen().as_name_for_definition()
@@ -4881,7 +4973,9 @@ struct CodeGenerator {
 
                 for i in parent_constructor_parameter_count..function.params.size() {
                     let param = function.params[i]
-                    initializers.push(param.variable.name_for_codegen().as_name_for_use() + "(move(a_" + param.variable.name_for_codegen().as_name_for_use() + "))")
+                    initializers.push(
+                        param.variable.name_for_codegen().as_name_for_use() + "(move(a_" + param.variable.name_for_codegen().as_name_for_use() + "))"
+                    )
                 }
                 output += join(initializers, separator: ", ")
             }
@@ -4932,7 +5026,11 @@ struct CodeGenerator {
                     output += param.variable.name_for_codegen().as_name_for_definition()
                 }
 
-                output += format(") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", .current_error_handler(), class_name_with_generics)
+                output += format(
+                    ") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} ("
+                    .current_error_handler()
+                    class_name_with_generics
+                )
 
                 first = true
                 for param in function.params {

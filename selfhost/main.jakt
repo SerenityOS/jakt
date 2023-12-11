@@ -10,7 +10,7 @@ import jakt::libc::io { system }
 import jakt::arguments { ArgsParser }
 import jakt::file_iterator { RecursiveFileIterator }
 import jakt::path { Path, get_path_separator }
-import jakt::platform { platform_fs, is_windows }
+import jakt::platform { is_windows, platform_fs }
 
 import build { Builder }
 import compiler { Compiler, FileId }
@@ -25,14 +25,12 @@ import platform { library_name_for_target, platform_compiler }
 import project { Project }
 import repl { REPL, serialize_ast_node }
 import typechecker { Typechecker }
-import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImpl }
-import utility { Queue, Span, escape_for_quotes, join, write_to_file, to_string }
+import types { FunctionId, ModuleId, ResolvedNamespace, ScopeId, Value, ValueImpl }
+import utility { Queue, Span, escape_for_quotes, join, to_string, write_to_file }
 
 import platform_fs() { DirectoryIterator, make_directory }
 
-import platform_compiler() {
-    run_compiler
-}
+import platform_compiler() { run_compiler }
 
 import jakt::platform { Target }
 
@@ -426,7 +424,9 @@ fn selfhost_crosscompiler_main(args: [String]) throws -> c_int {
         let source_path = Path::from_string(source_file!)
         compiler_args.push(source_path.to_string())
         compiler_args.push("-o")
-        let default_output_filename = install_bin_dir.join(output_filename ?? source_path.basename(strip_extension: true)).to_string()
+        let default_output_filename = install_bin_dir.join(output_filename ?? source_path.basename(
+            strip_extension: true
+        )).to_string()
         compiler_args.push(default_output_filename)
 
         return compiler_main(compiler_args)
@@ -507,13 +507,16 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     let codegen_debug = args_parser.flag(["-d"])
     let debug_print = args_parser.flag(["--debug-print"])
     let prettify_cpp_source = args_parser.flag(["-p", "--prettify-cpp-source"])
-    let json_errors = args_parser.flag(["-j","--json-errors"])
+    let json_errors = args_parser.flag(["-j", "--json-errors"])
     let dump_type_hints = args_parser.flag(["-H", "--type-hints"])
     let dump_try_hints = args_parser.flag(["--try-hints"])
     let check_only = args_parser.flag(["-c", "--check-only"])
     let generate_depfile = args_parser.option(["-M", "--dep-file"])
     let target_triple = args_parser.option(["-T", "--target-triple"])
-    let runtime_library_path = args_parser.option(["-RLP", "--runtime-library-path"]) ?? default_runtime_library_path.to_string()
+    let runtime_library_path = args_parser.option([
+        "-RLP"
+        "--runtime-library-path"
+    ]) ?? default_runtime_library_path.to_string()
     mut compiler_job_count = args_parser.option(["-J", "--jobs"]) ?? "2"
 
     // FIXME: Remove this when parallel runs on windows work correctly.
@@ -713,7 +716,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     let parsed_namespace = Parser::parse(compiler, tokens)
 
     if parser_debug {
-        println("{:#}", parsed_namespace);
+        println("{:#}", parsed_namespace)
     }
 
     if print_symbols {
@@ -788,7 +791,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
             namespace_
             this_argument: None
             arguments
-            call_span)
+        call_span)
 
         match main_result {
             Return(x) => match x.impl {
@@ -812,37 +815,47 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     }
 
     if goto_def.has_value() {
-        let index = goto_def!.to_uint()! as! usize;
+        let index = goto_def!.to_uint()! as! usize
 
-        let result = ide::find_definition_in_program(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
+        let result = ide::find_definition_in_program(program: checked_program, span: Span(file_id: FileId(
+            id: 1
+            ), start: index, end: index))
 
         if result.file_id.id == 1 {
-            println("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
+            println("{{\"start\": {}, \"end\": {}}}", result.start, result.end)
         } else {
             let file_path = compiler.get_file_path(result.file_id)
 
-            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, escape_for_quotes(file_path!.to_string()));
+            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, escape_for_quotes(
+                file_path!.to_string()
+            ))
         }
         return 0
     }
     if goto_type_def.has_value() {
-        let index = goto_type_def!.to_uint()! as! usize;
+        let index = goto_type_def!.to_uint()! as! usize
 
-        let result = ide::find_type_definition_in_program(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
+        let result = ide::find_type_definition_in_program(program: checked_program, span: Span(file_id: FileId(
+            id: 1
+            ), start: index, end: index))
 
         if result.file_id.id == 1 {
-            println("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
+            println("{{\"start\": {}, \"end\": {}}}", result.start, result.end)
         } else {
             let file_path = compiler.get_file_path(result.file_id)
 
-            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, escape_for_quotes(file_path!.to_string()));
+            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, escape_for_quotes(
+                file_path!.to_string()
+            ))
         }
         return 0
     }
     if hover.has_value() {
-        let index = hover!.to_uint()! as! usize;
+        let index = hover!.to_uint()! as! usize
 
-        let result = ide::find_typename_in_program(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
+        let result = ide::find_typename_in_program(program: checked_program, span: Span(file_id: FileId(
+            id: 1
+            ), start: index, end: index))
 
         if result.has_value() {
             println("{{\"hover\": \"{}\"}}", result!)
@@ -850,11 +863,13 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         return 0
     }
     if completions.has_value() {
-        let index = completions!.to_uint()! as! usize;
+        let index = completions!.to_uint()! as! usize
 
-        let result = ide::find_dot_completions(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
+        let result = ide::find_dot_completions(program: checked_program, span: Span(file_id: FileId(
+            id: 1
+            ), start: index, end: index))
 
-        print("{{\"completions\": [");
+        print("{{\"completions\": [")
         mut first = true
         for completion in result {
             if not first {
@@ -864,12 +879,12 @@ fn compiler_main(anon args: [String]) throws -> c_int {
             }
             print("\"{}\"", completion)
         }
-        println("]}}");
+        println("]}}")
         return 0
     }
 
     if typechecker_debug {
-        println("{:#}", checked_program);
+        println("{:#}", checked_program)
     }
 
     compiler.print_errors()
@@ -1029,7 +1044,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
                 extra_include_paths
                 optimize
                 extra_compiler_flags
-            ](input_filename: String, output_filename: String) throws -> [String] {
+            ](input_filename: String, output_filename: String) throws -> [String]{
                 return run_compiler(
                     cxx_compiler_path
                     cpp_filename: input_filename
@@ -1120,7 +1135,8 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     return 0
 }
 
-fn format_output(file_path: Path, tokens: [Token], format_range: FormatRange?, format_debug: bool, format_inplace: bool) throws {
+fn format_output(
+    file_path: Path, tokens: [Token], format_range: FormatRange?, format_debug: bool, format_inplace: bool) throws {
     mut formatted_file = StringBuilder::create()
 
     mut on_new_line = true

@@ -5,9 +5,7 @@ import types {
     FunctionGenericParameterKind, FunctionGenerics, FunctionLinkage, ModuleId, ScopeId, SpecializedType, StructId
     Type, TypeId, Value, ValueImpl, builtin, unknown_type_id, void_type_id
 }
-import parser {
-    FunctionType, ParsedField, ParsedVarDecl, RecordType, ParsedType
-}
+import parser { FunctionType, ParsedField, ParsedType, ParsedVarDecl, RecordType }
 import compiler { Compiler }
 import jakt::path { Path, get_path_separator }
 import utility { Span, join }
@@ -16,8 +14,8 @@ import jakt::platform::utility { null }
 import jakt::platform { Target, platform_fs }
 import platform_fs() { real_path }
 import cpp_import::clang_c {
-    CXChildVisitResult, CXClientData, CXCursor, CXCursorKind, CXFile, CXIndex, CXSourceLocation, CXString
-    CXTranslationUnit, CXTranslationUnit_Flags, CXType, CXTypeKind, CXUnsavedFile, CXToken, CXTokenKind
+    CXChildVisitResult, CXClientData, CXCursor, CXCursorKind, CXFile, CXIndex, CXSourceLocation, CXString, CXToken
+    CXTokenKind, CXTranslationUnit, CXTranslationUnit_Flags, CXType, CXTypeKind, CXUnsavedFile
 }
 import cpp_import::clang_c {
     clang_CXXMethod_isConst, clang_CXXMethod_isPureVirtual, clang_CXXMethod_isStatic, clang_CXXMethod_isVirtual
@@ -189,7 +187,10 @@ fn function_names_from(cursor: CXCursor) throws -> (String, ExternalName?) {
     let name = name_builder.to_string()
     let simple_extern_name = name_from(cursor)
     let extern_name = match simple_extern_name.starts_with("operator") {
-        true => Some(ExternalName::Operator(name: simple_extern_name.substring(start: 8, length: simple_extern_name.length() - 8)))
+        true => Some(ExternalName::Operator(name: simple_extern_name.substring(
+            start: 8
+            length: simple_extern_name.length() - 8
+        )))
         false => match simple_extern_name == name {
             true => None
             false => Some(ExternalName::Plain(simple_extern_name))
@@ -216,7 +217,7 @@ struct TemplateParameters {
     packs_by_name: [String]
 }
 
-struct HashableCursor implements(Equal<HashableCursor>, Hashable) {
+struct HashableCursor implements(Equal<HashableCursor>,Hashable) {
     cursor: CXCursor
     hash_value: u32
 
@@ -380,7 +381,13 @@ class CppImportProcessor {
             CXType_Pointer => {
                 let pointee_type = clang_getPointeeType(t)
                 yield match pointee_type.kind {
-                    CXType_FunctionProto | CXType_FunctionNoProto => .type_from(program, scope_id, root_scope_id, module_id, pointee_type)
+                    CXType_FunctionProto | CXType_FunctionNoProto => .type_from(
+                        program
+                        scope_id
+                        root_scope_id
+                        module_id
+                        pointee_type
+                    )
                     else => program.find_or_add_type_id(
                         type: Type::RawPtr(
                             .type_from(program, scope_id, root_scope_id, module_id, clang_getPointeeType(t))
@@ -441,7 +448,9 @@ class CppImportProcessor {
                         let base_usr = string_from(clang_getCursorUSR(cursor: definition_cursor))
 
                         // NonnullRefPtr<T> where T is a class -> T
-                        let is_nnrp_class_type = base_usr.starts_with("c:@N@AK@S@NonnullRefPtr>") or base_usr == "c:@N@AK@ST>1#T@NonnullRefPtr"
+                        let is_nnrp_class_type = base_usr.starts_with(
+                            "c:@N@AK@S@NonnullRefPtr>"
+                        ) or base_usr == "c:@N@AK@ST>1#T@NonnullRefPtr"
                         // Function<T> -> T
                         let is_ak_function = base_usr.starts_with("c:@N@AK@S@Function>")
 
@@ -842,7 +851,7 @@ class CppImportProcessor {
         let name = name_from(cursor)
         let template_parameters = .extract_cursors_of_kinds(
             cursor
-            kinds: {CXCursorKind::CXCursor_TemplateTypeParameter, CXCursorKind::CXCursor_NonTypeTemplateParameter}
+            kinds: {CXCursorKind::CXCursor_TemplateTypeParameter, CXCursorKind::CXCursor_NonTypeTemplateParameter }
         )
         let specialization_template_parameters = .extract_template_parameters(
             program
@@ -1012,7 +1021,7 @@ class CppImportProcessor {
     ) throws -> TemplateParameters {
         let template_parameters = .extract_cursors_of_kinds(
             cursor
-            kinds: {CXCursorKind::CXCursor_TemplateTypeParameter, CXCursorKind::CXCursor_NonTypeTemplateParameter}
+            kinds: {CXCursorKind::CXCursor_TemplateTypeParameter, CXCursorKind::CXCursor_NonTypeTemplateParameter }
         )
         mut params: [CheckedGenericParameter] = []
         mut defaults: [TypeId?] = []
@@ -1042,10 +1051,16 @@ class CppImportProcessor {
                 defer clang_disposeTokens(tu, tokens, num_tokens)
 
                 if num_tokens >= 1 {
-                    is_variadic = string_from(clang_getTokenSpelling(tu, token: unsafe read_at_offset(tokens, num_tokens - 1))) == "..."
+                    is_variadic = string_from(clang_getTokenSpelling(tu, token: unsafe read_at_offset(
+                        tokens
+                        num_tokens - 1
+                    ))) == "..."
                 }
                 if num_tokens >= 2 {
-                    is_variadic = is_variadic or string_from(clang_getTokenSpelling(tu, token: unsafe read_at_offset(tokens, num_tokens - 2))) == "..."
+                    is_variadic = is_variadic or string_from(clang_getTokenSpelling(tu, token: unsafe read_at_offset(
+                        tokens
+                        num_tokens - 2
+                    ))) == "..."
                 }
             }
 
@@ -1243,7 +1258,7 @@ class CppImportProcessor {
         let should_skip = match clang_getCursorKind(cursor) {
             CXCursor_UsingDeclaration | CXCursor_UsingDirective => {
                 // These just bring in names from other namespaces, the referenced type is the same as the alias.
-                let ns_cursor = .extract_cursors_of_kinds(cursor, kinds: {CXCursorKind::CXCursor_NamespaceRef})
+                let ns_cursor = .extract_cursors_of_kinds(cursor, kinds: {CXCursorKind::CXCursor_NamespaceRef })
                 mut ns_scope = parent_scope_id
                 for cursor in ns_cursor {
                     let name = name_from(cursor)
@@ -1463,7 +1478,7 @@ class CppImportProcessor {
 
         let parameters = .extract_cursors_of_kinds(
             cursor
-            kinds: {CXCursorKind::CXCursor_ParmDecl}
+            kinds: {CXCursorKind::CXCursor_ParmDecl }
         )
         for parameter in parameters {
             if string_from(clang_getTypeSpelling(clang_getCursorType(parameter))).ends_with("...") {
@@ -1697,7 +1712,7 @@ class CppImportProcessor {
 
         let variant_cursors = .extract_cursors_of_kinds(
             cursor
-            kinds: {CXCursorKind::CXCursor_EnumConstantDecl}
+            kinds: {CXCursorKind::CXCursor_EnumConstantDecl }
         )
         // Untyped(enum_id: EnumId, name: String, span: Span)
         mut variants: [CheckedEnumVariant] = []
@@ -1750,7 +1765,7 @@ class CppImportProcessor {
 
     fn inherits_from_refcounted_base(mut this, anon cursor: CXCursor) throws -> bool {
         // FIXME: Figure out why ::Core::Object doesn't have any CXXBaseSpecifier children.
-        return .inherits_from_any_of(cursor, {"c:@N@AK@S@RefCountedBase", "c:@N@Core@S@Object"})
+        return .inherits_from_any_of(cursor,  {"c:@N@AK@S@RefCountedBase", "c:@N@Core@S@Object" })
     }
 
     fn inherits_from_any_of(mut this, anon cursor: CXCursor, anon usrs: {String}) throws -> bool {
@@ -1764,7 +1779,7 @@ class CppImportProcessor {
         if kind is CXCursor_ClassTemplate {
             let def = .extract_cursors_of_kinds(
                 cursor: definition
-                kinds: {CXCursorKind::CXCursor_StructDecl, CXCursorKind::CXCursor_ClassDecl}
+                kinds: {CXCursorKind::CXCursor_StructDecl, CXCursorKind::CXCursor_ClassDecl }
             ).first()
 
             if def.has_value() {
@@ -1779,8 +1794,8 @@ class CppImportProcessor {
         }
 
         for base in .extract_cursors_of_kinds(
-            cursor: definition
-            kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier}
+                cursor: definition
+                kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier }
         ) {
             if .inherits_from_any_of(base, usrs) {
                 return true
@@ -1824,7 +1839,7 @@ class CppImportProcessor {
 
         let bases = .extract_cursors_of_kinds(
             cursor
-            kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier}
+            kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier }
         )
 
         mut module = program.get_module(module_id)

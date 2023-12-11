@@ -19,6 +19,6 @@ fn run_compiler(
         extra_lib_paths,
         extra_link_libs,
         optimize,
-        extra_compiler_flags)
+    extra_compiler_flags)
     throw Error::from_errno(38)
 }

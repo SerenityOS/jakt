@@ -16,8 +16,8 @@ struct CppImportErrors {
 }
 
 comptime choose_processor() throws -> String => "cpp_import::" + match UserConfiguration::value_of(
-    "jakt.cpp_import.processor"
-) ?? "default" {
+        "jakt.cpp_import.processor"
+    ) ?? "default" {
     "libcpp" => "libcpp"
     "clang" => "clang"
     "default" | "none" => "none"

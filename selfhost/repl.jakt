@@ -2,9 +2,7 @@ import typechecker {
     BuiltinType, CheckedExpression, CheckedProgram, CheckedUnaryOperator, GenericInferences, ImportList, ImportName
     Interpreter, InterpreterScope, LoadedModule, ModuleId, SafetyMode, ScopeId, TypeId, Typechecker, builtin
 }
-import parser {
-    ParsedModuleImport
-}
+import parser { ParsedModuleImport }
 import compiler { Compiler, FileId }
 import lexer { Lexer, Token }
 import parser { Parser }
@@ -14,7 +12,7 @@ import interpreter { value_to_checked_expression }
 import jakt::path { Path }
 
 import platform { repl_backend }
-import repl_backend() { Editor, LineResult, Style, Color, XTermColor }
+import repl_backend() { Color, Editor, LineResult, Style, XTermColor }
 
 fn serialize_unary_operation(anon op: CheckedUnaryOperator, anon expr: String) throws -> String => match op {
     PreIncrement => "++" + expr
@@ -169,7 +167,7 @@ struct REPL {
     root_interpreter_scope: InterpreterScope
     file_id: FileId
 
-    fn create(runtime_path: Path, target_triple: String? = None, user_configuration: [String:String]) throws -> REPL {
+    fn create(runtime_path: Path, target_triple: String? = None, user_configuration: [String: String]) throws -> REPL {
         mut compiler = Compiler(
             files: []
             file_ids: [:]
@@ -229,7 +227,7 @@ struct REPL {
         )
 
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
-        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: true,  debug_name: "root")
+        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: true, debug_name: "root")
         typechecker.typecheck_module_import(
             import_: ParsedModuleImport(
                 module_name: ImportName::Literal(
@@ -264,33 +262,33 @@ struct REPL {
     }
 
     fn line_to_bytes(anon line: String) throws -> [u8] {
-      mut pos: usize   = 0
-      mut bytes_: [u8] = []
+        mut pos: usize = 0
+        mut bytes_: [u8] = []
 
-      bytes_.ensure_capacity(line.length())
+        bytes_.ensure_capacity(line.length())
 
-      while pos < line.length() {
-          bytes_.push(line.byte_at(pos))
-          ++pos
-      }
+        while pos < line.length() {
+            bytes_.push(line.byte_at(pos))
+            ++pos
+        }
 
-      return bytes_
+        return bytes_
     }
 
     fn check_parens(tokens: [Token]) -> bool {
-        mut unmatched_parens   = 0
+        mut unmatched_parens = 0
         mut unmatched_brackets = 0
-        mut unmatched_curlies  = 0
+        mut unmatched_curlies = 0
 
         for token in tokens {
             match token {
-                LParen  => { unmatched_parens   += 1 }
-                RParen  => { unmatched_parens   -= 1 }
+                LParen => { unmatched_parens += 1 }
+                RParen => { unmatched_parens -= 1 }
                 LSquare => { unmatched_brackets += 1 }
                 RSquare => { unmatched_brackets -= 1 }
-                LCurly  => { unmatched_curlies  += 1 }
-                RCurly  => { unmatched_curlies  -= 1 }
-                else    => {}
+                LCurly => { unmatched_curlies += 1 }
+                RCurly => { unmatched_curlies -= 1 }
+                else => {}
             }
         }
 
@@ -314,7 +312,7 @@ struct REPL {
                 .compiler.errors = arr
             }
 
-            for token in try Lexer::lex(compiler: .compiler) catch { return } {
+            for token in try Lexer::lex(compiler: .compiler) catch { return }  {
                 match token {
                     SingleQuotedString(span)
                     | QuotedString(span)
@@ -375,7 +373,11 @@ struct REPL {
                     => editor.highlight(span, Style(foreground: Color::XTerm(XTermColor::Yellow)))
                     DotDot(span) => editor.highlight(span, Style(foreground: Color::XTerm(XTermColor::Cyan)))
                     Eol(span, comment) => {
-                        if comment.has_value() { editor.highlight(span, Style(foreground: Color::Components(red: 128, green: 128, blue: 128))) }
+                        if comment.has_value() { editor.highlight(span, Style(foreground: Color::Components(
+                            red: 128
+                            green: 128
+                            blue: 128
+                        ))) }
                     }
                     else => {}
                 }
@@ -404,7 +406,7 @@ struct REPL {
             }
 
             if line == "\n" {
-              continue
+                continue
             }
 
             if line == ".exit\n" {
@@ -483,7 +485,11 @@ struct REPL {
                 continue
             }
 
-            let checked_statement = try .typechecker.typecheck_statement(statement: parsed_statement, scope_id: .root_scope_id, safety_mode: SafetyMode::Safe) catch {
+            let checked_statement = try .typechecker.typecheck_statement(
+                statement: parsed_statement
+                scope_id: .root_scope_id
+                safety_mode: SafetyMode::Safe
+            ) catch {
                 .handle_possible_error()
                 continue
             }

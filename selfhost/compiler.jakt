@@ -7,7 +7,7 @@ import platform_module("jakt::platform::fs")
 
 class Compiler {
     public files: [Path]
-    public file_ids: [String: FileId]
+    public file_ids: [String:FileId]
     public errors: [JaktError]
     public current_file: FileId?
     public current_file_contents: [u8]
@@ -52,7 +52,7 @@ class Compiler {
                             try {
                                 mut file = File::open_for_reading(file_name)
                                 file_contents = file.read_all()
-                            } catch error {}
+                            } catch error { }
                         }
                         print_error(file_name, file_contents, error)
                     }
@@ -169,7 +169,10 @@ class Compiler {
         let standard_module_name = "jakt"
 
         if module_name.starts_with(standard_module_name) {
-            let std_module_name_path = module_name.substring(start: standard_module_name.length() + 1, length: module_name.length() - (standard_module_name.length() + 1))
+            let std_module_name_path = module_name.substring(
+                start: standard_module_name.length() + 1
+                length: module_name.length() - (standard_module_name.length() + 1)
+            )
             let candidate_path = Path::from_parts([.std_include_path.to_string(), std_module_name_path + ".jakt"])
             if candidate_path.exists() {
                 return candidate_path
@@ -179,7 +182,12 @@ class Compiler {
         return .find_in_search_paths(Path::from_string(module_name + ".jakt"), relative_import, parent_path_count)
     }
 
-    public fn find_in_search_paths(this, anon path: Path, relative_import: bool = false, parent_path_count: usize = 0) throws -> Path? {
+    public fn find_in_search_paths(
+        this
+        anon path: Path
+        relative_import: bool = false
+        parent_path_count: usize = 0
+    ) throws -> Path? {
         for include_path in .include_paths {
             let candidate_path = Path::from_string(include_path).join(path)
             if candidate_path.exists() {

@@ -1,9 +1,9 @@
 import extern c "clang-c/Index.h" {
-    extern struct CXIndex { fn CXIndex() -> CXIndex }
-    extern struct CXTranslationUnit { fn CXTranslationUnit() -> CXTranslationUnit }
-    extern struct CXCursor { fn CXCursor() -> CXCursor }
+    extern struct CXIndex { fn CXIndex() -> CXIndex}
+    extern struct CXTranslationUnit { fn CXTranslationUnit() -> CXTranslationUnit}
+    extern struct CXCursor { fn CXCursor() -> CXCursor}
     extern struct CXString {}
-    extern struct CXFile { fn CXFile() -> CXFile }
+    extern struct CXFile { fn CXFile() -> CXFile}
     extern struct CXSourceLocation {}
     extern struct CXClientData {
         fn CXClientData() -> CXClientData
@@ -297,7 +297,7 @@ import extern c "clang-c/Index.h" {
         CXCursor_OverloadCandidate
     }
 
-    extern enum CXChildVisitResult : c_int {
+    extern enum CXChildVisitResult: c_int {
         CXChildVisit_Break
         CXChildVisit_Continue
         CXChildVisit_Recurse
@@ -436,20 +436,20 @@ import extern c "clang-c/Index.h" {
         CXType_Atomic
         CXType_BTFTagAttributed
     }
-    extern enum CXTranslationUnit_Flags : c_int {
+    extern enum CXTranslationUnit_Flags: c_int {
         CXTranslationUnit_SkipFunctionBodies
         CXTranslationUnit_DetailedPreprocessingRecord
         CXTranslationUnit_CreatePreambleOnFirstParse
         CXTranslationUnit_Incomplete
     }
-    extern enum CXErrorCode : c_int {
+    extern enum CXErrorCode: c_int {
         CXError_Success
         CXError_Failure
         CXError_Crashed
         CXError_InvalidArguments
         CXError_ASTReadError
     }
-    extern enum CXTokenKind : c_int {
+    extern enum CXTokenKind: c_int {
         CXToken_Punctuation
         CXToken_Keyword
         CXToken_Identifier
@@ -549,7 +549,7 @@ import extern c "clang-c/Index.h" {
     extern fn clang_getArraySize(anon a: CXType) -> u64
 
     extern struct CXEvalResult {}
-    extern enum CXEvalResultKind : c_int {
+    extern enum CXEvalResultKind: c_int {
         CXEval_Int
         CXEval_Float
         CXEval_ObjCStrLiteral
@@ -572,12 +572,12 @@ import extern c "clang-c/Index.h" {
 }
 
 type CXTranslationUnit implements(Equal<CXTranslationUnit>) {
-    [[name="operator(==)"]]
+    [[name = "operator(==)"]]
     extern fn equals(this, anon rhs: CXTranslationUnit) -> bool
 }
 
-type CXCursorKind implements(Equal<CXCursorKind>, Hashable) {
-    [[name="operator(==)"]]
+type CXCursorKind implements(Equal<CXCursorKind>,Hashable) {
+    [[name = "operator(==)"]]
     extern fn equals(this, anon rhs: CXCursorKind) -> bool
 
     [[inline(always)]]

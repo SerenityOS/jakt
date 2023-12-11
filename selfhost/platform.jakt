@@ -1,4 +1,4 @@
-import jakt::platform { platform_module, Target }
+import jakt::platform { Target, platform_module }
 import jakt::prelude::configuration { UserConfiguration }
 
 comptime platform_compiler() throws -> [String] => platform_module("platform::compiler")

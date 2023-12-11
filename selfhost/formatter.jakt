@@ -112,7 +112,14 @@ enum State {
         MatchPattern => "match pattern"
         VariableDeclaration => "variable declaration"
         GenericCallTypeParams => "generic call type params"
-        TypeContext(open_parens, open_curlies, open_squares, open_angles, seen_start) => format("type context (p{} c{} s{} a{} s:{})", open_parens, open_curlies, open_squares, open_angles, seen_start)
+        TypeContext(open_parens, open_curlies, open_squares, open_angles, seen_start) => format(
+            "type context (p{} c{} s{} a{} s:{})"
+            open_parens
+            open_curlies
+            open_squares
+            open_angles
+            seen_start
+        )
         FunctionTypeContext => "function type context"
     }
 }
@@ -569,7 +576,9 @@ struct Stage0 {
             ))
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
         }
-        Public | Private | Virtual | Override | Boxed | Unsafe => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Public | Private | Virtual | Override | Boxed | Unsafe => .formatted_token(token, trailing_trivia: [
+            b' '
+            ], preceding_trivia: [])
         Restricted => {
             .push_state(State::RestrictionList)
             yield .formatted_token(token)
@@ -1965,7 +1974,6 @@ struct Stage0 {
                 seen_start: false
             ))
 
-
             yield .formatted_token(token)
         }
         RCurly => {
@@ -2219,7 +2227,7 @@ struct Stage0 {
         mut indent_change = 0
         if not reconsume {
             if (not .already_seen_enclosure_in_current_line) and (
-                token is LParen or token is LCurly or token is LSquare
+                    token is LParen or token is LCurly or token is LSquare
             ) {
                 .already_seen_enclosure_in_current_line = true
                 .dedents_to_skip.push(0uz)
@@ -2269,20 +2277,67 @@ struct Stage0 {
         }
 
         return match .state() {
-            Toplevel(open_parens, open_curlies, open_squares, is_extern) => .next_in_toplevel_context(open_parens, open_curlies, open_squares, is_extern, token)
+            Toplevel(open_parens, open_curlies, open_squares, is_extern) => .next_in_toplevel_context(
+                open_parens
+                open_curlies
+                open_squares
+                is_extern
+                token
+            )
             Extern => .next_in_extern_context(token)
             Import(is_extern, is_comptime) => .next_in_import_context(is_extern, is_comptime, token)
             ImportList(emitted_comma) => .next_in_import_list_context(emitted_comma, token)
             Implements => .next_in_implements_context(token)
-            EntityDeclaration(entity, accept_generics, has_generics, generic_nesting, is_extern) => .next_in_entity_declaration_context(entity, accept_generics, has_generics, generic_nesting, is_extern, token)
-            EntityDefinition(entity, is_extern) => .next_in_entity_definition_context(entity, is_extern, &mut indent_change, token)
-            StatementContext(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, previous_expression_mode,, dedents_on_open_curly) => .next_in_statement_context(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, previous_expression_mode, dedents_on_open_curly, &mut indent_change, token)
+            EntityDeclaration(
+                entity
+                accept_generics
+                has_generics
+                generic_nesting
+                is_extern
+            ) => .next_in_entity_declaration_context(entity, accept_generics, has_generics, generic_nesting, is_extern, token)
+            EntityDefinition(entity, is_extern) => .next_in_entity_definition_context(
+                entity
+                is_extern
+                &mut indent_change
+                token
+            )
+            StatementContext(
+                open_parens
+                open_curlies
+                open_squares
+                arrow_indents
+                allow_eol
+                inserted_comma
+                expression_mode
+                previous_expression_mode
+
+                dedents_on_open_curly
+            ) => .next_in_statement_context(
+                open_parens
+                open_curlies
+                open_squares
+                arrow_indents
+                allow_eol
+                inserted_comma
+                expression_mode
+                previous_expression_mode
+                dedents_on_open_curly
+                &mut indent_change
+                token
+            )
             GenericCallTypeParams(open_angles) => .next_in_generic_call_type_params_context(open_angles, token)
             VariableDeclaration(open_parens) => .next_in_variable_declaration_context(open_parens, token)
             RestrictionList => .next_in_restriction_list_context(token)
             CaptureList => .next_in_capture_list_context(token)
             ParameterList(open_parens) => .next_in_parameter_list_context(open_parens, token)
-            TypeContext(open_parens, open_curlies, open_squares, open_angles, seen_start) => .next_in_type_context(open_parens, open_curlies, open_squares, open_angles, seen_start, token)
+            TypeContext(open_parens, open_curlies, open_squares, open_angles, seen_start) => .next_in_type_context(
+                open_parens
+                open_curlies
+                open_squares
+                open_angles
+                seen_start
+                token
+            )
             FunctionTypeContext(seen_final_type) => .next_in_function_type_context(seen_final_type, token)
             MatchPattern(open_parens, allow_multiple) => .next_in_match_pattern_context(open_parens, allow_multiple, token)
         }

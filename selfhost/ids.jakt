@@ -1,6 +1,6 @@
 import jakt::prelude::hash { pair_int_hash }
 
-struct ModuleId implements(Hashable, Equal<ModuleId>) {
+struct ModuleId implements(Hashable,Equal<ModuleId>) {
     id: usize
 
     [[inline(make_available)]]
@@ -29,7 +29,7 @@ struct FunctionId {
     }
 }
 
-struct StructId implements(Hashable, Equal<StructId>) {
+struct StructId implements(Hashable,Equal<StructId>) {
     module: ModuleId
     id: usize
 
@@ -54,7 +54,7 @@ struct EnumId {
     }
 }
 
-struct TypeId implements(Hashable, Equal<TypeId>) {
+struct TypeId implements(Hashable,Equal<TypeId>) {
     module: ModuleId
     id: usize
 
@@ -80,7 +80,7 @@ struct TraitId {
     }
 }
 
-struct ScopeId implements(Hashable, Equal<ScopeId>) {
+struct ScopeId implements(Hashable,Equal<ScopeId>) {
     module_id: ModuleId
     id: usize
 

@@ -5,9 +5,7 @@ import types {
     CheckedVariable, CheckedVisibility, DefinitionLinkage, FileId, FunctionGenerics, FunctionLinkage, ModuleId
     ScopeId, StructId, Type, TypeId
 }
-import parser {
-    FunctionType, ParsedField, ParsedVarDecl, RecordType
-}
+import parser { FunctionType, ParsedField, ParsedVarDecl, RecordType }
 import compiler { Compiler }
 import jakt::path { Path }
 import utility { Span }
@@ -48,7 +46,7 @@ import extern "LibCpp/Parser.h" {
         extern class Name {
             public fn full_name(this) -> StringView
         }
-        [[name="Declaration const"]]
+        [[name = "Declaration const"]]
         extern class Declaration {
             public fn full_name(this) -> String
             public virtual fn class_name(this) -> StringView
@@ -64,49 +62,49 @@ import extern "LibCpp/Parser.h" {
             public virtual fn declarations(this) -> Vector<Declaration>
             public fn ptr(this) -> raw Declaration
         }
-        [[name="FunctionDeclaration const"]]
-        extern class FunctionDeclaration : Declaration {
+        [[name = "FunctionDeclaration const"]]
+        extern class FunctionDeclaration: Declaration {
             public fn qualifiers(this) -> Vector<StringView>
             public fn return_type(this) -> raw Cpp::RType
             public fn parameters(this) -> Vector<Cpp::Parameter>
             public fn is_constructor(this) -> bool
             public fn is_destructor(this) -> bool
         }
-        [[name="NamespaceDeclaration const"]]
-        extern class NamespaceDeclaration : Declaration {
+        [[name = "NamespaceDeclaration const"]]
+        extern class NamespaceDeclaration: Declaration {
         }
-        [[name="StructOrClassDeclaration const"]]
-        extern class StructOrClassDeclaration : Declaration {
+        [[name = "StructOrClassDeclaration const"]]
+        extern class StructOrClassDeclaration: Declaration {
             public fn members(this) -> Vector<Declaration>
             public fn baseclasses(this) -> Vector<Name>
         }
         // FIXME: Naming this 'Type' somehow interferes with 'Reflect::Type' :/
-        [[name="Type const"]]
+        [[name = "Type const"]]
         extern class RType {
             public fn is_auto(this) -> bool
             public fn qualifiers(this) -> Vector<StringView>
             public fn to_deprecated_string(this) -> String
         }
-        [[name="NamedType const"]]
-        extern class NamedType : RType {
+        [[name = "NamedType const"]]
+        extern class NamedType: RType {
             public fn name(this) -> raw Name
         }
-        [[name="Pointer const"]]
-        extern class Pointer : RType {
+        [[name = "Pointer const"]]
+        extern class Pointer: RType {
             public fn pointee(this) -> raw Cpp::RType
         }
-        [[name="Reference const"]]
-        extern class Reference : RType {
+        [[name = "Reference const"]]
+        extern class Reference: RType {
             public fn referenced_type(this) -> raw Cpp::RType
         }
-        [[name="FunctionType const"]]
-        extern class RFunctionType : RType {
+        [[name = "FunctionType const"]]
+        extern class RFunctionType: RType {
         }
-        [[name="VariableOrParameterDeclaration const"]]
-        extern class VariableOrParameterDeclaration : Declaration {
+        [[name = "VariableOrParameterDeclaration const"]]
+        extern class VariableOrParameterDeclaration: Declaration {
             public fn type(this) -> raw Cpp::RType
         }
-        [[name="Parameter const"]]
+        [[name = "Parameter const"]]
         extern class Parameter: VariableOrParameterDeclaration {
             public fn is_ellipsis(this) -> bool
         }
@@ -122,7 +120,7 @@ import extern "LibCpp/Parser.h" {
 }
 
 trait DeclarationImpl {}
-type Cpp::Declaration implements(DeclarationImpl) {
+type Cpp:: Declarationimplements ( DeclarationImpl)  {
     [[inline(always)]]
     public fn typed_name(this) throws -> String {
         mut s = StringBuilder::create()
@@ -143,7 +141,7 @@ type Cpp::Declaration implements(DeclarationImpl) {
         return s.to_string()
     }
 }
-type Cpp::NamedType implements(DeclarationImpl) {
+type Cpp:: NamedTypeimplements ( DeclarationImpl)  {
     [[inline(always)]]
     public fn full_name(this) -> StringView => match .name() {
         (null<raw Cpp::Name>()) => ""
@@ -264,7 +262,9 @@ fn process_cpp_declaration(
 
             mut params: [CheckedParameter] = []
             mut is_mutating = not fd.qualifiers().contains_slow("const")
-            mut is_static = fd.qualifiers().contains_slow("static") or fd.is_constructor() or fd.is_destructor() or not this_type.has_value()
+            mut is_static = fd.qualifiers().contains_slow(
+                "static"
+            ) or fd.is_constructor() or fd.is_destructor() or not this_type.has_value()
             if not is_static {
                 let variable = CheckedVariable(
                     name: "this"
