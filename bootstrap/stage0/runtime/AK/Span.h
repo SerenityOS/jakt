@@ -276,6 +276,12 @@ public:
         return at(index);
     }
 
+    void reverse()
+    {
+        for (size_t i = 0; i < size() / 2; ++i)
+            AK::swap(at(i), at(size() - i - 1));
+    }
+
     [[nodiscard]] ALWAYS_INLINE constexpr T& operator[](size_t index)
     {
         return at(index);
@@ -296,7 +302,7 @@ public:
 };
 
 template<typename T>
-struct Traits<Span<T>> : public GenericTraits<Span<T>> {
+struct Traits<Span<T>> : public DefaultTraits<Span<T>> {
     static unsigned hash(Span<T> const& span)
     {
         unsigned hash = 0;
@@ -316,6 +322,20 @@ using ReadonlySpan = Span<T const>;
 using ReadonlyBytes = ReadonlySpan<u8>;
 using Bytes = Span<u8>;
 
+template<typename T>
+requires(IsTrivial<T>)
+ReadonlyBytes to_readonly_bytes(Span<T> span)
+{
+    return ReadonlyBytes { static_cast<void*>(span.data()), span.size() * sizeof(T) };
+}
+
+template<typename T>
+requires(IsTrivial<T> && !IsConst<T>)
+Bytes to_bytes(Span<T> span)
+{
+    return Bytes { static_cast<void*>(span.data()), span.size() * sizeof(T) };
+}
+
 }
 
 #if USING_AK_GLOBALLY
@@ -323,4 +343,6 @@ using AK::Bytes;
 using AK::ReadonlyBytes;
 using AK::ReadonlySpan;
 using AK::Span;
+using AK::to_bytes;
+using AK::to_readonly_bytes;
 #endif

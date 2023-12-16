@@ -3,3 +3,4 @@ import jakt::prelude::iteration { IntoIterator, IntoThrowingIterator, Iterable, 
 import jakt::prelude::string { FromStringLiteral, ThrowingFromStringLiteral }
 import jakt::prelude::operators { * }
 import jakt::prelude::hash { * }
+import jakt::prelude::class_name { UnderlyingClassTypeOf }

@@ -8,14 +8,14 @@ namespace jakt__file_iterator {
 class RecursiveFileIterator :public RefCounted<RecursiveFileIterator>, public Weakable<RecursiveFileIterator> {
   public:
 virtual ~RecursiveFileIterator() = default;
-private: DeprecatedString extension;private: JaktInternal::DynamicArray<jakt__path::Path> directory_list;private: JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory;public: static ErrorOr<NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator>> make(jakt__path::Path const directory, DeprecatedString const extension);
+private: ByteString extension;private: JaktInternal::DynamicArray<jakt__path::Path> directory_list;private: JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory;public: static ErrorOr<NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator>> make(jakt__path::Path const directory, ByteString const extension);
 public: ErrorOr<JaktInternal::Optional<jakt__path::Path>> next();
 public: protected:
-explicit RecursiveFileIterator(DeprecatedString a_extension, JaktInternal::DynamicArray<jakt__path::Path> a_directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> a_current_directory);
+explicit RecursiveFileIterator(ByteString a_extension, JaktInternal::DynamicArray<jakt__path::Path> a_directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> a_current_directory);
 public:
-static ErrorOr<NonnullRefPtr<RecursiveFileIterator>> __jakt_create(DeprecatedString extension, JaktInternal::DynamicArray<jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory);
+static ErrorOr<NonnullRefPtr<RecursiveFileIterator>> __jakt_create(ByteString extension, JaktInternal::DynamicArray<jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory);
 
-public: ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::jakt__file_iterator::RecursiveFileIterator> : Jakt::Formatter<Jakt::StringView>{

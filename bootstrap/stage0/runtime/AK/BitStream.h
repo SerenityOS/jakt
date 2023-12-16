@@ -7,6 +7,7 @@
 #pragma once
 
 #include <AK/ByteBuffer.h>
+#include <AK/Concepts.h>
 #include <AK/MaybeOwned.h>
 #include <AK/NumericLimits.h>
 #include <AK/OwnPtr.h>
@@ -28,8 +29,8 @@ public:
     {
         if (m_current_byte.has_value() && is_aligned_to_byte_boundary()) {
             bytes[0] = m_current_byte.release_value();
-            // FIXME: This accidentally slices off the first byte of the returned span.
-            return m_stream->read_some(bytes.slice(1));
+            auto freshly_read_bytes = TRY(m_stream->read_some(bytes.slice(1)));
+            return bytes.trim(1 + freshly_read_bytes.size());
         }
         align_to_byte_boundary();
         return m_stream->read_some(bytes);
@@ -150,8 +151,14 @@ protected:
 /// in little-endian order from another stream.
 class LittleEndianInputBitStream : public LittleEndianBitStream {
 public:
-    explicit LittleEndianInputBitStream(MaybeOwned<Stream> stream)
+    enum UnsatisfiableReadBehavior {
+        Reject,
+        FillWithZero,
+    };
+
+    explicit LittleEndianInputBitStream(MaybeOwned<Stream> stream, UnsatisfiableReadBehavior unsatisfiable_read_behavior = UnsatisfiableReadBehavior::Reject)
         : LittleEndianBitStream(move(stream))
+        , m_unsatisfiable_read_behavior(unsatisfiable_read_behavior)
     {
     }
 
@@ -209,7 +216,7 @@ public:
     ErrorOr<T> peek_bits(size_t count)
     {
         if (count > m_bit_count)
-            TRY(refill_buffer_from_stream());
+            TRY(refill_buffer_from_stream(count));
 
         return m_bit_buffer & lsb_mask<T>(min(count, m_bit_count));
     }
@@ -217,6 +224,7 @@ public:
     ALWAYS_INLINE void discard_previously_peeked_bits(u8 count)
     {
         // We allow "retrieving" more bits than we can provide, but we need to make sure that we don't underflow the current bit counter.
+        // This only affects certain "modes", but all the relevant checks have been handled in the respective `peek_bits` call.
         if (count > m_bit_count)
             count = m_bit_count;
 
@@ -239,19 +247,32 @@ public:
     }
 
 private:
-    ErrorOr<void> refill_buffer_from_stream()
+    ErrorOr<void> refill_buffer_from_stream(size_t requested_bit_count)
     {
-        size_t bits_to_read = bit_buffer_size - m_bit_count;
-        size_t bytes_to_read = bits_to_read / bits_per_byte;
+        while (requested_bit_count > m_bit_count) [[likely]] {
+            if (m_stream->is_eof()) [[unlikely]] {
+                if (m_unsatisfiable_read_behavior == UnsatisfiableReadBehavior::FillWithZero) {
+                    m_bit_count = requested_bit_count;
+                    return {};
+                }
 
-        BufferType buffer = 0;
-        auto bytes = TRY(m_stream->read_some({ &buffer, bytes_to_read }));
+                return Error::from_string_literal("Reached end-of-stream without collecting the required number of bits");
+            }
 
-        m_bit_buffer |= (buffer << m_bit_count);
-        m_bit_count += bytes.size() * bits_per_byte;
+            size_t bits_to_read = bit_buffer_size - m_bit_count;
+            size_t bytes_to_read = bits_to_read / bits_per_byte;
+
+            BufferType buffer = 0;
+            auto bytes = TRY(m_stream->read_some({ &buffer, bytes_to_read }));
+
+            m_bit_buffer |= (buffer << m_bit_count);
+            m_bit_count += bytes.size() * bits_per_byte;
+        }
 
         return {};
     }
+
+    UnsatisfiableReadBehavior m_unsatisfiable_read_behavior;
 };
 
 /// A stream wrapper class that allows you to write arbitrary amounts of bits
@@ -427,4 +448,11 @@ public:
     }
 };
 
+template<typename T>
+concept InputBitStream = OneOf<T, BigEndianInputBitStream, LittleEndianInputBitStream>;
+
 }
+
+#if USING_AK_GLOBALLY
+using AK::InputBitStream;
+#endif

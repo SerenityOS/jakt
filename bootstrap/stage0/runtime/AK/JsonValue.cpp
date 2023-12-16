@@ -15,11 +15,6 @@
 
 namespace AK {
 
-JsonValue::JsonValue(Type type)
-    : m_type(type)
-{
-}
-
 JsonValue::JsonValue(JsonValue const& other)
 {
     copy_from(other);
@@ -160,7 +155,7 @@ JsonValue::JsonValue(long long unsigned value)
 }
 
 JsonValue::JsonValue(char const* cstring)
-    : JsonValue(DeprecatedString(cstring))
+    : JsonValue(ByteString(cstring))
 {
 }
 
@@ -172,7 +167,7 @@ JsonValue::JsonValue(double value)
 }
 #endif
 
-JsonValue::JsonValue(DeprecatedString const& value)
+JsonValue::JsonValue(ByteString const& value)
 {
     m_type = Type::String;
     m_value.as_string = const_cast<StringImpl*>(value.impl());
@@ -180,7 +175,7 @@ JsonValue::JsonValue(DeprecatedString const& value)
 }
 
 JsonValue::JsonValue(StringView value)
-    : JsonValue(value.to_deprecated_string())
+    : JsonValue(value.to_byte_string())
 {
 }
 

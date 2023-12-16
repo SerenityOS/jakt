@@ -48,7 +48,7 @@ set(RUNTIME_SOURCES
     ${IMPORTED_AK_SOURCES}
     IO/File.cpp
     Jakt/PrettyPrint.cpp
-    Jakt/DeprecatedStringBuilder.cpp
+    Jakt/ByteStringBuilder.cpp
 )
 
 # FIXME: create a new external_project foreach(target IN LISTS JAKT_RUNTIME_TARGETS)

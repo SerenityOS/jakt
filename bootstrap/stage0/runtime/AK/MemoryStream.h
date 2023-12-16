@@ -18,7 +18,12 @@ namespace AK {
 /// using a single read/write head.
 class FixedMemoryStream : public SeekableStream {
 public:
-    explicit FixedMemoryStream(Bytes bytes, bool writing_enabled = true);
+    enum class Mode {
+        ReadOnly,
+        ReadWrite,
+    };
+
+    explicit FixedMemoryStream(Bytes bytes, Mode mode = Mode::ReadWrite);
     explicit FixedMemoryStream(ReadonlyBytes bytes);
 
     virtual bool is_eof() const override;
@@ -64,7 +69,7 @@ public:
                 return Error::from_string_view_or_print_error_and_return_errno("Tried to obtain a non-const span from a read-only FixedMemoryStream"sv, EINVAL);
         }
 
-        Span<T> span { m_bytes.offset_pointer(m_offset), count };
+        Span<T> span { reinterpret_cast<T*>(m_bytes.offset_pointer(m_offset)), count };
         TRY(discard(sizeof(T) * count));
         return span;
     }

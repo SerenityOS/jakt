@@ -17,6 +17,8 @@ template<size_t inline_capacity>
 class ByteBuffer;
 }
 
+enum class TrailingCodePointTransformation : u8;
+
 class BigEndianInputBitStream;
 class BigEndianOutputBitStream;
 class Bitmap;
@@ -25,7 +27,7 @@ class CircularBuffer;
 class ConstrainedStream;
 class CountingStream;
 class DeprecatedFlyString;
-class DeprecatedString;
+class ByteString;
 class DeprecatedStringCodePointIterator;
 class Duration;
 class Error;
@@ -157,12 +159,12 @@ using AK::BigEndianOutputBitStream;
 using AK::Bitmap;
 using AK::ByteBuffer;
 using AK::Bytes;
+using AK::ByteString;
 using AK::CircularBuffer;
 using AK::CircularQueue;
 using AK::ConstrainedStream;
 using AK::CountingStream;
 using AK::DeprecatedFlyString;
-using AK::DeprecatedString;
 using AK::DeprecatedStringCodePointIterator;
 using AK::DoublyLinkedList;
 using AK::Duration;
@@ -198,6 +200,7 @@ using AK::String;
 using AK::StringBuilder;
 using AK::StringImpl;
 using AK::StringView;
+using AK::TrailingCodePointTransformation;
 using AK::Traits;
 using AK::UnixDateTime;
 using AK::URL;

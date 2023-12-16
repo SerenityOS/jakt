@@ -6,7 +6,7 @@ struct UserConfiguration {
   public:
 public: UserConfiguration();
 
-public: public: ErrorOr<DeprecatedString> debug_description() const;
+public: public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::jakt__prelude__configuration::UserConfiguration> : Jakt::Formatter<Jakt::StringView>{

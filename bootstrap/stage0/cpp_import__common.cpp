@@ -1,11 +1,11 @@
 #include "cpp_import__common.h"
 namespace Jakt {
 namespace cpp_import__common {
-ErrorOr<DeprecatedString> read_all(DeprecatedString const filename) {
+ErrorOr<ByteString> read_all(ByteString const filename) {
 {
 NonnullRefPtr<File> file = TRY((File::open_for_reading(filename)));
 JaktInternal::DynamicArray<u8> const buf = TRY((((file)->read_all())));
-DeprecatedStringBuilder s = DeprecatedStringBuilder::create();
+ByteStringBuilder s = ByteStringBuilder::create();
 {
 JaktInternal::ArrayIterator<u8> _magic = ((buf).iterator());
 for (;;){
@@ -25,7 +25,7 @@ return TRY((((s).to_string())));
 }
 }
 
-ErrorOr<DeprecatedString> cpp_import__common::CppImportErrors::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("CppImportErrors("sv));{
+ErrorOr<ByteString> cpp_import__common::CppImportErrors::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("CppImportErrors("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
 TRY(builder.append(")"sv));return builder.to_string(); }

@@ -5,6 +5,7 @@
 #include "jakt__prelude__string.h"
 #include "jakt__prelude__operators.h"
 #include "jakt__prelude__hash.h"
+#include "jakt__prelude__class_name.h"
 namespace Jakt {
 namespace jakt__prelude__prelude {
 }

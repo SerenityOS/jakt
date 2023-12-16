@@ -16,6 +16,8 @@
 
 #include <AK/Assertions.h>
 
+#define OFFSET_OF(class, member) __builtin_offsetof(class, member)
+
 namespace AK {
 
 template<typename T, typename U>

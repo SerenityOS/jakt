@@ -1,24 +1,24 @@
 #include "build.h"
 namespace Jakt {
 namespace build {
-ErrorOr<DeprecatedString> build::Builder::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Builder("sv));{
+ErrorOr<ByteString> build::Builder::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Builder("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("linked_files: {}, ", linked_files));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("files_to_compile: {}, ", files_to_compile));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("pool: {}", pool));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-ErrorOr<void> build::Builder::link_into_executable(DeprecatedString const cxx_compiler_path,DeprecatedString const output_filename,JaktInternal::DynamicArray<DeprecatedString> const extra_arguments) {
+ErrorOr<void> build::Builder::link_into_executable(ByteString const cxx_compiler_path,ByteString const output_filename,JaktInternal::DynamicArray<ByteString> const extra_arguments) {
 {
-JaktInternal::DynamicArray<DeprecatedString> args = (TRY((DynamicArray<DeprecatedString>::create_with({cxx_compiler_path, TRY(DeprecatedString::from_utf8("-o"sv)), output_filename}))));
+JaktInternal::DynamicArray<ByteString> args = (TRY((DynamicArray<ByteString>::create_with({cxx_compiler_path, TRY(ByteString::from_utf8("-o"sv)), output_filename}))));
 {
-JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).linked_files)).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).linked_files)).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
+JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-DeprecatedString file = (_magic_value.value());
+ByteString file = (_magic_value.value());
 {
 TRY((((args).push(file))));
 }
@@ -27,13 +27,13 @@ TRY((((args).push(file))));
 }
 
 {
-JaktInternal::ArrayIterator<DeprecatedString> _magic = ((extra_arguments).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = ((extra_arguments).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
+JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-DeprecatedString arg = (_magic_value.value());
+ByteString arg = (_magic_value.value());
 {
 TRY((((args).push(arg))));
 }
@@ -51,22 +51,22 @@ return Error::from_errno(static_cast<i32>(1));
 return {};
 }
 
-ErrorOr<build::Builder> build::Builder::for_building(JaktInternal::DynamicArray<DeprecatedString> const files,size_t const max_concurrent) {
+ErrorOr<build::Builder> build::Builder::for_building(JaktInternal::DynamicArray<ByteString> const files,size_t const max_concurrent) {
 {
-return build::Builder((TRY((DynamicArray<DeprecatedString>::create_with({})))),files,TRY((build::ParallelExecutionPool::create(max_concurrent))));
+return build::Builder((TRY((DynamicArray<ByteString>::create_with({})))),files,TRY((build::ParallelExecutionPool::create(max_concurrent))));
 }
 }
 
-ErrorOr<void> build::Builder::link_into_archive(DeprecatedString const archiver,DeprecatedString const archive_filename,JaktInternal::DynamicArray<DeprecatedString> const extra_arguments) {
+ErrorOr<void> build::Builder::link_into_archive(ByteString const archiver,ByteString const archive_filename,JaktInternal::DynamicArray<ByteString> const extra_arguments) {
 {
-JaktInternal::DynamicArray<DeprecatedString> args = (TRY((DynamicArray<DeprecatedString>::create_with({archiver, ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<void>>{
+JaktInternal::DynamicArray<ByteString> args = (TRY((DynamicArray<ByteString>::create_with({archiver, ({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>>{
 auto __jakt_enum_value = (((extra_arguments).size()));
 if (__jakt_enum_value == static_cast<size_t>(0ULL)) {
-return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("cr"sv)));
+return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("cr"sv)));
 }
 else {
-return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("crT"sv)));
+return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("crT"sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -74,13 +74,13 @@ return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("crT"sv)));
     _jakt_value.release_value();
 }), archive_filename}))));
 {
-JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).linked_files)).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).linked_files)).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
+JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-DeprecatedString file = (_magic_value.value());
+ByteString file = (_magic_value.value());
 {
 TRY((((args).push(file))));
 }
@@ -99,19 +99,19 @@ return Error::from_errno(static_cast<i32>(1));
 return {};
 }
 
-build::Builder::Builder(JaktInternal::DynamicArray<DeprecatedString> a_linked_files, JaktInternal::DynamicArray<DeprecatedString> a_files_to_compile, build::ParallelExecutionPool a_pool): linked_files(move(a_linked_files)), files_to_compile(move(a_files_to_compile)), pool(move(a_pool)){}
+build::Builder::Builder(JaktInternal::DynamicArray<ByteString> a_linked_files, JaktInternal::DynamicArray<ByteString> a_files_to_compile, build::ParallelExecutionPool a_pool): linked_files(move(a_linked_files)), files_to_compile(move(a_files_to_compile)), pool(move(a_pool)){}
 
-ErrorOr<void> build::Builder::build_all(jakt__path::Path const binary_dir,Function<ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>(DeprecatedString, DeprecatedString)> const& compiler_invocation) {
+ErrorOr<void> build::Builder::build_all(jakt__path::Path const binary_dir,Function<ErrorOr<JaktInternal::DynamicArray<ByteString>>(ByteString, ByteString)> const& compiler_invocation) {
 {
 JaktInternal::Set<size_t> ids = (TRY((Set<size_t>::create_with_values({}))));
 {
-JaktInternal::ArrayIterator<DeprecatedString> _magic = ((((*this).files_to_compile)).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).files_to_compile)).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
+JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-DeprecatedString file_name = (_magic_value.value());
+ByteString file_name = (_magic_value.value());
 {
 {
 JaktInternal::DictionaryIterator<size_t,jakt__platform__unknown_process::ExitPollResult> _magic = ((((((*this).pool)).completed)).iterator());
@@ -136,9 +136,9 @@ return Error::from_errno(static_cast<i32>(1));
 }
 }
 
-DeprecatedString const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((jakt__path::Path::from_string(file_name)))).replace_extension(TRY(DeprecatedString::from_utf8("o"sv))))))).to_string())))))).to_string());
+ByteString const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((jakt__path::Path::from_string(file_name)))).replace_extension(TRY(ByteString::from_utf8("o"sv))))))).to_string())))))).to_string());
 TRY((((((*this).linked_files)).push(built_object))));
-JaktInternal::DynamicArray<DeprecatedString> const args = TRY((compiler_invocation(((TRY((((binary_dir).join(file_name))))).to_string()),built_object)));
+JaktInternal::DynamicArray<ByteString> const args = TRY((compiler_invocation(((TRY((((binary_dir).join(file_name))))).to_string()),built_object)));
 size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((ids).add(id))));
 warnln((StringView::from_string_literal("{:c}[2LBuilding: {}/{} ({})"sv)),static_cast<i64>(27LL),((ids).size()),((((*this).files_to_compile)).size()),file_name);
@@ -170,12 +170,12 @@ return Error::from_errno(static_cast<i32>(1));
 }
 }
 
-(((*this).files_to_compile) = (TRY((DynamicArray<DeprecatedString>::create_with({})))));
+(((*this).files_to_compile) = (TRY((DynamicArray<ByteString>::create_with({})))));
 }
 return {};
 }
 
-ErrorOr<DeprecatedString> build::ParallelExecutionPool::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ParallelExecutionPool("sv));{
+ErrorOr<ByteString> build::ParallelExecutionPool::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParallelExecutionPool("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("pids: {}, ", pids));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("completed: {}, ", completed));
@@ -264,7 +264,7 @@ TRY((((((*this).completed)).set(index,status))));
 return {};
 }
 
-ErrorOr<size_t> build::ParallelExecutionPool::run(JaktInternal::DynamicArray<DeprecatedString> const args) {
+ErrorOr<size_t> build::ParallelExecutionPool::run(JaktInternal::DynamicArray<ByteString> const args) {
 {
 if ([](size_t const& self, size_t rhs) -> bool {
 {

@@ -32,6 +32,7 @@
 #include "jakt__platform.h"
 #include "jakt__arguments.h"
 #include "jakt__prelude__prelude.h"
+#include "jakt__prelude__class_name.h"
 #include "jakt__prelude__hash.h"
 #include "jakt__prelude__operators.h"
 #include "jakt__prelude__string.h"

@@ -7,10 +7,10 @@ namespace cpp_import__none {
 struct CppImportProcessor {
   public:
 public: static cpp_import__none::CppImportProcessor create();
-public: ErrorOr<ids::ScopeId> process_cpp_import(NonnullRefPtr<types::CheckedProgram>& program, jakt__path::Path const import_path, ids::ScopeId const scope_id, bool const is_c, JaktInternal::Dictionary<DeprecatedString,DeprecatedString> const defines);
+public: ErrorOr<ids::ScopeId> process_cpp_import(NonnullRefPtr<types::CheckedProgram>& program, jakt__path::Path const import_path, ids::ScopeId const scope_id, bool const is_c, JaktInternal::Dictionary<ByteString,ByteString> const defines);
 public: CppImportProcessor();
 
-public: ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::cpp_import__none::CppImportProcessor> : Jakt::Formatter<Jakt::StringView>{

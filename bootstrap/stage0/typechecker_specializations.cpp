@@ -32,6 +32,7 @@
 #include "jakt__platform.h"
 #include "jakt__arguments.h"
 #include "jakt__prelude__prelude.h"
+#include "jakt__prelude__class_name.h"
 #include "jakt__prelude__hash.h"
 #include "jakt__prelude__operators.h"
 #include "jakt__prelude__string.h"
@@ -40,23 +41,23 @@
 namespace Jakt {
 namespace typechecker {
 
-/* specialisation 0 of function create_internal_dictionary_product: ["DeprecatedString", "JaktInternal::Tuple<utility::Span,ids::TypeId>"] */
-template<> ErrorOr<typechecker::InternalDictionaryProduct<DeprecatedString,JaktInternal::Tuple<utility::Span,ids::TypeId>>> create_internal_dictionary_product<DeprecatedString, JaktInternal::Tuple<utility::Span,ids::TypeId>>(JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> const dict);
+/* specialisation 0 of function create_internal_dictionary_product: ["ByteString", "JaktInternal::Tuple<utility::Span,ids::TypeId>"] */
+template<> ErrorOr<typechecker::InternalDictionaryProduct<ByteString,JaktInternal::Tuple<utility::Span,ids::TypeId>>> create_internal_dictionary_product<ByteString, JaktInternal::Tuple<utility::Span,ids::TypeId>>(JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> const dict);
 template<>
-ErrorOr<typechecker::InternalDictionaryProduct<DeprecatedString,JaktInternal::Tuple<utility::Span,ids::TypeId>>> create_internal_dictionary_product<DeprecatedString, JaktInternal::Tuple<utility::Span,ids::TypeId>>(JaktInternal::Dictionary<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> const dict) {
+ErrorOr<typechecker::InternalDictionaryProduct<ByteString,JaktInternal::Tuple<utility::Span,ids::TypeId>>> create_internal_dictionary_product<ByteString, JaktInternal::Tuple<utility::Span,ids::TypeId>>(JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> const dict) {
 {
-JaktInternal::Dictionary<DeprecatedString,size_t> current_index = (TRY((Dictionary<DeprecatedString, size_t>::create_with_entries({}))));
+JaktInternal::Dictionary<ByteString,size_t> current_index = (TRY((Dictionary<ByteString, size_t>::create_with_entries({}))));
 {
-JaktInternal::DictionaryIterator<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> _magic = ((dict).iterator());
+JaktInternal::DictionaryIterator<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> _magic = ((dict).iterator());
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>>> const _magic_value = ((_magic).next());
+JaktInternal::Optional<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>>> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-JaktInternal::Tuple<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> key_____ = (_magic_value.value());
+JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> key_____ = (_magic_value.value());
 {
-JaktInternal::Tuple<DeprecatedString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> const jakt__key_____ = key_____;
-DeprecatedString const key = ((jakt__key_____).template get<0>());
+JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> const jakt__key_____ = key_____;
+ByteString const key = ((jakt__key_____).template get<0>());
 JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>> const _ = ((jakt__key_____).template get<1>());
 
 TRY(current_index.set(key, static_cast<size_t>(0ULL)));
@@ -65,8 +66,8 @@ TRY(current_index.set(key, static_cast<size_t>(0ULL)));
 }
 }
 
-JaktInternal::Dictionary<DeprecatedString,JaktInternal::Tuple<utility::Span,ids::TypeId>> const current = (TRY((Dictionary<DeprecatedString, JaktInternal::Tuple<utility::Span,ids::TypeId>>::create_with_entries({}))));
-return typechecker::InternalDictionaryProduct<DeprecatedString, JaktInternal::Tuple<utility::Span,ids::TypeId>>(dict,current,current_index,false);
+JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<utility::Span,ids::TypeId>> const current = (TRY((Dictionary<ByteString, JaktInternal::Tuple<utility::Span,ids::TypeId>>::create_with_entries({}))));
+return typechecker::InternalDictionaryProduct<ByteString, JaktInternal::Tuple<utility::Span,ids::TypeId>>(dict,current,current_index,false);
 }
 }
 }

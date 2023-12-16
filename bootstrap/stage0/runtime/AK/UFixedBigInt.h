@@ -581,7 +581,7 @@ private:
 };
 
 template<size_t M>
-struct Traits<UFixedBigInt<M>> : public GenericTraits<UFixedBigInt<M>> {
+struct Traits<UFixedBigInt<M>> : public DefaultTraits<UFixedBigInt<M>> {
     static constexpr bool is_trivially_serializable() { return true; }
     static constexpr bool is_trivial() { return true; }
 };
@@ -649,7 +649,10 @@ struct Formatter<T> : StandardFormatter {
 // these sizes should suffice for most usecases
 using u128 = AK::UFixedBigInt<128>;
 using u256 = AK::UFixedBigInt<256>;
+using u384 = AK::UFixedBigInt<384>;
 using u512 = AK::UFixedBigInt<512>;
+using u768 = AK::UFixedBigInt<768>;
 using u1024 = AK::UFixedBigInt<1024>;
+using u1536 = AK::UFixedBigInt<1536>;
 using u2048 = AK::UFixedBigInt<2048>;
 using u4096 = AK::UFixedBigInt<4096>;

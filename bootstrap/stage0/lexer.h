@@ -5,32 +5,9 @@
 #include "compiler.h"
 namespace Jakt {
 namespace lexer {
-struct LiteralPrefix {
-u8 __jakt_variant_index = 0;
-union VariantData {
-u8 __jakt_uninit_value;
-constexpr VariantData() {}
-~VariantData() {}
-} as;
-constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
-[[nodiscard]] static LiteralPrefix None();
-[[nodiscard]] static LiteralPrefix Hexadecimal();
-[[nodiscard]] static LiteralPrefix Octal();
-[[nodiscard]] static LiteralPrefix Binary();
-~LiteralPrefix();
-LiteralPrefix& operator=(LiteralPrefix const &);
-LiteralPrefix& operator=(LiteralPrefix &&);
-LiteralPrefix(LiteralPrefix const&);
-LiteralPrefix(LiteralPrefix &&);
-private: void __jakt_destroy_variant();
-public:
-ErrorOr<DeprecatedString> to_string() const;
-private:
-LiteralPrefix() {};
-};
 struct Lexer {
   public:
-public: size_t index;public: JaktInternal::DynamicArray<u8> input;public: NonnullRefPtr<compiler::Compiler> compiler;public: JaktInternal::Optional<JaktInternal::DynamicArray<u8>> comment_contents;public: JaktInternal::Set<DeprecatedString> illegal_cpp_keywords;public: ErrorOr<JaktInternal::Optional<DeprecatedString>> consume_comment_contents();
+public: size_t index;public: JaktInternal::DynamicArray<u8> input;public: NonnullRefPtr<compiler::Compiler> compiler;public: JaktInternal::Optional<JaktInternal::DynamicArray<u8>> comment_contents;public: JaktInternal::Set<ByteString> illegal_cpp_keywords;public: ErrorOr<JaktInternal::Optional<ByteString>> consume_comment_contents();
 public: ErrorOr<lexer::Token> lex_quoted_string(u8 const delimiter);
 public: ErrorOr<JaktInternal::Optional<lexer::Token>> next();
 public: ErrorOr<lexer::Token> lex_character_constant_or_name();
@@ -46,7 +23,7 @@ public: lexer::Token lex_percent_sign();
 public: ErrorOr<lexer::Token> lex_number_or_name();
 public: lexer::Token lex_less_than();
 public: bool eof() const;
-public: Lexer(size_t a_index, JaktInternal::DynamicArray<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> a_comment_contents, JaktInternal::Set<DeprecatedString> a_illegal_cpp_keywords);
+public: Lexer(size_t a_index, JaktInternal::DynamicArray<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> a_comment_contents, JaktInternal::Set<ByteString> a_illegal_cpp_keywords);
 
 public: lexer::Token lex_ampersand();
 public: utility::Span span(size_t const start, size_t const end) const;
@@ -55,15 +32,15 @@ public: lexer::Token lex_exclamation_point();
 public: ErrorOr<lexer::LiteralSuffix> consume_numeric_literal_suffix();
 public: lexer::Token lex_colon();
 public: bool valid_digit(lexer::LiteralPrefix const prefix, u8 const digit, bool const decimal_allowed);
-public: ErrorOr<void> error(DeprecatedString const message, utility::Span const span);
+public: ErrorOr<void> error(ByteString const message, utility::Span const span);
 public: lexer::Token lex_equals();
-public: ErrorOr<DeprecatedString> substring(size_t const start, size_t const length) const;
+public: ErrorOr<ByteString> substring(size_t const start, size_t const length) const;
 public: lexer::Token lex_greater_than();
 public: lexer::Token lex_pipe();
 public: lexer::Token lex_caret();
 public: ErrorOr<lexer::Token> lex_number();
 public: static ErrorOr<JaktInternal::DynamicArray<lexer::Token>> lex(NonnullRefPtr<compiler::Compiler> const compiler);
-public: ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<ByteString> debug_description() const;
 };struct LiteralSuffix {
 u8 __jakt_variant_index = 0;
 union VariantData {
@@ -71,7 +48,7 @@ u8 __jakt_uninit_value;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
-constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<ByteString> debug_description() const;
 [[nodiscard]] static LiteralSuffix None();
 [[nodiscard]] static LiteralSuffix UZ();
 [[nodiscard]] static LiteralSuffix U8();
@@ -91,31 +68,54 @@ LiteralSuffix(LiteralSuffix const&);
 LiteralSuffix(LiteralSuffix &&);
 private: void __jakt_destroy_variant();
 public:
-ErrorOr<DeprecatedString> to_string() const;
+ErrorOr<ByteString> to_string() const;
 private:
 LiteralSuffix() {};
+};
+struct LiteralPrefix {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<ByteString> debug_description() const;
+[[nodiscard]] static LiteralPrefix None();
+[[nodiscard]] static LiteralPrefix Hexadecimal();
+[[nodiscard]] static LiteralPrefix Octal();
+[[nodiscard]] static LiteralPrefix Binary();
+~LiteralPrefix();
+LiteralPrefix& operator=(LiteralPrefix const &);
+LiteralPrefix& operator=(LiteralPrefix &&);
+LiteralPrefix(LiteralPrefix const&);
+LiteralPrefix(LiteralPrefix &&);
+private: void __jakt_destroy_variant();
+public:
+ErrorOr<ByteString> to_string() const;
+private:
+LiteralPrefix() {};
 };
 struct Token {
 u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
 struct {
-DeprecatedString quote;
-JaktInternal::Optional<DeprecatedString> prefix;
+ByteString quote;
+JaktInternal::Optional<ByteString> prefix;
 utility::Span span;
 } SingleQuotedString;
 struct {
-DeprecatedString quote;
+ByteString quote;
 utility::Span span;
 } QuotedString;
 struct {
 lexer::LiteralPrefix prefix;
-DeprecatedString number;
+ByteString number;
 lexer::LiteralSuffix suffix;
 utility::Span span;
 } Number;
 struct {
-DeprecatedString name;
+ByteString name;
 utility::Span span;
 } Identifier;
 struct {
@@ -272,7 +272,7 @@ struct {
 utility::Span value;
 } DotDot;
 struct {
-JaktInternal::Optional<DeprecatedString> comment;
+JaktInternal::Optional<ByteString> comment;
 utility::Span span;
 } Eol;
 struct {
@@ -344,6 +344,9 @@ utility::Span value;
 struct {
 utility::Span value;
 } Import;
+struct {
+utility::Span value;
+} Relative;
 struct {
 utility::Span value;
 } In;
@@ -441,17 +444,17 @@ struct {
 utility::Span value;
 } Trait;
 struct {
-JaktInternal::Optional<DeprecatedString> consumed;
+JaktInternal::Optional<ByteString> consumed;
 utility::Span span;
 } Garbage;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
-constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const;
-[[nodiscard]] static Token SingleQuotedString(DeprecatedString quote, JaktInternal::Optional<DeprecatedString> prefix, utility::Span span);
-[[nodiscard]] static Token QuotedString(DeprecatedString quote, utility::Span span);
-[[nodiscard]] static Token Number(lexer::LiteralPrefix prefix, DeprecatedString number, lexer::LiteralSuffix suffix, utility::Span span);
-[[nodiscard]] static Token Identifier(DeprecatedString name, utility::Span span);
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<ByteString> debug_description() const;
+[[nodiscard]] static Token SingleQuotedString(ByteString quote, JaktInternal::Optional<ByteString> prefix, utility::Span span);
+[[nodiscard]] static Token QuotedString(ByteString quote, utility::Span span);
+[[nodiscard]] static Token Number(lexer::LiteralPrefix prefix, ByteString number, lexer::LiteralSuffix suffix, utility::Span span);
+[[nodiscard]] static Token Identifier(ByteString name, utility::Span span);
 [[nodiscard]] static Token Semicolon(utility::Span value);
 [[nodiscard]] static Token Colon(utility::Span value);
 [[nodiscard]] static Token ColonColon(utility::Span value);
@@ -503,7 +506,7 @@ constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 
 [[nodiscard]] static Token Comma(utility::Span value);
 [[nodiscard]] static Token Dot(utility::Span value);
 [[nodiscard]] static Token DotDot(utility::Span value);
-[[nodiscard]] static Token Eol(JaktInternal::Optional<DeprecatedString> comment, utility::Span span);
+[[nodiscard]] static Token Eol(JaktInternal::Optional<ByteString> comment, utility::Span span);
 [[nodiscard]] static Token Eof(utility::Span value);
 [[nodiscard]] static Token FatArrow(utility::Span value);
 [[nodiscard]] static Token Arrow(utility::Span value);
@@ -527,6 +530,7 @@ constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 
 [[nodiscard]] static Token Comptime(utility::Span value);
 [[nodiscard]] static Token If(utility::Span value);
 [[nodiscard]] static Token Import(utility::Span value);
+[[nodiscard]] static Token Relative(utility::Span value);
 [[nodiscard]] static Token In(utility::Span value);
 [[nodiscard]] static Token Is(utility::Span value);
 [[nodiscard]] static Token Let(utility::Span value);
@@ -559,7 +563,7 @@ constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 
 [[nodiscard]] static Token Implements(utility::Span value);
 [[nodiscard]] static Token Requires(utility::Span value);
 [[nodiscard]] static Token Trait(utility::Span value);
-[[nodiscard]] static Token Garbage(JaktInternal::Optional<DeprecatedString> consumed, utility::Span span);
+[[nodiscard]] static Token Garbage(JaktInternal::Optional<ByteString> consumed, utility::Span span);
 ~Token();
 Token& operator=(Token const &);
 Token& operator=(Token &&);
@@ -567,18 +571,12 @@ Token(Token const&);
 Token(Token &&);
 private: void __jakt_destroy_variant();
 public:
-static ErrorOr<lexer::Token> from_keyword_or_identifier(DeprecatedString const string, utility::Span const span);
+static ErrorOr<lexer::Token> from_keyword_or_identifier(ByteString const string, utility::Span const span);
 utility::Span span() const;
 private:
 Token() {};
 };
 }
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::lexer::LiteralPrefix> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralPrefix const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::lexer::Lexer> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::Lexer const& value) {
@@ -588,6 +586,12 @@ namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::lexer::LiteralSuffix> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralSuffix const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::lexer::LiteralPrefix> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::lexer::LiteralPrefix const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

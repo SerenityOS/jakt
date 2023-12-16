@@ -1,13 +1,13 @@
 #include "platform.h"
 namespace Jakt {
 namespace platform {
-ErrorOr<DeprecatedString> library_name_for_target(DeprecatedString const name,jakt__platform::Target const target) {
+ErrorOr<ByteString> library_name_for_target(ByteString const name,jakt__platform::Target const target) {
 {
-DeprecatedString const target_name = TRY((((target).name(false))));
+ByteString const target_name = TRY((((target).name(false))));
 return TRY((__jakt_format((StringView::from_string_literal("{}/{}"sv)),target_name,({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<DeprecatedString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((target).os));
-if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("windows"sv))) {
+if (__jakt_enum_value == TRY(ByteString::from_utf8("windows"sv))) {
 return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("jakt_{}_{}.lib"sv)),name,target_name))));
 }
 else {

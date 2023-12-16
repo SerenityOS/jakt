@@ -1,3 +1,4 @@
+#include "jakt__prelude__class_name.h"
 #include "main.h"
 #include "platform__unknown_compiler.h"
 #include "repl.h"
@@ -38,6 +39,6 @@
 #include "jakt__prelude__iteration.h"
 #include "jakt__prelude__static_array.h"
 namespace Jakt {
-namespace Reflect {
+namespace jakt__prelude__class_name {
 }
 } // namespace Jakt

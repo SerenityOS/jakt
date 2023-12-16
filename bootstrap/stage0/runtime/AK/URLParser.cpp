@@ -5,9 +5,9 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <AK/ByteString.h>
 #include <AK/CharacterTypes.h>
 #include <AK/Debug.h>
-#include <AK/DeprecatedString.h>
 #include <AK/IntegralMath.h>
 #include <AK/Optional.h>
 #include <AK/SourceLocation.h>
@@ -57,7 +57,7 @@ static Optional<URL::Host> parse_opaque_host(StringView input)
     //       currently report validation errors, they are only useful for debugging efforts in the URL parsing code.
 
     // 4. Return the result of running UTF-8 percent-encode on input using the C0 control percent-encode set.
-    return String::from_deprecated_string(URL::percent_encode(input, URL::PercentEncodeSet::C0Control)).release_value_but_fixme_should_propagate_errors();
+    return String::from_byte_string(URL::percent_encode(input, URL::PercentEncodeSet::C0Control)).release_value_but_fixme_should_propagate_errors();
 }
 
 struct ParsedIPv4Number {
@@ -603,9 +603,10 @@ static Optional<URL::Host> parse_host(StringView input, bool is_opaque = false)
     // FIXME: 4. Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of input.
     auto domain = URL::percent_decode(input);
 
-    // FIXME: 5. Let asciiDomain be the result of running domain to ASCII on domain.
+    // NOTE: This is handled in Unicode::create_unicode_url, to work around the fact that we can't call into LibUnicode here
+    // FIXME: 5. Let asciiDomain be the result of running domain to ASCII with domain and false.
     // FIXME: 6. If asciiDomain is failure, then return failure.
-    auto ascii_domain_or_error = String::from_deprecated_string(domain);
+    auto ascii_domain_or_error = String::from_byte_string(domain);
     if (ascii_domain_or_error.is_error())
         return {};
 
@@ -791,7 +792,7 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
     if (start_index >= end_index)
         return {};
 
-    DeprecatedString processed_input = raw_input.substring_view(start_index, end_index - start_index);
+    ByteString processed_input = raw_input.substring_view(start_index, end_index - start_index);
 
     // 2. If input contains any ASCII tab or newline, invalid-URL-unit validation error.
     // 3. Remove all ASCII tab or newline from input.
@@ -1115,7 +1116,7 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
 
                 // 2. If atSignSeen is true, then prepend "%40" to buffer.
                 if (at_sign_seen) {
-                    auto content = buffer.to_deprecated_string();
+                    auto content = buffer.to_byte_string();
                     buffer.clear();
                     buffer.append("%40"sv);
                     buffer.append(content);
@@ -1124,7 +1125,8 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                 // 3. Set atSignSeen to true.
                 at_sign_seen = true;
 
-                StringBuilder builder;
+                StringBuilder username_builder;
+                StringBuilder password_builder;
 
                 // 4. For each codePoint in buffer:
                 for (auto c : Utf8View(buffer.string_view())) {
@@ -1137,20 +1139,26 @@ URL URLParser::basic_parse(StringView raw_input, Optional<URL> const& base_url, 
                     // 2. Let encodedCodePoints be the result of running UTF-8 percent-encode codePoint using the userinfo percent-encode set.
                     // NOTE: This is done inside of step 3 and 4 implementation
 
-                    builder.clear();
                     // 3. If passwordTokenSeen is true, then append encodedCodePoints to url’s password.
                     if (password_token_seen) {
-                        builder.append(url->m_password);
-                        URL::append_percent_encoded_if_necessary(builder, c, URL::PercentEncodeSet::Userinfo);
-                        url->m_password = builder.to_string().release_value_but_fixme_should_propagate_errors();
+                        if (password_builder.is_empty())
+                            password_builder.append(url->m_password);
+
+                        URL::append_percent_encoded_if_necessary(password_builder, c, URL::PercentEncodeSet::Userinfo);
                     }
                     // 4. Otherwise, append encodedCodePoints to url’s username.
                     else {
-                        builder.append(url->m_username);
-                        URL::append_percent_encoded_if_necessary(builder, c, URL::PercentEncodeSet::Userinfo);
-                        url->m_username = builder.to_string().release_value_but_fixme_should_propagate_errors();
+                        if (username_builder.is_empty())
+                            username_builder.append(url->m_username);
+
+                        URL::append_percent_encoded_if_necessary(username_builder, c, URL::PercentEncodeSet::Userinfo);
                     }
                 }
+
+                if (username_builder.string_view().length() > url->m_username.bytes().size())
+                    url->m_username = username_builder.to_string().release_value_but_fixme_should_propagate_errors();
+                if (password_builder.string_view().length() > url->m_password.bytes().size())
+                    url->m_password = password_builder.to_string().release_value_but_fixme_should_propagate_errors();
 
                 // 5. Set buffer to the empty string.
                 buffer.clear();

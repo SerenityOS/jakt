@@ -15,7 +15,7 @@ return Error::from_errno(static_cast<i32>(38));
 }
 }
 
-ErrorOr<jakt__platform__unknown_process::Process> start_background_process(JaktInternal::DynamicArray<DeprecatedString> const args) {
+ErrorOr<jakt__platform__unknown_process::Process> start_background_process(JaktInternal::DynamicArray<ByteString> const args) {
 {
 warnln((StringView::from_string_literal("NOT IMPLEMENTED: start_background_process {}"sv)),args);
 return Error::from_errno(static_cast<i32>(38));
@@ -37,13 +37,13 @@ return Error::from_errno(static_cast<i32>(38));
 return {};
 }
 
-ErrorOr<DeprecatedString> jakt__platform__unknown_process::Process::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Process("sv));{
+ErrorOr<ByteString> jakt__platform__unknown_process::Process::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Process("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
 jakt__platform__unknown_process::Process::Process(){}
 
-ErrorOr<DeprecatedString> jakt__platform__unknown_process::ExitPollResult::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("ExitPollResult("sv));{
+ErrorOr<ByteString> jakt__platform__unknown_process::ExitPollResult::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ExitPollResult("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("exit_code: {}, ", exit_code));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("process: {}", process));

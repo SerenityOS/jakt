@@ -1,14 +1,14 @@
 #include "error.h"
 namespace Jakt {
 namespace error {
-ErrorOr<void> print_error_json(DeprecatedString const file_name,error::JaktError const error) {
+ErrorOr<void> print_error_json(ByteString const file_name,error::JaktError const error) {
 {
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<void>>{
 auto&& __jakt_match_variant = error;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Message */: {
-auto&& __jakt_match_value = __jakt_match_variant.as.Message;DeprecatedString const& message = __jakt_match_value.message;
+auto&& __jakt_match_value = __jakt_match_variant.as.Message;ByteString const& message = __jakt_match_value.message;
 utility::Span const& span = __jakt_match_value.span;
 {
 TRY((error::display_message_with_span_json(error::MessageSeverity::Error(),file_name,message,span)));
@@ -16,9 +16,9 @@ TRY((error::display_message_with_span_json(error::MessageSeverity::Error(),file_
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 1 /* MessageWithHint */: {
-auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;DeprecatedString const& message = __jakt_match_value.message;
+auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;ByteString const& message = __jakt_match_value.message;
 utility::Span const& span = __jakt_match_value.span;
-DeprecatedString const& hint = __jakt_match_value.hint;
+ByteString const& hint = __jakt_match_value.hint;
 utility::Span const& hint_span = __jakt_match_value.hint_span;
 {
 TRY((error::display_message_with_span_json(error::MessageSeverity::Error(),file_name,message,span)));
@@ -37,14 +37,14 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 return {};
 }
 
-ErrorOr<void> print_error(DeprecatedString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents,error::JaktError const error) {
+ErrorOr<void> print_error(ByteString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents,error::JaktError const error) {
 {
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<void>>{
 auto&& __jakt_match_variant = error;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Message */: {
-auto&& __jakt_match_value = __jakt_match_variant.as.Message;DeprecatedString const& message = __jakt_match_value.message;
+auto&& __jakt_match_value = __jakt_match_variant.as.Message;ByteString const& message = __jakt_match_value.message;
 utility::Span const& span = __jakt_match_value.span;
 {
 TRY((error::display_message_with_span(error::MessageSeverity::Error(),file_name,file_contents,message,span)));
@@ -52,9 +52,9 @@ TRY((error::display_message_with_span(error::MessageSeverity::Error(),file_name,
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 1 /* MessageWithHint */: {
-auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;DeprecatedString const& message = __jakt_match_value.message;
+auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;ByteString const& message = __jakt_match_value.message;
 utility::Span const& span = __jakt_match_value.span;
-DeprecatedString const& hint = __jakt_match_value.hint;
+ByteString const& hint = __jakt_match_value.hint;
 utility::Span const& hint_span = __jakt_match_value.hint_span;
 {
 TRY((error::display_message_with_span(error::MessageSeverity::Error(),file_name,file_contents,message,span)));
@@ -73,7 +73,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 return {};
 }
 
-ErrorOr<void> display_message_with_span(error::MessageSeverity const severity,DeprecatedString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents,DeprecatedString const message,utility::Span const span) {
+ErrorOr<void> display_message_with_span(error::MessageSeverity const severity,ByteString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents,ByteString const message,utility::Span const span) {
 {
 warnln((StringView::from_string_literal("{}: {}"sv)),TRY((((severity).name()))),message);
 if ((!(((contents).has_value())))){
@@ -453,20 +453,20 @@ warnln((StringView::from_string_literal(""sv)));
 return {};
 }
 
-ErrorOr<void> display_message_with_span_json(error::MessageSeverity const severity,DeprecatedString const file_name,DeprecatedString const message,utility::Span const span) {
+ErrorOr<void> display_message_with_span_json(error::MessageSeverity const severity,ByteString const file_name,ByteString const message,utility::Span const span) {
 {
 outln((StringView::from_string_literal("{{\"type\":\"diagnostic\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"sv)),message,TRY((((severity).name()))),((((span).file_id)).id),((span).start),((span).end));
 }
 return {};
 }
 
-ErrorOr<DeprecatedString> error::MessageSeverity::debug_description() const {
-auto builder = DeprecatedStringBuilder::create();
+ErrorOr<ByteString> error::MessageSeverity::debug_description() const {
+auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Hint */: {
-return DeprecatedString("MessageSeverity::Hint"sv);
+return ByteString("MessageSeverity::Hint"sv);
 break;}
 case 1 /* Error */: {
-return DeprecatedString("MessageSeverity::Error"sv);
+return ByteString("MessageSeverity::Error"sv);
 break;}
 }
 return builder.to_string();
@@ -555,17 +555,17 @@ case 0 /* Hint */:break;
 case 1 /* Error */:break;
 }
 }
-ErrorOr<DeprecatedString> error::MessageSeverity::ansi_color_code() const {
+ErrorOr<ByteString> error::MessageSeverity::ansi_color_code() const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ErrorOr<ByteString>>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Hint */: {
-return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("94"sv)));
+return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("94"sv)));
 };/*case end*/
 case 1 /* Error */: {
-return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("31"sv)));
+return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("31"sv)));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -577,17 +577,17 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 }
 
-ErrorOr<DeprecatedString> error::MessageSeverity::name() const {
+ErrorOr<ByteString> error::MessageSeverity::name() const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString, ErrorOr<DeprecatedString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ErrorOr<ByteString>>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Hint */: {
-return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("Hint"sv)));
+return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("Hint"sv)));
 };/*case end*/
 case 1 /* Error */: {
-return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8("Error"sv)));
+return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("Error"sv)));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -599,8 +599,8 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 }
 
-ErrorOr<DeprecatedString> error::JaktError::debug_description() const {
-auto builder = DeprecatedStringBuilder::create();
+ErrorOr<ByteString> error::JaktError::debug_description() const {
+auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Message */: {
 TRY(builder.append("JaktError::Message"sv));
 [[maybe_unused]] auto const& that = this->as.Message;
@@ -634,14 +634,14 @@ break;}
 }
 return builder.to_string();
 }
-[[nodiscard]] JaktError JaktError::Message(DeprecatedString message, utility::Span span){
+[[nodiscard]] JaktError JaktError::Message(ByteString message, utility::Span span){
 JaktError __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 1;
 new (&__jakt_uninit_enum.as.Message.message) (decltype(message))(move(message));
 new (&__jakt_uninit_enum.as.Message.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
-[[nodiscard]] JaktError JaktError::MessageWithHint(DeprecatedString message, utility::Span span, DeprecatedString hint, utility::Span hint_span){
+[[nodiscard]] JaktError JaktError::MessageWithHint(ByteString message, utility::Span span, ByteString hint, utility::Span hint_span){
 JaktError __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 2;
 new (&__jakt_uninit_enum.as.MessageWithHint.message) (decltype(message))(move(message));
@@ -756,12 +756,12 @@ this->__jakt_destroy_variant();
 }
 void JaktError::__jakt_destroy_variant() {
 switch (this->__jakt_init_index()) {
-case 0 /* Message */:this->as.Message.message.~DeprecatedString();
+case 0 /* Message */:this->as.Message.message.~ByteString();
 this->as.Message.span.~Span();
 break;
-case 1 /* MessageWithHint */:this->as.MessageWithHint.message.~DeprecatedString();
+case 1 /* MessageWithHint */:this->as.MessageWithHint.message.~ByteString();
 this->as.MessageWithHint.span.~Span();
-this->as.MessageWithHint.hint.~DeprecatedString();
+this->as.MessageWithHint.hint.~ByteString();
 this->as.MessageWithHint.hint_span.~Span();
 break;
 }

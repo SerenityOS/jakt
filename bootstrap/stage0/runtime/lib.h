@@ -61,8 +61,8 @@ class Set;
 #include <Builtins/DynamicArray.h>
 #include <Builtins/Dictionary.h>
 #include <Builtins/Set.h>
-#include <Jakt/DeprecatedStringBuilder.h>
-#include <Jakt/DeprecatedString.h>
+#include <Jakt/ByteStringBuilder.h>
+#include <Jakt/ByteString.h>
 
 #include <IO/File.h>
 
@@ -288,40 +288,40 @@ ALWAYS_INLINE constexpr OutputType as_truncated(InputType input)
     }
 }
 
-inline ErrorOr<DeprecatedString> ___jakt_get_target_triple_string()
+inline ErrorOr<ByteString> ___jakt_get_target_triple_string()
 {
 #ifdef __JAKT_BUILD_TARGET
-    return DeprecatedString(__JAKT_BUILD_TARGET sv);
+    return ByteString(__JAKT_BUILD_TARGET sv);
 #else
 // Pure guesswork.
 #   if defined(_WIN64)
-    return DeprecatedString("amd64-unknown-windows-unknown"sv);
+    return ByteString("amd64-unknown-windows-unknown"sv);
 #   elif defined(_WIN32)
-    return DeprecatedString("i686-unknown-windows-unknown"sv);
+    return ByteString("i686-unknown-windows-unknown"sv);
 #   elif defined(__linux__)
-    return DeprecatedString("x86_64-unknown-linux-unknown"sv);
+    return ByteString("x86_64-unknown-linux-unknown"sv);
 #   elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
-    return DeprecatedString("x86_64-unknown-bsd-unknown"sv);
+    return ByteString("x86_64-unknown-bsd-unknown"sv);
 #   elif defined(__APPLE__)
 #       if defined (__arm64__)
-            return DeprecatedString("arm64-unknown-darwin-unknown"sv);
+            return ByteString("arm64-unknown-darwin-unknown"sv);
 #       else
-            return DeprecatedString("x86_64-unknown-darwin-unknown"sv);
+            return ByteString("x86_64-unknown-darwin-unknown"sv);
 #       endif
 #   elif defined(__serenity__)
     #if defined(__i686__)
-        return DeprecatedString("i686-unknown-serenityos-unknown"sv);
+        return ByteString("i686-unknown-serenityos-unknown"sv);
     #elif defined(__x86_64__)
-        return DeprecatedString("x86_64-unknown-serenityos-unknown"sv);
+        return ByteString("x86_64-unknown-serenityos-unknown"sv);
     #elif defined(__aarch64__)
-        return DeprecatedString("aarch64-unknown-serenityos-unknown"sv);
+        return ByteString("aarch64-unknown-serenityos-unknown"sv);
     #else
-        return DeprecatedString("unknown-unknown-serenityos-unknown"sv);
+        return ByteString("unknown-unknown-serenityos-unknown"sv);
     #endif
 #   elif defined(__unix__)
-    return DeprecatedString("x86_64-unknown-unix-unknown"sv);
+    return ByteString("x86_64-unknown-unix-unknown"sv);
 #   else
-    return DeprecatedString("unknown-unknown-unknown-unknown"sv);
+    return ByteString("unknown-unknown-unknown-unknown"sv);
 #   endif
 #endif
 }
@@ -351,6 +351,16 @@ ALWAYS_INLINE decltype(auto) deref_if_ref_pointer(T&& value)
 namespace Detail {
 template<auto... Xs>
 struct DependentValue {};
+
+template<typename T>
+struct UnderlyingClassTypeOf {
+    using Type = T;
+};
+
+template<typename T>
+struct UnderlyingClassTypeOf<NonnullRefPtr<T>> {
+    using Type = T;
+};
 }
 
 template<typename T, auto Reason>
@@ -360,9 +370,12 @@ T fail_comptime_call()
     return declval<T>();
 }
 
+template<typename T>
+using UnderlyingClassTypeOf = typename Detail::UnderlyingClassTypeOf<RemoveCVReference<T>>::Type;
 }
 
 namespace Jakt {
+using JaktInternal::___jakt_get_target_triple_string;
 using JaktInternal::abort;
 using JaktInternal::as_saturated;
 using JaktInternal::as_truncated;
@@ -370,17 +383,17 @@ using JaktInternal::assert_type;
 using JaktInternal::fallible_class_cast;
 using JaktInternal::fallible_integer_cast;
 using JaktInternal::infallible_class_cast;
-using JaktInternal::infallible_integer_cast;
 using JaktInternal::infallible_enum_cast;
+using JaktInternal::infallible_integer_cast;
 using JaktInternal::Range;
 using JaktInternal::unchecked_add;
 using JaktInternal::unchecked_div;
 using JaktInternal::unchecked_mul;
 using JaktInternal::unchecked_sub;
-using JaktInternal::___jakt_get_target_triple_string;
+using JaktInternal::UnderlyingClassTypeOf;
 }
 
 // We place main in a separate namespace to ensure it has access to the same identifiers as other functions
 namespace Jakt {
-ErrorOr<int> main(DynamicArray<DeprecatedString>);
+ErrorOr<int> main(DynamicArray<ByteString>);
 }
