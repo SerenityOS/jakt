@@ -21,7 +21,7 @@ import extern c "stdlib.h" {
 import extern "LibCpp/Preprocessor.h" {
     namespace Cpp {
         extern struct Token {
-            fn to_deprecated_string(this) -> String
+            fn to_byte_string(this) -> String
         }
         namespace Preprocessor {
             extern struct Definition {
@@ -85,7 +85,7 @@ import extern "LibCpp/Parser.h" {
         extern class RType {
             public fn is_auto(this) -> bool
             public fn qualifiers(this) -> Vector<StringView>
-            public fn to_deprecated_string(this) -> String
+            public fn to_byte_string(this) -> String
         }
         [[name="NamedType const"]]
         extern class NamedType : RType {

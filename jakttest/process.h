@@ -5,7 +5,7 @@
 #pragma once
 #include <Builtins/DynamicArray.h>
 #include <AK/Error.h>
-#include <AK/DeprecatedString.h>
+#include <AK/ByteString.h>
 
 namespace Jakt::process {
 // NOTE: I need a class declaration with getters because that's the only way to
@@ -24,7 +24,7 @@ public:
     i32 exit_code() const { return m_exit_code; }
     i32 pid() const { return m_pid; }
 };
-ErrorOr<i32> start_background_process(DynamicArray<DeprecatedString> args);
+ErrorOr<i32> start_background_process(DynamicArray<ByteString> args);
 ErrorOr<Optional<ExitPollResult>> poll_process_exit(i32 pid);
 ErrorOr<void> forcefully_kill_process(i32 pid);
 }

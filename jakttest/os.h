@@ -10,7 +10,7 @@
 
 namespace Jakt::os {
     ErrorOr<size_t> get_num_cpus();
-    ErrorOr<DeprecatedString> get_system_temporary_directory();
+    ErrorOr<ByteString> get_system_temporary_directory();
     ErrorOr<void> ignore_sigchild();
-    ErrorOr<DeprecatedString> get_script_execution_string();
+    ErrorOr<ByteString> get_script_execution_string();
 }

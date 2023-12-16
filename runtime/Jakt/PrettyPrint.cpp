@@ -1,6 +1,6 @@
 #include <Jakt/AKIntegration.h>
 #include <Jakt/PrettyPrint.h>
-#include <Jakt/DeprecatedStringBuilder.h>
+#include <Jakt/ByteStringBuilder.h>
 
 namespace JaktInternal::PrettyPrint {
 
@@ -41,5 +41,5 @@ Jakt::ErrorOr<void> output_indentation(auto& builder) {
     return {};
 }
 
-template Jakt::ErrorOr<void> output_indentation<Jakt::DeprecatedStringBuilder>(Jakt::DeprecatedStringBuilder& builder);
+template Jakt::ErrorOr<void> output_indentation<Jakt::ByteStringBuilder>(Jakt::ByteStringBuilder& builder);
 }

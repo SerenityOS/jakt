@@ -12,7 +12,7 @@
 #include <Jakt/AKIntegration.h>
 #include <Jakt/PrettyPrint.h>
 
-#include <AK/DeprecatedString.h>
+#include <AK/ByteString.h>
 #include <AK/Format.h>
 #include <AK/Forward.h>
 #include <AK/Optional.h>
@@ -24,11 +24,11 @@
 
 namespace Jakt {
 
-class DeprecatedStringBuilder {
+class ByteStringBuilder {
 public:
-    static DeprecatedStringBuilder create();
+    static ByteStringBuilder create();
 
-    ~DeprecatedStringBuilder() = default;
+    ~ByteStringBuilder() = default;
 
     ErrorOr<void> append(StringView);
     ErrorOr<void> append_code_point(u32);
@@ -43,7 +43,7 @@ public:
     ErrorOr<void> append(char const*, size_t);
     ErrorOr<void> append_escaped_for_json(StringView);
 
-    [[nodiscard]] ErrorOr<DeprecatedString> to_string() const;
+    [[nodiscard]] ErrorOr<ByteString> to_string() const;
 
     [[nodiscard]] StringView string_view() const;
     void clear();
@@ -66,11 +66,11 @@ public:
     }
 
     // FIXME: These only exist because we don't support function overloading in Jakt yet.
-    ErrorOr<void> append_string(DeprecatedString const& string) { return append(string.view()); }
+    ErrorOr<void> append_string(ByteString const& string) { return append(string.view()); }
     ErrorOr<void> append_c_string(char const* string) { return append(string, strlen(string)); }
 
 private:
-    DeprecatedStringBuilder();
+    ByteStringBuilder();
 
     ErrorOr<void> will_append(size_t);
     u8* data()
@@ -94,12 +94,12 @@ private:
 namespace Jakt {
 
 template<typename T>
-ErrorOr<void> append_value(DeprecatedStringBuilder& string_builder, T const& value, bool alternative_form=false)
+ErrorOr<void> append_value(ByteStringBuilder& string_builder, T const& value, bool alternative_form=false)
 {
-    if constexpr (IsSame<DeprecatedString, T>)
+    if constexpr (IsSame<ByteString, T>)
         TRY(string_builder.append("\""sv));
     TRY(string_builder.appendff(alternative_form ? "{:#}"sv : "{}"sv, value));
-    if constexpr (IsSame<DeprecatedString, T>)
+    if constexpr (IsSame<ByteString, T>)
         TRY(string_builder.append("\""sv));
     return {};
 }
@@ -120,7 +120,7 @@ struct Jakt::Formatter<JaktInternal::DynamicArray<T>> : Jakt::Formatter<Jakt::St
     {
         JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
 
-        auto string_builder = Jakt::DeprecatedStringBuilder::create();
+        auto string_builder = Jakt::ByteStringBuilder::create();
         TRY(string_builder.append("["sv));
         {
             JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -143,7 +143,7 @@ struct Jakt::Formatter<JaktInternal::ArraySlice<T>> : Jakt::Formatter<Jakt::Stri
     {
         JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
 
-        auto string_builder = Jakt::DeprecatedStringBuilder::create();
+        auto string_builder = Jakt::ByteStringBuilder::create();
         TRY(string_builder.append("["sv));
         {
             JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -166,7 +166,7 @@ struct Jakt::Formatter<JaktInternal::ArrayIterator<T>> : Jakt::Formatter<Jakt::S
     {
         JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
 
-        auto string_builder = Jakt::DeprecatedStringBuilder::create();
+        auto string_builder = Jakt::ByteStringBuilder::create();
         TRY(string_builder.append("ArrayIterator"sv));
 
         return Jakt::Formatter<Jakt::StringView>::format(builder, TRY(string_builder.to_string()));
@@ -179,7 +179,7 @@ struct Jakt::Formatter<JaktInternal::Set<T>> : Jakt::Formatter<Jakt::StringView>
     {
         JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
 
-        auto string_builder = Jakt::DeprecatedStringBuilder::create();
+        auto string_builder = Jakt::ByteStringBuilder::create();
         TRY(string_builder.append("{"sv));
         auto iter = set.iterator();
         {
@@ -203,7 +203,7 @@ struct Jakt::Formatter<JaktInternal::SetIterator<T>> : Jakt::Formatter<Jakt::Str
     {
         JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
 
-        auto string_builder = Jakt::DeprecatedStringBuilder::create();
+        auto string_builder = Jakt::ByteStringBuilder::create();
         TRY(string_builder.append("SetIterator"sv));
 
         return Jakt::Formatter<Jakt::StringView>::format(builder, TRY(string_builder.to_string()));
@@ -216,7 +216,7 @@ struct Jakt::Formatter<JaktInternal::Range<T>> : Jakt::Formatter<Jakt::StringVie
     {
         JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
 
-        auto string_builder = Jakt::DeprecatedStringBuilder::create();
+        auto string_builder = Jakt::ByteStringBuilder::create();
         {
             JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
             TRY(JaktInternal::PrettyPrint::output_indentation(string_builder));
@@ -235,7 +235,7 @@ struct Jakt::Formatter<JaktInternal::Dictionary<K, V>> : Jakt::Formatter<Jakt::S
     {
         JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
 
-        auto string_builder = Jakt::DeprecatedStringBuilder::create();
+        auto string_builder = Jakt::ByteStringBuilder::create();
         TRY(string_builder.append("["sv));
         auto iter = dict.iterator();
 
@@ -263,7 +263,7 @@ struct Jakt::Formatter<JaktInternal::DictionaryIterator<K, V>> : Jakt::Formatter
     {
         JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
 
-        auto string_builder = Jakt::DeprecatedStringBuilder::create();
+        auto string_builder = Jakt::ByteStringBuilder::create();
         TRY(string_builder.append("DictionaryIterator"sv));
 
         return Jakt::Formatter<Jakt::StringView>::format(builder, TRY(string_builder.to_string()));
@@ -276,18 +276,18 @@ struct Jakt::Formatter<Jakt::Tuple<Ts...>> : Jakt::Formatter<Jakt::StringView> {
     {
         JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
 
-        auto string_builder = Jakt::DeprecatedStringBuilder::create();
+        auto string_builder = Jakt::ByteStringBuilder::create();
         TRY(string_builder.append("("sv));
         if constexpr (sizeof...(Ts) > 0) {
             JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
             TRY(tuple.apply_as_args([&](auto first, auto... args) {
                 Jakt::ErrorOr<void> append_error = {};
 
-                auto append_helper = [&](Jakt::DeprecatedStringBuilder& string_builder, Jakt::StringView value) {
+                auto append_helper = [&](Jakt::ByteStringBuilder& string_builder, Jakt::StringView value) {
                     if (!append_error.is_error())
                         append_error = string_builder.append(value);
                 };
-                auto append_value_helper = [&](Jakt::DeprecatedStringBuilder& string_builder, auto const& value) {
+                auto append_value_helper = [&](Jakt::ByteStringBuilder& string_builder, auto const& value) {
                     (void) JaktInternal::PrettyPrint::output_indentation(string_builder);
                     if (!append_error.is_error())
                         append_error = append_value(string_builder, value, m_alternative_form);

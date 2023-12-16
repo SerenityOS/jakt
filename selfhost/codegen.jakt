@@ -1637,7 +1637,7 @@ struct CodeGenerator {
 
         set_access_level(CheckedVisibility::Public)
         if struct_.generic_parameters.is_empty() {
-            output += "ErrorOr<DeprecatedString> debug_description() const;\n"
+            output += "ErrorOr<ByteString> debug_description() const;\n"
         } else {
             output += .codegen_debug_description_getter(struct_, is_inline: true)
         }
@@ -1805,7 +1805,7 @@ struct CodeGenerator {
 
 
         if enum_.generic_parameters.is_empty() {
-            output += "ErrorOr<DeprecatedString> debug_description() const;\n"
+            output += "ErrorOr<ByteString> debug_description() const;\n"
         } else {
             output += .codegen_enum_debug_description_getter(enum_, is_inline: true)
         }
@@ -2229,7 +2229,7 @@ struct CodeGenerator {
     }
 
     fn destructor_name(this, anon id: TypeId) throws -> String? => match .program.get_type(id) {
-        JaktString => "DeprecatedString"
+        JaktString => "ByteString"
         GenericInstance(id) | GenericResolvedType(id) | Struct(id) => {
             let struct_ = .program.get_struct(id)
             yield match (struct_.record_type is Class) {
@@ -2341,13 +2341,13 @@ struct CodeGenerator {
             output += ">\n"
         }
 
-        output += "ErrorOr<DeprecatedString> "
+        output += "ErrorOr<ByteString> "
         if not is_inline {
             output += .codegen_type_possibly_as_namespace(type_id: struct_.type_id, as_namespace: true)
             output += "::"
         }
         output += "debug_description() const { "
-        output += "auto builder = DeprecatedStringBuilder::create();"
+        output += "auto builder = ByteStringBuilder::create();"
         output += format("TRY(builder.append(\"{}(\"sv));", struct_.name_for_codegen().as_name_for_use())
         output += "{\n"
         output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
@@ -2394,13 +2394,13 @@ struct CodeGenerator {
             output += ">\n"
         }
 
-        output += "ErrorOr<DeprecatedString> "
+        output += "ErrorOr<ByteString> "
         if not is_inline {
             output += .codegen_type_possibly_as_namespace(type_id: enum_.type_id, as_namespace: true)
             output += "::"
         }
         output += "debug_description() const {\n"
-        output += "auto builder = DeprecatedStringBuilder::create();\n"
+        output += "auto builder = ByteStringBuilder::create();\n"
         output += "switch (this->__jakt_init_index()) {"
 
         let common_field_count = enum_.fields.size()
@@ -2448,7 +2448,7 @@ struct CodeGenerator {
                     }
                 }
                 else => {
-                    output += format("return DeprecatedString(\"{}::{}\"sv);\n", enum_.name, name)
+                    output += format("return ByteString(\"{}::{}\"sv);\n", enum_.name, name)
                 }
             }
 
@@ -2548,7 +2548,7 @@ struct CodeGenerator {
                 let original_string = val.to_string()
                 let escaped_value = original_string.replace(replace: "\n", with: "\\n")
                 yield match val.type_id == builtin(BuiltinType::JaktString) {
-                    true => "Jakt::DeprecatedString(\"" + escaped_value + "\"sv)"
+                    true => "Jakt::ByteString(\"" + escaped_value + "\"sv)"
                     false => {
                         let ids = .program.find_functions_with_name_in_scope(
                             parent_scope_id: .program.find_type_scope_id(val.type_id)
@@ -4387,7 +4387,7 @@ struct CodeGenerator {
             F32 => "f32"
             F64 => "f64"
             Usize => "size_t"
-            JaktString => "DeprecatedString"
+            JaktString => "ByteString"
             CChar => "char"
             CInt => "int"
             Never => "void"
@@ -5076,7 +5076,7 @@ struct CodeGenerator {
         output += "("
 
         if is_main and function.params.is_empty() {
-            output += "DynamicArray<DeprecatedString>"
+            output += "DynamicArray<ByteString>"
         }
 
         mut first = true

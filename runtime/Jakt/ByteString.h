@@ -3,24 +3,24 @@
 #include <Jakt/AKIntegration.h>
 
 #include <AK/CheckedFormatString.h>
-#include <AK/DeprecatedString.h>
+#include <AK/ByteString.h>
 #include <AK/Utf8View.h>
 
 namespace Jakt {
 template<typename... Ts>
-inline ErrorOr<DeprecatedString> __jakt_format(CheckedFormatString<Ts...> fmt, Ts const&... args)
+inline ErrorOr<ByteString> __jakt_format(CheckedFormatString<Ts...> fmt, Ts const&... args)
 {
-    return DeprecatedString::formatted(fmt.view(), args...);
+    return ByteString::formatted(fmt.view(), args...);
 }
 
-inline ErrorOr<DeprecatedString> operator+(DeprecatedString const& a, DeprecatedString const& b)
+inline ErrorOr<ByteString> operator+(ByteString const& a, ByteString const& b)
 {
-    return DeprecatedString::formatted("{}{}", a, b);
+    return ByteString::formatted("{}{}", a, b);
 }
 
-inline DeprecatedString& operator+=(DeprecatedString& a, DeprecatedString const& b)
+inline ByteString& operator+=(ByteString& a, ByteString const& b)
 {
-    auto result = DeprecatedString::formatted("{}{}", a, b);
+    auto result = ByteString::formatted("{}{}", a, b);
     *bit_cast<RefPtr<StringImpl const>*>(&a) = result.impl(); // I'm sorry.
     return a;
 }
