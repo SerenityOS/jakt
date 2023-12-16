@@ -42,7 +42,7 @@ File::~File()
 
 ErrorOr<NonnullRefPtr<File>> File::open_for_reading(StringView path_)
 {
-    auto path = DeprecatedString(path_);
+    auto path = ByteString(path_);
     auto* stdio_file = fopen(path.characters(), "rb");
     if (!stdio_file)
         return Error::from_errno(errno);
@@ -58,7 +58,7 @@ ErrorOr<NonnullRefPtr<File>> File::open_for_reading(StringView path_)
 
 ErrorOr<NonnullRefPtr<File>> File::open_for_writing(StringView path_)
 {
-    auto path = DeprecatedString(path_);
+    auto path = ByteString(path_);
     auto* stdio_file = fopen(path.characters(), "wb");
     if (!stdio_file)
         return Error::from_errno(errno);
@@ -75,6 +75,16 @@ ErrorOr<NonnullRefPtr<File>> File::open_for_writing(StringView path_)
 ErrorOr<DynamicArray<u8>> File::read_all()
 {
     auto entire_file = TRY(DynamicArray<u8>::create_empty());
+
+    // Try to guess the file size so we can pre-allocate the buffer.
+    size_t file_size = 0;
+    if (fseek(m_stdio_file, 0, SEEK_END) == 0) {
+        file_size = ftell(m_stdio_file);
+        fseek(m_stdio_file, 0, SEEK_SET);
+    }
+
+    if (file_size > 0)
+        TRY(entire_file.ensure_capacity(file_size));
 
     while (true) {
         u8 buffer[4096];
@@ -119,7 +129,7 @@ ErrorOr<size_t> File::write(DynamicArray<u8> data)
 
 bool File::exists(StringView path_)
 {
-    auto path = DeprecatedString(path_);
+    auto path = ByteString(path_);
 #ifdef _WIN32
     auto res = GetFileAttributesA(path.characters());
     return res != INVALID_FILE_ATTRIBUTES;
@@ -128,12 +138,12 @@ bool File::exists(StringView path_)
 #endif
 }
 
-ErrorOr<DeprecatedString> File::current_executable_path()
+ErrorOr<ByteString> File::current_executable_path()
 {
     char path[4096] {};
 #ifdef _WIN32
     DWORD ret = GetModuleFileName(nullptr, path, sizeof(path));
-    if (ret < 0) 
+    if (ret < 0)
         return Error::from_errno(GetLastError());
 #else
     const char* path_to_readlink = nullptr;
@@ -157,7 +167,7 @@ ErrorOr<DeprecatedString> File::current_executable_path()
 #endif
     path[sizeof(path) - 1] = '\0';
 
-    return DeprecatedString(StringView { path, strlen(path) });
+    return ByteString(StringView { path, strlen(path) });
 }
 
 }

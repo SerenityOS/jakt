@@ -215,10 +215,15 @@ String& String::operator=(String&& other)
 String& String::operator=(String const& other)
 {
     if (&other != this) {
+        if (!is_short_string())
+            m_data->unref();
+
         m_data = other.m_data;
+
         if (!is_short_string())
             m_data->ref();
     }
+
     return *this;
 }
 
@@ -513,9 +518,9 @@ bool String::starts_with(u32 code_point) const
     return *code_points().begin() == code_point;
 }
 
-bool String::starts_with_bytes(StringView bytes) const
+bool String::starts_with_bytes(StringView bytes, CaseSensitivity case_sensitivity) const
 {
-    return bytes_as_string_view().starts_with(bytes);
+    return bytes_as_string_view().starts_with(bytes, case_sensitivity);
 }
 
 bool String::ends_with(u32 code_point) const
@@ -530,9 +535,9 @@ bool String::ends_with(u32 code_point) const
     return last_code_point == code_point;
 }
 
-bool String::ends_with_bytes(StringView bytes) const
+bool String::ends_with_bytes(StringView bytes, CaseSensitivity case_sensitivity) const
 {
-    return bytes_as_string_view().ends_with(bytes);
+    return bytes_as_string_view().ends_with(bytes, case_sensitivity);
 }
 
 bool String::is_short_string() const
@@ -616,14 +621,19 @@ void String::did_create_fly_string(Badge<FlyString>) const
     m_data->set_fly_string(true);
 }
 
-DeprecatedString String::to_deprecated_string() const
+ByteString String::to_byte_string() const
 {
-    return DeprecatedString(bytes_as_string_view());
+    return ByteString(bytes_as_string_view());
 }
 
-ErrorOr<String> String::from_deprecated_string(DeprecatedString const& deprecated_string)
+ErrorOr<String> String::from_byte_string(ByteString const& byte_string)
 {
-    return String::from_utf8(deprecated_string.view());
+    return String::from_utf8(byte_string.view());
+}
+
+bool String::equals_ignoring_ascii_case(StringView other) const
+{
+    return StringUtils::equals_ignoring_ascii_case(bytes_as_string_view(), other);
 }
 
 }

@@ -14,7 +14,7 @@ explicit DirectoryIterator();
 public:
 static ErrorOr<NonnullRefPtr<DirectoryIterator>> __jakt_create();
 
-public: ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::jakt__platform__unknown_fs::DirectoryIterator> : Jakt::Formatter<Jakt::StringView>{

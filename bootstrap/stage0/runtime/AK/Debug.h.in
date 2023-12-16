@@ -210,6 +210,10 @@
 #    cmakedefine01 ICO_DEBUG
 #endif
 
+#ifndef IDL_DEBUG
+#    cmakedefine01 IDL_DEBUG
+#endif
+
 #ifndef ILBM_DEBUG
 #    cmakedefine01 ILBM_DEBUG
 #endif
@@ -280,6 +284,10 @@
 
 #ifndef LZMA_DEBUG
 #    cmakedefine01 LZMA_DEBUG
+#endif
+
+#ifndef LZW_DEBUG
+#    cmakedefine01 LZW_DEBUG
 #endif
 
 #ifndef MALLOC_DEBUG
@@ -456,6 +464,10 @@
 
 #ifndef TEXTEDITOR_DEBUG
 #    cmakedefine01 TEXTEDITOR_DEBUG
+#endif
+
+#ifndef TIFF_DEBUG
+#    cmakedefine01 TIFF_DEBUG
 #endif
 
 #ifndef TIME_ZONE_DEBUG

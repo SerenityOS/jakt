@@ -6,12 +6,12 @@ struct Process {
   public:
 public: Process();
 
-public: ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<ByteString> debug_description() const;
 };struct ExitPollResult {
   public:
 public: i32 exit_code;public: jakt__platform__unknown_process::Process process;public: ExitPollResult(i32 a_exit_code, jakt__platform__unknown_process::Process a_process);
 
-public: ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::jakt__platform__unknown_process::Process> : Jakt::Formatter<Jakt::StringView>{

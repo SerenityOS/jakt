@@ -168,6 +168,14 @@ public:
         MUST(try_resize(new_size));
     }
 
+    void trim(size_t size, bool may_discard_existing_data)
+    {
+        VERIFY(size <= m_size);
+        if (!m_inline && size <= inline_capacity)
+            shrink_into_inline_buffer(size, may_discard_existing_data);
+        m_size = size;
+    }
+
     ALWAYS_INLINE void ensure_capacity(size_t new_capacity)
     {
         MUST(try_ensure_capacity(new_capacity));
@@ -282,14 +290,6 @@ private:
         other.m_inline = true;
     }
 
-    void trim(size_t size, bool may_discard_existing_data)
-    {
-        VERIFY(size <= m_size);
-        if (!m_inline && size <= inline_capacity)
-            shrink_into_inline_buffer(size, may_discard_existing_data);
-        m_size = size;
-    }
-
     NEVER_INLINE void shrink_into_inline_buffer(size_t size, bool may_discard_existing_data)
     {
         // m_inline_buffer and m_outline_buffer are part of a union, so save the pointer
@@ -341,7 +341,7 @@ private:
 }
 
 template<>
-struct Traits<ByteBuffer> : public GenericTraits<ByteBuffer> {
+struct Traits<ByteBuffer> : public DefaultTraits<ByteBuffer> {
     static unsigned hash(ByteBuffer const& byte_buffer)
     {
         return Traits<ReadonlyBytes>::hash(byte_buffer.span());

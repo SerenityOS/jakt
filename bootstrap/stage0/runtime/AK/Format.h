@@ -501,7 +501,7 @@ struct Formatter<unsigned char[Size]> : Formatter<StringView> {
     }
 };
 template<>
-struct Formatter<DeprecatedString> : Formatter<StringView> {
+struct Formatter<ByteString> : Formatter<StringView> {
 };
 template<>
 struct Formatter<DeprecatedFlyString> : Formatter<StringView> {
@@ -691,6 +691,7 @@ void dbgln(CheckedFormatString<Parameters...>&& fmtstr, Parameters const&... par
 inline void dbgln() { dbgln(""); }
 
 void set_debug_enabled(bool);
+void set_rich_debug_enabled(bool);
 
 #ifdef KERNEL
 void vdmesgln(StringView fmtstr, TypeErasedFormatParams&);

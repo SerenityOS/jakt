@@ -20,6 +20,8 @@ enum class Ordering: u8;
 }
 namespace jakt__prelude__hash {
 }
+namespace jakt__prelude__class_name {
+}
 namespace jakt__prelude__prelude {
 }
 namespace jakt__arguments {
@@ -27,16 +29,16 @@ struct ArgsParser;
 }
 namespace jakt__platform {
 struct Target;
-JaktInternal::Optional<size_t> last_namespace_separator(DeprecatedString const name);
+JaktInternal::Optional<size_t> last_namespace_separator(ByteString const name);
 
 
 
 
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> add_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const prefix, DeprecatedString const suffix);
+ErrorOr<JaktInternal::DynamicArray<ByteString>> add_to_each(JaktInternal::DynamicArray<ByteString> const strings, ByteString const prefix, ByteString const suffix);
 
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> platform_import_names();
+ErrorOr<JaktInternal::DynamicArray<ByteString>> platform_import_names();
 
 }
 namespace jakt__platform__unknown_path {
@@ -48,11 +50,11 @@ struct Path;
 }
 namespace jakt__platform__unknown_fs {
 class DirectoryIterator;
-ErrorOr<DeprecatedString> current_directory();
+ErrorOr<ByteString> current_directory();
 
-ErrorOr<void> make_directory(DeprecatedString const path);
+ErrorOr<void> make_directory(ByteString const path);
 
-ErrorOr<DeprecatedString> real_path(DeprecatedString const path);
+ErrorOr<ByteString> real_path(ByteString const path);
 
 }
 namespace jakt__file_iterator {
@@ -65,7 +67,7 @@ ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<size_t>,jakt__platform__unkno
 
 ErrorOr<jakt__platform__unknown_process::ExitPollResult> wait_for_process(jakt__platform__unknown_process::Process const& process);
 
-ErrorOr<jakt__platform__unknown_process::Process> start_background_process(JaktInternal::DynamicArray<DeprecatedString> const args);
+ErrorOr<jakt__platform__unknown_process::Process> start_background_process(JaktInternal::DynamicArray<ByteString> const args);
 
 ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> poll_process_exit(jakt__platform__unknown_process::Process const& process);
 
@@ -77,7 +79,7 @@ struct Builder;
 struct ParallelExecutionPool;
 }
 namespace jakt__platform__utility {
-ErrorOr<DeprecatedString> join(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const separator);
+ErrorOr<ByteString> join(JaktInternal::DynamicArray<ByteString> const strings, ByteString const separator);
 
 }
 namespace utility {
@@ -94,29 +96,29 @@ bool is_whitespace(u8 const byte);
 
 bool is_ascii_binary(u8 const c);
 
-ErrorOr<DeprecatedString> join(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const separator);
+ErrorOr<ByteString> join(JaktInternal::DynamicArray<ByteString> const strings, ByteString const separator);
 
-[[noreturn]] void panic(DeprecatedString const message);
+[[noreturn]] void panic(ByteString const message);
 
-ErrorOr<DeprecatedString> to_string(JaktInternal::DynamicArray<u8> const bytes);
+ErrorOr<ByteString> to_string(JaktInternal::DynamicArray<u8> const bytes);
 
-ErrorOr<DeprecatedString> escape_for_quotes(DeprecatedString const s);
+ErrorOr<ByteString> escape_for_quotes(ByteString const s);
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> prepend_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const prefix);
+ErrorOr<JaktInternal::DynamicArray<ByteString>> prepend_to_each(JaktInternal::DynamicArray<ByteString> const strings, ByteString const prefix);
 
 bool is_ascii_digit(u8 const c);
 
 bool is_ascii_hexdigit(u8 const c);
 
-ErrorOr<void> write_to_file(DeprecatedString const data, DeprecatedString const output_filename);
+ErrorOr<void> write_to_file(ByteString const data, ByteString const output_filename);
 
-ErrorOr<DeprecatedString> interpret_escapes(DeprecatedString const s);
+ErrorOr<ByteString> interpret_escapes(ByteString const s);
 
-[[noreturn]] void todo(DeprecatedString const message);
+[[noreturn]] void todo(ByteString const message);
 
 bool is_ascii_alpha(u8 const c);
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> append_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings, DeprecatedString const suffix);
+ErrorOr<JaktInternal::DynamicArray<ByteString>> append_to_each(JaktInternal::DynamicArray<ByteString> const strings, ByteString const suffix);
 
 }
 namespace error {
@@ -124,11 +126,11 @@ struct MessageSeverity;
 
 struct JaktError;
 
-ErrorOr<void> print_error_json(DeprecatedString const file_name, error::JaktError const error);
+ErrorOr<void> print_error_json(ByteString const file_name, error::JaktError const error);
 
-ErrorOr<void> print_error(DeprecatedString const file_name, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents, error::JaktError const error);
+ErrorOr<void> print_error(ByteString const file_name, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents, error::JaktError const error);
 
-ErrorOr<void> display_message_with_span(error::MessageSeverity const severity, DeprecatedString const file_name, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents, DeprecatedString const message, utility::Span const span);
+ErrorOr<void> display_message_with_span(error::MessageSeverity const severity, ByteString const file_name, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents, ByteString const message, utility::Span const span);
 
 ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>>> gather_line_spans(JaktInternal::DynamicArray<u8> const file_contents);
 
@@ -136,7 +138,7 @@ ErrorOr<void> print_underline(error::MessageSeverity const severity, size_t cons
 
 ErrorOr<void> print_source_line(error::MessageSeverity const severity, JaktInternal::DynamicArray<u8> const file_contents, JaktInternal::Tuple<size_t,size_t> const file_span, utility::Span const error_span, size_t const line_number, size_t const largest_line_number);
 
-ErrorOr<void> display_message_with_span_json(error::MessageSeverity const severity, DeprecatedString const file_name, DeprecatedString const message, utility::Span const span);
+ErrorOr<void> display_message_with_span_json(error::MessageSeverity const severity, ByteString const file_name, ByteString const message, utility::Span const span);
 
 }
 namespace compiler {
@@ -319,7 +321,7 @@ struct BuiltinType;
 
 struct CheckedTraitRequirements;
 
-ErrorOr<DeprecatedString> comptime_format_impl(DeprecatedString const format_string, JaktInternal::ArraySlice<types::Value> const arguments, NonnullRefPtr<types::CheckedProgram> const& program);
+ErrorOr<ByteString> comptime_format_impl(ByteString const format_string, JaktInternal::ArraySlice<types::Value> const arguments, NonnullRefPtr<types::CheckedProgram> const& program);
 
 ids::TypeId builtin(types::BuiltinType const builtin);
 
@@ -329,7 +331,7 @@ ids::TypeId unknown_type_id();
 
 ids::TypeId never_type_id();
 
-ErrorOr<DeprecatedString> format_value_impl(DeprecatedString const format_string, types::Value const value, NonnullRefPtr<types::CheckedProgram> const& program);
+ErrorOr<ByteString> format_value_impl(ByteString const format_string, types::Value const value, NonnullRefPtr<types::CheckedProgram> const& program);
 
 }
 namespace interpreter {
@@ -358,7 +360,7 @@ extern JaktInternal::Optional<StringView> ___jakt_get_user_configuration_value(S
 }
 namespace cpp_import__common {
 struct CppImportErrors;
-ErrorOr<DeprecatedString> read_all(DeprecatedString const filename);
+ErrorOr<ByteString> read_all(ByteString const filename);
 
 
 }
@@ -376,7 +378,7 @@ struct NumericOrStringValue;
 
 struct FunctionMatchResult;
 
-ErrorOr<JaktInternal::Dictionary<DeprecatedString,DeprecatedString>> defines_from(JaktInternal::DynamicArray<parser::IncludeAction> const actions);
+ErrorOr<JaktInternal::Dictionary<ByteString,ByteString>> defines_from(JaktInternal::DynamicArray<parser::IncludeAction> const actions);
 
 ErrorOr<void> dump_scope(ids::ScopeId const scope_id, NonnullRefPtr<types::CheckedProgram> const& program, i64 const indent);
 
@@ -406,7 +408,7 @@ struct BreakablePoint;
 
 struct Entity;
 
-void bubble_sort(JaktInternal::DynamicArray<DeprecatedString> values);
+void bubble_sort(JaktInternal::DynamicArray<ByteString> values);
 
 }
 namespace ide {
@@ -421,25 +423,25 @@ struct VarType;
 
 ErrorOr<ide::JaktSymbol> record_to_symbol(parser::ParsedRecord const record);
 
-ErrorOr<ide::Usage> get_enum_variant_usage_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id, DeprecatedString const name);
+ErrorOr<ide::Usage> get_enum_variant_usage_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id, ByteString const name);
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> completions_for_type_id(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id);
+ErrorOr<JaktInternal::DynamicArray<ByteString>> completions_for_type_id(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id);
 
-ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,ids::TypeId>>> enum_variant_fields(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnumVariant const checked_enum_variant);
+ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>> enum_variant_fields(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnumVariant const checked_enum_variant);
 
-ErrorOr<DeprecatedString> get_enum_variant_signature_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id, DeprecatedString const name);
+ErrorOr<ByteString> get_enum_variant_signature_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id, ByteString const name);
 
-ErrorOr<DeprecatedString> get_type_signature(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id);
+ErrorOr<ByteString> get_type_signature(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_scope(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::Scope> const scope, utility::Span const span);
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> find_dot_completions(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
+ErrorOr<JaktInternal::DynamicArray<ByteString>> find_dot_completions(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
 ErrorOr<utility::Span> find_definition_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
-ErrorOr<DeprecatedString> get_var_signature(NonnullRefPtr<types::CheckedProgram> const program, DeprecatedString const name, ids::TypeId const var_type_id, ide::Mutability const mutability, ide::VarType const var_type, ide::VarVisibility const visibility, JaktInternal::Optional<ids::TypeId> const struct_type_id);
+ErrorOr<ByteString> get_var_signature(NonnullRefPtr<types::CheckedProgram> const program, ByteString const name, ids::TypeId const var_type_id, ide::Mutability const mutability, ide::VarType const var_type, ide::VarVisibility const visibility, JaktInternal::Optional<ids::TypeId> const struct_type_id);
 
-ErrorOr<DeprecatedString> get_constructor_signature(NonnullRefPtr<types::CheckedProgram> const program, ids::FunctionId const function_id);
+ErrorOr<ByteString> get_constructor_signature(NonnullRefPtr<types::CheckedProgram> const program, ids::FunctionId const function_id);
 
 ErrorOr<utility::Span> find_type_definition_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
@@ -447,29 +449,29 @@ ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_expression(NonnullRefPt
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> find_function_completions_in_scope(NonnullRefPtr<types::Scope> const scope, NonnullRefPtr<types::CheckedProgram> const program);
+ErrorOr<JaktInternal::DynamicArray<ByteString>> find_function_completions_in_scope(NonnullRefPtr<types::Scope> const scope, NonnullRefPtr<types::CheckedProgram> const program);
 
 ErrorOr<JaktInternal::DynamicArray<ide::JaktSymbol>> find_symbols_in_namespace(parser::ParsedNamespace const namespace_);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_function(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<types::CheckedFunction> const checked_function, utility::Span const span);
 
-ErrorOr<JaktInternal::Optional<DeprecatedString>> find_typename_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
+ErrorOr<JaktInternal::Optional<ByteString>> find_typename_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
 ErrorOr<utility::Span> find_type_definition_for_type_id(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id, utility::Span const span);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_statement(NonnullRefPtr<types::CheckedProgram> const program, NonnullRefPtr<typename types::CheckedStatement> const statement, utility::Span const span);
 
-ErrorOr<DeprecatedString> get_enum_variant_signature(NonnullRefPtr<types::CheckedProgram> const program, DeprecatedString const name, ids::TypeId const type_id, JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<DeprecatedString>,ids::TypeId>> const variants, JaktInternal::Optional<types::NumberConstant> const number_constant);
+ErrorOr<ByteString> get_enum_variant_signature(NonnullRefPtr<types::CheckedProgram> const program, ByteString const name, ids::TypeId const type_id, JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>> const variants, JaktInternal::Optional<types::NumberConstant> const number_constant);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_enum(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnum const checked_enum, utility::Span const span);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_block(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedBlock const block, utility::Span const span);
 
-ErrorOr<ide::JaktSymbol> function_to_symbol(parser::ParsedFunction const function, DeprecatedString const kind);
+ErrorOr<ide::JaktSymbol> function_to_symbol(parser::ParsedFunction const function, ByteString const kind);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_struct(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedStruct const checked_struct, utility::Span const span);
 
-ErrorOr<DeprecatedString> get_function_signature(NonnullRefPtr<types::CheckedProgram> const program, ids::FunctionId const function_id);
+ErrorOr<ByteString> get_function_signature(NonnullRefPtr<types::CheckedProgram> const program, ids::FunctionId const function_id);
 
 }
 namespace project {
@@ -478,7 +480,7 @@ struct Project;
 namespace platform {
 
 
-ErrorOr<DeprecatedString> library_name_for_target(DeprecatedString const name, jakt__platform::Target const target);
+ErrorOr<ByteString> library_name_for_target(ByteString const name, jakt__platform::Target const target);
 
 
 }
@@ -498,13 +500,13 @@ struct Editor;
 }
 namespace repl {
 struct REPL;
-ErrorOr<DeprecatedString> serialize_unary_operation(types::CheckedUnaryOperator const op, DeprecatedString const expr);
+ErrorOr<ByteString> serialize_unary_operation(types::CheckedUnaryOperator const op, ByteString const expr);
 
-ErrorOr<DeprecatedString> serialize_ast_node(NonnullRefPtr<typename types::CheckedExpression> const node);
+ErrorOr<ByteString> serialize_ast_node(NonnullRefPtr<typename types::CheckedExpression> const node);
 
 }
 namespace platform__unknown_compiler {
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> run_compiler(DeprecatedString const cxx_compiler_path, DeprecatedString const cpp_filename, DeprecatedString const output_filename, DeprecatedString const runtime_path, JaktInternal::DynamicArray<DeprecatedString> const extra_include_paths, JaktInternal::DynamicArray<DeprecatedString> const extra_lib_paths, JaktInternal::DynamicArray<DeprecatedString> const extra_link_libs, bool const optimize, JaktInternal::DynamicArray<DeprecatedString> const extra_compiler_flags, bool const use_ccache);
+ErrorOr<JaktInternal::DynamicArray<ByteString>> run_compiler(ByteString const cxx_compiler_path, ByteString const cpp_filename, ByteString const output_filename, ByteString const runtime_path, JaktInternal::DynamicArray<ByteString> const extra_include_paths, JaktInternal::DynamicArray<ByteString> const extra_lib_paths, JaktInternal::DynamicArray<ByteString> const extra_link_libs, bool const optimize, JaktInternal::DynamicArray<ByteString> const extra_compiler_flags, bool const use_ccache);
 
 }
 struct FormatRange;
@@ -515,20 +517,20 @@ ErrorOr<void> install(jakt__path::Path const from, jakt__path::Path const to);
 ErrorOr<void> mkdir_p(jakt__path::Path const path);
 
 
-ErrorOr<DeprecatedString> usage();
+ErrorOr<ByteString> usage();
 
-ErrorOr<JaktInternal::DynamicArray<jakt__path::Path>> find_with_extension(jakt__path::Path const path, DeprecatedString const extension);
+ErrorOr<JaktInternal::DynamicArray<jakt__path::Path>> find_with_extension(jakt__path::Path const path, ByteString const extension);
 
-ErrorOr<int> compiler_main(JaktInternal::DynamicArray<DeprecatedString> const args);
+ErrorOr<int> compiler_main(JaktInternal::DynamicArray<ByteString> const args);
 
-ErrorOr<DeprecatedString> escape_for_depfile(DeprecatedString const input);
+ErrorOr<ByteString> escape_for_depfile(ByteString const input);
 
-ErrorOr<DeprecatedString> help();
+ErrorOr<ByteString> help();
 
-ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(DeprecatedString const range, size_t const input_file_length);
+ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(ByteString const range, size_t const input_file_length);
 
-ErrorOr<DeprecatedString> indent(size_t const level);
+ErrorOr<ByteString> indent(size_t const level);
 
-ErrorOr<int> selfhost_crosscompiler_main(JaktInternal::DynamicArray<DeprecatedString> const args);
+ErrorOr<int> selfhost_crosscompiler_main(JaktInternal::DynamicArray<ByteString> const args);
 
 } // namespace Jakt

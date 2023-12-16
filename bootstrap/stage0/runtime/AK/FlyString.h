@@ -22,7 +22,7 @@ public:
 
     static ErrorOr<FlyString> from_utf8(StringView);
     template<typename T>
-    requires(IsOneOf<RemoveCVReference<T>, DeprecatedString, DeprecatedFlyString>)
+    requires(IsOneOf<RemoveCVReference<T>, ByteString, DeprecatedFlyString, FlyString, String>)
     static ErrorOr<String> from_utf8(T&&) = delete;
 
     FlyString(String const&);
@@ -69,6 +69,10 @@ public:
     [[nodiscard]] bool equals_ignoring_ascii_case(FlyString const&) const;
     [[nodiscard]] bool equals_ignoring_ascii_case(StringView) const;
 
+    [[nodiscard]] bool starts_with_bytes(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
+
+    [[nodiscard]] bool ends_with_bytes(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
+
     template<typename... Ts>
     [[nodiscard]] ALWAYS_INLINE constexpr bool is_one_of(Ts... strings) const
     {
@@ -82,7 +86,7 @@ private:
 };
 
 template<>
-struct Traits<FlyString> : public GenericTraits<FlyString> {
+struct Traits<FlyString> : public DefaultTraits<FlyString> {
     static unsigned hash(FlyString const&);
 };
 

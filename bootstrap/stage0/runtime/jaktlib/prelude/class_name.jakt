@@ -1,0 +1,6 @@
+import extern "Jakt/Forward.h" {
+    extern struct UnderlyingClassTypeOf<T> {
+        [[name="prefix-operator()"]]
+        fn self(this) -> T
+    }
+}

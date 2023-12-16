@@ -1,14 +1,14 @@
 #include "jakt__file_iterator.h"
 namespace Jakt {
 namespace jakt__file_iterator {
-ErrorOr<DeprecatedString> jakt__file_iterator::RecursiveFileIterator::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("RecursiveFileIterator("sv));{
+ErrorOr<ByteString> jakt__file_iterator::RecursiveFileIterator::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("RecursiveFileIterator("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("extension: \"{}\", ", extension));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("directory_list: {}, ", directory_list));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("current_directory: {}", current_directory));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-ErrorOr<NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator>> jakt__file_iterator::RecursiveFileIterator::make(jakt__path::Path const directory,DeprecatedString const extension) {
+ErrorOr<NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator>> jakt__file_iterator::RecursiveFileIterator::make(jakt__path::Path const directory,ByteString const extension) {
 {
 return TRY((jakt__file_iterator::RecursiveFileIterator::__jakt_create(extension,(TRY((DynamicArray<jakt__path::Path>::create_with({directory})))),JaktInternal::OptionalNone())));
 }
@@ -62,7 +62,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-jakt__file_iterator::RecursiveFileIterator::RecursiveFileIterator(DeprecatedString a_extension, JaktInternal::DynamicArray<jakt__path::Path> a_directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> a_current_directory): extension(move(a_extension)), directory_list(move(a_directory_list)), current_directory(move(a_current_directory)){}
-ErrorOr<NonnullRefPtr<RecursiveFileIterator>> jakt__file_iterator::RecursiveFileIterator::__jakt_create(DeprecatedString extension, JaktInternal::DynamicArray<jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) RecursiveFileIterator (move(extension), move(directory_list), move(current_directory)))); return o; }
+jakt__file_iterator::RecursiveFileIterator::RecursiveFileIterator(ByteString a_extension, JaktInternal::DynamicArray<jakt__path::Path> a_directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> a_current_directory): extension(move(a_extension)), directory_list(move(a_directory_list)), current_directory(move(a_current_directory)){}
+ErrorOr<NonnullRefPtr<RecursiveFileIterator>> jakt__file_iterator::RecursiveFileIterator::__jakt_create(ByteString extension, JaktInternal::DynamicArray<jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) RecursiveFileIterator (move(extension), move(directory_list), move(current_directory)))); return o; }
 }
 } // namespace Jakt

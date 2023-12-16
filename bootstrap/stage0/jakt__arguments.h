@@ -4,14 +4,14 @@ namespace Jakt {
 namespace jakt__arguments {
 struct ArgsParser {
   public:
-public: JaktInternal::DynamicArray<DeprecatedString> args;public: JaktInternal::DynamicArray<size_t> removed_indices;public: JaktInternal::DynamicArray<DeprecatedString> definitely_positional_args;public: static ErrorOr<jakt__arguments::ArgsParser> from_args(JaktInternal::DynamicArray<DeprecatedString> const args);
-public: ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> option_multiple(JaktInternal::DynamicArray<DeprecatedString> const names);
-public: ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> remaining_arguments() const;
-public: ErrorOr<bool> flag(JaktInternal::DynamicArray<DeprecatedString> const names);
-public: ErrorOr<JaktInternal::Optional<DeprecatedString>> option(JaktInternal::DynamicArray<DeprecatedString> const names);
-public: ArgsParser(JaktInternal::DynamicArray<DeprecatedString> a_args, JaktInternal::DynamicArray<size_t> a_removed_indices, JaktInternal::DynamicArray<DeprecatedString> a_definitely_positional_args);
+public: JaktInternal::DynamicArray<ByteString> args;public: JaktInternal::DynamicArray<size_t> removed_indices;public: JaktInternal::DynamicArray<ByteString> definitely_positional_args;public: static ErrorOr<jakt__arguments::ArgsParser> from_args(JaktInternal::DynamicArray<ByteString> const args);
+public: ErrorOr<JaktInternal::DynamicArray<ByteString>> option_multiple(JaktInternal::DynamicArray<ByteString> const names);
+public: ErrorOr<JaktInternal::DynamicArray<ByteString>> remaining_arguments() const;
+public: ErrorOr<bool> flag(JaktInternal::DynamicArray<ByteString> const names);
+public: ErrorOr<JaktInternal::Optional<ByteString>> option(JaktInternal::DynamicArray<ByteString> const names);
+public: ArgsParser(JaktInternal::DynamicArray<ByteString> a_args, JaktInternal::DynamicArray<size_t> a_removed_indices, JaktInternal::DynamicArray<ByteString> a_definitely_positional_args);
 
-public: ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::jakt__arguments::ArgsParser> : Jakt::Formatter<Jakt::StringView>{

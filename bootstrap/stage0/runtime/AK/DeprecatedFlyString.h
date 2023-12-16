@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <AK/DeprecatedString.h>
+#include <AK/ByteString.h>
 #include <AK/StringUtils.h>
 
 namespace AK {
@@ -22,10 +22,10 @@ public:
         : m_impl(move(other.m_impl))
     {
     }
-    DeprecatedFlyString(DeprecatedString const&);
+    DeprecatedFlyString(ByteString const&);
     DeprecatedFlyString(StringView);
     DeprecatedFlyString(char const* string)
-        : DeprecatedFlyString(static_cast<DeprecatedString>(string))
+        : DeprecatedFlyString(static_cast<ByteString>(string))
     {
     }
 
@@ -54,7 +54,7 @@ public:
 
     bool operator==(DeprecatedFlyString const& other) const { return m_impl == other.m_impl; }
 
-    bool operator==(DeprecatedString const&) const;
+    bool operator==(ByteString const&) const;
 
     bool operator==(StringView) const;
 
@@ -95,7 +95,7 @@ private:
 };
 
 template<>
-struct Traits<DeprecatedFlyString> : public GenericTraits<DeprecatedFlyString> {
+struct Traits<DeprecatedFlyString> : public DefaultTraits<DeprecatedFlyString> {
     static unsigned hash(DeprecatedFlyString const& s) { return s.hash(); }
 };
 

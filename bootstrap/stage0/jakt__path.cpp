@@ -1,7 +1,7 @@
 #include "jakt__path.h"
 namespace Jakt {
 namespace jakt__path {
-ErrorOr<DeprecatedString> jakt__path::Path::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Path("sv));{
+ErrorOr<ByteString> jakt__path::Path::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Path("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("path: \"{}\"", path));
 }
@@ -12,7 +12,7 @@ return *this;
 }
 }
 
-ErrorOr<DeprecatedString> jakt__path::Path::extension() const {
+ErrorOr<ByteString> jakt__path::Path::extension() const {
 {
 {
 JaktInternal::Range<size_t> _magic = (((JaktInternal::Range<size_t>{static_cast<size_t>(JaktInternal::checked_sub(((((*this).path)).length()),static_cast<size_t>(1ULL))),static_cast<size_t>(static_cast<size_t>(0ULL))})).inclusive());
@@ -35,15 +35,15 @@ return ((((*this).path)).substring(JaktInternal::checked_add(i,static_cast<size_
 }
 }
 
-return TRY(DeprecatedString::from_utf8(""sv));
+return TRY(ByteString::from_utf8(""sv));
 }
 }
 
-jakt__path::Path::Path(DeprecatedString a_path): path(move(a_path)){}
+jakt__path::Path::Path(ByteString a_path): path(move(a_path)){}
 
-ErrorOr<DeprecatedString> jakt__path::Path::basename(bool const strip_extension) const {
+ErrorOr<ByteString> jakt__path::Path::basename(bool const strip_extension) const {
 {
-JaktInternal::Tuple<DeprecatedString,DeprecatedString> const parts = TRY((((*this).split_at_last_slash())));
+JaktInternal::Tuple<ByteString,ByteString> const parts = TRY((((*this).split_at_last_slash())));
 if (strip_extension){
 size_t ext_length = ((TRY((((*this).extension())))).length());
 if ([](size_t const& self, size_t rhs) -> bool {
@@ -65,9 +65,9 @@ return ((parts).template get<1>());
 }
 }
 
-ErrorOr<jakt__path::Path> jakt__path::Path::join(DeprecatedString const path) const {
+ErrorOr<jakt__path::Path> jakt__path::Path::join(ByteString const path) const {
 {
-if ((((((*this).path)) == (TRY(DeprecatedString::from_utf8("."sv)))) || ((((((*this).path)).length())) == (static_cast<size_t>(0ULL))))){
+if ((((((*this).path)) == (TRY(ByteString::from_utf8("."sv)))) || ((((((*this).path)).length())) == (static_cast<size_t>(0ULL))))){
 return jakt__path::Path(path);
 }
 if (((path).is_empty())){
@@ -77,7 +77,7 @@ u8 const separator = static_cast<u8>(47);
 if (((((path).byte_at(static_cast<size_t>(0ULL)))) == (separator))){
 return TRY((jakt__path::Path::from_string(path)));
 }
-DeprecatedStringBuilder join_builder = DeprecatedStringBuilder::create();
+ByteStringBuilder join_builder = ByteStringBuilder::create();
 TRY((((join_builder).append_string(((*this).path)))));
 if (((((((*this).path)).byte_at(JaktInternal::checked_sub(((((*this).path)).length()),static_cast<size_t>(1ULL))))) != (separator))){
 TRY((((join_builder).append(separator))));
@@ -93,7 +93,7 @@ return TRY((((*this).join(((path).path)))));
 }
 }
 
-DeprecatedString jakt__path::Path::to_string() const {
+ByteString jakt__path::Path::to_string() const {
 {
 return ((*this).path);
 }
@@ -105,29 +105,29 @@ return File::exists(((*this).path));
 }
 }
 
-ErrorOr<jakt__path::Path> jakt__path::Path::replace_extension(DeprecatedString const new_extension) const {
+ErrorOr<jakt__path::Path> jakt__path::Path::replace_extension(ByteString const new_extension) const {
 {
-JaktInternal::Tuple<DeprecatedString,DeprecatedString> const parts = TRY((((*this).split_at_last_slash())));
-DeprecatedString const basename = TRY((((*this).basename(true))));
-DeprecatedString const extension = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<jakt__path::Path>>{
+JaktInternal::Tuple<ByteString,ByteString> const parts = TRY((((*this).split_at_last_slash())));
+ByteString const basename = TRY((((*this).basename(true))));
+ByteString const extension = ({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<jakt__path::Path>>{
 auto __jakt_enum_value = (new_extension);
-if (__jakt_enum_value == TRY(DeprecatedString::from_utf8(""sv))) {
-return JaktInternal::ExplicitValue(TRY(DeprecatedString::from_utf8(""sv)));
+if (__jakt_enum_value == TRY(ByteString::from_utf8(""sv))) {
+return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 }
 else {
-return JaktInternal::ExplicitValue(TRY((((TRY(DeprecatedString::from_utf8("."sv))) + (new_extension)))));
+return JaktInternal::ExplicitValue(TRY((((TRY(ByteString::from_utf8("."sv))) + (new_extension)))));
 }
 }());
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-return TRY((jakt__path::Path::from_parts((TRY((DynamicArray<DeprecatedString>::create_with({((parts).template get<0>()), TRY((((basename) + (extension))))})))))));
+return TRY((jakt__path::Path::from_parts((TRY((DynamicArray<ByteString>::create_with({((parts).template get<0>()), TRY((((basename) + (extension))))})))))));
 }
 }
 
-JaktInternal::Optional<size_t> jakt__path::Path::last_slash(DeprecatedString const path) {
+JaktInternal::Optional<size_t> jakt__path::Path::last_slash(ByteString const path) {
 {
 size_t i = JaktInternal::checked_sub(((path).length()),static_cast<size_t>(1ULL));
 u8 const separator = static_cast<u8>(47);
@@ -151,7 +151,7 @@ return i;
 }
 }
 
-ErrorOr<jakt__path::Path> jakt__path::Path::from_string(DeprecatedString const string) {
+ErrorOr<jakt__path::Path> jakt__path::Path::from_string(ByteString const string) {
 {
 jakt__path::Path path = jakt__path::Path(string);
 TRY((((path).normalize_separators())));
@@ -159,17 +159,17 @@ return path;
 }
 }
 
-ErrorOr<jakt__path::Path> jakt__path::Path::from_parts(JaktInternal::DynamicArray<DeprecatedString> const parts) {
+ErrorOr<jakt__path::Path> jakt__path::Path::from_parts(JaktInternal::DynamicArray<ByteString> const parts) {
 {
-jakt__path::Path path = jakt__path::Path(TRY(DeprecatedString::from_utf8("."sv)));
+jakt__path::Path path = jakt__path::Path(TRY(ByteString::from_utf8("."sv)));
 {
-JaktInternal::ArrayIterator<DeprecatedString> _magic = ((parts).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = ((parts).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
+JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-DeprecatedString part = (_magic_value.value());
+ByteString part = (_magic_value.value());
 {
 (path = TRY((((path).join(part)))));
 }
@@ -181,24 +181,24 @@ return path;
 }
 }
 
-ErrorOr<JaktInternal::Tuple<DeprecatedString,DeprecatedString>> jakt__path::Path::split_at_last_slash() const {
+ErrorOr<JaktInternal::Tuple<ByteString,ByteString>> jakt__path::Path::split_at_last_slash() const {
 {
 size_t const len = ((((*this).path)).length());
 JaktInternal::Optional<size_t> const last_slash = jakt__path::Path::last_slash(((*this).path));
 if (((last_slash).has_value())){
-DeprecatedString const dir = ((((*this).path)).substring(static_cast<size_t>(0ULL),(last_slash.value())));
-DeprecatedString const base = ((((*this).path)).substring(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(len,(last_slash.value())),static_cast<size_t>(1ULL))));
+ByteString const dir = ((((*this).path)).substring(static_cast<size_t>(0ULL),(last_slash.value())));
+ByteString const base = ((((*this).path)).substring(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(len,(last_slash.value())),static_cast<size_t>(1ULL))));
 return (Tuple{dir, base});
 }
-return (Tuple{TRY(DeprecatedString::from_utf8(""sv)), ((*this).path)});
+return (Tuple{TRY(ByteString::from_utf8(""sv)), ((*this).path)});
 }
 }
 
 ErrorOr<jakt__path::Path> jakt__path::Path::parent() const {
 {
-JaktInternal::Tuple<DeprecatedString,DeprecatedString> const parts = TRY((((*this).split_at_last_slash())));
-if (((((parts).template get<0>())) == (TRY(DeprecatedString::from_utf8(""sv))))){
-return jakt__path::Path(TRY(DeprecatedString::from_utf8("."sv)));
+JaktInternal::Tuple<ByteString,ByteString> const parts = TRY((((*this).split_at_last_slash())));
+if (((((parts).template get<0>())) == (TRY(ByteString::from_utf8(""sv))))){
+return jakt__path::Path(TRY(ByteString::from_utf8("."sv)));
 }
 return jakt__path::Path(((parts).template get<0>()));
 }
@@ -208,7 +208,7 @@ ErrorOr<void> jakt__path::Path::normalize_separators() {
 {
 JaktInternal::DynamicArray<u8> separators = (TRY((DynamicArray<u8>::create_with({static_cast<u8>(47)}))));
 u8 separator = static_cast<u8>(47);
-DeprecatedStringBuilder normalized_builder = DeprecatedStringBuilder::create();
+ByteStringBuilder normalized_builder = ByteStringBuilder::create();
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).path)).length()))});
 for (;;){
@@ -236,9 +236,9 @@ TRY((((normalized_builder).append(ch))));
 return {};
 }
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> jakt__path::Path::components() const {
+ErrorOr<JaktInternal::DynamicArray<ByteString>> jakt__path::Path::components() const {
 {
-JaktInternal::DynamicArray<DeprecatedString> parts = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
+JaktInternal::DynamicArray<ByteString> parts = (TRY((DynamicArray<ByteString>::create_with({}))));
 JaktInternal::Optional<size_t> last_slash = JaktInternal::OptionalNone();
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).path)).length()))});
@@ -259,7 +259,7 @@ TRY((((parts).push(((((*this).path)).substring(JaktInternal::checked_add((last_s
 }
 else {
 if (((i) == (static_cast<size_t>(0ULL)))){
-TRY((((parts).push(TRY(DeprecatedString::from_utf8("/"sv))))));
+TRY((((parts).push(TRY(ByteString::from_utf8("/"sv))))));
 }
 else {
 TRY((((parts).push(((((*this).path)).substring(static_cast<size_t>(0ULL),i))))));
@@ -299,7 +299,7 @@ return parts;
 
 ErrorOr<bool> jakt__path::Path::is_dot() const {
 {
-return (((((*this).path)) == (TRY(DeprecatedString::from_utf8("."sv)))) || ((((*this).path)) == (TRY(DeprecatedString::from_utf8(".."sv)))));
+return (((((*this).path)) == (TRY(ByteString::from_utf8("."sv)))) || ((((*this).path)) == (TRY(ByteString::from_utf8(".."sv)))));
 }
 }
 

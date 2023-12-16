@@ -210,6 +210,10 @@
 #    define ICO_DEBUG 0
 #endif
 
+#ifndef IDL_DEBUG
+#    define IDL_DEBUG 0
+#endif
+
 #ifndef ILBM_DEBUG
 #    define ILBM_DEBUG 0
 #endif
@@ -280,6 +284,10 @@
 
 #ifndef LZMA_DEBUG
 #    define LZMA_DEBUG 0
+#endif
+
+#ifndef LZW_DEBUG
+#    define LZW_DEBUG 0
 #endif
 
 #ifndef MALLOC_DEBUG
@@ -456,6 +464,10 @@
 
 #ifndef TEXTEDITOR_DEBUG
 #    define TEXTEDITOR_DEBUG 0
+#endif
+
+#ifndef TIFF_DEBUG
+#    define TIFF_DEBUG 0
 #endif
 
 #ifndef TIME_ZONE_DEBUG

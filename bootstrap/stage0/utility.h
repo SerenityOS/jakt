@@ -9,7 +9,7 @@ struct FileId {
 public: size_t id;public: FileId(size_t a_id);
 
 public: bool equals(utility::FileId const rhs) const;
-public: ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<ByteString> debug_description() const;
 };struct Span {
   public:
 public: utility::FileId file_id;public: size_t start;public: size_t end;public: bool contains(utility::Span const span) const;
@@ -18,7 +18,7 @@ public: Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
 public: static utility::Span first(utility::Span const a, utility::Span const b);
 public: bool is_in_offset_range(size_t const start, size_t const end) const;
 public: static utility::Span last(utility::Span const a, utility::Span const b);
-public: ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<ByteString> debug_description() const;
 };template<typename T>
 struct IterationDecision {
 u8 __jakt_variant_index = 0;
@@ -30,8 +30,8 @@ T value;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
-constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<DeprecatedString> debug_description() const {
-auto builder = DeprecatedStringBuilder::create();
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<ByteString> debug_description() const {
+auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Break */: {
 TRY(builder.append("IterationDecision::Break"sv));
 [[maybe_unused]] auto const& that = this->as.Break;
@@ -44,7 +44,7 @@ TRY(builder.appendff("value: {}", that.value));
 TRY(builder.append(")"sv));
 break;}
 case 1 /* Continue */: {
-return DeprecatedString("IterationDecision::Continue"sv);
+return ByteString("IterationDecision::Continue"sv);
 break;}
 }
 return builder.to_string();

@@ -1,7 +1,7 @@
 #include "jakt__platform.h"
 namespace Jakt {
 namespace jakt__platform {
-JaktInternal::Optional<size_t> last_namespace_separator(DeprecatedString const name) {
+JaktInternal::Optional<size_t> last_namespace_separator(ByteString const name) {
 {
 size_t i = JaktInternal::checked_sub(((name).length()),static_cast<size_t>(1ULL));
 while ([](size_t const& self, size_t rhs) -> bool {
@@ -24,17 +24,17 @@ return JaktInternal::OptionalNone();
 }
 }
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> add_to_each(JaktInternal::DynamicArray<DeprecatedString> const strings,DeprecatedString const prefix,DeprecatedString const suffix) {
+ErrorOr<JaktInternal::DynamicArray<ByteString>> add_to_each(JaktInternal::DynamicArray<ByteString> const strings,ByteString const prefix,ByteString const suffix) {
 {
-JaktInternal::DynamicArray<DeprecatedString> output = (TRY((DynamicArray<DeprecatedString>::create_with({}))));
+JaktInternal::DynamicArray<ByteString> output = (TRY((DynamicArray<ByteString>::create_with({}))));
 {
-JaktInternal::ArrayIterator<DeprecatedString> _magic = ((strings).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = ((strings).iterator());
 for (;;){
-JaktInternal::Optional<DeprecatedString> const _magic_value = ((_magic).next());
+JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-DeprecatedString str = (_magic_value.value());
+ByteString str = (_magic_value.value());
 {
 TRY((((output).push(TRY((((TRY((((prefix) + (str))))) + (suffix))))))));
 }
@@ -46,24 +46,24 @@ return output;
 }
 }
 
-ErrorOr<JaktInternal::DynamicArray<DeprecatedString>> platform_import_names() {
+ErrorOr<JaktInternal::DynamicArray<ByteString>> platform_import_names() {
 {
 jakt__platform::Target const target = TRY((jakt__platform::Target::active()));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<DeprecatedString>,ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<ByteString>,ErrorOr<JaktInternal::DynamicArray<ByteString>>>{
 auto __jakt_enum_value = (((target).os));
-if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("windows"sv))) {
+if (__jakt_enum_value == TRY(ByteString::from_utf8("windows"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<DeprecatedString>,ErrorOr<JaktInternal::DynamicArray<DeprecatedString>>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<ByteString>,ErrorOr<JaktInternal::DynamicArray<ByteString>>>{
 auto __jakt_enum_value = (((target).arch));
-if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86_64"sv))) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({TRY(DeprecatedString::from_utf8("win64"sv)), TRY(DeprecatedString::from_utf8("windows"sv))})))));
+if (__jakt_enum_value == TRY(ByteString::from_utf8("x86_64"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("win64"sv)), TRY(ByteString::from_utf8("windows"sv))})))));
 }
-else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("i686"sv))) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({TRY(DeprecatedString::from_utf8("win32"sv)), TRY(DeprecatedString::from_utf8("windows"sv))})))));
+else if (__jakt_enum_value == TRY(ByteString::from_utf8("i686"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("win32"sv)), TRY(ByteString::from_utf8("windows"sv))})))));
 }
 else {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({TRY(DeprecatedString::from_utf8("windows"sv))})))));
+return JaktInternal::ExplicitValue((TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("windows"sv))})))));
 }
 }());
     if (_jakt_value.is_return())
@@ -71,23 +71,23 @@ return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_
     _jakt_value.release_value();
 }));
 }
-else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("darwin"sv))) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({TRY(DeprecatedString::from_utf8("darwin"sv)), TRY(DeprecatedString::from_utf8("posix"sv))})))));
+else if (__jakt_enum_value == TRY(ByteString::from_utf8("darwin"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("darwin"sv)), TRY(ByteString::from_utf8("posix"sv))})))));
 }
-else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("linux"sv))) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("posix"sv))})))));
+else if (__jakt_enum_value == TRY(ByteString::from_utf8("linux"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<ByteString>::create_with({((target).os), TRY(ByteString::from_utf8("posix"sv))})))));
 }
-else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("openbsd"sv))) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("posix"sv))})))));
+else if (__jakt_enum_value == TRY(ByteString::from_utf8("openbsd"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<ByteString>::create_with({((target).os), TRY(ByteString::from_utf8("posix"sv))})))));
 }
-else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("serenityos"sv))) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("posix"sv))})))));
+else if (__jakt_enum_value == TRY(ByteString::from_utf8("serenityos"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<ByteString>::create_with({((target).os), TRY(ByteString::from_utf8("posix"sv))})))));
 }
-else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("serenity"sv))) {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("posix"sv))})))));
+else if (__jakt_enum_value == TRY(ByteString::from_utf8("serenity"sv))) {
+return JaktInternal::ExplicitValue((TRY((DynamicArray<ByteString>::create_with({((target).os), TRY(ByteString::from_utf8("posix"sv))})))));
 }
 else {
-return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_with({((target).os), TRY(DeprecatedString::from_utf8("unknown"sv))})))));
+return JaktInternal::ExplicitValue((TRY((DynamicArray<ByteString>::create_with({((target).os), TRY(ByteString::from_utf8("unknown"sv))})))));
 }
 }());
     if (_jakt_value.is_return())
@@ -97,7 +97,7 @@ return JaktInternal::ExplicitValue((TRY((DynamicArray<DeprecatedString>::create_
 }
 }
 
-ErrorOr<DeprecatedString> jakt__platform::Target::debug_description() const { auto builder = DeprecatedStringBuilder::create();TRY(builder.append("Target("sv));{
+ErrorOr<ByteString> jakt__platform::Target::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Target("sv));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("arch: \"{}\", ", arch));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("platform: \"{}\", ", platform));
@@ -105,11 +105,11 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("abi: \"{}\"", abi));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-jakt__platform::Target::Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi): arch(move(a_arch)), platform(move(a_platform)), os(move(a_os)), abi(move(a_abi)){}
+jakt__platform::Target::Target(ByteString a_arch, ByteString a_platform, ByteString a_os, ByteString a_abi): arch(move(a_arch)), platform(move(a_platform)), os(move(a_os)), abi(move(a_abi)){}
 
-ErrorOr<jakt__platform::Target> jakt__platform::Target::from_triple(DeprecatedString const triple) {
+ErrorOr<jakt__platform::Target> jakt__platform::Target::from_triple(ByteString const triple) {
 {
-JaktInternal::DynamicArray<DeprecatedString> const parts = ((triple).split('-'));
+JaktInternal::DynamicArray<ByteString> const parts = ((triple).split('-'));
 if (((((parts).size())) != (static_cast<size_t>(4ULL)))){
 warnln((StringView::from_string_literal("Invalid target triple '{}'"sv)),triple);
 return Error::from_errno(static_cast<i32>(22));
@@ -129,10 +129,10 @@ ErrorOr<size_t> jakt__platform::Target::pointer_size() const {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
 auto __jakt_enum_value = (((*this).arch));
-if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86_64"sv))) {
+if (__jakt_enum_value == TRY(ByteString::from_utf8("x86_64"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(8ULL));
 }
-else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86"sv))) {
+else if (__jakt_enum_value == TRY(ByteString::from_utf8("x86"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
 }
 else {
@@ -148,10 +148,10 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("point
 }
 }
 
-ErrorOr<DeprecatedString> jakt__platform::Target::name(bool const abbreviate) const {
+ErrorOr<ByteString> jakt__platform::Target::name(bool const abbreviate) const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<DeprecatedString,ErrorOr<DeprecatedString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (abbreviate);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}-{}-{}"sv)),((*this).arch),((*this).platform),((*this).os)))));
@@ -170,7 +170,7 @@ VERIFY_NOT_REACHED();
 
 ErrorOr<jakt__platform::Target> jakt__platform::Target::active() {
 {
-DeprecatedString const triple = TRY((___jakt_get_target_triple_string()));
+ByteString const triple = TRY((___jakt_get_target_triple_string()));
 return TRY((jakt__platform::Target::from_triple(triple)));
 }
 }
@@ -186,10 +186,10 @@ ErrorOr<size_t> jakt__platform::Target::size_t_size() const {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
 auto __jakt_enum_value = (((*this).arch));
-if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86_64"sv))) {
+if (__jakt_enum_value == TRY(ByteString::from_utf8("x86_64"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(8ULL));
 }
-else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86"sv))) {
+else if (__jakt_enum_value == TRY(ByteString::from_utf8("x86"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
 }
 else {
@@ -210,10 +210,10 @@ ErrorOr<size_t> jakt__platform::Target::int_size() const {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
 auto __jakt_enum_value = (((*this).arch));
-if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86_64"sv))) {
+if (__jakt_enum_value == TRY(ByteString::from_utf8("x86_64"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
 }
-else if (__jakt_enum_value == TRY(DeprecatedString::from_utf8("x86"sv))) {
+else if (__jakt_enum_value == TRY(ByteString::from_utf8("x86"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));
 }
 else {

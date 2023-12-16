@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <AK/DeprecatedString.h>
+#include <AK/ByteString.h>
 #include <AK/Error.h>
 #include <AK/Format.h>
 #include <AK/Forward.h>
@@ -57,6 +57,8 @@ private:
 
 class Utf16View {
 public:
+    using Iterator = Utf16CodePointIterator;
+
     static bool is_high_surrogate(u16);
     static bool is_low_surrogate(u16);
     static u32 decode_surrogate_pair(u16 high_surrogate, u16 low_surrogate);
@@ -76,7 +78,7 @@ public:
         No,
     };
 
-    ErrorOr<DeprecatedString> to_deprecated_string(AllowInvalidCodeUnits = AllowInvalidCodeUnits::No) const;
+    ErrorOr<ByteString> to_byte_string(AllowInvalidCodeUnits = AllowInvalidCodeUnits::No) const;
     ErrorOr<String> to_utf8(AllowInvalidCodeUnits = AllowInvalidCodeUnits::No) const;
 
     bool is_null() const { return m_code_units.is_null(); }

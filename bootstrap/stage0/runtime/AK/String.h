@@ -67,7 +67,7 @@ public:
     // Creates a new String from a sequence of UTF-8 encoded code points.
     static ErrorOr<String> from_utf8(StringView);
     template<typename T>
-    requires(IsOneOf<RemoveCVReference<T>, DeprecatedString, DeprecatedFlyString>)
+    requires(IsOneOf<RemoveCVReference<T>, ByteString, DeprecatedFlyString, FlyString, String>)
     static ErrorOr<String> from_utf8(T&&) = delete;
 
     // Creates a new String by reading byte_count bytes from a UTF-8 encoded Stream.
@@ -95,17 +95,19 @@ public:
     // Creates a new String by case-transforming this String. Using these methods require linking LibUnicode into your application.
     ErrorOr<String> to_lowercase(Optional<StringView> const& locale = {}) const;
     ErrorOr<String> to_uppercase(Optional<StringView> const& locale = {}) const;
-    ErrorOr<String> to_titlecase(Optional<StringView> const& locale = {}) const;
+    ErrorOr<String> to_titlecase(Optional<StringView> const& locale = {}, TrailingCodePointTransformation trailing_code_point_transformation = TrailingCodePointTransformation::Lowercase) const;
     ErrorOr<String> to_casefold() const;
 
     // Compare this String against another string with caseless matching. Using this method requires linking LibUnicode into your application.
     [[nodiscard]] bool equals_ignoring_case(String const&) const;
 
+    [[nodiscard]] bool equals_ignoring_ascii_case(StringView) const;
+
     [[nodiscard]] bool starts_with(u32 code_point) const;
-    [[nodiscard]] bool starts_with_bytes(StringView) const;
+    [[nodiscard]] bool starts_with_bytes(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
 
     [[nodiscard]] bool ends_with(u32 code_point) const;
-    [[nodiscard]] bool ends_with_bytes(StringView) const;
+    [[nodiscard]] bool ends_with_bytes(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
 
     // Creates a substring with a deep copy of the specified data window.
     ErrorOr<String> substring_from_byte_offset(size_t start, size_t byte_count) const;
@@ -179,6 +181,10 @@ public:
     template<Arithmetic T>
     Optional<T> to_number(TrimWhitespace trim_whitespace = TrimWhitespace::Yes) const
     {
+#ifndef KERNEL
+        if constexpr (IsFloatingPoint<T>)
+            return StringUtils::convert_to_floating_point<T>(bytes_as_string_view(), trim_whitespace);
+#endif
         if constexpr (IsSigned<T>)
             return StringUtils::convert_to_int<T>(bytes_as_string_view(), trim_whitespace);
         else
@@ -215,11 +221,11 @@ public:
     void did_create_fly_string(Badge<FlyString>) const;
 
     // FIXME: Remove these once all code has been ported to String
-    [[nodiscard]] DeprecatedString to_deprecated_string() const;
-    static ErrorOr<String> from_deprecated_string(DeprecatedString const&);
+    [[nodiscard]] ByteString to_byte_string() const;
+    static ErrorOr<String> from_byte_string(ByteString const&);
     template<typename T>
     requires(IsSame<RemoveCVReference<T>, StringView>)
-    static ErrorOr<String> from_deprecated_string(T&&) = delete;
+    static ErrorOr<String> from_byte_string(T&&) = delete;
 
 private:
     // NOTE: If the least significant bit of the pointer is set, this is a short string.
@@ -255,7 +261,7 @@ private:
 };
 
 template<>
-struct Traits<String> : public GenericTraits<String> {
+struct Traits<String> : public DefaultTraits<String> {
     static unsigned hash(String const&);
 };
 

@@ -10,16 +10,16 @@
 #include <AK/StdLibExtras.h>
 #include <AK/StringView.h>
 #include <AK/UnicodeUtils.h>
-#include <Jakt/DeprecatedStringBuilder.h>
+#include <Jakt/ByteStringBuilder.h>
 
 namespace Jakt {
 
-DeprecatedStringBuilder DeprecatedStringBuilder::create()
+ByteStringBuilder ByteStringBuilder::create()
 {
-    return DeprecatedStringBuilder {};
+    return ByteStringBuilder {};
 }
 
-inline ErrorOr<void> DeprecatedStringBuilder::will_append(size_t size)
+inline ErrorOr<void> ByteStringBuilder::will_append(size_t size)
 {
     if (!m_buffer.has_value()) {
         m_buffer = TRY(DynamicArray<u8>::create_empty());
@@ -28,9 +28,9 @@ inline ErrorOr<void> DeprecatedStringBuilder::will_append(size_t size)
     return {};
 }
 
-DeprecatedStringBuilder::DeprecatedStringBuilder() = default;
+ByteStringBuilder::ByteStringBuilder() = default;
 
-ErrorOr<void> DeprecatedStringBuilder::append(StringView string)
+ErrorOr<void> ByteStringBuilder::append(StringView string)
 {
     if (string.is_empty())
         return {};
@@ -39,35 +39,35 @@ ErrorOr<void> DeprecatedStringBuilder::append(StringView string)
     return {};
 }
 
-ErrorOr<void> DeprecatedStringBuilder::append(char ch)
+ErrorOr<void> ByteStringBuilder::append(char ch)
 {
     TRY(will_append(1));
     TRY(m_buffer->push(ch));
     return {};
 }
 
-ErrorOr<void> DeprecatedStringBuilder::append(char const* characters, size_t length)
+ErrorOr<void> ByteStringBuilder::append(char const* characters, size_t length)
 {
     return append(StringView { characters, length });
 }
-ErrorOr<DeprecatedString> DeprecatedStringBuilder::to_string() const
+ErrorOr<ByteString> ByteStringBuilder::to_string() const
 {
     if (is_empty())
-        return DeprecatedString::empty();
-    return DeprecatedString(string_view());
+        return ByteString::empty();
+    return ByteString(string_view());
 }
 
-StringView DeprecatedStringBuilder::string_view() const
+StringView ByteStringBuilder::string_view() const
 {
     return StringView { data(), length() };
 }
 
-void DeprecatedStringBuilder::clear()
+void ByteStringBuilder::clear()
 {
     m_buffer = {};
 }
 
-ErrorOr<void> DeprecatedStringBuilder::append_code_point(u32 code_point)
+ErrorOr<void> ByteStringBuilder::append_code_point(u32 code_point)
 {
     auto nwritten = TRY(Jakt::UnicodeUtils::try_code_point_to_utf8(code_point, [this](char c) -> ErrorOr<void> {
         TRY(append(c));
@@ -83,7 +83,7 @@ ErrorOr<void> DeprecatedStringBuilder::append_code_point(u32 code_point)
     return {};
 }
 
-ErrorOr<void> DeprecatedStringBuilder::append_escaped_for_json(StringView string)
+ErrorOr<void> ByteStringBuilder::append_escaped_for_json(StringView string)
 {
     for (auto ch : string) {
         switch (ch) {

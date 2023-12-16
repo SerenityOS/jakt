@@ -10,7 +10,7 @@
 
 #include <AK/Error.h>
 #include <AK/RefCounted.h>
-#include <AK/DeprecatedString.h>
+#include <AK/ByteString.h>
 
 #include <Builtins/DynamicArray.h>
 #include <stdio.h>
@@ -29,7 +29,7 @@ public:
     ~File();
 
     static bool exists(StringView path);
-    static ErrorOr<DeprecatedString> current_executable_path();
+    static ErrorOr<ByteString> current_executable_path();
 
 private:
     File();

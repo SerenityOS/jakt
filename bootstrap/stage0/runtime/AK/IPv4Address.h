@@ -17,7 +17,7 @@
 #    include <AK/Error.h>
 #    include <Kernel/Library/KString.h>
 #else
-#    include <AK/DeprecatedString.h>
+#    include <AK/ByteString.h>
 #    include <AK/String.h>
 #endif
 
@@ -67,18 +67,18 @@ public:
             octet(SubnetClass::D));
     }
 #else
-    DeprecatedString to_deprecated_string() const
+    ByteString to_byte_string() const
     {
-        return DeprecatedString::formatted("{}.{}.{}.{}",
+        return ByteString::formatted("{}.{}.{}.{}",
             octet(SubnetClass::A),
             octet(SubnetClass::B),
             octet(SubnetClass::C),
             octet(SubnetClass::D));
     }
 
-    DeprecatedString to_deprecated_string_reversed() const
+    ByteString to_byte_string_reversed() const
     {
-        return DeprecatedString::formatted("{}.{}.{}.{}",
+        return ByteString::formatted("{}.{}.{}.{}",
             octet(SubnetClass::D),
             octet(SubnetClass::C),
             octet(SubnetClass::B),
@@ -162,7 +162,7 @@ private:
 static_assert(sizeof(IPv4Address) == 4);
 
 template<>
-struct Traits<IPv4Address> : public GenericTraits<IPv4Address> {
+struct Traits<IPv4Address> : public DefaultTraits<IPv4Address> {
     static unsigned hash(IPv4Address const& address) { return secure_sip_hash(static_cast<u64>(address.to_u32())); }
 };
 
@@ -179,7 +179,7 @@ template<>
 struct Formatter<IPv4Address> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, IPv4Address value)
     {
-        return Formatter<StringView>::format(builder, value.to_deprecated_string());
+        return Formatter<StringView>::format(builder, value.to_byte_string());
     }
 };
 #endif

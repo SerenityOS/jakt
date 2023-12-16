@@ -4,18 +4,18 @@ namespace Jakt {
 namespace jakt__platform {
 struct Target {
   public:
-public: DeprecatedString arch;public: DeprecatedString platform;public: DeprecatedString os;public: DeprecatedString abi;public: Target(DeprecatedString a_arch, DeprecatedString a_platform, DeprecatedString a_os, DeprecatedString a_abi);
+public: ByteString arch;public: ByteString platform;public: ByteString os;public: ByteString abi;public: Target(ByteString a_arch, ByteString a_platform, ByteString a_os, ByteString a_abi);
 
-public: static ErrorOr<jakt__platform::Target> from_triple(DeprecatedString const triple);
+public: static ErrorOr<jakt__platform::Target> from_triple(ByteString const triple);
 public: ErrorOr<size_t> int_alignment() const;
 public: ErrorOr<size_t> pointer_size() const;
-public: ErrorOr<DeprecatedString> name(bool const abbreviate) const;
+public: ErrorOr<ByteString> name(bool const abbreviate) const;
 public: static ErrorOr<jakt__platform::Target> active();
 public: ErrorOr<size_t> size_t_alignment() const;
 public: ErrorOr<size_t> size_t_size() const;
 public: ErrorOr<size_t> int_size() const;
 public: ErrorOr<size_t> pointer_alignment() const;
-public: ErrorOr<DeprecatedString> debug_description() const;
+public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::jakt__platform::Target> : Jakt::Formatter<Jakt::StringView>{
