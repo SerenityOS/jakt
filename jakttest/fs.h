@@ -6,7 +6,7 @@
 #include <Jakt/AKIntegration.h>
 
 #include <AK/Forward.h>
-#include <AK/DeprecatedString.h>
+#include <AK/ByteString.h>
 #include <AK/RefPtr.h>
 #ifndef _WIN32
 #include <dirent.h>
@@ -30,7 +30,7 @@ public:
     {
         other.m_dirfd = NULL;
     }
-    ErrorOr<Optional<DeprecatedString>> next();
+    ErrorOr<Optional<ByteString>> next();
 };
 
 class StatResults {
@@ -57,7 +57,7 @@ public:
     static ErrorOr<NonnullRefPtr<DirectoryIterator>> create(RefPtr<Impl>);
     ~DirectoryIterator();
     DirectoryIterator(DirectoryIterator&& other);
-    ErrorOr<Optional<DeprecatedString>> next();
+    ErrorOr<Optional<ByteString>> next();
 
 private:
     DirectoryIterator(RefPtr<Impl> impl);
@@ -87,10 +87,10 @@ public:
 };
 #endif
 
-ErrorOr<void> mkdir(DeprecatedString path);
-ErrorOr<void> rmdir(DeprecatedString path);
-ErrorOr<void> unlink(DeprecatedString path);
+ErrorOr<void> mkdir(ByteString path);
+ErrorOr<void> rmdir(ByteString path);
+ErrorOr<void> unlink(ByteString path);
 
-ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(DeprecatedString path);
-ErrorOr<Optional<StatResults>> stat_silencing_enoent(DeprecatedString path);
+ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(ByteString path);
+ErrorOr<Optional<StatResults>> stat_silencing_enoent(ByteString path);
 }

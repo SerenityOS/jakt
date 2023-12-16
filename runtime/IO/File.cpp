@@ -42,7 +42,7 @@ File::~File()
 
 ErrorOr<NonnullRefPtr<File>> File::open_for_reading(StringView path_)
 {
-    auto path = DeprecatedString(path_);
+    auto path = ByteString(path_);
     auto* stdio_file = fopen(path.characters(), "rb");
     if (!stdio_file)
         return Error::from_errno(errno);
@@ -58,7 +58,7 @@ ErrorOr<NonnullRefPtr<File>> File::open_for_reading(StringView path_)
 
 ErrorOr<NonnullRefPtr<File>> File::open_for_writing(StringView path_)
 {
-    auto path = DeprecatedString(path_);
+    auto path = ByteString(path_);
     auto* stdio_file = fopen(path.characters(), "wb");
     if (!stdio_file)
         return Error::from_errno(errno);
@@ -129,7 +129,7 @@ ErrorOr<size_t> File::write(DynamicArray<u8> data)
 
 bool File::exists(StringView path_)
 {
-    auto path = DeprecatedString(path_);
+    auto path = ByteString(path_);
 #ifdef _WIN32
     auto res = GetFileAttributesA(path.characters());
     return res != INVALID_FILE_ATTRIBUTES;
@@ -138,7 +138,7 @@ bool File::exists(StringView path_)
 #endif
 }
 
-ErrorOr<DeprecatedString> File::current_executable_path()
+ErrorOr<ByteString> File::current_executable_path()
 {
     char path[4096] {};
 #ifdef _WIN32
@@ -167,7 +167,7 @@ ErrorOr<DeprecatedString> File::current_executable_path()
 #endif
     path[sizeof(path) - 1] = '\0';
 
-    return DeprecatedString(StringView { path, strlen(path) });
+    return ByteString(StringView { path, strlen(path) });
 }
 
 }
