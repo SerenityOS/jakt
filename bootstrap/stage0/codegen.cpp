@@ -7568,7 +7568,9 @@ if (((!(((ids).has_value()))) || (((ids.value())).is_empty()))){
 utility::panic(TRY(ByteString::from_utf8("Internal error: couldn't find a 'from_string_literal' function despite passing typecheck"sv)));
 }
 ByteString const name = TRY((((((((((*this).program))->get_function((((ids.value()))[static_cast<i64>(0LL)]))))->name_for_codegen())).as_name_for_use())));
-ByteString const error_handler = ({
+ByteString const error_handler = "";
+/*
+({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((val).may_throw));
 if (__jakt_enum_value == true) {
@@ -7582,6 +7584,7 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
+*/
 __jakt_var_637 = TRY((__jakt_format((StringView::from_string_literal("{}({}::{}(\"{}\"sv))"sv)),error_handler,TRY((((*this).codegen_type(((val).type_id))))),name,escaped_value))); goto __jakt_label_542;
 
 }

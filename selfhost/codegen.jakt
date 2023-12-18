@@ -2559,7 +2559,6 @@ struct CodeGenerator {
                         }
 
                         let name = .program.get_function(ids![0]).name_for_codegen().as_name_for_use()
-
                         let error_handler = match val.may_throw { true => .current_error_handler(), else => "" }
                         yield format(
                             "{}({}::{}(\"{}\"sv))"
