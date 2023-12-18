@@ -47,7 +47,7 @@ return (((c) == (static_cast<u8>(u8'0'))) || ((c) == (static_cast<u8>(u8'1'))));
 
 ErrorOr<ByteString> join(JaktInternal::DynamicArray<ByteString> const strings,ByteString const separator) {
 {
-ByteString output = TRY(ByteString::from_utf8(""sv));
+ByteString output = (ByteString::must_from_utf8(""sv));
 size_t i = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((strings).iterator());
@@ -140,19 +140,19 @@ u32 cp = (_magic_value.value());
 auto __jakt_enum_value = (cp);
 if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'"'))))) {
 {
-TRY((((builder).append_string(TRY(ByteString::from_utf8("\\\""sv))))));
+TRY((((builder).append_string((ByteString::must_from_utf8("\\\""sv))))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'\\'))))) {
 {
-TRY((((builder).append_string(TRY(ByteString::from_utf8("\\\\"sv))))));
+TRY((((builder).append_string((ByteString::must_from_utf8("\\\\"sv))))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'\n'))))) {
 {
-TRY((((builder).append_string(TRY(ByteString::from_utf8("\\n"sv))))));
+TRY((((builder).append_string((ByteString::must_from_utf8("\\n"sv))))));
 }
 return JaktInternal::ExplicitValue<void>();
 }

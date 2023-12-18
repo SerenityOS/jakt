@@ -10,7 +10,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<void> build::Builder::link_into_executable(ByteString const cxx_compiler_path,ByteString const output_filename,JaktInternal::DynamicArray<ByteString> const extra_arguments) {
 {
-JaktInternal::DynamicArray<ByteString> args = (TRY((DynamicArray<ByteString>::create_with({cxx_compiler_path, TRY(ByteString::from_utf8("-o"sv)), output_filename}))));
+JaktInternal::DynamicArray<ByteString> args = (TRY((DynamicArray<ByteString>::create_with({cxx_compiler_path, (ByteString::must_from_utf8("-o"sv)), output_filename}))));
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).linked_files)).iterator());
 for (;;){
@@ -63,10 +63,10 @@ JaktInternal::DynamicArray<ByteString> args = (TRY((DynamicArray<ByteString>::cr
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>>{
 auto __jakt_enum_value = (((extra_arguments).size()));
 if (__jakt_enum_value == static_cast<size_t>(0ULL)) {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("cr"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("cr"sv)));
 }
 else {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("crT"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("crT"sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -136,7 +136,7 @@ return Error::from_errno(static_cast<i32>(1));
 }
 }
 
-ByteString const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((jakt__path::Path::from_string(file_name)))).replace_extension(TRY(ByteString::from_utf8("o"sv))))))).to_string())))))).to_string());
+ByteString const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((jakt__path::Path::from_string(file_name)))).replace_extension((ByteString::must_from_utf8("o"sv))))))).to_string())))))).to_string());
 TRY((((((*this).linked_files)).push(built_object))));
 JaktInternal::DynamicArray<ByteString> const args = TRY((compiler_invocation(((TRY((((binary_dir).join(file_name))))).to_string()),built_object)));
 size_t const id = TRY((((((*this).pool)).run(args))));

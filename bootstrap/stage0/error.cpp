@@ -562,10 +562,10 @@ return ({
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Hint */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("94"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("94"sv)));
 };/*case end*/
 case 1 /* Error */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("31"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("31"sv)));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -584,10 +584,10 @@ return ({
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Hint */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("Hint"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("Hint"sv)));
 };/*case end*/
 case 1 /* Error */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("Error"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("Error"sv)));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()

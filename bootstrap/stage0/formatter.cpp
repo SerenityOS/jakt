@@ -58,7 +58,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* SingleQuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.SingleQuotedString;ByteString const& quote = __jakt_match_value.quote;
 JaktInternal::Optional<ByteString> const& prefix = __jakt_match_value.prefix;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}'{}'"sv)),TRY((prefix.try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return TRY(ByteString::from_utf8(""sv)); }))),quote))));
+return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}'{}'"sv)),TRY((prefix.try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8(""sv)); }))),quote))));
 };/*case end*/
 case 1 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;ByteString const& quote = __jakt_match_value.quote;
@@ -75,331 +75,331 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const&
 return JaktInternal::ExplicitValue(name);
 };/*case end*/
 case 4 /* Semicolon */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(";"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(";"sv)));
 };/*case end*/
 case 5 /* Colon */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(":"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(":"sv)));
 };/*case end*/
 case 6 /* ColonColon */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("::"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("::"sv)));
 };/*case end*/
 case 7 /* LParen */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("("sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("("sv)));
 };/*case end*/
 case 8 /* RParen */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(")"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(")"sv)));
 };/*case end*/
 case 9 /* LCurly */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("{"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("{"sv)));
 };/*case end*/
 case 10 /* RCurly */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("}"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("}"sv)));
 };/*case end*/
 case 11 /* LSquare */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("["sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("["sv)));
 };/*case end*/
 case 12 /* RSquare */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("]"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("]"sv)));
 };/*case end*/
 case 13 /* PercentSign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("%"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("%"sv)));
 };/*case end*/
 case 14 /* Plus */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("+"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("+"sv)));
 };/*case end*/
 case 15 /* Minus */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("-"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("-"sv)));
 };/*case end*/
 case 16 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("="sv)));
 };/*case end*/
 case 17 /* PlusEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("+="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("+="sv)));
 };/*case end*/
 case 18 /* PlusPlus */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("++"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("++"sv)));
 };/*case end*/
 case 19 /* MinusEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("-="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("-="sv)));
 };/*case end*/
 case 20 /* MinusMinus */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("--"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("--"sv)));
 };/*case end*/
 case 21 /* AsteriskEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("*="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("*="sv)));
 };/*case end*/
 case 22 /* ForwardSlashEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("/="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("/="sv)));
 };/*case end*/
 case 23 /* PercentSignEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("%="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("%="sv)));
 };/*case end*/
 case 24 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("!="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("!="sv)));
 };/*case end*/
 case 25 /* DoubleEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("=="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("=="sv)));
 };/*case end*/
 case 26 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(">"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(">"sv)));
 };/*case end*/
 case 27 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(">="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(">="sv)));
 };/*case end*/
 case 28 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("<"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("<"sv)));
 };/*case end*/
 case 29 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("<="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("<="sv)));
 };/*case end*/
 case 30 /* LeftArithmeticShift */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("<<<"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("<<<"sv)));
 };/*case end*/
 case 31 /* LeftShift */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("<<"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("<<"sv)));
 };/*case end*/
 case 32 /* LeftShiftEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("<<="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("<<="sv)));
 };/*case end*/
 case 33 /* RightShift */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(">>"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(">>"sv)));
 };/*case end*/
 case 34 /* RightArithmeticShift */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(">>>"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(">>>"sv)));
 };/*case end*/
 case 35 /* RightShiftEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(">>="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(">>="sv)));
 };/*case end*/
 case 36 /* Asterisk */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("*"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("*"sv)));
 };/*case end*/
 case 37 /* Ampersand */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("&"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("&"sv)));
 };/*case end*/
 case 38 /* AmpersandEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("&="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("&="sv)));
 };/*case end*/
 case 39 /* AmpersandAmpersand */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("&&"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("&&"sv)));
 };/*case end*/
 case 40 /* Pipe */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("|"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("|"sv)));
 };/*case end*/
 case 41 /* PipeEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("|="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("|="sv)));
 };/*case end*/
 case 42 /* PipePipe */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("||"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("||"sv)));
 };/*case end*/
 case 43 /* Caret */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("^"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("^"sv)));
 };/*case end*/
 case 44 /* CaretEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("^="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("^="sv)));
 };/*case end*/
 case 45 /* Dollar */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("$"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("$"sv)));
 };/*case end*/
 case 46 /* Tilde */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("~"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("~"sv)));
 };/*case end*/
 case 47 /* ForwardSlash */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("/"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("/"sv)));
 };/*case end*/
 case 48 /* ExclamationPoint */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("!"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("!"sv)));
 };/*case end*/
 case 49 /* QuestionMark */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("?"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("?"sv)));
 };/*case end*/
 case 50 /* QuestionMarkQuestionMark */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("??"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("??"sv)));
 };/*case end*/
 case 51 /* QuestionMarkQuestionMarkEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("??="sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("??="sv)));
 };/*case end*/
 case 52 /* Comma */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(","sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(","sv)));
 };/*case end*/
 case 53 /* Dot */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("."sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("."sv)));
 };/*case end*/
 case 54 /* DotDot */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(".."sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(".."sv)));
 };/*case end*/
 case 55 /* Eol */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 case 56 /* Eof */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 case 57 /* FatArrow */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("=>"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("=>"sv)));
 };/*case end*/
 case 58 /* Arrow */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("->"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("->"sv)));
 };/*case end*/
 case 59 /* And */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("and"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("and"sv)));
 };/*case end*/
 case 60 /* Anon */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("anon"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("anon"sv)));
 };/*case end*/
 case 61 /* As */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("as"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("as"sv)));
 };/*case end*/
 case 62 /* Boxed */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("boxed"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("boxed"sv)));
 };/*case end*/
 case 63 /* Break */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("break"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("break"sv)));
 };/*case end*/
 case 64 /* Catch */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("catch"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("catch"sv)));
 };/*case end*/
 case 65 /* Class */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("class"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("class"sv)));
 };/*case end*/
 case 66 /* Continue */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("continue"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("continue"sv)));
 };/*case end*/
 case 67 /* Cpp */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("cpp"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("cpp"sv)));
 };/*case end*/
 case 68 /* Defer */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("defer"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("defer"sv)));
 };/*case end*/
 case 69 /* Destructor */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("destructor"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("destructor"sv)));
 };/*case end*/
 case 70 /* Else */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("else"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("else"sv)));
 };/*case end*/
 case 71 /* Enum */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("enum"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("enum"sv)));
 };/*case end*/
 case 72 /* Extern */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("extern"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("extern"sv)));
 };/*case end*/
 case 73 /* False */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("false"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("false"sv)));
 };/*case end*/
 case 74 /* For */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("for"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("for"sv)));
 };/*case end*/
 case 75 /* Fn */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("fn"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("fn"sv)));
 };/*case end*/
 case 76 /* Comptime */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("comptime"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("comptime"sv)));
 };/*case end*/
 case 77 /* If */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("if"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("if"sv)));
 };/*case end*/
 case 78 /* Import */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("import"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("import"sv)));
 };/*case end*/
 case 79 /* Relative */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("relative"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("relative"sv)));
 };/*case end*/
 case 80 /* In */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("in"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("in"sv)));
 };/*case end*/
 case 81 /* Is */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("is"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("is"sv)));
 };/*case end*/
 case 82 /* Let */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("let"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("let"sv)));
 };/*case end*/
 case 83 /* Loop */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("loop"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("loop"sv)));
 };/*case end*/
 case 84 /* Match */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("match"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("match"sv)));
 };/*case end*/
 case 85 /* Mut */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("mut"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("mut"sv)));
 };/*case end*/
 case 86 /* Namespace */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("namespace"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("namespace"sv)));
 };/*case end*/
 case 87 /* Not */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not"sv)));
 };/*case end*/
 case 88 /* Or */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("or"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("or"sv)));
 };/*case end*/
 case 90 /* Private */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("private"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("private"sv)));
 };/*case end*/
 case 91 /* Public */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("public"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("public"sv)));
 };/*case end*/
 case 92 /* Raw */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("raw"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("raw"sv)));
 };/*case end*/
 case 94 /* Return */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("return"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("return"sv)));
 };/*case end*/
 case 95 /* Restricted */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("restricted"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("restricted"sv)));
 };/*case end*/
 case 96 /* Sizeof */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("sizeof"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("sizeof"sv)));
 };/*case end*/
 case 97 /* Struct */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("struct"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("struct"sv)));
 };/*case end*/
 case 98 /* This */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("this"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("this"sv)));
 };/*case end*/
 case 99 /* Throw */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("throw"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("throw"sv)));
 };/*case end*/
 case 100 /* Throws */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("throws"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("throws"sv)));
 };/*case end*/
 case 101 /* True */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("true"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("true"sv)));
 };/*case end*/
 case 102 /* Try */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("try"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("try"sv)));
 };/*case end*/
 case 103 /* Unsafe */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("unsafe"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("unsafe"sv)));
 };/*case end*/
 case 105 /* Weak */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("weak"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("weak"sv)));
 };/*case end*/
 case 106 /* While */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("while"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("while"sv)));
 };/*case end*/
 case 107 /* Yield */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("yield"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("yield"sv)));
 };/*case end*/
 case 108 /* Guard */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("guard"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("guard"sv)));
 };/*case end*/
 case 89 /* Override */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("override"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("override"sv)));
 };/*case end*/
 case 104 /* Virtual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("virtual"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("virtual"sv)));
 };/*case end*/
 case 109 /* Implements */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("implements"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("implements"sv)));
 };/*case end*/
 case 110 /* Requires */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("requires"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("requires"sv)));
 };/*case end*/
 case 111 /* Trait */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("trait"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("trait"sv)));
 };/*case end*/
 case 93 /* Reflect */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("reflect"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("reflect"sv)));
 };/*case end*/
 case 112 /* Garbage */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -423,10 +423,10 @@ return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_l
 };/*case end*/
 case 55 /* Eol */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Eol;JaktInternal::Optional<ByteString> const& comment = __jakt_match_value.comment;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("Eol: {}"sv)),TRY((comment.try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return TRY(ByteString::from_utf8(""sv)); })))))));
+return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("Eol: {}"sv)),TRY((comment.try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8(""sv)); })))))));
 };/*case end*/
 case 56 /* Eof */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("Eof"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("Eof"sv)));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(TRY((((*this).token_text()))));
@@ -1868,7 +1868,7 @@ __jakt_label_572:; __jakt_var_676.release_value(); }));
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_677; {
-if ((((name) == (TRY(ByteString::from_utf8("type"sv)))) && ((((*this).peek(static_cast<i64>(0LL)))).__jakt_init_index() == 3 /* Identifier */))){
+if ((((name) == ((ByteString::must_from_utf8("type"sv)))) && ((((*this).peek(static_cast<i64>(0LL)))).__jakt_init_index() == 3 /* Identifier */))){
 TRY((((*this).push_state(formatter::State::EntityDeclaration(formatter::Entity::from_token(((token))),true,false,static_cast<size_t>(0ULL),is_extern)))));
 return TRY((((*this).formatted_token(token,(TRY((DynamicArray<u8>::create_with({static_cast<u8>(u8' ')})))),(TRY((DynamicArray<u8>::create_with({}))))))));
 }
@@ -5815,7 +5815,7 @@ return TRY((((*this).next())));
 default: {
 return JaktInternal::ExplicitValue(({ Optional<formatter::FormattedToken> __jakt_var_872; {
 JaktInternal::DynamicArray<ByteString> collection = (TRY((DynamicArray<ByteString>::create_with({}))));
-ByteString output = TRY(ByteString::from_utf8(""sv));
+ByteString output = (ByteString::must_from_utf8(""sv));
 utility::Span const span = ((token).span());
 lexer::Token local_token = token;
 while ((!(((local_token).__jakt_init_index() == 10 /* RCurly */)))){
@@ -5857,7 +5857,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY(ByteString::from_utf8("\n"sv)))));
+(output,(ByteString::must_from_utf8("\n"sv)))));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(indent_amount)});
 for (;;){
@@ -5873,7 +5873,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY(ByteString::from_utf8(" "sv)))));
+(output,(ByteString::must_from_utf8(" "sv)))));
 }
 
 }
@@ -5888,7 +5888,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY(ByteString::from_utf8(", "sv)))));
+(output,(ByteString::must_from_utf8(", "sv)))));
 ((current_len) += (static_cast<size_t>(2ULL)));
 }
 else {
@@ -5918,23 +5918,23 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-(output = TRY((((TRY(ByteString::from_utf8(" "sv))) + (output)))));
+(output = TRY(((((ByteString::must_from_utf8(" "sv))) + (output)))));
 }
 
 }
 }
 
-(output = TRY((((TRY(ByteString::from_utf8("\n"sv))) + (output)))));
+(output = TRY(((((ByteString::must_from_utf8("\n"sv))) + (output)))));
 TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 {
 (self = TRY((((self) + (rhs)))));
 }
 return {};
 }
-(output,TRY(ByteString::from_utf8("\n"sv)))));
+(output,(ByteString::must_from_utf8("\n"sv)))));
 }
 else {
-(output = TRY((((TRY((((TRY(ByteString::from_utf8(" "sv))) + (output))))) + (TRY(ByteString::from_utf8(" "sv)))))));
+(output = TRY((((TRY(((((ByteString::must_from_utf8(" "sv))) + (output))))) + ((ByteString::must_from_utf8(" "sv)))))));
 }
 
 ((*this).pop_state());
@@ -6787,46 +6787,46 @@ return ({
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Toplevel */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("toplevel"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("toplevel"sv)));
 };/*case end*/
 case 1 /* Extern */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("extern"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("extern"sv)));
 };/*case end*/
 case 2 /* Import */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("import"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("import"sv)));
 };/*case end*/
 case 3 /* ImportList */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("import list"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("import list"sv)));
 };/*case end*/
 case 5 /* Implements */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("implements"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("implements"sv)));
 };/*case end*/
 case 4 /* EntityDeclaration */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("entity declaration"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("entity declaration"sv)));
 };/*case end*/
 case 6 /* CaptureList */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("capture list"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("capture list"sv)));
 };/*case end*/
 case 7 /* ParameterList */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("parameter list"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("parameter list"sv)));
 };/*case end*/
 case 8 /* RestrictionList */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("restriction list"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("restriction list"sv)));
 };/*case end*/
 case 9 /* EntityDefinition */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("entity definition"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("entity definition"sv)));
 };/*case end*/
 case 10 /* StatementContext */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("statement context"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("statement context"sv)));
 };/*case end*/
 case 11 /* MatchPattern */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("match pattern"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("match pattern"sv)));
 };/*case end*/
 case 12 /* VariableDeclaration */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("variable declaration"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("variable declaration"sv)));
 };/*case end*/
 case 13 /* GenericCallTypeParams */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("generic call type params"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("generic call type params"sv)));
 };/*case end*/
 case 14 /* TypeContext */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.TypeContext;size_t const& open_parens = __jakt_match_value.open_parens;
@@ -6837,7 +6837,7 @@ bool const& seen_start = __jakt_match_value.seen_start;
 return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("type context (p{} c{} s{} a{} s:{})"sv)),open_parens,open_curlies,open_squares,open_angles,seen_start))));
 };/*case end*/
 case 15 /* FunctionTypeContext */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("function type context"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("function type context"sv)));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()

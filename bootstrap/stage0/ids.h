@@ -23,41 +23,6 @@ return ((((*this).id)) == (((rhs).id)));
 public: ModuleId(size_t a_id);
 
 public: public: ErrorOr<ByteString> debug_description() const;
-};struct VarId {
-  public:
-public: ids::ModuleId module;public: size_t id;public: VarId(ids::ModuleId a_module, size_t a_id);
-
-public: ErrorOr<ByteString> debug_description() const;
-};struct TypeId {
-  public:
-public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline u32 hash() const {
-{
-return [](size_t const& self, ids::ModuleId const& other) -> u32 {
-{
-return pair_int_hash([](size_t const& self) -> u32 {
-{
-return ((AK::Traits<size_t>()).hash(self));
-}
-}
-(self),((((other))).hash()));
-}
-}
-(((*this).id),((((*this).module))));
-}
-}
-public: __attribute__((always_inline)) inline static JaktInternal::Optional<ids::TypeId> none() {
-{
-return JaktInternal::OptionalNone();
-}
-}
-public: TypeId(ids::ModuleId a_module, size_t a_id);
-
-public: public: __attribute__((always_inline)) inline bool equals(ids::TypeId const rhs) const {
-{
-return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)) == (((rhs).id))));
-}
-}
-public: public: ErrorOr<ByteString> debug_description() const;
 };struct EnumId {
   public:
 public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(ids::EnumId const rhs) const {
@@ -66,6 +31,11 @@ return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)
 }
 }
 public: EnumId(ids::ModuleId a_module, size_t a_id);
+
+public: ErrorOr<ByteString> debug_description() const;
+};struct VarId {
+  public:
+public: ids::ModuleId module;public: size_t id;public: VarId(ids::ModuleId a_module, size_t a_id);
 
 public: ErrorOr<ByteString> debug_description() const;
 };struct StructId {
@@ -113,6 +83,36 @@ return (((((((*this).module)).id)) == (((((other).module)).id))) && ((((*this).i
 public: TraitId(ids::ModuleId a_module, size_t a_id);
 
 public: ErrorOr<ByteString> debug_description() const;
+};struct TypeId {
+  public:
+public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline u32 hash() const {
+{
+return [](size_t const& self, ids::ModuleId const& other) -> u32 {
+{
+return pair_int_hash([](size_t const& self) -> u32 {
+{
+return ((AK::Traits<size_t>()).hash(self));
+}
+}
+(self),((((other))).hash()));
+}
+}
+(((*this).id),((((*this).module))));
+}
+}
+public: __attribute__((always_inline)) inline static JaktInternal::Optional<ids::TypeId> none() {
+{
+return JaktInternal::OptionalNone();
+}
+}
+public: TypeId(ids::ModuleId a_module, size_t a_id);
+
+public: public: __attribute__((always_inline)) inline bool equals(ids::TypeId const rhs) const {
+{
+return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)) == (((rhs).id))));
+}
+}
+public: public: ErrorOr<ByteString> debug_description() const;
 };struct FunctionId {
   public:
 public: ids::ModuleId module;public: size_t id;public: FunctionId(ids::ModuleId a_module, size_t a_id);
@@ -131,20 +131,14 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::ids::VarId> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ids::VarId const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::ids::TypeId> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ids::TypeId const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::ids::EnumId> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ids::EnumId const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::ids::VarId> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ids::VarId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
@@ -163,6 +157,12 @@ namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::ids::TraitId> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ids::TraitId const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::ids::TypeId> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ids::TypeId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
