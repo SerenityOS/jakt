@@ -10720,7 +10720,6 @@ struct Typechecker {
 
             if call.name == "format" {
                 return_type = .prelude_struct_type_named("String")
-                callee_throws = true
             }
         } else {
             mut max_found_specificity = -1i64
