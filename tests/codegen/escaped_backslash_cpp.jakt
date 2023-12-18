@@ -1,0 +1,16 @@
+/// Expect:
+/// - output: "PASS\n"
+
+// #1159: The substitutions for '\\' and '\"' should yield correct C++ without
+// crashing the compiler.
+
+fn main() {
+    let str = "\\\\\\\\\\\\"
+    let str2 = "\\\\"
+    let str3 = "\
+           \\
+        "
+    unsafe { cpp { " auto str4 = \"\\\"\";" } }
+    unsafe { cpp { " auto str5 = \"\\\\\";" } }
+    println("PASS")
+}
