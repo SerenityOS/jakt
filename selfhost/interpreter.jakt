@@ -467,7 +467,7 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
                 type: Type::Struct(interpreter.program.find_struct_in_prelude("String"))
                 module_id: interpreter.program.prelude_module_id()
             )
-            may_throw: true
+            may_throw: false
         )
         span: this_value.span
     )
@@ -479,7 +479,7 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
                 type: Type::Struct(interpreter.program.find_struct_in_prelude("StringView"))
                 module_id: interpreter.program.prelude_module_id()
             )
-            may_throw: true
+            may_throw: false
         )
         span: this_value.span
     )

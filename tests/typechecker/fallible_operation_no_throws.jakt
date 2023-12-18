@@ -1,8 +1,0 @@
-/// Expect:
-/// - error: "Operation that may throw needs to be in a try statement or a function marked as throws"
-
-fn does_not_throw() {
-    "whf"
-}
-
-fn main() {}

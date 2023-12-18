@@ -8137,7 +8137,7 @@ struct Typechecker {
                     mut type_id = .strip_optional_from_type(.generic_inferences.map(type_hint!))
                     let prelude_string_type_id = .prelude_struct_type_named("String")
                     let prelude_string_view_type_id = .prelude_struct_type_named("StringView")
-                    mut may_throw = type_id.equals(prelude_string_type_id)
+                    mut may_throw = false
                     if not type_id.equals(prelude_string_type_id) and not type_id.equals(prelude_string_view_type_id) {
                         if .get_type(type_id).is_concrete() {
                             let trait_implementation = .find_any_singular_trait_implementation(
@@ -8159,7 +8159,6 @@ struct Typechecker {
                             }
                         } else if not .get_type(type_id).is_concrete() {
                             type_id = .prelude_struct_type_named("String")
-                            may_throw = true
                         }
                     }
 
@@ -8184,14 +8183,11 @@ struct Typechecker {
                     )
                 }
                 else => {
-                    if not .get_scope(scope_id).can_throw {
-                        .error("Operation that may throw needs to be in a try statement or a function marked as throws", span)
-                    }
                     yield CheckedExpression::QuotedString(
                         val: CheckedStringLiteral(
                             value: StringLiteral::Static(val)
                             type_id: .prelude_struct_type_named("String")
-                            may_throw: true
+                            may_throw: false
                         )
                         span
                     )
