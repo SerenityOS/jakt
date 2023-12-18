@@ -1,13 +1,13 @@
 #include "parser.h"
 namespace Jakt {
 namespace parser {
-ErrorOr<utility::Span> merge_spans(utility::Span const start,utility::Span const end) {
+utility::Span merge_spans(utility::Span const start,utility::Span const end) {
 {
 if ((((((((end).file_id)).id)) == (static_cast<size_t>(0ULL))) && (((((end).start)) == (static_cast<size_t>(0ULL))) && ((((end).end)) == (static_cast<size_t>(0ULL)))))){
 return start;
 }
 if (((((((start).file_id)).id)) != (((((end).file_id)).id)))){
-utility::panic(TRY((__jakt_format((StringView::from_string_literal("cannot merge spans from two different files ({} and {})"sv)),start,end))));
+utility::panic(__jakt_format((StringView::from_string_literal("cannot merge spans from two different files ({} and {})"sv)),start,end));
 }
 return utility::Span(((start).file_id),((start).start),((end).end));
 }
@@ -185,7 +185,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("should_auto_import: {}", should_auto_import));
 }
 TRY(builder.append(")"sv));return builder.to_string(); }
-ErrorOr<bool> parser::ParsedExternImport::is_equivalent_to(parser::ParsedExternImport const other) const {
+bool parser::ParsedExternImport::is_equivalent_to(parser::ParsedExternImport const other) const {
 {
 return (((*this).is_c) && (((other).is_c) && (((((*this).get_path())) == (((other).get_path()))) && (((((*this).get_name())) == (((other).get_name()))) && ((((*this).should_auto_import)) == (((other).should_auto_import)))))));
 }
@@ -277,7 +277,7 @@ break;
 }
 parser::ImportName name = (_magic_value.value());
 {
-TRY((((name_set).add(TRY((((name).literal_name())))))));
+TRY((((name_set).add(((name).literal_name())))));
 }
 
 }
@@ -316,7 +316,7 @@ break;
 }
 parser::ImportName name = (_magic_value.value());
 {
-if ((!(((name_set).contains(TRY((((name).literal_name())))))))){
+if ((!(((name_set).contains(((name).literal_name())))))){
 TRY((((((*this).import_list)).add(name))));
 }
 }
@@ -528,7 +528,7 @@ return true;
 }
 }
 
-ErrorOr<JaktInternal::Optional<utility::Span>> parser::ParsedBlock::span(parser::Parser const parser) const {
+JaktInternal::Optional<utility::Span> parser::ParsedBlock::span(parser::Parser const parser) const {
 {
 JaktInternal::Optional<size_t> start = JaktInternal::OptionalNone();
 size_t end = static_cast<size_t>(0ULL);
@@ -727,7 +727,7 @@ return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::Pa
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
-utility::Span const span = TRY((parser::merge_spans(start,((expr)->span()))));
+utility::Span const span = parser::merge_spans(start,((expr)->span()));
 __jakt_var_15 = TRY((parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::LogicalNot(),span))); goto __jakt_label_11;
 
 }
@@ -739,7 +739,7 @@ return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::Pa
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
-utility::Span const span = TRY((parser::merge_spans(start,((expr)->span()))));
+utility::Span const span = parser::merge_spans(start,((expr)->span()));
 __jakt_var_16 = TRY((parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::BitwiseNot(),span))); goto __jakt_label_12;
 
 }
@@ -751,7 +751,7 @@ return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::Pa
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedType> const parsed_type = TRY((((*this).parse_typename())));
-utility::Span const span = TRY((parser::merge_spans(start,((parsed_type)->span()))));
+utility::Span const span = parser::merge_spans(start,((parsed_type)->span()));
 __jakt_var_17 = TRY((parser::ParsedExpression::UnaryOp(TRY((parser::ParsedExpression::Garbage(span))),parser::UnaryOperator::Sizeof(parsed_type),span))); goto __jakt_label_13;
 
 }
@@ -763,7 +763,7 @@ return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::Pa
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedType> const type = TRY((((*this).parse_typename())));
-utility::Span const span = TRY((parser::merge_spans(start,((type)->span()))));
+utility::Span const span = parser::merge_spans(start,((type)->span()));
 __jakt_var_18 = TRY((parser::ParsedExpression::Reflect(type,span))); goto __jakt_label_14;
 
 }
@@ -882,7 +882,7 @@ return JaktInternal::ExplicitValue<void>();
 if (((*this).eof())){
 TRY((((*this).error((ByteString::must_from_utf8("Expected ')'"sv)),((((*this).current())).span())))));
 }
-(expr = TRY((parser::ParsedExpression::JaktTuple(tuple_exprs,TRY((parser::merge_spans(start_span,end_span)))))));
+(expr = TRY((parser::ParsedExpression::JaktTuple(tuple_exprs,parser::merge_spans(start_span,end_span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -935,7 +935,7 @@ TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("unreachable"sv)))
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
-utility::Span const span = TRY((parser::merge_spans(start,((expr)->span()))));
+utility::Span const span = parser::merge_spans(start,((expr)->span()));
 __jakt_var_21 = TRY((parser::ParsedExpression::UnaryOp(expr,op,span))); goto __jakt_label_17;
 
 }
@@ -972,7 +972,7 @@ TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("unreachable"sv)))
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
-utility::Span const span = TRY((parser::merge_spans(start,((expr)->span()))));
+utility::Span const span = parser::merge_spans(start,((expr)->span()));
 __jakt_var_22 = TRY((parser::ParsedExpression::UnaryOp(expr,op,span))); goto __jakt_label_18;
 
 }
@@ -1009,7 +1009,7 @@ TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("unreachable"sv)))
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
-utility::Span const span = TRY((parser::merge_spans(start,((expr)->span()))));
+utility::Span const span = parser::merge_spans(start,((expr)->span()));
 __jakt_var_23 = TRY((parser::ParsedExpression::UnaryOp(expr,op,span))); goto __jakt_label_19;
 
 }
@@ -1097,7 +1097,7 @@ case 2 /* U8 */: {
 {
 JaktInternal::Optional<u8> const n = (fallible_integer_cast<u8>((number)));
 if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix),span))));
 return parser::NumericConstant::U64(number);
 }
 return parser::NumericConstant::U8((n.value()));
@@ -1108,7 +1108,7 @@ case 3 /* U16 */: {
 {
 JaktInternal::Optional<u16> const n = (fallible_integer_cast<u16>((number)));
 if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix),span))));
 return parser::NumericConstant::U64(number);
 }
 return parser::NumericConstant::U16((n.value()));
@@ -1119,7 +1119,7 @@ case 4 /* U32 */: {
 {
 JaktInternal::Optional<u32> const n = (fallible_integer_cast<u32>((number)));
 if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix),span))));
 return parser::NumericConstant::U64(number);
 }
 return parser::NumericConstant::U32((n.value()));
@@ -1130,7 +1130,7 @@ case 5 /* U64 */: {
 {
 JaktInternal::Optional<u64> const n = (fallible_integer_cast<u64>((number)));
 if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix),span))));
 return parser::NumericConstant::U64(number);
 }
 return parser::NumericConstant::U64((n.value()));
@@ -1141,7 +1141,7 @@ case 1 /* UZ */: {
 {
 JaktInternal::Optional<size_t> const n = (fallible_integer_cast<size_t>((number)));
 if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix),span))));
 return parser::NumericConstant::U64(number);
 }
 return parser::NumericConstant::USize((infallible_integer_cast<u64>(((n.value())))));
@@ -1152,7 +1152,7 @@ case 6 /* I8 */: {
 {
 JaktInternal::Optional<i8> const n = (fallible_integer_cast<i8>((number)));
 if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix),span))));
 return parser::NumericConstant::U64(number);
 }
 return parser::NumericConstant::I8((n.value()));
@@ -1163,7 +1163,7 @@ case 7 /* I16 */: {
 {
 JaktInternal::Optional<i16> const n = (fallible_integer_cast<i16>((number)));
 if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix),span))));
 return parser::NumericConstant::U64(number);
 }
 return parser::NumericConstant::I16((n.value()));
@@ -1174,7 +1174,7 @@ case 8 /* I32 */: {
 {
 JaktInternal::Optional<i32> const n = (fallible_integer_cast<i32>((number)));
 if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix),span))));
 return parser::NumericConstant::U64(number);
 }
 return parser::NumericConstant::I32((n.value()));
@@ -1185,7 +1185,7 @@ case 9 /* I64 */: {
 {
 JaktInternal::Optional<i64> const n = (fallible_integer_cast<i64>((number)));
 if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Number {} cannot fit in integer type {}"sv)),number,suffix),span))));
 return parser::NumericConstant::U64(number);
 }
 return parser::NumericConstant::I64((n.value()));
@@ -1297,7 +1297,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).parse_block()))));
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-return TRY((parser::ParsedExpression::Function(captures,((fn_parameters).parameters),can_throw,is_fat_arrow,return_type,block,TRY((parser::merge_spans(start,((((*this).current())).span())))))));
+return TRY((parser::ParsedExpression::Function(captures,((fn_parameters).parameters),can_throw,is_fat_arrow,return_type,block,parser::merge_spans(start,((((*this).current())).span())))));
 }
 }
 
@@ -1312,7 +1312,7 @@ return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::Pa
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedType> const inner = TRY((((*this).parse_typename())));
-utility::Span const span = TRY((parser::merge_spans(start,((((*this).current())).span()))));
+utility::Span const span = parser::merge_spans(start,((((*this).current())).span()));
 __jakt_var_30 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedType>, ErrorOr<NonnullRefPtr<typename parser::ParsedType>>>{
 auto&& __jakt_match_variant = *inner;
@@ -1340,7 +1340,7 @@ return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::Pa
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedType> const inner = TRY((((*this).parse_typename())));
-utility::Span const span = TRY((parser::merge_spans(start,((((*this).current())).span()))));
+utility::Span const span = parser::merge_spans(start,((((*this).current())).span()));
 __jakt_var_31 = TRY((parser::ParsedType::WeakPtr(qualifiers,inner,span))); goto __jakt_label_27;
 
 }
@@ -1440,7 +1440,7 @@ else {
 TRY((((*this).error((ByteString::must_from_utf8("Expected '->'"sv)),((((*this).current())).span())))));
 }
 
-__jakt_var_33 = TRY((parser::ParsedType::Function(qualifiers,((fn_parameters).parameters),can_throw,return_type,TRY((parser::merge_spans(start,((return_type)->span()))))))); goto __jakt_label_29;
+__jakt_var_33 = TRY((parser::ParsedType::Function(qualifiers,((fn_parameters).parameters),can_throw,return_type,parser::merge_spans(start,((return_type)->span()))))); goto __jakt_label_29;
 
 }
 __jakt_label_29:; __jakt_var_33.release_value(); }));
@@ -3265,7 +3265,7 @@ else if ((for_trailing_closure && ((((*this).current())).__jakt_init_index() == 
 ((((*this).index)++));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Expected '{:c}'"sv)),({
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Expected '{:c}'"sv)),({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<u32,ErrorOr<parser::ParsedFunctionParameters>>{
 auto __jakt_enum_value = (for_trailing_closure);
 if (__jakt_enum_value == true) {
@@ -3279,7 +3279,7 @@ VERIFY_NOT_REACHED();
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-})))),((((*this).current())).span())))));
+})),((((*this).current())).span())))));
 }
 
 ((*this).skip_newlines());
@@ -4174,7 +4174,7 @@ if (((((*this).current())).__jakt_init_index() == 9 /* LCurly */)){
 NonnullRefPtr<typename parser::ParsedType> const inner = TRY((((*this).parse_typename())));
 if (((((*this).current())).__jakt_init_index() == 10 /* RCurly */)){
 ((((*this).index)++));
-return TRY((parser::ParsedType::Set(qualifiers,inner,TRY((parser::merge_spans(start,((((*this).current())).span())))))));
+return TRY((parser::ParsedType::Set(qualifiers,inner,parser::merge_spans(start,((((*this).current())).span())))));
 }
 TRY((((*this).error((ByteString::must_from_utf8("Expected '}'"sv)),((((*this).current())).span())))));
 return TRY((parser::ParsedType::Empty(qualifiers)));
@@ -4215,7 +4215,7 @@ parser::ParsedBlock const block = TRY((((*this).parse_block())));
 if (((then_block).equals(block))){
 TRY((((*this).error((ByteString::must_from_utf8("if and else have identical blocks"sv)),((((*this).current())).span())))));
 }
-(else_statement = TRY((parser::ParsedStatement::Block(block,TRY((parser::merge_spans(start_span,((((*this).previous())).span()))))))));
+(else_statement = TRY((parser::ParsedStatement::Block(block,parser::merge_spans(start_span,((((*this).previous())).span()))))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -4233,7 +4233,7 @@ return JaktInternal::ExplicitValue<void>();
     _jakt_value.release_value();
 });
 }
-return TRY((parser::ParsedStatement::If(condition,then_block,else_statement,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
+return TRY((parser::ParsedStatement::If(condition,then_block,else_statement,parser::merge_spans(start_span,((((*this).previous())).span())))));
 }
 }
 
@@ -4342,7 +4342,7 @@ return JaktInternal::ExplicitValue<void>();
 default: {
 {
 utility::Span const label_span = ((((*this).current())).span());
-ByteString const label = TRY((((*this).parse_argument_label())));
+ByteString const label = ((*this).parse_argument_label());
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
 TRY((((((call).args)).push((Tuple{label, label_span, expr})))));
 }
@@ -4402,7 +4402,7 @@ if (has_varargs){
 TRY((((*this).error((ByteString::must_from_utf8("Function expressions cannot have varargs"sv)),((((*this).current())).span())))));
 }
 (block = TRY((((*this).parse_block()))));
-utility::Span const span = TRY((parser::merge_spans(start,((((*this).current())).span()))));
+utility::Span const span = parser::merge_spans(start,((((*this).current())).span()));
 JaktInternal::DynamicArray<parser::ParsedCapture> const captures = (TRY((DynamicArray<parser::ParsedCapture>::create_with({parser::ParsedCapture::AllByReference((ByteString::must_from_utf8(""sv)),((*this).empty_span()))}))));
 NonnullRefPtr<typename parser::ParsedExpression> const trailing_closure = TRY((parser::ParsedExpression::Function(captures,params,false,false,TRY((parser::ParsedType::Empty(JaktInternal::OptionalNone()))),(block.value()),span)));
 NonnullRefPtr<typename parser::ParsedExpression> const reference_to_closure = TRY((parser::ParsedExpression::UnaryOp(trailing_closure,parser::UnaryOperator::Reference(),span)));
@@ -4562,7 +4562,7 @@ return JaktInternal::ExplicitValue(({ Optional<parser::ParsedMatchPattern> __jak
 JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> variant_arguments = TRY((((*this).parse_variant_arguments())));
 utility::Span const arguments_start = ((((*this).current())).span());
 utility::Span const arguments_end = ((((*this).previous())).span());
-utility::Span const arguments_span = TRY((parser::merge_spans(arguments_start,arguments_end)));
+utility::Span const arguments_span = parser::merge_spans(arguments_start,arguments_end);
 __jakt_var_48 = parser::ParsedMatchPattern::CatchAll((TRY((Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})))),variant_arguments,arguments_span); goto __jakt_label_44;
 
 }
@@ -4618,7 +4618,7 @@ return JaktInternal::ExplicitValue<void>();
 JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> variant_arguments = TRY((((*this).parse_variant_arguments())));
 utility::Span const arguments_start = ((((*this).current())).span());
 utility::Span const arguments_end = ((((*this).previous())).span());
-utility::Span const arguments_span = TRY((parser::merge_spans(arguments_start,arguments_end)));
+utility::Span const arguments_span = parser::merge_spans(arguments_start,arguments_end);
 __jakt_var_49 = parser::ParsedMatchPattern::EnumVariant((TRY((Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})))),variant_names,variant_arguments,arguments_span); goto __jakt_label_45;
 
 }
@@ -4702,7 +4702,7 @@ if (((((*this).current())).__jakt_init_index() == 58 /* Arrow */)){
 ((((*this).index)++));
 utility::Span const start = ((((*this).current())).span());
 (((parsed_function).return_type) = TRY((((*this).parse_typename()))));
-(((parsed_function).return_type_span) = TRY((parser::merge_spans(start,((((*this).previous())).span())))));
+(((parsed_function).return_type_span) = parser::merge_spans(start,((((*this).previous())).span())));
 }
 else {
 if (((parsed_function).is_jakt_main)){
@@ -4884,7 +4884,7 @@ case 6 /* ColonColon */: {
 if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
 ByteString const name = (((*this).current())).as.Identifier.name;
 ((((*this).index)++));
-(result = TRY((parser::ParsedType::DependentType(JaktInternal::OptionalNone(),result,name,TRY((parser::merge_spans(((base)->span()),((((*this).current())).span()))))))));
+(result = TRY((parser::ParsedType::DependentType(JaktInternal::OptionalNone(),result,name,parser::merge_spans(((base)->span()),((((*this).current())).span()))))));
 }
 else {
 TRY((((*this).error((ByteString::must_from_utf8("Expected identifier after `::`"sv)),((((*this).current())).span())))));
@@ -5388,7 +5388,7 @@ default: {
 {
 (active_attributes = (TRY((DynamicArray<parser::ParsedAttribute>::create_with({})))));
 if ((!(error))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid member, did not expect a {} here"sv)),token))),((token).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid member, did not expect a {} here"sv)),token),((token).span())))));
 (error = true);
 }
 ((((*this).index)++));
@@ -5423,7 +5423,7 @@ ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
-return TRY((parser::ParsedExpression::Unsafe(expr,TRY((parser::merge_spans(start,((expr)->span())))))));
+return TRY((parser::ParsedExpression::Unsafe(expr,parser::merge_spans(start,((expr)->span())))));
 }
 }
 
@@ -5434,10 +5434,10 @@ return TRY((((parser).parse_namespace(false))));
 }
 }
 
-ErrorOr<JaktInternal::Optional<parser::NumericConstant>> parser::Parser::make_float_numeric_constant(f64 const number,lexer::LiteralSuffix const suffix,utility::Span const span) {
+JaktInternal::Optional<parser::NumericConstant> parser::Parser::make_float_numeric_constant(f64 const number,lexer::LiteralSuffix const suffix,utility::Span const span) {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<parser::NumericConstant>, ErrorOr<JaktInternal::Optional<parser::NumericConstant>>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<parser::NumericConstant>, JaktInternal::Optional<parser::NumericConstant>>{
 auto&& __jakt_match_variant = suffix;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 10 /* F32 */: {
@@ -5501,7 +5501,7 @@ return JaktInternal::ExplicitValue<void>();
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-return TRY((parser::ParsedExpression::Range(JaktInternal::OptionalNone(),to,TRY((parser::merge_spans(start,((((*this).current())).span())))))));
+return TRY((parser::ParsedExpression::Range(JaktInternal::OptionalNone(),to,parser::merge_spans(start,((((*this).current())).span())))));
 }
 }
 
@@ -5510,7 +5510,7 @@ ErrorOr<parser::ParsedBlock> parser::Parser::parse_fat_arrow() {
 ((((*this).index)++));
 utility::Span const start = ((((*this).current())).span());
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
-NonnullRefPtr<typename parser::ParsedStatement> const return_statement = TRY((parser::ParsedStatement::Return(expr,TRY((parser::merge_spans(start,((((*this).current())).span())))))));
+NonnullRefPtr<typename parser::ParsedStatement> const return_statement = TRY((parser::ParsedStatement::Return(expr,parser::merge_spans(start,((((*this).current())).span())))));
 return parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({return_statement})))));
 }
 }
@@ -5963,7 +5963,7 @@ ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
-return TRY((parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::Dereference(),TRY((parser::merge_spans(start,((((*this).current())).span())))))));
+return TRY((parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::Dereference(),parser::merge_spans(start,((((*this).current())).span())))));
 }
 }
 
@@ -6019,7 +6019,7 @@ TRY((((*this).error_with_hint((ByteString::must_from_utf8("Duplicated match patt
 }
 
 }
-return TRY((parser::ParsedExpression::Match(expr,cases,TRY((parser::merge_spans(start,((((*this).previous())).span())))),start)));
+return TRY((parser::ParsedExpression::Match(expr,cases,parser::merge_spans(start,((((*this).previous())).span())),start)));
 }
 }
 
@@ -6064,7 +6064,7 @@ if (((((argument).assigned_value)).has_value())){
 if (((((argument).name)).starts_with((ByteString::must_from_utf8("define"sv))))){
 JaktInternal::DynamicArray<ByteString> const parts = (((((argument).assigned_value).value())).split('='));
 if (((((parts).size())) != (static_cast<size_t>(2ULL)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The argument '{}' expects a value in the form 'name=value'"sv)),((argument).name)))),((argument).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The argument '{}' expects a value in the form 'name=value'"sv)),((argument).name)),((argument).span)))));
 return JaktInternal::LoopContinue{};
 }
 parser::IncludeAction const action = parser::IncludeAction::Define(((parts)[static_cast<i64>(0LL)]),((attribute).span),((parts)[static_cast<i64>(1LL)]));
@@ -6089,7 +6089,7 @@ TRY((((((((namespace_))).generating_import_extern_after_include)).push(action)))
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The argument '{}' expects a value"sv)),((argument).name)))),((argument).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The argument '{}' expects a value"sv)),((argument).name)),((argument).span)))));
 return JaktInternal::LoopContinue{};
 }
 
@@ -6102,7 +6102,7 @@ if (((((argument).assigned_value)).has_value())){
 if (((((argument).name)).starts_with((ByteString::must_from_utf8("define"sv))))){
 JaktInternal::DynamicArray<ByteString> const parts = (((((argument).assigned_value).value())).split('='));
 if (((((parts).size())) != (static_cast<size_t>(2ULL)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The argument '{}' expects a value in the form 'name=value'"sv)),((argument).name)))),((argument).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The argument '{}' expects a value in the form 'name=value'"sv)),((argument).name)),((argument).span)))));
 return JaktInternal::LoopContinue{};
 }
 parser::IncludeAction const action = parser::IncludeAction::Define(((parts)[static_cast<i64>(0LL)]),((attribute).span),((parts)[static_cast<i64>(1LL)]));
@@ -6127,7 +6127,7 @@ TRY((((((((namespace_))).generating_import_extern_after_include)).push(action)))
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The argument '{}' expects a value"sv)),((argument).name)))),((argument).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The argument '{}' expects a value"sv)),((argument).name)),((argument).span)))));
 return JaktInternal::LoopContinue{};
 }
 
@@ -6140,7 +6140,7 @@ if (((((argument).assigned_value)).has_value())){
 if (((((argument).name)).starts_with((ByteString::must_from_utf8("define"sv))))){
 JaktInternal::DynamicArray<ByteString> const parts = (((((argument).assigned_value).value())).split('='));
 if (((((parts).size())) != (static_cast<size_t>(2ULL)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The argument '{}' expects a value in the form 'name=value'"sv)),((argument).name)))),((argument).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The argument '{}' expects a value in the form 'name=value'"sv)),((argument).name)),((argument).span)))));
 return JaktInternal::LoopContinue{};
 }
 parser::IncludeAction const action = parser::IncludeAction::Define(((parts)[static_cast<i64>(0LL)]),((attribute).span),((parts)[static_cast<i64>(1LL)]));
@@ -6165,7 +6165,7 @@ TRY((((((((namespace_))).generating_import_extern_after_include)).push(action)))
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The argument '{}' expects a value"sv)),((argument).name)))),((argument).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The argument '{}' expects a value"sv)),((argument).name)),((argument).span)))));
 return JaktInternal::LoopContinue{};
 }
 
@@ -6178,7 +6178,7 @@ if (((((argument).assigned_value)).has_value())){
 if (((((argument).name)).starts_with((ByteString::must_from_utf8("define"sv))))){
 JaktInternal::DynamicArray<ByteString> const parts = (((((argument).assigned_value).value())).split('='));
 if (((((parts).size())) != (static_cast<size_t>(2ULL)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The argument '{}' expects a value in the form 'name=value'"sv)),((argument).name)))),((argument).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The argument '{}' expects a value in the form 'name=value'"sv)),((argument).name)),((argument).span)))));
 return JaktInternal::LoopContinue{};
 }
 parser::IncludeAction const action = parser::IncludeAction::Define(((parts)[static_cast<i64>(0LL)]),((attribute).span),((parts)[static_cast<i64>(1LL)]));
@@ -6203,7 +6203,7 @@ TRY((((((((namespace_))).generating_import_extern_after_include)).push(action)))
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The argument '{}' expects a value"sv)),((argument).name)))),((argument).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The argument '{}' expects a value"sv)),((argument).name)),((argument).span)))));
 return JaktInternal::LoopContinue{};
 }
 
@@ -6212,7 +6212,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid argument for attribute '{}'"sv)),((attribute).name)))),((argument).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid argument for attribute '{}'"sv)),((attribute).name)),((argument).span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -6233,7 +6233,7 @@ return JaktInternal::ExplicitValue<void>();
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' does not take a value"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' does not take a value"sv)),((attribute).name)),((attribute).span)))));
 return JaktInternal::LoopContinue{};
 }
 
@@ -6246,7 +6246,7 @@ if ((!(((((attribute).assigned_value)).has_value())))){
 (((((namespace_))).is_generated_code) = true);
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' does not take a value"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' does not take a value"sv)),((attribute).name)),((attribute).span)))));
 return JaktInternal::LoopContinue{};
 }
 
@@ -6255,7 +6255,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' does not apply to namespaces"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' does not apply to namespaces"sv)),((attribute).name)),((attribute).span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -6296,7 +6296,7 @@ if (__jakt_enum_value == (ByteString::must_from_utf8("name"sv))) {
 {
 if (((((attribute).assigned_value)).has_value())){
 if (((((((((field))).var_decl)).external_name)).has_value())){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)),((attribute).span)))));
 return JaktInternal::LoopContinue{};
 }
 if (((((((attribute).assigned_value).value())).starts_with((ByteString::must_from_utf8("operator("sv)))) && (((((attribute).assigned_value).value())).ends_with((ByteString::must_from_utf8(")"sv)))))){
@@ -6313,7 +6313,7 @@ else {
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' requires a value"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' requires a value"sv)),((attribute).name)),((attribute).span)))));
 return JaktInternal::LoopContinue{};
 }
 
@@ -6322,7 +6322,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' does not apply to fields"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' does not apply to fields"sv)),((attribute).name)),((attribute).span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -6363,7 +6363,7 @@ if (__jakt_enum_value == (ByteString::must_from_utf8("name"sv))) {
 {
 if (((((attribute).assigned_value)).has_value())){
 if (((((((parsed_function))).external_name)).has_value())){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)),((attribute).span)))));
 return JaktInternal::LoopContinue{};
 }
 if (((((((attribute).assigned_value).value())).starts_with((ByteString::must_from_utf8("operator("sv)))) && (((((attribute).assigned_value).value())).ends_with((ByteString::must_from_utf8(")"sv)))))){
@@ -6380,7 +6380,7 @@ else {
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' requires a value"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' requires a value"sv)),((attribute).name)),((attribute).span)))));
 return JaktInternal::LoopContinue{};
 }
 
@@ -6390,10 +6390,10 @@ return JaktInternal::ExplicitValue<void>();
 else if (__jakt_enum_value == (ByteString::must_from_utf8("deprecated"sv))) {
 {
 if (((((((parsed_function))).deprecated_message)).has_value())){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)),((attribute).span)))));
 return JaktInternal::LoopContinue{};
 }
-ByteString const message = TRY((((((((attribute).arguments)).first())).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return TRY((__jakt_format((StringView::from_string_literal("The function '{}' is marked as deprecated"sv)),((((parsed_function))).name)))); })));
+ByteString const message = ((((((attribute).arguments)).first())).map([](auto& _value) { return _value.name; })).value_or_lazy_evaluated([&] { return __jakt_format((StringView::from_string_literal("The function '{}' is marked as deprecated"sv)),((((parsed_function))).name)); });
 (((((parsed_function))).deprecated_message) = message);
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6401,7 +6401,7 @@ return JaktInternal::ExplicitValue<void>();
 else if (__jakt_enum_value == (ByteString::must_from_utf8("inline"sv))) {
 {
 if ((!(((((((parsed_function))).force_inline)).__jakt_init_index() == 0 /* Default */)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)),((attribute).span)))));
 return JaktInternal::LoopContinue{};
 }
 parser::InlineState const inline_state = ({
@@ -6421,7 +6421,7 @@ return JaktInternal::ExplicitValue(parser::InlineState::MakeDefinitionAvailable(
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid argument for attribute '{}'"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid argument for attribute '{}'"sv)),((attribute).name)),((attribute).span)))));
 return JaktInternal::LoopContinue{};
 }
 }
@@ -6478,11 +6478,11 @@ if ((((target).has_value()) && ((((((param).variable)).name)) == ((target.value(
 }
 
 if ((!(((name_index).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Argument '{}' declared as stored here does not exist"sv)),((argument).name)))),((argument).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Argument '{}' declared as stored here does not exist"sv)),((argument).name)),((argument).span)))));
 continue;
 }
 if ((((target).has_value()) && (!(((target_index).has_value()))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Argument '{}' declared as store target here does not exist"sv)),(target.value())))),((argument).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Argument '{}' declared as store target here does not exist"sv)),(target.value())),((argument).span)))));
 continue;
 }
 JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel> entry = (Tuple{(name_index.value()), parser::ArgumentStoreLevel::InStaticStorage()});
@@ -6507,7 +6507,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' does not apply to functions"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' does not apply to functions"sv)),((attribute).name)),((attribute).span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -6555,7 +6555,7 @@ if (__jakt_enum_value == (ByteString::must_from_utf8("name"sv))) {
 {
 if (((((attribute).assigned_value)).has_value())){
 if (((((((parsed_record))).external_name)).has_value())){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)),((attribute).span)))));
 return JaktInternal::LoopContinue{};
 }
 if (((((((attribute).assigned_value).value())).starts_with((ByteString::must_from_utf8("operator("sv)))) && (((((attribute).assigned_value).value())).ends_with((ByteString::must_from_utf8(")"sv)))))){
@@ -6565,7 +6565,7 @@ return JaktInternal::LoopContinue{};
 (((((parsed_record))).external_name) = parser::ExternalName::Plain((((attribute).assigned_value).value())));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' requires a value"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' requires a value"sv)),((attribute).name)),((attribute).span)))));
 return JaktInternal::LoopContinue{};
 }
 
@@ -6574,7 +6574,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The attribute '{}' does not apply to records"sv)),((attribute).name)))),((attribute).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' does not apply to records"sv)),((attribute).name)),((attribute).span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -6770,7 +6770,7 @@ if (((((*this).current())).__jakt_init_index() == 7 /* LParen */)){
 ((((*this).index)--));
 JaktInternal::Optional<parser::ParsedCall> call = TRY((((*this).parse_call())));
 ((((call.value())).namespace_) = namespace_);
-return TRY((parser::ParsedExpression::Call((call.value()),TRY((parser::merge_spans(((expr)->span()),((((*this).current())).span())))))));
+return TRY((parser::ParsedExpression::Call((call.value()),parser::merge_spans(((expr)->span()),((((*this).current())).span())))));
 }
 if (((((*this).current())).__jakt_init_index() == 28 /* LessThan */)){
 ((((*this).index)--));
@@ -6778,7 +6778,7 @@ JaktInternal::Optional<parser::ParsedCall> const maybe_call = TRY((((*this).pars
 if (((maybe_call).has_value())){
 parser::ParsedCall call = (maybe_call.value());
 (((call).namespace_) = namespace_);
-return TRY((parser::ParsedExpression::Call(call,TRY((parser::merge_spans(((expr)->span()),((((*this).current())).span())))))));
+return TRY((parser::ParsedExpression::Call(call,parser::merge_spans(((expr)->span()),((((*this).current())).span())))));
 }
 return TRY((parser::ParsedExpression::Garbage(((((*this).current())).span()))));
 }
@@ -6794,7 +6794,7 @@ TRY((((*this).error((ByteString::must_from_utf8("Expected namespace"sv)),((expr)
 ((((*this).index)++));
 }
 else {
-return TRY((parser::ParsedExpression::NamespacedVar(current_name,namespace_,TRY((parser::merge_spans(start,((((*this).current())).span())))))));
+return TRY((parser::ParsedExpression::NamespacedVar(current_name,namespace_,parser::merge_spans(start,((((*this).current())).span())))));
 }
 
 }
@@ -6894,7 +6894,7 @@ return JaktInternal::ExplicitValue<void>();
 case 0 /* SingleQuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.SingleQuotedString;utility::Span const& span = __jakt_match_value.span;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6902,7 +6902,7 @@ return JaktInternal::ExplicitValue<void>();
 case 1 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;utility::Span const& span = __jakt_match_value.span;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6910,7 +6910,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2 /* Number */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Number;utility::Span const& span = __jakt_match_value.span;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6918,7 +6918,7 @@ return JaktInternal::ExplicitValue<void>();
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;utility::Span const& span = __jakt_match_value.span;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6926,7 +6926,7 @@ return JaktInternal::ExplicitValue<void>();
 case 4 /* Semicolon */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Semicolon;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6934,7 +6934,7 @@ return JaktInternal::ExplicitValue<void>();
 case 5 /* Colon */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Colon;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6942,7 +6942,7 @@ return JaktInternal::ExplicitValue<void>();
 case 6 /* ColonColon */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ColonColon;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6950,7 +6950,7 @@ return JaktInternal::ExplicitValue<void>();
 case 7 /* LParen */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LParen;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6958,7 +6958,7 @@ return JaktInternal::ExplicitValue<void>();
 case 8 /* RParen */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RParen;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6966,7 +6966,7 @@ return JaktInternal::ExplicitValue<void>();
 case 9 /* LCurly */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LCurly;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6974,7 +6974,7 @@ return JaktInternal::ExplicitValue<void>();
 case 12 /* RSquare */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RSquare;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6982,7 +6982,7 @@ return JaktInternal::ExplicitValue<void>();
 case 13 /* PercentSign */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PercentSign;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6990,7 +6990,7 @@ return JaktInternal::ExplicitValue<void>();
 case 14 /* Plus */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Plus;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6998,7 +6998,7 @@ return JaktInternal::ExplicitValue<void>();
 case 15 /* Minus */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Minus;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7006,7 +7006,7 @@ return JaktInternal::ExplicitValue<void>();
 case 16 /* Equal */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Equal;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7014,7 +7014,7 @@ return JaktInternal::ExplicitValue<void>();
 case 17 /* PlusEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PlusEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7022,7 +7022,7 @@ return JaktInternal::ExplicitValue<void>();
 case 18 /* PlusPlus */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PlusPlus;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7030,7 +7030,7 @@ return JaktInternal::ExplicitValue<void>();
 case 19 /* MinusEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MinusEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7038,7 +7038,7 @@ return JaktInternal::ExplicitValue<void>();
 case 20 /* MinusMinus */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MinusMinus;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7046,7 +7046,7 @@ return JaktInternal::ExplicitValue<void>();
 case 21 /* AsteriskEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.AsteriskEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7054,7 +7054,7 @@ return JaktInternal::ExplicitValue<void>();
 case 22 /* ForwardSlashEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ForwardSlashEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7062,7 +7062,7 @@ return JaktInternal::ExplicitValue<void>();
 case 23 /* PercentSignEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PercentSignEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7070,7 +7070,7 @@ return JaktInternal::ExplicitValue<void>();
 case 24 /* NotEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.NotEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7078,7 +7078,7 @@ return JaktInternal::ExplicitValue<void>();
 case 25 /* DoubleEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.DoubleEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7086,7 +7086,7 @@ return JaktInternal::ExplicitValue<void>();
 case 26 /* GreaterThan */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GreaterThan;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7094,7 +7094,7 @@ return JaktInternal::ExplicitValue<void>();
 case 27 /* GreaterThanOrEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GreaterThanOrEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7102,7 +7102,7 @@ return JaktInternal::ExplicitValue<void>();
 case 28 /* LessThan */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LessThan;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7110,7 +7110,7 @@ return JaktInternal::ExplicitValue<void>();
 case 29 /* LessThanOrEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LessThanOrEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7118,7 +7118,7 @@ return JaktInternal::ExplicitValue<void>();
 case 30 /* LeftArithmeticShift */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LeftArithmeticShift;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7126,7 +7126,7 @@ return JaktInternal::ExplicitValue<void>();
 case 31 /* LeftShift */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LeftShift;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7134,7 +7134,7 @@ return JaktInternal::ExplicitValue<void>();
 case 32 /* LeftShiftEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LeftShiftEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7142,7 +7142,7 @@ return JaktInternal::ExplicitValue<void>();
 case 33 /* RightShift */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RightShift;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7150,7 +7150,7 @@ return JaktInternal::ExplicitValue<void>();
 case 34 /* RightArithmeticShift */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RightArithmeticShift;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7158,7 +7158,7 @@ return JaktInternal::ExplicitValue<void>();
 case 35 /* RightShiftEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RightShiftEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7166,7 +7166,7 @@ return JaktInternal::ExplicitValue<void>();
 case 36 /* Asterisk */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Asterisk;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7174,7 +7174,7 @@ return JaktInternal::ExplicitValue<void>();
 case 37 /* Ampersand */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Ampersand;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7182,7 +7182,7 @@ return JaktInternal::ExplicitValue<void>();
 case 38 /* AmpersandEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.AmpersandEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7190,7 +7190,7 @@ return JaktInternal::ExplicitValue<void>();
 case 39 /* AmpersandAmpersand */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.AmpersandAmpersand;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7198,7 +7198,7 @@ return JaktInternal::ExplicitValue<void>();
 case 40 /* Pipe */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Pipe;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7206,7 +7206,7 @@ return JaktInternal::ExplicitValue<void>();
 case 41 /* PipeEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PipeEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7214,7 +7214,7 @@ return JaktInternal::ExplicitValue<void>();
 case 42 /* PipePipe */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PipePipe;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7222,7 +7222,7 @@ return JaktInternal::ExplicitValue<void>();
 case 43 /* Caret */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Caret;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7230,7 +7230,7 @@ return JaktInternal::ExplicitValue<void>();
 case 44 /* CaretEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.CaretEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7238,7 +7238,7 @@ return JaktInternal::ExplicitValue<void>();
 case 45 /* Dollar */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Dollar;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7246,7 +7246,7 @@ return JaktInternal::ExplicitValue<void>();
 case 46 /* Tilde */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Tilde;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7254,7 +7254,7 @@ return JaktInternal::ExplicitValue<void>();
 case 47 /* ForwardSlash */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ForwardSlash;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7262,7 +7262,7 @@ return JaktInternal::ExplicitValue<void>();
 case 48 /* ExclamationPoint */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ExclamationPoint;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7270,7 +7270,7 @@ return JaktInternal::ExplicitValue<void>();
 case 49 /* QuestionMark */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuestionMark;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7278,7 +7278,7 @@ return JaktInternal::ExplicitValue<void>();
 case 50 /* QuestionMarkQuestionMark */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuestionMarkQuestionMark;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7286,7 +7286,7 @@ return JaktInternal::ExplicitValue<void>();
 case 51 /* QuestionMarkQuestionMarkEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuestionMarkQuestionMarkEqual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7294,7 +7294,7 @@ return JaktInternal::ExplicitValue<void>();
 case 52 /* Comma */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Comma;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7302,7 +7302,7 @@ return JaktInternal::ExplicitValue<void>();
 case 53 /* Dot */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Dot;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7310,7 +7310,7 @@ return JaktInternal::ExplicitValue<void>();
 case 54 /* DotDot */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.DotDot;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7318,7 +7318,7 @@ return JaktInternal::ExplicitValue<void>();
 case 57 /* FatArrow */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.FatArrow;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7326,7 +7326,7 @@ return JaktInternal::ExplicitValue<void>();
 case 58 /* Arrow */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Arrow;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7334,7 +7334,7 @@ return JaktInternal::ExplicitValue<void>();
 case 59 /* And */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.And;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7342,7 +7342,7 @@ return JaktInternal::ExplicitValue<void>();
 case 60 /* Anon */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Anon;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7350,7 +7350,7 @@ return JaktInternal::ExplicitValue<void>();
 case 61 /* As */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.As;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7358,7 +7358,7 @@ return JaktInternal::ExplicitValue<void>();
 case 62 /* Boxed */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Boxed;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7366,7 +7366,7 @@ return JaktInternal::ExplicitValue<void>();
 case 63 /* Break */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Break;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7374,7 +7374,7 @@ return JaktInternal::ExplicitValue<void>();
 case 64 /* Catch */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Catch;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7382,7 +7382,7 @@ return JaktInternal::ExplicitValue<void>();
 case 65 /* Class */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Class;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7390,7 +7390,7 @@ return JaktInternal::ExplicitValue<void>();
 case 66 /* Continue */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Continue;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7398,7 +7398,7 @@ return JaktInternal::ExplicitValue<void>();
 case 67 /* Cpp */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Cpp;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7406,7 +7406,7 @@ return JaktInternal::ExplicitValue<void>();
 case 68 /* Defer */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Defer;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7414,7 +7414,7 @@ return JaktInternal::ExplicitValue<void>();
 case 69 /* Destructor */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Destructor;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7422,7 +7422,7 @@ return JaktInternal::ExplicitValue<void>();
 case 70 /* Else */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Else;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7430,7 +7430,7 @@ return JaktInternal::ExplicitValue<void>();
 case 71 /* Enum */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Enum;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7438,7 +7438,7 @@ return JaktInternal::ExplicitValue<void>();
 case 72 /* Extern */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Extern;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7446,7 +7446,7 @@ return JaktInternal::ExplicitValue<void>();
 case 73 /* False */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.False;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7454,7 +7454,7 @@ return JaktInternal::ExplicitValue<void>();
 case 74 /* For */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.For;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7462,7 +7462,7 @@ return JaktInternal::ExplicitValue<void>();
 case 76 /* Comptime */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Comptime;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7470,7 +7470,7 @@ return JaktInternal::ExplicitValue<void>();
 case 77 /* If */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.If;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7478,7 +7478,7 @@ return JaktInternal::ExplicitValue<void>();
 case 78 /* Import */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Import;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7486,7 +7486,7 @@ return JaktInternal::ExplicitValue<void>();
 case 79 /* Relative */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Relative;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7494,7 +7494,7 @@ return JaktInternal::ExplicitValue<void>();
 case 80 /* In */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.In;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7502,7 +7502,7 @@ return JaktInternal::ExplicitValue<void>();
 case 81 /* Is */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Is;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7510,7 +7510,7 @@ return JaktInternal::ExplicitValue<void>();
 case 82 /* Let */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Let;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7518,7 +7518,7 @@ return JaktInternal::ExplicitValue<void>();
 case 83 /* Loop */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Loop;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7526,7 +7526,7 @@ return JaktInternal::ExplicitValue<void>();
 case 84 /* Match */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Match;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7534,7 +7534,7 @@ return JaktInternal::ExplicitValue<void>();
 case 85 /* Mut */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Mut;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7542,7 +7542,7 @@ return JaktInternal::ExplicitValue<void>();
 case 86 /* Namespace */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Namespace;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7550,7 +7550,7 @@ return JaktInternal::ExplicitValue<void>();
 case 87 /* Not */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Not;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7558,7 +7558,7 @@ return JaktInternal::ExplicitValue<void>();
 case 88 /* Or */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Or;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7566,7 +7566,7 @@ return JaktInternal::ExplicitValue<void>();
 case 89 /* Override */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Override;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7574,7 +7574,7 @@ return JaktInternal::ExplicitValue<void>();
 case 90 /* Private */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Private;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7582,7 +7582,7 @@ return JaktInternal::ExplicitValue<void>();
 case 91 /* Public */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Public;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7590,7 +7590,7 @@ return JaktInternal::ExplicitValue<void>();
 case 92 /* Raw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Raw;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7598,7 +7598,7 @@ return JaktInternal::ExplicitValue<void>();
 case 93 /* Reflect */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Reflect;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7606,7 +7606,7 @@ return JaktInternal::ExplicitValue<void>();
 case 94 /* Return */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Return;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7614,7 +7614,7 @@ return JaktInternal::ExplicitValue<void>();
 case 95 /* Restricted */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Restricted;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7622,7 +7622,7 @@ return JaktInternal::ExplicitValue<void>();
 case 96 /* Sizeof */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Sizeof;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7630,7 +7630,7 @@ return JaktInternal::ExplicitValue<void>();
 case 97 /* Struct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Struct;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7638,7 +7638,7 @@ return JaktInternal::ExplicitValue<void>();
 case 98 /* This */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.This;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7646,7 +7646,7 @@ return JaktInternal::ExplicitValue<void>();
 case 99 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7654,7 +7654,7 @@ return JaktInternal::ExplicitValue<void>();
 case 100 /* Throws */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throws;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7662,7 +7662,7 @@ return JaktInternal::ExplicitValue<void>();
 case 101 /* True */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.True;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7670,7 +7670,7 @@ return JaktInternal::ExplicitValue<void>();
 case 102 /* Try */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Try;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7678,7 +7678,7 @@ return JaktInternal::ExplicitValue<void>();
 case 103 /* Unsafe */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Unsafe;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7686,7 +7686,7 @@ return JaktInternal::ExplicitValue<void>();
 case 104 /* Virtual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Virtual;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7694,7 +7694,7 @@ return JaktInternal::ExplicitValue<void>();
 case 105 /* Weak */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Weak;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7702,7 +7702,7 @@ return JaktInternal::ExplicitValue<void>();
 case 106 /* While */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.While;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7710,7 +7710,7 @@ return JaktInternal::ExplicitValue<void>();
 case 107 /* Yield */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Yield;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7718,7 +7718,7 @@ return JaktInternal::ExplicitValue<void>();
 case 108 /* Guard */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Guard;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7726,7 +7726,7 @@ return JaktInternal::ExplicitValue<void>();
 case 109 /* Implements */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Implements;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7734,7 +7734,7 @@ return JaktInternal::ExplicitValue<void>();
 case 110 /* Requires */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Requires;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7742,7 +7742,7 @@ return JaktInternal::ExplicitValue<void>();
 case 111 /* Trait */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Trait;utility::Span const& span = __jakt_match_value.value;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7750,7 +7750,7 @@ return JaktInternal::ExplicitValue<void>();
 case 112 /* Garbage */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Garbage;utility::Span const& span = __jakt_match_value.span;
 {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)))),((parsed_trait).name_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Expected 'function' keyword inside trait definition"sv)),span,__jakt_format((StringView::from_string_literal("Inside '{}' trait's definition only function declarations can appear"sv)),((parsed_trait).name)),((parsed_trait).name_span)))));
 return parsed_trait;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -7965,7 +7965,7 @@ return JaktInternal::ExplicitValue<void>();
     _jakt_value.release_value();
 });
 }
-return parser::ParsedVarDeclTuple(var_declarations,TRY((parser::merge_spans(start,((((*this).previous())).span())))));
+return parser::ParsedVarDeclTuple(var_declarations,parser::merge_spans(start,((((*this).previous())).span())));
 }
 }
 
@@ -8024,7 +8024,7 @@ return JaktInternal::ExplicitValue<void>();
         return JaktInternal::LoopContinue {};
     _jakt_value.release_value();
 });
-__jakt_var_54 = TRY((parser::ParsedExpression::Range(result,to,TRY((parser::merge_spans(start,span_end)))))); goto __jakt_label_49;
+__jakt_var_54 = TRY((parser::ParsedExpression::Range(result,to,parser::merge_spans(start,span_end)))); goto __jakt_label_49;
 
 }
 __jakt_label_49:; __jakt_var_54.release_value(); }));
@@ -8032,7 +8032,7 @@ __jakt_label_49:; __jakt_var_54.release_value(); }));
 case 48 /* ExclamationPoint */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_55; {
 ((((*this).index)++));
-__jakt_var_55 = TRY((parser::ParsedExpression::ForcedUnwrap(result,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_50;
+__jakt_var_55 = TRY((parser::ParsedExpression::ForcedUnwrap(result,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_50;
 
 }
 __jakt_label_50:; __jakt_var_55.release_value(); }));
@@ -8040,7 +8040,7 @@ __jakt_label_50:; __jakt_var_55.release_value(); }));
 case 18 /* PlusPlus */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_56; {
 ((((*this).index)++));
-__jakt_var_56 = TRY((parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::PostIncrement(),TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_51;
+__jakt_var_56 = TRY((parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::PostIncrement(),parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_51;
 
 }
 __jakt_label_51:; __jakt_var_56.release_value(); }));
@@ -8048,7 +8048,7 @@ __jakt_label_51:; __jakt_var_56.release_value(); }));
 case 20 /* MinusMinus */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_57; {
 ((((*this).index)++));
-__jakt_var_57 = TRY((parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::PostDecrement(),TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_52;
+__jakt_var_57 = TRY((parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::PostDecrement(),parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_52;
 
 }
 __jakt_label_52:; __jakt_var_57.release_value(); }));
@@ -8056,7 +8056,7 @@ __jakt_label_52:; __jakt_var_57.release_value(); }));
 case 61 /* As */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_58; {
 ((((*this).index)++));
-utility::Span const cast_span = TRY((parser::merge_spans(((((*this).previous())).span()),((((*this).current())).span()))));
+utility::Span const cast_span = parser::merge_spans(((((*this).previous())).span()),((((*this).current())).span()));
 parser::TypeCast const cast = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::TypeCast, ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto&& __jakt_match_variant = ((*this).current());
@@ -8096,7 +8096,7 @@ __jakt_label_56:; __jakt_var_61.release_value(); }));
         return JaktInternal::LoopContinue {};
     _jakt_value.release_value();
 });
-utility::Span const span = TRY((parser::merge_spans(start,TRY((parser::merge_spans(cast_span,((((*this).current())).span())))))));
+utility::Span const span = parser::merge_spans(start,parser::merge_spans(cast_span,((((*this).current())).span())));
 __jakt_var_58 = TRY((parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::TypeCast(cast),span))); goto __jakt_label_53;
 
 }
@@ -8106,7 +8106,7 @@ case 81 /* Is */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_62; {
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedType> const parsed_type = TRY((((*this).parse_typename())));
-utility::Span const span = TRY((parser::merge_spans(start,((((*this).current())).span()))));
+utility::Span const span = parser::merge_spans(start,((((*this).current())).span()));
 JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> bindings = (TRY((DynamicArray<parser::EnumVariantPatternArgument>::create_with({}))));
 JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> unary_operator_is = JaktInternal::OptionalNone();
 if ((((((*this).current())).__jakt_init_index() == 7 /* LParen */) && (((parsed_type)->__jakt_init_index() == 1 /* NamespacedName */) || ((parsed_type)->__jakt_init_index() == 0 /* Name */)))){
@@ -8153,7 +8153,7 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_65; {
 parser::NumericConstant const val = (numeric_constant)->as.NumericConstant.val;
 size_t const num = ((val).to_usize());
-__jakt_var_65 = TRY((parser::ParsedExpression::IndexedTuple(result,num,is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_60;
+__jakt_var_65 = TRY((parser::ParsedExpression::IndexedTuple(result,num,is_optional,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_60;
 
 }
 __jakt_label_60:; __jakt_var_65.release_value(); }));
@@ -8195,13 +8195,13 @@ __jakt_var_67 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto __jakt_enum_value = (((call).has_value()));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))));
+return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,parser::merge_spans(start,((((*this).previous())).span()))))));
 }
 else {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_68; {
 (((*this).index) = original_index);
 (((((*this).compiler))->errors) = existing_errors);
-__jakt_var_68 = TRY((parser::ParsedExpression::IndexedStruct(result,name,is_optional,TRY((parser::merge_spans(start,((((*this).current())).span()))))))); goto __jakt_label_63;
+__jakt_var_68 = TRY((parser::ParsedExpression::IndexedStruct(result,name,is_optional,parser::merge_spans(start,((((*this).current())).span()))))); goto __jakt_label_63;
 
 }
 __jakt_label_63:; __jakt_var_68.release_value(); }));
@@ -8223,13 +8223,13 @@ case 7 /* LParen */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_69; {
 ((((*this).index)--));
 JaktInternal::Optional<parser::ParsedCall> const call = TRY((((*this).parse_call())));
-__jakt_var_69 = TRY((parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_64;
+__jakt_var_69 = TRY((parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_64;
 
 }
 __jakt_label_64:; __jakt_var_69.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::IndexedStruct(result,name,is_optional,TRY((parser::merge_spans(start,((((*this).current())).span()))))))));
+return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::IndexedStruct(result,name,is_optional,parser::merge_spans(start,((((*this).current())).span()))))));
 };/*case end*/
 }/*switch end*/
 }()
@@ -8254,7 +8254,7 @@ if ((!(((((*this).current())).__jakt_init_index() == 12 /* RSquare */)))){
 TRY((((*this).error((ByteString::must_from_utf8("Expected ‘]’ to close the index"sv)),((((*this).current())).span())))));
 }
 ((((*this).index)++));
-__jakt_var_70 = TRY((parser::ParsedExpression::ComptimeIndex(result,index,is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_65;
+__jakt_var_70 = TRY((parser::ParsedExpression::ComptimeIndex(result,index,is_optional,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_65;
 
 }
 __jakt_label_65:; __jakt_var_70.release_value(); }));
@@ -8311,7 +8311,7 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_74; {
 parser::NumericConstant const val = (numeric_constant)->as.NumericConstant.val;
 size_t const num = ((val).to_usize());
-__jakt_var_74 = TRY((parser::ParsedExpression::IndexedTuple(result,num,is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_69;
+__jakt_var_74 = TRY((parser::ParsedExpression::IndexedTuple(result,num,is_optional,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_69;
 
 }
 __jakt_label_69:; __jakt_var_74.release_value(); }));
@@ -8353,13 +8353,13 @@ __jakt_var_76 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>>>{
 auto __jakt_enum_value = (((call).has_value()));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))));
+return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,parser::merge_spans(start,((((*this).previous())).span()))))));
 }
 else {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_77; {
 (((*this).index) = original_index);
 (((((*this).compiler))->errors) = existing_errors);
-__jakt_var_77 = TRY((parser::ParsedExpression::IndexedStruct(result,name,is_optional,TRY((parser::merge_spans(start,((((*this).current())).span()))))))); goto __jakt_label_72;
+__jakt_var_77 = TRY((parser::ParsedExpression::IndexedStruct(result,name,is_optional,parser::merge_spans(start,((((*this).current())).span()))))); goto __jakt_label_72;
 
 }
 __jakt_label_72:; __jakt_var_77.release_value(); }));
@@ -8381,13 +8381,13 @@ case 7 /* LParen */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_78; {
 ((((*this).index)--));
 JaktInternal::Optional<parser::ParsedCall> const call = TRY((((*this).parse_call())));
-__jakt_var_78 = TRY((parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_73;
+__jakt_var_78 = TRY((parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_73;
 
 }
 __jakt_label_73:; __jakt_var_78.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::IndexedStruct(result,name,is_optional,TRY((parser::merge_spans(start,((((*this).current())).span()))))))));
+return JaktInternal::ExplicitValue(TRY((parser::ParsedExpression::IndexedStruct(result,name,is_optional,parser::merge_spans(start,((((*this).current())).span()))))));
 };/*case end*/
 }/*switch end*/
 }()
@@ -8412,7 +8412,7 @@ if ((!(((((*this).current())).__jakt_init_index() == 12 /* RSquare */)))){
 TRY((((*this).error((ByteString::must_from_utf8("Expected ‘]’ to close the index"sv)),((((*this).current())).span())))));
 }
 ((((*this).index)++));
-__jakt_var_79 = TRY((parser::ParsedExpression::ComptimeIndex(result,index,is_optional,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_74;
+__jakt_var_79 = TRY((parser::ParsedExpression::ComptimeIndex(result,index,is_optional,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_74;
 
 }
 __jakt_label_74:; __jakt_var_79.release_value(); }));
@@ -8453,7 +8453,7 @@ TRY((((*this).error((ByteString::must_from_utf8("Expected ']'"sv)),((((*this).cu
 }
 
 size_t const end = JaktInternal::checked_sub(((*this).index),static_cast<size_t>(1ULL));
-__jakt_var_81 = TRY((parser::ParsedExpression::IndexedExpression(result,index_expr,TRY((parser::merge_spans(start,((((((*this).tokens))[end])).span()))))))); goto __jakt_label_76;
+__jakt_var_81 = TRY((parser::ParsedExpression::IndexedExpression(result,index_expr,parser::merge_spans(start,((((((*this).tokens))[end])).span()))))); goto __jakt_label_76;
 
 }
 __jakt_label_76:; __jakt_var_81.release_value(); }));
@@ -8548,7 +8548,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (end,((((*this).tokens)).size())) || (!(((((((*this).tokens))[end])).__jakt_init_index() == 10 /* RCurly */))))){
 TRY((((*this).error((ByteString::must_from_utf8("Expected ‘}’ to close the set"sv)),((((((*this).tokens))[end])).span())))));
 }
-return TRY((parser::ParsedExpression::Set(output,TRY((parser::merge_spans(start,((((((*this).tokens))[end])).span())))))));
+return TRY((parser::ParsedExpression::Set(output,parser::merge_spans(start,((((((*this).tokens))[end])).span())))));
 }
 }
 
@@ -8647,7 +8647,7 @@ case 13 /* Operator */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Operator;parser::BinaryOperator const& op = __jakt_match_value.op;
 utility::Span const& span = __jakt_match_value.span;
 {
-utility::Span const new_span = TRY((parser::merge_spans(((lhs)->span()),((rhs)->span()))));
+utility::Span const new_span = parser::merge_spans(((lhs)->span()),((rhs)->span()));
 TRY((((expr_stack).push(TRY((parser::ParsedExpression::BinaryOp(lhs,op,rhs,new_span)))))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -8696,7 +8696,7 @@ case 13 /* Operator */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Operator;parser::BinaryOperator const& op = __jakt_match_value.op;
 utility::Span const& span = __jakt_match_value.span;
 {
-utility::Span const new_span = TRY((parser::merge_spans(((lhs)->span()),((rhs)->span()))));
+utility::Span const new_span = parser::merge_spans(((lhs)->span()),((rhs)->span()));
 TRY((((expr_stack).push(TRY((parser::ParsedExpression::BinaryOp(lhs,op,rhs,new_span)))))));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -8926,7 +8926,7 @@ return JaktInternal::ExplicitValue<void>();
 default: {
 {
 TRY((((*this).error((ByteString::must_from_utf8("Expected iterator name or destructuring pattern"sv)),((((*this).current())).span())))));
-return TRY((parser::ParsedStatement::Garbage(TRY((parser::merge_spans(start_span,((((*this).current())).span())))))));
+return TRY((parser::ParsedStatement::Garbage(parser::merge_spans(start_span,((((*this).current())).span())))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -8942,7 +8942,7 @@ if (((((*this).current())).__jakt_init_index() == 80 /* In */)){
 }
 else {
 TRY((((*this).error((ByteString::must_from_utf8("Expected ‘in’"sv)),((((*this).current())).span())))));
-return TRY((parser::ParsedStatement::Garbage(TRY((parser::merge_spans(start_span,((((*this).current())).span())))))));
+return TRY((parser::ParsedStatement::Garbage(parser::merge_spans(start_span,((((*this).current())).span())))));
 }
 
 bool const previous_can_have_trailing_closure = ((*this).can_have_trailing_closure);
@@ -8972,15 +8972,15 @@ return {};
 }
 (tuple_var_name,iterator_name)));
 parser::ParsedVarDecl tuple_var_decl = parser::ParsedVarDecl(tuple_var_name,TRY((parser::ParsedType::Empty(JaktInternal::OptionalNone()))),false,JaktInternal::OptionalNone(),((((*this).current())).span()),JaktInternal::OptionalNone());
-NonnullRefPtr<typename parser::ParsedExpression> const init = TRY((parser::ParsedExpression::Var(iterator_name,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
-NonnullRefPtr<typename parser::ParsedStatement> const var_decl = TRY((parser::ParsedStatement::VarDecl(tuple_var_decl,init,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
-NonnullRefPtr<typename parser::ParsedStatement> const destructured_vars_stmt = TRY((parser::ParsedStatement::DestructuringAssignment(destructured_var_decls,var_decl,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
+NonnullRefPtr<typename parser::ParsedExpression> const init = TRY((parser::ParsedExpression::Var(iterator_name,parser::merge_spans(start_span,((((*this).previous())).span())))));
+NonnullRefPtr<typename parser::ParsedStatement> const var_decl = TRY((parser::ParsedStatement::VarDecl(tuple_var_decl,init,parser::merge_spans(start_span,((((*this).previous())).span())))));
+NonnullRefPtr<typename parser::ParsedStatement> const destructured_vars_stmt = TRY((parser::ParsedStatement::DestructuringAssignment(destructured_var_decls,var_decl,parser::merge_spans(start_span,((((*this).previous())).span())))));
 JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>> block_stmts = (TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({}))));
 TRY((((block_stmts).push(destructured_vars_stmt))));
 TRY((((block_stmts).push_values(((((block).stmts)))))));
 (((block).stmts) = block_stmts);
 }
-return TRY((parser::ParsedStatement::For(iterator_name,name_span,is_destructuring,range,block,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
+return TRY((parser::ParsedStatement::For(iterator_name,name_span,is_destructuring,range,block,parser::merge_spans(start_span,((((*this).previous())).span())))));
 }
 }
 
@@ -8990,7 +8990,7 @@ utility::Span const start = ((((*this).current())).span());
 if (((((*this).current())).__jakt_init_index() == 76 /* Comptime */)){
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
-return TRY((parser::ParsedType::Const(JaktInternal::OptionalNone(),expr,TRY((parser::merge_spans(start,((expr)->span())))))));
+return TRY((parser::ParsedType::Const(JaktInternal::OptionalNone(),expr,parser::merge_spans(start,((expr)->span())))));
 }
 parser::ParsedTypeQualifiers qualifiers = parser::ParsedTypeQualifiers(false,false);
 bool is_reference = false;
@@ -9024,11 +9024,11 @@ if (((parsed_type)->__jakt_init_index() == 15 /* Empty */)){
 }
 if (((((*this).current())).__jakt_init_index() == 49 /* QuestionMark */)){
 ((((*this).index)++));
-utility::Span const span = TRY((parser::merge_spans(start,((((*this).current())).span()))));
+utility::Span const span = parser::merge_spans(start,((((*this).current())).span()));
 (parsed_type = TRY((parser::ParsedType::Optional(JaktInternal::OptionalNone(),parsed_type,span))));
 }
 if (is_reference){
-utility::Span const span = TRY((parser::merge_spans(start,((((*this).current())).span()))));
+utility::Span const span = parser::merge_spans(start,((((*this).current())).span()));
 if (is_mutable_reference){
 (parsed_type = TRY((parser::ParsedType::MutableReference(JaktInternal::OptionalNone(),parsed_type,span))));
 }
@@ -9235,7 +9235,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Incomplete enum variant definition, expected `,` or `)`; got ‘{}’"sv)),((*this).current())))),((((*this).current())).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Incomplete enum variant definition, expected `,` or `)`; got ‘{}’"sv)),((*this).current())),((((*this).current())).span())))));
 return JaktInternal::LoopBreak{};
 }
 return JaktInternal::ExplicitValue<void>();
@@ -9610,7 +9610,7 @@ TRY((((captures).push(parser::ParsedCapture::ByMutableReference(name,((((*this).
 ((((*this).index)++));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Expected identifier, got '{}'"sv)),((*this).current())))),((((*this).current())).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Expected identifier, got '{}'"sv)),((*this).current())),((((*this).current())).span())))));
 ((((*this).index)++));
 }
 
@@ -9627,7 +9627,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Expected identifier or mut, got '{}'"sv)),((*this).current())))),((((*this).current())).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Expected identifier or mut, got '{}'"sv)),((*this).current())),((((*this).current())).span())))));
 ((((*this).index)++));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -9655,7 +9655,7 @@ TRY((((captures).push(parser::ParsedCapture::ByComptimeDependency(name,((((*this
 ((((*this).index)++));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Expected identifier, got '{}'"sv)),((*this).current())))),((((*this).current())).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Expected identifier, got '{}'"sv)),((*this).current())),((((*this).current())).span())))));
 ((((*this).index)++));
 }
 
@@ -9691,7 +9691,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unexpected token '{}' in captures list"sv)),((*this).current())))),((((*this).current())).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Unexpected token '{}' in captures list"sv)),((*this).current())),((((*this).current())).span())))));
 ((((*this).index)++));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -9729,7 +9729,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 1 /* Hexadecimal */: {
 {
 if (((((number).length())) == (static_cast<size_t>(0ULL)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Could not parse hexadecimal number due to no digits"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Could not parse hexadecimal number due to no digits"sv))),span))));
 return TRY((parser::ParsedExpression::Garbage(span)));
 }
 {
@@ -9805,7 +9805,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2 /* Octal */: {
 {
 if (((((number).length())) == (static_cast<size_t>(0ULL)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Could not parse octal number due to no digits"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Could not parse octal number due to no digits"sv))),span))));
 return TRY((parser::ParsedExpression::Garbage(span)));
 }
 {
@@ -9833,7 +9833,7 @@ return JaktInternal::ExplicitValue<void>();
 case 3 /* Binary */: {
 {
 if (((((number).length())) == (static_cast<size_t>(0ULL)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Could not parse binary number due to no digits"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Could not parse binary number due to no digits"sv))),span))));
 return TRY((parser::ParsedExpression::Garbage(span)));
 }
 {
@@ -9881,7 +9881,7 @@ bool floating = false;
 u64 fraction_nominator = static_cast<u64>(0ULL);
 u64 fraction_denominator = static_cast<u64>(1ULL);
 if (((((number).length())) == (static_cast<size_t>(0ULL)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Could not parse number due to no digits"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Could not parse number due to no digits"sv))),span))));
 return TRY((parser::ParsedExpression::Garbage(span)));
 }
 {
@@ -9929,7 +9929,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 
 if (number_too_large){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Integer literal too large"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Integer literal too large"sv))),span))));
 return TRY((parser::ParsedExpression::Garbage(span)));
 }
 if ((floating && ((suffix).__jakt_init_index() == 0 /* None */))){
@@ -9965,7 +9965,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 10 /* F32 */: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<parser::NumericConstant>> __jakt_var_84; {
 f64 const number = ((parser::u64_to_float<f64>(total)) + (((parser::u64_to_float<f64>(fraction_nominator)) / (parser::u64_to_float<f64>(fraction_denominator)))));
-__jakt_var_84 = TRY((((*this).make_float_numeric_constant(number,suffix,span)))); goto __jakt_label_79;
+__jakt_var_84 = ((*this).make_float_numeric_constant(number,suffix,span)); goto __jakt_label_79;
 
 }
 __jakt_label_79:; __jakt_var_84.release_value(); }));
@@ -9973,7 +9973,7 @@ __jakt_label_79:; __jakt_var_84.release_value(); }));
 case 11 /* F64 */: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<parser::NumericConstant>> __jakt_var_85; {
 f64 const number = ((parser::u64_to_float<f64>(total)) + (((parser::u64_to_float<f64>(fraction_nominator)) / (parser::u64_to_float<f64>(fraction_denominator)))));
-__jakt_var_85 = TRY((((*this).make_float_numeric_constant(number,suffix,span)))); goto __jakt_label_80;
+__jakt_var_85 = ((*this).make_float_numeric_constant(number,suffix,span)); goto __jakt_label_80;
 
 }
 __jakt_label_80:; __jakt_var_85.release_value(); }));
@@ -10081,7 +10081,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Incomplete relative import defintion, `)`; got ‘{}’"sv)),((*this).current())))),((((*this).current())).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Incomplete relative import defintion, `)`; got ‘{}’"sv)),((*this).current())),((((*this).current())).span())))));
 return parsed_import;
 }
 return JaktInternal::ExplicitValue<void>();
@@ -10102,7 +10102,7 @@ if (((((*this).current())).__jakt_init_index() == 6 /* ColonColon */)){
 ((((*this).index)++));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Expected `::` after {}, got ‘{}’"sv)),((*this).previous()),((*this).current())))),((((*this).current())).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Expected `::` after {}, got ‘{}’"sv)),((*this).previous()),((*this).current())),((((*this).current())).span())))));
 return parsed_import;
 }
 
@@ -10162,7 +10162,7 @@ if (((*this).eol())){
 return parsed_import;
 }
 if ((!(((((*this).current())).__jakt_init_index() == 9 /* LCurly */)))){
-ByteString module_name = TRY((((((parsed_import).module_name)).literal_name())));
+ByteString module_name = ((((parsed_import).module_name)).literal_name());
 utility::Span module_span = ((((parsed_import).module_name)).span());
 while (((((*this).current())).__jakt_init_index() == 6 /* ColonColon */)){
 ((((*this).index)++));
@@ -10188,7 +10188,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 return {};
 }
 (module_name,name)));
-(module_span = TRY((parser::merge_spans(module_span,span))));
+(module_span = parser::merge_spans(module_span,span));
 ((((*this).index)++));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -10262,7 +10262,7 @@ JaktInternal::DynamicArray<parser::ImportName> mutable_names = names;
 TRY((((mutable_names).push(parser::ImportName::Literal(name,span)))));
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Already importing everything from '{}'"sv)),TRY((((((parsed_import).module_name)).literal_name())))))),((((*this).current())).span()),(ByteString::must_from_utf8("Remove the '*' to import specific names"sv)),((((*this).current())).span())))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Already importing everything from '{}'"sv)),((((parsed_import).module_name)).literal_name())),((((*this).current())).span()),(ByteString::must_from_utf8("Remove the '*' to import specific names"sv)),((((*this).current())).span())))));
 }
 
 ((((*this).index)++));
@@ -10278,10 +10278,10 @@ if (((names).is_empty())){
 }
 else {
 if (((((parsed_import).import_list)).__jakt_init_index() == 1 /* All */)){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot repeat '*' in import list for '{}'"sv)),TRY((((((parsed_import).module_name)).literal_name())))))),((((*this).current())).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot repeat '*' in import list for '{}'"sv)),((((parsed_import).module_name)).literal_name())),((((*this).current())).span())))));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot mix '*' and specific names in import list for '{}'"sv)),TRY((((((parsed_import).module_name)).literal_name())))))),((((*this).current())).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot mix '*' and specific names in import list for '{}'"sv)),((((parsed_import).module_name)).literal_name())),((((*this).current())).span())))));
 }
 
 }
@@ -10289,10 +10289,10 @@ TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot 
 }
 else {
 if (((((parsed_import).import_list)).__jakt_init_index() == 1 /* All */)){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot repeat '*' in import list for '{}'"sv)),TRY((((((parsed_import).module_name)).literal_name())))))),((((*this).current())).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot repeat '*' in import list for '{}'"sv)),((((parsed_import).module_name)).literal_name())),((((*this).current())).span())))));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot mix '*' and specific names in import list for '{}'"sv)),TRY((((((parsed_import).module_name)).literal_name())))))),((((*this).current())).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot mix '*' and specific names in import list for '{}'"sv)),((((parsed_import).module_name)).literal_name())),((((*this).current())).span())))));
 }
 
 }
@@ -10419,7 +10419,7 @@ utility::Span const start = ((((*this).current())).span());
 NonnullRefPtr<typename parser::ParsedType> const inner = TRY((((*this).parse_typename())));
 if (((((*this).current())).__jakt_init_index() == 12 /* RSquare */)){
 ((((*this).index)++));
-return TRY((parser::ParsedType::JaktArray(qualifiers,inner,TRY((parser::merge_spans(start,((((*this).previous())).span())))))));
+return TRY((parser::ParsedType::JaktArray(qualifiers,inner,parser::merge_spans(start,((((*this).previous())).span())))));
 }
 if (((((*this).current())).__jakt_init_index() == 5 /* Colon */)){
 ((((*this).index)++));
@@ -10431,7 +10431,7 @@ else {
 TRY((((*this).error((ByteString::must_from_utf8("Expected ']'"sv)),((((*this).current())).span())))));
 }
 
-return TRY((parser::ParsedType::Dictionary(qualifiers,inner,value,TRY((parser::merge_spans(start,((((*this).current())).span())))))));
+return TRY((parser::ParsedType::Dictionary(qualifiers,inner,value,parser::merge_spans(start,((((*this).current())).span())))));
 }
 TRY((((*this).error((ByteString::must_from_utf8("Expected shorthand type"sv)),((((*this).current())).span())))));
 return TRY((parser::ParsedType::Empty(qualifiers)));
@@ -10446,7 +10446,7 @@ JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> types = (
 while ((!(((*this).eof())))){
 if (((((*this).current())).__jakt_init_index() == 8 /* RParen */)){
 ((((*this).index)++));
-return TRY((parser::ParsedType::JaktTuple(qualifiers,types,TRY((parser::merge_spans(start,((((*this).previous())).span())))))));
+return TRY((parser::ParsedType::JaktTuple(qualifiers,types,parser::merge_spans(start,((((*this).previous())).span())))));
 }
 if (((((*this).current())).__jakt_init_index() == 52 /* Comma */)){
 ((((*this).index)++));
@@ -10593,10 +10593,10 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 TRY((((*this).error((ByteString::must_from_utf8("Expected ‘]’ to close the array"sv)),((((((*this).tokens))[end])).span())))));
 }
 if (is_dictionary){
-return TRY((parser::ParsedExpression::JaktDictionary(dict_output,TRY((parser::merge_spans(start,((((((*this).tokens))[end])).span())))))));
+return TRY((parser::ParsedExpression::JaktDictionary(dict_output,parser::merge_spans(start,((((((*this).tokens))[end])).span())))));
 }
 else {
-return TRY((parser::ParsedExpression::JaktArray(output,fill_size_expr,TRY((parser::merge_spans(start,((((((*this).tokens))[end])).span())))))));
+return TRY((parser::ParsedExpression::JaktArray(output,fill_size_expr,parser::merge_spans(start,((((((*this).tokens))[end])).span())))));
 }
 
 }
@@ -10706,7 +10706,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 67 /* Cpp */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_92; {
 ((((*this).index)++));
-__jakt_var_92 = TRY((parser::ParsedStatement::InlineCpp(TRY((((*this).parse_block()))),TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_86;
+__jakt_var_92 = TRY((parser::ParsedStatement::InlineCpp(TRY((((*this).parse_block()))),parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_86;
 
 }
 __jakt_label_86:; __jakt_var_92.release_value(); }));
@@ -10715,7 +10715,7 @@ case 68 /* Defer */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_93; {
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedStatement> const statement = TRY((((*this).parse_statement(false))));
-__jakt_var_93 = TRY((parser::ParsedStatement::Defer(statement,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_87;
+__jakt_var_93 = TRY((parser::ParsedStatement::Defer(statement,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_87;
 
 }
 __jakt_label_87:; __jakt_var_93.release_value(); }));
@@ -10729,7 +10729,7 @@ case 9 /* LCurly */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_94; {
 ((((*this).index)++));
 parser::ParsedBlock const block = TRY((((*this).parse_block())));
-__jakt_var_94 = TRY((parser::ParsedStatement::UnsafeBlock(block,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_88;
+__jakt_var_94 = TRY((parser::ParsedStatement::UnsafeBlock(block,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_88;
 
 }
 __jakt_label_88:; __jakt_var_94.release_value(); }));
@@ -10737,7 +10737,7 @@ __jakt_label_88:; __jakt_var_94.release_value(); }));
 default: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_95; {
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(true,false))));
-__jakt_var_95 = TRY((parser::ParsedStatement::Expression(expr,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_89;
+__jakt_var_95 = TRY((parser::ParsedStatement::Expression(expr,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_89;
 
 }
 __jakt_label_89:; __jakt_var_95.release_value(); }));
@@ -10770,7 +10770,7 @@ case 83 /* Loop */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_98; {
 ((((*this).index)++));
 parser::ParsedBlock const block = TRY((((*this).parse_block())));
-__jakt_var_98 = TRY((parser::ParsedStatement::Loop(block,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_92;
+__jakt_var_98 = TRY((parser::ParsedStatement::Loop(block,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_92;
 
 }
 __jakt_label_92:; __jakt_var_98.release_value(); }));
@@ -10779,7 +10779,7 @@ case 99 /* Throw */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_99; {
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
-__jakt_var_99 = TRY((parser::ParsedStatement::Throw(expr,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_93;
+__jakt_var_99 = TRY((parser::ParsedStatement::Throw(expr,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_93;
 
 }
 __jakt_label_93:; __jakt_var_99.release_value(); }));
@@ -10792,7 +10792,7 @@ bool const previous_can_have_trailing_closure = ((*this).can_have_trailing_closu
 NonnullRefPtr<typename parser::ParsedExpression> const condition = TRY((((*this).parse_expression(false,true))));
 (((*this).can_have_trailing_closure) = previous_can_have_trailing_closure);
 parser::ParsedBlock const block = TRY((((*this).parse_block())));
-__jakt_var_100 = TRY((parser::ParsedStatement::While(condition,block,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_94;
+__jakt_var_100 = TRY((parser::ParsedStatement::While(condition,block,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_94;
 
 }
 __jakt_label_94:; __jakt_var_100.release_value(); }));
@@ -10802,9 +10802,9 @@ return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::Pa
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(false,false))));
 if ((!(inside_block))){
-TRY((((*this).error((ByteString::must_from_utf8("‘yield’ can only be used inside a block"sv)),TRY((parser::merge_spans(start,((expr)->span()))))))));
+TRY((((*this).error((ByteString::must_from_utf8("‘yield’ can only be used inside a block"sv)),parser::merge_spans(start,((expr)->span()))))));
 }
-__jakt_var_101 = TRY((parser::ParsedStatement::Yield(expr,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_95;
+__jakt_var_101 = TRY((parser::ParsedStatement::Yield(expr,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_95;
 
 }
 __jakt_label_95:; __jakt_var_101.release_value(); }));
@@ -10826,7 +10826,7 @@ case 10 /* RCurly */: {
 return JaktInternal::ExplicitValue(TRY((parser::ParsedStatement::Return(JaktInternal::OptionalNone(),start))));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY((parser::ParsedStatement::Return(TRY((((*this).parse_expression(false,false)))),TRY((parser::merge_spans(start,((((*this).previous())).span()))))))));
+return JaktInternal::ExplicitValue(TRY((parser::ParsedStatement::Return(TRY((((*this).parse_expression(false,false)))),parser::merge_spans(start,((((*this).previous())).span()))))));
 };/*case end*/
 }/*switch end*/
 }()
@@ -10911,10 +10911,10 @@ __jakt_label_99:; __jakt_var_105.release_value(); }));
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-NonnullRefPtr<typename parser::ParsedStatement> return_statement = TRY((parser::ParsedStatement::VarDecl(tuple_var_decl,init,TRY((parser::merge_spans(start,((((*this).previous())).span())))))));
+NonnullRefPtr<typename parser::ParsedStatement> return_statement = TRY((parser::ParsedStatement::VarDecl(tuple_var_decl,init,parser::merge_spans(start,((((*this).previous())).span())))));
 if (is_destructuring_assingment){
 NonnullRefPtr<typename parser::ParsedStatement> const old_return_statement = return_statement;
-(return_statement = TRY((parser::ParsedStatement::DestructuringAssignment(vars,old_return_statement,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))));
+(return_statement = TRY((parser::ParsedStatement::DestructuringAssignment(vars,old_return_statement,parser::merge_spans(start,((((*this).previous())).span()))))));
 }
 __jakt_var_103 = return_statement; goto __jakt_label_97;
 
@@ -10993,10 +10993,10 @@ __jakt_label_102:; __jakt_var_108.release_value(); }));
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-NonnullRefPtr<typename parser::ParsedStatement> return_statement = TRY((parser::ParsedStatement::VarDecl(tuple_var_decl,init,TRY((parser::merge_spans(start,((((*this).previous())).span())))))));
+NonnullRefPtr<typename parser::ParsedStatement> return_statement = TRY((parser::ParsedStatement::VarDecl(tuple_var_decl,init,parser::merge_spans(start,((((*this).previous())).span())))));
 if (is_destructuring_assingment){
 NonnullRefPtr<typename parser::ParsedStatement> const old_return_statement = return_statement;
-(return_statement = TRY((parser::ParsedStatement::DestructuringAssignment(vars,old_return_statement,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))));
+(return_statement = TRY((parser::ParsedStatement::DestructuringAssignment(vars,old_return_statement,parser::merge_spans(start,((((*this).previous())).span()))))));
 }
 __jakt_var_106 = return_statement; goto __jakt_label_100;
 
@@ -11012,7 +11012,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).parse_for_statement()))));
 case 9 /* LCurly */: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_109; {
 parser::ParsedBlock const block = TRY((((*this).parse_block())));
-__jakt_var_109 = TRY((parser::ParsedStatement::Block(block,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_103;
+__jakt_var_109 = TRY((parser::ParsedStatement::Block(block,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_103;
 
 }
 __jakt_label_103:; __jakt_var_109.release_value(); }));
@@ -11023,7 +11023,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).parse_guard_statement()))));
 default: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_110; {
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_expression(true,false))));
-__jakt_var_110 = TRY((parser::ParsedStatement::Expression(expr,TRY((parser::merge_spans(start,((((*this).previous())).span()))))))); goto __jakt_label_104;
+__jakt_var_110 = TRY((parser::ParsedStatement::Expression(expr,parser::merge_spans(start,((((*this).previous())).span()))))); goto __jakt_label_104;
 
 }
 __jakt_label_104:; __jakt_var_110.release_value(); }));
@@ -11053,7 +11053,7 @@ return parser::ParsedField(parsed_variable_declaration,visibility,default_value)
 }
 }
 
-ErrorOr<ByteString> parser::Parser::parse_argument_label() {
+ByteString parser::Parser::parse_argument_label() {
 {
 if ((((((*this).peek(static_cast<size_t>(1ULL)))).__jakt_init_index() == 5 /* Colon */) && ((((*this).current())).__jakt_init_index() == 3 /* Identifier */))){
 ByteString const name = (((*this).current())).as.Identifier.name;
@@ -11071,15 +11071,15 @@ utility::Span const start = ((((*this).current())).span());
 if (((((*this).current())).__jakt_init_index() == 92 /* Raw */)){
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
-return TRY((parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::RawAddress(),TRY((parser::merge_spans(start,((expr)->span())))))));
+return TRY((parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::RawAddress(),parser::merge_spans(start,((expr)->span())))));
 }
 if (((((*this).current())).__jakt_init_index() == 85 /* Mut */)){
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
-return TRY((parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::MutableReference(),TRY((parser::merge_spans(start,((expr)->span())))))));
+return TRY((parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::MutableReference(),parser::merge_spans(start,((expr)->span())))));
 }
 NonnullRefPtr<typename parser::ParsedExpression> const expr = TRY((((*this).parse_operand())));
-return TRY((parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::Reference(),TRY((parser::merge_spans(start,((expr)->span())))))));
+return TRY((parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::Reference(),parser::merge_spans(start,((expr)->span())))));
 }
 }
 
@@ -11258,7 +11258,7 @@ TRY((((*this).error((ByteString::must_from_utf8("Expected ‘catch’"sv)),((((*
 }
 
 parser::ParsedBlock const catch_block = TRY((((*this).parse_block())));
-return TRY((parser::ParsedExpression::TryBlock(stmt,error_name,error_span,catch_block,TRY((parser::merge_spans(start_span,((((*this).previous())).span())))))));
+return TRY((parser::ParsedExpression::TryBlock(stmt,error_name,error_span,catch_block,parser::merge_spans(start_span,((((*this).previous())).span())))));
 }
 }
 
@@ -12496,7 +12496,7 @@ break;
 }
 parser::ParsedExternImport extern_import = (_magic_value.value());
 {
-if (TRY((((extern_import).is_equivalent_to(import_))))){
+if (((extern_import).is_equivalent_to(import_))){
 TRY((((((extern_import).assigned_namespace)).merge_with(((import_).assigned_namespace)))));
 TRY((((((extern_import).before_include)).push_values(((((import_).before_include)))))));
 TRY((((((extern_import).after_include)).push_values(((((import_).after_include)))))));
@@ -12868,10 +12868,10 @@ case 2 /* Operator */:this->as.Operator.name.~ByteString();
 break;
 }
 }
-ErrorOr<ByteString> parser::ExternalName::as_name_for_use() const {
+ByteString parser::ExternalName::as_name_for_use() const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ErrorOr<ByteString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ByteString>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Plain */: {
@@ -12884,7 +12884,7 @@ return JaktInternal::ExplicitValue(name);
 };/*case end*/
 case 2 /* Operator */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Operator;ByteString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal(" {} "sv)),name))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal(" {} "sv)),name));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -13093,7 +13093,7 @@ case 1 /* Comptime */:this->as.Comptime.expression.~NonnullRefPtr();
 break;
 }
 }
-ErrorOr<ByteString> parser::ImportName::literal_name() const {
+ByteString parser::ImportName::literal_name() const {
 {
 if (((*this).__jakt_init_index() == 0 /* Literal */)){
 ByteString const name = (*this).as.Literal.name;
@@ -23394,10 +23394,10 @@ break;
 case 4 /* Garbage */:break;
 }
 }
-ErrorOr<ByteString> parser::RecordType::record_type_name() const {
+ByteString parser::RecordType::record_type_name() const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ErrorOr<ByteString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ByteString>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Struct */: {

@@ -138,7 +138,7 @@ ErrorOr<void> print_underline(error::MessageSeverity const severity, size_t cons
 
 ErrorOr<void> print_source_line(error::MessageSeverity const severity, JaktInternal::DynamicArray<u8> const file_contents, JaktInternal::Tuple<size_t,size_t> const file_span, utility::Span const error_span, size_t const line_number, size_t const largest_line_number);
 
-ErrorOr<void> display_message_with_span_json(error::MessageSeverity const severity, ByteString const file_name, ByteString const message, utility::Span const span);
+void display_message_with_span_json(error::MessageSeverity const severity, ByteString const file_name, ByteString const message, utility::Span const span);
 
 }
 namespace compiler {
@@ -229,7 +229,7 @@ struct RecordType;
 
 struct FunctionType;
 
-ErrorOr<utility::Span> merge_spans(utility::Span const start, utility::Span const end);
+utility::Span merge_spans(utility::Span const start, utility::Span const end);
 
 f32 f64_to_f32(f64 const number);
 
@@ -517,17 +517,17 @@ ErrorOr<void> install(jakt__path::Path const from, jakt__path::Path const to);
 ErrorOr<void> mkdir_p(jakt__path::Path const path);
 
 
-ErrorOr<ByteString> usage();
+ByteString usage();
 
 ErrorOr<JaktInternal::DynamicArray<jakt__path::Path>> find_with_extension(jakt__path::Path const path, ByteString const extension);
 
 ErrorOr<int> compiler_main(JaktInternal::DynamicArray<ByteString> const args);
 
-ErrorOr<ByteString> escape_for_depfile(ByteString const input);
+ByteString escape_for_depfile(ByteString const input);
 
 ErrorOr<ByteString> help();
 
-ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(ByteString const range, size_t const input_file_length);
+JaktInternal::Optional<FormatRange> parse_format_range(ByteString const range, size_t const input_file_length);
 
 ErrorOr<ByteString> indent(size_t const level);
 

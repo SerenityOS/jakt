@@ -12,7 +12,7 @@ return *this;
 }
 }
 
-ErrorOr<ByteString> jakt__path::Path::extension() const {
+ByteString jakt__path::Path::extension() const {
 {
 {
 JaktInternal::Range<size_t> _magic = (((JaktInternal::Range<size_t>{static_cast<size_t>(JaktInternal::checked_sub(((((*this).path)).length()),static_cast<size_t>(1ULL))),static_cast<size_t>(static_cast<size_t>(0ULL))})).inclusive());
@@ -41,11 +41,11 @@ return (ByteString::must_from_utf8(""sv));
 
 jakt__path::Path::Path(ByteString a_path): path(move(a_path)){}
 
-ErrorOr<ByteString> jakt__path::Path::basename(bool const strip_extension) const {
+ByteString jakt__path::Path::basename(bool const strip_extension) const {
 {
-JaktInternal::Tuple<ByteString,ByteString> const parts = TRY((((*this).split_at_last_slash())));
+JaktInternal::Tuple<ByteString,ByteString> const parts = ((*this).split_at_last_slash());
 if (strip_extension){
-size_t ext_length = ((TRY((((*this).extension())))).length());
+size_t ext_length = ((((*this).extension())).length());
 if ([](size_t const& self, size_t rhs) -> bool {
 {
 return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
@@ -107,8 +107,8 @@ return File::exists(((*this).path));
 
 ErrorOr<jakt__path::Path> jakt__path::Path::replace_extension(ByteString const new_extension) const {
 {
-JaktInternal::Tuple<ByteString,ByteString> const parts = TRY((((*this).split_at_last_slash())));
-ByteString const basename = TRY((((*this).basename(true))));
+JaktInternal::Tuple<ByteString,ByteString> const parts = ((*this).split_at_last_slash());
+ByteString const basename = ((*this).basename(true));
 ByteString const extension = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<jakt__path::Path>>{
 auto __jakt_enum_value = (new_extension);
@@ -181,7 +181,7 @@ return path;
 }
 }
 
-ErrorOr<JaktInternal::Tuple<ByteString,ByteString>> jakt__path::Path::split_at_last_slash() const {
+JaktInternal::Tuple<ByteString,ByteString> jakt__path::Path::split_at_last_slash() const {
 {
 size_t const len = ((((*this).path)).length());
 JaktInternal::Optional<size_t> const last_slash = jakt__path::Path::last_slash(((*this).path));
@@ -196,7 +196,7 @@ return (Tuple{(ByteString::must_from_utf8(""sv)), ((*this).path)});
 
 ErrorOr<jakt__path::Path> jakt__path::Path::parent() const {
 {
-JaktInternal::Tuple<ByteString,ByteString> const parts = TRY((((*this).split_at_last_slash())));
+JaktInternal::Tuple<ByteString,ByteString> const parts = ((*this).split_at_last_slash());
 if (((((parts).template get<0>())) == ((ByteString::must_from_utf8(""sv))))){
 return jakt__path::Path((ByteString::must_from_utf8("."sv)));
 }
@@ -297,7 +297,7 @@ return parts;
 }
 }
 
-ErrorOr<bool> jakt__path::Path::is_dot() const {
+bool jakt__path::Path::is_dot() const {
 {
 return (((((*this).path)) == ((ByteString::must_from_utf8("."sv)))) || ((((*this).path)) == ((ByteString::must_from_utf8(".."sv)))));
 }

@@ -8,7 +8,14 @@
 #include "interpreter.h"
 namespace Jakt {
 namespace codegen {
-struct AllowedControlExits {
+struct CodegenDebugInfo {
+  public:
+public: NonnullRefPtr<compiler::Compiler> compiler;public: JaktInternal::Dictionary<size_t,JaktInternal::DynamicArray<codegen::LineSpan>> line_spans;public: bool statement_span_comments;public: ErrorOr<void> gather_line_spans();
+public: ErrorOr<ByteString> span_to_source_location(utility::Span const span);
+public: CodegenDebugInfo(NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Dictionary<size_t,JaktInternal::DynamicArray<codegen::LineSpan>> a_line_spans, bool a_statement_span_comments);
+
+public: ErrorOr<ByteString> debug_description() const;
+};struct AllowedControlExits {
 u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
@@ -33,25 +40,13 @@ AllowedControlExits() {};
 struct ControlFlowState {
   public:
 public: codegen::AllowedControlExits allowed_exits;public: bool passes_through_match;public: bool passes_through_try;public: size_t match_nest_level;public: codegen::ControlFlowState enter_function() const;
-public: static ErrorOr<ByteString> nested_release_return_expr(ids::TypeId const func_return_type, bool const func_can_throw, ByteString const cpp_match_result_type);
+public: static ByteString nested_release_return_expr(ids::TypeId const func_return_type, bool const func_can_throw, ByteString const cpp_match_result_type);
 public: ErrorOr<ByteString> apply_control_flow_macro(ByteString const x, ids::TypeId const func_return_type, bool const func_can_throw, ByteString const cpp_match_result_type) const;
 public: codegen::ControlFlowState enter_loop() const;
 public: static codegen::ControlFlowState no_control_flow();
 public: bool is_match_nested() const;
 public: codegen::ControlFlowState enter_match() const;
 public: ControlFlowState(codegen::AllowedControlExits a_allowed_exits, bool a_passes_through_match, bool a_passes_through_try, size_t a_match_nest_level);
-
-public: ErrorOr<ByteString> debug_description() const;
-};struct LineSpan {
-  public:
-public: size_t start;public: size_t end;public: LineSpan(size_t a_start, size_t a_end);
-
-public: ErrorOr<ByteString> debug_description() const;
-};struct CodegenDebugInfo {
-  public:
-public: NonnullRefPtr<compiler::Compiler> compiler;public: JaktInternal::Dictionary<size_t,JaktInternal::DynamicArray<codegen::LineSpan>> line_spans;public: bool statement_span_comments;public: ErrorOr<void> gather_line_spans();
-public: ErrorOr<ByteString> span_to_source_location(utility::Span const span);
-public: CodegenDebugInfo(NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Dictionary<size_t,JaktInternal::DynamicArray<codegen::LineSpan>> a_line_spans, bool a_statement_span_comments);
 
 public: ErrorOr<ByteString> debug_description() const;
 };struct CodeGenerator {
@@ -78,8 +73,8 @@ public: ErrorOr<ByteString> codegen_template_parameter_names(JaktInternal::Dynam
 public: ErrorOr<ByteString> codegen_template_parameter_names(JaktInternal::DynamicArray<ids::TypeId> const parameters, JaktInternal::DynamicArray<ByteString>& names);
 public: ErrorOr<ByteString> codegen_method_call(NonnullRefPtr<typename types::CheckedExpression> const expr, types::CheckedCall const call, bool const is_optional);
 public: ErrorOr<void> codegen_for_enum_variants(types::CheckedEnum const& enum_, Function<ErrorOr<ByteString>(ByteString)> const& stmt_fmt, ByteString const index_expr, ByteStringBuilder& output) const;
-public: ErrorOr<ByteString> fresh_label();
-public: ErrorOr<ByteString> fresh_var();
+public: ByteString fresh_label();
+public: ByteString fresh_var();
 public: ErrorOr<ByteString> codegen_call(types::CheckedCall const call);
 public: ErrorOr<ByteString> codegen_namespace_predecl(NonnullRefPtr<types::Scope> const scope, NonnullRefPtr<types::Module> const current_module);
 public: ErrorOr<JaktInternal::DynamicArray<ids::ModuleId>> topologically_sort_modules() const;
@@ -99,11 +94,11 @@ public: CodeGenerator(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPt
 public: ids::TypeId map_type(ids::TypeId const type_id) const;
 public: ErrorOr<ByteString> codegen_function(NonnullRefPtr<types::CheckedFunction> const function, bool const as_method);
 public: ErrorOr<ByteString> codegen_generic_type_instance(ids::StructId const id, JaktInternal::DynamicArray<ids::TypeId> const args, bool const as_namespace);
-public: ErrorOr<JaktInternal::Optional<ByteString>> destructor_name(ids::TypeId const id) const;
+public: JaktInternal::Optional<ByteString> destructor_name(ids::TypeId const id) const;
 public: ErrorOr<ByteString> codegen_enum_debug_description_getter(types::CheckedEnum const enum_, bool const is_inline);
 public: ErrorOr<ByteString> codegen_expression(NonnullRefPtr<typename types::CheckedExpression> const expression);
 public: ErrorOr<ByteString> codegen_binary_expression(NonnullRefPtr<typename types::CheckedExpression> const expression, ids::TypeId const type_id, NonnullRefPtr<typename types::CheckedExpression> const lhs, NonnullRefPtr<typename types::CheckedExpression> const rhs, types::CheckedBinaryOperator const op);
-public: ErrorOr<ByteString> current_error_handler() const;
+public: ByteString current_error_handler() const;
 public: ErrorOr<ByteString> codegen_enum_match(types::CheckedEnum const enum_, NonnullRefPtr<typename types::CheckedExpression> const expr, JaktInternal::DynamicArray<types::CheckedMatchCase> const match_cases, ids::TypeId const type_id, bool const all_variants_constant);
 public: ErrorOr<ByteString> codegen_namespace_path(types::CheckedCall const call);
 public: ErrorOr<ByteString> codegen_enum_assignment_body(types::CheckedEnum const enum_, bool const is_constructor, bool const use_move) const;
@@ -129,7 +124,18 @@ public: ErrorOr<ByteString> codegen_type_possibly_as_namespace(ids::TypeId const
 public: ErrorOr<void> codegen_enum_destructor_body(types::CheckedEnum const enum_, ByteString& output) const;
 public: ErrorOr<ByteString> codegen_struct_predecl(types::CheckedStruct const struct_);
 public: ErrorOr<ByteString> debug_description() const;
+};struct LineSpan {
+  public:
+public: size_t start;public: size_t end;public: LineSpan(size_t a_start, size_t a_end);
+
+public: ErrorOr<ByteString> debug_description() const;
 };}
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::codegen::CodegenDebugInfo> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::CodegenDebugInfo const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::codegen::AllowedControlExits> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::AllowedControlExits const& value) {
@@ -143,20 +149,14 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::codegen::LineSpan> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::LineSpan const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::codegen::CodegenDebugInfo> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::CodegenDebugInfo const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::codegen::CodeGenerator> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::CodeGenerator const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::codegen::LineSpan> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::LineSpan const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

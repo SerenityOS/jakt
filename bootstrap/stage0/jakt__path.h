@@ -7,10 +7,10 @@ namespace jakt__path {
 struct Path {
   public:
 private: ByteString path;public: ErrorOr<jakt__path::Path> absolute() const;
-public: ErrorOr<ByteString> extension() const;
+public: ByteString extension() const;
 public: Path(ByteString a_path);
 
-public: ErrorOr<ByteString> basename(bool const strip_extension) const;
+public: ByteString basename(bool const strip_extension) const;
 public: ErrorOr<jakt__path::Path> join(ByteString const path) const;
 public: ErrorOr<jakt__path::Path> join(jakt__path::Path const path) const;
 public: ByteString to_string() const;
@@ -19,11 +19,11 @@ public: ErrorOr<jakt__path::Path> replace_extension(ByteString const new_extensi
 private: static JaktInternal::Optional<size_t> last_slash(ByteString const path);
 public: static ErrorOr<jakt__path::Path> from_string(ByteString const string);
 public: static ErrorOr<jakt__path::Path> from_parts(JaktInternal::DynamicArray<ByteString> const parts);
-private: ErrorOr<JaktInternal::Tuple<ByteString,ByteString>> split_at_last_slash() const;
+private: JaktInternal::Tuple<ByteString,ByteString> split_at_last_slash() const;
 public: ErrorOr<jakt__path::Path> parent() const;
 private: ErrorOr<void> normalize_separators();
 public: ErrorOr<JaktInternal::DynamicArray<ByteString>> components() const;
-public: ErrorOr<bool> is_dot() const;
+public: bool is_dot() const;
 public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt

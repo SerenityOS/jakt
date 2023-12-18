@@ -61,7 +61,7 @@ auto&& __jakt_match_variant = *node;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Boolean */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Boolean;bool const& val = __jakt_match_value.val;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}"sv)),val))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}"sv)),val));
 };/*case end*/
 case 1 /* NumericConstant */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.NumericConstant;types::CheckedNumericConstant const& val = __jakt_match_value.val;
@@ -71,47 +71,47 @@ auto&& __jakt_match_variant = val;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* I8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I8;i8 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}i8"sv)),value))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}i8"sv)),value));
 };/*case end*/
 case 1 /* I16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I16;i16 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}i16"sv)),value))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}i16"sv)),value));
 };/*case end*/
 case 2 /* I32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I32;i32 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}i32"sv)),value))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}i32"sv)),value));
 };/*case end*/
 case 3 /* I64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I64;i64 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}i64"sv)),value))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}i64"sv)),value));
 };/*case end*/
 case 4 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}u8"sv)),value))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}u8"sv)),value));
 };/*case end*/
 case 5 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}u16"sv)),value))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}u16"sv)),value));
 };/*case end*/
 case 6 /* U32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U32;u32 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}u32"sv)),value))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}u32"sv)),value));
 };/*case end*/
 case 7 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}u64"sv)),value))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}u64"sv)),value));
 };/*case end*/
 case 9 /* F32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.F32;f32 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}f32"sv)),value))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}f32"sv)),value));
 };/*case end*/
 case 10 /* F64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.F64;f64 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}f64"sv)),value))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}f64"sv)),value));
 };/*case end*/
 case 8 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;u64 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}uz"sv)),value))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}uz"sv)),value));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -127,10 +127,10 @@ return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((((val).type_id)).equals(types::builtin(types::BuiltinType::JaktString()))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("\"{}\""sv)),((val).to_string())))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("\"{}\""sv)),((val).to_string())));
 }
 else {
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("(overloaded) \"{}\""sv)),((val).to_string())))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("(overloaded) \"{}\""sv)),((val).to_string())));
 }
 }());
     if (_jakt_value.is_return())
@@ -140,15 +140,15 @@ return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_l
 };/*case end*/
 case 3 /* ByteConstant */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ByteConstant;ByteString const& val = __jakt_match_value.val;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("b'{}'"sv)),val))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("b'{}'"sv)),val));
 };/*case end*/
 case 4 /* CharacterConstant */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.CharacterConstant;ByteString const& val = __jakt_match_value.val;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("'{}'"sv)),val))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("'{}'"sv)),val));
 };/*case end*/
 case 5 /* CCharacterConstant */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.CCharacterConstant;ByteString const& val = __jakt_match_value.val;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("c'{}'"sv)),val))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("c'{}'"sv)),val));
 };/*case end*/
 case 6 /* UnaryOp */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.UnaryOp;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
@@ -196,7 +196,7 @@ ByteString to_output = (ByteString::must_from_utf8(""sv));
 if (((to).has_value())){
 (to_output = TRY((repl::serialize_ast_node((to.value())))));
 }
-__jakt_var_929 = TRY((__jakt_format((StringView::from_string_literal("{}..{}"sv)),from_output,to_output))); goto __jakt_label_823;
+__jakt_var_929 = __jakt_format((StringView::from_string_literal("{}..{}"sv)),from_output,to_output); goto __jakt_label_823;
 
 }
 __jakt_label_823:; __jakt_var_929.release_value(); }));
@@ -294,22 +294,22 @@ __jakt_label_826:; __jakt_var_932.release_value(); }));
 case 13 /* IndexedExpression */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.IndexedExpression;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
 NonnullRefPtr<typename types::CheckedExpression> const& index = __jakt_match_value.index;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}[{}]"sv)),TRY((repl::serialize_ast_node(expr))),TRY((repl::serialize_ast_node(index)))))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}[{}]"sv)),TRY((repl::serialize_ast_node(expr))),TRY((repl::serialize_ast_node(index)))));
 };/*case end*/
 case 14 /* IndexedDictionary */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.IndexedDictionary;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
 NonnullRefPtr<typename types::CheckedExpression> const& index = __jakt_match_value.index;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}[{}]"sv)),TRY((repl::serialize_ast_node(expr))),TRY((repl::serialize_ast_node(index)))))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}[{}]"sv)),TRY((repl::serialize_ast_node(expr))),TRY((repl::serialize_ast_node(index)))));
 };/*case end*/
 case 15 /* IndexedTuple */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.IndexedTuple;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
 size_t const& index = __jakt_match_value.index;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}.{}"sv)),TRY((repl::serialize_ast_node(expr))),index))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}.{}"sv)),TRY((repl::serialize_ast_node(expr))),index));
 };/*case end*/
 case 16 /* IndexedStruct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.IndexedStruct;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
 JaktInternal::Optional<ids::VarId> const& index = __jakt_match_value.index;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}.{}"sv)),TRY((repl::serialize_ast_node(expr))),index))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}.{}"sv)),TRY((repl::serialize_ast_node(expr))),index));
 };/*case end*/
 case 23 /* NamespacedVar */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.NamespacedVar;JaktInternal::DynamicArray<types::CheckedNamespace> const& namespaces = __jakt_match_value.namespaces;
@@ -347,11 +347,11 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8("None"sv)));
 };/*case end*/
 case 26 /* OptionalSome */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.OptionalSome;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("Some({})"sv)),TRY((repl::serialize_ast_node(expr)))))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("Some({})"sv)),TRY((repl::serialize_ast_node(expr)))));
 };/*case end*/
 case 27 /* ForcedUnwrap */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ForcedUnwrap;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}!"sv)),TRY((repl::serialize_ast_node(expr)))))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}!"sv)),TRY((repl::serialize_ast_node(expr)))));
 };/*case end*/
 case 21 /* Call */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Call;types::CheckedCall const& call = __jakt_match_value.call;

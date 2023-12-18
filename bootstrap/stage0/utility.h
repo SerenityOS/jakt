@@ -4,7 +4,22 @@
 #include "jakt__platform__utility.h"
 namespace Jakt {
 namespace utility {
-template<typename T>
+struct FileId {
+  public:
+public: size_t id;public: FileId(size_t a_id);
+
+public: bool equals(utility::FileId const rhs) const;
+public: ErrorOr<ByteString> debug_description() const;
+};struct Span {
+  public:
+public: utility::FileId file_id;public: size_t start;public: size_t end;public: bool contains(utility::Span const span) const;
+public: Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
+
+public: static utility::Span first(utility::Span const a, utility::Span const b);
+public: bool is_in_offset_range(size_t const start, size_t const end) const;
+public: static utility::Span last(utility::Span const a, utility::Span const b);
+public: ErrorOr<ByteString> debug_description() const;
+};template<typename T>
 struct IterationDecision {
 u8 __jakt_variant_index = 0;
 union VariantData {
@@ -130,34 +145,11 @@ public:
 private:
 IterationDecision() {};
 };
-struct FileId {
-  public:
-public: size_t id;public: FileId(size_t a_id);
-
-public: bool equals(utility::FileId const rhs) const;
-public: ErrorOr<ByteString> debug_description() const;
-};struct Span {
-  public:
-public: utility::FileId file_id;public: size_t start;public: size_t end;public: bool contains(utility::Span const span) const;
-public: Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
-
-public: static utility::Span first(utility::Span const a, utility::Span const b);
-public: bool is_in_offset_range(size_t const start, size_t const end) const;
-public: static utility::Span last(utility::Span const a, utility::Span const b);
-public: ErrorOr<ByteString> debug_description() const;
-};template <typename T,typename U>
+template <typename T,typename U>
 ErrorOr<JaktInternal::DynamicArray<U>> map(JaktInternal::DynamicArray<T> const input, Function<ErrorOr<U>(T)> const& mapper);
 template <typename T>
 ErrorOr<JaktInternal::DynamicArray<T>> add_arrays(JaktInternal::DynamicArray<T> const a, JaktInternal::DynamicArray<T> const b);
 }
-} // namespace Jakt
-template<typename T>struct Jakt::Formatter<Jakt::utility::IterationDecision<T>
-> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::utility::IterationDecision<T>
- const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::utility::FileId> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::utility::FileId const& value) {
@@ -167,6 +159,14 @@ namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::utility::Span> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::utility::Span const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<typename T>struct Jakt::Formatter<Jakt::utility::IterationDecision<T>
+> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::utility::IterationDecision<T>
+ const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
