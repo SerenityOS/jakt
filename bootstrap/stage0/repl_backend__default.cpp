@@ -20,7 +20,7 @@ free(line_pointer);
 
 ErrorOr<repl_backend__default::Editor> repl_backend__default::Editor::create(ByteString const prompt,Function<ErrorOr<void>(repl_backend__default::Editor&)> const& syntax_highlight_handler) {
 {
-FILE* std_in = fopen(((TRY(ByteString::from_utf8("/dev/stdin"sv))).characters()),((TRY(ByteString::from_utf8("r"sv))).characters()));
+FILE* std_in = fopen((((ByteString::must_from_utf8("/dev/stdin"sv))).characters()),(((ByteString::must_from_utf8("r"sv))).characters()));
 if ((std_in == jakt__platform__utility::null<FILE*>())){
 warnln((StringView::from_string_literal("Could not open /dev/stdin for reading"sv)));
 return Error::from_errno(static_cast<i32>(42));

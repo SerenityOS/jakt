@@ -10,7 +10,7 @@ type StringView implements(FromStringLiteral) {
     fn from_string_literal(anon string: StringView) -> StringView => string
 }
 
-type String implements(ThrowingFromStringLiteral) {
-    [[name=from_utf8]]
-    extern fn from_string_literal(anon string: StringView) throws -> String
+type String implements(FromStringLiteral) {
+    [[name=must_from_utf8]]
+    extern fn from_string_literal(anon string: StringView) -> String
 }

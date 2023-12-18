@@ -30,9 +30,9 @@ return defines;
 ErrorOr<void> dump_scope(ids::ScopeId const scope_id,NonnullRefPtr<types::CheckedProgram> const& program,i64 const indent) {
 {
 NonnullRefPtr<types::Scope> scope = TRY((((((program)))->get_scope(scope_id))));
-warnln((StringView::from_string_literal("{: >{}}Scope (ns={}) {}"sv)),TRY(ByteString::from_utf8(""sv)),indent,((scope)->namespace_name),((scope)->debug_name));
+warnln((StringView::from_string_literal("{: >{}}Scope (ns={}) {}"sv)),(ByteString::must_from_utf8(""sv)),indent,((scope)->namespace_name),((scope)->debug_name));
 i64 const cindent = JaktInternal::checked_add(indent,static_cast<i64>(2LL));
-warnln((StringView::from_string_literal("{: >{}}Types:"sv)),TRY(ByteString::from_utf8(""sv)),cindent);
+warnln((StringView::from_string_literal("{: >{}}Types:"sv)),(ByteString::must_from_utf8(""sv)),cindent);
 {
 JaktInternal::DictionaryIterator<ByteString,ids::TypeId> _magic = ((((scope)->types)).iterator());
 for (;;){
@@ -47,13 +47,13 @@ ByteString const name = ((jakt__name__type_id__).template get<0>());
 ids::TypeId const type_id = ((jakt__name__type_id__).template get<1>());
 
 NonnullRefPtr<typename types::Type> const type = ((((program)))->get_type(type_id));
-warnln((StringView::from_string_literal("{: >{}}{}: {}"sv)),TRY(ByteString::from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),name,TRY((((((program)))->type_name(type_id,true)))));
+warnln((StringView::from_string_literal("{: >{}}{}: {}"sv)),(ByteString::must_from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),name,TRY((((((program)))->type_name(type_id,true)))));
 }
 
 }
 }
 
-warnln((StringView::from_string_literal("{: >{}}Specializations:"sv)),TRY(ByteString::from_utf8(""sv)),cindent);
+warnln((StringView::from_string_literal("{: >{}}Specializations:"sv)),(ByteString::must_from_utf8(""sv)),cindent);
 {
 JaktInternal::DictionaryIterator<ByteString,types::SpecializedType> _magic = ((((scope)->explicitly_specialized_types)).iterator());
 for (;;){
@@ -68,7 +68,7 @@ ByteString const name = ((jakt__name__type__).template get<0>());
 types::SpecializedType const type = ((jakt__name__type__).template get<1>());
 
 ByteString const type_name = TRY((((((program)))->type_name(((type).type_id),true))));
-ByteString args = TRY(ByteString::from_utf8(""sv));
+ByteString args = (ByteString::must_from_utf8(""sv));
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((((type).arguments)).iterator());
 for (;;){
@@ -78,19 +78,19 @@ break;
 }
 ids::TypeId arg = (_magic_value.value());
 {
-(args = TRY((((TRY((((args) + (TRY((((((program)))->type_name(arg,true))))))))) + (TRY(ByteString::from_utf8(", "sv)))))));
+(args = TRY((((TRY((((args) + (TRY((((((program)))->type_name(arg,true))))))))) + ((ByteString::must_from_utf8(", "sv)))))));
 }
 
 }
 }
 
-warnln((StringView::from_string_literal("{: >{}}{}<{}> = {}"sv)),TRY(ByteString::from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),name,args,type_name);
+warnln((StringView::from_string_literal("{: >{}}{}<{}> = {}"sv)),(ByteString::must_from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),name,args,type_name);
 }
 
 }
 }
 
-warnln((StringView::from_string_literal("{: >{}}Variables:"sv)),TRY(ByteString::from_utf8(""sv)),cindent);
+warnln((StringView::from_string_literal("{: >{}}Variables:"sv)),(ByteString::must_from_utf8(""sv)),cindent);
 {
 JaktInternal::DictionaryIterator<ByteString,ids::VarId> _magic = ((((scope)->vars)).iterator());
 for (;;){
@@ -105,13 +105,13 @@ ByteString const name = ((jakt__name__var_id__).template get<0>());
 ids::VarId const var_id = ((jakt__name__var_id__).template get<1>());
 
 NonnullRefPtr<types::CheckedVariable> const var = ((((program)))->get_variable(var_id));
-warnln((StringView::from_string_literal("{: >{}}{}: {}"sv)),TRY(ByteString::from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),name,TRY((((((program)))->type_name(((var)->type_id),true)))));
+warnln((StringView::from_string_literal("{: >{}}{}: {}"sv)),(ByteString::must_from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),name,TRY((((((program)))->type_name(((var)->type_id),true)))));
 }
 
 }
 }
 
-warnln((StringView::from_string_literal("{: >{}}Functions:"sv)),TRY(ByteString::from_utf8(""sv)),cindent);
+warnln((StringView::from_string_literal("{: >{}}Functions:"sv)),(ByteString::must_from_utf8(""sv)),cindent);
 {
 JaktInternal::DictionaryIterator<ByteString,JaktInternal::DynamicArray<ids::FunctionId>> _magic = ((((scope)->functions)).iterator());
 for (;;){
@@ -125,7 +125,7 @@ JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<ids::FunctionId>> cons
 ByteString const name = ((jakt__name__ids__).template get<0>());
 JaktInternal::DynamicArray<ids::FunctionId> const ids = ((jakt__name__ids__).template get<1>());
 
-warnln((StringView::from_string_literal("{: >{}}{}:"sv)),TRY(ByteString::from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),name);
+warnln((StringView::from_string_literal("{: >{}}{}:"sv)),(ByteString::must_from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),name);
 {
 JaktInternal::ArrayIterator<ids::FunctionId> _magic = ((ids).iterator());
 for (;;){
@@ -136,7 +136,7 @@ break;
 ids::FunctionId id = (_magic_value.value());
 {
 NonnullRefPtr<types::CheckedFunction> const function = ((((program)))->get_function(id));
-ByteString args = TRY(ByteString::from_utf8(""sv));
+ByteString args = (ByteString::must_from_utf8(""sv));
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((function)->params)).iterator());
 for (;;){
@@ -146,13 +146,13 @@ break;
 }
 types::CheckedParameter arg = (_magic_value.value());
 {
-(args = TRY((((TRY((((args) + (TRY((((((program)))->type_name(((((arg).variable))->type_id),true))))))))) + (TRY(ByteString::from_utf8(", "sv)))))));
+(args = TRY((((TRY((((args) + (TRY((((((program)))->type_name(((((arg).variable))->type_id),true))))))))) + ((ByteString::must_from_utf8(", "sv)))))));
 }
 
 }
 }
 
-ByteString generics = TRY(ByteString::from_utf8(""sv));
+ByteString generics = (ByteString::must_from_utf8(""sv));
 {
 JaktInternal::ArrayIterator<types::FunctionGenericParameter> _magic = ((((((function)->generics))->params)).iterator());
 for (;;){
@@ -162,7 +162,7 @@ break;
 }
 types::FunctionGenericParameter generic = (_magic_value.value());
 {
-(generics = TRY((((TRY((((generics) + (TRY((((((program)))->type_name(((generic).type_id()),true))))))))) + (TRY(ByteString::from_utf8(", "sv)))))));
+(generics = TRY((((TRY((((generics) + (TRY((((((program)))->type_name(((generic).type_id()),true))))))))) + ((ByteString::must_from_utf8(", "sv)))))));
 }
 
 }
@@ -171,7 +171,7 @@ types::FunctionGenericParameter generic = (_magic_value.value());
 if ((!(((generics).is_empty())))){
 (generics = TRY((__jakt_format((StringView::from_string_literal("<{}>"sv)),generics))));
 }
-warnln((StringView::from_string_literal("{: >{}}fn{}({}) -> {}"sv)),TRY(ByteString::from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(4LL)),generics,args,TRY((((((program)))->type_name(((function)->return_type_id),true)))));
+warnln((StringView::from_string_literal("{: >{}}fn{}({}) -> {}"sv)),(ByteString::must_from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(4LL)),generics,args,TRY((((((program)))->type_name(((function)->return_type_id),true)))));
 }
 
 }
@@ -182,7 +182,7 @@ warnln((StringView::from_string_literal("{: >{}}fn{}({}) -> {}"sv)),TRY(ByteStri
 }
 }
 
-warnln((StringView::from_string_literal("{: >{}}Structs:"sv)),TRY(ByteString::from_utf8(""sv)),cindent);
+warnln((StringView::from_string_literal("{: >{}}Structs:"sv)),(ByteString::must_from_utf8(""sv)),cindent);
 {
 JaktInternal::DictionaryIterator<ByteString,ids::StructId> _magic = ((((scope)->structs)).iterator());
 for (;;){
@@ -197,13 +197,13 @@ ByteString const name = ((jakt__name__id__).template get<0>());
 ids::StructId const id = ((jakt__name__id__).template get<1>());
 
 types::CheckedStruct const struct_ = ((((program)))->get_struct(id));
-warnln((StringView::from_string_literal("{: >{}}{}@{}: {}"sv)),TRY(ByteString::from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),((id).id),((id).module),((struct_).name));
+warnln((StringView::from_string_literal("{: >{}}{}@{}: {}"sv)),(ByteString::must_from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),((id).id),((id).module),((struct_).name));
 }
 
 }
 }
 
-warnln((StringView::from_string_literal("{: >{}}Aliases:"sv)),TRY(ByteString::from_utf8(""sv)),cindent);
+warnln((StringView::from_string_literal("{: >{}}Aliases:"sv)),(ByteString::must_from_utf8(""sv)),cindent);
 {
 JaktInternal::DictionaryIterator<ByteString,ids::ScopeId> _magic = ((((scope)->aliases)).iterator());
 for (;;){
@@ -218,13 +218,13 @@ ByteString const name = ((jakt__name__id__).template get<0>());
 ids::ScopeId const id = ((jakt__name__id__).template get<1>());
 
 NonnullRefPtr<types::Scope> const scope = TRY((((((program)))->get_scope(id))));
-warnln((StringView::from_string_literal("{: >{}}{}: {}"sv)),TRY(ByteString::from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),name,((scope)->debug_name));
+warnln((StringView::from_string_literal("{: >{}}{}: {}"sv)),(ByteString::must_from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(2LL)),name,((scope)->debug_name));
 }
 
 }
 }
 
-warnln((StringView::from_string_literal("{: >{}}Children:"sv)),TRY(ByteString::from_utf8(""sv)),cindent);
+warnln((StringView::from_string_literal("{: >{}}Children:"sv)),(ByteString::must_from_utf8(""sv)),cindent);
 {
 JaktInternal::ArrayIterator<ids::ScopeId> _magic = ((((scope)->children)).iterator());
 for (;;){
@@ -333,7 +333,7 @@ TRY((((((typechecker))).error(TRY((__jakt_format((StringView::from_string_litera
 }
 else if (((private_matching_method).has_value())){
 utility::Span const span = (private_matching_method.value());
-TRY((((((typechecker))).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Implementation of ‘{}’ for trait ‘{}’ is valid but is not public"sv)),method_name,trait_name))),span,TRY(ByteString::from_utf8("Consider adding ‘public’ to make the method accessible"sv)),span))));
+TRY((((((typechecker))).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Implementation of ‘{}’ for trait ‘{}’ is valid but is not public"sv)),method_name,trait_name))),span,(ByteString::must_from_utf8("Consider adding ‘public’ to make the method accessible"sv)),span))));
 }
 else {
 NonnullRefPtr<types::CheckedFunction> const func = ((((typechecker))).get_function(trait_method_id));
@@ -345,12 +345,12 @@ JaktInternal::Tuple<utility::Span,JaktInternal::DynamicArray<error::JaktError>> 
 utility::Span const method_span = ((method_span_errors_).template get<0>());
 JaktInternal::DynamicArray<error::JaktError> const errors = ((method_span_errors_).template get<1>());
 
-TRY((((((typechecker))).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Missing implementation for method ‘{}’ of trait ‘{}’ on type ‘{}’"sv)),method_name,trait_name,TRY((((((typechecker))).type_name(trait_type_id,false))))))),record_decl_span,TRY(ByteString::from_utf8("The method is declared here, but its signature doesn't match"sv)),method_span))));
+TRY((((((typechecker))).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Missing implementation for method ‘{}’ of trait ‘{}’ on type ‘{}’"sv)),method_name,trait_name,TRY((((((typechecker))).type_name(trait_type_id,false))))))),record_decl_span,(ByteString::must_from_utf8("The method is declared here, but its signature doesn't match"sv)),method_span))));
 TRY((((((((((typechecker))).compiler))->errors)).push_values(((errors))))));
 }
 else {
 utility::Span const trait_method_span = ((((((typechecker))).get_function(trait_method_id)))->name_span);
-TRY((((((typechecker))).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Missing implementation for method ‘{}’ of trait ‘{}’"sv)),method_name,trait_name))),record_decl_span,TRY(ByteString::from_utf8("Consider implementing the method with the signature specified here"sv)),trait_method_span))));
+TRY((((((typechecker))).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Missing implementation for method ‘{}’ of trait ‘{}’"sv)),method_name,trait_name))),record_decl_span,(ByteString::must_from_utf8("Consider implementing the method with the signature specified here"sv)),trait_method_span))));
 }
 
 }
@@ -798,7 +798,7 @@ return TRY((((((*this).program))->create_scope(parent_scope_id,can_throw,debug_n
 ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typechecker::Typechecker::typecheck_return(JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const expr,utility::Span const span,ids::ScopeId const scope_id,types::SafetyMode const safety_mode) {
 {
 if (((*this).inside_defer)){
-TRY((((*this).error(TRY(ByteString::from_utf8("‘return’ is not allowed inside ‘defer’"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("‘return’ is not allowed inside ‘defer’"sv)),span))));
 }
 if ((!(((expr).has_value())))){
 if (((((*this).current_function_id)).has_value())){
@@ -811,7 +811,7 @@ TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_litera
 return TRY((types::CheckedStatement::Return(JaktInternal::OptionalNone(),span)));
 }
 if (((!((((((*this).current_function_id)).has_value()) && ((((*this).get_function((((*this).current_function_id).value()))))->is_comptime)))) && (((expr.value()))->__jakt_init_index() == 25 /* Function */))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Returning a function is not currently supported"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Returning a function is not currently supported"sv)),span))));
 }
 JaktInternal::Optional<ids::TypeId> type_hint = JaktInternal::OptionalNone();
 if (((((*this).current_function_id)).has_value())){
@@ -829,12 +829,12 @@ utility::Span const span = (checked_expr)->as.OptionalNone.span;
 if (((((*this).get_type((type_hint.value()))))->__jakt_init_index() == 20 /* GenericInstance */)){
 ids::StructId const id = (((*this).get_type((type_hint.value()))))->as.GenericInstance.id;
 JaktInternal::DynamicArray<ids::TypeId> const args = (((*this).get_type((type_hint.value()))))->as.GenericInstance.args;
-if (((!(((id).equals(TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv)))))))))) && (!(((id).equals(TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("WeakPtr"sv)))))))))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot assign None to a non-optional type"sv)),span))));
+if (((!(((id).equals(TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv)))))))))) && (!(((id).equals(TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("WeakPtr"sv)))))))))))){
+TRY((((*this).error((ByteString::must_from_utf8("Cannot assign None to a non-optional type"sv)),span))));
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot assign None to a non-optional type"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot assign None to a non-optional type"sv)),span))));
 }
 
 }
@@ -1084,12 +1084,12 @@ if (((*this).dump_try_hints)){
 TRY((((*this).dump_try_hint(span))));
 }
 if ((!(((TRY((((*this).get_scope(scope_id)))))->can_throw)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Set initialization needs to be in a try statement or a function marked as throws"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Set initialization needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 ids::TypeId inner_type_id = types::unknown_type_id();
 JaktInternal::Optional<utility::Span> inner_type_span = JaktInternal::OptionalNone();
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> output = (TRY((DynamicArray<NonnullRefPtr<typename types::CheckedExpression>>::create_with({}))));
-ids::StructId const set_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Set"sv))))));
+ids::StructId const set_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Set"sv))))));
 JaktInternal::Optional<ids::TypeId> inner_hint = JaktInternal::OptionalNone();
 JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> const type_hint_ids = TRY((((*this).get_type_ids_from_type_hint_if_struct_ids_match(type_hint,set_struct_id))));
 if (((type_hint_ids).has_value())){
@@ -1108,7 +1108,7 @@ NonnullRefPtr<typename types::CheckedExpression> const checked_value = TRY((((*t
 ids::TypeId const current_value_type_id = ((checked_value)->type());
 if (((inner_type_id).equals(types::unknown_type_id()))){
 if ((((current_value_type_id).equals(types::void_type_id())) || ((current_value_type_id).equals(types::unknown_type_id())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot create a set with values of type void"sv)),((value)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot create a set with values of type void"sv)),((value)->span())))));
 }
 (inner_type_id = current_value_type_id);
 (inner_type_span = ((value)->span()));
@@ -1128,13 +1128,13 @@ if (((inner_hint).has_value())){
 (inner_type_id = (inner_hint.value()));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot infer generic type for Set<T>"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot infer generic type for Set<T>"sv)),span))));
 }
 
 }
 if ((!(((inner_type_id).equals(types::unknown_type_id()))))){
-TRY((((*this).ensure_type_implements_trait(inner_type_id,TRY(ByteString::from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
-TRY((((*this).ensure_type_implements_trait(inner_type_id,TRY(ByteString::from_utf8("Equal"sv)),(TRY((DynamicArray<ids::TypeId>::create_with({inner_type_id})))),scope_id,span))));
+TRY((((*this).ensure_type_implements_trait(inner_type_id,(ByteString::must_from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
+TRY((((*this).ensure_type_implements_trait(inner_type_id,(ByteString::must_from_utf8("Equal"sv)),(TRY((DynamicArray<ids::TypeId>::create_with({inner_type_id})))),scope_id,span))));
 }
 ids::TypeId const type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),set_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({inner_type_id})))))))))));
 return TRY((types::CheckedExpression::JaktSet(JaktInternal::OptionalNone(),output,span,type_id,inner_type_id)));
@@ -1180,10 +1180,10 @@ NonnullRefPtr<types::CheckedFunction> checked_function = ((*this).get_function(f
 (((checked_function)->is_virtual) = ((method).is_virtual));
 (((checked_function)->visibility) = TRY((((*this).typecheck_visibility(((method).visibility),struct_scope_id)))));
 if ((((checked_function)->is_virtual) && TRY((((checked_function)->is_static()))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Functions cannot be both virtual and static"sv)),((checked_function)->name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Functions cannot be both virtual and static"sv)),((checked_function)->name_span)))));
 }
 if ((((checked_function)->is_override) && TRY((((checked_function)->is_static()))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Functions cannot be both override and static"sv)),((checked_function)->name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Functions cannot be both override and static"sv)),((checked_function)->name_span)))));
 }
 }
 
@@ -1343,18 +1343,18 @@ return TRY((((((*this).program))->find_comptime_binding_in_scope(scope_id,name,f
 
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typechecker::typecheck_try_block(NonnullRefPtr<typename parser::ParsedStatement> const stmt,ByteString const error_name,utility::Span const error_span,parser::ParsedBlock const catch_block,ids::ScopeId const scope_id,types::SafetyMode const safety_mode,utility::Span const span) {
 {
-ids::ScopeId const try_scope_id = TRY((((*this).create_scope(scope_id,true,TRY(ByteString::from_utf8("try"sv)),true))));
+ids::ScopeId const try_scope_id = TRY((((*this).create_scope(scope_id,true,(ByteString::must_from_utf8("try"sv)),true))));
 NonnullRefPtr<typename types::CheckedStatement> const checked_stmt = TRY((((*this).typecheck_statement(stmt,try_scope_id,safety_mode,JaktInternal::OptionalNone()))));
-ids::StructId const error_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Error"sv))))));
+ids::StructId const error_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Error"sv))))));
 NonnullRefPtr<types::CheckedVariable> const error_decl = TRY((types::CheckedVariable::__jakt_create(error_name,((((*this).get_struct(error_struct_id))).type_id),false,error_span,JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
 NonnullRefPtr<types::Module> module = ((*this).current_module());
 ids::VarId const error_id = TRY((((module)->add_variable(error_decl))));
 NonnullRefPtr<types::Scope> const parent_scope = TRY((((*this).get_scope(scope_id))));
-ids::ScopeId const catch_scope_id = TRY((((*this).create_scope(scope_id,((parent_scope)->can_throw),TRY(ByteString::from_utf8("catch"sv)),true))));
+ids::ScopeId const catch_scope_id = TRY((((*this).create_scope(scope_id,((parent_scope)->can_throw),(ByteString::must_from_utf8("catch"sv)),true))));
 TRY((((*this).add_var_to_scope(catch_scope_id,error_name,error_id,error_span))));
 types::CheckedBlock const checked_catch_block = TRY((((*this).typecheck_block(catch_block,catch_scope_id,safety_mode,JaktInternal::OptionalNone()))));
 if (((((checked_catch_block).yielded_type)).has_value())){
-TRY((((*this).error(TRY(ByteString::from_utf8("A ‘catch’ block as part of a try block is not allowed to yield values"sv)),(((catch_block).find_yield_span()).value())))));
+TRY((((*this).error((ByteString::must_from_utf8("A ‘catch’ block as part of a try block is not allowed to yield values"sv)),(((catch_block).find_yield_span()).value())))));
 }
 return TRY((types::CheckedExpression::TryBlock(JaktInternal::OptionalNone(),checked_stmt,checked_catch_block,error_name,error_span,span,types::void_type_id())));
 }
@@ -1480,7 +1480,7 @@ return JaktInternal::ExplicitValue(JaktInternal::checked_add(val,static_cast<u64
 case 2 /* Floating */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Floating;f64 const& val = __jakt_match_value.value;
 {
-utility::todo(TRY(ByteString::from_utf8("Implement floats"sv)));
+utility::todo((ByteString::must_from_utf8("Implement floats"sv)));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -1578,8 +1578,8 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 return (!(((self) == (rhs))));
 }
 }
-((((((((variant).params).value()))[static_cast<i64>(0LL)])).name),TRY(ByteString::from_utf8(""sv))));
-bool const is_typed = ((((((variant).params)).has_value()) && (((((((variant).params).value())).size())) == (static_cast<size_t>(1ULL)))) && (((((((((variant).params).value()))[static_cast<i64>(0LL)])).name)) == (TRY(ByteString::from_utf8(""sv)))));
+((((((((variant).params).value()))[static_cast<i64>(0LL)])).name),(ByteString::must_from_utf8(""sv))));
+bool const is_typed = ((((((variant).params)).has_value()) && (((((((variant).params).value())).size())) == (static_cast<size_t>(1ULL)))) && (((((((((variant).params).value()))[static_cast<i64>(0LL)])).name)) == ((ByteString::must_from_utf8(""sv)))));
 if (is_structlike){
 JaktInternal::Set<ByteString> seen_fields = (TRY((Set<ByteString>::create_with_values({}))));
 {
@@ -1719,7 +1719,7 @@ if ((!(((maybe_enum_variant_constructor).has_value())))){
 bool const can_function_throw = is_boxed;
 ids::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope_id,can_function_throw,TRY((__jakt_format((StringView::from_string_literal("enum-variant-constructor({}::{})"sv)),((enum_).name),((variant).name)))),true))));
 ids::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,can_function_throw,TRY((__jakt_format((StringView::from_string_literal("enum-variant-constructor-block({}::{})"sv)),((enum_).name),((variant).name)))),true))));
-NonnullRefPtr<types::CheckedVariable> const variable = TRY((types::CheckedVariable::__jakt_create(TRY(ByteString::from_utf8("value"sv)),type_id,false,((param).span),JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
+NonnullRefPtr<types::CheckedVariable> const variable = TRY((types::CheckedVariable::__jakt_create((ByteString::must_from_utf8("value"sv)),type_id,false,((param).span),JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
 TRY((((params).push(types::CheckedParameter(false,variable,JaktInternal::OptionalNone())))));
 NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(((variant).name),((variant).span),types::CheckedVisibility::Public(),TRY((((*this).find_or_add_type_id(TRY((types::Type::Enum(parser::CheckedQualifiers(false),enum_id))))))),JaktInternal::OptionalNone(),params,TRY((types::FunctionGenerics::__jakt_create(function_scope_id,params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id,types::BlockControlFlow::AlwaysReturns(),ids::TypeId::none(),false),can_function_throw,parser::FunctionType::ImplicitEnumConstructor(),parser::FunctionLinkage::Internal(),function_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),parser::InlineState::Default())));
 ids::FunctionId const function_id = TRY((((module)->add_function(checked_function))));
@@ -1827,7 +1827,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((((((callee_candidate)->generics))->params)).size()),type_arg_index)){
-TRY((((*this).error(TRY(ByteString::from_utf8("Trying to access generic parameter out of bounds"sv)),((parsed_type)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Trying to access generic parameter out of bounds"sv)),((parsed_type)->span())))));
 continue;
 }
 ids::TypeId const typevar_type_id = ((((((((callee_candidate)->generics))->params))[type_arg_index])).type_id());
@@ -1869,18 +1869,18 @@ TRY((((((*this).generic_inferences)).set(((((((structure).generic_parameters))[i
 
 }
 if (TRY((((callee_candidate)->is_static())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call static method on an instance of an object"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call static method on an instance of an object"sv)),span))));
 }
 else {
 (arg_offset = static_cast<size_t>(1ULL));
 }
 
 if ((TRY((((callee_candidate)->is_mutating()))) && (!((((this_expr.value()))->is_mutable(((*this).program))))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating method on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating method on an immutable object instance"sv)),span))));
 }
 }
 else if ((!(TRY((((callee_candidate)->is_static())))))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Cannot call an instance method statically"sv)),span,TRY(ByteString::from_utf8("Add a dot before the method name to call an instance method"sv)),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Cannot call an instance method statically"sv)),span,(ByteString::must_from_utf8("Add a dot before the method name to call an instance method"sv)),span))));
 }
 i64 total_function_specificity = static_cast<i64>(0LL);
 JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename types::CheckedExpression>>> const resolved_args = TRY((((*this).resolve_default_params(((((callee_candidate)->generics))->base_params),((callee_candidate)->has_varargs),((call).args),caller_scope_id,safety_mode,arg_offset,span))));
@@ -2056,7 +2056,7 @@ break;
 }
 
 }
-return TRY((utility::join(ss,TRY(ByteString::from_utf8(" -> "sv)))));
+return TRY((utility::join(ss,(ByteString::must_from_utf8(" -> "sv)))));
 }
 }
 
@@ -2603,7 +2603,7 @@ return JaktInternal::ExplicitValue(types::CheckedNumericConstant::I64((infallibl
 };/*case end*/
 default: {
 {
-utility::panic(TRY(ByteString::from_utf8("Unreachable"sv)));
+utility::panic((ByteString::must_from_utf8("Unreachable"sv)));
 }
 };/*case end*/
 }/*switch end*/
@@ -2630,7 +2630,7 @@ return {};
 JaktInternal::Optional<ids::FunctionId> const function_id = TRY((((*this).find_function_matching_signature_in_scope(parent_scope_id,parsed_function))));
 if (((function_id).has_value())){
 (((*this).current_function_id) = (function_id.value()));
-if (((((parsed_function).name)) == (TRY(ByteString::from_utf8("main"sv))))){
+if (((((parsed_function).name)) == ((ByteString::must_from_utf8("main"sv))))){
 TRY((((*this).typecheck_jakt_main(parsed_function,parent_scope_id))));
 }
 NonnullRefPtr<types::CheckedFunction> checked_function = ((*this).get_function((function_id.value())));
@@ -2638,7 +2638,7 @@ ids::ScopeId const function_scope_id = ((checked_function)->function_scope_id);
 parser::FunctionLinkage const function_linkage = ((checked_function)->linkage);
 if (((checked_function)->is_fully_checked)){
 if ((!(((TRY((((*this).get_scope(parent_scope_id)))))->is_from_generated_code)))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Function ‘{}’ is already defined"sv)),((parsed_function).name)))),((parsed_function).name_span),TRY(ByteString::from_utf8("Try removing this definition"sv)),(((((checked_function)->parsed_function).value())).name_span)))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Function ‘{}’ is already defined"sv)),((parsed_function).name)))),((parsed_function).name_span),(ByteString::must_from_utf8("Try removing this definition"sv)),(((((checked_function)->parsed_function).value())).name_span)))));
 }
 return {};
 }
@@ -2669,7 +2669,7 @@ if (((!(((parsed_function).is_fat_arrow))) && (((((parsed_function).return_type)
 return (!(((self) == (rhs))));
 }
 }
-(((parsed_function).name),TRY(ByteString::from_utf8("main"sv)))))){
+(((parsed_function).name),(ByteString::must_from_utf8("main"sv)))))){
 (function_return_type_id = types::void_type_id());
 }
 if (((function_return_type_id).equals(types::never_type_id()))){
@@ -2678,7 +2678,7 @@ NonnullRefPtr<types::Scope> scope = TRY((((*this).get_scope(function_scope_id)))
 }
 types::CheckedBlock const block = TRY((((*this).typecheck_block(((parsed_function).block),function_scope_id,types::SafetyMode::Safe(),JaktInternal::OptionalNone()))));
 if (((((block).yielded_type)).has_value())){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Functions are not allowed to yield values"sv)),(((((parsed_function).block)).find_yield_span()).value()),TRY(ByteString::from_utf8("You might want to return instead"sv)),(((((parsed_function).block)).find_yield_keyword_span()).value())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Functions are not allowed to yield values"sv)),(((((parsed_function).block)).find_yield_span()).value()),(ByteString::must_from_utf8("You might want to return instead"sv)),(((((parsed_function).block)).find_yield_keyword_span()).value())))));
 }
 ids::TypeId const return_type_id = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId,ErrorOr<void>>{
@@ -2696,10 +2696,10 @@ return JaktInternal::ExplicitValue(TRY((((*this).resolve_type_var(function_retur
 });
 if (((!(((function_linkage).__jakt_init_index() == 1 /* External */))) && ((!(((return_type_id).equals(types::void_type_id())))) && (!(((((block).control_flow)).always_transfers_control())))))){
 if ((((return_type_id).equals(types::never_type_id())) && (!(((((block).control_flow)).never_returns()))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Control reaches end of never-returning function"sv)),((parsed_function).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Control reaches end of never-returning function"sv)),((parsed_function).name_span)))));
 }
 else if (((!(((((block).control_flow)).never_returns()))) && (!(((parsed_function).is_jakt_main))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Control reaches end of non-void function"sv)),((parsed_function).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Control reaches end of non-void function"sv)),((parsed_function).name_span)))));
 }
 }
 (((checked_function)->block) = block);
@@ -2801,7 +2801,7 @@ case 0 /* Struct */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_447; {
 JaktInternal::Optional<ids::StructId> const struct_id = TRY((((*this).find_struct_in_scope(scope_id,((record).name),JaktInternal::OptionalNone()))));
 if ((!(((struct_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find struct that has been previous added"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find struct that has been previous added"sv))))));
 }
 TRY((((*this).typecheck_struct(record,(struct_id.value()),scope_id))));
 __jakt_var_447 = types::StructLikeId::Struct(JaktInternal::OptionalNone(),(struct_id.value())); goto __jakt_label_412;
@@ -2813,7 +2813,7 @@ case 1 /* Class */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_448; {
 JaktInternal::Optional<ids::StructId> const struct_id = TRY((((*this).find_struct_in_scope(scope_id,((record).name),JaktInternal::OptionalNone()))));
 if ((!(((struct_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find struct that has been previous added"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find struct that has been previous added"sv))))));
 }
 TRY((((*this).typecheck_struct(record,(struct_id.value()),scope_id))));
 __jakt_var_448 = types::StructLikeId::Struct(JaktInternal::OptionalNone(),(struct_id.value())); goto __jakt_label_413;
@@ -2825,7 +2825,7 @@ case 3 /* SumEnum */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_449; {
 JaktInternal::Optional<ids::EnumId> const enum_id = TRY((((((*this).program))->find_enum_in_scope(scope_id,((record).name),false,JaktInternal::OptionalNone()))));
 if ((!(((enum_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find enum that has been previous added"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find enum that has been previous added"sv))))));
 }
 TRY((((*this).typecheck_enum(record,(enum_id.value()),scope_id))));
 __jakt_var_449 = types::StructLikeId::Enum(JaktInternal::OptionalNone(),(enum_id.value())); goto __jakt_label_414;
@@ -2837,7 +2837,7 @@ case 2 /* ValueEnum */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_450; {
 JaktInternal::Optional<ids::EnumId> const enum_id = TRY((((((*this).program))->find_enum_in_scope(scope_id,((record).name),false,JaktInternal::OptionalNone()))));
 if ((!(((enum_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find enum that has been previous added"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find enum that has been previous added"sv))))));
 }
 TRY((((*this).typecheck_enum(record,(enum_id.value()),scope_id))));
 __jakt_var_450 = types::StructLikeId::Enum(JaktInternal::OptionalNone(),(enum_id.value())); goto __jakt_label_415;
@@ -2892,7 +2892,7 @@ if (((trait_id).has_value())){
 TRY((((*this).typecheck_trait(parsed_trait,(trait_id.value()),scope_id,false))));
 }
 else {
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find trait that has been previous added"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find trait that has been previous added"sv))))));
 }
 
 }
@@ -2952,7 +2952,7 @@ break;
 }
 parser::ParsedMethod method = (_magic_value.value());
 {
-if (((TRY((((((((((((method).parsed_function)).params)).first())).map([](auto& _value) { return _value.variable; }))).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return TRY(ByteString::from_utf8(""sv)); })))) == (TRY(ByteString::from_utf8("this"sv))))){
+if (((TRY((((((((((((method).parsed_function)).params)).first())).map([](auto& _value) { return _value.variable; }))).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8(""sv)); })))) == ((ByteString::must_from_utf8("this"sv))))){
 TRY((((*this).typecheck_method(((method).parsed_function),types::StructLikeId::Struct(JaktInternal::OptionalNone(),struct_id)))));
 }
 else {
@@ -2980,7 +2980,7 @@ break;
 }
 parser::ParsedMethod method = (_magic_value.value());
 {
-if (((TRY((((((((((((method).parsed_function)).params)).first())).map([](auto& _value) { return _value.variable; }))).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return TRY(ByteString::from_utf8(""sv)); })))) == (TRY(ByteString::from_utf8("this"sv))))){
+if (((TRY((((((((((((method).parsed_function)).params)).first())).map([](auto& _value) { return _value.variable; }))).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8(""sv)); })))) == ((ByteString::must_from_utf8("this"sv))))){
 TRY((((*this).typecheck_method(((method).parsed_function),types::StructLikeId::Struct(JaktInternal::OptionalNone(),struct_id)))));
 }
 else {
@@ -3008,7 +3008,7 @@ break;
 }
 parser::ParsedMethod method = (_magic_value.value());
 {
-if (((TRY((((((((((((method).parsed_function)).params)).first())).map([](auto& _value) { return _value.variable; }))).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return TRY(ByteString::from_utf8(""sv)); })))) == (TRY(ByteString::from_utf8("this"sv))))){
+if (((TRY((((((((((((method).parsed_function)).params)).first())).map([](auto& _value) { return _value.variable; }))).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8(""sv)); })))) == ((ByteString::must_from_utf8("this"sv))))){
 TRY((((*this).typecheck_method(((method).parsed_function),types::StructLikeId::Enum(JaktInternal::OptionalNone(),enum_id)))));
 }
 else {
@@ -3036,7 +3036,7 @@ break;
 }
 parser::ParsedMethod method = (_magic_value.value());
 {
-if (((TRY((((((((((((method).parsed_function)).params)).first())).map([](auto& _value) { return _value.variable; }))).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return TRY(ByteString::from_utf8(""sv)); })))) == (TRY(ByteString::from_utf8("this"sv))))){
+if (((TRY((((((((((((method).parsed_function)).params)).first())).map([](auto& _value) { return _value.variable; }))).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8(""sv)); })))) == ((ByteString::must_from_utf8("this"sv))))){
 TRY((((*this).typecheck_method(((method).parsed_function),types::StructLikeId::Enum(JaktInternal::OptionalNone(),enum_id)))));
 }
 else {
@@ -3305,7 +3305,7 @@ case 0 /* Nothing */: {
 ByteString const trait_name = ((trait_)->name);
 JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> const implemented_trait = ((implemented_traits).get(trait_name));
 if (((!(((implemented_trait).has_value()))) || (!((((((((implemented_trait.value())).first())).map([](auto& _value) { return _value.template get<0>(); }))).map([&](auto& _value) { return _value.equals(constraint); })).value_or_lazy_evaluated([&] { return false; }))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’"sv)),TRY((((*this).type_name(generic_argument,false)))),trait_name))),arg_span,TRY(ByteString::from_utf8("Consider implementing the required trait for this type"sv)),decl_span))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’"sv)),TRY((((*this).type_name(generic_argument,false)))),trait_name))),arg_span,(ByteString::must_from_utf8("Consider implementing the required trait for this type"sv)),decl_span))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -3315,7 +3315,7 @@ case 1 /* Methods */: {
 ByteString const trait_name = ((trait_)->name);
 JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> const implemented_trait = ((implemented_traits).get(trait_name));
 if (((!(((implemented_trait).has_value()))) || (!((((((((implemented_trait.value())).first())).map([](auto& _value) { return _value.template get<0>(); }))).map([&](auto& _value) { return _value.equals(constraint); })).value_or_lazy_evaluated([&] { return false; }))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’"sv)),TRY((((*this).type_name(generic_argument,false)))),trait_name))),arg_span,TRY(ByteString::from_utf8("Consider implementing the required trait for this type"sv)),decl_span))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’"sv)),TRY((((*this).type_name(generic_argument,false)))),trait_name))),arg_span,(ByteString::must_from_utf8("Consider implementing the required trait for this type"sv)),decl_span))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -3580,7 +3580,7 @@ ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typechecker::Typechecke
 {
 types::CheckedBlock const checked_block = TRY((((*this).typecheck_block(parsed_block,scope_id,safety_mode,JaktInternal::OptionalNone()))));
 if (((((checked_block).yielded_type)).has_value())){
-TRY((((*this).error(TRY(ByteString::from_utf8("A ‘loop’ block is not allowed to yield values"sv)),(((parsed_block).find_yield_span()).value())))));
+TRY((((*this).error((ByteString::must_from_utf8("A ‘loop’ block is not allowed to yield values"sv)),(((parsed_block).find_yield_span()).value())))));
 }
 return TRY((types::CheckedStatement::Loop(checked_block,span)));
 }
@@ -3595,15 +3595,15 @@ return TRY((((((*this).program))->get_scope(id))));
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typechecker::typecheck_indexed_tuple(NonnullRefPtr<typename parser::ParsedExpression> const expr,size_t const index,ids::ScopeId const scope_id,bool const is_optional,types::SafetyMode const safety_mode,utility::Span const span) {
 {
 NonnullRefPtr<typename types::CheckedExpression> const checked_expr = TRY((((*this).typecheck_expression_and_dereference_if_needed(expr,scope_id,safety_mode,JaktInternal::OptionalNone(),span))));
-ids::StructId const tuple_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Tuple"sv))))));
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const tuple_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Tuple"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 ids::TypeId expr_type_id = types::unknown_type_id();
 if (((((*this).get_type(((checked_expr)->type()))))->__jakt_init_index() == 20 /* GenericInstance */)){
 ids::StructId const id = (((*this).get_type(((checked_expr)->type()))))->as.GenericInstance.id;
 JaktInternal::DynamicArray<ids::TypeId> const args = (((*this).get_type(((checked_expr)->type()))))->as.GenericInstance.args;
 if (((id).equals(tuple_struct_id))){
 if (is_optional){
-TRY((((*this).error(TRY(ByteString::from_utf8("Optional chaining is not allowed on a non-optional tuple type"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Optional chaining is not allowed on a non-optional tuple type"sv)),span))));
 }
 if ([](size_t const& self, size_t rhs) -> bool {
 {
@@ -3616,7 +3616,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (index,((args).size()))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Tuple index past the end of the tuple"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Tuple index past the end of the tuple"sv)),span))));
 }
 else {
 (expr_type_id = ((args)[index]));
@@ -3640,7 +3640,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (index,((args).size()))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Optional-chained tuple index past the end of the tuple"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Optional-chained tuple index past the end of the tuple"sv)),span))));
 }
 else {
 (expr_type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),optional_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({((args)[index])}))))))))))));
@@ -3649,16 +3649,16 @@ else {
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Optional-chained tuple index used on non-tuple value"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Optional-chained tuple index used on non-tuple value"sv)),span))));
 }
 
 }
 }
 else if (is_optional){
-TRY((((*this).error(TRY(ByteString::from_utf8("Optional-chained tuple index used on non-tuple value"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Optional-chained tuple index used on non-tuple value"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Tuple index used on non-tuple value"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Tuple index used on non-tuple value"sv)),span))));
 }
 
 return TRY((types::CheckedExpression::IndexedTuple(JaktInternal::OptionalNone(),checked_expr,index,span,is_optional,expr_type_id)));
@@ -3689,13 +3689,13 @@ continue;
 TRY((((named_requirements).push((Tuple{((parameter).name), ((parameter).span), trait_requirements})))));
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("forall type '{}' is not allowed to be unconditional"sv)),((parameter).name)))),((parameter).span),TRY(ByteString::from_utf8("Try adding a 'requires' clause to the this type"sv)),((parameter).span)))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("forall type '{}' is not allowed to be unconditional"sv)),((parameter).name)))),((parameter).span),(ByteString::must_from_utf8("Try adding a 'requires' clause to the this type"sv)),((parameter).span)))));
 continue;
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("forall type '{}' is not allowed to be unconditional"sv)),((parameter).name)))),((parameter).span),TRY(ByteString::from_utf8("Try adding a 'requires' clause to the this type"sv)),((parameter).span)))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("forall type '{}' is not allowed to be unconditional"sv)),((parameter).name)))),((parameter).span),(ByteString::must_from_utf8("Try adding a 'requires' clause to the this type"sv)),((parameter).span)))));
 continue;
 }
 
@@ -3771,11 +3771,11 @@ ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typechecker::Typechecke
 {
 NonnullRefPtr<typename types::CheckedExpression> const checked_condition = TRY((((*this).typecheck_expression_and_dereference_if_needed(condition,scope_id,safety_mode,JaktInternal::OptionalNone(),span))));
 if ((!(((((checked_condition)->type())).equals(types::builtin(types::BuiltinType::Bool())))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Condition must be a boolean expression"sv)),((condition)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Condition must be a boolean expression"sv)),((condition)->span())))));
 }
 types::CheckedBlock const checked_block = TRY((((*this).typecheck_block(block,scope_id,safety_mode,JaktInternal::OptionalNone()))));
 if (((((checked_block).yielded_type)).has_value())){
-TRY((((*this).error(TRY(ByteString::from_utf8("A ‘while’ block is not allowed to yield values"sv)),(((block).find_yield_span()).value())))));
+TRY((((*this).error((ByteString::must_from_utf8("A ‘while’ block is not allowed to yield values"sv)),(((block).find_yield_span()).value())))));
 }
 return TRY((types::CheckedStatement::While(checked_condition,checked_block,span)));
 }
@@ -3952,7 +3952,7 @@ NonnullRefPtr<types::Scope> scope = TRY((((*this).get_scope(scope_id))));
 JaktInternal::Optional<ids::VarId> const existing_var = ((((scope)->vars)).get(name));
 if (((existing_var).has_value())){
 NonnullRefPtr<types::CheckedVariable> const variable_ = ((*this).get_variable((existing_var.value())));
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Redefinition of variable ‘{}’"sv)),name))),span,TRY(ByteString::from_utf8("previous definition here"sv)),((variable_)->definition_span)))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Redefinition of variable ‘{}’"sv)),name))),span,(ByteString::must_from_utf8("previous definition here"sv)),((variable_)->definition_span)))));
 }
 TRY((((((scope)->vars)).set(name,var_id))));
 TRY((((((*this).program))->set_owner_scope_if_needed(scope_id,var_id))));
@@ -3965,7 +3965,7 @@ ErrorOr<bool> typechecker::Typechecker::add_comptime_binding_to_scope(ids::Scope
 NonnullRefPtr<types::Scope> scope = TRY((((*this).get_scope(scope_id))));
 JaktInternal::Optional<types::Value> const existing_binding = ((((scope)->comptime_bindings)).get(name));
 if (((existing_binding).has_value())){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Redefinition of comptime variable ‘{}’"sv)),name))),span,TRY(ByteString::from_utf8("previous definition here"sv)),(((existing_binding.value())).span)))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Redefinition of comptime variable ‘{}’"sv)),name))),span,(ByteString::must_from_utf8("previous definition here"sv)),(((existing_binding.value())).span)))));
 }
 TRY((((((scope)->comptime_bindings)).set(name,value))));
 return true;
@@ -4120,10 +4120,10 @@ auto&& __jakt_match_value = __jakt_match_variant.as.CatchAll;JaktInternal::Dynam
 utility::Span const& arguments_span = __jakt_match_value.arguments_span;
 {
 if (((current_case_index) != (JaktInternal::checked_sub(case_count,static_cast<size_t>(1ULL))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Match else case is only allowed as the last case"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Match else case is only allowed as the last case"sv)),((case_).marker_span)))));
 }
 if (seen_catch_all){
-TRY((((*this).error(TRY(ByteString::from_utf8("Multiple catch-all cases in match are not allowed"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Multiple catch-all cases in match are not allowed"sv)),((case_).marker_span)))));
 }
 else {
 (seen_catch_all = true);
@@ -4171,7 +4171,7 @@ TRY((((checked_cases).push(checked_match_case))));
 
 }
 else {
-ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY(ByteString::from_utf8("catch-all"sv)),true))));
+ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),(ByteString::must_from_utf8("catch-all"sv)),true))));
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults = (TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({}))));
 {
 JaktInternal::DictionaryIterator<ByteString,parser::ParsedPatternDefault> _magic = ((((pattern).common.init_common.defaults)).iterator());
@@ -4278,11 +4278,11 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 (((missing_variants).size()),static_cast<size_t>(0ULL))){
 if ((!(seen_catch_all))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),TRY((utility::join(missing_variants,TRY(ByteString::from_utf8(", "sv)))))))),span))));
+TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),TRY((utility::join(missing_variants,(ByteString::must_from_utf8(", "sv)))))))),span))));
 }
 }
 else if ((seen_catch_all && (!(expanded_catch_all)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("All variants are covered, but an irrefutable pattern is also present"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("All variants are covered, but an irrefutable pattern is also present"sv)),span))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -4385,10 +4385,10 @@ auto&& __jakt_match_value = __jakt_match_variant.as.CatchAll;JaktInternal::Dynam
 utility::Span const& arguments_span = __jakt_match_value.arguments_span;
 {
 if (((current_case_index) != (JaktInternal::checked_sub(case_count,static_cast<size_t>(1ULL))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Match else case is only allowed as the last case"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Match else case is only allowed as the last case"sv)),((case_).marker_span)))));
 }
 if (seen_catch_all){
-TRY((((*this).error(TRY(ByteString::from_utf8("Multiple catch-all cases in match are not allowed"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Multiple catch-all cases in match are not allowed"sv)),((case_).marker_span)))));
 }
 else {
 (seen_catch_all = true);
@@ -4436,7 +4436,7 @@ TRY((((checked_cases).push(checked_match_case))));
 
 }
 else {
-ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY(ByteString::from_utf8("catch-all"sv)),true))));
+ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),(ByteString::must_from_utf8("catch-all"sv)),true))));
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults = (TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({}))));
 {
 JaktInternal::DictionaryIterator<ByteString,parser::ParsedPatternDefault> _magic = ((((pattern).common.init_common.defaults)).iterator());
@@ -4543,18 +4543,18 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 (((missing_variants).size()),static_cast<size_t>(0ULL))){
 if ((!(seen_catch_all))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),TRY((utility::join(missing_variants,TRY(ByteString::from_utf8(", "sv)))))))),span))));
+TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),TRY((utility::join(missing_variants,(ByteString::must_from_utf8(", "sv)))))))),span))));
 }
 }
 else if ((seen_catch_all && (!(expanded_catch_all)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("All variants are covered, but an irrefutable pattern is also present"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("All variants are covered, but an irrefutable pattern is also present"sv)),span))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 0 /* Void */: {
 {
-TRY((((*this).error(TRY(ByteString::from_utf8("Can't match on 'void' type"sv)),((checked_expr)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Can't match on 'void' type"sv)),((checked_expr)->span())))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -4578,7 +4578,7 @@ return JaktInternal::ExplicitValue((Tuple{id, TRY((((*this).struct_inheritance_c
 };/*case end*/
 default: {
 {
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("Expected struct or generic instance in inheritance-style match expression"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("Expected struct or generic instance in inheritance-style match expression"sv))))));
 }
 };/*case end*/
 }/*switch end*/
@@ -4640,14 +4640,14 @@ TRY((((names).push(((name).template get<0>())))));
 
 ids::TypeId const type = TRY((((*this).typecheck_typename(TRY((parser::ParsedType::NamespacedName(JaktInternal::OptionalNone(),(((names).last()).value()),TRY((((((names)[(JaktInternal::Range<size_t>{static_cast<size_t>(0LL),static_cast<size_t>(JaktInternal::checked_sub(((names).size()),static_cast<size_t>(1ULL)))})])).to_array()))),(TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({})))),((case_).marker_span)))),scope_id,JaktInternal::OptionalNone()))));
 if (seen_catch_all){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("This case is unreachable because a catch-all case is present before it"sv)),((case_).marker_span),({
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("This case is unreachable because a catch-all case is present before it"sv)),((case_).marker_span),({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
 auto __jakt_enum_value = (catch_all_matches_original_type);
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("Catch-all case matching the original subject type seen here"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("Catch-all case matching the original subject type seen here"sv)));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("Catch-all case seen here"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("Catch-all case seen here"sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -4685,7 +4685,7 @@ return {};
 ;
 if (((type).equals(subject_type_id))){
 if (seen_catch_all){
-TRY((((*this).error(TRY(ByteString::from_utf8("Multiple catch-all cases in match are not allowed"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Multiple catch-all cases in match are not allowed"sv)),((case_).marker_span)))));
 }
 else {
 (seen_catch_all = true);
@@ -4751,14 +4751,14 @@ ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*
 JaktInternal::Optional<types::ClassInstanceRebind> rebind_name = JaktInternal::OptionalNone();
 if ((!(((variant_arguments).is_empty())))){
 if (((((variant_arguments).size())) != (static_cast<size_t>(1ULL)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Class instance matches may only have one match argument (the name to rebind to)"sv)),arguments_span))));
+TRY((((*this).error((ByteString::must_from_utf8("Class instance matches may only have one match argument (the name to rebind to)"sv)),arguments_span))));
 }
 parser::EnumVariantPatternArgument const arg = ((variant_arguments)[static_cast<i64>(0LL)]);
 (rebind_name = types::ClassInstanceRebind(((arg).name_in_enum()),((arg).name_in_enum_span()),((arg).is_mutable),((arg).is_reference)));
 NonnullRefPtr<types::Module> module = ((*this).current_module());
 ids::VarId const variable_id = TRY((((module)->add_variable(TRY((types::CheckedVariable::__jakt_create((((rebind_name.value())).name),type,(((rebind_name.value())).is_mutable),(((rebind_name.value())).name_span),((case_).marker_span),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())))))));
 if (((((rebind_name.value())).is_mutable) && (!(((checked_expr)->is_mutable(((*this).program))))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating method on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating method on an immutable object instance"sv)),span))));
 }
 TRY((((*this).add_var_to_scope(new_scope_id,(((rebind_name.value())).name),variable_id,(((rebind_name.value())).name_span)))));
 }
@@ -4776,14 +4776,14 @@ auto&& __jakt_match_value = __jakt_match_variant.as.CatchAll;JaktInternal::Dynam
 utility::Span const& arguments_span = __jakt_match_value.arguments_span;
 {
 if (seen_catch_all){
-TRY((((*this).error(TRY(ByteString::from_utf8("Multiple catch-all cases in match are not allowed"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Multiple catch-all cases in match are not allowed"sv)),((case_).marker_span)))));
 }
 else {
 (seen_catch_all = true);
 (catch_all_marker_span = ((case_).marker_span));
-ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY(ByteString::from_utf8("class-variant(else)"sv)),true))));
+ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),(ByteString::must_from_utf8("class-variant(else)"sv)),true))));
 if ((!(((variant_arguments).is_empty())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Catch-all cases in class instance matches cannot have arguments"sv)),arguments_span))));
+TRY((((*this).error((ByteString::must_from_utf8("Catch-all cases in class instance matches cannot have arguments"sv)),arguments_span))));
 }
 JaktInternal::Tuple<types::CheckedMatchBody,JaktInternal::Optional<ids::TypeId>> const checked_body_result_type_ = TRY((((*this).typecheck_match_body(((case_).body),new_scope_id,safety_mode,((((*this).generic_inferences))),final_result_type,((case_).marker_span)))));
 types::CheckedMatchBody const checked_body = ((checked_body_result_type_).template get<0>());
@@ -4798,7 +4798,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY(ByteString::from_utf8("Only named types and 'else' patterns are allowed in class instance match expressions"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Only named types and 'else' patterns are allowed in class instance match expressions"sv)),((case_).marker_span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -4915,10 +4915,10 @@ JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> const& variant_ar
 utility::Span const& arguments_span = __jakt_match_value.arguments_span;
 {
 if (is_value_match){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot have an enum match case in a match expression containing value matches"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot have an enum match case in a match expression containing value matches"sv)),((case_).marker_span)))));
 }
 if (((((variant_names).size())) == (static_cast<size_t>(0ULL)))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("typecheck_match - else - EnumVariant - variant_names.size() == 0"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("typecheck_match - else - EnumVariant - variant_names.size() == 0"sv))))));
 }
 (is_enum_match = true);
 ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY((__jakt_format((StringView::from_string_literal("catch-enum-variant({})"sv)),variant_names))),true))));
@@ -4957,11 +4957,11 @@ case 2 /* CatchAll */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.CatchAll;JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> const& variant_arguments = __jakt_match_value.variant_arguments;
 {
 if (((current_case_index) != (JaktInternal::checked_sub(case_count,static_cast<size_t>(1ULL))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Match else case is only allowed as the last case"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Match else case is only allowed as the last case"sv)),((case_).marker_span)))));
 }
 (catch_all_span = ((case_).marker_span));
 if (seen_catch_all){
-TRY((((*this).error(TRY(ByteString::from_utf8("Multiple catch-all cases in match are not allowed"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Multiple catch-all cases in match are not allowed"sv)),((case_).marker_span)))));
 }
 else {
 (seen_catch_all = true);
@@ -4970,11 +4970,11 @@ else {
 if (((((variant_arguments).size())) != (static_cast<size_t>(0ULL)))){
 bool const old_ignore_errors = ((*this).ignore_errors);
 (((*this).ignore_errors) = false);
-TRY((((*this).error(TRY(ByteString::from_utf8("Bindings aren't allowed in a generic else"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Bindings aren't allowed in a generic else"sv)),((case_).marker_span)))));
 (((*this).ignore_errors) = old_ignore_errors);
 (((*this).had_an_error) = false);
 }
-ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY(ByteString::from_utf8("catch-all"sv)),true))));
+ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),(ByteString::must_from_utf8("catch-all"sv)),true))));
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults = (TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({}))));
 {
 JaktInternal::DictionaryIterator<ByteString,parser::ParsedPatternDefault> _magic = ((((pattern).common.init_common.defaults)).iterator());
@@ -5010,7 +5010,7 @@ case 1 /* Expression */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Expression;NonnullRefPtr<typename parser::ParsedExpression> const& expr = __jakt_match_value.value;
 {
 if (is_enum_match){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot have a value match case in a match expression containing enum matches"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot have a value match case in a match expression containing enum matches"sv)),((case_).marker_span)))));
 }
 (is_value_match = true);
 JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const new_condition_new_then_block_new_else_statement_ = TRY((((*this).expand_context_for_bindings(expr,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),scope_id,span))));
@@ -5045,14 +5045,14 @@ else if (((to).has_value())){
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("There has to be at least a 'from', or a 'to' in a range expression"sv)),((expr)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("There has to be at least a 'from', or a 'to' in a range expression"sv)),((expr)->span())))));
 return JaktInternal::LoopContinue{};
 }
 
 }
 TRY((((*this).check_types_for_compat(expression_type,subject_type_id,((((*this).generic_inferences))),((case_).marker_span)))));
 if ((!(((((pattern).common.init_common.defaults)).is_empty())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Expression patterns cannot have default bindings"sv)),((case_).marker_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Expression patterns cannot have default bindings"sv)),((case_).marker_span)))));
 }
 ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY((__jakt_format((StringView::from_string_literal("catch-expression({})"sv)),expr))),true))));
 JaktInternal::Tuple<types::CheckedMatchBody,JaktInternal::Optional<ids::TypeId>> const checked_body_result_type_ = TRY((((*this).typecheck_match_body(((case_).body),new_scope_id,safety_mode,((((*this).generic_inferences))),final_result_type,((case_).marker_span)))));
@@ -5093,10 +5093,10 @@ return JaktInternal::ExplicitValue<void>();
 }
 
 if ((is_value_match && (!((seen_catch_all || ((is_boolean_match && seen_true) && seen_false)))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"sv)),span))));
 }
 if ((is_value_match && (seen_catch_all && (is_boolean_match && (seen_true && seen_false))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("All cases are covered, but an irrefutable pattern is also present"sv)),(catch_all_span.value())))));
+TRY((((*this).error((ByteString::must_from_utf8("All cases are covered, but an irrefutable pattern is also present"sv)),(catch_all_span.value())))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -5171,13 +5171,13 @@ return {};
 ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typechecker::Typechecker::typecheck_throw(NonnullRefPtr<typename parser::ParsedExpression> const expr,ids::ScopeId const scope_id,types::SafetyMode const safety_mode,utility::Span const span) {
 {
 NonnullRefPtr<typename types::CheckedExpression> const checked_expr = TRY((((*this).typecheck_expression_and_dereference_if_needed(expr,scope_id,safety_mode,JaktInternal::OptionalNone(),span))));
-ids::TypeId const error_type_id = TRY((((*this).find_type_in_prelude(TRY(ByteString::from_utf8("Error"sv))))));
+ids::TypeId const error_type_id = TRY((((*this).find_type_in_prelude((ByteString::must_from_utf8("Error"sv))))));
 if ((!(((((checked_expr)->type())).equals(error_type_id))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("throw expression does not produce an error"sv)),((expr)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("throw expression does not produce an error"sv)),((expr)->span())))));
 }
 NonnullRefPtr<types::Scope> const scope = TRY((((*this).get_scope(scope_id))));
 if ((!(((scope)->can_throw)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Throw statement needs to be in a try statement or a function marked as throws"sv)),((expr)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Throw statement needs to be in a try statement or a function marked as throws"sv)),((expr)->span())))));
 }
 return TRY((types::CheckedStatement::Throw(checked_expr,span)));
 }
@@ -5325,7 +5325,7 @@ ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typecheck
 if (((*this).dump_try_hints)){
 TRY((((*this).dump_try_hint(span))));
 }
-ids::StructId const dictionary_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Dictionary"sv))))));
+ids::StructId const dictionary_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Dictionary"sv))))));
 JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename types::CheckedExpression>,NonnullRefPtr<typename types::CheckedExpression>>> checked_kv_pairs = (TRY((DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename types::CheckedExpression>,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({}))));
 ids::TypeId key_type_id = types::unknown_type_id();
 JaktInternal::Optional<utility::Span> key_type_span = JaktInternal::OptionalNone();
@@ -5358,10 +5358,10 @@ ids::TypeId const current_value_type_id = ((checked_value)->type());
 ids::TypeId const VOID_TYPE_ID = types::builtin(types::BuiltinType::Void());
 if ((((key_type_id).equals(types::unknown_type_id())) && ((value_type_id).equals(types::unknown_type_id())))){
 if (((current_key_type_id).equals(VOID_TYPE_ID))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Can't create a dictionary with keys of type void"sv)),((key)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Can't create a dictionary with keys of type void"sv)),((key)->span())))));
 }
 if (((current_value_type_id).equals(VOID_TYPE_ID))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Can't create a dictionary with values of type void"sv)),((value)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Can't create a dictionary with values of type void"sv)),((value)->span())))));
 }
 (key_type_id = current_key_type_id);
 (key_type_span = static_cast<JaktInternal::Optional<utility::Span>>(((key)->span())));
@@ -5392,20 +5392,20 @@ if (((key_hint).has_value())){
 (key_type_id = (key_hint.value()));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot infer key type for Dictionary<K, V>"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot infer key type for Dictionary<K, V>"sv)),span))));
 }
 
 }
 if ((!(((key_type_id).equals(types::unknown_type_id()))))){
-TRY((((*this).ensure_type_implements_trait(key_type_id,TRY(ByteString::from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
-TRY((((*this).ensure_type_implements_trait(key_type_id,TRY(ByteString::from_utf8("Equal"sv)),(TRY((DynamicArray<ids::TypeId>::create_with({key_type_id})))),scope_id,span))));
+TRY((((*this).ensure_type_implements_trait(key_type_id,(ByteString::must_from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
+TRY((((*this).ensure_type_implements_trait(key_type_id,(ByteString::must_from_utf8("Equal"sv)),(TRY((DynamicArray<ids::TypeId>::create_with({key_type_id})))),scope_id,span))));
 }
 if (((value_type_id).equals(types::unknown_type_id()))){
 if (((value_hint).has_value())){
 (value_type_id = (value_hint.value()));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot infer value type for Dictionary"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot infer value type for Dictionary"sv)),span))));
 }
 
 }
@@ -5417,7 +5417,7 @@ return TRY((types::CheckedExpression::JaktDictionary(JaktInternal::OptionalNone(
 ErrorOr<types::CheckedBlock> typechecker::Typechecker::typecheck_block(parser::ParsedBlock const parsed_block,ids::ScopeId const parent_scope_id,types::SafetyMode const safety_mode,JaktInternal::Optional<ids::TypeId> const yield_type_hint) {
 {
 bool const parent_throws = ((TRY((((*this).get_scope(parent_scope_id)))))->can_throw);
-ids::ScopeId const block_scope_id = TRY((((*this).create_scope(parent_scope_id,parent_throws,TRY(ByteString::from_utf8("block"sv)),true))));
+ids::ScopeId const block_scope_id = TRY((((*this).create_scope(parent_scope_id,parent_throws,(ByteString::must_from_utf8("block"sv)),true))));
 types::CheckedBlock checked_block = types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id,types::BlockControlFlow::MayReturn(),ids::TypeId::none(),false);
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<typename parser::ParsedStatement>> _magic = ((((parsed_block).stmts)).iterator());
@@ -5429,7 +5429,7 @@ break;
 NonnullRefPtr<typename parser::ParsedStatement> parsed_statement = (_magic_value.value());
 {
 if ((!(((((checked_block).control_flow)).is_reachable())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Unreachable code"sv)),((parsed_statement)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Unreachable code"sv)),((parsed_statement)->span())))));
 }
 NonnullRefPtr<typename types::CheckedStatement> const checked_statement = TRY((((*this).typecheck_statement(parsed_statement,block_scope_id,safety_mode,yield_type_hint))));
 (((checked_block).control_flow) = ((((checked_block).control_flow)).updated(TRY((((*this).statement_control_flow(checked_statement)))))));
@@ -5510,8 +5510,8 @@ return checked_block;
 
 ErrorOr<void> typechecker::Typechecker::typecheck_jakt_main(parser::ParsedFunction const parsed_function,ids::ScopeId const parent_scope_id) {
 {
-ByteString const param_type_error = TRY(ByteString::from_utf8("Main function must take a single array of strings as its parameter"sv));
-JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const func_ids = TRY((((*this).find_functions_with_name_in_scope(parent_scope_id,TRY(ByteString::from_utf8("main"sv)),JaktInternal::OptionalNone()))));
+ByteString const param_type_error = (ByteString::must_from_utf8("Main function must take a single array of strings as its parameter"sv));
+JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const func_ids = TRY((((*this).find_functions_with_name_in_scope(parent_scope_id,(ByteString::must_from_utf8("main"sv)),JaktInternal::OptionalNone()))));
 if ([](size_t const& self, size_t rhs) -> bool {
 {
 return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
@@ -5523,7 +5523,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 ((((func_ids.value())).size()),static_cast<size_t>(1ULL))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Function 'main' declared multiple times."sv)),((parsed_function).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Function 'main' declared multiple times."sv)),((parsed_function).name_span)))));
 }
 if ([](size_t const& self, size_t rhs) -> bool {
 {
@@ -5550,7 +5550,7 @@ if ([](ByteString const& self, ByteString rhs) -> bool {
 return (!(((self) == (rhs))));
 }
 }
-(name,TRY(ByteString::from_utf8("String"sv)))){
+(name,(ByteString::must_from_utf8("String"sv)))){
 TRY((((*this).error(param_type_error,span))));
 }
 }
@@ -5564,7 +5564,7 @@ TRY((((*this).error(param_type_error,((parsed_function).name_span)))));
 }
 
 }
-ByteString const return_type_error = TRY(ByteString::from_utf8("Main function must return c_int"sv));
+ByteString const return_type_error = (ByteString::must_from_utf8("Main function must return c_int"sv));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<void>>{
 auto&& __jakt_match_variant = *((parsed_function).return_type);
@@ -5583,7 +5583,7 @@ if ([](ByteString const& self, ByteString rhs) -> bool {
 return (!(((self) == (rhs))));
 }
 }
-(name,TRY(ByteString::from_utf8("c_int"sv)))){
+(name,(ByteString::must_from_utf8("c_int"sv)))){
 TRY((((*this).error(return_type_error,span))));
 }
 }
@@ -5626,12 +5626,12 @@ if (((checked_lhs)->__jakt_init_index() == 24 /* Var */)){
 NonnullRefPtr<types::CheckedVariable> const var = (checked_lhs)->as.Var.var;
 utility::Span const span = (checked_lhs)->as.Var.span;
 if ((!(((var)->is_mutable)))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("left-hand side of ??= must be a mutable variable"sv)),span,TRY(ByteString::from_utf8("This variable isn't marked as mutable"sv)),((var)->definition_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("left-hand side of ??= must be a mutable variable"sv)),span,(ByteString::must_from_utf8("This variable isn't marked as mutable"sv)),((var)->definition_span)))));
 return (Tuple{checked_operator, types::unknown_type_id()});
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("left-hand side of ??= must be a mutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("left-hand side of ??= must be a mutable variable"sv)),span))));
 return (Tuple{checked_operator, types::unknown_type_id()});
 }
 
@@ -5639,7 +5639,7 @@ return (Tuple{checked_operator, types::unknown_type_id()});
 if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 20 /* GenericInstance */)){
 ids::StructId const id = (((*this).get_type(lhs_type_id)))->as.GenericInstance.id;
 JaktInternal::DynamicArray<ids::TypeId> const args = (((*this).get_type(lhs_type_id)))->as.GenericInstance.args;
-if (((id).equals(TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))))))){
+if (((id).equals(TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))))))){
 if (((lhs_type_id).equals(rhs_type_id))){
 return (Tuple{checked_operator, lhs_type_id});
 }
@@ -5649,12 +5649,12 @@ return (Tuple{checked_operator, inner_type_id});
 }
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY(ByteString::from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY(ByteString::from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
 }
 
 TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
@@ -5669,12 +5669,12 @@ if (((checked_lhs)->__jakt_init_index() == 24 /* Var */)){
 NonnullRefPtr<types::CheckedVariable> const var = (checked_lhs)->as.Var.var;
 utility::Span const span = (checked_lhs)->as.Var.span;
 if ((!(((var)->is_mutable)))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("left-hand side of ??= must be a mutable variable"sv)),span,TRY(ByteString::from_utf8("This variable isn't marked as mutable"sv)),((var)->definition_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("left-hand side of ??= must be a mutable variable"sv)),span,(ByteString::must_from_utf8("This variable isn't marked as mutable"sv)),((var)->definition_span)))));
 return (Tuple{checked_operator, types::unknown_type_id()});
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("left-hand side of ??= must be a mutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("left-hand side of ??= must be a mutable variable"sv)),span))));
 return (Tuple{checked_operator, types::unknown_type_id()});
 }
 
@@ -5682,7 +5682,7 @@ return (Tuple{checked_operator, types::unknown_type_id()});
 if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 20 /* GenericInstance */)){
 ids::StructId const id = (((*this).get_type(lhs_type_id)))->as.GenericInstance.id;
 JaktInternal::DynamicArray<ids::TypeId> const args = (((*this).get_type(lhs_type_id)))->as.GenericInstance.args;
-if (((id).equals(TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))))))){
+if (((id).equals(TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))))))){
 if (((lhs_type_id).equals(rhs_type_id))){
 return (Tuple{checked_operator, lhs_type_id});
 }
@@ -5692,12 +5692,12 @@ return (Tuple{checked_operator, inner_type_id});
 }
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY(ByteString::from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY(ByteString::from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
 }
 
 TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
@@ -5708,10 +5708,10 @@ return JaktInternal::ExplicitValue<void>();
 case 18 /* LogicalAnd */: {
 {
 if ((!(((lhs_type_id).equals(types::builtin(types::BuiltinType::Bool())))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("left side of logical binary operation is not a boolean"sv)),lhs_span))));
+TRY((((*this).error((ByteString::must_from_utf8("left side of logical binary operation is not a boolean"sv)),lhs_span))));
 }
 if ((!(((rhs_type_id).equals(types::builtin(types::BuiltinType::Bool())))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("right side of logical binary operation is not a boolean"sv)),rhs_span))));
+TRY((((*this).error((ByteString::must_from_utf8("right side of logical binary operation is not a boolean"sv)),rhs_span))));
 }
 (type_id = types::builtin(types::BuiltinType::Bool()));
 }
@@ -5720,10 +5720,10 @@ return JaktInternal::ExplicitValue<void>();
 case 19 /* LogicalOr */: {
 {
 if ((!(((lhs_type_id).equals(types::builtin(types::BuiltinType::Bool())))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("left side of logical binary operation is not a boolean"sv)),lhs_span))));
+TRY((((*this).error((ByteString::must_from_utf8("left side of logical binary operation is not a boolean"sv)),lhs_span))));
 }
 if ((!(((rhs_type_id).equals(types::builtin(types::BuiltinType::Bool())))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("right side of logical binary operation is not a boolean"sv)),rhs_span))));
+TRY((((*this).error((ByteString::must_from_utf8("right side of logical binary operation is not a boolean"sv)),rhs_span))));
 }
 (type_id = types::builtin(types::BuiltinType::Bool()));
 }
@@ -5732,7 +5732,7 @@ return JaktInternal::ExplicitValue<void>();
 case 21 /* Assign */: {
 {
 if ((!(((checked_lhs)->is_mutable(((*this).program)))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),((checked_lhs)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),((checked_lhs)->span())))));
 return (Tuple{checked_operator, lhs_type_id});
 }
 if (((checked_rhs)->__jakt_init_index() == 25 /* OptionalNone */)){
@@ -5741,15 +5741,15 @@ ids::TypeId const type_id = (checked_rhs)->as.OptionalNone.type_id;
 if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 20 /* GenericInstance */)){
 ids::StructId const id = (((*this).get_type(lhs_type_id)))->as.GenericInstance.id;
 JaktInternal::DynamicArray<ids::TypeId> const args = (((*this).get_type(lhs_type_id)))->as.GenericInstance.args;
-if (((id).equals(TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))))))){
+if (((id).equals(TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))))))){
 return (Tuple{checked_operator, lhs_type_id});
 }
-if ((!(((id).equals(TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("WeakPtr"sv))))))))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot assign None to a non-optional type"sv)),span))));
+if ((!(((id).equals(TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("WeakPtr"sv))))))))))){
+TRY((((*this).error((ByteString::must_from_utf8("Cannot assign None to a non-optional type"sv)),span))));
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot assign None to a non-optional type"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot assign None to a non-optional type"sv)),span))));
 }
 
 }
@@ -5757,7 +5757,7 @@ NonnullRefPtr<typename types::Type> const lhs_type = TRY((((*this).unwrap_type_f
 if (((lhs_type)->__jakt_init_index() == 20 /* GenericInstance */)){
 ids::StructId const id = (lhs_type)->as.GenericInstance.id;
 JaktInternal::DynamicArray<ids::TypeId> const args = (lhs_type)->as.GenericInstance.args;
-if ((((((((((*this).program))->get_struct(id))).name)) == (TRY(ByteString::from_utf8("WeakPtr"sv)))) && (!(((lhs_type_id).equals(rhs_type_id)))))){
+if ((((((((((*this).program))->get_struct(id))).name)) == ((ByteString::must_from_utf8("WeakPtr"sv)))) && (!(((lhs_type_id).equals(rhs_type_id)))))){
 JaktInternal::Optional<ids::TypeId> const unified_type = TRY((((*this).unify(((args)[static_cast<i64>(0LL)]),lhs_span,((checked_rhs)->type()),rhs_span))));
 if (((unified_type).has_value())){
 return (Tuple{checked_operator, (unified_type.value())});
@@ -5781,67 +5781,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -5861,70 +5861,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -5936,8 +5936,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -5948,15 +5948,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -6033,67 +6033,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -6113,70 +6113,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -6188,8 +6188,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -6200,15 +6200,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -6285,67 +6285,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -6365,70 +6365,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -6440,8 +6440,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -6452,15 +6452,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -6537,67 +6537,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -6617,70 +6617,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -6692,8 +6692,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -6704,15 +6704,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -6789,67 +6789,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -6869,70 +6869,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -6944,8 +6944,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -6956,15 +6956,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -7041,67 +7041,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -7121,70 +7121,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -7196,8 +7196,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -7208,15 +7208,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -7293,67 +7293,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -7373,70 +7373,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -7448,8 +7448,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -7460,15 +7460,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -7545,67 +7545,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -7625,70 +7625,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -7700,8 +7700,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -7712,15 +7712,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -7797,67 +7797,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -7877,70 +7877,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -7952,8 +7952,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -7964,15 +7964,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -8049,67 +8049,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -8129,70 +8129,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -8204,8 +8204,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -8216,15 +8216,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -8301,67 +8301,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -8381,70 +8381,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -8456,8 +8456,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -8468,15 +8468,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -8553,67 +8553,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -8633,70 +8633,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -8708,8 +8708,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -8720,15 +8720,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -8805,67 +8805,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -8885,70 +8885,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -8960,8 +8960,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -8972,15 +8972,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -9057,67 +9057,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -9137,70 +9137,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -9212,8 +9212,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -9224,15 +9224,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -9309,67 +9309,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -9389,70 +9389,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -9464,8 +9464,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -9476,15 +9476,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -9561,67 +9561,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -9641,70 +9641,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -9716,8 +9716,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -9728,15 +9728,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -9813,67 +9813,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -9893,70 +9893,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -9968,8 +9968,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -9980,15 +9980,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -10065,67 +10065,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -10145,70 +10145,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -10220,8 +10220,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -10232,15 +10232,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -10317,67 +10317,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -10397,70 +10397,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -10472,8 +10472,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -10484,15 +10484,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -10569,67 +10569,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -10649,70 +10649,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -10724,8 +10724,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -10736,15 +10736,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -10821,67 +10821,67 @@ JaktInternal::Tuple<JaktInternal::DynamicArray<ByteString>,bool> const trait_nam
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Add"sv)), TRY(ByteString::from_utf8("ThrowingAdd"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Add"sv)), (ByteString::must_from_utf8("ThrowingAdd"sv))})))), false}));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Subtract"sv)), TRY(ByteString::from_utf8("ThrowingSubtract"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Subtract"sv)), (ByteString::must_from_utf8("ThrowingSubtract"sv))})))), false}));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Multiply"sv)), TRY(ByteString::from_utf8("ThrowingMultiply"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Multiply"sv)), (ByteString::must_from_utf8("ThrowingMultiply"sv))})))), false}));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Divide"sv)), TRY(ByteString::from_utf8("ThrowingDivide"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Divide"sv)), (ByteString::must_from_utf8("ThrowingDivide"sv))})))), false}));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Modulo"sv)), TRY(ByteString::from_utf8("ThrowingModulo"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Modulo"sv)), (ByteString::must_from_utf8("ThrowingModulo"sv))})))), false}));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Compare"sv)), TRY(ByteString::from_utf8("ThrowingCompare"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Compare"sv)), (ByteString::must_from_utf8("ThrowingCompare"sv))})))), false}));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Equal"sv)), TRY(ByteString::from_utf8("ThrowingEqual"sv))})))), false}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Equal"sv)), (ByteString::must_from_utf8("ThrowingEqual"sv))})))), false}));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("AddAssign"sv)), TRY(ByteString::from_utf8("ThrowingAddAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("AddAssign"sv)), (ByteString::must_from_utf8("ThrowingAddAssign"sv))})))), true}));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("SubtractAssign"sv)), TRY(ByteString::from_utf8("ThrowingSubtractAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("SubtractAssign"sv)), (ByteString::must_from_utf8("ThrowingSubtractAssign"sv))})))), true}));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("MultiplyAssign"sv)), TRY(ByteString::from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("MultiplyAssign"sv)), (ByteString::must_from_utf8("ThrowingMultiplyAssign"sv))})))), true}));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("DivideAssign"sv)), TRY(ByteString::from_utf8("ThrowingDivideAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("DivideAssign"sv)), (ByteString::must_from_utf8("ThrowingDivideAssign"sv))})))), true}));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("ModuloAssign"sv)), TRY(ByteString::from_utf8("ThrowingModuloAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("ModuloAssign"sv)), (ByteString::must_from_utf8("ThrowingModuloAssign"sv))})))), true}));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseAndAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseAndAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseAndAssign"sv))})))), true}));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseOrAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseOrAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseOrAssign"sv))})))), true}));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseXorAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseXorAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseXorAssign"sv))})))), true}));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseLeftShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseLeftShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseLeftShiftAssign"sv))})))), true}));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("BitwiseRightShiftAssign"sv)), TRY(ByteString::from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
+return JaktInternal::ExplicitValue((Tuple{(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("BitwiseRightShiftAssign"sv)), (ByteString::must_from_utf8("ThrowingBitwiseRightShiftAssign"sv))})))), true}));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue((Tuple{empty_array, false}));
@@ -10901,70 +10901,70 @@ ByteString const function_name = ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo"sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than"sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("less_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("less_than_or_equal"sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than"sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("greater_than_or_equal"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("greater_than_or_equal"sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("equals"sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("not_equals"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("not_equals"sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("add_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("add_assign"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("subtract_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("subtract_assign"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("multiply_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("multiply_assign"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("divide_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("divide_assign"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("modulo_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("modulo_assign"sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_and_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_and_assign"sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_or_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_or_assign"sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_xor_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_xor_assign"sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_left_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_left_shift_assign"sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("bitwise_right_shift_assign"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bitwise_right_shift_assign"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -10976,8 +10976,8 @@ return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8(""sv)));
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const add_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(lhs_type_id,trait_names,scope_id,lhs_span,(TRY((DynamicArray<ids::TypeId>::create_with({rhs_type_id}))))))));
 if (((add_trait_implementation).has_value())){
 typechecker::TraitImplementationDescriptor const implementation = (add_trait_implementation.value());
-if ((((((implementation).trait_name)).starts_with(TRY(ByteString::from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+if ((((((implementation).trait_name)).starts_with((ByteString::must_from_utf8("Throwing"sv)))) && (!(((scope)->can_throw))))){
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const parent_id___ = TRY((((*this).struct_like_id_from_type_id(lhs_type_id,scope_id,span,false,true))));
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
@@ -10988,15 +10988,15 @@ if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
 if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
-TRY((((*this).error(TRY(ByteString::from_utf8("Assignment to immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating function on an immutable object instance"sv)),span))));
 }
 
 }
 (type_id = ((implementation_function)->return_type_id));
-types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{TRY(ByteString::from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
+types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types::ResolvedNamespace>::create_with({})))),function_name,(TRY((DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({(Tuple{(ByteString::must_from_utf8(""sv)), checked_rhs})})))),(TRY((DynamicArray<ids::TypeId>::create_with({})))),implementation_function_id,type_id,((implementation_function)->can_throw),((implementation_function)->external_name),((implementation_function)->force_inline));
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
@@ -11382,7 +11382,7 @@ case 0 /* Struct */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_466; {
 JaktInternal::Optional<ids::StructId> const struct_id = TRY((((*this).find_struct_in_scope(scope_id,((record).name),JaktInternal::OptionalNone()))));
 if ((!(((struct_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find previously added struct"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find previously added struct"sv))))));
 }
 TRY((((*this).typecheck_struct_fields(record,(struct_id.value())))));
 __jakt_var_466 = types::StructLikeId::Struct(JaktInternal::OptionalNone(),(struct_id.value())); goto __jakt_label_421;
@@ -11394,7 +11394,7 @@ case 1 /* Class */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_467; {
 JaktInternal::Optional<ids::StructId> const struct_id = TRY((((*this).find_struct_in_scope(scope_id,((record).name),JaktInternal::OptionalNone()))));
 if ((!(((struct_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find previously added struct"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find previously added struct"sv))))));
 }
 TRY((((*this).typecheck_struct_fields(record,(struct_id.value())))));
 __jakt_var_467 = types::StructLikeId::Struct(JaktInternal::OptionalNone(),(struct_id.value())); goto __jakt_label_422;
@@ -11406,7 +11406,7 @@ case 2 /* ValueEnum */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_468; {
 JaktInternal::Optional<ids::EnumId> const enum_id = TRY((((((*this).program))->find_enum_in_scope(scope_id,((record).name),false,JaktInternal::OptionalNone()))));
 if ((!(((enum_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find previously added enum"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find previously added enum"sv))))));
 }
 __jakt_var_468 = types::StructLikeId::Enum(JaktInternal::OptionalNone(),(enum_id.value())); goto __jakt_label_423;
 
@@ -11417,7 +11417,7 @@ case 3 /* SumEnum */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_469; {
 JaktInternal::Optional<ids::EnumId> const enum_id = TRY((((((*this).program))->find_enum_in_scope(scope_id,((record).name),false,JaktInternal::OptionalNone()))));
 if ((!(((enum_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find previously added enum"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find previously added enum"sv))))));
 }
 __jakt_var_469 = types::StructLikeId::Enum(JaktInternal::OptionalNone(),(enum_id.value())); goto __jakt_label_424;
 
@@ -11517,7 +11517,7 @@ return JaktInternal::ExplicitValue<void>();
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-return TRY(ByteString::from_utf8(""sv));
+return (ByteString::must_from_utf8(""sv));
 }
 }
 
@@ -11543,7 +11543,7 @@ ScopeGuard __jakt_var_470([&] {
 NonnullRefPtr<types::Module> module = ((*this).current_module());
 ids::FunctionId const new_function_id = ((module)->next_function_id());
 parser::ParsedFunction parsed_function = TRY((((checked_function)->to_parsed_function())));
-ByteString arg_names = TRY(ByteString::from_utf8(""sv));
+ByteString arg_names = (ByteString::must_from_utf8(""sv));
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((generic_arguments).iterator());
 for (;;){
@@ -11560,7 +11560,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(arg_names,TRY(ByteString::from_utf8(", "sv)))));
+(arg_names,(ByteString::must_from_utf8(", "sv)))));
 }
 TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 {
@@ -12329,7 +12329,7 @@ TRY((((unused_field_names).push(field_name))));
 }
 }
 
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Match case argument '{}' for struct-like enum variant '{}' cannot be anon"sv)),((arg).binding),name))),((arg).span),TRY((__jakt_format((StringView::from_string_literal("Available arguments for '{}' are: {}\n"sv)),name,TRY((utility::join(unused_field_names,TRY(ByteString::from_utf8(", "sv)))))))),((arg).span)))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Match case argument '{}' for struct-like enum variant '{}' cannot be anon"sv)),((arg).binding),name))),((arg).span),TRY((__jakt_format((StringView::from_string_literal("Available arguments for '{}' are: {}\n"sv)),name,TRY((utility::join(unused_field_names,(ByteString::must_from_utf8(", "sv)))))))),((arg).span)))));
 continue;
 }
 }
@@ -12424,7 +12424,7 @@ return (Tuple{covered_name, checked_match_case, result_type});
 
 ErrorOr<void> typechecker::Typechecker::include_prelude() {
 {
-ByteString const module_name = TRY(ByteString::from_utf8("__prelude__"sv));
+ByteString const module_name = (ByteString::must_from_utf8("__prelude__"sv));
 jakt__path::Path const file_name = TRY((jakt__path::Path::from_string(module_name)));
 JaktInternal::DynamicArray<u8> const file_contents = (TRY((DynamicArray<u8>::create_with({static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(79), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(79), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(83), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(79), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(83), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(38), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(79), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(38), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(79), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(91), static_cast<u8>(91), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(61), static_cast<u8>(68), static_cast<u8>(121), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(93), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(107), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(100), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(95), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(111), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(38), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(112), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(114), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(97), static_cast<u8>(102), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(100), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(83), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(114), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(97), static_cast<u8>(102), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(100), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(91), static_cast<u8>(91), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(61), static_cast<u8>(68), static_cast<u8>(101), static_cast<u8>(112), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(67), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(80), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(93), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(67), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(80), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(101), static_cast<u8>(107), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(121), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(111), static_cast<u8>(102), static_cast<u8>(102), static_cast<u8>(115), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(91), static_cast<u8>(91), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(61), static_cast<u8>(66), static_cast<u8>(121), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(93), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(67), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(80), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(109), static_cast<u8>(95), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(102), static_cast<u8>(56), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(121), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(98), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(98), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(91), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(61), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(115), static_cast<u8>(93), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(117), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(119), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(121), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(119), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(119), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(119), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(86), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(119), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(91), static_cast<u8>(91), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(61), static_cast<u8>(66), static_cast<u8>(121), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(66), static_cast<u8>(117), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(93), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(66), static_cast<u8>(117), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(86), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(119), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(91), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(61), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(93), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(95), static_cast<u8>(106), static_cast<u8>(115), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(66), static_cast<u8>(117), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(101), static_cast<u8>(112), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(80), static_cast<u8>(73), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(87), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(107), static_cast<u8>(80), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(117), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(40), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(111), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(75), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(66), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(66), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(60), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(111), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(86), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(91), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(61), static_cast<u8>(34), static_cast<u8>(111), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(91), static_cast<u8>(93), static_cast<u8>(34), static_cast<u8>(93), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(121), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(69), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(91), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(61), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(95), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(93), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(86), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(119), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(109), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(69), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(91), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(61), static_cast<u8>(34), static_cast<u8>(95), static_cast<u8>(95), static_cast<u8>(106), static_cast<u8>(97), static_cast<u8>(107), static_cast<u8>(116), static_cast<u8>(95), static_cast<u8>(102), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(109), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(95), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(34), static_cast<u8>(93), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(109), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(95), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(86), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(119), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(69), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(111), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(95), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(95), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(111), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(95), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(95), static_cast<u8>(119), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(117), static_cast<u8>(102), static_cast<u8>(102), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(119), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(100), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(108), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(95), static_cast<u8>(95), static_cast<u8>(95), static_cast<u8>(106), static_cast<u8>(97), static_cast<u8>(107), static_cast<u8>(116), static_cast<u8>(95), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(95), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(95), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(100), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(100), static_cast<u8>(105), static_cast<u8>(118), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(98), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(80), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(80), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(119), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(68), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(86), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(68), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(98), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(86), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(98), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(32), static_cast<u8>(46), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(46), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(91), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(93), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(38), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(73), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(115), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(95), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(77), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(70), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(98), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(86), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(98), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(80), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(111), static_cast<u8>(99), static_cast<u8>(107), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(66), static_cast<u8>(108), static_cast<u8>(111), static_cast<u8>(99), static_cast<u8>(107), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(95), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(95), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(69), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(86), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(76), static_cast<u8>(105), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(100), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(67), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(101), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(69), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(40), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(108), static_cast<u8>(121), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(95), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(86), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(69), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(86), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(69), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(40), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(120), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(83), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(69), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(86), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(100), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(77), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(40), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(100), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(120), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(100), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(66), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(56), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(49), static_cast<u8>(54), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(73), static_cast<u8>(56), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(73), static_cast<u8>(49), static_cast<u8>(54), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(73), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(73), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(74), static_cast<u8>(97), static_cast<u8>(107), static_cast<u8>(116), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(67), static_cast<u8>(67), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(67), static_cast<u8>(73), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(110), static_cast<u8>(107), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(110), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(78), static_cast<u8>(101), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(79), static_cast<u8>(114), static_cast<u8>(69), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(40), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(100), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(86), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(80), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(77), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(58), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(100), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(118), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(100), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(66), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(56), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(49), static_cast<u8>(54), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(117), static_cast<u8>(49), static_cast<u8>(54), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(117), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(73), static_cast<u8>(56), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(105), static_cast<u8>(56), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(73), static_cast<u8>(49), static_cast<u8>(54), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(105), static_cast<u8>(49), static_cast<u8>(54), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(73), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(105), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(73), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(105), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(102), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(102), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(74), static_cast<u8>(97), static_cast<u8>(107), static_cast<u8>(116), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(67), static_cast<u8>(67), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(67), static_cast<u8>(73), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(110), static_cast<u8>(107), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(107), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(110), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(78), static_cast<u8>(101), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(79), static_cast<u8>(114), static_cast<u8>(69), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(40), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(100), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(34), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(125), static_cast<u8>(34), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(100), static_cast<u8>(46), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(86), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(34), static_cast<u8>(123), static_cast<u8>(125), static_cast<u8>(34), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(80), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(34), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(125), static_cast<u8>(34), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(46), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(34), static_cast<u8>(38), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(125), static_cast<u8>(34), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(46), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(77), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(102), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(34), static_cast<u8>(38), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(125), static_cast<u8>(34), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(46), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(109), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(61), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(34), static_cast<u8>(102), static_cast<u8>(110), static_cast<u8>(34), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10)}))));
 JaktInternal::Optional<utility::FileId> const old_file_id = ((((*this).compiler))->current_file);
@@ -12442,7 +12442,7 @@ utility::FileId const file_id = TRY((((((*this).compiler))->get_file_id_or_regis
 ids::ModuleId const prelude_module_id = TRY((((*this).create_module(module_name,false,JaktInternal::OptionalNone()))));
 (((*this).current_module_id) = prelude_module_id);
 TRY((((((*this).program))->set_loaded_module(module_name,types::LoadedModule(prelude_module_id,file_id)))));
-ids::ScopeId const prelude_scope_id = TRY((((*this).create_scope(JaktInternal::OptionalNone(),false,TRY(ByteString::from_utf8("prelude"sv)),false))));
+ids::ScopeId const prelude_scope_id = TRY((((*this).create_scope(JaktInternal::OptionalNone(),false,(ByteString::must_from_utf8("prelude"sv)),false))));
 JaktInternal::DynamicArray<lexer::Token> const tokens = TRY((lexer::Lexer::lex(((*this).compiler))));
 if (((((*this).compiler))->dump_lexer)){
 {
@@ -12577,7 +12577,7 @@ return JaktInternal::ExplicitValue(call);
 };/*case end*/
 default: {
 {
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("typecheck_call returned something other than a CheckedCall"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("typecheck_call returned something other than a CheckedCall"sv))))));
 }
 };/*case end*/
 }/*switch end*/
@@ -12632,7 +12632,7 @@ ids::StructId const struct_id = (super_type)->as.Struct.value;
 (super_struct_id = struct_id);
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Class can only inherit from another class"sv)),(((super_parsed_type.value()))->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Class can only inherit from another class"sv)),(((super_parsed_type.value()))->span())))));
 }
 
 }
@@ -12664,7 +12664,7 @@ ids::StructId const struct_id = (super_type)->as.Struct.value;
 (super_struct_id = struct_id);
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Struct can only inherit from another struct"sv)),(((super_parsed_type.value()))->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Struct can only inherit from another struct"sv)),(((super_parsed_type.value()))->span())))));
 }
 
 }
@@ -12684,7 +12684,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-utility::panic(TRY(ByteString::from_utf8("Expected Struct or Class in typecheck_struct_predecl"sv)));
+utility::panic((ByteString::must_from_utf8("Expected Struct or Class in typecheck_struct_predecl"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -12741,11 +12741,11 @@ case 0 /* PreIncrement */: {
 {
 if (((*this).is_integer(expr_type_id))){
 if ((!(((checked_expr)->is_mutable(((*this).program)))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Increment/decrement of immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Increment/decrement of immutable variable"sv)),span))));
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Increment/decrement of non-numeric value"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Increment/decrement of non-numeric value"sv)),span))));
 }
 
 }
@@ -12755,11 +12755,11 @@ case 1 /* PostIncrement */: {
 {
 if (((*this).is_integer(expr_type_id))){
 if ((!(((checked_expr)->is_mutable(((*this).program)))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Increment/decrement of immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Increment/decrement of immutable variable"sv)),span))));
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Increment/decrement of non-numeric value"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Increment/decrement of non-numeric value"sv)),span))));
 }
 
 }
@@ -12769,11 +12769,11 @@ case 2 /* PreDecrement */: {
 {
 if (((*this).is_integer(expr_type_id))){
 if ((!(((checked_expr)->is_mutable(((*this).program)))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Increment/decrement of immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Increment/decrement of immutable variable"sv)),span))));
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Increment/decrement of non-numeric value"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Increment/decrement of non-numeric value"sv)),span))));
 }
 
 }
@@ -12783,11 +12783,11 @@ case 3 /* PostDecrement */: {
 {
 if (((*this).is_integer(expr_type_id))){
 if ((!(((checked_expr)->is_mutable(((*this).program)))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Increment/decrement of immutable variable"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Increment/decrement of immutable variable"sv)),span))));
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Increment/decrement of non-numeric value"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Increment/decrement of non-numeric value"sv)),span))));
 }
 
 }
@@ -12796,7 +12796,7 @@ return JaktInternal::ExplicitValue<void>();
 case 9 /* LogicalNot */: {
 {
 if ((!(TRY((((*this).check_types_for_compat(types::builtin(types::BuiltinType::Bool()),((checked_expr)->type()),((((*this).generic_inferences))),span))))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot use a logical Not on a value of non-boolean type"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot use a logical Not on a value of non-boolean type"sv)),span))));
 }
 return TRY((types::CheckedExpression::UnaryOp(JaktInternal::OptionalNone(),checked_expr,checked_op,span,expr_type_id)));
 }
@@ -12866,7 +12866,7 @@ return JaktInternal::ExplicitValue<void>();
 case 8 /* MutableReference */: {
 {
 if ((!(((checked_expr)->is_mutable(((*this).program)))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot make mutable reference to immutable value"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot make mutable reference to immutable value"sv)),span))));
 }
 return TRY((types::CheckedExpression::UnaryOp(JaktInternal::OptionalNone(),checked_expr,checked_op,span,TRY((((*this).find_or_add_type_id(TRY((types::Type::MutableReference(parser::CheckedQualifiers(false),expr_type_id))))))))));
 }
@@ -12882,7 +12882,7 @@ case 26 /* RawPtr */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RawPtr;ids::TypeId const& type_id = __jakt_match_value.value;
 {
 if (((safety_mode).__jakt_init_index() == 0 /* Safe */)){
-TRY((((*this).error(TRY(ByteString::from_utf8("Dereference of raw pointer outside of unsafe block"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Dereference of raw pointer outside of unsafe block"sv)),span))));
 }
 return TRY((types::CheckedExpression::UnaryOp(JaktInternal::OptionalNone(),checked_expr,checked_op,span,type_id)));
 }
@@ -12932,7 +12932,7 @@ return TRY((types::CheckedExpression::UnaryOp(JaktInternal::OptionalNone(),check
 ErrorOr<void> typechecker::Typechecker::warn_about_unimplemented_nested_record(parser::ParsedRecord const record) {
 {
 if (((((record).definition_linkage)).__jakt_init_index() == 0 /* Internal */)){
-TRY((((*this).error(TRY(ByteString::from_utf8("Only external nested types are currently supported"sv)),((record).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Only external nested types are currently supported"sv)),((record).name_span)))));
 }
 }
 return {};
@@ -12957,7 +12957,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I8((infallible_integer_cast<i8>((val)))),span,types::builtin(types::BuiltinType::I8())))));
@@ -12978,7 +12978,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I16((infallible_integer_cast<i16>((val)))),span,types::builtin(types::BuiltinType::I16())))));
@@ -12999,7 +12999,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I32((infallible_integer_cast<i32>((val)))),span,types::builtin(types::BuiltinType::I32())))));
@@ -13020,7 +13020,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U8((infallible_integer_cast<u8>((val)))),span,types::builtin(types::BuiltinType::U8())))));
@@ -13041,7 +13041,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U16((infallible_integer_cast<u16>((val)))),span,types::builtin(types::BuiltinType::U16())))));
@@ -13062,7 +13062,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U32((infallible_integer_cast<u32>((val)))),span,types::builtin(types::BuiltinType::U32())))));
@@ -13092,7 +13092,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,static_cast<u64>(255ULL))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U8((infallible_integer_cast<u8>((val)))),span,types::builtin(types::BuiltinType::CChar())))));
@@ -13114,7 +13114,7 @@ case 20 /* GenericInstance */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructId const& id = __jakt_match_value.id;
 JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(({ Optional<ids::TypeId> __jakt_var_481; {
-if (((id).equals(TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))))))){
+if (((id).equals(TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))))))){
 return ((args)[static_cast<i64>(0LL)]);
 }
 __jakt_var_481 = type_id; goto __jakt_label_431;
@@ -13186,7 +13186,7 @@ return JaktInternal::OptionalNone();
 ErrorOr<types::CheckedParameter> typechecker::Typechecker::typecheck_parameter(parser::ParsedParameter const parameter,ids::ScopeId const scope_id,bool const first,JaktInternal::Optional<ids::TypeId> const this_arg_type_id,JaktInternal::Optional<ids::ScopeId> const check_scope) {
 {
 ids::TypeId type_id = TRY((((*this).typecheck_typename(((((parameter).variable)).parsed_type),scope_id,((((parameter).variable)).name)))));
-if ((first && ((((((parameter).variable)).name)) == (TRY(ByteString::from_utf8("this"sv)))))){
+if ((first && ((((((parameter).variable)).name)) == ((ByteString::must_from_utf8("this"sv)))))){
 if (((this_arg_type_id).has_value())){
 (type_id = (this_arg_type_id.value()));
 }
@@ -13194,7 +13194,7 @@ if (((this_arg_type_id).has_value())){
 if (((((((*this).get_type(type_id)))->common.init_common.qualifiers)).is_immutable)){
 (type_id = TRY((((*this).with_qualifiers(parser::CheckedQualifiers(false),type_id)))));
 if (((((parameter).variable)).is_mutable)){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot have a mutable binding to an immutable parameter"sv)),((((parameter).variable)).span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot have a mutable binding to an immutable parameter"sv)),((((parameter).variable)).span)))));
 }
 }
 NonnullRefPtr<types::CheckedVariable> const variable = TRY((types::CheckedVariable::__jakt_create(((((parameter).variable)).name),type_id,((((parameter).variable)).is_mutable),((((parameter).variable)).span),JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
@@ -13287,7 +13287,7 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::StructLikeId::Struct(JaktInternal::OptionalNone(),TRY((((((*this).program))->builtin_implementation_struct(((type)->as_builtin_type()),((((*this).program))->prelude_module_id())))))));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue(static_cast<JaktInternal::Optional<types::StructLikeId>>(types::StructLikeId::Struct(JaktInternal::OptionalNone(),TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("String"sv)))))))));
+return JaktInternal::ExplicitValue(static_cast<JaktInternal::Optional<types::StructLikeId>>(types::StructLikeId::Struct(JaktInternal::OptionalNone(),TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("String"sv)))))))));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -13305,7 +13305,7 @@ __jakt_var_482 = ({
 auto __jakt_enum_value = (for_optional_chain);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<types::StructLikeId>> __jakt_var_483; {
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 JaktInternal::Optional<types::StructLikeId> struct_id = JaktInternal::OptionalNone();
 if ((!(((id).equals(optional_struct_id))))){
 TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Can't use ‘{}’ as an optional type in optional chained call"sv)),((((*this).get_struct(id))).name)))),span))));
@@ -13334,7 +13334,7 @@ return JaktInternal::ExplicitValue(types::StructLikeId::Enum(JaktInternal::Optio
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_484; {
-TRY((((*this).error(TRY(ByteString::from_utf8("Can't use non-struct type as an optional type in optional chained call"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Can't use non-struct type as an optional type in optional chained call"sv)),span))));
 (found_optional = false);
 __jakt_var_484 = types::StructLikeId::Struct(JaktInternal::OptionalNone(),optional_struct_id); goto __jakt_label_434;
 
@@ -13510,7 +13510,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I8((infallible_integer_cast<i8>((val)))),span,types::builtin(types::BuiltinType::I8())))));
@@ -13541,7 +13541,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I16((infallible_integer_cast<i16>((val)))),span,types::builtin(types::BuiltinType::I16())))));
@@ -13572,7 +13572,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I32((infallible_integer_cast<i32>((val)))),span,types::builtin(types::BuiltinType::I32())))));
@@ -13603,7 +13603,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U8((infallible_integer_cast<u8>((val)))),span,types::builtin(types::BuiltinType::U8())))));
@@ -13634,7 +13634,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U16((infallible_integer_cast<u16>((val)))),span,types::builtin(types::BuiltinType::U16())))));
@@ -13665,7 +13665,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U32((infallible_integer_cast<u32>((val)))),span,types::builtin(types::BuiltinType::U32())))));
@@ -13686,7 +13686,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,static_cast<i64>(0LL))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U64((infallible_integer_cast<u64>((val)))),span,types::builtin(types::BuiltinType::U64())))));
@@ -13707,7 +13707,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,static_cast<i64>(0LL))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::USize((infallible_integer_cast<u64>((val)))),span,types::builtin(types::BuiltinType::Usize())))));
@@ -13728,7 +13728,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,static_cast<i64>(0LL))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I32((infallible_integer_cast<i32>((val)))),span,types::builtin(types::BuiltinType::CInt())))));
@@ -13759,7 +13759,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,static_cast<i64>(255LL)))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U8((infallible_integer_cast<u8>((val)))),span,types::builtin(types::BuiltinType::CChar())))));
@@ -13968,7 +13968,7 @@ return true;
 }
 if (((lhs_type)->__jakt_init_index() == 31 /* Self */)){
 if ((!(((((*this).self_type_id)).has_value())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Invalid use of the 'Self' type"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Invalid use of the 'Self' type"sv)),span))));
 }
 else {
 return TRY((((*this).check_types_for_compat((((*this).self_type_id).value()),rhs_type_id,generic_inferences,span))));
@@ -13977,7 +13977,7 @@ return TRY((((*this).check_types_for_compat((((*this).self_type_id).value()),rhs
 }
 if (((rhs_type)->__jakt_init_index() == 31 /* Self */)){
 if ((!(((((*this).self_type_id)).has_value())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Invalid use of the 'Self' type"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Invalid use of the 'Self' type"sv)),span))));
 }
 else {
 return TRY((((*this).check_types_for_compat(lhs_type_id,(((*this).self_type_id).value()),generic_inferences,span))));
@@ -13995,13 +13995,13 @@ if (((((rhs).impl))->equals(((lhs).impl)))){
 return true;
 }
 NonnullRefPtr<interpreter::Interpreter> const interpreter = TRY((((*this).interpreter())));
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Literal type value mismatch: expected '{}', found '{}'"sv)),TRY((types::comptime_format_impl(TRY(ByteString::from_utf8("{}"sv)),(((TRY((DynamicArray<types::Value>::create_with({lhs})))))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})]),((((*this).program)))))),TRY((types::comptime_format_impl(TRY(ByteString::from_utf8("{}"sv)),(((TRY((DynamicArray<types::Value>::create_with({rhs})))))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})]),((((*this).program))))))))),span))));
+TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Literal type value mismatch: expected '{}', found '{}'"sv)),TRY((types::comptime_format_impl((ByteString::must_from_utf8("{}"sv)),(((TRY((DynamicArray<types::Value>::create_with({lhs})))))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})]),((((*this).program)))))),TRY((types::comptime_format_impl((ByteString::must_from_utf8("{}"sv)),(((TRY((DynamicArray<types::Value>::create_with({rhs})))))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})]),((((*this).program))))))))),span))));
 return false;
 }
 }
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
-ids::StructId const weakptr_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("WeakPtr"sv))))));
-ids::StructId const array_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Array"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
+ids::StructId const weakptr_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("WeakPtr"sv))))));
+ids::StructId const array_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Array"sv))))));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<bool>>{
 auto&& __jakt_match_variant = *lhs_type;
@@ -14100,10 +14100,10 @@ ByteString const lhs_throw = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<bool>>{
 auto __jakt_enum_value = (lhs_can_throw);
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("Yes"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("Yes"sv)));
 }
 else {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("No"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("No"sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -14114,10 +14114,10 @@ ByteString const rhs_throw = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<bool>>{
 auto __jakt_enum_value = (rhs_can_throw);
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("Yes"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("Yes"sv)));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue(TRY(ByteString::from_utf8("No"sv)));
+return JaktInternal::ExplicitValue((ByteString::must_from_utf8("No"sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -14695,7 +14695,7 @@ if (TRY((((first)->is_static())))){
 if (TRY((((second)->is_static())))){
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Function signatures don't match: one is static and the other isn't"sv)),((first)->name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Function signatures don't match: one is static and the other isn't"sv)),((first)->name_span)))));
 return false;
 }
 
@@ -14706,13 +14706,13 @@ if (((TRY((((first)->is_mutating())))) == (TRY((((second)->is_mutating())))))){
 (arg_start = static_cast<size_t>(1ULL));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Function signatures don't match: one is mutating and the other isn't"sv)),((first)->name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Function signatures don't match: one is mutating and the other isn't"sv)),((first)->name_span)))));
 return false;
 }
 
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Function signatures don't match: one is static and the other isn't"sv)),((first)->name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Function signatures don't match: one is static and the other isn't"sv)),((first)->name_span)))));
 return false;
 }
 
@@ -14741,13 +14741,13 @@ return false;
 return true;
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Function signatures don't match: different number of parameters"sv)),((first)->name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Function signatures don't match: different number of parameters"sv)),((first)->name_span)))));
 return false;
 }
 
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Function signatures don't match: one can throw and the other can't"sv)),((first)->name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Function signatures don't match: one can throw and the other can't"sv)),((first)->name_span)))));
 return false;
 }
 
@@ -14776,7 +14776,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2 /* Restricted */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Restricted;JaktInternal::DynamicArray<NonnullRefPtr<typename types::MaybeResolvedScope>> const& scopes = __jakt_match_value.scopes;
 {
-TRY((((*this).check_restricted_access(accessor,TRY(ByteString::from_utf8("field"sv)),accessee,((member)->name),scopes,span))));
+TRY((((*this).check_restricted_access(accessor,(ByteString::must_from_utf8("field"sv)),accessee,((member)->name),scopes,span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -14847,7 +14847,7 @@ return (Tuple{result, errors});
 
 ErrorOr<NonnullRefPtr<typename types::Type>> typechecker::Typechecker::unwrap_type_from_optional_if_needed(NonnullRefPtr<typename types::Type> const type) const {
 {
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 if (((type)->__jakt_init_index() == 20 /* GenericInstance */)){
 ids::StructId const id = (type)->as.GenericInstance.id;
 JaktInternal::DynamicArray<ids::TypeId> const args = (type)->as.GenericInstance.args;
@@ -14926,7 +14926,7 @@ return JaktInternal::ExplicitValue<void>();
 
 types::CheckedBlock const checked_else_block = TRY((((*this).typecheck_block(else_block,scope_id,safety_mode,JaktInternal::OptionalNone()))));
 if (((!(seen_scope_exit)) && ((((checked_else_block).control_flow)).may_return()))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Else block of guard must either `return`, `break`, `continue`, or `throw`"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Else block of guard must either `return`, `break`, `continue`, or `throw`"sv)),span))));
 }
 JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>> const new_condition_new_then_block_new_else_statement_ = TRY((((*this).expand_context_for_bindings(expr,JaktInternal::OptionalNone(),remaining_code,TRY((parser::ParsedStatement::Block(else_block,span))),scope_id,span))));
 NonnullRefPtr<typename parser::ParsedExpression> const new_condition = ((new_condition_new_then_block_new_else_statement_).template get<0>());
@@ -14935,7 +14935,7 @@ JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const ne
 
 NonnullRefPtr<typename types::CheckedExpression> const checked_condition = TRY((((*this).typecheck_expression_and_dereference_if_needed(new_condition,scope_id,safety_mode,JaktInternal::OptionalNone(),span))));
 if ((!(((((checked_condition)->type())).equals(types::builtin(types::BuiltinType::Bool())))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Condition must be a boolean expression"sv)),((new_condition)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Condition must be a boolean expression"sv)),((new_condition)->span())))));
 }
 types::CheckedBlock const checked_block = TRY((((*this).typecheck_block((new_then_block.value()),scope_id,safety_mode,JaktInternal::OptionalNone()))));
 JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> checked_else = JaktInternal::OptionalNone();
@@ -15060,7 +15060,7 @@ NonnullRefPtr<typename types::CheckedExpression> const init = (checked_tuple_var
 (tuple_var_id = var_id);
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Destructuting assignment should be a variable declaration"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Destructuting assignment should be a variable declaration"sv)),span))));
 }
 
 JaktInternal::DynamicArray<ids::TypeId> inner_types = (TRY((DynamicArray<ids::TypeId>::create_with({}))));
@@ -15070,7 +15070,7 @@ JaktInternal::DynamicArray<ids::TypeId> const args = (tuple_type)->as.GenericIns
 (inner_types = args);
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Tuple Type should be Generic Instance"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Tuple Type should be Generic Instance"sv)),span))));
 }
 
 NonnullRefPtr<types::CheckedVariable> const tuple_variable = ((((*this).program))->get_variable(tuple_var_id));
@@ -15095,7 +15095,7 @@ TRY((((var_decls).push(TRY((((*this).typecheck_var_decl(((vars)[i]),init,scope_i
 
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Tuple inner types sould have same size as tuple members"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Tuple inner types sould have same size as tuple members"sv)),span))));
 }
 
 return TRY((types::CheckedStatement::DestructuringAssignment(var_decls,checked_tuple_var_decl,span)));
@@ -15194,7 +15194,7 @@ case 0 /* Struct */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_490; {
 JaktInternal::Optional<ids::StructId> const struct_id = TRY((((*this).find_struct_in_scope(scope_id,((record).name),JaktInternal::OptionalNone()))));
 if ((!(((struct_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find previously added struct"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find previously added struct"sv))))));
 }
 TRY((((*this).typecheck_struct_constructor(record,(struct_id.value()),scope_id))));
 __jakt_var_490 = types::StructLikeId::Struct(JaktInternal::OptionalNone(),(struct_id.value())); goto __jakt_label_437;
@@ -15206,7 +15206,7 @@ case 1 /* Class */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_491; {
 JaktInternal::Optional<ids::StructId> const struct_id = TRY((((*this).find_struct_in_scope(scope_id,((record).name),JaktInternal::OptionalNone()))));
 if ((!(((struct_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find previously added struct"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find previously added struct"sv))))));
 }
 TRY((((*this).typecheck_struct_constructor(record,(struct_id.value()),scope_id))));
 __jakt_var_491 = types::StructLikeId::Struct(JaktInternal::OptionalNone(),(struct_id.value())); goto __jakt_label_438;
@@ -15218,7 +15218,7 @@ case 3 /* SumEnum */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_492; {
 JaktInternal::Optional<ids::EnumId> const enum_id = TRY((((((*this).program))->find_enum_in_scope(scope_id,((record).name),false,JaktInternal::OptionalNone()))));
 if ((!(((enum_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find previously added enum"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find previously added enum"sv))))));
 }
 TRY((((*this).typecheck_enum_constructor(record,(enum_id.value()),scope_id))));
 __jakt_var_492 = types::StructLikeId::Enum(JaktInternal::OptionalNone(),(enum_id.value())); goto __jakt_label_439;
@@ -15230,7 +15230,7 @@ case 2 /* ValueEnum */: {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_493; {
 JaktInternal::Optional<ids::EnumId> const enum_id = TRY((((((*this).program))->find_enum_in_scope(scope_id,((record).name),false,JaktInternal::OptionalNone()))));
 if ((!(((enum_id).has_value())))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find previously added enum"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find previously added enum"sv))))));
 }
 TRY((((*this).typecheck_enum_constructor(record,(enum_id.value()),scope_id))));
 __jakt_var_493 = types::StructLikeId::Enum(JaktInternal::OptionalNone(),(enum_id.value())); goto __jakt_label_440;
@@ -15279,7 +15279,7 @@ ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typechecker::Typechecke
 {
 types::CheckedBlock const checked_block = TRY((((*this).typecheck_block(parsed_block,scope_id,safety_mode,JaktInternal::OptionalNone()))));
 if (((((checked_block).yielded_type)).has_value())){
-TRY((((*this).error(TRY(ByteString::from_utf8("A block used as a statement cannot yield values, as the value cannot be observed in any way"sv)),(((parsed_block).find_yield_span()).value())))));
+TRY((((*this).error((ByteString::must_from_utf8("A block used as a statement cannot yield values, as the value cannot be observed in any way"sv)),(((parsed_block).find_yield_span()).value())))));
 }
 return TRY((types::CheckedStatement::Block(checked_block,span)));
 }
@@ -15304,7 +15304,7 @@ bool const is_generic_function = (!(((((parsed_function).generic_parameters)).is
 bool const is_generic = (is_generic_function || (((this_arg_type_id).has_value()) && ((((*this).get_type((this_arg_type_id.value()))))->__jakt_init_index() == 20 /* GenericInstance */)));
 bool has_varargs = ((parsed_function).has_varargs);
 if ((has_varargs && ((((parsed_function).linkage)).__jakt_init_index() == 0 /* Internal */))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Only external functions are allowed to be declared using varargs"sv)),((parsed_function).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Only external functions are allowed to be declared using varargs"sv)),((parsed_function).name_span)))));
 (has_varargs = false);
 }
 NonnullRefPtr<types::CheckedFunction> checked_function = TRY((types::CheckedFunction::__jakt_create(((parsed_function).name),((parsed_function).name_span),TRY((((*this).typecheck_visibility(((parsed_function).visibility),parent_scope_id)))),types::unknown_type_id(),((parsed_function).return_type_span),(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),(generics.value()),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id,types::BlockControlFlow::MayReturn(),ids::TypeId::none(),false),((parsed_function).can_throw),((parsed_function).type),((parsed_function).linkage),function_scope_id,JaktInternal::OptionalNone(),((!(is_generic)) || (!(base_definition))),parsed_function,((parsed_function).is_comptime),false,false,((parsed_function).is_unsafe),has_varargs,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),false,((parsed_function).external_name),((parsed_function).deprecated_message),JaktInternal::OptionalNone(),((parsed_function).force_inline))));
@@ -15408,7 +15408,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (index,((((checked_function)->params)).size()))){
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("stores_argument() index out of bounds"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("stores_argument() index out of bounds"sv))))));
 }
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<ids::FunctionId>>{
@@ -15426,7 +15426,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("This parameter is not a reference"sv)),((((((((checked_function)->params))[index])).variable))->definition_span),TRY(ByteString::from_utf8("stores_argument() may only be used to declare reference lifetime requirements"sv)),((((((((checked_function)->params))[index])).variable))->definition_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("This parameter is not a reference"sv)),((((((((checked_function)->params))[index])).variable))->definition_span),(ByteString::must_from_utf8("stores_argument() may only be used to declare reference lifetime requirements"sv)),((((((((checked_function)->params))[index])).variable))->definition_span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -15458,7 +15458,7 @@ types::CheckedBlock const block = TRY((((*this).typecheck_block(((parsed_functio
 if (((*this).had_an_error)){
 (function_return_type_id = types::void_type_id());
 (((*this).ignore_errors) = false);
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Can't infer the return type of this function"sv)),((parsed_function).return_type_span),TRY(ByteString::from_utf8("Try adding an explicit return type to the function here"sv)),((parsed_function).return_type_span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Can't infer the return type of this function"sv)),((parsed_function).return_type_span),(ByteString::must_from_utf8("Try adding an explicit return type to the function here"sv)),((parsed_function).return_type_span)))));
 }
 else {
 (function_return_type_id = ((*this).infer_function_return_type(block)));
@@ -15515,7 +15515,7 @@ ErrorOr<typechecker::Typechecker> typechecker::Typechecker::typecheck(NonnullRef
 {
 JaktInternal::Optional<utility::FileId> const input_file = ((compiler)->current_file);
 if ((!(((input_file).has_value())))){
-TRY((((compiler)->panic(TRY(ByteString::from_utf8("trying to typecheck a non-existent file"sv))))));
+TRY((((compiler)->panic((ByteString::must_from_utf8("trying to typecheck a non-existent file"sv))))));
 }
 ByteString const true_module_name = TRY((((((((compiler)->files))[(((input_file.value())).id)])).basename(true))));
 ids::ModuleId const placeholder_module_id = ids::ModuleId(static_cast<size_t>(0ULL));
@@ -15528,8 +15528,8 @@ TRY((((compiler)->set_current_file((input_file.value())))));
 types::LoadedModule const loaded_module = types::LoadedModule(root_module_id,(input_file.value()));
 TRY((((((typechecker).program))->set_loaded_module(true_module_name,loaded_module))));
 ids::ScopeId const PRELUDE_SCOPE_ID = ((typechecker).prelude_scope_id());
-ids::ScopeId const root_scope_id = TRY((((typechecker).create_scope(PRELUDE_SCOPE_ID,false,TRY(ByteString::from_utf8("root"sv)),false))));
-TRY((((typechecker).typecheck_module_import(parser::ParsedModuleImport(parser::ImportName::Literal(TRY(ByteString::from_utf8("jakt::prelude::prelude"sv)),utility::Span(utility::FileId(static_cast<size_t>(0ULL)),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL))),JaktInternal::OptionalNone(),parser::ImportList::All(),false,static_cast<size_t>(0ULL)),root_scope_id))));
+ids::ScopeId const root_scope_id = TRY((((typechecker).create_scope(PRELUDE_SCOPE_ID,false,(ByteString::must_from_utf8("root"sv)),false))));
+TRY((((typechecker).typecheck_module_import(parser::ParsedModuleImport(parser::ImportName::Literal((ByteString::must_from_utf8("jakt::prelude::prelude"sv)),utility::Span(utility::FileId(static_cast<size_t>(0ULL)),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL))),JaktInternal::OptionalNone(),parser::ImportList::All(),false,static_cast<size_t>(0ULL)),root_scope_id))));
 {
 JaktInternal::DictionaryIterator<size_t,ids::StructId> _magic = ((((((((((typechecker).program))->modules))[static_cast<i64>(0LL)]))->builtin_implementation_structs)).iterator());
 for (;;){
@@ -15766,7 +15766,7 @@ return JaktInternal::ExplicitValue((Tuple{return_type_id, pseudo_function_id}));
 };/*case end*/
 default: {
 {
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("Expected the just-checked function to be of a function type"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("Expected the just-checked function to be of a function type"sv))))));
 }
 };/*case end*/
 }/*switch end*/
@@ -15786,7 +15786,7 @@ while (((effective_namespace_parent_scope)->is_block_scope)){
 (effective_namespace_parent_scope_id = (((effective_namespace_parent_scope)->parent).value()));
 (effective_namespace_parent_scope = TRY((((*this).get_scope(effective_namespace_parent_scope_id)))));
 }
-ids::ScopeId lambda_scope_id = TRY((((*this).create_scope(effective_namespace_parent_scope_id,can_throw,TRY(ByteString::from_utf8("lambda"sv)),true))));
+ids::ScopeId lambda_scope_id = TRY((((*this).create_scope(effective_namespace_parent_scope_id,can_throw,(ByteString::must_from_utf8("lambda"sv)),true))));
 bool is_capturing_everything = false;
 JaktInternal::DynamicArray<types::CheckedCapture> checked_captures = (TRY((DynamicArray<types::CheckedCapture>::create_with({}))));
 bool has_dependent_capture = false;
@@ -15800,10 +15800,10 @@ break;
 parser::ParsedCapture capture = (_magic_value.value());
 {
 if (((capture).__jakt_init_index() == 4 /* AllByReference */)){
-TRY((((checked_captures).push(types::CheckedCapture::AllByReference(TRY(ByteString::from_utf8(""sv)),((capture).common.init_common.span))))));
+TRY((((checked_captures).push(types::CheckedCapture::AllByReference((ByteString::must_from_utf8(""sv)),((capture).common.init_common.span))))));
 if ((!(is_capturing_everything))){
 (is_capturing_everything = true);
-(lambda_scope_id = TRY((((*this).create_scope(scope_id,can_throw,TRY(ByteString::from_utf8("lambda"sv)),true)))));
+(lambda_scope_id = TRY((((*this).create_scope(scope_id,can_throw,(ByteString::must_from_utf8("lambda"sv)),true)))));
 }
 }
 else if (((TRY((((*this).find_var_in_scope(scope_id,((capture).common.init_common.name),JaktInternal::OptionalNone()))))).has_value())){
@@ -15835,7 +15835,7 @@ __jakt_label_441:; __jakt_var_496.release_value(); }));
 };/*case end*/
 case 4 /* AllByReference */: {
 {
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("AllByReference capture should not be looked up by name"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("AllByReference capture should not be looked up by name"sv))))));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -15851,7 +15851,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 })))));
 if ((!(is_capturing_everything))){
 NonnullRefPtr<types::CheckedVariable> const var = (TRY((((*this).find_var_in_scope(scope_id,((capture).common.init_common.name),JaktInternal::OptionalNone())))).value());
-bool const is_this = ((((var)->name)) == (TRY(ByteString::from_utf8("this"sv))));
+bool const is_this = ((((var)->name)) == ((ByteString::must_from_utf8("this"sv))));
 ids::VarId const var_id = TRY((((module)->add_variable(TRY((types::CheckedVariable::__jakt_create(name,((var)->type_id),(((var)->is_mutable) && ((is_this || ((capture).__jakt_init_index() == 1 /* ByReference */)) || ((capture).__jakt_init_index() == 2 /* ByMutableReference */))),((var)->definition_span),((var)->type_span),((var)->visibility),((var)->owner_scope),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())))))));
 TRY((((*this).add_var_to_scope(lambda_scope_id,name,var_id,span))));
 }
@@ -15933,7 +15933,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).find_or_add_type_id(TRY((types:
 };/*case end*/
 default: {
 {
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("Expected the just-checked function to be of a function type"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("Expected the just-checked function to be of a function type"sv))))));
 }
 };/*case end*/
 }/*switch end*/
@@ -16129,7 +16129,7 @@ TRY((((resolved_args).push((Tuple{name, span, TRY((((*this).typecheck_expression
 return resolved_args;
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Wrong number of arguments"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Wrong number of arguments"sv)),span))));
 return (TRY((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({}))));
 }
 
@@ -16458,7 +16458,7 @@ return JaktInternal::ExplicitValue(fields);
 };/*case end*/
 default: {
 {
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("typecheck_struct_fields cannot handle non-structs"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("typecheck_struct_fields cannot handle non-structs"sv))))));
 }
 };/*case end*/
 }/*switch end*/
@@ -16532,19 +16532,19 @@ ScopeGuard __jakt_var_509([&] {
 bool const is_print_like = (((((call).namespace_)).is_empty()) && ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool,ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == TRY(ByteString::from_utf8("print"sv))) {
+if (__jakt_enum_value == (ByteString::must_from_utf8("print"sv))) {
 return JaktInternal::ExplicitValue(true);
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("println"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("println"sv))) {
 return JaktInternal::ExplicitValue(true);
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("eprintln"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("eprintln"sv))) {
 return JaktInternal::ExplicitValue(true);
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("eprint"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("eprint"sv))) {
 return JaktInternal::ExplicitValue(true);
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("format"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("format"sv))) {
 return JaktInternal::ExplicitValue(true);
 }
 else {
@@ -16689,7 +16689,7 @@ auto __jakt_enum_value = (first);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<ids::TypeId>> __jakt_var_514; {
 (first = false);
-__jakt_var_514 = static_cast<JaktInternal::Optional<ids::TypeId>>(TRY((((*this).prelude_struct_type_named(TRY(ByteString::from_utf8("StringView"sv))))))); goto __jakt_label_452;
+__jakt_var_514 = static_cast<JaktInternal::Optional<ids::TypeId>>(TRY((((*this).prelude_struct_type_named((ByteString::must_from_utf8("StringView"sv))))))); goto __jakt_label_452;
 
 }
 __jakt_label_452:; __jakt_var_514.release_value(); }));
@@ -16714,8 +16714,8 @@ TRY((((args).push((Tuple{((call).name), checked_arg})))));
 }
 }
 
-if (((((call).name)) == (TRY(ByteString::from_utf8("format"sv))))){
-(return_type = TRY((((*this).prelude_struct_type_named(TRY(ByteString::from_utf8("String"sv)))))));
+if (((((call).name)) == ((ByteString::must_from_utf8("format"sv))))){
+(return_type = TRY((((*this).prelude_struct_type_named((ByteString::must_from_utf8("String"sv)))))));
 (callee_throws = true);
 }
 }
@@ -16817,7 +16817,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 
 if ((!(((resolved_function_id).has_value())))){
 if ((!(((resolved_function_id_candidates).is_empty())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("No function with matching signature found."sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("No function with matching signature found."sv)),span))));
 {
 JaktInternal::ArrayIterator<error::JaktError> _magic = ((errors_while_trying_to_find_matching_function).iterator());
 for (;;){
@@ -16892,7 +16892,7 @@ NonnullRefPtr<types::CheckedFunction> const callee = ((*this).get_function((reso
 (callee_throws = ((callee)->can_throw));
 (return_type = ((callee)->return_type_id));
 if ((((callee)->is_unsafe) && ((safety_mode).__jakt_init_index() == 0 /* Safe */))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot call unsafe function in safe context"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot call unsafe function in safe context"sv)),span))));
 }
 if ((((type_hint).has_value()) && (!(((((type_hint).value())).equals(types::unknown_type_id())))))){
 bool const old_ignore_errors = ((*this).ignore_errors);
@@ -16926,7 +16926,7 @@ if (((substitution).has_value())){
 TRY((((generic_arguments).push((substitution.value())))));
 }
 else if ((!(((*this).in_comptime_function_call)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Not all generic parameters have known types"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Not all generic parameters have known types"sv)),span))));
 }
 else {
 TRY((((generic_arguments).push(((generic_typevar).type_id())))));
@@ -16950,7 +16950,7 @@ TRY((((*this).check_types_for_compat((type_hint.value()),return_type,((((*this).
 
 (return_type = TRY((((*this).substitute_typevars_in_type(return_type,((*this).generic_inferences))))));
 if ((callee_throws && (!(((TRY((((*this).get_scope(caller_scope_id)))))->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Call to function that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 if (((generic_checked_function_to_instantiate).has_value())){
 if (((maybe_this_type_id).has_value())){
@@ -17037,7 +17037,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
     _jakt_value.release_value();
 });
 if (TRY((((*this).scope_lifetime_subsumes(stored_scope_id,arg_scope_id))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot pass this argument by reference, it is not guaranteed to outlive the object it will be stored in"sv)),((TRY((resolve_arg(index))))->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot pass this argument by reference, it is not guaranteed to outlive the object it will be stored in"sv)),((TRY((resolve_arg(index))))->span())))));
 }
 }
 
@@ -17102,14 +17102,14 @@ types::Value const value = (evaluated_this).as.Throw.value;
 TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Error executing this expression (evaluation threw {})"sv)),value))),(((this_expr.value()))->span())))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Invalid this expression"sv)),(((this_expr.value()))->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Invalid this expression"sv)),(((this_expr.value()))->span())))));
 }
 
 }
 
 ;return {};}();
 if (__jakt_var_516.is_error()) {{
-TRY((((*this).error(TRY(ByteString::from_utf8("Error executing this expression"sv)),(((this_expr.value()))->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Error executing this expression"sv)),(((this_expr.value()))->span())))));
 }
 };
 }
@@ -17125,7 +17125,7 @@ JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>
 interpreter::StatementResult const value = ({ Optional<interpreter::StatementResult> __jakt_var_517;
 auto __jakt_var_518 = [&]() -> ErrorOr<interpreter::StatementResult> { return TRY((((interpreter)->execute_expression(((argument).template get<1>()),eval_scope)))); }();
 if (__jakt_var_518.is_error()) {{
-TRY((((*this).error(TRY(ByteString::from_utf8("Error in argument"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Error in argument"sv)),span))));
 continue;
 }
 } else {__jakt_var_517 = __jakt_var_518.release_value();
@@ -17337,7 +17337,7 @@ return JaktInternal::ExplicitValue<void>();
     _jakt_value.release_value();
 });
 }
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Not a namespace, enum, class, or struct: ‘{}’"sv)),TRY((utility::join(((call).namespace_),TRY(ByteString::from_utf8("::"sv)))))))),span))));
+TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Not a namespace, enum, class, or struct: ‘{}’"sv)),TRY((utility::join(((call).namespace_),(ByteString::must_from_utf8("::"sv)))))))),span))));
 }
 
 }
@@ -17599,7 +17599,7 @@ ids::ScopeId const import_scope_id = ({ Optional<ids::ScopeId> __jakt_var_523;
 auto __jakt_var_524 = [&]() -> ErrorOr<ids::ScopeId> { return TRY((((*this).cache_or_process_cpp_import(output,child_scope_id,false,(TRY((Dictionary<ByteString, ByteString>::create_with_entries({})))))))); }();
 if (__jakt_var_524.is_error()) {auto e = __jakt_var_524.release_error();
 {
-if (((TRY((ByteString::from_utf8(((e).string_literal()))))) == (TRY((ByteString::from_utf8(cpp_import__common::CppImportErrors::path_not_found())))))){
+if (((ByteString::must_from_utf8(((e).string_literal()))) == (ByteString::must_from_utf8(cpp_import__common::CppImportErrors::path_not_found())))){
 {
 JaktInternal::ArrayIterator<parser::ParsedExternImport> _magic = ((imports).iterator());
 for (;;){
@@ -17609,7 +17609,7 @@ break;
 }
 parser::ParsedExternImport import_ = (_magic_value.value());
 {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Could not find imported extern file '{}'"sv)),((import_).get_path())))),(((((import_).assigned_namespace)).name_span).value()),TRY(ByteString::from_utf8("make sure the file exists and is in the include path"sv)),(((((import_).assigned_namespace)).name_span).value())))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Could not find imported extern file '{}'"sv)),((import_).get_path())))),(((((import_).assigned_namespace)).name_span).value()),(ByteString::must_from_utf8("make sure the file exists and is in the include path"sv)),(((((import_).assigned_namespace)).name_span).value())))));
 }
 
 }
@@ -17653,11 +17653,11 @@ JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const ne
 
 NonnullRefPtr<typename types::CheckedExpression> const checked_condition = TRY((((*this).typecheck_expression_and_dereference_if_needed(new_condition,scope_id,safety_mode,JaktInternal::OptionalNone(),span))));
 if ((!(((((checked_condition)->type())).equals(types::builtin(types::BuiltinType::Bool())))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Condition must be a boolean expression"sv)),((new_condition)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Condition must be a boolean expression"sv)),((new_condition)->span())))));
 }
 types::CheckedBlock const checked_block = TRY((((*this).typecheck_block((new_then_block.value()),scope_id,safety_mode,JaktInternal::OptionalNone()))));
 if (((((checked_block).yielded_type)).has_value())){
-TRY((((*this).error(TRY(ByteString::from_utf8("An 'if' block is not allowed to yield values"sv)),((((new_then_block.value())).find_yield_span()).value())))));
+TRY((((*this).error((ByteString::must_from_utf8("An 'if' block is not allowed to yield values"sv)),((((new_then_block.value())).find_yield_span()).value())))));
 }
 JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> checked_else = JaktInternal::OptionalNone();
 if (((new_else_statement).has_value())){
@@ -17989,20 +17989,20 @@ ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typechecker::Typechecke
 {
 JaktInternal::Optional<utility::Span> const maybe_span = ((block).find_yield_span());
 if (((maybe_span).has_value())){
-TRY((((*this).error(TRY(ByteString::from_utf8("a 'for' loop block is not allowed to yield values"sv)),(maybe_span.value())))));
+TRY((((*this).error((ByteString::must_from_utf8("a 'for' loop block is not allowed to yield values"sv)),(maybe_span.value())))));
 }
 NonnullRefPtr<typename types::CheckedExpression> iterable_expr = TRY((((*this).typecheck_expression_and_dereference_if_needed(range,scope_id,safety_mode,JaktInternal::OptionalNone(),span))));
 ids::TypeId resolved_iterable_result_type = types::unknown_type_id();
 NonnullRefPtr<typename parser::ParsedExpression> expression_to_iterate = range;
-JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const iterable_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(((iterable_expr)->type()),(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("Iterable"sv)), TRY(ByteString::from_utf8("ThrowingIterable"sv))})))),scope_id,((iterable_expr)->span()),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const iterable_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(((iterable_expr)->type()),(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("Iterable"sv)), (ByteString::must_from_utf8("ThrowingIterable"sv))})))),scope_id,((iterable_expr)->span()),JaktInternal::OptionalNone()))));
 if ((!(((iterable_trait_implementation).has_value())))){
-JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const into_iterator_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(((iterable_expr)->type()),(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("IntoIterator"sv)), TRY(ByteString::from_utf8("IntoThrowingIterator"sv))})))),scope_id,((iterable_expr)->span()),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const into_iterator_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(((iterable_expr)->type()),(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("IntoIterator"sv)), (ByteString::must_from_utf8("IntoThrowingIterator"sv))})))),scope_id,((iterable_expr)->span()),JaktInternal::OptionalNone()))));
 if ((!(((into_iterator_trait_implementation).has_value())))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Iterable expression is not iterable"sv)),((range)->span()),TRY((__jakt_format((StringView::from_string_literal("Consider implementing (Throwing)Iterable<T> or Into(Throwing)Iterator<T> for the type of this expression (‘{}’)"sv)),TRY((((*this).type_name(((iterable_expr)->type()),false))))))),((range)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Iterable expression is not iterable"sv)),((range)->span()),TRY((__jakt_format((StringView::from_string_literal("Consider implementing (Throwing)Iterable<T> or Into(Throwing)Iterator<T> for the type of this expression (‘{}’)"sv)),TRY((((*this).type_name(((iterable_expr)->type()),false))))))),((range)->span())))));
 }
 else {
 (resolved_iterable_result_type = (((((into_iterator_trait_implementation.value())).implemented_type_args))[static_cast<i64>(0LL)]));
-(expression_to_iterate = TRY((parser::ParsedExpression::MethodCall(range,parser::ParsedCall((TRY((DynamicArray<ByteString>::create_with({})))),TRY(ByteString::from_utf8("iterator"sv)),(TRY((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>>::create_with({})))),(TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({}))))),false,name_span))));
+(expression_to_iterate = TRY((parser::ParsedExpression::MethodCall(range,parser::ParsedCall((TRY((DynamicArray<ByteString>::create_with({})))),(ByteString::must_from_utf8("iterator"sv)),(TRY((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>>::create_with({})))),(TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({}))))),false,name_span))));
 }
 
 }
@@ -18010,7 +18010,7 @@ else {
 (resolved_iterable_result_type = (((((iterable_trait_implementation.value())).implemented_type_args))[static_cast<i64>(0LL)]));
 }
 
-NonnullRefPtr<typename parser::ParsedStatement> const rewritten_statement = TRY((parser::ParsedStatement::Block(parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({TRY((parser::ParsedStatement::VarDecl(parser::ParsedVarDecl(TRY(ByteString::from_utf8("_magic"sv)),TRY((parser::ParsedType::Empty(JaktInternal::OptionalNone()))),true,JaktInternal::OptionalNone(),name_span,JaktInternal::OptionalNone()),expression_to_iterate,span))), TRY((parser::ParsedStatement::Loop(parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({TRY((parser::ParsedStatement::VarDecl(parser::ParsedVarDecl(TRY(ByteString::from_utf8("_magic_value"sv)),TRY((parser::ParsedType::Empty(JaktInternal::OptionalNone()))),false,JaktInternal::OptionalNone(),name_span,JaktInternal::OptionalNone()),TRY((parser::ParsedExpression::MethodCall(TRY((parser::ParsedExpression::Var(TRY(ByteString::from_utf8("_magic"sv)),name_span))),parser::ParsedCall((TRY((DynamicArray<ByteString>::create_with({})))),TRY(ByteString::from_utf8("next"sv)),(TRY((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>>::create_with({})))),(TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({}))))),false,name_span))),span))), TRY((parser::ParsedStatement::If(TRY((parser::ParsedExpression::UnaryOp(TRY((parser::ParsedExpression::MethodCall(TRY((parser::ParsedExpression::Var(TRY(ByteString::from_utf8("_magic_value"sv)),name_span))),parser::ParsedCall((TRY((DynamicArray<ByteString>::create_with({})))),TRY(ByteString::from_utf8("has_value"sv)),(TRY((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>>::create_with({})))),(TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({}))))),false,name_span))),parser::UnaryOperator::LogicalNot(),name_span))),parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({TRY((parser::ParsedStatement::Break(span)))}))))),JaktInternal::OptionalNone(),span))), TRY((parser::ParsedStatement::VarDecl(parser::ParsedVarDecl(iterator_name,TRY((parser::ParsedType::Empty(JaktInternal::OptionalNone()))),true,({
+NonnullRefPtr<typename parser::ParsedStatement> const rewritten_statement = TRY((parser::ParsedStatement::Block(parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({TRY((parser::ParsedStatement::VarDecl(parser::ParsedVarDecl((ByteString::must_from_utf8("_magic"sv)),TRY((parser::ParsedType::Empty(JaktInternal::OptionalNone()))),true,JaktInternal::OptionalNone(),name_span,JaktInternal::OptionalNone()),expression_to_iterate,span))), TRY((parser::ParsedStatement::Loop(parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({TRY((parser::ParsedStatement::VarDecl(parser::ParsedVarDecl((ByteString::must_from_utf8("_magic_value"sv)),TRY((parser::ParsedType::Empty(JaktInternal::OptionalNone()))),false,JaktInternal::OptionalNone(),name_span,JaktInternal::OptionalNone()),TRY((parser::ParsedExpression::MethodCall(TRY((parser::ParsedExpression::Var((ByteString::must_from_utf8("_magic"sv)),name_span))),parser::ParsedCall((TRY((DynamicArray<ByteString>::create_with({})))),(ByteString::must_from_utf8("next"sv)),(TRY((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>>::create_with({})))),(TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({}))))),false,name_span))),span))), TRY((parser::ParsedStatement::If(TRY((parser::ParsedExpression::UnaryOp(TRY((parser::ParsedExpression::MethodCall(TRY((parser::ParsedExpression::Var((ByteString::must_from_utf8("_magic_value"sv)),name_span))),parser::ParsedCall((TRY((DynamicArray<ByteString>::create_with({})))),(ByteString::must_from_utf8("has_value"sv)),(TRY((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>>::create_with({})))),(TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedType>>::create_with({}))))),false,name_span))),parser::UnaryOperator::LogicalNot(),name_span))),parser::ParsedBlock((TRY((DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({TRY((parser::ParsedStatement::Break(span)))}))))),JaktInternal::OptionalNone(),span))), TRY((parser::ParsedStatement::VarDecl(parser::ParsedVarDecl(iterator_name,TRY((parser::ParsedType::Empty(JaktInternal::OptionalNone()))),true,({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<utility::Span>,ErrorOr<NonnullRefPtr<typename types::CheckedStatement>>>{
 auto __jakt_enum_value = (is_destructuring);
 if (__jakt_enum_value == true) {
@@ -18024,7 +18024,7 @@ VERIFY_NOT_REACHED();
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}),name_span,JaktInternal::OptionalNone()),TRY((parser::ParsedExpression::ForcedUnwrap(TRY((parser::ParsedExpression::Var(TRY(ByteString::from_utf8("_magic_value"sv)),name_span))),name_span))),span))), TRY((parser::ParsedStatement::Block(block,span)))}))))),span)))}))))),span)));
+}),name_span,JaktInternal::OptionalNone()),TRY((parser::ParsedExpression::ForcedUnwrap(TRY((parser::ParsedExpression::Var((ByteString::must_from_utf8("_magic_value"sv)),name_span))),name_span))),span))), TRY((parser::ParsedStatement::Block(block,span)))}))))),span)))}))))),span)));
 return TRY((((*this).typecheck_statement(rewritten_statement,scope_id,safety_mode,JaktInternal::OptionalNone()))));
 }
 }
@@ -18147,7 +18147,7 @@ break;
 parser::ParsedMethod method = (_magic_value.value());
 {
 JaktInternal::Optional<ids::TypeId> this_arg_type_id = JaktInternal::OptionalNone();
-if (((TRY((((((((((((method).parsed_function)).params)).first())).map([](auto& _value) { return _value.variable; }))).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return TRY(ByteString::from_utf8(""sv)); })))) == (TRY(ByteString::from_utf8("this"sv))))){
+if (((TRY((((((((((((method).parsed_function)).params)).first())).map([](auto& _value) { return _value.variable; }))).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8(""sv)); })))) == ((ByteString::must_from_utf8("this"sv))))){
 (this_arg_type_id = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ids::TypeId>, ErrorOr<void>>{
 auto&& __jakt_match_variant = *((*this).get_type(for_type));
@@ -18243,7 +18243,7 @@ if (((*this).dump_try_hints)){
 TRY((((*this).dump_try_hint(span))));
 }
 if ((!(((TRY((((*this).get_scope(scope_id)))))->can_throw)))){
-ByteString const message = TRY(ByteString::from_utf8("Array initialization inside non-throwing scope"sv));
+ByteString const message = (ByteString::must_from_utf8("Array initialization inside non-throwing scope"sv));
 if (((((*this).current_function_id)).has_value())){
 NonnullRefPtr<types::CheckedFunction> const current_function = ((*this).get_function((((*this).current_function_id).value())));
 TRY((((*this).error_with_hint(message,span,TRY((__jakt_format((StringView::from_string_literal("Add `throws` keyword to function {}"sv)),((current_function)->name)))),((current_function)->name_span)))));
@@ -18263,7 +18263,7 @@ TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type '{
 }
 (repeat = fill_size_checked);
 }
-ids::StructId const array_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Array"sv))))));
+ids::StructId const array_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Array"sv))))));
 ids::TypeId inner_type_id = types::unknown_type_id();
 JaktInternal::Optional<utility::Span> inferred_type_span = JaktInternal::OptionalNone();
 JaktInternal::Optional<ids::TypeId> inner_hint = JaktInternal::OptionalNone();
@@ -18284,7 +18284,7 @@ NonnullRefPtr<typename parser::ParsedExpression> value = (_magic_value.value());
 NonnullRefPtr<typename types::CheckedExpression> const checked_expr = TRY((((*this).typecheck_expression(value,scope_id,safety_mode,inner_hint))));
 ids::TypeId const current_value_type_id = ((checked_expr)->type());
 if (((current_value_type_id).equals(types::void_type_id()))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot create an array with values of type void\n"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot create an array with values of type void\n"sv)),span))));
 }
 if (((inner_type_id).equals(types::unknown_type_id()))){
 (inner_type_id = current_value_type_id);
@@ -18304,7 +18304,7 @@ if (((inner_hint).has_value())){
 (inner_type_id = (inner_hint.value()));
 }
 else if ((((type_hint).has_value()) && (((type_hint.value())).equals(types::unknown_type_id())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot infer generic type for Array<T>"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot infer generic type for Array<T>"sv)),span))));
 }
 }
 ids::TypeId const type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),array_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({inner_type_id})))))))))));
@@ -18439,7 +18439,7 @@ return {};
 ErrorOr<void> typechecker::Typechecker::typecheck_trait_predecl(parser::ParsedTrait const parsed_trait,ids::ScopeId const scope_id) {
 {
 ids::ScopeId const trait_scope_id = TRY((((*this).create_scope(scope_id,false,TRY((__jakt_format((StringView::from_string_literal("trait({})"sv)),((parsed_trait).name)))),false))));
-TRY((((*this).add_type_to_scope(trait_scope_id,TRY(ByteString::from_utf8("Self"sv)),TRY((((*this).find_or_add_type_id(TRY((types::Type::Self(parser::CheckedQualifiers(false)))))))),((parsed_trait).name_span)))));
+TRY((((*this).add_type_to_scope(trait_scope_id,(ByteString::must_from_utf8("Self"sv)),TRY((((*this).find_or_add_type_id(TRY((types::Type::Self(parser::CheckedQualifiers(false)))))))),((parsed_trait).name_span)))));
 NonnullRefPtr<types::CheckedTrait> checked_trait = TRY((types::CheckedTrait::__jakt_create(((parsed_trait).name),((parsed_trait).name_span),({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::CheckedTraitRequirements, ErrorOr<void>>{
 auto&& __jakt_match_variant = ((parsed_trait).requirements);
@@ -18516,7 +18516,7 @@ parser::ParsedFunction parsed_function = (_magic_value.value());
 ids::ScopeId const method_scope_id = TRY((((*this).create_scope(trait_scope_id,((parsed_function).can_throw),TRY((__jakt_format((StringView::from_string_literal("trait-method({}::{})"sv)),((parsed_trait).name),((parsed_function).name)))),true))));
 ids::FunctionId const function_id = ((((((*this).program))->get_module(((*this).current_module_id))))->next_function_id());
 JaktInternal::Optional<ids::TypeId> this_arg_type_id = JaktInternal::OptionalNone();
-if (((!(((((parsed_function).params)).is_empty()))) && (((((((((((parsed_function).params)).first()).value())).variable)).name)) == (TRY(ByteString::from_utf8("this"sv)))))){
+if (((!(((((parsed_function).params)).is_empty()))) && (((((((((((parsed_function).params)).first()).value())).variable)).name)) == ((ByteString::must_from_utf8("this"sv)))))){
 (this_arg_type_id = struct_type_id);
 }
 TRY((((*this).typecheck_function_predecl(parsed_function,trait_scope_id,this_arg_type_id,JaktInternal::OptionalNone(),JaktInternal::OptionalNone()))));
@@ -18620,7 +18620,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Comptime;NonnullRefPtr<typen
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>>> __jakt_var_535; {
 NonnullRefPtr<interpreter::Interpreter> interpreter = TRY((((*this).interpreter())));
 NonnullRefPtr<interpreter::InterpreterScope> eval_scope = TRY((interpreter::InterpreterScope::from_runtime_scope(scope_id,((*this).program),JaktInternal::OptionalNone())));
-ids::ScopeId const exec_scope = TRY((((*this).create_scope(scope_id,true,TRY(ByteString::from_utf8("comptime-import"sv)),true))));
+ids::ScopeId const exec_scope = TRY((((*this).create_scope(scope_id,true,(ByteString::must_from_utf8("comptime-import"sv)),true))));
 interpreter::StatementResult const result = TRY((((interpreter)->execute_expression(TRY((((*this).typecheck_expression(expression,exec_scope,types::SafetyMode::Safe(),JaktInternal::OptionalNone())))),eval_scope))));
 __jakt_var_535 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>>, ErrorOr<void>>{
@@ -18628,7 +18628,7 @@ auto&& __jakt_match_variant = result;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Return */: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> __jakt_var_536; {
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY(ByteString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),(ByteString::must_from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
 __jakt_var_536 = JaktInternal::OptionalNone(); goto __jakt_label_458;
 
 }
@@ -18636,7 +18636,7 @@ __jakt_label_458:; __jakt_var_536; }));
 };/*case end*/
 case 2 /* Yield */: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> __jakt_var_537; {
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY(ByteString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),(ByteString::must_from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
 __jakt_var_537 = JaktInternal::OptionalNone(); goto __jakt_label_459;
 
 }
@@ -18644,7 +18644,7 @@ __jakt_label_459:; __jakt_var_537; }));
 };/*case end*/
 case 3 /* Continue */: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> __jakt_var_538; {
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY(ByteString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),(ByteString::must_from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
 __jakt_var_538 = JaktInternal::OptionalNone(); goto __jakt_label_460;
 
 }
@@ -18652,7 +18652,7 @@ __jakt_label_460:; __jakt_var_538; }));
 };/*case end*/
 case 4 /* Break */: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> __jakt_var_539; {
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY(ByteString::from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),(ByteString::must_from_utf8("this expression evaluates to an invalid value"sv)),((expression)->span())))));
 __jakt_var_539 = JaktInternal::OptionalNone(); goto __jakt_label_461;
 
 }
@@ -18661,7 +18661,7 @@ __jakt_label_461:; __jakt_var_539; }));
 case 1 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;types::Value const& error = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> __jakt_var_540; {
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY((__jakt_format((StringView::from_string_literal("this expression threw an error: {}"sv)),error))),((expression)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY((__jakt_format((StringView::from_string_literal("this expression threw an error: {}"sv)),error))),((expression)->span())))));
 __jakt_var_540 = JaktInternal::OptionalNone(); goto __jakt_label_462;
 
 }
@@ -18681,7 +18681,7 @@ case 20 /* JaktArray */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.JaktArray;JaktInternal::DynamicArray<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>>> __jakt_var_541; {
 if (((values).is_empty())){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY(ByteString::from_utf8("this expression evaluates to an empty array"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),(ByteString::must_from_utf8("this expression evaluates to an empty array"sv)),((expression)->span())))));
 }
 JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> result = (TRY((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>::create_with({}))));
 {
@@ -18703,7 +18703,7 @@ return (TRY((((result).push((Tuple{string, ((value).span)})))))), JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((value).span),TRY(ByteString::from_utf8("this expression evaluates to an invalid value"sv)),((value).span)))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((value).span),(ByteString::must_from_utf8("this expression evaluates to an invalid value"sv)),((value).span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -18730,7 +18730,7 @@ __jakt_label_463:; __jakt_var_541.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> __jakt_var_542; {
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("module name must evaluate to a string literal"sv)),((expression)->span()),TRY(ByteString::from_utf8("this expression evaluates to a non-string value"sv)),((expression)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("module name must evaluate to a string literal"sv)),((expression)->span()),(ByteString::must_from_utf8("this expression evaluates to a non-string value"sv)),((expression)->span())))));
 __jakt_var_542 = JaktInternal::OptionalNone(); goto __jakt_label_464;
 
 }
@@ -18789,7 +18789,7 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue((maybe_file_name.value()));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue(TRY((((TRY((((TRY((((TRY((((*this).get_root_path())))).parent())))).join(((name_and_span).template get<0>())))))).replace_extension(TRY(ByteString::from_utf8("jakt"sv)))))));
+return JaktInternal::ExplicitValue(TRY((((TRY((((TRY((((TRY((((*this).get_root_path())))).parent())))).join(((name_and_span).template get<0>())))))).replace_extension((ByteString::must_from_utf8("jakt"sv)))))));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -18817,14 +18817,14 @@ break;
 }
 
 if ((!(((module_name_and_span).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("No module in module set {{{}}} was found"sv)),TRY((utility::join(names,TRY(ByteString::from_utf8(", "sv)))))))),((((import_).module_name)).span())))));
+TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("No module in module set {{{}}} was found"sv)),TRY((utility::join(names,(ByteString::must_from_utf8(", "sv)))))))),((((import_).module_name)).span())))));
 return {};
 }
 JaktInternal::Tuple<ByteString,utility::Span> const module_name_module_span_ = (module_name_and_span.value());
 ByteString const module_name = ((module_name_module_span_).template get<0>());
 utility::Span const module_span = ((module_name_module_span_).template get<1>());
 
-ByteString const sanitized_module_name = ((module_name).replace(TRY(ByteString::from_utf8(":"sv)),TRY(ByteString::from_utf8("_"sv))));
+ByteString const sanitized_module_name = ((module_name).replace((ByteString::must_from_utf8(":"sv)),(ByteString::must_from_utf8("_"sv))));
 ids::ModuleId imported_module_id = ids::ModuleId(static_cast<size_t>(0ULL));
 JaktInternal::Optional<types::LoadedModule> maybe_loaded_module = ((((*this).program))->get_loaded_module(sanitized_module_name));
 if ((!(((maybe_loaded_module).has_value())))){
@@ -18836,7 +18836,7 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue((maybe_file_name.value()));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue(TRY((((TRY((((TRY((((TRY((((*this).get_root_path())))).parent())))).join(module_name))))).replace_extension(TRY(ByteString::from_utf8("jakt"sv)))))));
+return JaktInternal::ExplicitValue(TRY((((TRY((((TRY((((TRY((((*this).get_root_path())))).parent())))).join(module_name))))).replace_extension((ByteString::must_from_utf8("jakt"sv)))))));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -19110,13 +19110,13 @@ break;
 parser::ParsedFunction f = (_magic_value.value());
 {
 if ((!(((((f).linkage)).__jakt_init_index() == 1 /* External */)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Expected all functions in an `import extern` to be be external"sv)),((f).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Expected all functions in an `import extern` to be be external"sv)),((f).name_span)))));
 }
 if ((((import_).is_c) && (!(((((f).generic_parameters)).is_empty()))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("imported function '{}' is declared to have C linkage, but is generic"sv)),((f).name)))),((f).name_span),TRY(ByteString::from_utf8("this function may not be generic"sv)),((f).name_span)))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("imported function '{}' is declared to have C linkage, but is generic"sv)),((f).name)))),((f).name_span),(ByteString::must_from_utf8("this function may not be generic"sv)),((f).name_span)))));
 }
 if ((!(((((((f).block)).stmts)).is_empty())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("imported extern function is not allowed to have a body"sv)),((f).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("imported extern function is not allowed to have a body"sv)),((f).name_span)))));
 }
 }
 
@@ -19133,7 +19133,7 @@ break;
 parser::ParsedRecord record = (_magic_value.value());
 {
 if ((!(((((record).definition_linkage)).__jakt_init_index() == 1 /* External */)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Expected all records in an `import extern` to be external"sv)),((record).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Expected all records in an `import extern` to be external"sv)),((record).name_span)))));
 }
 if ((((import_).is_c) && (!(((((record).generic_parameters)).is_empty()))))){
 TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("imported {} '{}' is declared to have C linkage, but is generic"sv)),TRY((((((record).record_type)).record_type_name()))),((record).name)))),((record).name_span),TRY((__jakt_format((StringView::from_string_literal("this {} may not be generic"sv)),TRY((((((record).record_type)).record_type_name())))))),((record).name_span)))));
@@ -19157,13 +19157,13 @@ if (((override_target).has_value())){
 JaktInternal::Optional<ids::FunctionId> const method_id = TRY((((*this).find_function_matching_signature_in_scope(parent_scope_id,((method).parsed_function)))));
 NonnullRefPtr<types::CheckedFunction> const method_function = ((*this).get_function((method_id.value())));
 if ((!(((((method_function)->return_type_id)).equals((((override_target.value()))->return_type_id)))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Override function return type does not match virtual function"sv)),((method_function)->return_type_span).value_or_lazy_evaluated([&] { return ((method_function)->name_span); })))));
+TRY((((*this).error((ByteString::must_from_utf8("Override function return type does not match virtual function"sv)),((method_function)->return_type_span).value_or_lazy_evaluated([&] { return ((method_function)->name_span); })))));
 }
 if (((((method_function)->can_throw)) != ((((override_target.value()))->can_throw)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Override function throwability does not match virtual function"sv)),((method_function)->name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Override function throwability does not match virtual function"sv)),((method_function)->name_span)))));
 }
 if (((((((method_function)->params)).size())) != ((((((override_target.value()))->params)).size())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Override function parameters do not match virtual function"sv)),((method_function)->name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Override function parameters do not match virtual function"sv)),((method_function)->name_span)))));
 return {};
 }
 {
@@ -19178,13 +19178,13 @@ size_t param_index = (_magic_value.value());
 types::CheckedParameter const method_param = ((((method_function)->params))[param_index]);
 types::CheckedParameter const virtual_param = (((((override_target.value()))->params))[param_index]);
 if (((((((virtual_param).variable))->is_mutable)) != (((((method_param).variable))->is_mutable)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Override function parameter mutability does not match virtual function"sv)),((((method_param).variable))->definition_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Override function parameter mutability does not match virtual function"sv)),((((method_param).variable))->definition_span)))));
 }
-if ((((param_index) == (static_cast<size_t>(0ULL))) && ((((((method_param).variable))->name)) == (TRY(ByteString::from_utf8("this"sv)))))){
+if ((((param_index) == (static_cast<size_t>(0ULL))) && ((((((method_param).variable))->name)) == ((ByteString::must_from_utf8("this"sv)))))){
 continue;
 }
 if ((!(((((((method_param).variable))->type_id)).equals(((((virtual_param).variable))->type_id)))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Override function parameter type does not match virtual function"sv)),((((method_param).variable))->type_span).value_or_lazy_evaluated([&] { return ((((method_param).variable))->definition_span); })))));
+TRY((((*this).error((ByteString::must_from_utf8("Override function parameter type does not match virtual function"sv)),((((method_param).variable))->type_span).value_or_lazy_evaluated([&] { return ((((method_param).variable))->definition_span); })))));
 }
 }
 
@@ -19193,20 +19193,20 @@ TRY((((*this).error(TRY(ByteString::from_utf8("Override function parameter type 
 
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Missing virtual for override"sv)),((((method).parsed_function)).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Missing virtual for override"sv)),((((method).parsed_function)).name_span)))));
 return {};
 }
 
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Missing virtual for override"sv)),((((method).parsed_function)).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Missing virtual for override"sv)),((((method).parsed_function)).name_span)))));
 return {};
 }
 
 }
 else {
 if (((all_virtuals).contains(((((method).parsed_function)).name)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Missing override keyword on function that is virtual"sv)),((((method).parsed_function)).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Missing override keyword on function that is virtual"sv)),((((method).parsed_function)).name_span)))));
 }
 return {};
 }
@@ -19728,7 +19728,7 @@ NonnullRefPtr<typename types::CheckedStatement> const checked_statement = TRY(((
 if (((checked_statement)->__jakt_init_index() == 5 /* Block */)){
 types::CheckedBlock const block = (checked_statement)->as.Block.block;
 if (((((block).yielded_type)).has_value())){
-TRY((((*this).error(TRY(ByteString::from_utf8("‘yield’ inside ‘defer’ is meaningless"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("‘yield’ inside ‘defer’ is meaningless"sv)),span))));
 }
 }
 return TRY((types::CheckedStatement::Defer(checked_statement,span)));
@@ -19764,7 +19764,7 @@ if (TRY((((function_to_add)->signature_matches(existing_function,false))))){
 if (((TRY((((*this).get_scope(parent_scope_id)))))->is_from_generated_code)){
 continue;
 }
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Redefinition of function ‘{}’."sv)),((function_to_add)->name)))),(((((function_to_add)->parsed_function).value())).name_span),TRY(ByteString::from_utf8("Previous definition is here"sv)),(((((existing_function)->parsed_function).value())).name_span)))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Redefinition of function ‘{}’."sv)),((function_to_add)->name)))),(((((function_to_add)->parsed_function).value())).name_span),(ByteString::must_from_utf8("Previous definition is here"sv)),(((((existing_function)->parsed_function).value())).name_span)))));
 }
 }
 
@@ -19797,7 +19797,7 @@ case 1 /* Private */: {
 {
 if ((!(TRY((((*this).scope_can_access(accessor,accessee))))))){
 if ((!(((((method)->type)).__jakt_init_index() == 0 /* Normal */)))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Can't access constructor ‘{}’, because it is marked private"sv)),((method)->name)))),span,TRY(ByteString::from_utf8("Private constructors are created if any fields are private"sv)),span))));
+TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Can't access constructor ‘{}’, because it is marked private"sv)),((method)->name)))),span,(ByteString::must_from_utf8("Private constructors are created if any fields are private"sv)),span))));
 }
 else {
 TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Can't access method ‘{}’, because it is marked private"sv)),((method)->name)))),span))));
@@ -19810,7 +19810,7 @@ return JaktInternal::ExplicitValue<void>();
 case 2 /* Restricted */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Restricted;JaktInternal::DynamicArray<NonnullRefPtr<typename types::MaybeResolvedScope>> const& scopes = __jakt_match_value.scopes;
 {
-TRY((((*this).check_restricted_access(accessor,TRY(ByteString::from_utf8("function"sv)),accessee,((method)->name),scopes,span))));
+TRY((((*this).check_restricted_access(accessor,(ByteString::must_from_utf8("function"sv)),accessee,((method)->name),scopes,span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -19899,7 +19899,7 @@ ids::ScopeId const block_scope_id = TRY((((*this).create_scope(method_scope_id,(
 bool const is_generic = ((!(((((parsed_record).generic_parameters)).is_empty()))) || (!(((((func).generic_parameters)).is_empty()))));
 bool has_varargs = ((((method).parsed_function)).has_varargs);
 if ((has_varargs && ((((((method).parsed_function)).linkage)).__jakt_init_index() == 0 /* Internal */))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Only external functions are allowed to be declared using varargs"sv)),((((method).parsed_function)).name_span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Only external functions are allowed to be declared using varargs"sv)),((((method).parsed_function)).name_span)))));
 (has_varargs = false);
 }
 NonnullRefPtr<types::CheckedFunction> checked_function = TRY((types::CheckedFunction::__jakt_create(((func).name),((func).name_span),TRY((((*this).typecheck_visibility(((method).visibility),scope_id)))),types::unknown_type_id(),JaktInternal::OptionalNone(),(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),TRY((types::FunctionGenerics::__jakt_create(method_scope_id,(TRY((DynamicArray<types::CheckedParameter>::create_with({})))),(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id,types::BlockControlFlow::MayReturn(),ids::TypeId::none(),false),((func).can_throw),((func).type),((func).linkage),method_scope_id,JaktInternal::OptionalNone(),((!(is_generic)) || is_extern),func,((func).is_comptime),false,false,((func).is_unsafe),has_varargs,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),parser::InlineState::Default())));
@@ -19940,7 +19940,7 @@ break;
 }
 parser::ParsedParameter param = (_magic_value.value());
 {
-if (((((((param).variable)).name)) == (TRY(ByteString::from_utf8("this"sv))))){
+if (((((((param).variable)).name)) == ((ByteString::must_from_utf8("this"sv))))){
 NonnullRefPtr<types::CheckedVariable> const checked_variable = TRY((types::CheckedVariable::__jakt_create(((((param).variable)).name),enum_type_id,((((param).variable)).is_mutable),((((param).variable)).span),JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
 TRY((((checked_function)->add_param(types::CheckedParameter(((param).requires_label),checked_variable,JaktInternal::OptionalNone())))));
 }
@@ -20340,7 +20340,7 @@ break;
 }
 parser::ParsedNamespace namespace_ = (_magic_value.value());
 {
-ByteString debug_name = TRY(ByteString::from_utf8("namespace("sv));
+ByteString debug_name = (ByteString::must_from_utf8("namespace("sv));
 if (((((namespace_).name)).has_value())){
 TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 {
@@ -20357,7 +20357,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(debug_name,TRY(ByteString::from_utf8("unnamed-namespace"sv)))));
+(debug_name,(ByteString::must_from_utf8("unnamed-namespace"sv)))));
 }
 
 TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
@@ -20366,7 +20366,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(debug_name,TRY(ByteString::from_utf8(")"sv)))));
+(debug_name,(ByteString::must_from_utf8(")"sv)))));
 JaktInternal::Optional<ids::ScopeId> existing_scope_id = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ids::ScopeId>,ErrorOr<void>>{
 auto __jakt_enum_value = (((((namespace_).name)).has_value()));
@@ -20395,7 +20395,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(debug_name,TRY(ByteString::from_utf8(" (extern "sv)))));
+(debug_name,(ByteString::must_from_utf8(" (extern "sv)))));
 TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 {
 (self = TRY((((self) + (rhs)))));
@@ -20409,7 +20409,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(debug_name,TRY(ByteString::from_utf8(")"sv)))));
+(debug_name,(ByteString::must_from_utf8(")"sv)))));
 }
 ids::ScopeId const parent_scope_id = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::ScopeId,ErrorOr<void>>{
@@ -20669,7 +20669,7 @@ if (((trait_id).has_value())){
 TRY((((*this).typecheck_trait(parsed_trait,(trait_id.value()),scope_id,true))));
 }
 else {
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("can't find trait that has been previous added"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("can't find trait that has been previous added"sv))))));
 }
 
 }
@@ -20784,26 +20784,26 @@ ids::TypeId lhs_type_id = TRY((((*this).typecheck_typename(((var).parsed_type),s
 NonnullRefPtr<typename types::CheckedExpression> checked_expr = TRY((((*this).typecheck_expression(init,scope_id,safety_mode,lhs_type_id))));
 ids::TypeId const rhs_type_id = ((checked_expr)->type());
 if (((rhs_type_id).equals(types::void_type_id()))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot assign `void` to a variable"sv)),((checked_expr)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot assign `void` to a variable"sv)),((checked_expr)->span())))));
 }
 if (((((((*this).get_type(lhs_type_id)))->common.init_common.qualifiers)).is_immutable)){
 (lhs_type_id = TRY((((*this).with_qualifiers(parser::CheckedQualifiers(false),lhs_type_id)))));
 if (((var).is_mutable)){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot have a mutable binding to an immutable object"sv)),((var).span)))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot have a mutable binding to an immutable object"sv)),((var).span)))));
 }
 }
 if ((((lhs_type_id).equals(types::unknown_type_id())) && (!(((rhs_type_id).equals(types::unknown_type_id())))))){
 (lhs_type_id = rhs_type_id);
 }
-ids::StructId const weak_ptr_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("WeakPtr"sv))))));
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const weak_ptr_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("WeakPtr"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 if (TRY((((*this).type_contains_reference(lhs_type_id))))){
 JaktInternal::Tuple<JaktInternal::Optional<ids::ScopeId>,NonnullRefPtr<typename types::CheckedExpression>> const init_scope_id_cause_expr_ = TRY((((*this).required_scope_id_in_hierarchy_for(checked_expr,scope_id))));
 JaktInternal::Optional<ids::ScopeId> const init_scope_id = ((init_scope_id_cause_expr_).template get<0>());
 NonnullRefPtr<typename types::CheckedExpression> const cause_expr = ((init_scope_id_cause_expr_).template get<1>());
 
 if (TRY((((*this).scope_lifetime_subsumes(scope_id,init_scope_id))))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Cannot assign a reference to a variable that outlives the reference"sv)),((checked_expr)->span()),TRY(ByteString::from_utf8("Limited by this expression's lifetime"sv)),((cause_expr)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Cannot assign a reference to a variable that outlives the reference"sv)),((checked_expr)->span()),(ByteString::must_from_utf8("Limited by this expression's lifetime"sv)),((cause_expr)->span())))));
 }
 }
 NonnullRefPtr<typename types::Type> const lhs_type = ((*this).get_type(lhs_type_id));
@@ -20814,11 +20814,11 @@ if (((lhs_type)->__jakt_init_index() == 20 /* GenericInstance */)){
 ids::StructId const id = (lhs_type)->as.GenericInstance.id;
 JaktInternal::DynamicArray<ids::TypeId> const args = (lhs_type)->as.GenericInstance.args;
 if ((!((((id).equals(optional_struct_id)) || ((id).equals(weak_ptr_struct_id)))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot assign None to a non-optional type"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot assign None to a non-optional type"sv)),span))));
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot assign None to a non-optional type"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot assign None to a non-optional type"sv)),span))));
 }
 
 }
@@ -20895,7 +20895,7 @@ return TRY((types::CheckedStatement::VarDecl(var_id,checked_expr,span)));
 ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typechecker::Typechecker::typecheck_inline_cpp(parser::ParsedBlock const block,utility::Span const span,types::SafetyMode const safety_mode) {
 {
 if (((safety_mode).__jakt_init_index() == 0 /* Safe */)){
-TRY((((*this).error(TRY(ByteString::from_utf8("Use of inline cpp block outside of unsafe block"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Use of inline cpp block outside of unsafe block"sv)),span))));
 }
 JaktInternal::DynamicArray<ByteString> strings = (TRY((DynamicArray<ByteString>::create_with({}))));
 {
@@ -20915,12 +20915,12 @@ utility::Span const span = (expr)->as.QuotedString.span;
 TRY((((strings).push(val))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Expected block of strings"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Expected block of strings"sv)),span))));
 }
 
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Expected block of strings"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Expected block of strings"sv)),span))));
 }
 
 }
@@ -20983,7 +20983,7 @@ JaktInternal::Optional<ids::TypeId> type_hint_unwrapped = type_hint;
 if ((((type_hint).has_value()) && ((((*this).get_type((type_hint.value()))))->__jakt_init_index() == 20 /* GenericInstance */))){
 ids::StructId const id = (((*this).get_type((type_hint.value()))))->as.GenericInstance.id;
 JaktInternal::DynamicArray<ids::TypeId> const args = (((*this).get_type((type_hint.value()))))->as.GenericInstance.args;
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 if (((id).equals(optional_struct_id))){
 (type_hint_unwrapped = ((args)[static_cast<i64>(0LL)]));
 }
@@ -21061,14 +21061,14 @@ JaktInternal::Optional<ByteString> const& prefix = __jakt_match_value.prefix;
 utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::CheckedExpression>,ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
-auto __jakt_enum_value = (TRY((prefix.try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return TRY(ByteString::from_utf8(""sv)); }))));
-if (__jakt_enum_value == TRY(ByteString::from_utf8(""sv))) {
+auto __jakt_enum_value = (TRY((prefix.try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8(""sv)); }))));
+if (__jakt_enum_value == (ByteString::must_from_utf8(""sv))) {
 return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::CharacterConstant(JaktInternal::OptionalNone(),val,span))));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("b"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("b"sv))) {
 return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::ByteConstant(JaktInternal::OptionalNone(),val,span))));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("c"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("c"sv))) {
 return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::CCharacterConstant(JaktInternal::OptionalNone(),val,span))));
 }
 else {
@@ -21095,29 +21095,28 @@ auto __jakt_enum_value = ((((type_hint).has_value()) && (!((((type_hint.value())
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_563; {
 ids::TypeId type_id = TRY((((*this).strip_optional_from_type(((((*this).generic_inferences)).map((type_hint.value())))))));
-ids::TypeId const prelude_string_type_id = TRY((((*this).prelude_struct_type_named(TRY(ByteString::from_utf8("String"sv))))));
-ids::TypeId const prelude_string_view_type_id = TRY((((*this).prelude_struct_type_named(TRY(ByteString::from_utf8("StringView"sv))))));
-bool may_throw = ((type_id).equals(prelude_string_type_id));
+ids::TypeId const prelude_string_type_id = TRY((((*this).prelude_struct_type_named((ByteString::must_from_utf8("String"sv))))));
+ids::TypeId const prelude_string_view_type_id = TRY((((*this).prelude_struct_type_named((ByteString::must_from_utf8("StringView"sv))))));
+bool may_throw = false;
 if (((!(((type_id).equals(prelude_string_type_id)))) && (!(((type_id).equals(prelude_string_view_type_id)))))){
 if (((((*this).get_type(type_id)))->is_concrete())){
-JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const trait_implementation = TRY((((*this).find_any_singular_trait_implementation(type_id,(TRY((DynamicArray<ByteString>::create_with({TRY(ByteString::from_utf8("FromStringLiteral"sv)), TRY(ByteString::from_utf8("ThrowingFromStringLiteral"sv))})))),scope_id,span,JaktInternal::OptionalNone()))));
+JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const trait_implementation = TRY((((*this).find_any_singular_trait_implementation(type_id,(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("FromStringLiteral"sv)), (ByteString::must_from_utf8("ThrowingFromStringLiteral"sv))})))),scope_id,span,JaktInternal::OptionalNone()))));
 if ((!(((trait_implementation).has_value())))){
 TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Type {} cannot be used as an overloaded string literal type"sv)),TRY((((*this).type_name(type_id,true))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing the FromStringLiteral trait for {}"sv)),TRY((((*this).type_name(type_id,false))))))),span))));
 (type_id = prelude_string_type_id);
 }
 else {
-(may_throw = (((((trait_implementation.value())).trait_name)) == (TRY(ByteString::from_utf8("ThrowingFromStringLiteral"sv)))));
+(may_throw = (((((trait_implementation.value())).trait_name)) == ((ByteString::must_from_utf8("ThrowingFromStringLiteral"sv)))));
 }
 
 }
 else if ((!(((((*this).get_type(type_id)))->is_concrete())))){
-(type_id = TRY((((*this).prelude_struct_type_named(TRY(ByteString::from_utf8("String"sv)))))));
-(may_throw = true);
+(type_id = TRY((((*this).prelude_struct_type_named((ByteString::must_from_utf8("String"sv)))))));
 }
 }
 TRY((((*this).unify((type_hint.value()),span,type_id,span))));
 if ((may_throw && (!(((TRY((((*this).get_scope(scope_id)))))->can_throw))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Operation that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Operation that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
 }
 __jakt_var_563 = TRY((types::CheckedExpression::QuotedString(JaktInternal::OptionalNone(),types::CheckedStringLiteral(types::StringLiteral::Static(val),type_id,may_throw),span))); goto __jakt_label_480;
 
@@ -21126,10 +21125,7 @@ __jakt_label_480:; __jakt_var_563.release_value(); }));
 }
 else {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_564; {
-if ((!(((TRY((((*this).get_scope(scope_id)))))->can_throw)))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Operation that may throw needs to be in a try statement or a function marked as throws"sv)),span))));
-}
-__jakt_var_564 = TRY((types::CheckedExpression::QuotedString(JaktInternal::OptionalNone(),types::CheckedStringLiteral(types::StringLiteral::Static(val),TRY((((*this).prelude_struct_type_named(TRY(ByteString::from_utf8("String"sv)))))),true),span))); goto __jakt_label_481;
+__jakt_var_564 = TRY((types::CheckedExpression::QuotedString(JaktInternal::OptionalNone(),types::CheckedStringLiteral(types::StringLiteral::Static(val),TRY((((*this).prelude_struct_type_named((ByteString::must_from_utf8("String"sv)))))),false),span))); goto __jakt_label_481;
 
 }
 __jakt_label_481:; __jakt_var_564.release_value(); }));
@@ -21180,7 +21176,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Call;types::CheckedCall cons
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_567; {
 ids::TypeId result_type = ((call).return_type);
 if (is_optional){
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 (result_type = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),optional_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({result_type}))))))))))));
 }
 __jakt_var_567 = TRY((types::CheckedExpression::MethodCall(JaktInternal::OptionalNone(),checked_expr,call,span,is_optional,result_type))); goto __jakt_label_484;
@@ -21190,7 +21186,7 @@ __jakt_label_484:; __jakt_var_567.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("typecheck_call should return `CheckedExpression::Call()`"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("typecheck_call should return `CheckedExpression::Call()`"sv))))));
 }
 };/*case end*/
 }/*switch end*/
@@ -21234,7 +21230,7 @@ JaktInternal::Optional<ids::TypeId> values_type_id = JaktInternal::OptionalNone(
 if ((((from).has_value()) && ((to).has_value()))){
 (values_type_id = TRY((((*this).unify((from_type.value()),from_span,to_type,from_span)))));
 if ((!(((values_type_id).has_value())))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Range values differ in types"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Range values differ in types"sv)),span))));
 }
 }
 else if (((from).has_value())){
@@ -21243,7 +21239,7 @@ else if (((from).has_value())){
 else if (((to).has_value())){
 (values_type_id = to_type);
 }
-ids::StructId const range_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Range"sv))))));
+ids::StructId const range_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Range"sv))))));
 NonnullRefPtr<typename types::Type> const range_type = TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),range_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({((values_type_id).value_or(types::builtin(types::BuiltinType::I64())))})))))));
 ids::TypeId const type_id = TRY((((*this).find_or_add_type_id(range_type))));
 __jakt_var_568 = TRY((types::CheckedExpression::Range(JaktInternal::OptionalNone(),checked_from,checked_to,span,type_id))); goto __jakt_label_485;
@@ -21257,7 +21253,7 @@ utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_569; {
 ids::EnumId const reflected_type_enum_id = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::EnumId, ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
-auto&& __jakt_match_variant = TRY((((((*this).program))->find_reflected_primitive(TRY(ByteString::from_utf8("Type"sv))))));
+auto&& __jakt_match_variant = TRY((((((*this).program))->find_reflected_primitive((ByteString::must_from_utf8("Type"sv))))));
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 1 /* Enum */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Enum;ids::EnumId const& id = __jakt_match_value.value;
@@ -21265,7 +21261,7 @@ return JaktInternal::ExplicitValue(id);
 };/*case end*/
 default: {
 {
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("unreachable"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("unreachable"sv))))));
 }
 };/*case end*/
 }/*switch end*/
@@ -21353,7 +21349,7 @@ auto&& __jakt_match_variant = cast;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Fallible */: {
 return JaktInternal::ExplicitValue(({ Optional<types::CheckedTypeCast> __jakt_var_572; {
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 NonnullRefPtr<typename types::Type> const optional_type = TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),optional_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({type_id})))))));
 ids::TypeId const optional_type_id = TRY((((*this).find_or_add_type_id(optional_type))));
 __jakt_var_572 = types::CheckedTypeCast::Fallible(optional_type_id); goto __jakt_label_489;
@@ -21454,8 +21450,8 @@ if (((!(exists)) && ((type_id).equals(types::unknown_type_id())))){
 TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant {} does not exist on {}"sv)),name,TRY((((*this).type_name(expr_type_id,false))))))),span))));
 }
 }
-else if ((((name) == (TRY(ByteString::from_utf8("Some"sv)))) || ((name) == (TRY(ByteString::from_utf8("None"sv)))))){
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+else if ((((name) == ((ByteString::must_from_utf8("Some"sv)))) || ((name) == ((ByteString::must_from_utf8("None"sv)))))){
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 NonnullRefPtr<typename types::Type> const checked_expr_type = ((*this).get_type(((checked_expr)->type())));
 if ((!(((checked_expr_type)->__jakt_init_index() == 20 /* GenericInstance */)))){
 TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The left-hand side of an `is {}` statement must have a {} variant"sv)),name,name))),((checked_expr)->span())))));
@@ -21463,15 +21459,15 @@ TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The lef
 (operator_is = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::CheckedUnaryOperator,ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
 auto __jakt_enum_value = (name);
-if (__jakt_enum_value == TRY(ByteString::from_utf8("Some"sv))) {
+if (__jakt_enum_value == (ByteString::must_from_utf8("Some"sv))) {
 return JaktInternal::ExplicitValue(types::CheckedUnaryOperator::IsSome());
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("None"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("None"sv))) {
 return JaktInternal::ExplicitValue(types::CheckedUnaryOperator::IsNone());
 }
 else {
 {
-utility::panic(TRY(ByteString::from_utf8("unreachable"sv)));
+utility::panic((ByteString::must_from_utf8("unreachable"sv)));
 }
 }
 }());
@@ -21485,7 +21481,7 @@ TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unknown
 }
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("The right-hand side of an `is` operator must be a type name or enum variant"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("The right-hand side of an `is` operator must be a type name or enum variant"sv)),span))));
 }
 
 __jakt_var_574 = operator_is; goto __jakt_label_491;
@@ -21549,7 +21545,7 @@ ids::TypeId const hint = (((checked_lhs.value()))->type());
 if ((TRY((((*this).type_contains_reference((((original_checked_lhs.value()))->type()))))) && ((rhs)->__jakt_init_index() == 11 /* UnaryOp */))){
 parser::UnaryOperator const op = (rhs)->as.UnaryOp.op;
 if ((((op).__jakt_init_index() == 7 /* Reference */) || ((op).__jakt_init_index() == 8 /* MutableReference */))){
-TRY((((*this).error_with_hint(TRY(ByteString::from_utf8("Attempt to rebind a reference will result in write-through"sv)),span,TRY(ByteString::from_utf8("This reference will be immediately dereferenced and then assigned"sv)),((rhs)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Attempt to rebind a reference will result in write-through"sv)),span,(ByteString::must_from_utf8("This reference will be immediately dereferenced and then assigned"sv)),((rhs)->span())))));
 }
 }
 JaktInternal::Tuple<types::CheckedBinaryOperator,ids::TypeId> const checked_operator_output_type_ = TRY((((*this).typecheck_binary_operation((checked_lhs.value()),op,(checked_rhs.value()),scope_id,span))));
@@ -21568,7 +21564,7 @@ JaktInternal::Optional<ids::TypeId> type_hint_unwrapped = type_hint;
 if ((((type_hint).has_value()) && ((((*this).get_type((type_hint.value()))))->__jakt_init_index() == 20 /* GenericInstance */))){
 ids::StructId const id = (((*this).get_type((type_hint.value()))))->as.GenericInstance.id;
 JaktInternal::DynamicArray<ids::TypeId> const args = (((*this).get_type((type_hint.value()))))->as.GenericInstance.args;
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 if (((id).equals(optional_struct_id))){
 (type_hint_unwrapped = ((args)[static_cast<i64>(0LL)]));
 }
@@ -21584,7 +21580,7 @@ utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_577; {
 NonnullRefPtr<typename types::CheckedExpression> const checked_expr = TRY((((*this).typecheck_expression(expr,scope_id,safety_mode,JaktInternal::OptionalNone()))));
 ids::TypeId const type_id = ((checked_expr)->type());
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 NonnullRefPtr<typename types::Type> const optional_type = TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),optional_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({type_id})))))));
 ids::TypeId const optional_type_id = TRY((((*this).find_or_add_type_id(optional_type))));
 __jakt_var_577 = TRY((types::CheckedExpression::OptionalSome(JaktInternal::OptionalNone(),checked_expr,span,optional_type_id))); goto __jakt_label_494;
@@ -21624,8 +21620,8 @@ utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_579; {
 NonnullRefPtr<typename types::CheckedExpression> const checked_expr = TRY((((*this).typecheck_expression_and_dereference_if_needed(expr,scope_id,safety_mode,JaktInternal::OptionalNone(),span))));
 NonnullRefPtr<typename types::Type> const type = ((*this).get_type(((checked_expr)->type())));
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
-ids::StructId const weakptr_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("WeakPtr"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
+ids::StructId const weakptr_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("WeakPtr"sv))))));
 ids::TypeId const type_id = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId, ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
 auto&& __jakt_match_variant = *type;
@@ -21639,7 +21635,7 @@ if ((((id).equals(optional_struct_id)) || ((id).equals(weakptr_struct_id)))){
 (inner_type_id = ((args)[static_cast<i64>(0LL)]));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Forced unwrap only works on Optional"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Forced unwrap only works on Optional"sv)),span))));
 }
 
 __jakt_var_580 = inner_type_id; goto __jakt_label_497;
@@ -21649,7 +21645,7 @@ __jakt_label_497:; __jakt_var_580.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({ Optional<ids::TypeId> __jakt_var_581; {
-TRY((((*this).error(TRY(ByteString::from_utf8("Forced unwrap only works on Optional"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Forced unwrap only works on Optional"sv)),span))));
 __jakt_var_581 = types::unknown_type_id(); goto __jakt_label_498;
 
 }
@@ -21680,7 +21676,7 @@ return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::Che
 ids::TypeId const VOID_TYPE_ID = types::builtin(types::BuiltinType::Void());
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> checked_values = (TRY((DynamicArray<NonnullRefPtr<typename types::CheckedExpression>>::create_with({}))));
 JaktInternal::DynamicArray<ids::TypeId> checked_types = (TRY((DynamicArray<ids::TypeId>::create_with({}))));
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<typename parser::ParsedExpression>> _magic = ((values).iterator());
 for (;;){
@@ -21693,7 +21689,7 @@ NonnullRefPtr<typename parser::ParsedExpression> value = (_magic_value.value());
 NonnullRefPtr<typename types::CheckedExpression> const checked_value = TRY((((*this).typecheck_expression(value,scope_id,safety_mode,JaktInternal::OptionalNone()))));
 ids::TypeId const type_id = ((checked_value)->type());
 if (((type_id).equals(VOID_TYPE_ID))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Cannot create a tuple that contains a value of type void"sv)),((value)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Cannot create a tuple that contains a value of type void"sv)),((value)->span())))));
 }
 TRY((((checked_types).push(type_id))));
 TRY((((checked_values).push(checked_value))));
@@ -21751,7 +21747,7 @@ ids::TypeId const optional_type_id = TRY((((*this).find_or_add_type_id(optional_
 
 }
 }
-ids::StructId const tuple_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Tuple"sv))))));
+ids::StructId const tuple_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Tuple"sv))))));
 ids::TypeId const type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),tuple_struct_id,checked_types)))))));
 if (((type_hint).has_value())){
 TRY((((*this).check_types_for_compat((type_hint.value()),type_id,((((*this).generic_inferences))),span))));
@@ -21776,9 +21772,9 @@ case 20 /* GenericInstance */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructId const& id = __jakt_match_value.id;
 JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_584; {
-ids::StructId const array_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Array"sv))))));
-ids::StructId const array_slice_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("ArraySlice"sv))))));
-ids::StructId const dictionary_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Dictionary"sv))))));
+ids::StructId const array_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Array"sv))))));
+ids::StructId const array_slice_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("ArraySlice"sv))))));
+ids::StructId const dictionary_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Dictionary"sv))))));
 NonnullRefPtr<typename types::CheckedExpression> result = TRY((types::CheckedExpression::Garbage(JaktInternal::OptionalNone(),span,types::builtin(types::BuiltinType::Void()))));
 if ((((id).equals(array_struct_id)) || ((id).equals(array_slice_struct_id)))){
 if ((((*this).is_integer(((checked_index)->type()))) || ((checked_index)->__jakt_init_index() == 9 /* Range */))){
@@ -21788,7 +21784,7 @@ auto&& __jakt_match_variant = *checked_index;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 9 /* Range */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::TypeId> __jakt_var_585; {
-ids::StructId const array_slice_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("ArraySlice"sv))))));
+ids::StructId const array_slice_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("ArraySlice"sv))))));
 __jakt_var_585 = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),array_slice_struct_id,args))))))); goto __jakt_label_502;
 
 }
@@ -21807,7 +21803,7 @@ return JaktInternal::ExplicitValue(((args)[static_cast<i64>(0LL)]));
 (result = TRY((types::CheckedExpression::IndexedExpression(JaktInternal::OptionalNone(),checked_base,checked_index,span,type_id))));
 }
 else {
-TRY((((*this).error(TRY(ByteString::from_utf8("Index must be an integer or a range"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Index must be an integer or a range"sv)),span))));
 }
 
 }
@@ -21821,7 +21817,7 @@ __jakt_label_501:; __jakt_var_584.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_586; {
-TRY((((*this).error(TRY(ByteString::from_utf8("Index used on value that cannot be indexed"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Index used on value that cannot be indexed"sv)),span))));
 __jakt_var_586 = TRY((types::CheckedExpression::Garbage(JaktInternal::OptionalNone(),span,types::builtin(types::BuiltinType::Void())))); goto __jakt_label_503;
 
 }
@@ -21868,7 +21864,7 @@ NonnullRefPtr<typename parser::ParsedType> const& enum_variant = __jakt_match_va
 utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_587; {
 NonnullRefPtr<typename types::CheckedExpression> const checked_expr = TRY((((*this).typecheck_expression_and_dereference_if_needed(inner_expr,scope_id,safety_mode,JaktInternal::OptionalNone(),span))));
-types::CheckedEnumVariantBinding checked_binding = types::CheckedEnumVariantBinding(TRY(ByteString::from_utf8(""sv)),TRY(ByteString::from_utf8(""sv)),types::unknown_type_id(),span);
+types::CheckedEnumVariantBinding checked_binding = types::CheckedEnumVariantBinding((ByteString::must_from_utf8(""sv)),(ByteString::must_from_utf8(""sv)),types::unknown_type_id(),span);
 JaktInternal::Optional<types::CheckedEnumVariant> checked_enum_variant = JaktInternal::OptionalNone();
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
@@ -22019,7 +22015,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).typecheck_expression(expr,scope
 };/*case end*/
 case 13 /* Operator */: {
 {
-TRY((((((*this).compiler))->panic(TRY(ByteString::from_utf8("idk how to handle this thing"sv))))));
+TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("idk how to handle this thing"sv))))));
 }
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -22037,7 +22033,7 @@ ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typecheck
 NonnullRefPtr<typename types::CheckedExpression> const checked_expr = TRY((((*this).typecheck_expression_and_dereference_if_needed(expr,scope_id,safety_mode,JaktInternal::OptionalNone(),span))));
 ids::TypeId const checked_expr_type_id = ((checked_expr)->type());
 NonnullRefPtr<typename types::Type> const checked_expr_type = ((*this).get_type(checked_expr_type_id));
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
 auto&& __jakt_match_variant = *checked_expr_type;
@@ -22049,7 +22045,7 @@ JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 ids::TypeId type_id = checked_expr_type_id;
 if (is_optional){
 if ((!(((id).equals(optional_struct_id))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("Optional chaining is only allowed on optional types"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Optional chaining is only allowed on optional types"sv)),span))));
 return TRY((types::CheckedExpression::IndexedStruct(JaktInternal::OptionalNone(),checked_expr,field_name,JaktInternal::OptionalNone(),span,is_optional,types::unknown_type_id())));
 }
 (type_id = ((args)[static_cast<i64>(0LL)]));
@@ -22205,7 +22201,7 @@ case 24 /* Struct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Struct;ids::StructId const& struct_id = __jakt_match_value.value;
 {
 if (is_optional){
-TRY((((*this).error(TRY(ByteString::from_utf8("Optional chaining is not allowed on non-optional types"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Optional chaining is not allowed on non-optional types"sv)),span))));
 }
 types::CheckedStruct const structure = ((*this).get_struct(struct_id));
 JaktInternal::Optional<types::FieldRecord> const field_record = TRY((((*this).lookup_struct_field(struct_id,field_name))));
@@ -22224,7 +22220,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.GenericEnumInstance;ids::Enu
 JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 {
 if (is_optional){
-TRY((((*this).error(TRY(ByteString::from_utf8("Optional chaining is not allowed on non-optional types"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Optional chaining is not allowed on non-optional types"sv)),span))));
 }
 JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const checkpoint = TRY((((((*this).generic_inferences)).perform_checkpoint(false))));
 ScopeGuard __jakt_var_589([&] {
@@ -22264,7 +22260,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Enum;ids::EnumId const& enum
 JaktInternal::DynamicArray<ids::TypeId> const args = (TRY((DynamicArray<ids::TypeId>::create_with({}))));
 {
 if (is_optional){
-TRY((((*this).error(TRY(ByteString::from_utf8("Optional chaining is not allowed on non-optional types"sv)),span))));
+TRY((((*this).error((ByteString::must_from_utf8("Optional chaining is not allowed on non-optional types"sv)),span))));
 }
 JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const checkpoint = TRY((((((*this).generic_inferences)).perform_checkpoint(false))));
 ScopeGuard __jakt_var_590([&] {
@@ -22351,7 +22347,7 @@ NonnullRefPtr<types::Scope> scope = TRY((((*this).get_scope(scope_id))));
 TRY((((((scope)->resolution_mixins)).push(import_scope_id))));
 if (((((((extern_import).assigned_namespace)).name)).has_value())){
 (((TRY((((*this).get_scope(import_scope_id)))))->namespace_name) = (((((extern_import).assigned_namespace)).name).value()));
-(((TRY((((*this).get_scope(import_scope_id)))))->external_name) = parser::ExternalName::Plain(TRY(ByteString::from_utf8(""sv))));
+(((TRY((((*this).get_scope(import_scope_id)))))->external_name) = parser::ExternalName::Plain((ByteString::must_from_utf8(""sv))));
 }
 continue;
 }
@@ -22362,7 +22358,7 @@ TRY((((coalesced_imports).push(extern_import))));
 }
 
 if ((!(((coalesced_imports).is_empty())))){
-ids::ScopeId const child_scope_id = TRY((((*this).create_scope(((*this).root_scope_id()),false,TRY(ByteString::from_utf8("coalesced-extern-imports"sv)),false))));
+ids::ScopeId const child_scope_id = TRY((((*this).create_scope(((*this).root_scope_id()),false,(ByteString::must_from_utf8("coalesced-extern-imports"sv)),false))));
 {
 NonnullRefPtr<types::Scope> scope = TRY((((*this).get_scope(scope_id))));
 TRY((((((scope)->resolution_mixins)).push(child_scope_id))));
@@ -22398,7 +22394,7 @@ if (((root_module).has_value())){
 utility::FileId const file_id = (((root_module.value())).file_id);
 return (TRY((((((*this).compiler))->get_file_path(file_id)))).value());
 }
-return TRY((jakt__path::Path::from_string(TRY(ByteString::from_utf8("."sv)))));
+return TRY((jakt__path::Path::from_string((ByteString::must_from_utf8("."sv)))));
 }
 }
 
@@ -22505,7 +22501,7 @@ if ((((value).has_value()) && (((value.value())).__jakt_init_index() == 5 /* Jus
 types::Value const resolved_value = ((value.value())).as.JustValue.value;
 return TRY((((*this).find_or_add_type_id(TRY((types::Type::Const(parser::CheckedQualifiers(false),resolved_value)))))));
 }
-TRY((((*this).error(TRY(ByteString::from_utf8("Could not evaluate const expression"sv)),((expr)->span())))));
+TRY((((*this).error((ByteString::must_from_utf8("Could not evaluate const expression"sv)),((expr)->span())))));
 return TRY((((*this).find_or_add_type_id(TRY((types::Type::Unknown(parser::CheckedQualifiers(false))))))));
 }
 };/*case end*/
@@ -22601,52 +22597,52 @@ return TRY((((*this).with_qualifiers(((*this).typecheck_type_qualifiers(((parsed
 __jakt_var_597 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId,ErrorOr<ids::TypeId>>{
 auto __jakt_enum_value = (name);
-if (__jakt_enum_value == TRY(ByteString::from_utf8("i8"sv))) {
+if (__jakt_enum_value == (ByteString::must_from_utf8("i8"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::I8()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("i16"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("i16"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::I16()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("i32"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("i32"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::I32()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("i64"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("i64"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::I64()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("u8"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("u8"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::U8()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("u16"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("u16"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::U16()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("u32"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("u32"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::U32()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("u64"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("u64"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::U64()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("f32"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("f32"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::F32()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("f64"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("f64"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::F64()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("c_char"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("c_char"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::CChar()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("c_int"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("c_int"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::CInt()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("usize"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("usize"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::Usize()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("bool"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("bool"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::Bool()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("void"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("void"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::Void()));
 }
-else if (__jakt_enum_value == TRY(ByteString::from_utf8("never"sv))) {
+else if (__jakt_enum_value == (ByteString::must_from_utf8("never"sv))) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::Never()));
 }
 else {
@@ -22654,7 +22650,7 @@ return JaktInternal::ExplicitValue(({ Optional<ids::TypeId> __jakt_var_598; {
 if (((maybe_type_and_scope).has_value())){
 return (((maybe_type_and_scope.value())).template get<0>());
 }
-if ((((TRY((((*this).get_scope(scope_id)))))->is_from_generated_code) && ((name) == (TRY(ByteString::from_utf8("unknown"sv)))))){
+if ((((TRY((((*this).get_scope(scope_id)))))->is_from_generated_code) && ((name) == ((ByteString::must_from_utf8("unknown"sv)))))){
 return types::builtin(types::BuiltinType::Unknown());
 }
 TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unknown type ‘{}’ in scope {}"sv)),name,TRY((((*this).debug_description_of(scope_id))))))),span))));
@@ -22699,7 +22695,7 @@ TRY((((checked_types).push(TRY((((*this).typecheck_typename(parsed_type,scope_id
 }
 }
 
-ids::StructId const tuple_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Tuple"sv))))));
+ids::StructId const tuple_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Tuple"sv))))));
 __jakt_var_600 = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),tuple_struct_id,checked_types))))))); goto __jakt_label_512;
 
 }
@@ -22710,7 +22706,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.JaktArray;NonnullRefPtr<type
 utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<ids::TypeId> __jakt_var_601; {
 ids::TypeId const inner_type_id = TRY((((*this).typecheck_typename(inner,scope_id,name))));
-ids::StructId const array_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Array"sv))))));
+ids::StructId const array_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Array"sv))))));
 __jakt_var_601 = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),array_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({inner_type_id}))))))))))); goto __jakt_label_513;
 
 }
@@ -22723,9 +22719,9 @@ utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<ids::TypeId> __jakt_var_602; {
 ids::TypeId const key_type_id = TRY((((*this).typecheck_typename(key,scope_id,name))));
 ids::TypeId const value_type_id = TRY((((*this).typecheck_typename(value,scope_id,name))));
-ids::StructId const dict_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Dictionary"sv))))));
-TRY((((*this).ensure_type_implements_trait(key_type_id,TRY(ByteString::from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
-TRY((((*this).ensure_type_implements_trait(key_type_id,TRY(ByteString::from_utf8("Equal"sv)),(TRY((DynamicArray<ids::TypeId>::create_with({key_type_id})))),scope_id,span))));
+ids::StructId const dict_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Dictionary"sv))))));
+TRY((((*this).ensure_type_implements_trait(key_type_id,(ByteString::must_from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
+TRY((((*this).ensure_type_implements_trait(key_type_id,(ByteString::must_from_utf8("Equal"sv)),(TRY((DynamicArray<ids::TypeId>::create_with({key_type_id})))),scope_id,span))));
 __jakt_var_602 = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),dict_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({key_type_id, value_type_id}))))))))))); goto __jakt_label_514;
 
 }
@@ -22736,9 +22732,9 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Set;NonnullRefPtr<typename p
 utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<ids::TypeId> __jakt_var_603; {
 ids::TypeId const inner_type_id = TRY((((*this).typecheck_typename(inner,scope_id,name))));
-ids::StructId const set_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Set"sv))))));
-TRY((((*this).ensure_type_implements_trait(inner_type_id,TRY(ByteString::from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
-TRY((((*this).ensure_type_implements_trait(inner_type_id,TRY(ByteString::from_utf8("Equal"sv)),(TRY((DynamicArray<ids::TypeId>::create_with({inner_type_id})))),scope_id,span))));
+ids::StructId const set_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Set"sv))))));
+TRY((((*this).ensure_type_implements_trait(inner_type_id,(ByteString::must_from_utf8("Hashable"sv)),JaktInternal::OptionalNone(),scope_id,span))));
+TRY((((*this).ensure_type_implements_trait(inner_type_id,(ByteString::must_from_utf8("Equal"sv)),(TRY((DynamicArray<ids::TypeId>::create_with({inner_type_id})))),scope_id,span))));
 __jakt_var_603 = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),set_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({inner_type_id}))))))))))); goto __jakt_label_515;
 
 }
@@ -22749,7 +22745,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Optional;NonnullRefPtr<typen
 utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<ids::TypeId> __jakt_var_604; {
 ids::TypeId const inner_type_id = TRY((((*this).typecheck_typename(inner,scope_id,name))));
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 __jakt_var_604 = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),optional_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({inner_type_id}))))))))))); goto __jakt_label_516;
 
 }
@@ -22760,7 +22756,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.WeakPtr;NonnullRefPtr<typena
 utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<ids::TypeId> __jakt_var_605; {
 ids::TypeId const inner_type_id = TRY((((*this).typecheck_typename(inner,scope_id,name))));
-ids::StructId const weakptr_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("WeakPtr"sv))))));
+ids::StructId const weakptr_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("WeakPtr"sv))))));
 __jakt_var_605 = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),weakptr_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({inner_type_id}))))))))))); goto __jakt_label_517;
 
 }
@@ -22819,7 +22815,7 @@ else {
 return JaktInternal::ExplicitValue(TRY((({ Optional<ByteString> __jakt_var_609;
 auto __jakt_var_610 = [&]() -> ErrorOr<ByteString> { return TRY((__jakt_format((StringView::from_string_literal("lambda{}"sv)),((((*this).lambda_count)++))))); }();
 if (!__jakt_var_610.is_error()) __jakt_var_609 = __jakt_var_610.release_value();
-__jakt_var_609; }).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return TRY(ByteString::from_utf8(""sv)); }))));
+__jakt_var_609; }).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8(""sv)); }))));
 }
 }());
     if (_jakt_value.is_return())
@@ -22889,21 +22885,21 @@ return TRY((((*this).with_qualifiers(qualifiers,output))));
 
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typechecker::typecheck_try(NonnullRefPtr<typename parser::ParsedExpression> const expr,JaktInternal::Optional<parser::ParsedBlock> const catch_block,JaktInternal::Optional<utility::Span> const catch_span,JaktInternal::Optional<ByteString> const catch_name,ids::ScopeId const scope_id,types::SafetyMode const safety_mode,utility::Span const span,JaktInternal::Optional<ids::TypeId> const type_hint) {
 {
-ids::ScopeId const try_scope_id = TRY((((*this).create_scope(scope_id,true,TRY(ByteString::from_utf8("try"sv)),true))));
+ids::ScopeId const try_scope_id = TRY((((*this).create_scope(scope_id,true,(ByteString::must_from_utf8("try"sv)),true))));
 NonnullRefPtr<typename types::CheckedExpression> const checked_expr = TRY((((*this).typecheck_expression(expr,try_scope_id,safety_mode,type_hint))));
-ids::StructId const error_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Error"sv))))));
+ids::StructId const error_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Error"sv))))));
 NonnullRefPtr<types::Module> module = ((*this).current_module());
 JaktInternal::Optional<types::CheckedBlock> checked_catch_block = JaktInternal::OptionalNone();
 ids::TypeId const expression_type_id = ((checked_expr)->type());
-ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Optional"sv))))));
+ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 NonnullRefPtr<typename types::Type> const optional_type = TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),optional_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({expression_type_id})))))));
 ids::TypeId const optional_type_id = TRY((((*this).find_or_add_type_id(optional_type))));
 ids::TypeId type_id = optional_type_id;
 if (((catch_block).has_value())){
 NonnullRefPtr<types::Scope> const parent_scope = TRY((((*this).get_scope(scope_id))));
-ids::ScopeId const catch_scope_id = TRY((((*this).create_scope(scope_id,((parent_scope)->can_throw),TRY(ByteString::from_utf8("catch"sv)),true))));
+ids::ScopeId const catch_scope_id = TRY((((*this).create_scope(scope_id,((parent_scope)->can_throw),(ByteString::must_from_utf8("catch"sv)),true))));
 if (((catch_name).has_value())){
-ids::StructId const error_struct_id = TRY((((*this).find_struct_in_prelude(TRY(ByteString::from_utf8("Error"sv))))));
+ids::StructId const error_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Error"sv))))));
 NonnullRefPtr<types::CheckedVariable> const error_decl = TRY((types::CheckedVariable::__jakt_create((catch_name.value()),((((*this).get_struct(error_struct_id))).type_id),false,span,JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
 NonnullRefPtr<types::Module> module = ((*this).current_module());
 ids::VarId const error_id = TRY((((module)->add_variable(error_decl))));
@@ -22921,7 +22917,7 @@ else {
 }
 else {
 if ((!(((expression_type_id).equals(types::builtin(types::BuiltinType::Void())))))){
-TRY((((*this).error(TRY(ByteString::from_utf8("In a try expression that returns a value, 'catch' block must either yield a value or transfer control flow"sv)),catch_span.value_or_lazy_evaluated([&] { return span; })))));
+TRY((((*this).error((ByteString::must_from_utf8("In a try expression that returns a value, 'catch' block must either yield a value or transfer control flow"sv)),catch_span.value_or_lazy_evaluated([&] { return span; })))));
 }
 }
 
