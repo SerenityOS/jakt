@@ -154,10 +154,10 @@ return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (abbreviate);
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}-{}-{}"sv)),((*this).arch),((*this).platform),((*this).os)))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}-{}-{}"sv)),((*this).arch),((*this).platform),((*this).os)));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}-{}-{}-{}"sv)),((*this).arch),((*this).platform),((*this).os),((*this).abi)))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}-{}-{}-{}"sv)),((*this).arch),((*this).platform),((*this).os),((*this).abi)));
 }
 VERIFY_NOT_REACHED();
 }());

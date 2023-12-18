@@ -1839,7 +1839,7 @@ return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::QuotedString(J
 };/*case end*/
 case 15 /* CChar */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.CChar;char const& x = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::CCharacterConstant(JaktInternal::OptionalNone(),TRY((__jakt_format((StringView::from_string_literal("{}"sv)),x))),((this_value).span)))));
+return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::CCharacterConstant(JaktInternal::OptionalNone(),__jakt_format((StringView::from_string_literal("{}"sv)),x),((this_value).span)))));
 };/*case end*/
 case 16 /* CInt */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.CInt;int const& x = __jakt_match_value.value;
@@ -1949,7 +1949,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((materialised_fields).size()),((((callee)->params)).size()))){
-TRY((((interpreter)->error_with_hint((ByteString::must_from_utf8("Too many arguments for constructor"sv)),((this_value).span),TRY((__jakt_format((StringView::from_string_literal("Expected at most {} arguments, got {}"sv)),((((callee)->params)).size()),((materialised_fields).size())))),((this_value).span)))));
+TRY((((interpreter)->error_with_hint((ByteString::must_from_utf8("Too many arguments for constructor"sv)),((this_value).span),__jakt_format((StringView::from_string_literal("Expected at most {} arguments, got {}"sv)),((((callee)->params)).size()),((materialised_fields).size())),((this_value).span)))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 ByteString const name = ((struct_).name);
@@ -2040,7 +2040,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((materialised_fields).size()),((((callee)->params)).size()))){
-TRY((((interpreter)->error_with_hint((ByteString::must_from_utf8("Too many arguments for constructor"sv)),((this_value).span),TRY((__jakt_format((StringView::from_string_literal("Expected at most {} arguments, got {}"sv)),((((callee)->params)).size()),((materialised_fields).size())))),((this_value).span)))));
+TRY((((interpreter)->error_with_hint((ByteString::must_from_utf8("Too many arguments for constructor"sv)),((this_value).span),__jakt_format((StringView::from_string_literal("Expected at most {} arguments, got {}"sv)),((((callee)->params)).size()),((materialised_fields).size())),((this_value).span)))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 ByteString const name = ((struct_).name);
@@ -2290,7 +2290,7 @@ JaktInternal::DynamicArray<types::CheckedParameter> const& checked_params = __ja
 ids::ScopeId const& scope_id = __jakt_match_value.scope_id;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_200; {
 NonnullRefPtr<types::Scope> const parent_scope = TRY((((((interpreter)->program))->get_scope(((block).scope_id)))));
-ids::ScopeId const inherited_scope_id = TRY((((((interpreter)->program))->create_scope(((block).scope_id),((parent_scope)->can_throw),TRY((__jakt_format((StringView::from_string_literal("synthetic({})"sv)),((parent_scope)->debug_name)))),((type_id).module),true))));
+ids::ScopeId const inherited_scope_id = TRY((((((interpreter)->program))->create_scope(((block).scope_id),((parent_scope)->can_throw),__jakt_format((StringView::from_string_literal("synthetic({})"sv)),((parent_scope)->debug_name)),((type_id).module),true))));
 NonnullRefPtr<types::Scope> inherited_scope = TRY((((((interpreter)->program))->get_scope(inherited_scope_id))));
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> statements = (TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({}))));
 {
@@ -2323,7 +2323,7 @@ __jakt_label_186:; __jakt_var_200.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((interpreter)->error(TRY((__jakt_format((StringView::from_string_literal("Cannot materialise the type {}"sv)),((this_value).impl)))),((this_value).span)))));
+TRY((((interpreter)->error(__jakt_format((StringView::from_string_literal("Cannot materialise the type {}"sv)),((this_value).impl)),((this_value).span)))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -2558,7 +2558,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Could
 }
 }
 
-ErrorOr<ids::TypeId> interpreter::InterpreterScope::map_type(ids::TypeId const id) const {
+ids::TypeId interpreter::InterpreterScope::map_type(ids::TypeId const id) const {
 {
 if (((((*this).type_bindings)).contains(id))){
 return ((((*this).type_bindings))[id]);
@@ -2781,7 +2781,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid left-hand side of assignment {}"sv)),binding))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid left-hand side of assignment {}"sv)),binding),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -2993,7 +2993,7 @@ return JaktInternal::ExplicitValue(types::NumericOrStringValue::SignedNumericVal
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Index expression evaluation failed: expected numeric or string type, found {}"sv)),((value).impl)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Index expression evaluation failed: expected numeric or string type, found {}"sv)),((value).impl)),span))));
 return TRY((types::CheckedExpression::Garbage(JaktInternal::OptionalNone(),span,types::builtin(types::BuiltinType::Void()))));
 }
 };/*case end*/
@@ -3007,7 +3007,7 @@ return TRY((types::CheckedExpression::Garbage(JaktInternal::OptionalNone(),span,
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Index expression evaluation returned an invalid object {}"sv)),index_result))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Index expression evaluation returned an invalid object {}"sv)),index_result),span))));
 return TRY((types::CheckedExpression::Garbage(JaktInternal::OptionalNone(),span,types::builtin(types::BuiltinType::Void()))));
 }
 };/*case end*/
@@ -3025,7 +3025,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* StringValue */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.StringValue;ByteString const& field = __jakt_match_value.value;
 {
-ids::TypeId const checked_expr_type_id = TRY((((scope)->map_type(((expr)->type())))));
+ids::TypeId const checked_expr_type_id = ((scope)->map_type(((expr)->type())));
 NonnullRefPtr<typename types::Type> const checked_expr_type = ((((*this).program))->get_type(checked_expr_type_id));
 ids::StructId const optional_struct_id = TRY((((((*this).program))->find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 ({
@@ -3063,7 +3063,7 @@ types::CheckedField member_id = (_magic_value.value());
 {
 NonnullRefPtr<types::CheckedVariable> const member = ((((*this).program))->get_variable(((member_id).variable_id)));
 if (((((member)->name)) == (field))){
-ids::TypeId resolved_type_id = TRY((((scope)->map_type(((member)->type_id)))));
+ids::TypeId resolved_type_id = ((scope)->map_type(((member)->type_id)));
 if (is_optional){
 (resolved_type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),optional_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({resolved_type_id}))))))))))));
 }
@@ -3074,7 +3074,7 @@ return TRY((types::CheckedExpression::IndexedStruct(JaktInternal::OptionalNone()
 }
 }
 
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid operation"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -3094,7 +3094,7 @@ types::CheckedField member_id = (_magic_value.value());
 {
 NonnullRefPtr<types::CheckedVariable> const member = ((((*this).program))->get_variable(((member_id).variable_id)));
 if (((((member)->name)) == (field))){
-ids::TypeId resolved_type_id = TRY((((scope)->map_type(((member)->type_id)))));
+ids::TypeId resolved_type_id = ((scope)->map_type(((member)->type_id)));
 if (is_optional){
 (resolved_type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericInstance(parser::CheckedQualifiers(false),optional_struct_id,(TRY((DynamicArray<ids::TypeId>::create_with({resolved_type_id}))))))))))));
 }
@@ -3105,14 +3105,14 @@ return TRY((types::CheckedExpression::IndexedStruct(JaktInternal::OptionalNone()
 }
 }
 
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid operation"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Member field access on value of non-struct type ‘{}’"sv)),TRY((((((*this).program))->type_name(checked_expr_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Member field access on value of non-struct type ‘{}’"sv)),TRY((((((*this).program))->type_name(checked_expr_type_id,false))))),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid operation"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -3146,7 +3146,7 @@ types::CheckedField member_id = (_magic_value.value());
 {
 NonnullRefPtr<types::CheckedVariable> const member = ((((*this).program))->get_variable(((member_id).variable_id)));
 if (((((member)->name)) == (field))){
-ids::TypeId const resolved_type_id = TRY((((scope)->map_type(((member)->type_id)))));
+ids::TypeId const resolved_type_id = ((scope)->map_type(((member)->type_id)));
 return TRY((types::CheckedExpression::IndexedStruct(JaktInternal::OptionalNone(),expr,field,((member_id).variable_id),span,is_optional,resolved_type_id)));
 }
 }
@@ -3154,14 +3154,14 @@ return TRY((types::CheckedExpression::IndexedStruct(JaktInternal::OptionalNone()
 }
 }
 
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid operation"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Member field access on value of non-struct type ‘{}’"sv)),TRY((((((*this).program))->type_name(checked_expr_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Member field access on value of non-struct type ‘{}’"sv)),TRY((((((*this).program))->type_name(checked_expr_type_id,false))))),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid operation"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -3218,11 +3218,11 @@ auto&& __jakt_match_variant = cast;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Fallible */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Fallible;ids::TypeId const& type_id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::CheckedTypeCast::Fallible(TRY((((scope)->map_type(type_id))))));
+return JaktInternal::ExplicitValue(types::CheckedTypeCast::Fallible(((scope)->map_type(type_id))));
 };/*case end*/
 case 1 /* Infallible */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Infallible;ids::TypeId const& type_id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::CheckedTypeCast::Infallible(TRY((((scope)->map_type(type_id))))));
+return JaktInternal::ExplicitValue(types::CheckedTypeCast::Infallible(((scope)->map_type(type_id))));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -3241,7 +3241,7 @@ return JaktInternal::ExplicitValue(op);
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}),span,TRY((((scope)->map_type(type_id))))))));
+}),span,((scope)->map_type(type_id))))));
 };/*case end*/
 case 7 /* BinaryOp */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.BinaryOp;NonnullRefPtr<typename types::CheckedExpression> const& lhs = __jakt_match_value.lhs;
@@ -3249,7 +3249,7 @@ types::CheckedBinaryOperator const& op = __jakt_match_value.op;
 NonnullRefPtr<typename types::CheckedExpression> const& rhs = __jakt_match_value.rhs;
 utility::Span const& span = __jakt_match_value.span;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::BinaryOp(JaktInternal::OptionalNone(),TRY((((*this).perform_final_interpretation_expr_pass(lhs,scope,function_id)))),op,TRY((((*this).perform_final_interpretation_expr_pass(rhs,scope,function_id)))),span,TRY((((scope)->map_type(type_id))))))));
+return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::BinaryOp(JaktInternal::OptionalNone(),TRY((((*this).perform_final_interpretation_expr_pass(lhs,scope,function_id)))),op,TRY((((*this).perform_final_interpretation_expr_pass(rhs,scope,function_id)))),span,((scope)->map_type(type_id))))));
 };/*case end*/
 case 21 /* Call */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Call;types::CheckedCall const& call = __jakt_match_value.call;
@@ -3612,7 +3612,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Expected string as first argument to format, got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Expected string as first argument to format, got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -3640,7 +3640,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("println expects a string as its first argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("println expects a string as its first argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -3690,7 +3690,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("println expects a string as its first argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("println expects a string as its first argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -3740,7 +3740,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("println expects a string as its first argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("println expects a string as its first argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -3790,7 +3790,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("println expects a string as its first argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("println expects a string as its first argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -3858,7 +3858,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8(unchecked_mul<u8>(x
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -3882,7 +3882,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16(unchecked_mul<u16>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -3906,7 +3906,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32(unchecked_mul<u32>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -3930,7 +3930,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64(unchecked_mul<u64>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -3954,7 +3954,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8(unchecked_mul<i8>(x
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -3978,7 +3978,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16(unchecked_mul<i16>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4002,7 +4002,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32(unchecked_mul<i32>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4026,7 +4026,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64(unchecked_mul<i64>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4050,7 +4050,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F32(unchecked_mul<f32>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4074,7 +4074,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F64(unchecked_mul<f64>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4098,7 +4098,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize(unchecked_mul<si
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4112,7 +4112,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4148,7 +4148,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8(unchecked_add<u8>(x
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4172,7 +4172,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16(unchecked_add<u16>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4196,7 +4196,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32(unchecked_add<u32>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4220,7 +4220,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64(unchecked_add<u64>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4244,7 +4244,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8(unchecked_add<i8>(x
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4268,7 +4268,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16(unchecked_add<i16>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4292,7 +4292,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32(unchecked_add<i32>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4316,7 +4316,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64(unchecked_add<i64>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4340,7 +4340,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F32(unchecked_add<f32>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4364,7 +4364,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F64(unchecked_add<f64>
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4388,7 +4388,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize(unchecked_add<si
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4402,7 +4402,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4472,7 +4472,7 @@ __jakt_label_204:; __jakt_var_218.release_value(); }));
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function {}::{} is not implemented yet"sv)),namespace_,prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function {}::{} is not implemented yet"sv)),namespace_,prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -4530,7 +4530,7 @@ return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(types
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Error should have `i32` as its code, but got {}"sv)),((((fields)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Error should have `i32` as its code, but got {}"sv)),((((fields)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4544,7 +4544,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `Error::code` expects an Error as its this argument, but got {}"sv)),(((this_argument.value())).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `Error::code` expects an Error as its this argument, but got {}"sv)),(((this_argument.value())).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4558,7 +4558,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `Error::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `Error::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -4584,7 +4584,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `File::{}` expects a string as its first argument, but got {}"sv)),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `File::{}` expects a string as its first argument, but got {}"sv)),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4595,10 +4595,10 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-jakt__path::Path const path = TRY((((TRY(((((TRY((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))))).value())).parent())))).join(requested_path))));
+jakt__path::Path const path = TRY((((TRY(((((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))).value())).parent())))).join(requested_path))));
 types::Value const path_value = types::Value(TRY((types::ValueImpl::JaktString(((path).to_string())))),call_span);
 if ((!(((path).exists())))){
-return interpreter::StatementResult::Throw(TRY((((*this).error_value(TRY((__jakt_format((StringView::from_string_literal("Could not find file at path {}"sv)),((path).to_string())))),call_span)))));
+return interpreter::StatementResult::Throw(TRY((((*this).error_value(__jakt_format((StringView::from_string_literal("Could not find file at path {}"sv)),((path).to_string())),call_span)))));
 }
 ids::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude((ByteString::must_from_utf8("File"sv))))));
 types::CheckedStruct const file_struct = ((((*this).program))->get_struct(file_struct_id));
@@ -4621,7 +4621,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `File::{}` expects a string as its first argument, but got {}"sv)),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `File::{}` expects a string as its first argument, but got {}"sv)),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4632,10 +4632,10 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-jakt__path::Path const path = TRY((((TRY(((((TRY((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))))).value())).parent())))).join(requested_path))));
+jakt__path::Path const path = TRY((((TRY(((((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))).value())).parent())))).join(requested_path))));
 types::Value const path_value = types::Value(TRY((types::ValueImpl::JaktString(((path).to_string())))),call_span);
 if ((!(((path).exists())))){
-return interpreter::StatementResult::Throw(TRY((((*this).error_value(TRY((__jakt_format((StringView::from_string_literal("Could not find file at path {}"sv)),((path).to_string())))),call_span)))));
+return interpreter::StatementResult::Throw(TRY((((*this).error_value(__jakt_format((StringView::from_string_literal("Could not find file at path {}"sv)),((path).to_string())),call_span)))));
 }
 ids::StructId const file_struct_id = TRY((((((*this).program))->find_struct_in_prelude((ByteString::must_from_utf8("File"sv))))));
 types::CheckedStruct const file_struct = ((((*this).program))->get_struct(file_struct_id));
@@ -4677,7 +4677,7 @@ utility::panic((ByteString::must_from_utf8("invalid type for File::read_all"sv))
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `File::read_all` expects a `File` as its this argument, but got {}"sv)),(((this_argument.value())).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `File::read_all` expects a `File` as its this argument, but got {}"sv)),(((this_argument.value())).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4773,7 +4773,7 @@ utility::panic((ByteString::must_from_utf8("invalid type for File::read"sv)));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `File::read` expects a `File` as its this argument, but got {}"sv)),(((this_argument.value())).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `File::read` expects a `File` as its this argument, but got {}"sv)),(((this_argument.value())).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4826,7 +4826,7 @@ return JaktInternal::ExplicitValue(values);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `File::read` expects a `[u8]` as its argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `File::read` expects a `[u8]` as its argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4871,7 +4871,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `File::{}` expects a string as its first argument, but got {}"sv)),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `File::{}` expects a string as its first argument, but got {}"sv)),prelude_function,((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4882,7 +4882,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-jakt__path::Path const path = TRY((((TRY(((((TRY((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))))).value())).parent())))).join(requested_path))));
+jakt__path::Path const path = TRY((((TRY(((((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))).value())).parent())))).join(requested_path))));
 __jakt_var_225 = interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::Bool(((path).exists())))),call_span)); goto __jakt_label_211;
 
 }
@@ -4919,7 +4919,7 @@ utility::panic((ByteString::must_from_utf8("invalid type for File::write"sv)));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `File::write` expects a `File` as its this argument, but got {}"sv)),(((this_argument.value())).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `File::write` expects a `File` as its this argument, but got {}"sv)),(((this_argument.value())).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -4972,7 +4972,7 @@ return JaktInternal::ExplicitValue(values);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `File::write` expects a `[u8]` as its argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `File::write` expects a `[u8]` as its argument, but got {}"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -5030,7 +5030,7 @@ __jakt_label_212:; __jakt_var_226.release_value(); }));
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `File::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `File::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -5083,7 +5083,7 @@ utility::panic((ByteString::must_from_utf8("Invalid use of prelude StringBuilder
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -5121,7 +5121,7 @@ return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid use of StringBuilder::append({})"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid use of StringBuilder::append({})"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -5252,7 +5252,7 @@ utility::panic((ByteString::must_from_utf8("Invalid use of prelude StringBuilder
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -5290,7 +5290,7 @@ return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid use of StringBuilder::append({})"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid use of StringBuilder::append({})"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -5421,7 +5421,7 @@ utility::panic((ByteString::must_from_utf8("Invalid use of prelude StringBuilder
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -5459,7 +5459,7 @@ return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid use of StringBuilder::append({})"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid use of StringBuilder::append({})"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -5590,7 +5590,7 @@ utility::panic((ByteString::must_from_utf8("Invalid use of prelude StringBuilder
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -5628,7 +5628,7 @@ return (TRY((((builder).append(value))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid use of StringBuilder::append({})"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid use of StringBuilder::append({})"sv)),((((arguments)[static_cast<i64>(0LL)])).impl)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -5739,7 +5739,7 @@ return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(((fie
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -5781,7 +5781,7 @@ utility::panic((ByteString::must_from_utf8("Invalid use of prelude StringBuilder
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -5823,7 +5823,7 @@ utility::panic((ByteString::must_from_utf8("Invalid use of prelude StringBuilder
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -5852,7 +5852,7 @@ __jakt_label_218:; __jakt_var_232.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -5866,7 +5866,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `StringBuilder::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -6387,7 +6387,7 @@ utility::panic((ByteString::must_from_utf8("Invalid use of Dictionary::iterator(
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `Dictionary::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `Dictionary::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -6908,7 +6908,7 @@ utility::panic((ByteString::must_from_utf8("Invalid use of Array::shrink()"sv)))
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `Array::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `Array::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -7018,7 +7018,7 @@ utility::panic((ByteString::must_from_utf8("Invalid ArrayIterator configuration"
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `ArrayIterator::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `ArrayIterator::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -7288,7 +7288,7 @@ utility::panic((ByteString::must_from_utf8("Invalid use of Range::exclusive()"sv
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `Range::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `Range::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -8260,7 +8260,7 @@ __jakt_label_273:; __jakt_var_287.release_value(); }));
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `String::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `String::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -8594,7 +8594,7 @@ utility::panic((ByteString::must_from_utf8("Invalid use of Set::iterator()"sv)))
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `Set::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `Set::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -8704,7 +8704,7 @@ utility::panic((ByteString::must_from_utf8("Invalid SetIterator configuration"sv
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `ArrayIterator::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `ArrayIterator::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -8849,7 +8849,7 @@ utility::panic((ByteString::must_from_utf8("Invalid DictionaryIterator configura
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `DictionaryIterator::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `DictionaryIterator::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -8898,7 +8898,7 @@ return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(value
 };/*case end*/
 case 25 /* OptionalNone */: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot unwrap optional none"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot unwrap optional none"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Attempt to unwrap None"sv)));
 }
 };/*case end*/
@@ -9045,7 +9045,7 @@ utility::panic((ByteString::must_from_utf8("Invalid Optional configuration"sv)))
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `Optional::{}` is not implemented"sv)),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `Optional::{}` is not implemented"sv)),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -9057,7 +9057,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Prelude function `{}::{}` is not implemented"sv)),((((namespace_)[static_cast<i64>(0LL)])).name),prelude_function))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Prelude function `{}::{}` is not implemented"sv)),((((namespace_)[static_cast<i64>(0LL)])).name),prelude_function),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -9391,7 +9391,7 @@ return JaktInternal::ExplicitValue(lhs_value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operand '{}' to binary operation"sv)),TRY((((lhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operand '{}' to binary operation"sv)),((lhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -9469,7 +9469,7 @@ return JaktInternal::ExplicitValue(lhs_value);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operand '{}' to binary operation"sv)),TRY((((lhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operand '{}' to binary operation"sv)),((lhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -9722,7 +9722,7 @@ return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(types
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid type for unary operator"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid type for unary operator"sv))),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -9840,7 +9840,7 @@ __jakt_label_301:; __jakt_var_315.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid type for unary operator"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid type for unary operator"sv))),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -9969,7 +9969,7 @@ __jakt_label_312:; __jakt_var_326.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid type for unary operator"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid type for unary operator"sv))),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -10087,7 +10087,7 @@ __jakt_label_323:; __jakt_var_337.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid type for unary operator"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid type for unary operator"sv))),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -10216,7 +10216,7 @@ __jakt_label_334:; __jakt_var_348.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid type for unary operator"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid type for unary operator"sv))),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -10281,7 +10281,7 @@ __jakt_label_336:; __jakt_var_350.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid value for unary operator '{}'"sv)),op))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid value for unary operator '{}'"sv)),op),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -10295,7 +10295,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unimplemented unary operator '{}'"sv)),op))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Unimplemented unary operator '{}'"sv)),op),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -10521,7 +10521,7 @@ return TRY((((*this).call_prelude_function(((call).name),(TRY((DynamicArray<type
 }
 NonnullRefPtr<types::CheckedFunction> const function_to_run = ((((*this).program))->get_function((((call).function_id).value())));
 if (((((function_to_run)->type)).__jakt_init_index() == 6 /* Closure */)){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot call a closure (nyi)"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot call a closure (nyi)"sv))),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 JaktInternal::Optional<types::Value> this_argument = JaktInternal::OptionalNone();
@@ -11228,7 +11228,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (numeric_index,(infallible_integer_cast<u64>((((values).size())))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Index {} out of bounds (max={})"sv)),numeric_index,((values).size())))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Index {} out of bounds (max={})"sv)),numeric_index,((values).size())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 __jakt_var_356 = interpreter::StatementResult::JustValue(((values)[numeric_index])); goto __jakt_label_342;
@@ -11705,7 +11705,7 @@ return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_364; 
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((((((*this).program))->get_struct(struct_id))).scope_id)))));
 JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const overloads = ((((scope)->functions)).get((ByteString::must_from_utf8("from_string_literal"sv))));
 if ((!(((overloads).has_value())))){
-utility::panic(TRY((__jakt_format((StringView::from_string_literal("Failed to find a from_string_literal overload in {}"sv)),TRY((((((*this).program))->type_name(((val).type_id),false))))))));
+utility::panic(__jakt_format((StringView::from_string_literal("Failed to find a from_string_literal overload in {}"sv)),TRY((((((*this).program))->type_name(((val).type_id),false))))));
 }
 __jakt_var_364 = ((((overloads.value())).first()).value()); goto __jakt_label_350;
 
@@ -11718,7 +11718,7 @@ return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_365; 
 NonnullRefPtr<types::Scope> const scope = TRY((((((*this).program))->get_scope(((((((*this).program))->get_struct(struct_id))).scope_id)))));
 JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const overloads = ((((scope)->functions)).get((ByteString::must_from_utf8("from_string_literal"sv))));
 if ((!(((overloads).has_value())))){
-utility::panic(TRY((__jakt_format((StringView::from_string_literal("Failed to find a from_string_literal overload in {}"sv)),TRY((((((*this).program))->type_name(((val).type_id),false))))))));
+utility::panic(__jakt_format((StringView::from_string_literal("Failed to find a from_string_literal overload in {}"sv)),TRY((((((*this).program))->type_name(((val).type_id),false))))));
 }
 __jakt_var_365 = ((((overloads.value())).first()).value()); goto __jakt_label_351;
 
@@ -11753,7 +11753,7 @@ __jakt_label_353:; __jakt_var_367.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid type {} for string literal"sv)),((((*this).program))->get_type(((val).type_id)))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid type {} for string literal"sv)),((((*this).program))->get_type(((val).type_id)))),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -12539,7 +12539,7 @@ return JaktInternal::ExplicitValue<void>();
 case 0 /* EnumVariant */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.EnumVariant;utility::Span const& marker_span = __jakt_match_value.marker_span;
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Value matches cannot have enum variant arms (matching on {})"sv)),TRY((((value).type_name())))))),marker_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Value matches cannot have enum variant arms (matching on {})"sv)),((value).type_name())),marker_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -12561,7 +12561,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 if (((!(found_body).has_value()) && (!(catch_all_case).has_value()))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("No match found for value of type {}"sv)),TRY((((value).type_name())))))),(((((*this).spans)).last()).value())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("No match found for value of type {}"sv)),((value).type_name())),(((((*this).spans)).last()).value())))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 (found_body = found_body.value_or_lazy_evaluated([&] { return (catch_all_case.value()); }));
@@ -12799,7 +12799,7 @@ __jakt_label_367:; __jakt_var_383.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Value matches cannot have enum variant arms (matching on {})"sv)),TRY((((value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Value matches cannot have enum variant arms (matching on {})"sv)),((value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -12985,7 +12985,7 @@ if ((((capture).__jakt_init_index() == 0 /* ByValue */) || ((capture).__jakt_ini
 TRY((((resolved_captures).set(name,TRY((((scope)->must_get(name))))))));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot capture by reference in a comptime function (nyi)"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot capture by reference in a comptime function (nyi)"sv))),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 
@@ -13046,7 +13046,7 @@ if ((((capture).__jakt_init_index() == 0 /* ByValue */) || ((capture).__jakt_ini
 TRY((((resolved_captures).set(name,TRY((((scope)->must_get(name))))))));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot capture by reference in a comptime function (nyi)"sv))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot capture by reference in a comptime function (nyi)"sv))),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 
@@ -13192,7 +13192,7 @@ return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(TRY((
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("expression not implemented: {}"sv)),expr))),((expr)->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("expression not implemented: {}"sv)),expr),((expr)->span())))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -13280,7 +13280,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8(JaktInternal::check
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13304,7 +13304,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13328,7 +13328,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13352,7 +13352,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13376,7 +13376,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8(JaktInternal::check
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13400,7 +13400,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13424,7 +13424,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13448,7 +13448,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13472,7 +13472,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F32(((x) + (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13496,7 +13496,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F64(((x) + (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13520,7 +13520,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize(JaktInternal::ch
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13544,7 +13544,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::JaktString(TRY((((x) +
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13558,7 +13558,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13587,7 +13587,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8(JaktInternal::check
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13611,7 +13611,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13635,7 +13635,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13659,7 +13659,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13683,7 +13683,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8(JaktInternal::check
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13707,7 +13707,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13731,7 +13731,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13755,7 +13755,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13779,7 +13779,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F32(((x) - (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13803,7 +13803,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F64(((x) - (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13827,7 +13827,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize(JaktInternal::ch
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13841,7 +13841,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13870,7 +13870,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8(JaktInternal::check
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13894,7 +13894,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13918,7 +13918,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13942,7 +13942,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13966,7 +13966,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8(JaktInternal::check
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -13990,7 +13990,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14014,7 +14014,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14038,7 +14038,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14062,7 +14062,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F32(((x) * (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14086,7 +14086,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F64(((x) * (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14110,7 +14110,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize(JaktInternal::ch
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14124,7 +14124,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14153,7 +14153,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8(JaktInternal::check
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14177,7 +14177,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14201,7 +14201,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14225,7 +14225,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14249,7 +14249,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8(JaktInternal::check
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14273,7 +14273,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14297,7 +14297,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14321,7 +14321,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64(JaktInternal::chec
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14345,7 +14345,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F32(((x) / (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14369,7 +14369,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::F64(((x) / (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14393,7 +14393,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize(JaktInternal::ch
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14407,7 +14407,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14436,7 +14436,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14460,7 +14460,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14484,7 +14484,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14508,7 +14508,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14532,7 +14532,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14556,7 +14556,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14580,7 +14580,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14604,7 +14604,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14628,7 +14628,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14652,7 +14652,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14676,7 +14676,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14700,7 +14700,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14724,7 +14724,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14748,7 +14748,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) == (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14762,7 +14762,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14791,7 +14791,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14815,7 +14815,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14839,7 +14839,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14863,7 +14863,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14887,7 +14887,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14911,7 +14911,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14935,7 +14935,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14959,7 +14959,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -14983,7 +14983,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15007,7 +15007,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15031,7 +15031,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15055,7 +15055,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15079,7 +15079,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) != (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15108,7 +15108,7 @@ return (!(((self) == (rhs))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15122,7 +15122,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15161,7 +15161,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15195,7 +15195,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15229,7 +15229,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15263,7 +15263,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15297,7 +15297,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15331,7 +15331,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15365,7 +15365,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15399,7 +15399,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15433,7 +15433,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15467,7 +15467,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15501,7 +15501,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15525,7 +15525,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) < (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15539,7 +15539,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15578,7 +15578,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15612,7 +15612,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15646,7 +15646,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15680,7 +15680,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15714,7 +15714,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15748,7 +15748,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15782,7 +15782,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15816,7 +15816,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15850,7 +15850,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15884,7 +15884,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15918,7 +15918,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15942,7 +15942,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) <= (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15956,7 +15956,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -15995,7 +15995,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16029,7 +16029,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16063,7 +16063,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16097,7 +16097,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16131,7 +16131,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16165,7 +16165,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16199,7 +16199,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16233,7 +16233,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16267,7 +16267,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16301,7 +16301,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16335,7 +16335,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16359,7 +16359,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) > (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16373,7 +16373,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16412,7 +16412,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16446,7 +16446,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16480,7 +16480,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16514,7 +16514,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16548,7 +16548,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16582,7 +16582,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16616,7 +16616,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16650,7 +16650,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16684,7 +16684,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16718,7 +16718,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16752,7 +16752,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16776,7 +16776,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool(((x) >= (y))))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16790,7 +16790,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16819,7 +16819,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16843,7 +16843,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16867,7 +16867,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32((x & y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16891,7 +16891,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64((x & y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16915,7 +16915,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16939,7 +16939,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16963,7 +16963,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32((x & y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -16987,7 +16987,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64((x & y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17011,7 +17011,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize((x & y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17025,7 +17025,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17054,7 +17054,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17078,7 +17078,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17102,7 +17102,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32((x | y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17126,7 +17126,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64((x | y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17150,7 +17150,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17174,7 +17174,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17198,7 +17198,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32((x | y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17222,7 +17222,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64((x | y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17246,7 +17246,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize((x | y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17260,7 +17260,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17289,7 +17289,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17313,7 +17313,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17337,7 +17337,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32((x ^ y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17361,7 +17361,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64((x ^ y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17385,7 +17385,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17409,7 +17409,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17433,7 +17433,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32((x ^ y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17457,7 +17457,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64((x ^ y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17481,7 +17481,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize((x ^ y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17495,7 +17495,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17524,7 +17524,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17548,7 +17548,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17572,7 +17572,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32((x << y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17596,7 +17596,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64((x << y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17620,7 +17620,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17644,7 +17644,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17668,7 +17668,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32((x << y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17692,7 +17692,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64((x << y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17716,7 +17716,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize((x << y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17730,7 +17730,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17759,7 +17759,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17783,7 +17783,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17807,7 +17807,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32((x >> y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17831,7 +17831,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64((x >> y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17855,7 +17855,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17879,7 +17879,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17903,7 +17903,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32((x >> y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17927,7 +17927,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64((x >> y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17951,7 +17951,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize((x >> y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17965,7 +17965,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -17994,7 +17994,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18018,7 +18018,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18042,7 +18042,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32((x << y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18066,7 +18066,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64((x << y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18090,7 +18090,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8((infallible_integer
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18114,7 +18114,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16((infallible_intege
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18138,7 +18138,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32((x << y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18162,7 +18162,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64((x << y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18186,7 +18186,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize((x << y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18200,7 +18200,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18229,7 +18229,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U8(JaktInternal::arith
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18253,7 +18253,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U16(JaktInternal::arit
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18277,7 +18277,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U32(JaktInternal::arit
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18301,7 +18301,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::U64(JaktInternal::arit
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18325,7 +18325,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I8(JaktInternal::arith
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18349,7 +18349,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I16(JaktInternal::arit
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18373,7 +18373,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I32(JaktInternal::arit
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18397,7 +18397,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::I64(JaktInternal::arit
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18421,7 +18421,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::USize(JaktInternal::ar
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18435,7 +18435,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18464,7 +18464,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool((x || y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18478,7 +18478,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18507,7 +18507,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Bool((x && y)))));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18521,7 +18521,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),TRY((((lhs_value).type_name()))),TRY((((rhs_value).type_name())))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid operands '{}' and '{}' to binary operation"sv)),((lhs_value).type_name()),((rhs_value).type_name())),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -18568,7 +18568,7 @@ return JaktInternal::ExplicitValue(TRY((((*this).execute_binary_operator(lhs_val
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unimplemented binary operator '{}'"sv)),op))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Unimplemented binary operator '{}'"sv)),op),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/
@@ -18979,7 +18979,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("if condition must be a boolean, but got {}"sv)),((value).impl)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("if condition must be a boolean, but got {}"sv)),((value).impl)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -19595,21 +19595,21 @@ bool is_prelude_function = false;
 if (((((function_to_run)->linkage)).__jakt_init_index() == 1 /* External */)){
 NonnullRefPtr<types::Scope> const function_scope = TRY((((((*this).program))->get_scope(((function_to_run)->function_scope_id)))));
 if ((!(TRY((((*this).get_prelude_function(((function_to_run)->function_scope_id)))))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot call external function '{}'"sv)),((function_to_run)->name)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot call external function '{}'"sv)),((function_to_run)->name)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Attempt to call external function"sv)));
 }
 (is_prelude_function = true);
 }
-if (((TRY((((function_to_run)->is_static())))) == (((this_argument).has_value())))){
+if (((((function_to_run)->is_static())) == (((this_argument).has_value())))){
 ByteString expected = (ByteString::must_from_utf8("did not expect"sv));
-if ((!(TRY((((function_to_run)->is_static())))))){
+if ((!(((function_to_run)->is_static())))){
 (expected = (ByteString::must_from_utf8("expected"sv)));
 }
 ByteString not_provided = (ByteString::must_from_utf8(" not"sv));
 if (((this_argument).has_value())){
 (not_provided = (ByteString::must_from_utf8(""sv)));
 }
-TRY((((((((*this).compiler))->errors)).push(error::JaktError::Message(TRY((__jakt_format((StringView::from_string_literal("function call {} a this argument, yet one was{} provided"sv)),expected,not_provided))),((function_to_run)->name_span))))));
+TRY((((((((*this).compiler))->errors)).push(error::JaktError::Message(__jakt_format((StringView::from_string_literal("function call {} a this argument, yet one was{} provided"sv)),expected,not_provided),((function_to_run)->name_span))))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid this argument"sv)));
 }
 size_t this_offset = static_cast<size_t>(0ULL);
@@ -19617,7 +19617,7 @@ if (((this_argument).has_value())){
 (this_offset = static_cast<size_t>(1ULL));
 }
 if (((JaktInternal::checked_sub(((((function_to_run)->params)).size()),this_offset)) != (((arguments).size())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Function called with wrong number of arguments, expected {} but got {}"sv)),((((function_to_run)->params)).size()),((arguments).size())))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Function called with wrong number of arguments, expected {} but got {}"sv)),((((function_to_run)->params)).size()),((arguments).size())),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Mismatching arguments"sv)));
 }
 if (is_prelude_function){
@@ -20057,7 +20057,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Class(arguments,struct
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot create instance of non-struct type {}"sv)),((struct_).name)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot create instance of non-struct type {}"sv)),((struct_).name)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -20089,7 +20089,7 @@ return JaktInternal::ExplicitValue(TRY((types::ValueImpl::Class(arguments,struct
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot create instance of non-struct type {}"sv)),((struct_).name)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot create instance of non-struct type {}"sv)),((struct_).name)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 };/*case end*/
@@ -20106,7 +20106,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Implicit constructor can only return a struct or a generic instance"sv))))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Implicit constructor can only return a struct or a generic instance"sv))),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -20150,7 +20150,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Implicit enum constructor can only return an enum or a generic instance of one"sv))))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Implicit enum constructor can only return an enum or a generic instance of one"sv))),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
@@ -20177,7 +20177,7 @@ return JaktInternal::ExplicitValue<void>();
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Function type {} is not implemented"sv)),((function_to_run)->type)))),call_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Function type {} is not implemented"sv)),((function_to_run)->type)),call_span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 }
@@ -20283,7 +20283,7 @@ return interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImp
 
 ErrorOr<types::Value> interpreter::Interpreter::reflect_type(ids::TypeId const type_id,utility::Span const span,NonnullRefPtr<interpreter::InterpreterScope> const scope) {
 {
-ids::TypeId const mapped_type_id = TRY((((scope)->map_type(type_id))));
+ids::TypeId const mapped_type_id = ((scope)->map_type(type_id));
 if (((((*this).reflected_type_cache)).contains(mapped_type_id))){
 return (((((*this).reflected_type_cache)).get(mapped_type_id)).value());
 }
@@ -20322,7 +20322,7 @@ auto&& __jakt_match_variant = *type;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Void */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_398; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20334,7 +20334,7 @@ __jakt_label_374:; __jakt_var_398.release_value(); }));
 };/*case end*/
 case 6 /* I8 */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_399; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20346,7 +20346,7 @@ __jakt_label_375:; __jakt_var_399.release_value(); }));
 };/*case end*/
 case 7 /* I16 */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_400; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20358,7 +20358,7 @@ __jakt_label_376:; __jakt_var_400.release_value(); }));
 };/*case end*/
 case 8 /* I32 */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_401; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20370,7 +20370,7 @@ __jakt_label_377:; __jakt_var_401.release_value(); }));
 };/*case end*/
 case 9 /* I64 */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_402; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20382,7 +20382,7 @@ __jakt_label_378:; __jakt_var_402.release_value(); }));
 };/*case end*/
 case 2 /* U8 */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_403; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20394,7 +20394,7 @@ __jakt_label_379:; __jakt_var_403.release_value(); }));
 };/*case end*/
 case 3 /* U16 */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_404; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20406,7 +20406,7 @@ __jakt_label_380:; __jakt_var_404.release_value(); }));
 };/*case end*/
 case 4 /* U32 */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_405; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20418,7 +20418,7 @@ __jakt_label_381:; __jakt_var_405.release_value(); }));
 };/*case end*/
 case 5 /* U64 */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_406; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20430,7 +20430,7 @@ __jakt_label_382:; __jakt_var_406.release_value(); }));
 };/*case end*/
 case 12 /* Usize */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_407; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20442,7 +20442,7 @@ __jakt_label_383:; __jakt_var_407.release_value(); }));
 };/*case end*/
 case 10 /* F32 */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_408; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20454,7 +20454,7 @@ __jakt_label_384:; __jakt_var_408.release_value(); }));
 };/*case end*/
 case 11 /* F64 */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_409; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20466,7 +20466,7 @@ __jakt_label_385:; __jakt_var_409.release_value(); }));
 };/*case end*/
 case 13 /* JaktString */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_410; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20478,7 +20478,7 @@ __jakt_label_386:; __jakt_var_410.release_value(); }));
 };/*case end*/
 case 14 /* CChar */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_411; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20490,7 +20490,7 @@ __jakt_label_387:; __jakt_var_411.release_value(); }));
 };/*case end*/
 case 15 /* CInt */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_412; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20502,7 +20502,7 @@ __jakt_label_388:; __jakt_var_412.release_value(); }));
 };/*case end*/
 case 1 /* Bool */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_413; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20514,7 +20514,7 @@ __jakt_label_389:; __jakt_var_413.release_value(); }));
 };/*case end*/
 case 16 /* Unknown */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_414; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20526,7 +20526,7 @@ __jakt_label_390:; __jakt_var_414.release_value(); }));
 };/*case end*/
 case 17 /* Never */: {
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_415; {
-JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone()))));
+JaktInternal::Optional<ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone()))));
 if ((!(((constructor).has_value())))){
 TRY((((*this).error((ByteString::must_from_utf8("Attempted to access a variant that does not exist"sv)),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Invalid type"sv)));
@@ -20553,7 +20553,7 @@ __jakt_label_392:; __jakt_var_416.release_value(); }));
 case 26 /* RawPtr */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RawPtr;ids::TypeId const& type_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_417; {
-ids::FunctionId const constructor = (TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone())))).value());
+ids::FunctionId const constructor = (TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone())))).value());
 (fields = (TRY((DynamicArray<types::Value>::create_with({TRY((((*this).reflect_type(type_id,span,scope))))})))));
 __jakt_var_417 = constructor; goto __jakt_label_393;
 
@@ -20563,7 +20563,7 @@ __jakt_label_393:; __jakt_var_417.release_value(); }));
 case 28 /* Reference */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Reference;ids::TypeId const& type_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_418; {
-ids::FunctionId const constructor = (TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone())))).value());
+ids::FunctionId const constructor = (TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone())))).value());
 (fields = (TRY((DynamicArray<types::Value>::create_with({TRY((((*this).reflect_type(type_id,span,scope))))})))));
 __jakt_var_418 = constructor; goto __jakt_label_394;
 
@@ -20573,7 +20573,7 @@ __jakt_label_394:; __jakt_var_418.release_value(); }));
 case 29 /* MutableReference */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MutableReference;ids::TypeId const& type_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<ids::FunctionId> __jakt_var_419; {
-ids::FunctionId const constructor = (TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),TRY((((type)->constructor_name()))),JaktInternal::OptionalNone())))).value());
+ids::FunctionId const constructor = (TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),((type)->constructor_name()),JaktInternal::OptionalNone())))).value());
 (fields = (TRY((DynamicArray<types::Value>::create_with({TRY((((*this).reflect_type(type_id,span,scope))))})))));
 __jakt_var_419 = constructor; goto __jakt_label_395;
 
@@ -21363,7 +21363,7 @@ __jakt_label_404:; __jakt_var_428.release_value(); }));
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type reflection not implemented: {}"sv)),type))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type reflection not implemented: {}"sv)),type),span))));
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Not yet implemented"sv)));
 }
 };/*case end*/

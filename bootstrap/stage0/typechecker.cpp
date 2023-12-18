@@ -169,7 +169,7 @@ types::FunctionGenericParameter generic = (_magic_value.value());
 }
 
 if ((!(((generics).is_empty())))){
-(generics = TRY((__jakt_format((StringView::from_string_literal("<{}>"sv)),generics))));
+(generics = __jakt_format((StringView::from_string_literal("<{}>"sv)),generics));
 }
 warnln((StringView::from_string_literal("{: >{}}fn{}({}) -> {}"sv)),(ByteString::must_from_utf8(""sv)),JaktInternal::checked_add(cindent,static_cast<i64>(4LL)),generics,args,TRY((((((program)))->type_name(((function)->return_type_id),true)))));
 }
@@ -329,11 +329,11 @@ JaktInternal::Optional<typechecker::AlreadyImplementedFor> const already_impleme
 JaktInternal::Optional<JaktInternal::Tuple<utility::Span,JaktInternal::DynamicArray<error::JaktError>>> const unmatched_signature = ((unmatched_signatures).get(method_name));
 JaktInternal::Optional<utility::Span> const private_matching_method = ((private_matching_methods).get(method_name));
 if (((already_implemented_for).has_value())){
-TRY((((((typechecker))).error(TRY((__jakt_format((StringView::from_string_literal("Cannot implement ‘{}’ for ‘{}’ because it's already implementing ‘{}’"sv)),method_name,trait_name,(((already_implemented_for.value())).trait_name)))),(((already_implemented_for.value())).encounter_span)))));
+TRY((((((typechecker))).error(__jakt_format((StringView::from_string_literal("Cannot implement ‘{}’ for ‘{}’ because it's already implementing ‘{}’"sv)),method_name,trait_name,(((already_implemented_for.value())).trait_name)),(((already_implemented_for.value())).encounter_span)))));
 }
 else if (((private_matching_method).has_value())){
 utility::Span const span = (private_matching_method.value());
-TRY((((((typechecker))).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Implementation of ‘{}’ for trait ‘{}’ is valid but is not public"sv)),method_name,trait_name))),span,(ByteString::must_from_utf8("Consider adding ‘public’ to make the method accessible"sv)),span))));
+TRY((((((typechecker))).error_with_hint(__jakt_format((StringView::from_string_literal("Implementation of ‘{}’ for trait ‘{}’ is valid but is not public"sv)),method_name,trait_name),span,(ByteString::must_from_utf8("Consider adding ‘public’ to make the method accessible"sv)),span))));
 }
 else {
 NonnullRefPtr<types::CheckedFunction> const func = ((((typechecker))).get_function(trait_method_id));
@@ -345,12 +345,12 @@ JaktInternal::Tuple<utility::Span,JaktInternal::DynamicArray<error::JaktError>> 
 utility::Span const method_span = ((method_span_errors_).template get<0>());
 JaktInternal::DynamicArray<error::JaktError> const errors = ((method_span_errors_).template get<1>());
 
-TRY((((((typechecker))).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Missing implementation for method ‘{}’ of trait ‘{}’ on type ‘{}’"sv)),method_name,trait_name,TRY((((((typechecker))).type_name(trait_type_id,false))))))),record_decl_span,(ByteString::must_from_utf8("The method is declared here, but its signature doesn't match"sv)),method_span))));
+TRY((((((typechecker))).error_with_hint(__jakt_format((StringView::from_string_literal("Missing implementation for method ‘{}’ of trait ‘{}’ on type ‘{}’"sv)),method_name,trait_name,TRY((((((typechecker))).type_name(trait_type_id,false))))),record_decl_span,(ByteString::must_from_utf8("The method is declared here, but its signature doesn't match"sv)),method_span))));
 TRY((((((((((typechecker))).compiler))->errors)).push_values(((errors))))));
 }
 else {
 utility::Span const trait_method_span = ((((((typechecker))).get_function(trait_method_id)))->name_span);
-TRY((((((typechecker))).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Missing implementation for method ‘{}’ of trait ‘{}’"sv)),method_name,trait_name))),record_decl_span,(ByteString::must_from_utf8("Consider implementing the method with the signature specified here"sv)),trait_method_span))));
+TRY((((((typechecker))).error_with_hint(__jakt_format((StringView::from_string_literal("Missing implementation for method ‘{}’ of trait ‘{}’"sv)),method_name,trait_name),record_decl_span,(ByteString::must_from_utf8("Consider implementing the method with the signature specified here"sv)),trait_method_span))));
 }
 
 }
@@ -461,7 +461,7 @@ continue;
 
 }
 else {
-TRY((((((((*this).unmatched_signatures))[trait_type_id])).set(method_name,(Tuple{((method)->name_span), (TRY((DynamicArray<error::JaktError>::create_with({error::JaktError::Message(TRY((__jakt_format((StringView::from_string_literal("Expected {} generic arguments, but got {}"sv)),((((trait_)->generic_parameters)).size()),((trait_generic_arguments).size())))),((method)->name_span))}))))})))));
+TRY((((((((*this).unmatched_signatures))[trait_type_id])).set(method_name,(Tuple{((method)->name_span), (TRY((DynamicArray<error::JaktError>::create_with({error::JaktError::Message(__jakt_format((StringView::from_string_literal("Expected {} generic arguments, but got {}"sv)),((((trait_)->generic_parameters)).size()),((trait_generic_arguments).size())),((method)->name_span))}))))})))));
 continue;
 }
 
@@ -580,7 +580,7 @@ NonnullRefPtr<types::Module> module = ((*this).current_module());
 TRY((((((module)->types)).push(TRY((types::Type::Struct(parser::CheckedQualifiers(false),struct_id)))))));
 ids::TypeId const struct_type_id = ids::TypeId(module_id,JaktInternal::checked_sub(((((((*this).current_module()))->types)).size()),static_cast<size_t>(1ULL)));
 TRY((((*this).add_type_to_scope(scope_id,((parsed_record).name),struct_type_id,((parsed_record).name_span)))));
-ids::ScopeId const struct_scope_id = TRY((((*this).create_scope(scope_id,false,TRY((__jakt_format((StringView::from_string_literal("struct({})"sv)),((parsed_record).name)))),false))));
+ids::ScopeId const struct_scope_id = TRY((((*this).create_scope(scope_id,false,__jakt_format((StringView::from_string_literal("struct({})"sv)),((parsed_record).name)),false))));
 NonnullRefPtr<types::Scope> scope = TRY((((*this).get_scope(struct_scope_id))));
 (((scope)->namespace_name) = ((parsed_record).name));
 (((scope)->external_name) = ((parsed_record).external_name));
@@ -624,7 +624,7 @@ break;
 JaktInternal::Tuple<ByteString,utility::Span> y = (_magic_value.value());
 {
 if (((((x).template get<0>())) == (((y).template get<0>())))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Can't have a member variable and member function both named `{}`"sv)),((x).template get<0>())))),utility::Span::last(((x).template get<1>()),((y).template get<1>())),TRY((__jakt_format((StringView::from_string_literal("`{}` is first defined here"sv)),((x).template get<0>())))),utility::Span::first(((x).template get<1>()),((y).template get<1>()))))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Can't have a member variable and member function both named `{}`"sv)),((x).template get<0>())),utility::Span::last(((x).template get<1>()),((y).template get<1>())),__jakt_format((StringView::from_string_literal("`{}` is first defined here"sv)),((x).template get<0>())),utility::Span::first(((x).template get<1>()),((y).template get<1>()))))));
 }
 }
 
@@ -673,7 +673,7 @@ break;
 JaktInternal::Tuple<ByteString,utility::Span> y = (_magic_value.value());
 {
 if (((((x).template get<0>())) == (((y).template get<0>())))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Can't have a member variable and member function both named `{}`"sv)),((x).template get<0>())))),utility::Span::last(((x).template get<1>()),((y).template get<1>())),TRY((__jakt_format((StringView::from_string_literal("`{}` is first defined here"sv)),((x).template get<0>())))),utility::Span::first(((x).template get<1>()),((y).template get<1>()))))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Can't have a member variable and member function both named `{}`"sv)),((x).template get<0>())),utility::Span::last(((x).template get<1>()),((y).template get<1>())),__jakt_format((StringView::from_string_literal("`{}` is first defined here"sv)),((x).template get<0>())),utility::Span::first(((x).template get<1>()),((y).template get<1>()))))));
 }
 }
 
@@ -711,7 +711,7 @@ return {};
 }
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const implementation = TRY((((*this).find_any_singular_trait_implementation(type_id,(TRY((DynamicArray<ByteString>::create_with({trait_name})))),scope_id,span,filter_for_generics))));
 if ((!(((implementation).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type ‘{}’ does not implement trait ‘{}’"sv)),TRY((((*this).type_name(type_id,false)))),trait_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type ‘{}’ does not implement trait ‘{}’"sv)),TRY((((*this).type_name(type_id,false)))),trait_name),span))));
 }
 }
 return {};
@@ -805,7 +805,7 @@ if (((((*this).current_function_id)).has_value())){
 NonnullRefPtr<types::CheckedFunction> const current_function = ((*this).get_function((((*this).current_function_id).value())));
 NonnullRefPtr<typename types::Type> const return_type = ((*this).get_type(((current_function)->return_type_id)));
 if (((!(((return_type)->__jakt_init_index() == 0 /* Void */))) && (!(((return_type)->__jakt_init_index() == 16 /* Unknown */))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("’return’ with no value in function ’{}’ returning ’{}’"sv)),((current_function)->name),TRY((((*this).type_name(((current_function)->return_type_id),false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Add return value of type ’{}’ here"sv)),TRY((((*this).type_name(((current_function)->return_type_id),false))))))),span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("’return’ with no value in function ’{}’ returning ’{}’"sv)),((current_function)->name),TRY((((*this).type_name(((current_function)->return_type_id),false))))),span,__jakt_format((StringView::from_string_literal("Add return value of type ’{}’ here"sv)),TRY((((*this).type_name(((current_function)->return_type_id),false))))),span))));
 }
 }
 return TRY((types::CheckedStatement::Return(JaktInternal::OptionalNone(),span)));
@@ -991,7 +991,7 @@ continue;
 if (((!(((((record).generic_parameters)).is_empty()))) || (!(((((((method).parsed_function)).generic_parameters)).is_empty()))))){
 NonnullRefPtr<types::CheckedFunction> func = ((*this).get_function((TRY((((*this).find_function_matching_signature_in_scope(record_scope_id,((method).parsed_function))))).value())));
 ids::ScopeId const method_scope_id = ((func)->function_scope_id);
-ids::ScopeId const check_scope = TRY((((*this).create_scope(method_scope_id,((func)->can_throw),TRY((__jakt_format((StringView::from_string_literal("method-checking({}::{})"sv)),((record).name),((func)->name)))),true))));
+ids::ScopeId const check_scope = TRY((((*this).create_scope(method_scope_id,((func)->can_throw),__jakt_format((StringView::from_string_literal("method-checking({}::{})"sv)),((record).name),((func)->name)),true))));
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((func)->params)).iterator());
 for (;;){
@@ -1081,7 +1081,7 @@ return {};
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typechecker::typecheck_set(JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> const values,utility::Span const span,ids::ScopeId const scope_id,types::SafetyMode const safety_mode,JaktInternal::Optional<ids::TypeId> const type_hint) {
 {
 if (((*this).dump_try_hints)){
-TRY((((*this).dump_try_hint(span))));
+((*this).dump_try_hint(span));
 }
 if ((!(((TRY((((*this).get_scope(scope_id)))))->can_throw)))){
 TRY((((*this).error((ByteString::must_from_utf8("Set initialization needs to be in a try statement or a function marked as throws"sv)),span))));
@@ -1115,7 +1115,7 @@ TRY((((*this).error((ByteString::must_from_utf8("Cannot create a set with values
 }
 else if ((!(((inner_type_id).equals(current_value_type_id))))){
 ByteString const set_type_name = TRY((((*this).type_name(inner_type_id,false))));
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Type '{}' does not match type '{}' of previous values in set"sv)),TRY((((*this).type_name(current_value_type_id,false)))),set_type_name))),((value)->span()),TRY((__jakt_format((StringView::from_string_literal("Set was inferred to store type '{}' here"sv)),set_type_name))),(inner_type_span.value())))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Type '{}' does not match type '{}' of previous values in set"sv)),TRY((((*this).type_name(current_value_type_id,false)))),set_type_name),((value)->span()),__jakt_format((StringView::from_string_literal("Set was inferred to store type '{}' here"sv)),set_type_name),(inner_type_span.value())))));
 }
 TRY((((output).push(checked_value))));
 }
@@ -1153,7 +1153,7 @@ ScopeGuard __jakt_var_436([&] {
 ids::TypeId const struct_type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::Struct(parser::CheckedQualifiers(false),struct_id)))))));
 (((*this).current_struct_type_id) = struct_type_id);
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(struct_type_id))));
+((*this).set_self_type_id(struct_type_id));
 ScopeGuard __jakt_var_437([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -1179,10 +1179,10 @@ NonnullRefPtr<types::CheckedFunction> checked_function = ((*this).get_function(f
 (((checked_function)->is_override) = ((method).is_override));
 (((checked_function)->is_virtual) = ((method).is_virtual));
 (((checked_function)->visibility) = TRY((((*this).typecheck_visibility(((method).visibility),struct_scope_id)))));
-if ((((checked_function)->is_virtual) && TRY((((checked_function)->is_static()))))){
+if ((((checked_function)->is_virtual) && ((checked_function)->is_static()))){
 TRY((((*this).error((ByteString::must_from_utf8("Functions cannot be both virtual and static"sv)),((checked_function)->name_span)))));
 }
-if ((((checked_function)->is_override) && TRY((((checked_function)->is_static()))))){
+if ((((checked_function)->is_override) && ((checked_function)->is_static()))){
 TRY((((*this).error((ByteString::must_from_utf8("Functions cannot be both override and static"sv)),((checked_function)->name_span)))));
 }
 }
@@ -1364,7 +1364,7 @@ ErrorOr<void> typechecker::Typechecker::typecheck_trait(parser::ParsedTrait cons
 {
 NonnullRefPtr<types::CheckedTrait> checked_trait = ((((((((((*this).program))->modules))[((((trait_id).module)).id)]))->traits))[((trait_id).id)]);
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(TRY((((*this).find_or_add_type_id(TRY((types::Type::Trait(parser::CheckedQualifiers(false),trait_id)))))))))));
+((*this).set_self_type_id(TRY((((*this).find_or_add_type_id(TRY((types::Type::Trait(parser::CheckedQualifiers(false),trait_id)))))))));
 ScopeGuard __jakt_var_439([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -1404,7 +1404,7 @@ u64 next_constant_value = static_cast<u64>(0ULL);
 JaktInternal::Set<ByteString> seen_names = (TRY((Set<ByteString>::create_with_values({}))));
 types::CheckedEnum enum_ = ((*this).get_enum(enum_id));
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(((enum_).type_id)))));
+((*this).set_self_type_id(((enum_).type_id)));
 ScopeGuard __jakt_var_440([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -1449,7 +1449,7 @@ break;
 parser::ValueEnumVariant variant = (_magic_value.value());
 {
 if (((seen_names).contains(((variant).name)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant '{}' is defined more than once"sv)),((variant).name)))),((variant).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum variant '{}' is defined more than once"sv)),((variant).name)),((variant).span)))));
 }
 else {
 TRY((((seen_names).add(((variant).name)))));
@@ -1499,7 +1499,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant '{}' in enum '{}' has a non-constant value: {}"sv)),((variant).name),((enum_).name),value_expression))),((variant).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum variant '{}' in enum '{}' has a non-constant value: {}"sv)),((variant).name),((enum_).name),value_expression),((variant).span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -1559,7 +1559,7 @@ break;
 parser::SumEnumVariant variant = (_magic_value.value());
 {
 if (((seen_names).contains(((variant).name)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant '{}' is defined more than once"sv)),((variant).name)))),((variant).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum variant '{}' is defined more than once"sv)),((variant).name)),((variant).span)))));
 continue;
 }
 TRY((((seen_names).add(((variant).name)))));
@@ -1645,7 +1645,7 @@ size_t i = (_magic_value.value());
 parser::ParsedVarDecl const param = ((variant_params)[i]);
 JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const default_value = ((variant_default_values)[i]);
 if (((seen_fields).contains(((param).name)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant '{}' has a member named '{}' more than once"sv)),((variant).name),((param).name)))),((param).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum variant '{}' has a member named '{}' more than once"sv)),((variant).name),((param).name)),((param).span)))));
 continue;
 }
 TRY((((seen_fields).add(((param).name)))));
@@ -1687,8 +1687,8 @@ TRY((((((enum_).variants)).push(types::CheckedEnumVariant::StructLike(enum_id,((
 JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const maybe_enum_variant_constructor = TRY((((*this).find_functions_with_name_in_scope(((enum_).scope_id),((variant).name),JaktInternal::OptionalNone()))));
 if ((!(((maybe_enum_variant_constructor).has_value())))){
 bool const can_function_throw = is_boxed;
-ids::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope_id,can_function_throw,TRY((__jakt_format((StringView::from_string_literal("enum-variant-constructor({}::{})"sv)),((enum_).name),((variant).name)))),true))));
-ids::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,can_function_throw,TRY((__jakt_format((StringView::from_string_literal("enum-variant-constructor-block({}::{})"sv)),((enum_).name),((variant).name)))),true))));
+ids::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope_id,can_function_throw,__jakt_format((StringView::from_string_literal("enum-variant-constructor({}::{})"sv)),((enum_).name),((variant).name)),true))));
+ids::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,can_function_throw,__jakt_format((StringView::from_string_literal("enum-variant-constructor-block({}::{})"sv)),((enum_).name),((variant).name)),true))));
 NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(((variant).name),((variant).span),types::CheckedVisibility::Public(),TRY((((*this).find_or_add_type_id(TRY((types::Type::Enum(parser::CheckedQualifiers(false),enum_id))))))),JaktInternal::OptionalNone(),params,TRY((types::FunctionGenerics::__jakt_create(function_scope_id,params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id,types::BlockControlFlow::MayReturn(),ids::TypeId::none(),false),can_function_throw,parser::FunctionType::ImplicitEnumConstructor(),parser::FunctionLinkage::Internal(),function_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),parser::InlineState::Default())));
 ids::FunctionId const function_id = TRY((((module)->add_function(checked_function))));
 TRY((((*this).add_function_to_scope(((enum_).scope_id),((variant).name),(TRY((DynamicArray<ids::FunctionId>::create_with({function_id})))),((variant).span)))));
@@ -1717,8 +1717,8 @@ TRY((((((enum_).variants)).push(types::CheckedEnumVariant::Typed(enum_id,((varia
 JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const maybe_enum_variant_constructor = TRY((((*this).find_functions_with_name_in_scope(((enum_).scope_id),((variant).name),JaktInternal::OptionalNone()))));
 if ((!(((maybe_enum_variant_constructor).has_value())))){
 bool const can_function_throw = is_boxed;
-ids::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope_id,can_function_throw,TRY((__jakt_format((StringView::from_string_literal("enum-variant-constructor({}::{})"sv)),((enum_).name),((variant).name)))),true))));
-ids::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,can_function_throw,TRY((__jakt_format((StringView::from_string_literal("enum-variant-constructor-block({}::{})"sv)),((enum_).name),((variant).name)))),true))));
+ids::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope_id,can_function_throw,__jakt_format((StringView::from_string_literal("enum-variant-constructor({}::{})"sv)),((enum_).name),((variant).name)),true))));
+ids::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,can_function_throw,__jakt_format((StringView::from_string_literal("enum-variant-constructor-block({}::{})"sv)),((enum_).name),((variant).name)),true))));
 NonnullRefPtr<types::CheckedVariable> const variable = TRY((types::CheckedVariable::__jakt_create((ByteString::must_from_utf8("value"sv)),type_id,false,((param).span),JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
 TRY((((params).push(types::CheckedParameter(false,variable,JaktInternal::OptionalNone())))));
 NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(((variant).name),((variant).span),types::CheckedVisibility::Public(),TRY((((*this).find_or_add_type_id(TRY((types::Type::Enum(parser::CheckedQualifiers(false),enum_id))))))),JaktInternal::OptionalNone(),params,TRY((types::FunctionGenerics::__jakt_create(function_scope_id,params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id,types::BlockControlFlow::AlwaysReturns(),ids::TypeId::none(),false),can_function_throw,parser::FunctionType::ImplicitEnumConstructor(),parser::FunctionLinkage::Internal(),function_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),parser::InlineState::Default())));
@@ -1747,8 +1747,8 @@ TRY((((((enum_).variants)).push(types::CheckedEnumVariant::Untyped(enum_id,((var
 JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const maybe_enum_variant_constructor = TRY((((*this).find_functions_with_name_in_scope(((enum_).scope_id),((variant).name),JaktInternal::OptionalNone()))));
 if ((!(((maybe_enum_variant_constructor).has_value())))){
 bool const can_function_throw = is_boxed;
-ids::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope_id,can_function_throw,TRY((__jakt_format((StringView::from_string_literal("enum-variant-constructor({}::{})"sv)),((enum_).name),((variant).name)))),true))));
-ids::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,can_function_throw,TRY((__jakt_format((StringView::from_string_literal("enum-variant-constructor-block({}::{})"sv)),((enum_).name),((variant).name)))),true))));
+ids::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope_id,can_function_throw,__jakt_format((StringView::from_string_literal("enum-variant-constructor({}::{})"sv)),((enum_).name),((variant).name)),true))));
+ids::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,can_function_throw,__jakt_format((StringView::from_string_literal("enum-variant-constructor-block({}::{})"sv)),((enum_).name),((variant).name)),true))));
 NonnullRefPtr<types::CheckedFunction> const checked_function = TRY((types::CheckedFunction::__jakt_create(((variant).name),((variant).span),types::CheckedVisibility::Public(),TRY((((*this).find_or_add_type_id(TRY((types::Type::Enum(parser::CheckedQualifiers(false),enum_id))))))),JaktInternal::OptionalNone(),params,TRY((types::FunctionGenerics::__jakt_create(function_scope_id,params,(TRY((DynamicArray<types::FunctionGenericParameter>::create_with({})))),(TRY((DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({}))))))),types::CheckedBlock((TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({})))),block_scope_id,types::BlockControlFlow::AlwaysReturns(),ids::TypeId::none(),false),can_function_throw,parser::FunctionType::ImplicitEnumConstructor(),parser::FunctionLinkage::Internal(),function_scope_id,JaktInternal::OptionalNone(),true,JaktInternal::OptionalNone(),false,false,false,false,false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),parser::InlineState::Default())));
 ids::FunctionId const function_id = TRY((((module)->add_function(checked_function))));
 TRY((((*this).add_function_to_scope(((enum_).scope_id),((variant).name),(TRY((DynamicArray<ids::FunctionId>::create_with({function_id})))),((variant).span)))));
@@ -1868,18 +1868,18 @@ TRY((((((*this).generic_inferences)).set(((((((structure).generic_parameters))[i
 }
 
 }
-if (TRY((((callee_candidate)->is_static())))){
+if (((callee_candidate)->is_static())){
 TRY((((*this).error((ByteString::must_from_utf8("Cannot call static method on an instance of an object"sv)),span))));
 }
 else {
 (arg_offset = static_cast<size_t>(1ULL));
 }
 
-if ((TRY((((callee_candidate)->is_mutating()))) && (!((((this_expr.value()))->is_mutable(((*this).program))))))){
+if ((((callee_candidate)->is_mutating()) && (!((((this_expr.value()))->is_mutable(((*this).program))))))){
 TRY((((*this).error((ByteString::must_from_utf8("Cannot call mutating method on an immutable object instance"sv)),span))));
 }
 }
-else if ((!(TRY((((callee_candidate)->is_static())))))){
+else if ((!(((callee_candidate)->is_static())))){
 TRY((((*this).error_with_hint((ByteString::must_from_utf8("Cannot call an instance method statically"sv)),span,(ByteString::must_from_utf8("Add a dot before the method name to call an instance method"sv)),span))));
 }
 i64 total_function_specificity = static_cast<i64>(0LL);
@@ -2046,7 +2046,7 @@ JaktInternal::DynamicArray<ByteString> ss = (TRY((DynamicArray<ByteString>::crea
 ids::ScopeId current_scope_id = scope_id;
 for (;;){
 NonnullRefPtr<types::Scope> const scope = TRY((((*this).get_scope(current_scope_id))));
-ByteString const d = TRY((__jakt_format((StringView::from_string_literal("{} (named {})"sv)),((scope)->debug_name),((scope)->namespace_name))));
+ByteString const d = __jakt_format((StringView::from_string_literal("{} (named {})"sv)),((scope)->debug_name),((scope)->namespace_name));
 TRY((((ss).insert(static_cast<size_t>(0ULL),d))));
 if (((((scope)->parent)).has_value())){
 (current_scope_id = (((scope)->parent).value()));
@@ -2175,7 +2175,7 @@ JaktInternal::DynamicArray<ids::TypeId> const generic_params = ((trait_id_generi
 
 NonnullRefPtr<types::CheckedTrait> const trait_ = ((*this).get_trait(trait_id));
 if (((((((trait_)->generic_parameters)).size())) != (((generic_params).size())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Trait ‘{}’ expects {} generic parameters, but {} were given"sv)),trait_name,((((trait_)->generic_parameters)).size()),((generic_params).size())))),((trait_)->name_span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Trait ‘{}’ expects {} generic parameters, but {} were given"sv)),trait_name,((((trait_)->generic_parameters)).size()),((generic_params).size())),((trait_)->name_span)))));
 continue;
 }
 TRY((((*this).specialize_trait(trait_id,generic_params))));
@@ -2293,7 +2293,7 @@ JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::Dynami
 ids::ScopeId type_scope = scope_id;
 if (((trait_name_scope_id_override).has_value())){
 ids::ScopeId const id = (trait_name_scope_id_override.value());
-ids::ScopeId const aliased_scope_id = TRY((((*this).create_scope(id,false,TRY((__jakt_format((StringView::from_string_literal("trait-alias-mixin({})"sv)),((TRY((((*this).get_scope(id)))))->debug_name)))),false))));
+ids::ScopeId const aliased_scope_id = TRY((((*this).create_scope(id,false,__jakt_format((StringView::from_string_literal("trait-alias-mixin({})"sv)),((TRY((((*this).get_scope(id)))))->debug_name)),false))));
 NonnullRefPtr<types::Scope> scope = TRY((((*this).get_scope(scope_id))));
 TRY((((((scope)->resolution_mixins)).push(aliased_scope_id))));
 }
@@ -2391,13 +2391,13 @@ TRY((((((trait_implementations))).set(((trait_name).name),(TRY((DynamicArray<Jak
 TRY((((result).push((Tuple{trait_id, generic_arguments})))));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Expected ‘{}’ to be a trait"sv)),((trait_name).name)))),((trait_name).name_span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Expected ‘{}’ to be a trait"sv)),((trait_name).name)),((trait_name).name_span)))));
 continue;
 }
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot find trait ‘{}’"sv)),((trait_name).name)))),((trait_name).name_span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot find trait ‘{}’"sv)),((trait_name).name)),((trait_name).name_span)))));
 continue;
 }
 
@@ -2529,7 +2529,7 @@ ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typecheck
 if (((!(((((*this).program))->is_integer(type_id)))) || ((((*this).program))->is_signed(type_id)))){
 return TRY((types::CheckedExpression::UnaryOp(JaktInternal::OptionalNone(),expr,types::CheckedUnaryOperator::Negate(),span,type_id)));
 }
-ids::TypeId const flipped_sign_type = TRY((((((*this).get_type(type_id)))->flip_signedness())));
+ids::TypeId const flipped_sign_type = ((((*this).get_type(type_id)))->flip_signedness());
 types::CheckedNumericConstant const constant = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::CheckedNumericConstant, ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
 auto&& __jakt_match_variant = *expr;
@@ -2551,7 +2551,7 @@ return TRY((types::CheckedExpression::UnaryOp(JaktInternal::OptionalNone(),expr,
     _jakt_value.release_value();
 });
 types::NumberConstant const number = (((constant).number_constant()).value());
-size_t const raw_number = TRY((((number).to_usize())));
+size_t const raw_number = ((number).to_usize());
 size_t const max_signed = (infallible_integer_cast<size_t>((((TRY((types::Type::I64(parser::CheckedQualifiers(false)))))->max()))));
 i64 negated_number = static_cast<i64>(0LL);
 if (((raw_number) == (JaktInternal::checked_add(max_signed,static_cast<size_t>(1ULL))))){
@@ -2581,8 +2581,8 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (self,rhs))))) == (static_cast<u8>(2)));
 }
 }
-(raw_number,JaktInternal::checked_add(max_signed,static_cast<size_t>(1ULL))) || (!(TRY((((negated_number_constant).can_fit_number(flipped_sign_type,((*this).program))))))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Negative literal -{} too small for type ‘{}’"sv)),raw_number,TRY((((*this).type_name(flipped_sign_type,false))))))),span))));
+(raw_number,JaktInternal::checked_add(max_signed,static_cast<size_t>(1ULL))) || (!(((negated_number_constant).can_fit_number(flipped_sign_type,((*this).program))))))){
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Negative literal -{} too small for type ‘{}’"sv)),raw_number,TRY((((*this).type_name(flipped_sign_type,false))))),span))));
 return TRY((types::CheckedExpression::UnaryOp(JaktInternal::OptionalNone(),expr,types::CheckedUnaryOperator::Negate(),span,type_id)));
 }
 types::CheckedNumericConstant const new_constant = ({
@@ -2638,7 +2638,7 @@ ids::ScopeId const function_scope_id = ((checked_function)->function_scope_id);
 parser::FunctionLinkage const function_linkage = ((checked_function)->linkage);
 if (((checked_function)->is_fully_checked)){
 if ((!(((TRY((((*this).get_scope(parent_scope_id)))))->is_from_generated_code)))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Function ‘{}’ is already defined"sv)),((parsed_function).name)))),((parsed_function).name_span),(ByteString::must_from_utf8("Try removing this definition"sv)),(((((checked_function)->parsed_function).value())).name_span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Function ‘{}’ is already defined"sv)),((parsed_function).name)),((parsed_function).name_span),(ByteString::must_from_utf8("Try removing this definition"sv)),(((((checked_function)->parsed_function).value())).name_span)))));
 }
 return {};
 }
@@ -2707,7 +2707,7 @@ TRY((((*this).error((ByteString::must_from_utf8("Control reaches end of non-void
 (((*this).current_function_id) = JaktInternal::OptionalNone());
 }
 else {
-TRY((((((*this).compiler))->panic(TRY((__jakt_format((StringView::from_string_literal("Previously defined function {} not found in scope {}"sv)),((parsed_function).name),parent_scope_id)))))));
+TRY((((((*this).compiler))->panic(__jakt_format((StringView::from_string_literal("Previously defined function {} not found in scope {}"sv)),((parsed_function).name),parent_scope_id)))));
 }
 
 }
@@ -2871,7 +2871,7 @@ break;
 parser::ParsedRecord nested_record = (_magic_value.value());
 {
 TRY((((*this).warn_about_unimplemented_nested_record(nested_record))));
-((records_to_process).enqueue((Tuple{nested_record, TRY((((id).scope_id(((((*this).program)))))))})));
+((records_to_process).enqueue((Tuple{nested_record, ((id).scope_id(((((*this).program)))))})));
 }
 
 }
@@ -3085,7 +3085,7 @@ ErrorOr<void> typechecker::Typechecker::typecheck_struct_constructor(parser::Par
 ids::TypeId const struct_type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::Struct(parser::CheckedQualifiers(false),struct_id)))))));
 (((*this).current_struct_type_id) = struct_type_id);
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(struct_type_id))));
+((*this).set_self_type_id(struct_type_id));
 ScopeGuard __jakt_var_451([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -3113,8 +3113,8 @@ NonnullRefPtr<types::CheckedFunction> func = ((*this).get_function(constructor_i
 }
 else if ((!(((((parsed_record).definition_linkage)).__jakt_init_index() == 1 /* External */)))){
 bool const constructor_can_throw = ((((parsed_record).record_type)).__jakt_init_index() == 1 /* Class */);
-ids::ScopeId const function_scope_id = TRY((((*this).create_scope(((struct_).scope_id),constructor_can_throw,TRY((__jakt_format((StringView::from_string_literal("generated-constructor({})"sv)),((parsed_record).name)))),true))));
-ids::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,constructor_can_throw,TRY((__jakt_format((StringView::from_string_literal("generated-constructor-block({})"sv)),((parsed_record).name)))),true))));
+ids::ScopeId const function_scope_id = TRY((((*this).create_scope(((struct_).scope_id),constructor_can_throw,__jakt_format((StringView::from_string_literal("generated-constructor({})"sv)),((parsed_record).name)),true))));
+ids::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,constructor_can_throw,__jakt_format((StringView::from_string_literal("generated-constructor-block({})"sv)),((parsed_record).name)),true))));
 JaktInternal::DynamicArray<ids::StructId> const inheritance_chain = TRY((((*this).struct_inheritance_chain(struct_id))));
 JaktInternal::DynamicArray<types::CheckedParameter> constructor_parameters = (TRY((DynamicArray<types::CheckedParameter>::create_with({}))));
 size_t const parent_index_in_chain = ({
@@ -3261,7 +3261,7 @@ __jakt_label_416:; __jakt_var_452.release_value(); }));
 }
 else if (__jakt_enum_value == false) {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as only enums, structs and classes can implement the required traits"sv)),TRY((((*this).type_name(generic_argument,false))))))),arg_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as only enums, structs and classes can implement the required traits"sv)),TRY((((*this).type_name(generic_argument,false))))),arg_span))));
 {
 return ErrorOr<void>{};
 }
@@ -3305,7 +3305,7 @@ case 0 /* Nothing */: {
 ByteString const trait_name = ((trait_)->name);
 JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> const implemented_trait = ((implemented_traits).get(trait_name));
 if (((!(((implemented_trait).has_value()))) || (!((((((((implemented_trait.value())).first())).map([](auto& _value) { return _value.template get<0>(); }))).map([&](auto& _value) { return _value.equals(constraint); })).value_or_lazy_evaluated([&] { return false; }))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’"sv)),TRY((((*this).type_name(generic_argument,false)))),trait_name))),arg_span,(ByteString::must_from_utf8("Consider implementing the required trait for this type"sv)),decl_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’"sv)),TRY((((*this).type_name(generic_argument,false)))),trait_name),arg_span,(ByteString::must_from_utf8("Consider implementing the required trait for this type"sv)),decl_span))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -3315,7 +3315,7 @@ case 1 /* Methods */: {
 ByteString const trait_name = ((trait_)->name);
 JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> const implemented_trait = ((implemented_traits).get(trait_name));
 if (((!(((implemented_trait).has_value()))) || (!((((((((implemented_trait.value())).first())).map([](auto& _value) { return _value.template get<0>(); }))).map([&](auto& _value) { return _value.equals(constraint); })).value_or_lazy_evaluated([&] { return false; }))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’"sv)),TRY((((*this).type_name(generic_argument,false)))),trait_name))),arg_span,(ByteString::must_from_utf8("Consider implementing the required trait for this type"sv)),decl_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’"sv)),TRY((((*this).type_name(generic_argument,false)))),trait_name),arg_span,(ByteString::must_from_utf8("Consider implementing the required trait for this type"sv)),decl_span))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -3347,7 +3347,7 @@ return JaktInternal::ExplicitValue(x);
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_455; {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid result type for comptime requirements in trait ‘{}’, expected ‘bool’ but got ‘{}’"sv)),((trait_)->name),((value).impl)))),arg_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid result type for comptime requirements in trait ‘{}’, expected ‘bool’ but got ‘{}’"sv)),((trait_)->name),((value).impl)),arg_span))));
 __jakt_var_455 = false; goto __jakt_label_417;
 
 }
@@ -3367,7 +3367,7 @@ __jakt_label_417:; __jakt_var_455.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_456; {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Invalid result type for comptime requirements in trait ‘{}’, expected ‘bool’ but got ‘{}’"sv)),((trait_)->name),result))),arg_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Invalid result type for comptime requirements in trait ‘{}’, expected ‘bool’ but got ‘{}’"sv)),((trait_)->name),result),arg_span))));
 __jakt_var_456 = false; goto __jakt_label_418;
 
 }
@@ -3386,7 +3386,7 @@ __jakt_label_418:; __jakt_var_456.release_value(); }));
 }));
 }
 if ((!(meets_requirement))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as it doesn't meet the comptime requirements for ‘{}’"sv)),TRY((((*this).type_name(generic_argument,false)))),((trait_)->name)))),arg_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot use ‘{}’ here as it doesn't meet the comptime requirements for ‘{}’"sv)),TRY((((*this).type_name(generic_argument,false)))),((trait_)->name)),arg_span))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -3489,7 +3489,7 @@ TRY((((builder).append((StringView::from_string_literal(" -> "sv))))));
 TRY((((builder).append(TRY((((*this).type_name(((function)->return_type_id),false))))))));
 if (((((function)->specialization_index)).has_value())){
 size_t const index = (((function)->specialization_index).value());
-TRY((((builder).append(TRY((__jakt_format((StringView::from_string_literal(" [specialization {}: <"sv)),index)))))));
+TRY((((builder).append(__jakt_format((StringView::from_string_literal(" [specialization {}: <"sv)),index)))));
 JaktInternal::DynamicArray<ids::TypeId> const type_ids = ((((((function)->generics))->specializations))[index]);
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((type_ids).size()))});
@@ -3689,13 +3689,13 @@ continue;
 TRY((((named_requirements).push((Tuple{((parameter).name), ((parameter).span), trait_requirements})))));
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("forall type '{}' is not allowed to be unconditional"sv)),((parameter).name)))),((parameter).span),(ByteString::must_from_utf8("Try adding a 'requires' clause to the this type"sv)),((parameter).span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("forall type '{}' is not allowed to be unconditional"sv)),((parameter).name)),((parameter).span),(ByteString::must_from_utf8("Try adding a 'requires' clause to the this type"sv)),((parameter).span)))));
 continue;
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("forall type '{}' is not allowed to be unconditional"sv)),((parameter).name)))),((parameter).span),(ByteString::must_from_utf8("Try adding a 'requires' clause to the this type"sv)),((parameter).span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("forall type '{}' is not allowed to be unconditional"sv)),((parameter).name)),((parameter).span),(ByteString::must_from_utf8("Try adding a 'requires' clause to the this type"sv)),((parameter).span)))));
 continue;
 }
 
@@ -3801,7 +3801,7 @@ else {
 return JaktInternal::ExplicitValue(({ Optional<parser::ParsedName> __jakt_var_458; {
 parser::ParsedNameWithGenericParameters const name = (((((alias).target)).last()).value());
 if ((!(((((name).generic_parameters)).is_empty())))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Cannot alias a generic instance of a type to the type itself"sv))))),((name).name_span),TRY((__jakt_format((StringView::from_string_literal("Add an alias name here: 'as <name>'"sv))))),((name).name_span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Cannot alias a generic instance of a type to the type itself"sv))),((name).name_span),__jakt_format((StringView::from_string_literal("Add an alias name here: 'as <name>'"sv))),((name).name_span)))));
 }
 __jakt_var_458 = parser::ParsedName(((name).name),((name).name_span)); goto __jakt_label_419;
 
@@ -3826,7 +3826,7 @@ size_t i = (_magic_value.value());
 {
 JaktInternal::Optional<JaktInternal::Tuple<ids::ScopeId,bool>> const namespace_ = TRY((((*this).find_namespace_in_scope(resolved_scope_id,((((((alias).target))[i])).name),false,JaktInternal::OptionalNone()))));
 if ((!(((namespace_).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unknown namespace '{}'"sv)),((((((alias).target))[i])).name)))),((((((alias).target))[i])).name_span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Unknown namespace '{}'"sv)),((((((alias).target))[i])).name)),((((((alias).target))[i])).name_span)))));
 return {};
 }
 (resolved_scope_id = (((namespace_.value())).template get<0>()));
@@ -3845,7 +3845,7 @@ return JaktInternal::ExplicitValue((((scope)->alias_scope).value()));
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(({ Optional<ids::ScopeId> __jakt_var_459; {
-ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,false,TRY((__jakt_format((StringView::from_string_literal("alias-scope({})"sv)),((scope)->debug_name)))),false))));
+ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,false,__jakt_format((StringView::from_string_literal("alias-scope({})"sv)),((scope)->debug_name)),false))));
 NonnullRefPtr<types::Scope> new_scope = TRY((((*this).get_scope(new_scope_id))));
 (((new_scope)->alias_path) = alias_path);
 TRY((((((TRY((((*this).get_scope(scope_id)))))->children)).push(new_scope_id))));
@@ -3885,19 +3885,19 @@ utility::Span const& span = __jakt_match_value.span;
 if (((((*this).get_type(expr_type_id)))->__jakt_init_index() == 25 /* Enum */)){
 ids::EnumId const enum_id = (((*this).get_type(expr_type_id)))->as.Enum.value;
 types::CheckedEnum const enum_ = ((*this).get_enum(enum_id));
-JaktInternal::Optional<types::CheckedEnumVariant> const variant = TRY((((*this).get_enum_variant(enum_,variant_name))));
+JaktInternal::Optional<types::CheckedEnumVariant> const variant = ((*this).get_enum_variant(enum_,variant_name));
 if (((variant).has_value())){
 JaktInternal::Optional<JaktInternal::DynamicArray<types::CheckedEnumVariantBinding>> const checked_enum_variant_bindings = TRY((((*this).typecheck_enum_variant_bindings((variant.value()),bindings,span))));
 (checked_op = types::CheckedUnaryOperator::IsEnumVariant((variant.value()),(checked_enum_variant_bindings.value()),expr_type_id));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant {} does not exist on {}"sv)),variant_name,TRY((((*this).type_name(type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum variant {} does not exist on {}"sv)),variant_name,TRY((((*this).type_name(type_id,false))))),span))));
 return checked_op;
 }
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unknown type or invalid type name: {}"sv)),variant_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Unknown type or invalid type name: {}"sv)),variant_name),span))));
 return checked_op;
 }
 
@@ -3911,19 +3911,19 @@ utility::Span const& span = __jakt_match_value.span;
 if (((((*this).get_type(expr_type_id)))->__jakt_init_index() == 25 /* Enum */)){
 ids::EnumId const enum_id = (((*this).get_type(expr_type_id)))->as.Enum.value;
 types::CheckedEnum const enum_ = ((*this).get_enum(enum_id));
-JaktInternal::Optional<types::CheckedEnumVariant> const variant = TRY((((*this).get_enum_variant(enum_,variant_name))));
+JaktInternal::Optional<types::CheckedEnumVariant> const variant = ((*this).get_enum_variant(enum_,variant_name));
 if (((variant).has_value())){
 JaktInternal::Optional<JaktInternal::DynamicArray<types::CheckedEnumVariantBinding>> const checked_enum_variant_bindings = TRY((((*this).typecheck_enum_variant_bindings((variant.value()),bindings,span))));
 (checked_op = types::CheckedUnaryOperator::IsEnumVariant((variant.value()),(checked_enum_variant_bindings.value()),expr_type_id));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant {} does not exist on {}"sv)),variant_name,TRY((((*this).type_name(type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum variant {} does not exist on {}"sv)),variant_name,TRY((((*this).type_name(type_id,false))))),span))));
 return checked_op;
 }
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unknown type or invalid type name: {}"sv)),variant_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Unknown type or invalid type name: {}"sv)),variant_name),span))));
 return checked_op;
 }
 
@@ -3952,10 +3952,10 @@ NonnullRefPtr<types::Scope> scope = TRY((((*this).get_scope(scope_id))));
 JaktInternal::Optional<ids::VarId> const existing_var = ((((scope)->vars)).get(name));
 if (((existing_var).has_value())){
 NonnullRefPtr<types::CheckedVariable> const variable_ = ((*this).get_variable((existing_var.value())));
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Redefinition of variable ‘{}’"sv)),name))),span,(ByteString::must_from_utf8("previous definition here"sv)),((variable_)->definition_span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Redefinition of variable ‘{}’"sv)),name),span,(ByteString::must_from_utf8("previous definition here"sv)),((variable_)->definition_span)))));
 }
 TRY((((((scope)->vars)).set(name,var_id))));
-TRY((((((*this).program))->set_owner_scope_if_needed(scope_id,var_id))));
+((((*this).program))->set_owner_scope_if_needed(scope_id,var_id));
 return true;
 }
 }
@@ -3965,7 +3965,7 @@ ErrorOr<bool> typechecker::Typechecker::add_comptime_binding_to_scope(ids::Scope
 NonnullRefPtr<types::Scope> scope = TRY((((*this).get_scope(scope_id))));
 JaktInternal::Optional<types::Value> const existing_binding = ((((scope)->comptime_bindings)).get(name));
 if (((existing_binding).has_value())){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Redefinition of comptime variable ‘{}’"sv)),name))),span,(ByteString::must_from_utf8("previous definition here"sv)),(((existing_binding.value())).span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Redefinition of comptime variable ‘{}’"sv)),name),span,(ByteString::must_from_utf8("previous definition here"sv)),(((existing_binding.value())).span)))));
 }
 TRY((((((scope)->comptime_bindings)).set(name,value))));
 return true;
@@ -4073,7 +4073,7 @@ return (!(((self) == (rhs))));
 }
 }
 (((((variant_names_)[static_cast<i64>(0LL)])).template get<0>()),((enum_).name))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match case '{}' does not match enum '{}'"sv)),((((variant_names_)[static_cast<i64>(0LL)])).template get<0>()),((enum_).name)))),((((variant_names_)[static_cast<i64>(0LL)])).template get<1>())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Match case '{}' does not match enum '{}'"sv)),((((variant_names_)[static_cast<i64>(0LL)])).template get<0>()),((enum_).name)),((((variant_names_)[static_cast<i64>(0LL)])).template get<1>())))));
 return JaktInternal::LoopContinue{};
 }
 size_t i = static_cast<size_t>(0ULL);
@@ -4099,7 +4099,7 @@ if (((((v).name())) == (((((variant_names_)[static_cast<i64>(1LL)])).template ge
 }
 
 if ((!(((matched_variant).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum '{}' does not contain a variant named '{}'"sv)),((enum_).name),((((variant_names_)[static_cast<i64>(1LL)])).template get<0>())))),((case_).marker_span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum '{}' does not contain a variant named '{}'"sv)),((enum_).name),((((variant_names_)[static_cast<i64>(1LL)])).template get<0>())),((case_).marker_span)))));
 return TRY((types::CheckedExpression::Match(JaktInternal::OptionalNone(),checked_expr,(TRY((DynamicArray<types::CheckedMatchCase>::create_with({})))),span,types::unknown_type_id(),false)));
 }
 JaktInternal::Tuple<JaktInternal::Optional<ByteString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>> const covered_name_checked_match_case_result_type_ = TRY((((*this).typecheck_match_variant(case_,subject_type_id,(variant_index.value()),final_result_type,(matched_variant.value()),variant_arguments,((pattern).common.init_common.defaults),arguments_span,scope_id,safety_mode))));
@@ -4278,7 +4278,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 (((missing_variants).size()),static_cast<size_t>(0ULL))){
 if ((!(seen_catch_all))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),TRY((utility::join(missing_variants,(ByteString::must_from_utf8(", "sv)))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),TRY((utility::join(missing_variants,(ByteString::must_from_utf8(", "sv)))))),span))));
 }
 }
 else if ((seen_catch_all && (!(expanded_catch_all)))){
@@ -4338,7 +4338,7 @@ return (!(((self) == (rhs))));
 }
 }
 (((((variant_names_)[static_cast<i64>(0LL)])).template get<0>()),((enum_).name))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match case '{}' does not match enum '{}'"sv)),((((variant_names_)[static_cast<i64>(0LL)])).template get<0>()),((enum_).name)))),((((variant_names_)[static_cast<i64>(0LL)])).template get<1>())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Match case '{}' does not match enum '{}'"sv)),((((variant_names_)[static_cast<i64>(0LL)])).template get<0>()),((enum_).name)),((((variant_names_)[static_cast<i64>(0LL)])).template get<1>())))));
 return JaktInternal::LoopContinue{};
 }
 size_t i = static_cast<size_t>(0ULL);
@@ -4364,7 +4364,7 @@ if (((((v).name())) == (((((variant_names_)[static_cast<i64>(1LL)])).template ge
 }
 
 if ((!(((matched_variant).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum '{}' does not contain a variant named '{}'"sv)),((enum_).name),((((variant_names_)[static_cast<i64>(1LL)])).template get<0>())))),((case_).marker_span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum '{}' does not contain a variant named '{}'"sv)),((enum_).name),((((variant_names_)[static_cast<i64>(1LL)])).template get<0>())),((case_).marker_span)))));
 return TRY((types::CheckedExpression::Match(JaktInternal::OptionalNone(),checked_expr,(TRY((DynamicArray<types::CheckedMatchCase>::create_with({})))),span,types::unknown_type_id(),false)));
 }
 JaktInternal::Tuple<JaktInternal::Optional<ByteString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>> const covered_name_checked_match_case_result_type_ = TRY((((*this).typecheck_match_variant(case_,subject_type_id,(variant_index.value()),final_result_type,(matched_variant.value()),variant_arguments,((pattern).common.init_common.defaults),arguments_span,scope_id,safety_mode))));
@@ -4543,7 +4543,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 (((missing_variants).size()),static_cast<size_t>(0ULL))){
 if ((!(seen_catch_all))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),TRY((utility::join(missing_variants,(ByteString::must_from_utf8(", "sv)))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),TRY((utility::join(missing_variants,(ByteString::must_from_utf8(", "sv)))))),span))));
 }
 }
 else if ((seen_catch_all && (!(expanded_catch_all)))){
@@ -4672,7 +4672,7 @@ break;
 ids::StructId covered_case = (_magic_value.value());
 {
 if (TRY((((*this).struct_inherits_from(id,covered_case,JaktInternal::OptionalNone()))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Type ‘{}’ used as a match case at this position is redundant"sv)),TRY((((*this).type_name(type,false))))))),((case_).marker_span),TRY((__jakt_format((StringView::from_string_literal("Type ‘{}’ (a supertype of ‘{}’) has been covered by a case above"sv)),((((*this).get_struct(covered_case))).name),TRY((((*this).type_name(type,false))))))),((case_).marker_span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Type ‘{}’ used as a match case at this position is redundant"sv)),TRY((((*this).type_name(type,false))))),((case_).marker_span),__jakt_format((StringView::from_string_literal("Type ‘{}’ (a supertype of ‘{}’) has been covered by a case above"sv)),((((*this).get_struct(covered_case))).name),TRY((((*this).type_name(type,false))))),((case_).marker_span)))));
 }
 }
 
@@ -4704,7 +4704,7 @@ case 24 /* Struct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Struct;ids::StructId const& id = __jakt_match_value.value;
 {
 if (((!(TRY((((*this).struct_inherits_from(struct_to_match_on,id,struct_inheritance_chain)))))) && (!(TRY((((*this).struct_inherits_from(id,struct_to_match_on,JaktInternal::OptionalNone())))))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Type ‘{}’ cannot be used as a match case for ‘{}’"sv)),TRY((((*this).type_name(type,false)))),TRY((((*this).type_name(subject_type_id,false))))))),((case_).marker_span),TRY((__jakt_format((StringView::from_string_literal("Neither ‘{}’ nor ‘{}’ are super types of the other"sv)),TRY((((*this).type_name(type,false)))),TRY((((*this).type_name(subject_type_id,false))))))),((case_).marker_span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Type ‘{}’ cannot be used as a match case for ‘{}’"sv)),TRY((((*this).type_name(type,false)))),TRY((((*this).type_name(subject_type_id,false))))),((case_).marker_span),__jakt_format((StringView::from_string_literal("Neither ‘{}’ nor ‘{}’ are super types of the other"sv)),TRY((((*this).type_name(type,false)))),TRY((((*this).type_name(subject_type_id,false))))),((case_).marker_span)))));
 }
 else {
 TRY((check_cover_overlap(id)));
@@ -4718,7 +4718,7 @@ case 20 /* GenericInstance */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructId const& id = __jakt_match_value.id;
 {
 if (((!(TRY((((*this).struct_inherits_from(struct_to_match_on,id,struct_inheritance_chain)))))) && (!(TRY((((*this).struct_inherits_from(id,struct_to_match_on,JaktInternal::OptionalNone())))))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Type ‘{}’ cannot be used as a match case for ‘{}’"sv)),TRY((((*this).type_name(type,false)))),TRY((((*this).type_name(subject_type_id,false))))))),((case_).marker_span),TRY((__jakt_format((StringView::from_string_literal("Neither ‘{}’ nor ‘{}’ are super types of the other"sv)),TRY((((*this).type_name(type,false)))),TRY((((*this).type_name(subject_type_id,false))))))),((case_).marker_span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Type ‘{}’ cannot be used as a match case for ‘{}’"sv)),TRY((((*this).type_name(type,false)))),TRY((((*this).type_name(subject_type_id,false))))),((case_).marker_span),__jakt_format((StringView::from_string_literal("Neither ‘{}’ nor ‘{}’ are super types of the other"sv)),TRY((((*this).type_name(type,false)))),TRY((((*this).type_name(subject_type_id,false))))),((case_).marker_span)))));
 }
 else {
 TRY((check_cover_overlap(id)));
@@ -4730,7 +4730,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type ‘{}’ cannot be used as a match case for ‘{}’"sv)),TRY((((*this).type_name(type,false)))),TRY((((*this).type_name(subject_type_id,false))))))),((case_).marker_span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type ‘{}’ cannot be used as a match case for ‘{}’"sv)),TRY((((*this).type_name(type,false)))),TRY((((*this).type_name(subject_type_id,false))))),((case_).marker_span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -4747,7 +4747,7 @@ return JaktInternal::ExplicitValue<void>();
 });
 }
 
-ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY((__jakt_format((StringView::from_string_literal("class-variant({})"sv)),names))),true))));
+ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),__jakt_format((StringView::from_string_literal("class-variant({})"sv)),names),true))));
 JaktInternal::Optional<types::ClassInstanceRebind> rebind_name = JaktInternal::OptionalNone();
 if ((!(((variant_arguments).is_empty())))){
 if (((((variant_arguments).size())) != (static_cast<size_t>(1ULL)))){
@@ -4836,7 +4836,7 @@ ids::StructId struct_id = (_magic_value.value());
 {
 if ((!(((covered_cases).contains(struct_id))))){
 ByteString const struct_name = ((((*this).get_struct(struct_id))).name);
-TRY((((missing).add(TRY((__jakt_format((StringView::from_string_literal("‘{}’"sv)),struct_name)))))));
+TRY((((missing).add(__jakt_format((StringView::from_string_literal("‘{}’"sv)),struct_name)))));
 }
 }
 
@@ -4921,7 +4921,7 @@ if (((((variant_names).size())) == (static_cast<size_t>(0ULL)))){
 TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("typecheck_match - else - EnumVariant - variant_names.size() == 0"sv))))));
 }
 (is_enum_match = true);
-ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY((__jakt_format((StringView::from_string_literal("catch-enum-variant({})"sv)),variant_names))),true))));
+ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),__jakt_format((StringView::from_string_literal("catch-enum-variant({})"sv)),variant_names),true))));
 JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults = (TRY((DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({}))));
 {
 JaktInternal::DictionaryIterator<ByteString,parser::ParsedPatternDefault> _magic = ((((pattern).common.init_common.defaults)).iterator());
@@ -5054,7 +5054,7 @@ TRY((((*this).check_types_for_compat(expression_type,subject_type_id,((((*this).
 if ((!(((((pattern).common.init_common.defaults)).is_empty())))){
 TRY((((*this).error((ByteString::must_from_utf8("Expression patterns cannot have default bindings"sv)),((case_).marker_span)))));
 }
-ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY((__jakt_format((StringView::from_string_literal("catch-expression({})"sv)),expr))),true))));
+ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),__jakt_format((StringView::from_string_literal("catch-expression({})"sv)),expr),true))));
 JaktInternal::Tuple<types::CheckedMatchBody,JaktInternal::Optional<ids::TypeId>> const checked_body_result_type_ = TRY((((*this).typecheck_match_body(((case_).body),new_scope_id,safety_mode,((((*this).generic_inferences))),final_result_type,((case_).marker_span)))));
 types::CheckedMatchBody const checked_body = ((checked_body_result_type_).template get<0>());
 JaktInternal::Optional<ids::TypeId> const result_type = ((checked_body_result_type_).template get<1>());
@@ -5223,13 +5223,13 @@ TRY((((((trait_implementations))).push((type_id.value())))));
 TRY((((((trait_requirements))).push(trait_id))));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Requirement ‘{}’ is not a trait"sv)),((name).name)))),((name).name_span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Requirement ‘{}’ is not a trait"sv)),((name).name)),((name).name_span)))));
 continue;
 }
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Couldn't find trait ‘{}’"sv)),((name).name)))),((name).name_span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Couldn't find trait ‘{}’"sv)),((name).name)),((name).name_span)))));
 continue;
 }
 
@@ -5323,7 +5323,7 @@ return JaktInternal::OptionalNone();
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typechecker::typecheck_dictionary(JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,NonnullRefPtr<typename parser::ParsedExpression>>> const values,utility::Span const span,ids::ScopeId const scope_id,types::SafetyMode const safety_mode,JaktInternal::Optional<ids::TypeId> const type_hint) {
 {
 if (((*this).dump_try_hints)){
-TRY((((*this).dump_try_hint(span))));
+((*this).dump_try_hint(span));
 }
 ids::StructId const dictionary_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Dictionary"sv))))));
 JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename types::CheckedExpression>,NonnullRefPtr<typename types::CheckedExpression>>> checked_kv_pairs = (TRY((DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename types::CheckedExpression>,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({}))));
@@ -5372,12 +5372,12 @@ else {
 if ((!(((key_type_id).equals(current_key_type_id))))){
 ByteString const key_type_name = TRY((((*this).type_name(key_type_id,false))));
 ByteString const current_key_type_name = TRY((((*this).type_name(current_key_type_id,false))));
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Type '{}' does not match type '{}' of previous keys in dictionary"sv)),current_key_type_name,key_type_name))),((key)->span()),TRY((__jakt_format((StringView::from_string_literal("Dictionary was inferred to store keys of type '{}' here"sv)),key_type_name))),(key_type_span.value())))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Type '{}' does not match type '{}' of previous keys in dictionary"sv)),current_key_type_name,key_type_name),((key)->span()),__jakt_format((StringView::from_string_literal("Dictionary was inferred to store keys of type '{}' here"sv)),key_type_name),(key_type_span.value())))));
 }
 if ((!(((value_type_id).equals(current_value_type_id))))){
 ByteString const value_type_name = TRY((((*this).type_name(value_type_id,false))));
 ByteString const current_value_type_name = TRY((((*this).type_name(current_value_type_id,false))));
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Type '{}' does not match type '{}' of previous values in dictionary"sv)),current_value_type_name,value_type_name))),((value)->span()),TRY((__jakt_format((StringView::from_string_literal("Dictionary was inferred to store values of type '{}' here"sv)),value_type_name))),(value_type_span.value())))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Type '{}' does not match type '{}' of previous values in dictionary"sv)),current_value_type_name,value_type_name),((value)->span()),__jakt_format((StringView::from_string_literal("Dictionary was inferred to store values of type '{}' here"sv)),value_type_name),(value_type_span.value())))));
 }
 }
 
@@ -5649,15 +5649,15 @@ return (Tuple{checked_operator, inner_type_id});
 }
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
 }
 
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return (Tuple{checked_operator, lhs_type_id});
 }
 return JaktInternal::ExplicitValue<void>();
@@ -5692,15 +5692,15 @@ return (Tuple{checked_operator, inner_type_id});
 }
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,(ByteString::must_from_utf8("Left side of ?? must be an Optional but isn't"sv)),lhs_span))));
 }
 
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("None coalescing (??) with incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return (Tuple{checked_operator, lhs_type_id});
 }
 return JaktInternal::ExplicitValue<void>();
@@ -5767,7 +5767,7 @@ return (Tuple{checked_operator, (unified_type.value())});
 ids::TypeId const effective_lhs_type_id = TRY((((*this).find_or_add_type_id(lhs_type))));
 JaktInternal::Optional<ids::TypeId> const result = TRY((((*this).unify(rhs_type_id,rhs_span,effective_lhs_type_id,lhs_span))));
 if ((!(((result).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Assignment between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Assignment between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 }
 return (Tuple{checked_operator, ((result).value_or(lhs_type_id))});
 }
@@ -5943,10 +5943,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -5960,7 +5960,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -5978,29 +5978,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -6012,12 +5995,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -6195,10 +6195,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -6212,7 +6212,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -6230,29 +6230,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -6264,12 +6247,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -6447,10 +6447,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -6464,7 +6464,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -6482,29 +6482,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -6516,12 +6499,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -6699,10 +6699,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -6716,7 +6716,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -6734,29 +6734,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -6768,12 +6751,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -6951,10 +6951,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -6968,7 +6968,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -6986,29 +6986,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -7020,12 +7003,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -7203,10 +7203,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -7220,7 +7220,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -7238,29 +7238,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -7272,12 +7255,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -7455,10 +7455,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -7472,7 +7472,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -7490,29 +7490,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -7524,12 +7507,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -7707,10 +7707,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -7724,7 +7724,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -7742,29 +7742,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -7776,12 +7759,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -7959,10 +7959,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -7976,7 +7976,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -7994,29 +7994,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -8028,12 +8011,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -8211,10 +8211,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -8228,7 +8228,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -8246,29 +8246,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -8280,12 +8263,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -8463,10 +8463,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -8480,7 +8480,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -8498,29 +8498,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -8532,12 +8515,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -8715,10 +8715,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -8732,7 +8732,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -8750,29 +8750,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -8784,12 +8767,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -8967,10 +8967,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -8984,7 +8984,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -9002,29 +9002,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -9036,12 +9019,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -9219,10 +9219,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -9236,7 +9236,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -9254,29 +9254,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -9288,12 +9271,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -9471,10 +9471,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -9488,7 +9488,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -9506,29 +9506,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -9540,12 +9523,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -9723,10 +9723,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -9740,7 +9740,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -9758,29 +9758,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -9792,12 +9775,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -9975,10 +9975,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -9992,7 +9992,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -10010,29 +10010,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -10044,12 +10027,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -10227,10 +10227,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -10244,7 +10244,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -10262,29 +10262,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -10296,12 +10279,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -10479,10 +10479,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -10496,7 +10496,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -10514,29 +10514,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -10548,12 +10531,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -10731,10 +10731,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -10748,7 +10748,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -10766,29 +10766,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -10800,12 +10783,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -10983,10 +10983,10 @@ JaktInternal::Tuple<JaktInternal::Optional<types::StructLikeId>,bool> const pare
 JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id___).template get<0>());
 bool const _ = ((parent_id___).template get<1>());
 
-JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,TRY((((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })))).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
+JaktInternal::Optional<ids::FunctionId> const implementation_function_id = TRY((((*this).find_function_matching_trait_implementation_in_scope(lhs_type_id,((parent_id).map([&](auto& _value) { return _value.scope_id(((((*this).program)))); })).value_or_lazy_evaluated([&] { return scope_id; }),function_name,((implementation))))));
 if (((implementation_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const implementation_function = ((*this).get_function((implementation_function_id.value())));
-if ((TRY((((implementation_function)->is_mutating()))) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
+if ((((implementation_function)->is_mutating()) && (!(((checked_lhs)->is_mutable(((*this).program))))))){
 if (is_assignment){
 TRY((((*this).error((ByteString::must_from_utf8("Assignment to immutable variable"sv)),span))));
 }
@@ -11000,7 +11000,7 @@ types::CheckedCall call_expression = types::CheckedCall((TRY((DynamicArray<types
 (((checked_operator).trait_implementation) = types::OperatorTraitImplementation(((implementation).trait_id),((implementation).implemented_type_args),call_expression));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope(TRY(((((parent_id.value())).scope_id(((((*this).program))))))))))))->debug_name)))),lhs_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Failed to find an implementation of '{}' (trait {}) in type {} ({})"sv)),function_name,((implementation).trait_name),TRY((((*this).type_name(lhs_type_id,false)))),((TRY((((*this).get_scope((((parent_id.value())).scope_id(((((*this).program))))))))))->debug_name)),lhs_span))));
 (type_id = types::unknown_type_id());
 }
 
@@ -11018,29 +11018,12 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-
-}
-else {
-if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
-JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
-if (((trait_implementations).is_empty())){
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
-}
-
-}
-else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -11052,12 +11035,29 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).
 if (((trait_implementations).is_empty())){
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
 else {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))))),lhs_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+
+}
+else {
+if (((((*this).get_type(lhs_type_id)))->__jakt_init_index() == 18 /* TypeVariable */)){
+JaktInternal::DynamicArray<ids::TypeId> const trait_implementations = (((*this).get_type(lhs_type_id)))->as.TypeVariable.trait_implementations;
+if (((trait_implementations).is_empty())){
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
+}
+
+}
+else {
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("Consider implementing ‘(Throwing){}<{}, ...>’ for the type of this expression (‘{}’)"sv)),((trait_names)[static_cast<i64>(0LL)]),TRY((((*this).type_name(rhs_type_id,false)))),TRY((((*this).type_name(lhs_type_id,false))))),lhs_span))));
 }
 
 }
@@ -11090,7 +11090,7 @@ TRY((((((module)->types)).push(TRY((types::Type::Enum(parser::CheckedQualifiers(
 ids::TypeId const enum_type_id = ids::TypeId(module_id,JaktInternal::checked_sub(((((((*this).current_module()))->types)).size()),static_cast<size_t>(1ULL)));
 TRY((((*this).add_type_to_scope(scope_id,((parsed_record).name),enum_type_id,((parsed_record).name_span)))));
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(enum_type_id))));
+((*this).set_self_type_id(enum_type_id));
 ScopeGuard __jakt_var_462([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -11162,7 +11162,7 @@ JaktInternal::Optional<ids::TraitId> const trait_id = TRY((((((*this).program))-
 if (((trait_id).has_value())){
 return TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericTraitInstance(parser::CheckedQualifiers(false),(trait_id.value()),checked_inner_types)))))));
 }
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("could not find {}"sv)),name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("could not find {}"sv)),name),span))));
 return types::unknown_type_id();
 }
 }
@@ -11234,7 +11234,7 @@ return JaktInternal::ExplicitValue(typechecker::NumericOrStringValue::SignedNume
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Index expression evaluation failed: expected numeric or string type, found {}"sv)),((value).impl)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Index expression evaluation failed: expected numeric or string type, found {}"sv)),((value).impl)),span))));
 return TRY((types::CheckedExpression::Garbage(JaktInternal::OptionalNone(),span,types::builtin(types::BuiltinType::Void()))));
 }
 };/*case end*/
@@ -11248,7 +11248,7 @@ return TRY((types::CheckedExpression::Garbage(JaktInternal::OptionalNone(),span,
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Index expression evaluation returned an invalid object {}"sv)),index_result))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Index expression evaluation returned an invalid object {}"sv)),index_result),span))));
 return TRY((types::CheckedExpression::Garbage(JaktInternal::OptionalNone(),span,types::builtin(types::BuiltinType::Void()))));
 }
 };/*case end*/
@@ -11450,7 +11450,7 @@ break;
 parser::ParsedRecord nested_record = (_magic_value.value());
 {
 TRY((((*this).warn_about_unimplemented_nested_record(nested_record))));
-((records_to_process).enqueue((Tuple{nested_record, TRY((((id).scope_id(((((*this).program)))))))})));
+((records_to_process).enqueue((Tuple{nested_record, ((id).scope_id(((((*this).program)))))})));
 }
 
 }
@@ -11476,13 +11476,13 @@ return TRY((((((*this).program))->substitute_typevars_in_type(type_id,generic_in
 }
 }
 
-ErrorOr<ByteString> typechecker::Typechecker::get_argument_name(JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>> const arg) const {
+ByteString typechecker::Typechecker::get_argument_name(JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>> const arg) const {
 {
 if ((!(((((arg).template get<0>())).is_empty())))){
 return ((arg).template get<0>());
 }
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<ByteString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ByteString>{
 auto&& __jakt_match_variant = *((arg).template get<2>());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 9 /* Var */: {
@@ -11542,7 +11542,7 @@ ScopeGuard __jakt_var_470([&] {
 (((*this).current_module_id) = ((((checked_function)->function_scope_id)).module_id));
 NonnullRefPtr<types::Module> module = ((*this).current_module());
 ids::FunctionId const new_function_id = ((module)->next_function_id());
-parser::ParsedFunction parsed_function = TRY((((checked_function)->to_parsed_function())));
+parser::ParsedFunction parsed_function = ((checked_function)->to_parsed_function());
 ByteString arg_names = (ByteString::must_from_utf8(""sv));
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((generic_arguments).iterator());
@@ -11574,9 +11574,9 @@ return {};
 }
 }
 
-ids::ScopeId const scope_id = TRY((((*this).create_scope(((((checked_function)->generics))->base_scope_id),((parsed_function).can_throw),TRY((__jakt_format((StringView::from_string_literal("function-specialization({}<{}>)"sv)),((parsed_function).name),arg_names))),true))));
+ids::ScopeId const scope_id = TRY((((*this).create_scope(((((checked_function)->generics))->base_scope_id),((parsed_function).can_throw),__jakt_format((StringView::from_string_literal("function-specialization({}<{}>)"sv)),((parsed_function).name),arg_names),true))));
 if (((((((parsed_function).generic_parameters)).size())) != (((generic_arguments).size())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Generic function {} expects {} generic arguments, but {} were given"sv)),((parsed_function).name),((((parsed_function).generic_parameters)).size()),((generic_arguments).size())))),((parsed_function).name_span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Generic function {} expects {} generic arguments, but {} were given"sv)),((parsed_function).name),((((parsed_function).generic_parameters)).size()),((generic_arguments).size())),((parsed_function).name_span)))));
 }
 if (([](size_t const& self, size_t rhs) -> bool {
 {
@@ -12192,7 +12192,7 @@ if (((((trait_)->generic_parameters)).is_empty())){
 return {};
 }
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericTraitInstance(parser::CheckedQualifiers(false),trait_id,generic_parameters)))))))))));
+((*this).set_self_type_id(TRY((((*this).find_or_add_type_id(TRY((types::Type::GenericTraitInstance(parser::CheckedQualifiers(false),trait_id,generic_parameters)))))))));
 ScopeGuard __jakt_var_477([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -12220,7 +12220,7 @@ return {};
 ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>>> typechecker::Typechecker::typecheck_match_variant(parser::ParsedMatchCase const case_,ids::TypeId const subject_type_id,size_t const variant_index,JaktInternal::Optional<ids::TypeId> const final_result_type,types::CheckedEnumVariant const variant,JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> const variant_arguments,JaktInternal::Dictionary<ByteString,parser::ParsedPatternDefault> const default_bindings,utility::Span const arguments_span,ids::ScopeId const scope_id,types::SafetyMode const safety_mode) {
 {
 JaktInternal::Optional<ByteString> covered_name = JaktInternal::OptionalNone();
-ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),TRY((__jakt_format((StringView::from_string_literal("catch-enum-variant({})"sv)),((variant).name())))),true))));
+ids::ScopeId const new_scope_id = TRY((((*this).create_scope(scope_id,((TRY((((*this).get_scope(scope_id)))))->can_throw),__jakt_format((StringView::from_string_literal("catch-enum-variant({})"sv)),((variant).name())),true))));
 NonnullRefPtr<types::Module> module = ((*this).current_module());
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,types::CheckedMatchCase,JaktInternal::Optional<ids::TypeId>>>>{
@@ -12231,7 +12231,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Untyped;ByteString const& na
 {
 (covered_name = name);
 if ((!(((variant_arguments).is_empty())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match case '{}' cannot have arguments"sv)),name))),arguments_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Match case '{}' cannot have arguments"sv)),name),arguments_span))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -12244,7 +12244,7 @@ utility::Span const& span = __jakt_match_value.span;
 (covered_name = name);
 if ((!(((variant_arguments).is_empty())))){
 if (((((variant_arguments).size())) != (static_cast<size_t>(1ULL)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match case ‘{}’ must have exactly one argument"sv)),name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Match case ‘{}’ must have exactly one argument"sv)),name),span))));
 }
 else {
 parser::EnumVariantPatternArgument const variant_argument = ((variant_arguments)[static_cast<i64>(0LL)]);
@@ -12329,13 +12329,13 @@ TRY((((unused_field_names).push(field_name))));
 }
 }
 
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Match case argument '{}' for struct-like enum variant '{}' cannot be anon"sv)),((arg).binding),name))),((arg).span),TRY((__jakt_format((StringView::from_string_literal("Available arguments for '{}' are: {}\n"sv)),name,TRY((utility::join(unused_field_names,(ByteString::must_from_utf8(", "sv)))))))),((arg).span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Match case argument '{}' for struct-like enum variant '{}' cannot be anon"sv)),((arg).binding),name),((arg).span),__jakt_format((StringView::from_string_literal("Available arguments for '{}' are: {}\n"sv)),name,TRY((utility::join(unused_field_names,(ByteString::must_from_utf8(", "sv)))))),((arg).span)))));
 continue;
 }
 }
 ByteString const arg_name = ((arg).name).value_or_lazy_evaluated([&] { return ((arg).binding); });
 if (((seen_names).contains(arg_name))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match case argument '{}' is already defined"sv)),arg_name))),((arg).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Match case argument '{}' is already defined"sv)),arg_name),((arg).span)))));
 continue;
 }
 TRY((((seen_names).add(arg_name))));
@@ -12367,7 +12367,7 @@ ids::VarId const var_id = TRY((((module)->add_variable(TRY((types::CheckedVariab
 TRY((((*this).add_var_to_scope(new_scope_id,((arg).binding),var_id,matched_span))));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Match case argument '{}' does not exist in struct-like enum variant '{}'"sv)),arg_name,name))),((arg).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Match case argument '{}' does not exist in struct-like enum variant '{}'"sv)),arg_name,name),((arg).span)))));
 }
 
 }
@@ -12465,7 +12465,7 @@ parser::ParsedNamespace const parsed_namespace = TRY((parser::Parser::parse(((*t
 if (((((*this).compiler))->dump_parser)){
 outln((StringView::from_string_literal("{:#}"sv)),parsed_namespace);
 }
-TRY((((((*this).compiler))->dbg_println(TRY((__jakt_format((StringView::from_string_literal("before typechecking parsed prelude, modules ‘{}’"sv)),((((*this).program))->modules))))))));
+((((*this).compiler))->dbg_println(__jakt_format((StringView::from_string_literal("before typechecking parsed prelude, modules ‘{}’"sv)),((((*this).program))->modules))));
 TRY((((*this).typecheck_module(parsed_namespace,prelude_scope_id))));
 }
 return {};
@@ -12510,7 +12510,7 @@ else if (((enum_in_scope).has_value())){
 (next_scope = ((((*this).get_enum((enum_in_scope.value())))).scope_id));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Namespace ‘{}’ not found"sv)),ns))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Namespace ‘{}’ not found"sv)),ns),span))));
 }
 
 TRY((((scopes).push(next_scope))));
@@ -12590,7 +12590,7 @@ TRY((((((*this).compiler))->panic((ByteString::must_from_utf8("typecheck_call re
 if (((((call).function_id)).has_value())){
 return TRY((types::CheckedExpression::Call(JaktInternal::OptionalNone(),call,span,type_id)));
 }
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Variable '{}' not found"sv)),name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Variable '{}' not found"sv)),name),span))));
 return TRY((types::CheckedExpression::NamespacedVar(JaktInternal::OptionalNone(),checked_namespaces,TRY((types::CheckedVariable::__jakt_create(name,types::unknown_type_id(),false,span,JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone()))),span)));
 }
 }
@@ -12607,7 +12607,7 @@ ScopeGuard __jakt_var_479([&] {
 ids::TypeId const struct_type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::Struct(parser::CheckedQualifiers(false),struct_id)))))));
 (((*this).current_struct_type_id) = struct_type_id);
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(struct_type_id))));
+((*this).set_self_type_id(struct_type_id));
 ScopeGuard __jakt_var_480([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -12904,7 +12904,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Dereference of a non-pointer type ‘{}’"sv)),TRY((((*this).type_name(expr_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Dereference of a non-pointer type ‘{}’"sv)),TRY((((*this).type_name(expr_type_id,false))))),span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -12957,7 +12957,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I8((infallible_integer_cast<i8>((val)))),span,types::builtin(types::BuiltinType::I8())))));
@@ -12978,7 +12978,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I16((infallible_integer_cast<i16>((val)))),span,types::builtin(types::BuiltinType::I16())))));
@@ -12999,7 +12999,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I32((infallible_integer_cast<i32>((val)))),span,types::builtin(types::BuiltinType::I32())))));
@@ -13020,7 +13020,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U8((infallible_integer_cast<u8>((val)))),span,types::builtin(types::BuiltinType::U8())))));
@@ -13041,7 +13041,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U16((infallible_integer_cast<u16>((val)))),span,types::builtin(types::BuiltinType::U16())))));
@@ -13062,7 +13062,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((type_)->max()),val)){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U32((infallible_integer_cast<u32>((val)))),span,types::builtin(types::BuiltinType::U32())))));
@@ -13092,7 +13092,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,static_cast<u64>(255ULL))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U8((infallible_integer_cast<u8>((val)))),span,types::builtin(types::BuiltinType::CChar())))));
@@ -13308,7 +13308,7 @@ return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<types::Str
 ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 JaktInternal::Optional<types::StructLikeId> struct_id = JaktInternal::OptionalNone();
 if ((!(((id).equals(optional_struct_id))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Can't use ‘{}’ as an optional type in optional chained call"sv)),((((*this).get_struct(id))).name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Can't use ‘{}’ as an optional type in optional chained call"sv)),((((*this).get_struct(id))).name)),span))));
 }
 else {
 (found_optional = true);
@@ -13430,7 +13430,7 @@ return JaktInternal::ExplicitValue(types::StructLikeId::Struct(JaktInternal::Opt
 }
 else {
 return JaktInternal::ExplicitValue(({ Optional<types::StructLikeId> __jakt_var_485; {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("no methods available on value (type: {} {})"sv)),TRY((((((*this).get_type(type_id)))->constructor_name()))),TRY((((*this).type_name(type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("no methods available on value (type: {} {})"sv)),((((*this).get_type(type_id)))->constructor_name()),TRY((((*this).type_name(type_id,false))))),span))));
 __jakt_var_485 = JaktInternal::OptionalNone(); goto __jakt_label_435;
 
 }
@@ -13460,7 +13460,7 @@ JaktInternal::Optional<ids::TypeId> const type_id = TRY((((*this).find_type_in_s
 if (((type_id).has_value())){
 return ((type_id).value());
 }
-TRY((((((*this).compiler))->panic(TRY((__jakt_format((StringView::from_string_literal("internal error: {} builtin definition not found"sv)),name)))))));
+TRY((((((*this).compiler))->panic(__jakt_format((StringView::from_string_literal("internal error: {} builtin definition not found"sv)),name)))));
 }
 }
 
@@ -13472,7 +13472,7 @@ if ((((found_type_id).has_value()) && (!((((found_type_id.value())).equals(type_
 if (((TRY((((*this).get_scope(scope_id)))))->is_from_generated_code)){
 return false;
 }
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Redefinition of type ‘{}’ (duplicate: {} in {})"sv)),type_name,TRY((((*this).type_name((found_type_id.value()),true)))),TRY((((*this).debug_description_of(scope_id))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Redefinition of type ‘{}’ (duplicate: {} in {})"sv)),type_name,TRY((((*this).type_name((found_type_id.value()),true)))),TRY((((*this).debug_description_of(scope_id))))),span))));
 TRY((((((*this).generic_inferences)).debug_description(((((*this).program)))))));
 return false;
 }
@@ -13510,7 +13510,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I8((infallible_integer_cast<i8>((val)))),span,types::builtin(types::BuiltinType::I8())))));
@@ -13541,7 +13541,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I16((infallible_integer_cast<i16>((val)))),span,types::builtin(types::BuiltinType::I16())))));
@@ -13572,7 +13572,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I32((infallible_integer_cast<i32>((val)))),span,types::builtin(types::BuiltinType::I32())))));
@@ -13603,7 +13603,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U8((infallible_integer_cast<u8>((val)))),span,types::builtin(types::BuiltinType::U8())))));
@@ -13634,7 +13634,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U16((infallible_integer_cast<u16>((val)))),span,types::builtin(types::BuiltinType::U16())))));
@@ -13665,7 +13665,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,(infallible_integer_cast<i64>((((type_)->max()))))))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U32((infallible_integer_cast<u32>((val)))),span,types::builtin(types::BuiltinType::U32())))));
@@ -13686,7 +13686,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,static_cast<i64>(0LL))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U64((infallible_integer_cast<u64>((val)))),span,types::builtin(types::BuiltinType::U64())))));
@@ -13707,7 +13707,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,static_cast<i64>(0LL))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::USize((infallible_integer_cast<u64>((val)))),span,types::builtin(types::BuiltinType::Usize())))));
@@ -13728,7 +13728,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,static_cast<i64>(0LL))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::I32((infallible_integer_cast<i32>((val)))),span,types::builtin(types::BuiltinType::CInt())))));
@@ -13759,7 +13759,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (val,static_cast<i64>(255LL)))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,TRY((__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))))),span))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Integer promotion failed"sv)),span,__jakt_format((StringView::from_string_literal("Cannot fit value into range [{}, {}] of type {}."sv)),((type_)->min()),((type_)->max()),TRY((((*this).type_name(builtin_typeid,false))))),span))));
 }
 else {
 (expr = TRY((types::CheckedExpression::NumericConstant(JaktInternal::OptionalNone(),types::CheckedNumericConstant::U8((infallible_integer_cast<u8>((val)))),span,types::builtin(types::BuiltinType::CChar())))));
@@ -13857,7 +13857,7 @@ return false;
 }
 ids::StructId const existing_struct_id = (maybe_scope_id.value());
 utility::Span const definition_span = ((((*this).get_struct(existing_struct_id))).name_span);
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("redefinition of struct/class {}"sv)),name))),span,TRY((__jakt_format((StringView::from_string_literal("struct/class {} was first defined here"sv)),name))),definition_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("redefinition of struct/class {}"sv)),name),span,__jakt_format((StringView::from_string_literal("struct/class {} was first defined here"sv)),name),definition_span))));
 return false;
 }
 TRY((((((scope)->structs)).set(name,struct_id))));
@@ -13890,7 +13890,7 @@ return JaktInternal::ExplicitValue(((((*this).get_function((((*this).current_fun
 else {
 return JaktInternal::ExplicitValue(({ Optional<ids::ScopeId> __jakt_var_487; {
 if ((!(((((*this).current_struct_type_id)).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Can't access {0} ‘{1}’ from this global scope, because ‘{1}’ restricts access to it"sv)),accessee_kind,name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Can't access {0} ‘{1}’ from this global scope, because ‘{1}’ restricts access to it"sv)),accessee_kind,name),span))));
 return false;
 }
 __jakt_var_487 = ({
@@ -13903,7 +13903,7 @@ return JaktInternal::ExplicitValue(((((*this).get_struct(id))).scope_id));
 };/*case end*/
 default: {
 {
-utility::panic(TRY((__jakt_format((StringView::from_string_literal("Internal error: current_struct_type_id is not a struct"sv)),span))));
+utility::panic(__jakt_format((StringView::from_string_literal("Internal error: current_struct_type_id is not a struct"sv)),span));
 }
 };/*case end*/
 }/*switch end*/
@@ -13948,7 +13948,7 @@ continue;
 }
 
 NonnullRefPtr<types::Scope> const scope = TRY((((*this).get_scope(most_specific_active_scope_id))));
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot access {} ‘{}’ from this scope"sv)),accessee_kind,name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot access {} ‘{}’ from this scope"sv)),accessee_kind,name),span))));
 return false;
 }
 }
@@ -13995,7 +13995,7 @@ if (((((rhs).impl))->equals(((lhs).impl)))){
 return true;
 }
 NonnullRefPtr<interpreter::Interpreter> const interpreter = TRY((((*this).interpreter())));
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Literal type value mismatch: expected '{}', found '{}'"sv)),TRY((types::comptime_format_impl((ByteString::must_from_utf8("{}"sv)),(((TRY((DynamicArray<types::Value>::create_with({lhs})))))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})]),((((*this).program)))))),TRY((types::comptime_format_impl((ByteString::must_from_utf8("{}"sv)),(((TRY((DynamicArray<types::Value>::create_with({rhs})))))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})]),((((*this).program))))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Literal type value mismatch: expected '{}', found '{}'"sv)),TRY((types::comptime_format_impl((ByteString::must_from_utf8("{}"sv)),(((TRY((DynamicArray<types::Value>::create_with({lhs})))))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})]),((((*this).program)))))),TRY((types::comptime_format_impl((ByteString::must_from_utf8("{}"sv)),(((TRY((DynamicArray<types::Value>::create_with({rhs})))))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})]),((((*this).program))))))),span))));
 return false;
 }
 }
@@ -14034,7 +14034,7 @@ return (!(((self) == (rhs))));
 }
 }
 (name,rhs_name)){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: mismatched names for dependent types: ‘{}’ and ‘{}’"sv)),name,rhs_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: mismatched names for dependent types: ‘{}’ and ‘{}’"sv)),name,rhs_name),span))));
 return false;
 }
 }
@@ -14070,7 +14070,7 @@ return false;
 }
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("mismatched number of generic parameters for {}"sv)),((lhs_enum).name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("mismatched number of generic parameters for {}"sv)),((lhs_enum).name)),span))));
 return false;
 }
 
@@ -14078,7 +14078,7 @@ return false;
 }
 else {
 if ((!(((rhs_type_id).equals(lhs_type_id))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 }
@@ -14125,14 +14125,14 @@ VERIFY_NOT_REACHED();
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Function can throw mismatch: expected ‘{}’, but got ‘{}’"sv)),lhs_throw,rhs_throw))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Function can throw mismatch: expected ‘{}’, but got ‘{}’"sv)),lhs_throw,rhs_throw),span))));
 }
 if ((!(((((lhs_params).size())) == (((rhs_params).size())))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Function parameter count mismatch: expected ‘{}’, but got ‘{}’"sv)),((lhs_params).size()),((rhs_params).size())))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Function parameter count mismatch: expected ‘{}’, but got ‘{}’"sv)),((lhs_params).size()),((rhs_params).size())),span))));
 return false;
 }
 if ((!(TRY((((*this).check_types_for_compat(lhs_return_type_id,rhs_return_type_id,generic_inferences,span))))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Function type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("The return types differ: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_return_type_id,false)))),TRY((((*this).type_name(rhs_return_type_id,false))))))),span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Function type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("The return types differ: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_return_type_id,false)))),TRY((((*this).type_name(rhs_return_type_id,false))))),span))));
 return false;
 }
 {
@@ -14145,7 +14145,7 @@ break;
 size_t i = (_magic_value.value());
 {
 if ((!(TRY((((*this).check_types_for_compat(((lhs_params)[i]),((rhs_params)[i]),generic_inferences,span))))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Function type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span,TRY((__jakt_format((StringView::from_string_literal("The parameter types differ at argument {}: expected ‘{}’, but got ‘{}’"sv)),JaktInternal::checked_add(i,static_cast<size_t>(1ULL)),TRY((((*this).type_name(((lhs_params)[i]),false)))),TRY((((*this).type_name(((rhs_params)[i]),false))))))),span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Function type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span,__jakt_format((StringView::from_string_literal("The parameter types differ at argument {}: expected ‘{}’, but got ‘{}’"sv)),JaktInternal::checked_add(i,static_cast<size_t>(1ULL)),TRY((((*this).type_name(((lhs_params)[i]),false)))),TRY((((*this).type_name(((rhs_params)[i]),false))))),span))));
 return false;
 }
 }
@@ -14155,7 +14155,7 @@ return false;
 
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 
@@ -14273,7 +14273,7 @@ return false;
 }
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("mismatched number of generic parameters for {}"sv)),((lhs_struct).name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("mismatched number of generic parameters for {}"sv)),((lhs_struct).name)),span))));
 return false;
 }
 
@@ -14283,18 +14283,18 @@ ids::TypeId const array_value_type_id = ((args)[static_cast<i64>(0LL)]);
 if (((array_value_type_id).equals(types::unknown_type_id()))){
 return true;
 }
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 
 }
 else {
 if ((!(((rhs_type_id).equals(lhs_type_id))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 }
@@ -14319,7 +14319,7 @@ JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 if (((enum_id).equals(id))){
 types::CheckedEnum const lhs_enum = ((*this).get_enum(enum_id));
 if (((((args).size())) != (((((lhs_enum).generic_parameters)).size())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("mismatched number of generic parameters for {}"sv)),((lhs_enum).name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("mismatched number of generic parameters for {}"sv)),((lhs_enum).name)),span))));
 return false;
 }
 size_t idx = static_cast<size_t>(0ULL);
@@ -14353,7 +14353,7 @@ return (!(((self).equals(rhs))));
 }
 }
 ((maybe_seen_type_id.value()),lhs_type_id)){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(((maybe_seen_type_id).value()),false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(((maybe_seen_type_id).value()),false))))),span))));
 return false;
 }
 }
@@ -14367,7 +14367,7 @@ return JaktInternal::ExplicitValue<void>();
 default: {
 {
 if ((!(((rhs_type_id).equals(lhs_type_id))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 }
@@ -14398,12 +14398,12 @@ auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructI
 JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 {
 if ((!(((lhs_struct_id).equals(id))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 types::CheckedStruct const lhs_struct = ((*this).get_struct(lhs_struct_id));
 if (((((args).size())) != (((((lhs_struct).generic_parameters)).size())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("mismatched number of generic parameters for {}"sv)),((lhs_struct).name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("mismatched number of generic parameters for {}"sv)),((lhs_struct).name)),span))));
 return false;
 }
 size_t idx = static_cast<size_t>(0ULL);
@@ -14436,7 +14436,7 @@ return (!(((self).equals(rhs))));
 }
 }
 (((seen_type_id).value()),lhs_type_id)){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(((seen_type_id).value()),false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(((seen_type_id).value()),false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 }
@@ -14453,7 +14453,7 @@ if (((*this).is_subclass_of(lhs_type_id,rhs_type_id))){
 return true;
 }
 if ((!(((rhs_type_id).equals(lhs_type_id))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 }
@@ -14483,7 +14483,7 @@ return false;
 }
 else {
 if ((!(((rhs_type_id).equals(lhs_type_id))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 }
@@ -14501,7 +14501,7 @@ return false;
 }
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 
@@ -14518,7 +14518,7 @@ return false;
 }
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 
@@ -14533,7 +14533,7 @@ return (!(((self).equals(rhs))));
 }
 }
 (((((generic_inferences))).map(rhs_type_id)),((((generic_inferences))).map(lhs_type_id)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),span))));
 return false;
 }
 }
@@ -14554,11 +14554,11 @@ ErrorOr<void> typechecker::Typechecker::typecheck_enum_predecl(parser::ParsedRec
 {
 ids::TypeId const enum_type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::Enum(parser::CheckedQualifiers(false),enum_id)))))));
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(enum_type_id))));
+((*this).set_self_type_id(enum_type_id));
 ScopeGuard __jakt_var_488([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
-ids::ScopeId const enum_scope_id = TRY((((*this).create_scope(scope_id,false,TRY((__jakt_format((StringView::from_string_literal("enum({})"sv)),((parsed_record).name)))),false))));
+ids::ScopeId const enum_scope_id = TRY((((*this).create_scope(scope_id,false,__jakt_format((StringView::from_string_literal("enum({})"sv)),((parsed_record).name)),false))));
 NonnullRefPtr<types::Scope> scope = TRY((((*this).get_scope(enum_scope_id))));
 (((scope)->namespace_name) = ((parsed_record).name));
 (((scope)->relevant_type_id) = enum_type_id);
@@ -14614,7 +14614,7 @@ parser::ParsedField field = (_magic_value.value());
 {
 parser::ParsedVarDecl const var_decl = ((field).var_decl);
 if (((seen_fields).contains(((var_decl).name)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Field '{}' is defined more than once"sv)),((var_decl).name)))),((var_decl).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Field '{}' is defined more than once"sv)),((var_decl).name)),((var_decl).span)))));
 continue;
 }
 TRY((((seen_fields).add(((var_decl).name)))));
@@ -14691,8 +14691,8 @@ if (TRY((types_match(((*this)),((first)->return_type_id),((second)->return_type_
 if (((((first)->can_throw)) == (((second)->can_throw)))){
 if (((((((first)->params)).size())) == (((((second)->params)).size())))){
 size_t arg_start = static_cast<size_t>(0ULL);
-if (TRY((((first)->is_static())))){
-if (TRY((((second)->is_static())))){
+if (((first)->is_static())){
+if (((second)->is_static())){
 }
 else {
 TRY((((*this).error((ByteString::must_from_utf8("Function signatures don't match: one is static and the other isn't"sv)),((first)->name_span)))));
@@ -14701,8 +14701,8 @@ return false;
 
 }
 else {
-if ((!(TRY((((second)->is_static())))))){
-if (((TRY((((first)->is_mutating())))) == (TRY((((second)->is_mutating())))))){
+if ((!(((second)->is_static())))){
+if (((((first)->is_mutating())) == (((second)->is_mutating())))){
 (arg_start = static_cast<size_t>(1ULL));
 }
 else {
@@ -14768,7 +14768,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 1 /* Private */: {
 {
 if ((!(TRY((((*this).scope_can_access(accessor,accessee))))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Can't access field ‘{}’, because it is marked private"sv)),((member)->name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Can't access field ‘{}’, because it is marked private"sv)),((member)->name)),span))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -15002,7 +15002,7 @@ ErrorOr<bool> typechecker::Typechecker::add_trait_to_scope(ids::ScopeId const sc
 NonnullRefPtr<types::Scope> scope = TRY((((*this).get_scope(scope_id))));
 JaktInternal::Optional<ids::TraitId> const found_trait_id = ((((scope)->traits)).get(trait_name));
 if ((((found_trait_id).has_value()) && (!((((found_trait_id.value())).equals(trait_id)))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Redefinition of trait ‘{}’"sv)),trait_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Redefinition of trait ‘{}’"sv)),trait_name),span))));
 return false;
 }
 TRY((((((scope)->traits)).set(trait_name,trait_id))));
@@ -15264,7 +15264,7 @@ break;
 parser::ParsedRecord nested_record = (_magic_value.value());
 {
 TRY((((*this).warn_about_unimplemented_nested_record(nested_record))));
-((records_to_process).enqueue((Tuple{nested_record, TRY((((id).scope_id(((((*this).program)))))))})));
+((records_to_process).enqueue((Tuple{nested_record, ((id).scope_id(((((*this).program)))))})));
 }
 
 }
@@ -15287,12 +15287,12 @@ return TRY((types::CheckedStatement::Block(checked_block,span)));
 
 ErrorOr<ids::FunctionId> typechecker::Typechecker::typecheck_function_predecl(parser::ParsedFunction const parsed_function,ids::ScopeId const parent_scope_id,JaktInternal::Optional<ids::TypeId> const this_arg_type_id,JaktInternal::Optional<NonnullRefPtr<types::FunctionGenerics>> generics,JaktInternal::Optional<ids::ScopeId> scope_mixin) {
 {
-ids::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope_id,((parsed_function).can_throw),TRY((__jakt_format((StringView::from_string_literal("fn({})"sv)),((parsed_function).name)))),true))));
+ids::ScopeId const function_scope_id = TRY((((*this).create_scope(parent_scope_id,((parsed_function).can_throw),__jakt_format((StringView::from_string_literal("fn({})"sv)),((parsed_function).name)),true))));
 if (((scope_mixin).has_value())){
 NonnullRefPtr<types::Scope> function_scope = TRY((((*this).get_scope(function_scope_id))));
 TRY((((((function_scope)->resolution_mixins)).push((scope_mixin.value())))));
 }
-ByteString const scope_debug_name = TRY((__jakt_format((StringView::from_string_literal("function-block({})"sv)),((parsed_function).name))));
+ByteString const scope_debug_name = __jakt_format((StringView::from_string_literal("function-block({})"sv)),((parsed_function).name));
 ids::ScopeId const block_scope_id = TRY((((*this).create_scope(function_scope_id,((parsed_function).can_throw),scope_debug_name,true))));
 size_t const module_id = ((((*this).current_module_id)).id);
 bool base_definition = false;
@@ -15517,9 +15517,9 @@ JaktInternal::Optional<utility::FileId> const input_file = ((compiler)->current_
 if ((!(((input_file).has_value())))){
 TRY((((compiler)->panic((ByteString::must_from_utf8("trying to typecheck a non-existent file"sv))))));
 }
-ByteString const true_module_name = TRY((((((((compiler)->files))[(((input_file.value())).id)])).basename(true))));
+ByteString const true_module_name = ((((((compiler)->files))[(((input_file.value())).id)])).basename(true));
 ids::ModuleId const placeholder_module_id = ids::ModuleId(static_cast<size_t>(0ULL));
-ByteString const root_module_name = TRY(((((((compiler)->current_file_path()).value())).basename(true))));
+ByteString const root_module_name = (((((compiler)->current_file_path()).value())).basename(true));
 typechecker::Typechecker typechecker = typechecker::Typechecker(compiler,TRY((types::CheckedProgram::__jakt_create(compiler,(TRY((DynamicArray<NonnullRefPtr<types::Module>>::create_with({})))),(TRY((Dictionary<ByteString, types::LoadedModule>::create_with_entries({}))))))),placeholder_module_id,ids::TypeId::none(),JaktInternal::OptionalNone(),false,static_cast<size_t>(0ULL),false,((compiler)->dump_type_hints),((compiler)->dump_try_hints),static_cast<u64>(0ULL),types::GenericInferences((TRY((Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({}))))),JaktInternal::OptionalNone(),root_module_name,false,false,(TRY((Dictionary<ByteString, ids::ScopeId>::create_with_entries({})))),JaktInternal::OptionalNone());
 TRY((((typechecker).include_prelude())));
 ids::ModuleId const root_module_id = TRY((((typechecker).create_module(root_module_name,true,JaktInternal::OptionalNone()))));
@@ -15580,7 +15580,7 @@ ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<types::CheckedEnumVari
 if (((variant).__jakt_init_index() == 1 /* Typed */)){
 ids::TypeId const type_id = (variant).as.Typed.type_id;
 if (((((bindings).size())) != (static_cast<size_t>(1ULL)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant ‘{}’ must have exactly one argument"sv)),((variant).name())))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum variant ‘{}’ must have exactly one argument"sv)),((variant).name())),span))));
 return JaktInternal::OptionalNone();
 }
 return (TRY((DynamicArray<types::CheckedEnumVariantBinding>::create_with({types::CheckedEnumVariantBinding(JaktInternal::OptionalNone(),((((bindings)[static_cast<i64>(0LL)])).binding),type_id,span)}))));
@@ -15636,7 +15636,7 @@ break;
 }
 
 if ((!(found))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant ‘{}’ doesn't have field with name ‘{}’"sv)),((variant).name()),((binding).name_in_enum())))),((binding).name_in_enum_span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum variant ‘{}’ doesn't have field with name ‘{}’"sv)),((variant).name()),((binding).name_in_enum())),((binding).name_in_enum_span())))));
 }
 }
 
@@ -15670,7 +15670,7 @@ ErrorOr<void> typechecker::Typechecker::typecheck_struct(parser::ParsedRecord co
 ids::TypeId const struct_type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::Struct(parser::CheckedQualifiers(false),struct_id)))))));
 (((*this).current_struct_type_id) = struct_type_id);
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(struct_type_id))));
+((*this).set_self_type_id(struct_type_id));
 ScopeGuard __jakt_var_494([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -15826,7 +15826,7 @@ case 3 /* ByComptimeDependency */: {
 return JaktInternal::ExplicitValue(({ Optional<types::CheckedCapture> __jakt_var_496; {
 (has_dependent_capture = true);
 if ((!(((*this).in_comptime_function_call)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Comptime dependency capture ‘{}’ is only allowed in comptime function calls"sv)),name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Comptime dependency capture ‘{}’ is only allowed in comptime function calls"sv)),name),span))));
 }
 __jakt_var_496 = types::CheckedCapture::ByComptimeDependency(name,span); goto __jakt_label_441;
 
@@ -15857,7 +15857,7 @@ TRY((((*this).add_var_to_scope(lambda_scope_id,name,var_id,span))));
 }
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Variable '{}' not found"sv)),((capture).common.init_common.name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Variable '{}' not found"sv)),((capture).common.init_common.name)),span))));
 }
 
 }
@@ -16024,7 +16024,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 (((args).size()),consumed_arg)){
 if ((!(((((param).default_value_expression)).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Missing argument for function parameter {}"sv)),((((param).variable))->name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Missing argument for function parameter {}"sv)),((((param).variable))->name)),span))));
 continue;
 }
 if (((((param).default_value_expression)).has_value())){
@@ -16053,7 +16053,7 @@ return (!(((self) == (rhs))));
 }
 }
 (name,((((param).variable))->name)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Wrong parameter name in argument label (got '{}', expected '{}')"sv)),name,((((param).variable))->name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Wrong parameter name in argument label (got '{}', expected '{}')"sv)),name,((((param).variable))->name)),span))));
 }
 (maybe_checked_expr = TRY((((*this).typecheck_expression(expr,scope_id,safety_mode,((((param).variable))->type_id))))));
 ((consumed_arg++));
@@ -16440,7 +16440,7 @@ ids::ScopeId const checked_struct_scope_id = ((((*this).get_struct(struct_id))).
 ids::TypeId const struct_type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::Struct(parser::CheckedQualifiers(false),struct_id)))))));
 (((*this).current_struct_type_id) = struct_type_id);
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(struct_type_id))));
+((*this).set_self_type_id(struct_type_id));
 ScopeGuard __jakt_var_508([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -16598,7 +16598,7 @@ ids::StructId const parent_struct_id = (((struct_).super_struct_id).value());
 (scope_id = ((struct_).scope_id));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Could not find ‘{}’"sv)),((call).name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Could not find ‘{}’"sv)),((call).name)),span))));
 break;
 }
 
@@ -16716,7 +16716,6 @@ TRY((((args).push((Tuple{((call).name), checked_arg})))));
 
 if (((((call).name)) == ((ByteString::must_from_utf8("format"sv))))){
 (return_type = TRY((((*this).prelude_struct_type_named((ByteString::must_from_utf8("String"sv)))))));
-(callee_throws = true);
 }
 }
 else {
@@ -16845,7 +16844,7 @@ break;
 }
 ids::FunctionId candidate = (_magic_value.value());
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Candidate: {}"sv)),TRY((((*this).stringify_function_prototype(candidate))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Candidate: {}"sv)),TRY((((*this).stringify_function_prototype(candidate))))),span))));
 }
 
 }
@@ -16959,7 +16958,7 @@ if (((maybe_this_type_id).has_value())){
 (resolved_function_id = TRY((((*this).typecheck_and_specialize_generic_function((generic_checked_function_to_instantiate.value()),generic_arguments,callee_scope_id,maybe_this_type_id,((*this).generic_inferences),((call).type_args),span,args)))));
 }
 if ((((*this).dump_try_hints) && callee_throws)){
-TRY((((*this).dump_try_hint(span))));
+((*this).dump_try_hint(span));
 }
 JaktInternal::Optional<parser::ExternalName> const external_name = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<parser::ExternalName>,ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
@@ -16968,7 +16967,7 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<parser::ExternalName>> __jakt_var_515; {
 NonnullRefPtr<types::CheckedFunction> const function = ((*this).get_function((resolved_function_id.value())));
 if (((((function)->deprecated_message)).has_value())){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Call to deprecated function: {}"sv)),(((function)->deprecated_message).value())))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Call to deprecated function: {}"sv)),(((function)->deprecated_message).value())),span))));
 }
 __jakt_var_515 = ((function)->external_name); goto __jakt_label_453;
 
@@ -17003,7 +17002,7 @@ parser::ArgumentStoreLevel const level = ((jakt__index__level__).template get<1>
 
 Function<ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>(size_t)> const resolve_arg = [&args, &this_expr, &function](size_t index) -> ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> {
 {
-if (TRY((((function)->is_static())))){
+if (((function)->is_static())){
 return ((((args)[index])).template get<1>());
 }
 if (((index) == (static_cast<size_t>(0ULL)))){
@@ -17099,7 +17098,7 @@ types::Value const value = (evaluated_this).as.JustValue.value;
 }
 else if (((evaluated_this).__jakt_init_index() == 1 /* Throw */)){
 types::Value const value = (evaluated_this).as.Throw.value;
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Error executing this expression (evaluation threw {})"sv)),value))),(((this_expr.value()))->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Error executing this expression (evaluation threw {})"sv)),value),(((this_expr.value()))->span())))));
 }
 else {
 TRY((((*this).error((ByteString::must_from_utf8("Invalid this expression"sv)),(((this_expr.value()))->span())))));
@@ -17132,7 +17131,7 @@ continue;
 }
 __jakt_var_517.release_value(); });
 if (((value).__jakt_init_index() == 1 /* Throw */)){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Compiletime call failed: {}"sv)),value))),((((argument).template get<1>()))->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Compiletime call failed: {}"sv)),value),((((argument).template get<1>()))->span())))));
 break;
 }
 types::Value const evaluated_value = ({
@@ -17191,7 +17190,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((((function_call).type_args)).size()),i)){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Missing type argument for generic parameter {}"sv)),i))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Missing type argument for generic parameter {}"sv)),i),span))));
 break;
 }
 TRY((((type_bindings).set(((param).type_id()),((((function_call).type_args))[i])))));
@@ -17208,7 +17207,7 @@ auto __jakt_var_519 = [&]() -> ErrorOr<void> {{
 
 ;return {};}();
 if (__jakt_var_519.is_error()) {auto error = __jakt_var_519.release_error();{
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Compiletime call failed: {}"sv)),error))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Compiletime call failed: {}"sv)),error),span))));
 return checked_call;
 }
 };
@@ -17223,7 +17222,7 @@ return JaktInternal::ExplicitValue(TRY((interpreter::value_to_checked_expression
 case 1 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;types::Value const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_520; {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Compiletime call failed: {}"sv)),x))),((x).span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Compiletime call failed: {}"sv)),x),((x).span)))));
 __jakt_var_520 = checked_call; goto __jakt_label_454;
 
 }
@@ -17282,8 +17281,8 @@ types::CheckedEnum const enum_ = ((*this).get_enum((maybe_enum_scope.value())));
 (current_scope_id = ((enum_).scope_id));
 continue;
 }
-if (((TRY((((((*this).generic_inferences)).find_and_map(scope_name,((((*this).program)))))))).has_value())){
-ids::TypeId const type_id = (TRY((((((*this).generic_inferences)).find_and_map(scope_name,((((*this).program))))))).value());
+if (((((((*this).generic_inferences)).find_and_map(scope_name,((((*this).program)))))).has_value())){
+ids::TypeId const type_id = (((((*this).generic_inferences)).find_and_map(scope_name,((((*this).program))))).value());
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::DynamicArray<ids::FunctionId>>>{
 auto&& __jakt_match_variant = *((*this).get_type(type_id));
@@ -17337,7 +17336,7 @@ return JaktInternal::ExplicitValue<void>();
     _jakt_value.release_value();
 });
 }
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Not a namespace, enum, class, or struct: ‘{}’"sv)),TRY((utility::join(((call).namespace_),(ByteString::must_from_utf8("::"sv)))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Not a namespace, enum, class, or struct: ‘{}’"sv)),TRY((utility::join(((call).namespace_),(ByteString::must_from_utf8("::"sv)))))),span))));
 }
 
 }
@@ -17465,7 +17464,7 @@ return (((maybe_overload_set.value())).template get<0>());
 }
 }
 if (must_be_enum_constructor){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("No such enum constructor ‘{}’"sv)),((call).name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("No such enum constructor ‘{}’"sv)),((call).name)),span))));
 return (TRY((DynamicArray<ids::FunctionId>::create_with({}))));
 }
 JaktInternal::Optional<ids::StructId> const maybe_struct_id = TRY((((*this).find_struct_in_scope(current_scope_id,((call).name),JaktInternal::OptionalNone()))));
@@ -17479,7 +17478,7 @@ if (((maybe_function_id).has_value())){
 return (((maybe_function_id.value())).template get<0>());
 }
 }
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Call to unknown function: ‘{}’"sv)),((call).name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Call to unknown function: ‘{}’"sv)),((call).name)),span))));
 return (TRY((DynamicArray<ids::FunctionId>::create_with({}))));
 }
 }
@@ -17502,7 +17501,7 @@ break;
 parser::ParsedExternImport import_ = (_magic_value.value());
 {
 TRY((((path_name_builder).append((StringView::from_string_literal("_"sv))))));
-TRY((((path_name_builder).append(TRY((((TRY((jakt__path::Path::from_string(((import_).get_path()))))).basename(true))))))));
+TRY((((path_name_builder).append(((TRY((jakt__path::Path::from_string(((import_).get_path()))))).basename(true))))));
 {
 JaktInternal::ArrayIterator<parser::IncludeAction> _magic = ((((import_).before_include)).iterator());
 for (;;){
@@ -17519,11 +17518,11 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Define */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Define;ByteString const& name = __jakt_match_value.name;
 ByteString const& value = __jakt_match_value.value;
-return (TRY((((builder).append(TRY((__jakt_format((StringView::from_string_literal("#define {} {}\n"sv)),name,value)))))))), JaktInternal::ExplicitValue<void>();
+return (TRY((((builder).append(__jakt_format((StringView::from_string_literal("#define {} {}\n"sv)),name,value)))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 1 /* Undefine */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Undefine;ByteString const& name = __jakt_match_value.name;
-return (TRY((((builder).append(TRY((__jakt_format((StringView::from_string_literal("#undef {}\n"sv)),name)))))))), JaktInternal::ExplicitValue<void>();
+return (TRY((((builder).append(__jakt_format((StringView::from_string_literal("#undef {}\n"sv)),name)))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -17544,7 +17543,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 if (((import_).is_c)){
 TRY((((builder).append((StringView::from_string_literal("extern \"C\" {\n"sv))))));
 }
-TRY((((builder).append(TRY((__jakt_format((StringView::from_string_literal("#include <{}>\n"sv)),((import_).get_path()))))))));
+TRY((((builder).append(__jakt_format((StringView::from_string_literal("#include <{}>\n"sv)),((import_).get_path()))))));
 if (((import_).is_c)){
 TRY((((builder).append((StringView::from_string_literal("}\n"sv))))));
 }
@@ -17564,11 +17563,11 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Define */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Define;ByteString const& name = __jakt_match_value.name;
 ByteString const& value = __jakt_match_value.value;
-return (TRY((((builder).append(TRY((__jakt_format((StringView::from_string_literal("#define {} {}\n"sv)),name,value)))))))), JaktInternal::ExplicitValue<void>();
+return (TRY((((builder).append(__jakt_format((StringView::from_string_literal("#define {} {}\n"sv)),name,value)))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 1 /* Undefine */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Undefine;ByteString const& name = __jakt_match_value.name;
-return (TRY((((builder).append(TRY((__jakt_format((StringView::from_string_literal("#undef {}\n"sv)),name)))))))), JaktInternal::ExplicitValue<void>();
+return (TRY((((builder).append(__jakt_format((StringView::from_string_literal("#undef {}\n"sv)),name)))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -17592,7 +17591,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 
 ByteString const contents = TRY((((builder).to_string())));
-ByteString const filename = TRY((__jakt_format((StringView::from_string_literal("jakt_autogen_{}.h"sv)),((TRY((((path_name_builder).to_string())))).hash()))));
+ByteString const filename = __jakt_format((StringView::from_string_literal("jakt_autogen_{}.h"sv)),((TRY((((path_name_builder).to_string())))).hash()));
 jakt__path::Path const output = TRY((((TRY((((((((*this).compiler))->binary_dir)).absolute())))).join(filename))));
 TRY((utility::write_to_file(contents,((output).to_string()))));
 ids::ScopeId const import_scope_id = ({ Optional<ids::ScopeId> __jakt_var_523;
@@ -17609,7 +17608,7 @@ break;
 }
 parser::ParsedExternImport import_ = (_magic_value.value());
 {
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Could not find imported extern file '{}'"sv)),((import_).get_path())))),(((((import_).assigned_namespace)).name_span).value()),(ByteString::must_from_utf8("make sure the file exists and is in the include path"sv)),(((((import_).assigned_namespace)).name_span).value())))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Could not find imported extern file '{}'"sv)),((import_).get_path())),(((((import_).assigned_namespace)).name_span).value()),(ByteString::must_from_utf8("make sure the file exists and is in the include path"sv)),(((((import_).assigned_namespace)).name_span).value())))));
 }
 
 }
@@ -17689,9 +17688,9 @@ break;
 types::CheckedField field = (_magic_value.value());
 {
 NonnullRefPtr<types::CheckedVariable> const variable = ((*this).get_variable(((field).variable_id)));
-ByteString const name = TRY((((*this).get_argument_name(arg))));
+ByteString const name = ((*this).get_argument_name(arg));
 if ((((((variable)->name)) == (name)) && ((((variable)->visibility)).__jakt_init_index() == 1 /* Private */))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Can't access field '{}' when calling implicit constructor of '{}' because it is marked private"sv)),((variable)->name),((struct_).name)))),((arg).template get<1>())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Can't access field '{}' when calling implicit constructor of '{}' because it is marked private"sv)),((variable)->name),((struct_).name)),((arg).template get<1>())))));
 return {};
 }
 }
@@ -17820,7 +17819,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 if (((chosen_specialization).has_value())){
 if (((TRY((types::StructLikeId::from_type_id((result.value()),((((*this).program))))))).has_value())){
 types::StructLikeId const struct_like_id = (TRY((types::StructLikeId::from_type_id((result.value()),((((*this).program)))))).value());
-TRY((((((*this).generic_inferences)).set_all(TRY((((struct_like_id).generic_parameters_as_checked(((((*this).program))))))),(((chosen_specialization.value())).arguments)))));
+TRY((((((*this).generic_inferences)).set_all(((struct_like_id).generic_parameters_as_checked(((((*this).program))))),(((chosen_specialization.value())).arguments)))));
 }
 }
 return result;
@@ -17830,7 +17829,7 @@ return result;
 ErrorOr<void> typechecker::Typechecker::typecheck_enum(parser::ParsedRecord const record,ids::EnumId const enum_id,ids::ScopeId const parent_scope_id) {
 {
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(((((*this).get_enum(enum_id))).type_id)))));
+((*this).set_self_type_id(((((*this).get_enum(enum_id))).type_id)));
 ScopeGuard __jakt_var_527([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -17866,7 +17865,7 @@ return TRY((((((*this).program))->find_type_in_scope(scope_id,name,false,JaktInt
 }
 }
 
-ErrorOr<void> typechecker::Typechecker::set_self_type_id(ids::TypeId const type_id) {
+void typechecker::Typechecker::set_self_type_id(ids::TypeId const type_id) {
 {
 if (((((*this).get_type(type_id)))->__jakt_init_index() == 24 /* Struct */)){
 ids::StructId const struct_id = (((*this).get_type(type_id)))->as.Struct.value;
@@ -17884,10 +17883,9 @@ else {
 }
 
 }
-return {};
 }
 
-ErrorOr<JaktInternal::Optional<types::CheckedEnumVariant>> typechecker::Typechecker::get_enum_variant(types::CheckedEnum const enum_,ByteString const variant_name) {
+JaktInternal::Optional<types::CheckedEnumVariant> typechecker::Typechecker::get_enum_variant(types::CheckedEnum const enum_,ByteString const variant_name) {
 {
 {
 JaktInternal::ArrayIterator<types::CheckedEnumVariant> _magic = ((((enum_).variants)).iterator());
@@ -17959,11 +17957,11 @@ return reverse_chain;
 }
 }
 
-ErrorOr<bool> typechecker::Typechecker::type_contains_reference(ids::TypeId const type_id) {
+bool typechecker::Typechecker::type_contains_reference(ids::TypeId const type_id) {
 {
 NonnullRefPtr<typename types::Type> const type = ((*this).get_type(type_id));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, ErrorOr<bool>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *type;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 28 /* Reference */: {
@@ -17998,7 +17996,7 @@ JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const iterabl
 if ((!(((iterable_trait_implementation).has_value())))){
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const into_iterator_trait_implementation = TRY((((*this).find_any_singular_trait_implementation(((iterable_expr)->type()),(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("IntoIterator"sv)), (ByteString::must_from_utf8("IntoThrowingIterator"sv))})))),scope_id,((iterable_expr)->span()),JaktInternal::OptionalNone()))));
 if ((!(((into_iterator_trait_implementation).has_value())))){
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("Iterable expression is not iterable"sv)),((range)->span()),TRY((__jakt_format((StringView::from_string_literal("Consider implementing (Throwing)Iterable<T> or Into(Throwing)Iterator<T> for the type of this expression (‘{}’)"sv)),TRY((((*this).type_name(((iterable_expr)->type()),false))))))),((range)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("Iterable expression is not iterable"sv)),((range)->span()),__jakt_format((StringView::from_string_literal("Consider implementing (Throwing)Iterable<T> or Into(Throwing)Iterator<T> for the type of this expression (‘{}’)"sv)),TRY((((*this).type_name(((iterable_expr)->type()),false))))),((range)->span())))));
 }
 else {
 (resolved_iterable_result_type = (((((into_iterator_trait_implementation.value())).implemented_type_args))[static_cast<i64>(0LL)]));
@@ -18240,13 +18238,13 @@ return {};
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typechecker::typecheck_array(ids::ScopeId const scope_id,JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> const values,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const fill_size,utility::Span const span,types::SafetyMode const safety_mode,JaktInternal::Optional<ids::TypeId> const type_hint) {
 {
 if (((*this).dump_try_hints)){
-TRY((((*this).dump_try_hint(span))));
+((*this).dump_try_hint(span));
 }
 if ((!(((TRY((((*this).get_scope(scope_id)))))->can_throw)))){
 ByteString const message = (ByteString::must_from_utf8("Array initialization inside non-throwing scope"sv));
 if (((((*this).current_function_id)).has_value())){
 NonnullRefPtr<types::CheckedFunction> const current_function = ((*this).get_function((((*this).current_function_id).value())));
-TRY((((*this).error_with_hint(message,span,TRY((__jakt_format((StringView::from_string_literal("Add `throws` keyword to function {}"sv)),((current_function)->name)))),((current_function)->name_span)))));
+TRY((((*this).error_with_hint(message,span,__jakt_format((StringView::from_string_literal("Add `throws` keyword to function {}"sv)),((current_function)->name)),((current_function)->name_span)))));
 }
 else {
 TRY((((*this).error(message,span))));
@@ -18259,7 +18257,7 @@ NonnullRefPtr<typename parser::ParsedExpression> const fill_size_value = ((fill_
 NonnullRefPtr<typename types::CheckedExpression> const fill_size_checked = TRY((((*this).typecheck_expression_and_dereference_if_needed(fill_size_value,scope_id,safety_mode,JaktInternal::OptionalNone(),span))));
 ids::TypeId const fill_size_type = ((fill_size_checked)->type());
 if ((!(((*this).is_integer(fill_size_type))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type '{}' is not convertible to an integer. Only integer values can be array fill size expressions."sv)),TRY((((*this).type_name(fill_size_type,false))))))),((fill_size_value)->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type '{}' is not convertible to an integer. Only integer values can be array fill size expressions."sv)),TRY((((*this).type_name(fill_size_type,false))))),((fill_size_value)->span())))));
 }
 (repeat = fill_size_checked);
 }
@@ -18291,7 +18289,7 @@ if (((inner_type_id).equals(types::unknown_type_id()))){
 (inferred_type_span = ((value)->span()));
 }
 else if ((!(((inner_type_id).equals(current_value_type_id))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Type '{}' does not match type '{}' of previous values in array"sv)),TRY((((*this).type_name(current_value_type_id,false)))),TRY((((*this).type_name(inner_type_id,false))))))),((value)->span()),TRY((__jakt_format((StringView::from_string_literal("Array was inferred to store type '{}' here"sv)),TRY((((*this).type_name(inner_type_id,false))))))),(inferred_type_span.value())))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Type '{}' does not match type '{}' of previous values in array"sv)),TRY((((*this).type_name(current_value_type_id,false)))),TRY((((*this).type_name(inner_type_id,false))))),((value)->span()),__jakt_format((StringView::from_string_literal("Array was inferred to store type '{}' here"sv)),TRY((((*this).type_name(inner_type_id,false))))),(inferred_type_span.value())))));
 }
 TRY((((vals).push(checked_expr))));
 }
@@ -18349,7 +18347,7 @@ JaktInternal::DynamicArray<ids::TypeId> const generic_params = ((trait_id_generi
 
 NonnullRefPtr<types::CheckedTrait> const trait_ = ((*this).get_trait(trait_id));
 if (((((((trait_)->generic_parameters)).size())) != (((generic_params).size())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Trait ‘{}’ expects {} generic parameters, but {} were given"sv)),trait_name,((((trait_)->generic_parameters)).size()),((generic_params).size())))),((trait_)->name_span)))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Trait ‘{}’ expects {} generic parameters, but {} were given"sv)),trait_name,((((trait_)->generic_parameters)).size()),((generic_params).size())),((trait_)->name_span)))));
 continue;
 }
 TRY((((*this).specialize_trait(trait_id,generic_params))));
@@ -18379,7 +18377,7 @@ continue;
 }
 JaktInternal::Optional<ids::ScopeId> mixin_scope_id = JaktInternal::OptionalNone();
 if ((!(((((trait_)->generic_parameters)).is_empty())))){
-ids::ScopeId const id = TRY((((((*this).program))->create_scope(JaktInternal::OptionalNone(),false,TRY((__jakt_format((StringView::from_string_literal("trait({}).generic-mixin"sv)),((trait_)->name)))),((scope_id).module_id),false))));
+ids::ScopeId const id = TRY((((((*this).program))->create_scope(JaktInternal::OptionalNone(),false,__jakt_format((StringView::from_string_literal("trait({}).generic-mixin"sv)),((trait_)->name)),((scope_id).module_id),false))));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((trait_)->generic_parameters)).size()))});
 for (;;){
@@ -18438,7 +18436,7 @@ return {};
 
 ErrorOr<void> typechecker::Typechecker::typecheck_trait_predecl(parser::ParsedTrait const parsed_trait,ids::ScopeId const scope_id) {
 {
-ids::ScopeId const trait_scope_id = TRY((((*this).create_scope(scope_id,false,TRY((__jakt_format((StringView::from_string_literal("trait({})"sv)),((parsed_trait).name)))),false))));
+ids::ScopeId const trait_scope_id = TRY((((*this).create_scope(scope_id,false,__jakt_format((StringView::from_string_literal("trait({})"sv)),((parsed_trait).name)),false))));
 TRY((((*this).add_type_to_scope(trait_scope_id,(ByteString::must_from_utf8("Self"sv)),TRY((((*this).find_or_add_type_id(TRY((types::Type::Self(parser::CheckedQualifiers(false)))))))),((parsed_trait).name_span)))));
 NonnullRefPtr<types::CheckedTrait> checked_trait = TRY((types::CheckedTrait::__jakt_create(((parsed_trait).name),((parsed_trait).name_span),({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::CheckedTraitRequirements, ErrorOr<void>>{
@@ -18462,7 +18460,7 @@ ids::TraitId const trait_id = ids::TraitId(((*this).current_module_id),(((((((((
 ids::TypeId const trait_type_id = TRY((((*this).find_or_add_type_id(TRY((types::Type::Trait(parser::CheckedQualifiers(false),trait_id)))))));
 TRY((((((((((((*this).program))->modules))[((((*this).current_module_id)).id)]))->traits)).push(checked_trait))));
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(trait_type_id))));
+((*this).set_self_type_id(trait_type_id));
 ScopeGuard __jakt_var_533([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -18513,7 +18511,7 @@ break;
 }
 parser::ParsedFunction parsed_function = (_magic_value.value());
 {
-ids::ScopeId const method_scope_id = TRY((((*this).create_scope(trait_scope_id,((parsed_function).can_throw),TRY((__jakt_format((StringView::from_string_literal("trait-method({}::{})"sv)),((parsed_trait).name),((parsed_function).name)))),true))));
+ids::ScopeId const method_scope_id = TRY((((*this).create_scope(trait_scope_id,((parsed_function).can_throw),__jakt_format((StringView::from_string_literal("trait-method({}::{})"sv)),((parsed_trait).name),((parsed_function).name)),true))));
 ids::FunctionId const function_id = ((((((*this).program))->get_module(((*this).current_module_id))))->next_function_id());
 JaktInternal::Optional<ids::TypeId> this_arg_type_id = JaktInternal::OptionalNone();
 if (((!(((((parsed_function).params)).is_empty()))) && (((((((((((parsed_function).params)).first()).value())).variable)).name)) == ((ByteString::must_from_utf8("this"sv)))))){
@@ -18661,7 +18659,7 @@ __jakt_label_461:; __jakt_var_539; }));
 case 1 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;types::Value const& error = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> __jakt_var_540; {
-TRY((((*this).error_with_hint((ByteString::must_from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),TRY((__jakt_format((StringView::from_string_literal("this expression threw an error: {}"sv)),error))),((expression)->span())))));
+TRY((((*this).error_with_hint((ByteString::must_from_utf8("module name must evaluate to a string literal or an array of strings"sv)),((expression)->span()),__jakt_format((StringView::from_string_literal("this expression threw an error: {}"sv)),error),((expression)->span())))));
 __jakt_var_540 = JaktInternal::OptionalNone(); goto __jakt_label_462;
 
 }
@@ -18817,7 +18815,7 @@ break;
 }
 
 if ((!(((module_name_and_span).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("No module in module set {{{}}} was found"sv)),TRY((utility::join(names,(ByteString::must_from_utf8(", "sv)))))))),((((import_).module_name)).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("No module in module set {{{}}} was found"sv)),TRY((utility::join(names,(ByteString::must_from_utf8(", "sv)))))),((((import_).module_name)).span())))));
 return {};
 }
 JaktInternal::Tuple<ByteString,utility::Span> const module_name_module_span_ = (module_name_and_span.value());
@@ -18847,14 +18845,14 @@ VERIFY_NOT_REACHED();
 utility::FileId const file_id = TRY((((((*this).compiler))->get_file_id_or_register(file_name))));
 JaktInternal::Optional<parser::ParsedNamespace> const parsed_namespace = TRY((((*this).lex_and_parse_file_contents(file_id))));
 if ((!(((parsed_namespace).has_value())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Module '{}' not found"sv)),module_name))),module_span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Module '{}' not found"sv)),module_name),module_span))));
 return {};
 }
 ids::ModuleId const original_current_module_id = ((*this).current_module_id);
 (imported_module_id = TRY((((*this).create_module(sanitized_module_name,false,((file_name).to_string()))))));
 TRY((((((*this).program))->set_loaded_module(sanitized_module_name,types::LoadedModule(imported_module_id,file_id)))));
 (((*this).current_module_id) = imported_module_id);
-ids::ScopeId const imported_scope_id = TRY((((*this).create_scope(((*this).root_scope_id()),false,TRY((__jakt_format((StringView::from_string_literal("module({})"sv)),sanitized_module_name))),false))));
+ids::ScopeId const imported_scope_id = TRY((((*this).create_scope(((*this).root_scope_id()),false,__jakt_format((StringView::from_string_literal("module({})"sv)),sanitized_module_name),false))));
 NonnullRefPtr<types::Scope> imported_scope = TRY((((*this).get_scope(imported_scope_id))));
 (((imported_scope)->namespace_name) = sanitized_module_name);
 (((imported_scope)->is_from_generated_code) = (((parsed_namespace.value())).is_generated_code));
@@ -18871,7 +18869,7 @@ if (((((import_).import_list)).is_empty())){
 JaktInternal::Dictionary<ByteString,ids::ModuleId> scope_imports = ((TRY((((*this).get_scope(scope_id)))))->imports);
 ByteString import_name = module_name;
 if (((((import_).alias_name)).has_value())){
-(import_name = TRY(((((((import_).alias_name).value())).literal_name()))));
+(import_name = (((((import_).alias_name).value())).literal_name()));
 }
 TRY((((scope_imports).set(import_name,imported_module_id))));
 }
@@ -19023,9 +19021,9 @@ break;
 }
 parser::ImportName imported_name = (_magic_value.value());
 {
-bool const found = TRY((((*this).find_and_import_name_from_scope(TRY((((imported_name).literal_name()))),((imported_name).span()),TRY((((imported_name).literal_name()))),((imported_name).span()),import_scope_id,scope_id,typechecker::ImportRestrictions::all()))));
+bool const found = TRY((((*this).find_and_import_name_from_scope(((imported_name).literal_name()),((imported_name).span()),((imported_name).literal_name()),((imported_name).span()),import_scope_id,scope_id,typechecker::ImportRestrictions::all()))));
 if ((!(found))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Imported name '{}' not found in module '{}'"sv)),TRY((((imported_name).literal_name()))),module_name))),((imported_name).span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Imported name '{}' not found in module '{}'"sv)),((imported_name).literal_name()),module_name),((imported_name).span())))));
 }
 }
 
@@ -19092,7 +19090,7 @@ TRY((((*this).typecheck_function(func,parent_scope_id))));
 return (method_id.value());
 }
 else {
-TRY((((((*this).compiler))->panic(TRY((__jakt_format((StringView::from_string_literal("Previously defined function {} not found in scope {}"sv)),((func).name),parent_scope_id)))))));
+TRY((((((*this).compiler))->panic(__jakt_format((StringView::from_string_literal("Previously defined function {} not found in scope {}"sv)),((func).name),parent_scope_id)))));
 }
 
 }
@@ -19113,7 +19111,7 @@ if ((!(((((f).linkage)).__jakt_init_index() == 1 /* External */)))){
 TRY((((*this).error((ByteString::must_from_utf8("Expected all functions in an `import extern` to be be external"sv)),((f).name_span)))));
 }
 if ((((import_).is_c) && (!(((((f).generic_parameters)).is_empty()))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("imported function '{}' is declared to have C linkage, but is generic"sv)),((f).name)))),((f).name_span),(ByteString::must_from_utf8("this function may not be generic"sv)),((f).name_span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("imported function '{}' is declared to have C linkage, but is generic"sv)),((f).name)),((f).name_span),(ByteString::must_from_utf8("this function may not be generic"sv)),((f).name_span)))));
 }
 if ((!(((((((f).block)).stmts)).is_empty())))){
 TRY((((*this).error((ByteString::must_from_utf8("imported extern function is not allowed to have a body"sv)),((f).name_span)))));
@@ -19136,7 +19134,7 @@ if ((!(((((record).definition_linkage)).__jakt_init_index() == 1 /* External */)
 TRY((((*this).error((ByteString::must_from_utf8("Expected all records in an `import extern` to be external"sv)),((record).name_span)))));
 }
 if ((((import_).is_c) && (!(((((record).generic_parameters)).is_empty()))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("imported {} '{}' is declared to have C linkage, but is generic"sv)),TRY((((((record).record_type)).record_type_name()))),((record).name)))),((record).name_span),TRY((__jakt_format((StringView::from_string_literal("this {} may not be generic"sv)),TRY((((((record).record_type)).record_type_name())))))),((record).name_span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("imported {} '{}' is declared to have C linkage, but is generic"sv)),((((record).record_type)).record_type_name()),((record).name)),((record).name_span),__jakt_format((StringView::from_string_literal("this {} may not be generic"sv)),((((record).record_type)).record_type_name())),((record).name_span)))));
 }
 }
 
@@ -19452,8 +19450,8 @@ return TRY((((((*this).program))->find_struct_in_scope(scope_id,name,false,root_
 
 ErrorOr<void> typechecker::Typechecker::check_that_type_doesnt_contain_reference(ids::TypeId const type_id,utility::Span const span) {
 {
-if (TRY((((*this).type_contains_reference(type_id))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Reference type ‘{}’ not usable in this context"sv)),TRY((((*this).type_name(type_id,false))))))),span))));
+if (((*this).type_contains_reference(type_id))){
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Reference type ‘{}’ not usable in this context"sv)),TRY((((*this).type_name(type_id,false))))),span))));
 }
 }
 return {};
@@ -19559,16 +19557,16 @@ return parser::CheckedQualifiers(false);
 
 ErrorOr<bool> typechecker::Typechecker::validate_argument_label(types::CheckedParameter const param,ByteString const label,utility::Span const span,NonnullRefPtr<typename parser::ParsedExpression> const expr,JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const default_value) {
 {
-ByteString const name = TRY((((*this).get_argument_name((Tuple{label, span, expr})))));
+ByteString const name = ((*this).get_argument_name((Tuple{label, span, expr})));
 if (((name) == (((((param).variable))->name)))){
 return true;
 }
 if ((!(((default_value).has_value())))){
 if (((label).is_empty())){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Missing argument label (expected '{}:')"sv)),((((param).variable))->name)))),((expr)->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Missing argument label (expected '{}:')"sv)),((((param).variable))->name)),((expr)->span())))));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Wrong parameter name in argument label (got '{}', expected '{}')"sv)),label,((((param).variable))->name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Wrong parameter name in argument label (got '{}', expected '{}')"sv)),label,((((param).variable))->name)),span))));
 }
 
 }
@@ -19586,7 +19584,7 @@ return false;
 }
 ids::EnumId const existing_enum_id = (maybe_enum_id.value());
 utility::Span const definition_span = ((((*this).get_enum(existing_enum_id))).name_span);
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("redefinition of enum {}"sv)),name))),span,TRY((__jakt_format((StringView::from_string_literal("enum {} was first defined here"sv)),name))),definition_span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("redefinition of enum {}"sv)),name),span,__jakt_format((StringView::from_string_literal("enum {} was first defined here"sv)),name),definition_span))));
 return false;
 }
 TRY((((((scope)->enums)).set(name,enum_id))));
@@ -19764,7 +19762,7 @@ if (TRY((((function_to_add)->signature_matches(existing_function,false))))){
 if (((TRY((((*this).get_scope(parent_scope_id)))))->is_from_generated_code)){
 continue;
 }
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Redefinition of function ‘{}’."sv)),((function_to_add)->name)))),(((((function_to_add)->parsed_function).value())).name_span),(ByteString::must_from_utf8("Previous definition is here"sv)),(((((existing_function)->parsed_function).value())).name_span)))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Redefinition of function ‘{}’."sv)),((function_to_add)->name)),(((((function_to_add)->parsed_function).value())).name_span),(ByteString::must_from_utf8("Previous definition is here"sv)),(((((existing_function)->parsed_function).value())).name_span)))));
 }
 }
 
@@ -19797,10 +19795,10 @@ case 1 /* Private */: {
 {
 if ((!(TRY((((*this).scope_can_access(accessor,accessee))))))){
 if ((!(((((method)->type)).__jakt_init_index() == 0 /* Normal */)))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Can't access constructor ‘{}’, because it is marked private"sv)),((method)->name)))),span,(ByteString::must_from_utf8("Private constructors are created if any fields are private"sv)),span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Can't access constructor ‘{}’, because it is marked private"sv)),((method)->name)),span,(ByteString::must_from_utf8("Private constructors are created if any fields are private"sv)),span))));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Can't access method ‘{}’, because it is marked private"sv)),((method)->name)))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Can't access method ‘{}’, because it is marked private"sv)),((method)->name)),span))));
 }
 
 }
@@ -19894,8 +19892,8 @@ continue;
 if (((generic_pass) != ((!(((((func).generic_parameters)).is_empty())))))){
 continue;
 }
-ids::ScopeId const method_scope_id = TRY((((*this).create_scope(scope_id,((func).can_throw),TRY((__jakt_format((StringView::from_string_literal("method({}::{})"sv)),((parsed_record).name),((func).name)))),true))));
-ids::ScopeId const block_scope_id = TRY((((*this).create_scope(method_scope_id,((func).can_throw),TRY((__jakt_format((StringView::from_string_literal("method-block({}::{})"sv)),((parsed_record).name),((func).name)))),true))));
+ids::ScopeId const method_scope_id = TRY((((*this).create_scope(scope_id,((func).can_throw),__jakt_format((StringView::from_string_literal("method({}::{})"sv)),((parsed_record).name),((func).name)),true))));
+ids::ScopeId const block_scope_id = TRY((((*this).create_scope(method_scope_id,((func).can_throw),__jakt_format((StringView::from_string_literal("method-block({}::{})"sv)),((parsed_record).name),((func).name)),true))));
 bool const is_generic = ((!(((((parsed_record).generic_parameters)).is_empty()))) || (!(((((func).generic_parameters)).is_empty()))));
 bool has_varargs = ((((method).parsed_function)).has_varargs);
 if ((has_varargs && ((((((method).parsed_function)).linkage)).__jakt_init_index() == 0 /* Internal */))){
@@ -19985,11 +19983,10 @@ ids::TypeId const function_return_type_id = TRY((((*this).typecheck_typename(((f
 return {};
 }
 
-ErrorOr<void> typechecker::Typechecker::dump_try_hint(utility::Span const span) const {
+void typechecker::Typechecker::dump_try_hint(utility::Span const span) const {
 {
 outln((StringView::from_string_literal("{{\"type\":\"try\",\"file_id\":{},\"position\":{}}}"sv)),((((span).file_id)).id),((span).start));
 }
-return {};
 }
 
 ErrorOr<void> typechecker::Typechecker::typecheck_namespace_methods_predecl(parser::ParsedNamespace const parsed_namespace,ids::ScopeId const scope_id,bool const comptime_pass,bool const generic_pass) {
@@ -20324,7 +20321,7 @@ break;
 }
 parser::ParsedRecord record = (_magic_value.value());
 {
-((records_to_process).enqueue((Tuple{record, TRY((((id).scope_id(((((*this).program)))))))})));
+((records_to_process).enqueue((Tuple{record, ((id).scope_id(((((*this).program)))))})));
 }
 
 }
@@ -20582,7 +20579,7 @@ parser::ParsedExternalTraitImplementation implementation = (_magic_value.value()
 {
 ids::TypeId const for_type = TRY((((*this).typecheck_typename(((implementation).for_type),scope_id,JaktInternal::OptionalNone()))));
 JaktInternal::Optional<ids::TypeId> const old_self_type_id = ((*this).self_type_id);
-TRY((((*this).set_self_type_id(for_type))));
+((*this).set_self_type_id(for_type));
 ScopeGuard __jakt_var_559([&] {
 (((*this).self_type_id) = old_self_type_id);
 });
@@ -20629,7 +20626,7 @@ return JaktInternal::ExplicitValue<void>();
 default: {
 {
 if ((!(default_pass))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Cannot implement traits for type '{}'"sv)),TRY((((*this).type_name(for_type,false))))))),((((implementation).for_type))->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Cannot implement traits for type '{}'"sv)),TRY((((*this).type_name(for_type,false))))),((((implementation).for_type))->span())))));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -20797,7 +20794,7 @@ if ((((lhs_type_id).equals(types::unknown_type_id())) && (!(((rhs_type_id).equal
 }
 ids::StructId const weak_ptr_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("WeakPtr"sv))))));
 ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
-if (TRY((((*this).type_contains_reference(lhs_type_id))))){
+if (((*this).type_contains_reference(lhs_type_id))){
 JaktInternal::Tuple<JaktInternal::Optional<ids::ScopeId>,NonnullRefPtr<typename types::CheckedExpression>> const init_scope_id_cause_expr_ = TRY((((*this).required_scope_id_in_hierarchy_for(checked_expr,scope_id))));
 JaktInternal::Optional<ids::ScopeId> const init_scope_id = ((init_scope_id_cause_expr_).template get<0>());
 NonnullRefPtr<typename types::CheckedExpression> const cause_expr = ((init_scope_id_cause_expr_).template get<1>());
@@ -20827,17 +20824,17 @@ ids::StructId const id = (lhs_type)->as.GenericInstance.id;
 JaktInternal::DynamicArray<ids::TypeId> const args = (lhs_type)->as.GenericInstance.args;
 if (((id).equals(weak_ptr_struct_id))){
 if (((!(((lhs_type_id).equals(rhs_type_id)))) && ((!(((((args)[static_cast<i64>(0LL)])).equals(rhs_type_id)))) && ((!(((rhs_type_id).equals(types::unknown_type_id())))) && (!(((*this).is_subclass_of(((args)[static_cast<i64>(0LL)]),rhs_type_id)))))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),((checked_expr)->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),((checked_expr)->span())))));
 }
 }
 else if (((id).equals(optional_struct_id))){
 if (((!(((lhs_type_id).equals(rhs_type_id)))) && ((!(((((args)[static_cast<i64>(0LL)])).equals(rhs_type_id)))) && ((!(((rhs_type_id).equals(types::unknown_type_id())))) && (!(((*this).is_subclass_of(((args)[static_cast<i64>(0LL)]),rhs_type_id)))))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),((checked_expr)->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),((checked_expr)->span())))));
 }
 }
 else {
 if (((!(((lhs_type_id).equals(rhs_type_id)))) && (!(((rhs_type_id).equals(types::unknown_type_id())))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),((checked_expr)->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),((checked_expr)->span())))));
 }
 }
 
@@ -20871,13 +20868,13 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }));
 }
 if (((!((((*this).is_numeric(lhs_type_id)) && is_rhs_zero))) && (((*this).is_integer(lhs_type_id)) ^ ((*this).is_integer(rhs_type_id))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),((checked_expr)->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),((checked_expr)->span())))));
 return TRY((types::CheckedStatement::Garbage(span)));
 }
 }
 else {
 if (((!(((lhs_type_id).equals(rhs_type_id)))) && ((!(((rhs_type_id).equals(types::unknown_type_id())))) && (!(((*this).is_subclass_of(lhs_type_id,rhs_type_id))))))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))))),((checked_expr)->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Type mismatch: expected ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(lhs_type_id,false)))),TRY((((*this).type_name(rhs_type_id,false))))),((checked_expr)->span())))));
 }
 }
 
@@ -21073,7 +21070,7 @@ return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::CCharacterCons
 }
 else {
 {
-TRY((((((*this).compiler))->panic(TRY((__jakt_format((StringView::from_string_literal("Unknown string prefix {}"sv)),prefix)))))));
+TRY((((((*this).compiler))->panic(__jakt_format((StringView::from_string_literal("Unknown string prefix {}"sv)),prefix)))));
 }
 }
 }());
@@ -21087,7 +21084,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;ByteString cons
 utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_562; {
 if (((*this).dump_try_hints)){
-TRY((((*this).dump_try_hint(span))));
+((*this).dump_try_hint(span));
 }
 __jakt_var_562 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::CheckedExpression>,ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
@@ -21102,7 +21099,7 @@ if (((!(((type_id).equals(prelude_string_type_id)))) && (!(((type_id).equals(pre
 if (((((*this).get_type(type_id)))->is_concrete())){
 JaktInternal::Optional<typechecker::TraitImplementationDescriptor> const trait_implementation = TRY((((*this).find_any_singular_trait_implementation(type_id,(TRY((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("FromStringLiteral"sv)), (ByteString::must_from_utf8("ThrowingFromStringLiteral"sv))})))),scope_id,span,JaktInternal::OptionalNone()))));
 if ((!(((trait_implementation).has_value())))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Type {} cannot be used as an overloaded string literal type"sv)),TRY((((*this).type_name(type_id,true))))))),span,TRY((__jakt_format((StringView::from_string_literal("Consider implementing the FromStringLiteral trait for {}"sv)),TRY((((*this).type_name(type_id,false))))))),span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Type {} cannot be used as an overloaded string literal type"sv)),TRY((((*this).type_name(type_id,true))))),span,__jakt_format((StringView::from_string_literal("Consider implementing the FromStringLiteral trait for {}"sv)),TRY((((*this).type_name(type_id,false))))),span))));
 (type_id = prelude_string_type_id);
 }
 else {
@@ -21163,7 +21160,7 @@ JaktInternal::Optional<types::StructLikeId> const parent_id = ((parent_id_found_
 bool const found_optional = ((parent_id_found_optional_).template get<1>());
 
 if ((is_optional && (!(found_optional)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Optional chain mismatch: expected optional chain, found {}"sv)),TRY((((*this).type_name(checked_expr_type_id,false))))))),((checked_expr)->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Optional chain mismatch: expected optional chain, found {}"sv)),TRY((((*this).type_name(checked_expr_type_id,false))))),((checked_expr)->span())))));
 }
 NonnullRefPtr<typename types::CheckedExpression> const checked_call_expr = TRY((((*this).typecheck_call(call,scope_id,span,checked_expr,parent_id,safety_mode,type_hint,false))));
 ids::TypeId const type_id = ((checked_call_expr)->type());
@@ -21447,14 +21444,14 @@ break;
 }
 
 if (((!(exists)) && ((type_id).equals(types::unknown_type_id())))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant {} does not exist on {}"sv)),name,TRY((((*this).type_name(expr_type_id,false))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum variant {} does not exist on {}"sv)),name,TRY((((*this).type_name(expr_type_id,false))))),span))));
 }
 }
 else if ((((name) == ((ByteString::must_from_utf8("Some"sv)))) || ((name) == ((ByteString::must_from_utf8("None"sv)))))){
 ids::StructId const optional_struct_id = TRY((((*this).find_struct_in_prelude((ByteString::must_from_utf8("Optional"sv))))));
 NonnullRefPtr<typename types::Type> const checked_expr_type = ((*this).get_type(((checked_expr)->type())));
 if ((!(((checked_expr_type)->__jakt_init_index() == 20 /* GenericInstance */)))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("The left-hand side of an `is {}` statement must have a {} variant"sv)),name,name))),((checked_expr)->span())))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("The left-hand side of an `is {}` statement must have a {} variant"sv)),name,name),((checked_expr)->span())))));
 }
 (operator_is = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::CheckedUnaryOperator,ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>>{
@@ -21477,7 +21474,7 @@ utility::panic((ByteString::must_from_utf8("unreachable"sv)));
 }));
 }
 else if (((type_id).equals(types::unknown_type_id()))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unknown type or invalid type name: {}"sv)),name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Unknown type or invalid type name: {}"sv)),name),span))));
 }
 }
 else {
@@ -21542,7 +21539,7 @@ ids::TypeId const hint = (((checked_lhs.value()))->type());
 (checked_rhs = TRY((((*this).dereference_if_needed((original_checked_rhs.value()),span)))));
 }
 
-if ((TRY((((*this).type_contains_reference((((original_checked_lhs.value()))->type()))))) && ((rhs)->__jakt_init_index() == 11 /* UnaryOp */))){
+if ((((*this).type_contains_reference((((original_checked_lhs.value()))->type()))) && ((rhs)->__jakt_init_index() == 11 /* UnaryOp */))){
 parser::UnaryOperator const op = (rhs)->as.UnaryOp.op;
 if ((((op).__jakt_init_index() == 7 /* Reference */) || ((op).__jakt_init_index() == 8 /* MutableReference */))){
 TRY((((*this).error_with_hint((ByteString::must_from_utf8("Attempt to rebind a reference will result in write-through"sv)),span,(ByteString::must_from_utf8("This reference will be immediately dereferenced and then assigned"sv)),((rhs)->span())))));
@@ -21601,7 +21598,7 @@ return JaktInternal::ExplicitValue(TRY((types::CheckedExpression::Var(JaktIntern
 }
 else {
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename types::CheckedExpression>> __jakt_var_578; {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Variable '{}' not found"sv)),name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Variable '{}' not found"sv)),name),span))));
 __jakt_var_578 = TRY((types::CheckedExpression::Var(JaktInternal::OptionalNone(),TRY((types::CheckedVariable::__jakt_create(name,((type_hint).value_or(types::unknown_type_id())),false,span,JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone()))),span))); goto __jakt_label_495;
 
 }
@@ -21881,7 +21878,7 @@ case 25 /* Enum */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Enum;ids::EnumId const& enum_id = __jakt_match_value.value;
 {
 types::CheckedEnum const enum_ = ((*this).get_enum(enum_id));
-JaktInternal::Optional<types::CheckedEnumVariant> const variant = TRY((((*this).get_enum_variant(enum_,variant_name))));
+JaktInternal::Optional<types::CheckedEnumVariant> const variant = ((*this).get_enum_variant(enum_,variant_name));
 if (((variant).has_value())){
 (checked_enum_variant = variant);
 JaktInternal::Optional<JaktInternal::DynamicArray<types::CheckedEnumVariantBinding>> const checked_bindings = TRY((((*this).typecheck_enum_variant_bindings((variant.value()),(TRY((DynamicArray<parser::EnumVariantPatternArgument>::create_with({arg})))),span))));
@@ -21891,7 +21888,7 @@ JaktInternal::DynamicArray<types::CheckedEnumVariantBinding> const bindings = (c
 }
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant {} does not exist"sv)),variant_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum variant {} does not exist"sv)),variant_name),span))));
 }
 
 }
@@ -21899,7 +21896,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unknown type or invalid type name: {}"sv)),variant_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Unknown type or invalid type name: {}"sv)),variant_name),span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -21922,7 +21919,7 @@ case 25 /* Enum */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Enum;ids::EnumId const& enum_id = __jakt_match_value.value;
 {
 types::CheckedEnum const enum_ = ((*this).get_enum(enum_id));
-JaktInternal::Optional<types::CheckedEnumVariant> const variant = TRY((((*this).get_enum_variant(enum_,variant_name))));
+JaktInternal::Optional<types::CheckedEnumVariant> const variant = ((*this).get_enum_variant(enum_,variant_name));
 if (((variant).has_value())){
 (checked_enum_variant = variant);
 JaktInternal::Optional<JaktInternal::DynamicArray<types::CheckedEnumVariantBinding>> const checked_bindings = TRY((((*this).typecheck_enum_variant_bindings((variant.value()),(TRY((DynamicArray<parser::EnumVariantPatternArgument>::create_with({arg})))),span))));
@@ -21932,7 +21929,7 @@ JaktInternal::DynamicArray<types::CheckedEnumVariantBinding> const bindings = (c
 }
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Enum variant {} does not exist"sv)),variant_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Enum variant {} does not exist"sv)),variant_name),span))));
 }
 
 }
@@ -21940,7 +21937,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unknown type or invalid type name: {}"sv)),variant_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Unknown type or invalid type name: {}"sv)),variant_name),span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -22087,7 +22084,7 @@ return TRY((types::CheckedExpression::IndexedStruct(JaktInternal::OptionalNone()
 }
 }
 
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field_name),span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -22118,7 +22115,7 @@ return TRY((types::CheckedExpression::IndexedStruct(JaktInternal::OptionalNone()
 }
 }
 
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field_name),span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -22149,7 +22146,7 @@ return TRY((types::CheckedExpression::IndexedCommonEnumMember(JaktInternal::Opti
 }
 }
 
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("unknown common member of enum: {}.{}"sv)),((enum_).name),field_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("unknown common member of enum: {}.{}"sv)),((enum_).name),field_name),span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -22180,12 +22177,12 @@ return TRY((types::CheckedExpression::IndexedCommonEnumMember(JaktInternal::Opti
 }
 }
 
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("unknown common member of enum: {}.{}"sv)),((enum_).name),field_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("unknown common member of enum: {}.{}"sv)),((enum_).name),field_name),span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
-return (TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Member field access on value of non-struct type ‘{}’"sv)),TRY((((*this).type_name(checked_expr_type_id,false))))))),span))))), JaktInternal::ExplicitValue<void>();
+return (TRY((((*this).error(__jakt_format((StringView::from_string_literal("Member field access on value of non-struct type ‘{}’"sv)),TRY((((*this).type_name(checked_expr_type_id,false))))),span))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 }/*switch end*/
 }()
@@ -22211,7 +22208,7 @@ ids::TypeId const resolved_type_id = TRY((((*this).resolve_type_var(((member)->t
 TRY((((*this).check_member_access(scope_id,((((*this).get_struct((((field_record.value())).struct_id)))).scope_id),member,span))));
 return TRY((types::CheckedExpression::IndexedStruct(JaktInternal::OptionalNone(),checked_expr,field_name,(((field_record.value())).field_id),span,is_optional,resolved_type_id)));
 }
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("unknown member of struct: {}.{}"sv)),((structure).name),field_name),span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -22251,7 +22248,7 @@ return TRY((types::CheckedExpression::IndexedCommonEnumMember(JaktInternal::Opti
 }
 }
 
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("unknown common member of enum: {}.{}"sv)),((enum_).name),field_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("unknown common member of enum: {}.{}"sv)),((enum_).name),field_name),span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -22291,12 +22288,12 @@ return TRY((types::CheckedExpression::IndexedCommonEnumMember(JaktInternal::Opti
 }
 }
 
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("unknown common member of enum: {}.{}"sv)),((enum_).name),field_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("unknown common member of enum: {}.{}"sv)),((enum_).name),field_name),span))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
-return (TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Member field access on value of non-struct type ‘{}’"sv)),TRY((((*this).type_name(checked_expr_type_id,false))))))),span))))), JaktInternal::ExplicitValue<void>();
+return (TRY((((*this).error(__jakt_format((StringView::from_string_literal("Member field access on value of non-struct type ‘{}’"sv)),TRY((((*this).type_name(checked_expr_type_id,false))))),span))))), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 }/*switch end*/
 }()
@@ -22392,7 +22389,7 @@ ErrorOr<jakt__path::Path> typechecker::Typechecker::get_root_path() const {
 JaktInternal::Optional<types::LoadedModule> const root_module = ((((*this).program))->get_loaded_module(((*this).root_module_name)));
 if (((root_module).has_value())){
 utility::FileId const file_id = (((root_module.value())).file_id);
-return (TRY((((((*this).compiler))->get_file_path(file_id)))).value());
+return (((((*this).compiler))->get_file_path(file_id)).value());
 }
 return TRY((jakt__path::Path::from_string((ByteString::must_from_utf8("."sv)))));
 }
@@ -22464,7 +22461,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((trait_impls).size()),static_cast<size_t>(1ULL))){
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("type ‘{}’ implements trait ‘{}’ more than once, but a singular implementation is allowed"sv)),TRY((((*this).type_name(type_id,false)))),trait_name))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("type ‘{}’ implements trait ‘{}’ more than once, but a singular implementation is allowed"sv)),TRY((((*this).type_name(type_id,false)))),trait_name),span))));
 }
 return typechecker::TraitImplementationDescriptor((trait_id.value()),trait_name,((trait_impls)[static_cast<i64>(0LL)]));
 }
@@ -22544,7 +22541,7 @@ if (((result).has_value())){
 (current_namespace_scope_id = (((result.value())).template get<0>()));
 }
 else {
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unknown namespace: '{}'"sv)),ns))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Unknown namespace: '{}'"sv)),ns),span))));
 return types::unknown_type_id();
 }
 
@@ -22653,7 +22650,7 @@ return (((maybe_type_and_scope.value())).template get<0>());
 if ((((TRY((((*this).get_scope(scope_id)))))->is_from_generated_code) && ((name) == ((ByteString::must_from_utf8("unknown"sv)))))){
 return types::builtin(types::BuiltinType::Unknown());
 }
-TRY((((*this).error(TRY((__jakt_format((StringView::from_string_literal("Unknown type ‘{}’ in scope {}"sv)),name,TRY((((*this).debug_description_of(scope_id))))))),span))));
+TRY((((*this).error(__jakt_format((StringView::from_string_literal("Unknown type ‘{}’ in scope {}"sv)),name,TRY((((*this).debug_description_of(scope_id))))),span))));
 __jakt_var_598 = types::unknown_type_id(); goto __jakt_label_510;
 
 }
@@ -22813,7 +22810,7 @@ return JaktInternal::ExplicitValue((name.value()));
 }
 else {
 return JaktInternal::ExplicitValue(TRY((({ Optional<ByteString> __jakt_var_609;
-auto __jakt_var_610 = [&]() -> ErrorOr<ByteString> { return TRY((__jakt_format((StringView::from_string_literal("lambda{}"sv)),((((*this).lambda_count)++))))); }();
+auto __jakt_var_610 = [&]() -> ErrorOr<ByteString> { return __jakt_format((StringView::from_string_literal("lambda{}"sv)),((((*this).lambda_count)++))); }();
 if (!__jakt_var_610.is_error()) __jakt_var_609 = __jakt_var_610.release_value();
 __jakt_var_609; }).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8(""sv)); }))));
 }
@@ -22908,7 +22905,7 @@ TRY((((*this).add_var_to_scope(catch_scope_id,(catch_name.value()),error_id,span
 types::CheckedBlock const block = TRY((((*this).typecheck_block((catch_block.value()),catch_scope_id,safety_mode,JaktInternal::OptionalNone()))));
 if ((((((block).control_flow)).always_transfers_control()) || ((((block).yielded_type)).has_value()))){
 if ((!(((((block).yielded_type).value_or_lazy_evaluated([&] { return expression_type_id; })).equals(expression_type_id))))){
-TRY((((*this).error_with_hint(TRY((__jakt_format((StringView::from_string_literal("Expected a value of type ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(expression_type_id,false)))),TRY((((*this).type_name((((block).yielded_type).value()),false))))))),span,TRY((__jakt_format((StringView::from_string_literal("Expression 'catch' block must either yield the same type as the expression it is catching, or yield nothing"sv))))),span))));
+TRY((((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Expected a value of type ‘{}’, but got ‘{}’"sv)),TRY((((*this).type_name(expression_type_id,false)))),TRY((((*this).type_name((((block).yielded_type).value()),false))))),span,__jakt_format((StringView::from_string_literal("Expression 'catch' block must either yield the same type as the expression it is catching, or yield nothing"sv))),span))));
 }
 else {
 (type_id = ((block).yielded_type).value_or_lazy_evaluated([&] { return expression_type_id; }));

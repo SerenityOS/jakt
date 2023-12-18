@@ -46,7 +46,7 @@ if ((((next.value())).template get<1>())){
 TRY((((((*this).directory_list)).push(new_path))));
 return TRY((((*this).next())));
 }
-if (((TRY((((new_path).extension())))) == (((*this).extension)))){
+if (((((new_path).extension())) == (((*this).extension)))){
 return new_path;
 }
 else {

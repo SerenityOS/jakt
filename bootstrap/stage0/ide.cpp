@@ -147,7 +147,7 @@ parser::ParsedMethod method = (_magic_value.value());
 {
 ide::JaktSymbol const function_symbol = TRY((ide::function_to_symbol(((method).parsed_function),(ByteString::must_from_utf8("method"sv)))));
 TRY((((children).push(function_symbol))));
-(record_span = TRY((parser::merge_spans(record_span,((function_symbol).range)))));
+(record_span = parser::merge_spans(record_span,((function_symbol).range)));
 }
 
 }
@@ -569,7 +569,7 @@ return JaktInternal::ExplicitValue(((((program)->get_trait(trait_id)))->name));
 case 19 /* Dependent */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Dependent;ids::TypeId const& namespace_type = __jakt_match_value.namespace_type;
 ByteString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("{}::{}"sv)),TRY((((program)->type_name(namespace_type,false)))),name))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}::{}"sv)),TRY((((program)->type_name(namespace_type,false)))),name));
 };/*case end*/
 case 32 /* Const */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Const;types::Value const& value = __jakt_match_value.value;
@@ -596,7 +596,7 @@ TRY((((param_names).push(TRY((((program)->type_name(x,false))))))));
 }
 
 ByteString const return_type = TRY((((program)->type_name(return_type_id,false))));
-__jakt_var_885 = TRY((__jakt_format((StringView::from_string_literal("fn({}) -> {}"sv)),TRY((utility::join(param_names,(ByteString::must_from_utf8(", "sv))))),return_type))); goto __jakt_label_779;
+__jakt_var_885 = __jakt_format((StringView::from_string_literal("fn({}) -> {}"sv)),TRY((utility::join(param_names,(ByteString::must_from_utf8(", "sv))))),return_type); goto __jakt_label_779;
 
 }
 __jakt_label_779:; __jakt_var_885.release_value(); }));
@@ -867,7 +867,7 @@ if (((id).equals(array_struct_id))){
 if (((args).is_empty())){
 return (ByteString::must_from_utf8("[]"sv));
 }
-return TRY((__jakt_format((StringView::from_string_literal("[{}]"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))))));
+return __jakt_format((StringView::from_string_literal("[{}]"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))));
 }
 if (((id).equals(dictionary_struct_id))){
 if ([](size_t const& self, size_t rhs) -> bool {
@@ -883,25 +883,25 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (((args).size()),static_cast<size_t>(2ULL))){
 return (ByteString::must_from_utf8("[:]"sv));
 }
-return TRY((__jakt_format((StringView::from_string_literal("[{}: {}]"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(1LL)])))))));
+return __jakt_format((StringView::from_string_literal("[{}: {}]"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(1LL)])))));
 }
 if (((id).equals(optional_struct_id))){
 if (((args).is_empty())){
 return (ByteString::must_from_utf8(""sv));
 }
-return TRY((__jakt_format((StringView::from_string_literal("{}?"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))))));
+return __jakt_format((StringView::from_string_literal("{}?"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))));
 }
 if (((id).equals(range_struct_id))){
 if (((args).is_empty())){
 return (ByteString::must_from_utf8(""sv));
 }
-return TRY((__jakt_format((StringView::from_string_literal("{}..{}"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))),TRY((((program)->type_name(((args)[static_cast<i64>(0LL)]),false)))))));
+return __jakt_format((StringView::from_string_literal("{}..{}"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))),TRY((((program)->type_name(((args)[static_cast<i64>(0LL)]),false)))));
 }
 if (((id).equals(set_struct_id))){
 if (((args).is_empty())){
 return (ByteString::must_from_utf8(""sv));
 }
-return TRY((__jakt_format((StringView::from_string_literal("{{{}}}"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))))));
+return __jakt_format((StringView::from_string_literal("{{{}}}"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))));
 }
 if (((id).equals(tuple_struct_id))){
 ByteString output = (ByteString::must_from_utf8("("sv));
@@ -948,7 +948,7 @@ if (((id).equals(weak_ptr_struct_id))){
 if (((args).is_empty())){
 return (ByteString::must_from_utf8(""sv));
 }
-return TRY((__jakt_format((StringView::from_string_literal("weak {}"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))))));
+return __jakt_format((StringView::from_string_literal("weak {}"sv)),TRY((ide::get_type_signature(program,((args)[static_cast<i64>(0LL)])))));
 }
 types::CheckedStruct const record = ((program)->get_struct(id));
 ByteString output = ({
@@ -1039,11 +1039,11 @@ __jakt_label_785:; __jakt_var_891.release_value(); }));
 };/*case end*/
 case 28 /* Reference */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Reference;ids::TypeId const& type_id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("&{}"sv)),TRY((((program)->type_name(type_id,false))))))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("&{}"sv)),TRY((((program)->type_name(type_id,false))))));
 };/*case end*/
 case 29 /* MutableReference */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MutableReference;ids::TypeId const& type_id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((__jakt_format((StringView::from_string_literal("&mut {}"sv)),TRY((((program)->type_name(type_id,false))))))));
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("&mut {}"sv)),TRY((((program)->type_name(type_id,false))))));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -1287,7 +1287,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
     _jakt_value.release_value();
 });
 ByteString const type_name = TRY((ide::get_type_signature(program,var_type_id)));
-__jakt_var_894 = TRY((__jakt_format((StringView::from_string_literal("{} {}: {}"sv)),mut_string,name,type_name))); goto __jakt_label_788;
+__jakt_var_894 = __jakt_format((StringView::from_string_literal("{} {}: {}"sv)),mut_string,name,type_name); goto __jakt_label_788;
 
 }
 __jakt_label_788:; __jakt_var_894.release_value(); }));
@@ -1325,10 +1325,10 @@ return (!(((self) == (rhs))));
 }
 }
 (record_string,(ByteString::must_from_utf8(""sv)))){
-return TRY((__jakt_format((StringView::from_string_literal("{}\\n\\t{}{}: {}"sv)),record_string,visibility_string,name,type_name)));
+return __jakt_format((StringView::from_string_literal("{}\\n\\t{}{}: {}"sv)),record_string,visibility_string,name,type_name);
 }
 else {
-return TRY((__jakt_format((StringView::from_string_literal("{}{}: {}"sv)),visibility_string,name,type_name)));
+return __jakt_format((StringView::from_string_literal("{}{}: {}"sv)),visibility_string,name,type_name);
 }
 
 }
@@ -1405,7 +1405,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY((__jakt_format((StringView::from_string_literal("{}: {}"sv)),((variable)->name),TRY((((program)->type_name(((variable)->type_id),false))))))))));
+(output,__jakt_format((StringView::from_string_literal("{}: {}"sv)),((variable)->name),TRY((((program)->type_name(((variable)->type_id),false))))))));
 }
 
 }
@@ -1866,7 +1866,7 @@ __jakt_label_804:; __jakt_var_910.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Set<ByteString>> __jakt_var_911; {
-__jakt_var_911 = (TRY((Set<ByteString>::create_with_values({TRY((__jakt_format((StringView::from_string_literal("else ({})"sv)),TRY((((program)->type_name(type_id,false)))))))})))); goto __jakt_label_805;
+__jakt_var_911 = (TRY((Set<ByteString>::create_with_values({__jakt_format((StringView::from_string_literal("else ({})"sv)),TRY((((program)->type_name(type_id,false)))))})))); goto __jakt_label_805;
 
 }
 __jakt_label_805:; __jakt_var_911.release_value(); }));
@@ -2317,7 +2317,7 @@ TRY((((output).push(full_call))));
 }
 }
 else {
-TRY((((output).push(TRY((__jakt_format((StringView::from_string_literal("{}()"sv)),((checked_function)->name))))))));
+TRY((((output).push(__jakt_format((StringView::from_string_literal("{}()"sv)),((checked_function)->name))))));
 }
 
 }
@@ -2393,7 +2393,7 @@ break;
 }
 ide::JaktSymbol child = (_magic_value.value());
 {
-(namespace_span = TRY((parser::merge_spans((((namespace_).name_span).value()),((child).range)))));
+(namespace_span = parser::merge_spans((((namespace_).name_span).value()),((child).range)));
 }
 
 }
@@ -2979,7 +2979,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY((__jakt_format((StringView::from_string_literal("{}"sv)),value))))));
+(output,__jakt_format((StringView::from_string_literal("{}"sv)),value))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -2992,7 +2992,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY((__jakt_format((StringView::from_string_literal("{}"sv)),value))))));
+(output,__jakt_format((StringView::from_string_literal("{}"sv)),value))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -3005,7 +3005,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(output,TRY((__jakt_format((StringView::from_string_literal("{}"sv)),value))))));
+(output,__jakt_format((StringView::from_string_literal("{}"sv)),value))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -3154,7 +3154,7 @@ break;
 }
 NonnullRefPtr<typename parser::ParsedStatement> stmt = (_magic_value.value());
 {
-(function_span = TRY((parser::merge_spans(function_span,((stmt)->span())))));
+(function_span = parser::merge_spans(function_span,((stmt)->span())));
 }
 
 }
@@ -3268,7 +3268,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(generic_parameters,TRY((__jakt_format((StringView::from_string_literal("{}{}"sv)),separator,generic_type))))));
+(generic_parameters,__jakt_format((StringView::from_string_literal("{}{}"sv)),separator,generic_type))));
 (is_first_param = false);
 }
 
@@ -3370,7 +3370,7 @@ TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
 }
 return {};
 }
-(parameters,TRY((__jakt_format((StringView::from_string_literal("{}{}{}{}{}"sv)),separator,anon_value,is_mutable,((((param).variable))->name),variable_type))))));
+(parameters,__jakt_format((StringView::from_string_literal("{}{}{}{}{}"sv)),separator,anon_value,is_mutable,((((param).variable))->name),variable_type))));
 (is_first_param = false);
 }
 
@@ -3426,7 +3426,7 @@ else {
 (returns = (ByteString::must_from_utf8(""sv)));
 }
 
-return TRY((__jakt_format((StringView::from_string_literal("fn {}{}({}){}{}"sv)),((checked_function)->name),generic_parameters,parameters,throws_str,returns)));
+return __jakt_format((StringView::from_string_literal("fn {}{}({}){}{}"sv)),((checked_function)->name),generic_parameters,parameters,throws_str,returns);
 }
 }
 
@@ -3446,13 +3446,13 @@ ErrorOr<ByteString> ide::JaktSymbol::to_json() const {
 {
 ByteStringBuilder json_builder = ByteStringBuilder::create();
 TRY((((json_builder).append_string((ByteString::must_from_utf8("{"sv))))));
-TRY((((json_builder).append_string(TRY((__jakt_format((StringView::from_string_literal("\"name\": \"{}\","sv)),((*this).name))))))));
+TRY((((json_builder).append_string(__jakt_format((StringView::from_string_literal("\"name\": \"{}\","sv)),((*this).name))))));
 if (((((*this).detail)).has_value())){
-TRY((((json_builder).append_string(TRY((__jakt_format((StringView::from_string_literal("\"detail\": \"{}\","sv)),((*this).detail))))))));
+TRY((((json_builder).append_string(__jakt_format((StringView::from_string_literal("\"detail\": \"{}\","sv)),((*this).detail))))));
 }
-TRY((((json_builder).append_string(TRY((__jakt_format((StringView::from_string_literal("\"kind\": \"{}\","sv)),((*this).kind))))))));
-TRY((((json_builder).append_string(TRY((__jakt_format((StringView::from_string_literal("\"range\": {{\"start\": {}, \"end\": {}}},"sv)),((((*this).range)).start),((((*this).range)).end))))))));
-TRY((((json_builder).append_string(TRY((__jakt_format((StringView::from_string_literal("\"selection_range\": {{\"start\": {}, \"end\": {}}},"sv)),((((*this).selection_range)).start),((((*this).selection_range)).end))))))));
+TRY((((json_builder).append_string(__jakt_format((StringView::from_string_literal("\"kind\": \"{}\","sv)),((*this).kind))))));
+TRY((((json_builder).append_string(__jakt_format((StringView::from_string_literal("\"range\": {{\"start\": {}, \"end\": {}}},"sv)),((((*this).range)).start),((((*this).range)).end))))));
+TRY((((json_builder).append_string(__jakt_format((StringView::from_string_literal("\"selection_range\": {{\"start\": {}, \"end\": {}}},"sv)),((((*this).selection_range)).start),((((*this).selection_range)).end))))));
 JaktInternal::DynamicArray<ByteString> child_symbols = (TRY((DynamicArray<ByteString>::create_with({}))));
 TRY((((child_symbols).ensure_capacity(((((*this).children)).size())))));
 {
@@ -3470,7 +3470,7 @@ TRY((((child_symbols).push(TRY((((child).to_json())))))));
 }
 }
 
-TRY((((json_builder).append_string(TRY((__jakt_format((StringView::from_string_literal("\"children\": [{}]"sv)),TRY((utility::join(child_symbols,(ByteString::must_from_utf8(","sv))))))))))));
+TRY((((json_builder).append_string(__jakt_format((StringView::from_string_literal("\"children\": [{}]"sv)),TRY((utility::join(child_symbols,(ByteString::must_from_utf8(","sv))))))))));
 TRY((((json_builder).append_string((ByteString::must_from_utf8("}"sv))))));
 return TRY((((json_builder).to_string())));
 }

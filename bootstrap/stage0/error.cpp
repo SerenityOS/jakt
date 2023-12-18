@@ -11,7 +11,7 @@ case 0 /* Message */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Message;ByteString const& message = __jakt_match_value.message;
 utility::Span const& span = __jakt_match_value.span;
 {
-TRY((error::display_message_with_span_json(error::MessageSeverity::Error(),file_name,message,span)));
+error::display_message_with_span_json(error::MessageSeverity::Error(),file_name,message,span);
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -21,8 +21,8 @@ utility::Span const& span = __jakt_match_value.span;
 ByteString const& hint = __jakt_match_value.hint;
 utility::Span const& hint_span = __jakt_match_value.hint_span;
 {
-TRY((error::display_message_with_span_json(error::MessageSeverity::Error(),file_name,message,span)));
-TRY((error::display_message_with_span_json(error::MessageSeverity::Hint(),file_name,hint,hint_span)));
+error::display_message_with_span_json(error::MessageSeverity::Error(),file_name,message,span);
+error::display_message_with_span_json(error::MessageSeverity::Hint(),file_name,hint,hint_span);
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -75,7 +75,7 @@ return {};
 
 ErrorOr<void> display_message_with_span(error::MessageSeverity const severity,ByteString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents,ByteString const message,utility::Span const span) {
 {
-warnln((StringView::from_string_literal("{}: {}"sv)),TRY((((severity).name()))),message);
+warnln((StringView::from_string_literal("{}: {}"sv)),((severity).name()),message);
 if ((!(((contents).has_value())))){
 return {};
 }
@@ -143,7 +143,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 (++(line_index));
 }
-size_t const width = ((TRY((__jakt_format((StringView::from_string_literal("{}"sv)),largest_line_number)))).length());
+size_t const width = ((__jakt_format((StringView::from_string_literal("{}"sv)),largest_line_number)).length());
 (line_index = error_start_index);
 size_t const column_index = JaktInternal::checked_sub(((span).start),((((line_spans)[line_index])).template get<0>()));
 {
@@ -244,7 +244,7 @@ warn((StringView::from_string_literal(" "sv)));
 }
 }
 
-warnln((StringView::from_string_literal("\u001b[{}m╰─ {}\u001b[0m"sv)),TRY((((severity).ansi_color_code()))),message);
+warnln((StringView::from_string_literal("\u001b[{}m╰─ {}\u001b[0m"sv)),((severity).ansi_color_code()),message);
 (++(line_index));
 if ([](size_t const& self, size_t rhs) -> bool {
 {
@@ -347,7 +347,7 @@ break;
 size_t index = (_magic_value.value());
 {
 if (((index) == (((error_span).start)))){
-warn((StringView::from_string_literal("\u001b[{}m"sv)),TRY((((severity).ansi_color_code()))));
+warn((StringView::from_string_literal("\u001b[{}m"sv)),((severity).ansi_color_code()));
 }
 if (((index) == (JaktInternal::checked_sub(((error_span).end),static_cast<size_t>(1ULL))))){
 warn((StringView::from_string_literal("┬\u001b[0m"sv)));
@@ -392,8 +392,8 @@ return {};
 ErrorOr<void> print_source_line(error::MessageSeverity const severity,JaktInternal::DynamicArray<u8> const file_contents,JaktInternal::Tuple<size_t,size_t> const file_span,utility::Span const error_span,size_t const line_number,size_t const largest_line_number) {
 {
 size_t index = ((file_span).template get<0>());
-size_t const largest_width = ((TRY((__jakt_format((StringView::from_string_literal("{}"sv)),largest_line_number)))).length());
-size_t const current_width = ((TRY((__jakt_format((StringView::from_string_literal("{}"sv)),line_number)))).length());
+size_t const largest_width = ((__jakt_format((StringView::from_string_literal("{}"sv)),largest_line_number)).length());
+size_t const current_width = ((__jakt_format((StringView::from_string_literal("{}"sv)),line_number)).length());
 warn((StringView::from_string_literal(" {}"sv)),line_number);
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(JaktInternal::checked_sub(largest_width,current_width))});
@@ -440,7 +440,7 @@ else if ((((((error_span).start)) == (((error_span).end))) && ((index) == (((err
 (c = static_cast<u8>(u8'_'));
 }
 if (((index) == (((error_span).start)))){
-warn((StringView::from_string_literal("\u001b[{}m"sv)),TRY((((severity).ansi_color_code()))));
+warn((StringView::from_string_literal("\u001b[{}m"sv)),((severity).ansi_color_code()));
 }
 if (((index) == (((error_span).end)))){
 warn((StringView::from_string_literal("\u001b[0m"sv)));
@@ -453,11 +453,10 @@ warnln((StringView::from_string_literal(""sv)));
 return {};
 }
 
-ErrorOr<void> display_message_with_span_json(error::MessageSeverity const severity,ByteString const file_name,ByteString const message,utility::Span const span) {
+void display_message_with_span_json(error::MessageSeverity const severity,ByteString const file_name,ByteString const message,utility::Span const span) {
 {
-outln((StringView::from_string_literal("{{\"type\":\"diagnostic\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"sv)),message,TRY((((severity).name()))),((((span).file_id)).id),((span).start),((span).end));
+outln((StringView::from_string_literal("{{\"type\":\"diagnostic\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"sv)),message,((severity).name()),((((span).file_id)).id),((span).start),((span).end));
 }
-return {};
 }
 
 ErrorOr<ByteString> error::MessageSeverity::debug_description() const {
@@ -555,10 +554,10 @@ case 0 /* Hint */:break;
 case 1 /* Error */:break;
 }
 }
-ErrorOr<ByteString> error::MessageSeverity::ansi_color_code() const {
+ByteString error::MessageSeverity::ansi_color_code() const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ErrorOr<ByteString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ByteString>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Hint */: {
@@ -577,10 +576,10 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 }
 
-ErrorOr<ByteString> error::MessageSeverity::name() const {
+ByteString error::MessageSeverity::name() const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ErrorOr<ByteString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ByteString>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Hint */: {

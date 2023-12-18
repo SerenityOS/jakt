@@ -152,13 +152,12 @@ TRY((error::print_error(file_name,file_contents,error)));
 return {};
 }
 
-ErrorOr<void> compiler::Compiler::dbg_println(ByteString const message) const {
+void compiler::Compiler::dbg_println(ByteString const message) const {
 {
 if (((*this).debug_print)){
 outln((StringView::from_string_literal("{}"sv)),message);
 }
 }
-return {};
 }
 
 compiler::Compiler::Compiler(JaktInternal::DynamicArray<jakt__path::Path> a_files, JaktInternal::Dictionary<ByteString,utility::FileId> a_file_ids, JaktInternal::DynamicArray<error::JaktError> a_errors, JaktInternal::Optional<utility::FileId> a_current_file, JaktInternal::DynamicArray<u8> a_current_file_contents, bool a_dump_lexer, bool a_dump_parser, bool a_ignore_parser_errors, bool a_debug_print, jakt__path::Path a_std_include_path, JaktInternal::DynamicArray<ByteString> a_include_paths, bool a_json_errors, bool a_dump_type_hints, bool a_dump_try_hints, bool a_optimize, JaktInternal::Optional<ByteString> a_target_triple, JaktInternal::Dictionary<ByteString,ByteString> a_user_configuration, jakt__path::Path a_binary_dir, JaktInternal::Optional<jakt__path::Path> a_assume_main_file_path): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), std_include_path(move(a_std_include_path)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)), optimize(move(a_optimize)), target_triple(move(a_target_triple)), user_configuration(move(a_user_configuration)), binary_dir(move(a_binary_dir)), assume_main_file_path(move(a_assume_main_file_path)){}
@@ -229,7 +228,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-ErrorOr<JaktInternal::Optional<jakt__path::Path>> compiler::Compiler::get_file_path(utility::FileId const file_id) const {
+JaktInternal::Optional<jakt__path::Path> compiler::Compiler::get_file_path(utility::FileId const file_id) const {
 {
 if ([](size_t const& self, size_t rhs) -> bool {
 {

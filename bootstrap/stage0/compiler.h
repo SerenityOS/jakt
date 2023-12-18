@@ -17,7 +17,7 @@ public: void restore_file_state(JaktInternal::Tuple<JaktInternal::Optional<utili
 public: JaktInternal::Optional<jakt__path::Path> current_file_path() const;
 public: JaktInternal::Tuple<JaktInternal::Optional<utility::FileId>,JaktInternal::DynamicArray<u8>> current_file_state() const;
 public: ErrorOr<void> print_errors() const;
-public: ErrorOr<void> dbg_println(ByteString const message) const;
+public: void dbg_println(ByteString const message) const;
 public: protected:
 explicit Compiler(JaktInternal::DynamicArray<jakt__path::Path> a_files, JaktInternal::Dictionary<ByteString,utility::FileId> a_file_ids, JaktInternal::DynamicArray<error::JaktError> a_errors, JaktInternal::Optional<utility::FileId> a_current_file, JaktInternal::DynamicArray<u8> a_current_file_contents, bool a_dump_lexer, bool a_dump_parser, bool a_ignore_parser_errors, bool a_debug_print, jakt__path::Path a_std_include_path, JaktInternal::DynamicArray<ByteString> a_include_paths, bool a_json_errors, bool a_dump_type_hints, bool a_dump_try_hints, bool a_optimize, JaktInternal::Optional<ByteString> a_target_triple, JaktInternal::Dictionary<ByteString,ByteString> a_user_configuration, jakt__path::Path a_binary_dir, JaktInternal::Optional<jakt__path::Path> a_assume_main_file_path);
 public:
@@ -25,7 +25,7 @@ static ErrorOr<NonnullRefPtr<Compiler>> __jakt_create(JaktInternal::DynamicArray
 
 public: JaktInternal::Optional<utility::FileId> current_file_id() const;
 public: ErrorOr<JaktInternal::Optional<jakt__path::Path>> find_in_search_paths(jakt__path::Path const path, bool const relative_import, size_t const parent_path_count) const;
-public: ErrorOr<JaktInternal::Optional<jakt__path::Path>> get_file_path(utility::FileId const file_id) const;
+public: JaktInternal::Optional<jakt__path::Path> get_file_path(utility::FileId const file_id) const;
 public: ErrorOr<utility::FileId> get_file_id_or_register(jakt__path::Path const file);
 public: ErrorOr<bool> set_current_file(utility::FileId const file_id);
 public: [[noreturn]] ErrorOr<void> panic(ByteString const message) const;
