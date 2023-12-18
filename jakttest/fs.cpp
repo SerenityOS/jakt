@@ -168,7 +168,7 @@ ErrorOr<Optional<ByteString>> DirectoryIterator::next()
         }
     }
     m_impl->m_first = false;
-    auto filepath = TRY(__jakt_format("{}", StringView { pfile_data->cFileName, strnlen(pfile_data->cFileName, sizeof(pfile_data->cFileName)) }));
+    auto filepath = __jakt_format("{}", StringView { pfile_data->cFileName, strnlen(pfile_data->cFileName, sizeof(pfile_data->cFileName)) });
     return Optional<ByteString>(move(filepath));
 }
 
@@ -190,7 +190,7 @@ ErrorOr<NonnullRefPtr<DirectoryIterator>> DirectoryIterator::create(RefPtr<Impl>
 
 ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(ByteString path)
 {
-    path = TRY(__jakt_format("{}\\*", path));
+    path = __jakt_format("{}\\*", path);
     WIN32_FIND_DATA first_file_data = {};
     HANDLE dirhandle = FindFirstFile(path.characters(), &first_file_data);
     if (dirhandle == INVALID_HANDLE_VALUE) {

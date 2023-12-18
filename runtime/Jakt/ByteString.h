@@ -8,7 +8,7 @@
 
 namespace Jakt {
 template<typename... Ts>
-inline ErrorOr<ByteString> __jakt_format(CheckedFormatString<Ts...> fmt, Ts const&... args)
+inline ByteString __jakt_format(CheckedFormatString<Ts...> fmt, Ts const&... args)
 {
     return ByteString::formatted(fmt.view(), args...);
 }
