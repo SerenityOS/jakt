@@ -333,7 +333,7 @@ fn selfhost_crosscompiler_main(args: [String]) throws -> c_int {
         &system_lib_dirs
         &runtime_lib_path
         &runtime_path
-    ]() throws -> [String] {
+    ]() -> [String] {
         mut args = compiler_args[..].to_array()
         args.push("--target-triple")
         args.push(format("{}-unknown", abbreviated_triple))
