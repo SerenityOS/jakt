@@ -147,7 +147,6 @@ extern struct Range<T> {
 }
 
 extern struct StringView {
-    fn to_string(this) throws -> String
     fn length(this) -> usize
     [[name="operator[]"]]
     fn byte_at(this, anon index: usize) -> u8
