@@ -6,490 +6,422 @@ return (ByteString::must_from_utf8("usage: jakt [cross] [-h] [OPTIONS] <filename
 }
 }
 
-ErrorOr<ByteString> help() {
+ByteString help() {
 {
 ByteString output = (ByteString::must_from_utf8(""sv));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("Non-cross mode:\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("Non-cross mode:\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("= General:\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("= General:\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -h,--help\t\t\t\tPrint this help and exit.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -h,--help\t\t\t\tPrint this help and exit.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -v,--version\t\t\t\tPrint the compiler's version and exit.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -v,--version\t\t\t\tPrint the compiler's version and exit.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -cr,--compile-run\t\t\tBuild and run an executable file.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -cr,--compile-run\t\t\tBuild and run an executable file.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -r,--run\t\t\t\tRun the given file without compiling it (all positional arguments after the file name will be passed to main).\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -r,--run\t\t\t\tRun the given file without compiling it (all positional arguments after the file name will be passed to main).\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --create NAME\t\t\t\tCreate sample project in $PWD/NAME\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --create NAME\t\t\t\tCreate sample project in $PWD/NAME\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("= Compilation:\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("= Compilation:\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --config KEY=VALUE\t\t\tSet a user configuration value.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --config KEY=VALUE\t\t\tSet a user configuration value.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -c,--check-only\t\t\tOnly check the code for errors.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -c,--check-only\t\t\tOnly check the code for errors.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -d\t\t\t\t\tInsert debug statement spans in generated C++ code.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -d\t\t\t\t\tInsert debug statement spans in generated C++ code.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -O\t\t\t\t\tBuild an optimized executable.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -O\t\t\t\t\tBuild an optimized executable.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -S,--emit-cpp-source-only\t\tOnly output source (do not build).\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -S,--emit-cpp-source-only\t\tOnly output source (do not build).\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --ak-is-my-only-stdlib\t\tForget about interop, AK is the one and only STL.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --ak-is-my-only-stdlib\t\tForget about interop, AK is the one and only STL.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --cxx-compiler-path PATH\t\tPath of the C++ compiler to use when compiling the generated sources.\n\t\t\t\t\tDefaults to clang++.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --cxx-compiler-path PATH\t\tPath of the C++ compiler to use when compiling the generated sources.\n\t\t\t\t\tDefaults to clang++.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -M,--dep-file FILE\t\t\tEmit a depfile listing dependencies of the main output.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -M,--dep-file FILE\t\t\tEmit a depfile listing dependencies of the main output.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --extra-cpp-flagFLAG\t\t\tPass FLAG to the compiler. Can be specified multiple times.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --extra-cpp-flagFLAG\t\t\tPass FLAG to the compiler. Can be specified multiple times.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --use-ccache\t\t\t\tUse ccache when compiling.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --use-ccache\t\t\t\tUse ccache when compiling.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -o,--output-filename FILE\t\tName of the output binary.\n\t\t\t\t\tDefaults to the input-filename without the extension.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -o,--output-filename FILE\t\tName of the output binary.\n\t\t\t\t\tDefaults to the input-filename without the extension.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -B,--binary-dir PATH\t\t\tOutput directory for compiled files.\n\t\t\t\t\tDefaults to $PWD/build.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -B,--binary-dir PATH\t\t\tOutput directory for compiled files.\n\t\t\t\t\tDefaults to $PWD/build.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -I PATH\t\t\t\tAdd PATH to compiler's include list. Can be specified multiple times.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -I PATH\t\t\t\tAdd PATH to compiler's include list. Can be specified multiple times.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -J,--jobs NUMBER\t\t\tSpecify the number of jobs to run in parallel, defaults to 2 (1 on windows).\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -J,--jobs NUMBER\t\t\tSpecify the number of jobs to run in parallel, defaults to 2 (1 on windows).\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -L PATH\t\t\t\tAdd PATH to linker's search list. Can be specified multiple times.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -L PATH\t\t\t\tAdd PATH to linker's search list. Can be specified multiple times.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -l,--link-with LIB\t\t\tLink executable with LIB. Can be specified multiple times.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -l,--link-with LIB\t\t\tLink executable with LIB. Can be specified multiple times.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -WlARG\t\t\t\tPass ARG to the linker. Can be specified multiple times.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -WlARG\t\t\t\tPass ARG to the linker. Can be specified multiple times.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -X FILE\t\t\t\tPass FILE to the compiler. Can be specified multiple times.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -X FILE\t\t\t\tPass FILE to the compiler. Can be specified multiple times.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("= Debugging:\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("= Debugging:\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -dl\t\t\t\t\tPrint debug info for the lexer.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -dl\t\t\t\t\tPrint debug info for the lexer.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -dp\t\t\t\t\tPrint debug info for the parser.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -dp\t\t\t\t\tPrint debug info for the parser.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -dt\t\t\t\t\tPrint debug info for the typechecker.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -dt\t\t\t\t\tPrint debug info for the typechecker.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -fd,--format-debug\t\t\tOutput debug info for the formatter.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -fd,--format-debug\t\t\tOutput debug info for the formatter.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -p,--prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -p,--prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -D,--dot-clang-format-path PATH\tPath to the .clang-format file to use.\n\t\t\t\t\tDefaults to none, invoking clangs default .clang-format file handling.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -D,--dot-clang-format-path PATH\tPath to the .clang-format file to use.\n\t\t\t\t\tDefaults to none, invoking clangs default .clang-format file handling.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\t\t\t\tDefaults to clang-format\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\t\t\t\tDefaults to clang-format\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --debug-print\t\t\t\tOutput debug print.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --debug-print\t\t\t\tOutput debug print.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("= Formatting:\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("= Formatting:\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -f,--format\t\t\t\tFormat a file or directory and output the result.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -f,--format\t\t\t\tFormat a file or directory and output the result.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -fi,--format-inplace\t\t\tFormat a file or directory and save the result inplace.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -fi,--format-inplace\t\t\tFormat a file or directory and save the result inplace.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -fr,--format-range RANGE\t\tEmit part of the document with formatting applied.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -fr,--format-range RANGE\t\tEmit part of the document with formatting applied.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("= IDE integration:\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("= IDE integration:\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -e,--hover INDEX\t\t\tReturn the type of element at index.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -e,--hover INDEX\t\t\tReturn the type of element at index.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -g,--goto-def INDEX\t\t\tReturn the span for the definition at index.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -g,--goto-def INDEX\t\t\tReturn the span for the definition at index.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -H,--type-hints\t\t\tEmit machine-readable type hints (for IDE integration).\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -H,--type-hints\t\t\tEmit machine-readable type hints (for IDE integration).\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -m,--completions INDEX\t\tReturn dot completions at index.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -m,--completions INDEX\t\tReturn dot completions at index.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --try-hints\t\t\t\tEmit machine-readable try hints (for IDE integration).\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --try-hints\t\t\t\tEmit machine-readable try hints (for IDE integration).\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -t,--goto-type-def INDEX\t\tReturn the span for the type definition at index.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -t,--goto-type-def INDEX\t\tReturn the span for the type definition at index.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("= Misc:\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("= Misc:\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --discover\t\t\t\tDiscover all files in the project, print the dependencies and outputs, then exit.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --discover\t\t\t\tDiscover all files in the project, print the dependencies and outputs, then exit.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -j,--json-errors\t\t\tEmit machine-readable (JSON) errors.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -j,--json-errors\t\t\tEmit machine-readable (JSON) errors.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --runtime-library-path PATH\t\tSpecify the path to the runtime library.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --runtime-library-path PATH\t\tSpecify the path to the runtime library.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --runtime-path PATH\t\t\tSpecify the path to the host runtime headers.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --runtime-path PATH\t\t\tSpecify the path to the host runtime headers.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -R,--runtime-path PATH\t\tPath of the Jakt runtime headers.\n\t\t\t\t\tDefaults to $PWD/runtime.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -R,--runtime-path PATH\t\tPath of the Jakt runtime headers.\n\t\t\t\t\tDefaults to $PWD/runtime.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --assume-main-file-path PATH\t\tAssume the main file is at PATH.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --assume-main-file-path PATH\t\tAssume the main file is at PATH.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("\nCross mode:\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("\nCross mode:\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("All other given options and flags will be passed to the compiler invocation verbatim.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("All other given options and flags will be passed to the compiler invocation verbatim.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --source-file PATH\t\t\tSpecify the path to the source file to compile.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --source-file PATH\t\t\tSpecify the path to the source file to compile.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --sysroot PATH\t\t\tSpecify the sysroot used for the build.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --sysroot PATH\t\t\tSpecify the sysroot used for the build.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --system-include-dir PATH\t\tSpecify a system include directory to use.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --system-include-dir PATH\t\tSpecify a system include directory to use.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --system-lib-dir PATH\t\t\tSpecify a system library directory to use.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --system-lib-dir PATH\t\t\tSpecify a system library directory to use.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --compiler-include-dir PATH\t\tSpecify a compiler include directory to use.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --compiler-include-dir PATH\t\tSpecify a compiler include directory to use.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --compiler-lib-dir PATH\t\tSpecify a compiler library directory to use.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --compiler-lib-dir PATH\t\tSpecify a compiler library directory to use.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --install-root PATH\t\t\tSpecify the root directory to install to.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --install-root PATH\t\t\tSpecify the root directory to install to.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --only-support-libs\t\t\tOnly build and install support libraries for the target platform.\n"sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output,(ByteString::must_from_utf8("  --only-support-libs\t\t\tOnly build and install support libraries for the target platform.\n"sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("  --runtime-lib-path PATH\t\tSpecify the path to the host runtime library.\n"sv)))));
+(output,(ByteString::must_from_utf8("  --runtime-lib-path PATH\t\tSpecify the path to the host runtime library.\n"sv)));
 return output;
 }
 }
 
-ErrorOr<ByteString> indent(size_t const level) {
+ByteString indent(size_t const level) {
 {
 ByteString output = (ByteString::must_from_utf8(""sv));
 {
@@ -501,13 +433,12 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("    "sv)))));
+(output,(ByteString::must_from_utf8("    "sv)));
 }
 
 }
@@ -1030,11 +961,11 @@ ErrorOr<int> compiler_main(JaktInternal::DynamicArray<ByteString> const args) {
 jakt__arguments::ArgsParser args_parser = jakt__arguments::ArgsParser::from_args(args);
 if (TRY((((args_parser).flag((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-h"sv)), (ByteString::must_from_utf8("--help"sv))}))))))){
 outln((StringView::from_string_literal("{}\n"sv)),usage());
-outln((StringView::from_string_literal("{}"sv)),TRY((help())));
+outln((StringView::from_string_literal("{}"sv)),help());
 return static_cast<int>(0);
 }
 if (TRY((((args_parser).flag((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-v"sv)), (ByteString::must_from_utf8("--version"sv))}))))))){
-outln((StringView::from_string_literal("{}"sv)),(ByteString::must_from_utf8("90f08d3d44a36511bfdbd22c3209320648854606"sv)));
+outln((StringView::from_string_literal("{}"sv)),(ByteString::must_from_utf8("b1ccbb26050903b54251c87018c2807f72d8c44e"sv)));
 return static_cast<int>(0);
 }
 jakt__path::Path const current_executable_path = jakt__path::Path::from_string(TRY((File::current_executable_path())));
@@ -1306,13 +1237,13 @@ break;
 }
 ide::JaktSymbol symbol = (_magic_value.value());
 {
-((symbol_representations).push(TRY((((symbol).to_json())))));
+((symbol_representations).push(((symbol).to_json())));
 }
 
 }
 }
 
-outln((StringView::from_string_literal("[{}]"sv)),TRY((utility::join(symbol_representations,(ByteString::must_from_utf8(","sv))))));
+outln((StringView::from_string_literal("[{}]"sv)),utility::join(symbol_representations,(ByteString::must_from_utf8(","sv))));
 return static_cast<int>(0);
 }
 typechecker::Typechecker typechecker = TRY((typechecker::Typechecker::typecheck(compiler,parsed_namespace)));
@@ -2023,7 +1954,7 @@ ByteString const lhs_space = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>>{
 auto __jakt_enum_value = (on_new_line);
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(TRY((indent(((formatted_token).indent)))));
+return JaktInternal::ExplicitValue(indent(((formatted_token).indent)));
 }
 else {
 return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" "sv)));
@@ -2055,7 +1986,7 @@ return JaktInternal::ExplicitValue<void>();
 default: {
 {
 if (on_new_line){
-((formatted_file).append(__jakt_format((StringView::from_string_literal("{}"sv)),TRY((indent(((formatted_token).indent)))))));
+((formatted_file).append(__jakt_format((StringView::from_string_literal("{}"sv)),indent(((formatted_token).indent)))));
 }
 ((formatted_file).append(__jakt_format((StringView::from_string_literal("{}"sv)),TRY((((formatted_token).token_text()))))));
 (on_new_line = false);

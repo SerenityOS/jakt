@@ -1116,13 +1116,12 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 (JaktInternal::checked_add(JaktInternal::checked_add(current_len,((item).length())),static_cast<size_t>(2ULL)),JaktInternal::checked_sub(static_cast<size_t>(120ULL),indent_amount))){
 (overflow = true);
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("\n"sv)))));
+(output,(ByteString::must_from_utf8("\n"sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(indent_amount)});
 for (;;){
@@ -1132,13 +1131,12 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8(" "sv)))));
+(output,(ByteString::must_from_utf8(" "sv)));
 }
 
 }
@@ -1147,26 +1145,24 @@ return {};
 (current_len = indent_amount);
 }
 else if ((!(first))){
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8(", "sv)))));
+(output,(ByteString::must_from_utf8(", "sv)));
 ((current_len) += (static_cast<size_t>(2ULL)));
 }
 else {
 (first = false);
 }
 
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,item)));
+(output,item);
 ((current_len) += (((item).length())));
 }
 
@@ -1183,23 +1179,22 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-(output = TRY(((((ByteString::must_from_utf8(" "sv))) + (output)))));
+(output = (((ByteString::must_from_utf8(" "sv))) + (output)));
 }
 
 }
 }
 
-(output = TRY(((((ByteString::must_from_utf8("\n"sv))) + (output)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(output = (((ByteString::must_from_utf8("\n"sv))) + (output)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,(ByteString::must_from_utf8("\n"sv)))));
+(output,(ByteString::must_from_utf8("\n"sv)));
 }
 else {
-(output = TRY((((TRY(((((ByteString::must_from_utf8(" "sv))) + (output))))) + ((ByteString::must_from_utf8(" "sv)))))));
+(output = (((((ByteString::must_from_utf8(" "sv))) + (output))) + ((ByteString::must_from_utf8(" "sv)))));
 }
 
 ((*this).pop_state());

@@ -92,13 +92,13 @@ struct IterationDecision;
 
 [[noreturn]] void todo(ByteString const message);
 
-ErrorOr<ByteString> to_string(JaktInternal::DynamicArray<u8> const bytes);
+ByteString to_string(JaktInternal::DynamicArray<u8> const bytes);
 
-ErrorOr<ByteString> join(JaktInternal::DynamicArray<ByteString> const strings, ByteString const separator);
+ByteString join(JaktInternal::DynamicArray<ByteString> const strings, ByteString const separator);
 
-ErrorOr<JaktInternal::DynamicArray<ByteString>> prepend_to_each(JaktInternal::DynamicArray<ByteString> const strings, ByteString const prefix);
+JaktInternal::DynamicArray<ByteString> prepend_to_each(JaktInternal::DynamicArray<ByteString> const strings, ByteString const prefix);
 
-ErrorOr<JaktInternal::DynamicArray<ByteString>> append_to_each(JaktInternal::DynamicArray<ByteString> const strings, ByteString const suffix);
+JaktInternal::DynamicArray<ByteString> append_to_each(JaktInternal::DynamicArray<ByteString> const strings, ByteString const suffix);
 
 ErrorOr<void> write_to_file(ByteString const data, ByteString const output_filename);
 
@@ -423,9 +423,9 @@ struct Usage;
 
 ErrorOr<JaktInternal::DynamicArray<ide::JaktSymbol>> find_symbols_in_namespace(parser::ParsedNamespace const namespace_);
 
-ErrorOr<ide::JaktSymbol> record_to_symbol(parser::ParsedRecord const record);
+ide::JaktSymbol record_to_symbol(parser::ParsedRecord const record);
 
-ErrorOr<ide::JaktSymbol> function_to_symbol(parser::ParsedFunction const function, ByteString const kind);
+ide::JaktSymbol function_to_symbol(parser::ParsedFunction const function, ByteString const kind);
 
 ErrorOr<utility::Span> find_definition_in_program(NonnullRefPtr<types::CheckedProgram> const program, utility::Span const span);
 
@@ -467,9 +467,9 @@ ErrorOr<ByteString> get_enum_variant_signature(NonnullRefPtr<types::CheckedProgr
 
 ErrorOr<ByteString> get_enum_variant_signature_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id, ByteString const name);
 
-ErrorOr<ide::Usage> get_enum_variant_usage_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id, ByteString const name);
+ide::Usage get_enum_variant_usage_from_type_id_and_name(NonnullRefPtr<types::CheckedProgram> const program, ids::TypeId const type_id, ByteString const name);
 
-ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>> enum_variant_fields(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnumVariant const checked_enum_variant);
+JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>> enum_variant_fields(NonnullRefPtr<types::CheckedProgram> const program, types::CheckedEnumVariant const checked_enum_variant);
 
 ErrorOr<ByteString> get_constructor_signature(NonnullRefPtr<types::CheckedProgram> const program, ids::FunctionId const function_id);
 
@@ -513,9 +513,9 @@ struct FormatRange;
 
 ByteString usage();
 
-ErrorOr<ByteString> help();
+ByteString help();
 
-ErrorOr<ByteString> indent(size_t const level);
+ByteString indent(size_t const level);
 
 JaktInternal::Optional<FormatRange> parse_format_range(ByteString const range, size_t const input_file_length);
 

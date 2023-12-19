@@ -15,7 +15,7 @@ abort();
 }
 }
 
-ErrorOr<ByteString> to_string(JaktInternal::DynamicArray<u8> const bytes) {
+ByteString to_string(JaktInternal::DynamicArray<u8> const bytes) {
 {
 ByteStringBuilder builder = ByteStringBuilder::create();
 {
@@ -37,7 +37,7 @@ return ((builder).to_string());
 }
 }
 
-ErrorOr<ByteString> join(JaktInternal::DynamicArray<ByteString> const strings,ByteString const separator) {
+ByteString join(JaktInternal::DynamicArray<ByteString> const strings,ByteString const separator) {
 {
 ByteString output = (ByteString::must_from_utf8(""sv));
 size_t i = static_cast<size_t>(0ULL);
@@ -50,13 +50,12 @@ break;
 }
 ByteString s = (_magic_value.value());
 {
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,s)));
+(output,s);
 if ([](size_t const& self, size_t rhs) -> bool {
 {
 return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
@@ -68,13 +67,12 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (i,JaktInternal::checked_sub(((strings).size()),static_cast<size_t>(1ULL)))){
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(output,separator)));
+(output,separator);
 }
 ((i++));
 }
@@ -86,7 +84,7 @@ return output;
 }
 }
 
-ErrorOr<JaktInternal::DynamicArray<ByteString>> prepend_to_each(JaktInternal::DynamicArray<ByteString> const strings,ByteString const prefix) {
+JaktInternal::DynamicArray<ByteString> prepend_to_each(JaktInternal::DynamicArray<ByteString> const strings,ByteString const prefix) {
 {
 JaktInternal::DynamicArray<ByteString> output = (DynamicArray<ByteString>::create_with({}));
 {
@@ -98,7 +96,7 @@ break;
 }
 ByteString str = (_magic_value.value());
 {
-((output).push(TRY((((prefix) + (str))))));
+((output).push(((prefix) + (str))));
 }
 
 }
@@ -108,7 +106,7 @@ return output;
 }
 }
 
-ErrorOr<JaktInternal::DynamicArray<ByteString>> append_to_each(JaktInternal::DynamicArray<ByteString> const strings,ByteString const suffix) {
+JaktInternal::DynamicArray<ByteString> append_to_each(JaktInternal::DynamicArray<ByteString> const strings,ByteString const suffix) {
 {
 JaktInternal::DynamicArray<ByteString> output = (DynamicArray<ByteString>::create_with({}));
 {
@@ -120,7 +118,7 @@ break;
 }
 ByteString str = (_magic_value.value());
 {
-((output).push(TRY((((str) + (suffix))))));
+((output).push(((str) + (suffix))));
 }
 
 }

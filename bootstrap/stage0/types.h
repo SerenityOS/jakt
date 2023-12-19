@@ -1344,7 +1344,7 @@ public: ErrorOr<ByteString> debug_description() const;
   public:
 virtual ~CheckedProgram() = default;
 public: NonnullRefPtr<compiler::Compiler> compiler;public: JaktInternal::DynamicArray<NonnullRefPtr<types::Module>> modules;public: JaktInternal::Dictionary<ByteString,types::LoadedModule> loaded_modules;public: ErrorOr<ids::ModuleId> create_module(ByteString const name, bool const is_root, JaktInternal::Optional<ByteString> const path);
-public: ErrorOr<ByteString> debug_description_of(ids::ScopeId const scope_id) const;
+public: ByteString debug_description_of(ids::ScopeId const scope_id) const;
 public: ErrorOr<ids::ScopeId> create_scope(JaktInternal::Optional<ids::ScopeId> const parent_scope_id, bool const can_throw, ByteString const debug_name, ids::ModuleId const module_id, bool const for_block);
 public: ErrorOr<ids::TypeId> apply_qualifiers_to_type(parser::CheckedQualifiers const qualifiers, ids::TypeId const type_id);
 public: ErrorOr<ids::StructId> builtin_implementation_struct(types::BuiltinType const builtin, ids::ModuleId const for_module);
