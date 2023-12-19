@@ -7,16 +7,43 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("path: \"{}\"", path);
 }
 builder.append(")"sv);return builder.to_string(); }
-ErrorOr<jakt__path::Path> jakt__path::Path::absolute() const {
+jakt__path::Path jakt__path::Path::from_string(ByteString const string) {
 {
-return *this;
+jakt__path::Path path = jakt__path::Path(string);
+((path).normalize_separators());
+return path;
 }
 }
 
-ByteString jakt__path::Path::extension() const {
+jakt__path::Path jakt__path::Path::from_parts(JaktInternal::DynamicArray<ByteString> const parts) {
 {
+jakt__path::Path path = jakt__path::Path((ByteString::must_from_utf8("."sv)));
 {
-JaktInternal::Range<size_t> _magic = (((JaktInternal::Range<size_t>{static_cast<size_t>(JaktInternal::checked_sub(((((*this).path)).length()),static_cast<size_t>(1ULL))),static_cast<size_t>(static_cast<size_t>(0ULL))})).inclusive());
+JaktInternal::ArrayIterator<ByteString> _magic = ((parts).iterator());
+for (;;){
+JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+ByteString part = (_magic_value.value());
+{
+(path = ((path).join(part)));
+}
+
+}
+}
+
+return path;
+}
+}
+
+void jakt__path::Path::normalize_separators() {
+{
+JaktInternal::DynamicArray<u8> separators = (DynamicArray<u8>::create_with({static_cast<u8>(47)}));
+u8 separator = static_cast<u8>(47);
+ByteStringBuilder normalized_builder = ByteStringBuilder::create();
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).path)).length()))});
 for (;;){
 JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -24,45 +51,26 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-u8 const c = ((((*this).path)).byte_at(i));
-if (((c) == (static_cast<u8>(47)))){
-break;
+u8 const ch = ((((*this).path)).byte_at(i));
+if (((separators).contains(ch))){
+((normalized_builder).append(separator));
 }
-if (((c) == (static_cast<u8>(u8'.')))){
-return ((((*this).path)).substring(JaktInternal::checked_add(i,static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(((((*this).path)).length()),static_cast<size_t>(1ULL)),i)));
+else {
+((normalized_builder).append(ch));
 }
+
 }
 
 }
 }
 
-return (ByteString::must_from_utf8(""sv));
+(((*this).path) = ((normalized_builder).to_string()));
 }
 }
 
-jakt__path::Path::Path(ByteString a_path): path(move(a_path)){}
-
-ByteString jakt__path::Path::basename(bool const strip_extension) const {
+ByteString jakt__path::Path::to_string() const {
 {
-JaktInternal::Tuple<ByteString,ByteString> const parts = ((*this).split_at_last_slash());
-if (strip_extension){
-size_t ext_length = ((((*this).extension())).length());
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
-}
-}
-(self,rhs))))) == (static_cast<u8>(2)));
-}
-}
-(ext_length,static_cast<size_t>(0ULL))){
-((ext_length) += (static_cast<size_t>(1ULL)));
-}
-return ((((parts).template get<1>())).substring(static_cast<size_t>(0ULL),JaktInternal::checked_sub(((((parts).template get<1>())).length()),ext_length)));
-}
-return ((parts).template get<1>());
+return ((*this).path);
 }
 }
 
@@ -94,15 +102,60 @@ return ((*this).join(((path).path)));
 }
 }
 
-ByteString jakt__path::Path::to_string() const {
+bool jakt__path::Path::is_dot() const {
 {
-return ((*this).path);
+return (((((*this).path)) == ((ByteString::must_from_utf8("."sv)))) || ((((*this).path)) == ((ByteString::must_from_utf8(".."sv)))));
 }
 }
 
-bool jakt__path::Path::exists() const {
+ByteString jakt__path::Path::extension() const {
 {
-return File::exists(((*this).path));
+{
+JaktInternal::Range<size_t> _magic = (((JaktInternal::Range<size_t>{static_cast<size_t>(JaktInternal::checked_sub(((((*this).path)).length()),static_cast<size_t>(1ULL))),static_cast<size_t>(static_cast<size_t>(0ULL))})).inclusive());
+for (;;){
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+u8 const c = ((((*this).path)).byte_at(i));
+if (((c) == (static_cast<u8>(47)))){
+break;
+}
+if (((c) == (static_cast<u8>(u8'.')))){
+return ((((*this).path)).substring(JaktInternal::checked_add(i,static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(((((*this).path)).length()),static_cast<size_t>(1ULL)),i)));
+}
+}
+
+}
+}
+
+return (ByteString::must_from_utf8(""sv));
+}
+}
+
+ByteString jakt__path::Path::basename(bool const strip_extension) const {
+{
+JaktInternal::Tuple<ByteString,ByteString> const parts = ((*this).split_at_last_slash());
+if (strip_extension){
+size_t ext_length = ((((*this).extension())).length());
+if ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) == (static_cast<u8>(2)));
+}
+}
+(ext_length,static_cast<size_t>(0ULL))){
+((ext_length) += (static_cast<size_t>(1ULL)));
+}
+return ((((parts).template get<1>())).substring(static_cast<size_t>(0ULL),JaktInternal::checked_sub(((((parts).template get<1>())).length()),ext_length)));
+}
+return ((parts).template get<1>());
 }
 }
 
@@ -124,74 +177,7 @@ return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("."sv))) +
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-return jakt__path::Path::from_parts(((DynamicArray<ByteString>::must_create_with({((parts).template get<0>()), TRY((((basename) + (extension))))}))));
-}
-}
-
-JaktInternal::Optional<size_t> jakt__path::Path::last_slash(ByteString const path) {
-{
-size_t i = JaktInternal::checked_sub(((path).length()),static_cast<size_t>(1ULL));
-u8 const separator = static_cast<u8>(47);
-while (([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
-}
-}
-(self,rhs))))) != (static_cast<u8>(0)));
-}
-}
-(i,static_cast<size_t>(1ULL)) && ((((path).byte_at(i))) != (separator)))){
-((i) -= (static_cast<size_t>(1ULL)));
-}
-if ((((i) == (static_cast<size_t>(0ULL))) && ((((path).byte_at(i))) != (separator)))){
-return JaktInternal::OptionalNone();
-}
-return i;
-}
-}
-
-jakt__path::Path jakt__path::Path::from_string(ByteString const string) {
-{
-jakt__path::Path path = jakt__path::Path(string);
-((path).normalize_separators());
-return path;
-}
-}
-
-jakt__path::Path jakt__path::Path::from_parts(JaktInternal::DynamicArray<ByteString> const parts) {
-{
-jakt__path::Path path = jakt__path::Path((ByteString::must_from_utf8("."sv)));
-{
-JaktInternal::ArrayIterator<ByteString> _magic = ((parts).iterator());
-for (;;){
-JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-ByteString part = (_magic_value.value());
-{
-(path = ((path).join(part)));
-}
-
-}
-}
-
-return path;
-}
-}
-
-JaktInternal::Tuple<ByteString,ByteString> jakt__path::Path::split_at_last_slash() const {
-{
-size_t const len = ((((*this).path)).length());
-JaktInternal::Optional<size_t> const last_slash = jakt__path::Path::last_slash(((*this).path));
-if (((last_slash).has_value())){
-ByteString const dir = ((((*this).path)).substring(static_cast<size_t>(0ULL),(last_slash.value())));
-ByteString const base = ((((*this).path)).substring(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(len,(last_slash.value())),static_cast<size_t>(1ULL))));
-return (Tuple{dir, base});
-}
-return (Tuple{(ByteString::must_from_utf8(""sv)), ((*this).path)});
+return jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({((parts).template get<0>()), TRY((((basename) + (extension))))})));
 }
 }
 
@@ -205,40 +191,15 @@ return jakt__path::Path(((parts).template get<0>()));
 }
 }
 
-void jakt__path::Path::normalize_separators() {
+bool jakt__path::Path::exists() const {
 {
-JaktInternal::DynamicArray<u8> separators = ((DynamicArray<u8>::must_create_with({static_cast<u8>(47)})));
-u8 separator = static_cast<u8>(47);
-ByteStringBuilder normalized_builder = ByteStringBuilder::create();
-{
-JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).path)).length()))});
-for (;;){
-JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-size_t i = (_magic_value.value());
-{
-u8 const ch = ((((*this).path)).byte_at(i));
-if (((separators).contains(ch))){
-((normalized_builder).append(separator));
-}
-else {
-((normalized_builder).append(ch));
-}
-
-}
-
-}
-}
-
-(((*this).path) = ((normalized_builder).to_string()));
+return File::exists(((*this).path));
 }
 }
 
 JaktInternal::DynamicArray<ByteString> jakt__path::Path::components() const {
 {
-JaktInternal::DynamicArray<ByteString> parts = ((DynamicArray<ByteString>::must_create_with({})));
+JaktInternal::DynamicArray<ByteString> parts = (DynamicArray<ByteString>::create_with({}));
 JaktInternal::Optional<size_t> last_slash = JaktInternal::OptionalNone();
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).path)).length()))});
@@ -297,9 +258,48 @@ return parts;
 }
 }
 
-bool jakt__path::Path::is_dot() const {
+JaktInternal::Tuple<ByteString,ByteString> jakt__path::Path::split_at_last_slash() const {
 {
-return (((((*this).path)) == ((ByteString::must_from_utf8("."sv)))) || ((((*this).path)) == ((ByteString::must_from_utf8(".."sv)))));
+size_t const len = ((((*this).path)).length());
+JaktInternal::Optional<size_t> const last_slash = jakt__path::Path::last_slash(((*this).path));
+if (((last_slash).has_value())){
+ByteString const dir = ((((*this).path)).substring(static_cast<size_t>(0ULL),(last_slash.value())));
+ByteString const base = ((((*this).path)).substring(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(len,(last_slash.value())),static_cast<size_t>(1ULL))));
+return (Tuple{dir, base});
+}
+return (Tuple{(ByteString::must_from_utf8(""sv)), ((*this).path)});
+}
+}
+
+JaktInternal::Optional<size_t> jakt__path::Path::last_slash(ByteString const path) {
+{
+size_t i = JaktInternal::checked_sub(((path).length()),static_cast<size_t>(1ULL));
+u8 const separator = static_cast<u8>(47);
+while (([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) != (static_cast<u8>(0)));
+}
+}
+(i,static_cast<size_t>(1ULL)) && ((((path).byte_at(i))) != (separator)))){
+((i) -= (static_cast<size_t>(1ULL)));
+}
+if ((((i) == (static_cast<size_t>(0ULL))) && ((((path).byte_at(i))) != (separator)))){
+return JaktInternal::OptionalNone();
+}
+return i;
+}
+}
+
+jakt__path::Path::Path(ByteString a_path): path(move(a_path)){}
+
+ErrorOr<jakt__path::Path> jakt__path::Path::absolute() const {
+{
+return *this;
 }
 }
 

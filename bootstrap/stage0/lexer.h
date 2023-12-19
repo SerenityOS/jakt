@@ -535,46 +535,46 @@ Token(Token const&);
 Token(Token &&);
 private: void __jakt_destroy_variant();
 public:
-static lexer::Token from_keyword_or_identifier(ByteString const string, utility::Span const span);
 utility::Span span() const;
+static lexer::Token from_keyword_or_identifier(ByteString const string, utility::Span const span);
 private:
 Token() {};
 };
 struct Lexer {
   public:
-public: size_t index;public: JaktInternal::DynamicArray<u8> input;public: NonnullRefPtr<compiler::Compiler> compiler;public: JaktInternal::Optional<JaktInternal::DynamicArray<u8>> comment_contents;public: JaktInternal::Set<ByteString> illegal_cpp_keywords;public: JaktInternal::Optional<ByteString> consume_comment_contents();
-public: lexer::Token lex_quoted_string(u8 const delimiter);
-public: ErrorOr<JaktInternal::Optional<lexer::Token>> next();
-public: lexer::Token lex_character_constant_or_name();
-public: lexer::Token lex_dot();
-public: lexer::Token lex_question_mark();
-public: ErrorOr<lexer::Token> lex_forward_slash();
-public: u8 peek_behind(size_t const steps) const;
-public: u8 peek_ahead(size_t const steps) const;
-public: lexer::Token lex_asterisk();
-public: lexer::Token lex_minus();
+public: size_t index;public: JaktInternal::DynamicArray<u8> input;public: NonnullRefPtr<compiler::Compiler> compiler;public: JaktInternal::Optional<JaktInternal::DynamicArray<u8>> comment_contents;public: JaktInternal::Set<ByteString> illegal_cpp_keywords;public: static ErrorOr<JaktInternal::DynamicArray<lexer::Token>> lex(NonnullRefPtr<compiler::Compiler> const compiler);
+public: void error(ByteString const message, utility::Span const span);
+public: utility::Span span(size_t const start, size_t const end) const;
 public: u8 peek() const;
-public: lexer::Token lex_percent_sign();
-public: lexer::Token lex_number_or_name();
-public: lexer::Token lex_less_than();
+public: u8 peek_ahead(size_t const steps) const;
+public: u8 peek_behind(size_t const steps) const;
 public: bool eof() const;
+public: ByteString substring(size_t const start, size_t const length) const;
+public: lexer::Token lex_character_constant_or_name();
+public: lexer::Token lex_number_or_name();
+public: bool valid_digit(lexer::LiteralPrefix const prefix, u8 const digit, bool const decimal_allowed);
+public: lexer::Token lex_number();
+public: lexer::LiteralSuffix consume_numeric_literal_suffix();
+public: lexer::Token lex_quoted_string(u8 const delimiter);
+public: lexer::Token lex_plus();
+public: lexer::Token lex_minus();
+public: lexer::Token lex_asterisk();
+public: lexer::Token lex_forward_slash();
+public: lexer::Token lex_caret();
+public: lexer::Token lex_pipe();
+public: lexer::Token lex_percent_sign();
+public: lexer::Token lex_exclamation_point();
+public: lexer::Token lex_ampersand();
+public: lexer::Token lex_less_than();
+public: lexer::Token lex_greater_than();
+public: lexer::Token lex_dot();
+public: lexer::Token lex_colon();
+public: lexer::Token lex_question_mark();
+public: lexer::Token lex_equals();
+public: JaktInternal::Optional<ByteString> consume_comment_contents();
+public: JaktInternal::Optional<lexer::Token> next();
 public: Lexer(size_t a_index, JaktInternal::DynamicArray<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> a_comment_contents, JaktInternal::Set<ByteString> a_illegal_cpp_keywords);
 
-public: lexer::Token lex_ampersand();
-public: utility::Span span(size_t const start, size_t const end) const;
-public: lexer::Token lex_plus();
-public: lexer::Token lex_exclamation_point();
-public: lexer::LiteralSuffix consume_numeric_literal_suffix();
-public: lexer::Token lex_colon();
-public: bool valid_digit(lexer::LiteralPrefix const prefix, u8 const digit, bool const decimal_allowed);
-public: void error(ByteString const message, utility::Span const span);
-public: lexer::Token lex_equals();
-public: ByteString substring(size_t const start, size_t const length) const;
-public: lexer::Token lex_greater_than();
-public: lexer::Token lex_pipe();
-public: lexer::Token lex_caret();
-public: lexer::Token lex_number();
-public: static ErrorOr<JaktInternal::DynamicArray<lexer::Token>> lex(NonnullRefPtr<compiler::Compiler> const compiler);
 public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt

@@ -36,7 +36,7 @@ extern struct ArraySlice<T> {
     fn contains(this, anon value: T) -> bool
     fn size(this) -> usize
     fn iterator(this) -> ArrayIterator<T>
-    fn to_array(this) throws -> Array<T>
+    fn to_array(this) -> Array<T>
     fn first(this) -> T?
     fn last(this) -> T?
     fn unsafe_data(this) -> raw T
@@ -147,7 +147,6 @@ extern struct Range<T> {
 }
 
 extern struct StringView {
-    fn to_string(this) throws -> String
     fn length(this) -> usize
     [[name="operator[]"]]
     fn byte_at(this, anon index: usize) -> u8

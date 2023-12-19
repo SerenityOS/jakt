@@ -29,15 +29,15 @@ ErrorOr<ByteString> cpp_import__common::CppImportErrors::debug_description() con
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
 builder.append(")"sv);return builder.to_string(); }
-StringView cpp_import__common::CppImportErrors::no_this_type() {
-{
-return (StringView::from_string_literal("No 'this' type when compiling a function"sv));
-}
-}
-
 StringView cpp_import__common::CppImportErrors::path_not_found() {
 {
 return (StringView::from_string_literal("Could not find import path"sv));
+}
+}
+
+StringView cpp_import__common::CppImportErrors::no_this_type() {
+{
+return (StringView::from_string_literal("No 'this' type when compiling a function"sv));
 }
 }
 

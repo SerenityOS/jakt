@@ -221,11 +221,6 @@ public:
         return DynamicArray { move(storage) };
     }
 
-    static DynamicArray must_create_empty()
-    {
-        return create_empty();
-    }
-
     static DynamicArray create_with(std::initializer_list<T> list)
         requires(!IsLvalueReference<T>)
     {
@@ -235,13 +230,6 @@ public:
             array.push(move(const_cast<T&>(item)));
         return array;
     }
-
-    static DynamicArray must_create_with(std::initializer_list<T> list)
-        requires(!IsLvalueReference<T>)
-    {
-        return create_with(list);
-    }
-
 
     bool is_empty() const { return m_storage->is_empty(); }
     size_t size() const { return m_storage->size(); }
@@ -346,16 +334,6 @@ public:
         return array;
     }
 
-    static DynamicArray must_filled(size_t size, T value)
-    {
-        auto array = must_create_empty();
-        array.ensure_capacity(size);
-        for (size_t i = 0; i < size; ++i) {
-            array.push(value);
-        }
-        return array;
-    }
-
     T* unsafe_data()
     {
         return m_storage->unsafe_data();
@@ -414,14 +392,13 @@ public:
         }
     }
 
-    ErrorOr<DynamicArray<T>> to_array() const
+    DynamicArray<T> to_array() const
     {
         auto array = DynamicArray<T>::create_empty();
         array.ensure_capacity(size());
         for (size_t i = 0; i < size(); ++i) {
             array.push(at(i));
         }
-
         return array;
     }
 

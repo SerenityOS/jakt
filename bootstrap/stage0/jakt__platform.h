@@ -4,17 +4,17 @@ namespace Jakt {
 namespace jakt__platform {
 struct Target {
   public:
-public: ByteString arch;public: ByteString platform;public: ByteString os;public: ByteString abi;public: Target(ByteString a_arch, ByteString a_platform, ByteString a_os, ByteString a_abi);
-
-public: static ErrorOr<jakt__platform::Target> from_triple(ByteString const triple);
-public: ErrorOr<size_t> int_alignment() const;
-public: ErrorOr<size_t> pointer_size() const;
-public: ErrorOr<ByteString> name(bool const abbreviate) const;
+public: ByteString arch;public: ByteString platform;public: ByteString os;public: ByteString abi;public: static ErrorOr<jakt__platform::Target> from_triple(ByteString const triple);
 public: static ErrorOr<jakt__platform::Target> active();
-public: ErrorOr<size_t> size_t_alignment() const;
+public: ErrorOr<ByteString> name(bool const abbreviate) const;
+public: Target(ByteString a_arch, ByteString a_platform, ByteString a_os, ByteString a_abi);
+
 public: ErrorOr<size_t> size_t_size() const;
+public: ErrorOr<size_t> pointer_size() const;
 public: ErrorOr<size_t> int_size() const;
+public: ErrorOr<size_t> size_t_alignment() const;
 public: ErrorOr<size_t> pointer_alignment() const;
+public: ErrorOr<size_t> int_alignment() const;
 public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt

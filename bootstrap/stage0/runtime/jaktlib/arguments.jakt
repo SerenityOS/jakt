@@ -70,7 +70,7 @@ struct ArgsParser {
         return result
     }
 
-    fn from_args(anon args: [String]) throws -> ArgsParser {
+    fn from_args(anon args: [String]) -> ArgsParser {
         mut parser = ArgsParser(args, removed_indices: [], definitely_positional_args: [])
         mut i = 0uz
         for arg in parser.args {

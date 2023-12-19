@@ -6,8 +6,8 @@ namespace jakt__platform__unknown_fs {
 class DirectoryIterator :public RefCounted<DirectoryIterator>, public Weakable<DirectoryIterator> {
   public:
 virtual ~DirectoryIterator() = default;
-public: static ErrorOr<JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>>> from_path(jakt__path::Path const path);
 public: ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<jakt__path::Path,bool>>> next();
+public: static ErrorOr<JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>>> from_path(jakt__path::Path const path);
 public: ErrorOr<jakt__path::Path> get_path() const;
 public: protected:
 explicit DirectoryIterator();
