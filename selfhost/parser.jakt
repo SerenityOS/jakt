@@ -163,7 +163,7 @@ enum ImportList {
         All => false
     }
 
-    fn add(mut this, anon name: ImportName) throws {
+    fn add(mut this, anon name: ImportName) {
         match this {
             List(names) => {
                 mut mutable_names = names
@@ -313,7 +313,7 @@ struct ParsedNamespace {
         .namespaces.push(namespace_)
     }
 
-    fn add_alias(mut this, anon alias: ParsedAlias) throws {
+    fn add_alias(mut this, anon alias: ParsedAlias) {
         .aliases.push(alias)
     }
 
@@ -1704,13 +1704,13 @@ struct Parser {
 
     fn empty_span(this) -> Span => .span(start: 0, end: 0)
 
-    fn error(mut this, anon message: String, anon span: Span) throws {
+    fn error(mut this, anon message: String, anon span: Span) {
         if not .compiler.ignore_parser_errors {
             .compiler.errors.push(JaktError::Message(message, span))
         }
     }
 
-    fn error_with_hint(mut this, anon message: String, anon span: Span, anon hint: String, anon hint_span: Span) throws {
+    fn error_with_hint(mut this, anon message: String, anon span: Span, anon hint: String, anon hint_span: Span) {
         if not .compiler.ignore_parser_errors {
             .compiler.errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
         }
@@ -1738,7 +1738,7 @@ struct Parser {
         return .peek(0)
     }
 
-    fn inject_token(mut this, token: Token) throws {
+    fn inject_token(mut this, token: Token) {
         .tokens.insert(before_index: .index + 1, value: token)
     }
 
@@ -2277,7 +2277,7 @@ struct Parser {
         }
     }
 
-    fn parse_attribute_list(mut this, active_attributes: &mut [ParsedAttribute]) throws {
+    fn parse_attribute_list(mut this, active_attributes: &mut [ParsedAttribute]) {
         while not .eof() and not .current() is RSquare and not .peek(1) is RSquare {
             let attribute = .parse_attribute()
             if attribute.has_value() {
@@ -2291,7 +2291,7 @@ struct Parser {
         }
     }
 
-    fn parse_attribute(mut this) throws -> ParsedAttribute? {
+    fn parse_attribute(mut this) -> ParsedAttribute? {
         // Ident ('(' ((Ident|String) (':' (Ident|String))? ','?)* ')')? ('=' (Ident|String))?
         let span = .current().span()
         let name = match .current() {
@@ -5294,7 +5294,7 @@ struct Parser {
         return ParsedExpression::Garbage(span)
     }
 
-    fn make_integer_numeric_constant(mut this, number: u64, suffix: LiteralSuffix, span: Span) throws -> NumericConstant? {
+    fn make_integer_numeric_constant(mut this, number: u64, suffix: LiteralSuffix, span: Span) -> NumericConstant? {
         // FIXME: consider unifying with make_float_numeric_constant() to a single function
         match suffix {
             None => {
@@ -5389,7 +5389,7 @@ struct Parser {
         else => None
     }
 
-    fn parse_captures(mut this) throws -> [ParsedCapture] {
+    fn parse_captures(mut this) -> [ParsedCapture] {
         mut captures: [ParsedCapture] = []
         guard .current() is LSquare else {
             return []

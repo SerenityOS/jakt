@@ -263,7 +263,7 @@ struct Typechecker {
     fn get_type(this, anon id: TypeId) -> Type => .program.get_type(id)
     fn get_enum(this, anon id: EnumId) -> CheckedEnum => .program.get_enum(id)
     fn get_struct(this, anon id: StructId) -> CheckedStruct => .program.get_struct(id)
-    fn get_scope(this, anon id: ScopeId) throws -> Scope => .program.get_scope(id)
+    fn get_scope(this, anon id: ScopeId) -> Scope => .program.get_scope(id)
     fn find_var_in_scope(
         this
         scope_id: ScopeId
@@ -271,7 +271,7 @@ struct Typechecker {
         root_scope_id: ScopeId? = None
     ) throws -> CheckedVariable? => .program.find_var_in_scope(scope_id, var, root_scope_id)
 
-    fn lookup_struct_field(this, struct_id: StructId, name: String) throws -> FieldRecord? {
+    fn lookup_struct_field(this, struct_id: StructId, name: String) -> FieldRecord? {
         mut chain: [StructId] = []
         mut current = Some(struct_id)
 
@@ -328,7 +328,7 @@ struct Typechecker {
         return false
     }
 
-    fn error(mut this, anon message: String, anon span: Span) throws {
+    fn error(mut this, anon message: String, anon span: Span) {
         .had_an_error = true
         if not .ignore_errors {
             .compiler.errors.push(JaktError::Message(message, span))
@@ -337,7 +337,7 @@ struct Typechecker {
         }
     }
 
-    fn error_with_hint(mut this, anon message: String, anon span: Span, anon hint: String, anon hint_span: Span) throws {
+    fn error_with_hint(mut this, anon message: String, anon span: Span, anon hint: String, anon hint_span: Span) {
         if not .ignore_errors {
             .compiler.errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
         } else {
@@ -523,7 +523,7 @@ struct Typechecker {
         return .substitute_typevars_in_type(type_id: found_type, generic_inferences: .generic_inferences)
     }
 
-    fn find_or_add_type_id(mut this, anon type: Type) throws -> TypeId => .program.find_or_add_type_id(type, module_id: .current_module_id)
+    fn find_or_add_type_id(mut this, anon type: Type) -> TypeId => .program.find_or_add_type_id(type, module_id: .current_module_id)
 
     fn find_type_in_scope(this, scope_id: ScopeId, name: String) throws -> TypeId? {
         return .program.find_type_in_scope(scope_id, name)

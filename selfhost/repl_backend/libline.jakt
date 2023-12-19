@@ -102,7 +102,7 @@ struct Editor {
         return LineResult::Line(line)
     }
 
-    fn get_active_buffer(mut this) throws -> String {
+    fn get_active_buffer(mut this) -> String {
         return .editor.line()
     }
 

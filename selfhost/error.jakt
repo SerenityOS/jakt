@@ -16,7 +16,7 @@ enum JaktError {
 }
 
 
-fn print_error_json(file_name: String, error: JaktError) throws {
+fn print_error_json(file_name: String, error: JaktError) {
     match error {
         Message(message, span) => {
             display_message_with_span_json(MessageSeverity::Error, file_name, message, span)
@@ -60,7 +60,7 @@ fn display_message_with_span_json(anon severity: MessageSeverity, file_name: Str
         message, severity.name(), span.file_id.id, span.start, span.end)
 }
 
-fn display_message_with_span(anon severity: MessageSeverity, file_name: String, contents: [u8]?, message: String, span: Span) throws {
+fn display_message_with_span(anon severity: MessageSeverity, file_name: String, contents: [u8]?, message: String, span: Span) {
     eprintln("{}: {}", severity.name(), message)
 
     if not contents.has_value() {
@@ -139,7 +139,7 @@ fn display_message_with_span(anon severity: MessageSeverity, file_name: String, 
     eprintln("┴─")
 }
 
-fn print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: (usize, usize), error_span: Span, line_number: usize, largest_line_number: usize) throws {
+fn print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: (usize, usize), error_span: Span, line_number: usize, largest_line_number: usize) {
     mut index = file_span.0
 
     let largest_width = format("{}", largest_line_number).length()
@@ -173,7 +173,7 @@ fn print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: 
     eprintln("")
 }
 
-fn print_underline(severity: MessageSeverity, width: usize, file_span: (usize, usize), error_span: Span, line_number: usize, largest_line_number: usize) throws {
+fn print_underline(severity: MessageSeverity, width: usize, file_span: (usize, usize), error_span: Span, line_number: usize, largest_line_number: usize) {
     // Print the error label
     for x in 0..(width + 2) {
         eprint(" ")
@@ -198,7 +198,7 @@ fn print_underline(severity: MessageSeverity, width: usize, file_span: (usize, u
     eprintln("")
 }
 
-fn gather_line_spans(file_contents: [u8]) throws -> [(usize, usize)] {
+fn gather_line_spans(file_contents: [u8]) -> [(usize, usize)] {
     mut idx = 0uz
     mut output: [(usize, usize)] = []
 

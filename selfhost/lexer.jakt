@@ -316,7 +316,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return tokens
     }
 
-    fn error(mut this, anon message: String, anon span: Span) throws {
+    fn error(mut this, anon message: String, anon span: Span) {
         .compiler.errors.push(JaktError::Message(message, span))
     }
 

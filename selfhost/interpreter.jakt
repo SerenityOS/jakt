@@ -922,11 +922,11 @@ class InterpreterScope {
         }
     }
 
-    public fn defer_expression(mut this, expr: CheckedExpression) throws {
+    public fn defer_expression(mut this, expr: CheckedExpression) {
         .defers.push(Deferred::Expression(expr))
     }
 
-    public fn defer_statement(mut this, statement: CheckedStatement) throws {
+    public fn defer_statement(mut this, statement: CheckedStatement) {
         .defers.push(Deferred::Statement(statement))
     }
 }
@@ -971,7 +971,7 @@ class Interpreter {
         )
     }
 
-    public fn enter_span(mut this, anon span: Span) throws {
+    public fn enter_span(mut this, anon span: Span) {
         .spans.push(span)
     }
 
@@ -1316,7 +1316,7 @@ class Interpreter {
         else => expr
     }}
 
-    public fn get_prelude_function(this, anon scope_id: ScopeId) throws -> bool {
+    public fn get_prelude_function(this, anon scope_id: ScopeId) -> bool {
         mut current_scope_id = scope_id
         let prelude_scope_id = .program.prelude_scope_id()
         loop {
