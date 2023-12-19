@@ -70,11 +70,11 @@ struct Path {
         return .join(path.path)
     }
 
-    fn is_dot(this) throws -> bool {
+    fn is_dot(this) -> bool {
         return .path == "." or .path == ".."
     }
 
-    fn extension(this) throws -> String {
+    fn extension(this) -> String {
         for i in ((.path.length() - 1)..0).inclusive() {
             let c = .path.byte_at(i)
             if c == get_path_separator() {
@@ -89,7 +89,7 @@ struct Path {
         return ""
     }
 
-    fn basename(this, strip_extension: bool = false) throws -> String {
+    fn basename(this, strip_extension: bool = false) -> String {
         let parts = .split_at_last_slash()
         if strip_extension {
             mut ext_length = .extension().length()
@@ -162,7 +162,7 @@ struct Path {
         return parts
     }
 
-    private fn split_at_last_slash(this) throws -> (String, String) {
+    private fn split_at_last_slash(this) -> (String, String) {
         let len = .path.length()
         let last_slash = Path::last_slash(.path)
 

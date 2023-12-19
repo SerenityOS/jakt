@@ -84,7 +84,7 @@ struct ControlFlowState {
     // directly construct a `ExplicitValueOrControlFlow<MatchResult, void>` so
     // that the compiler doesn't try to construct one from a `void` value,
     // which it doesn't know how to do.
-    fn nested_release_return_expr(func_return_type: TypeId, func_can_throw: bool, cpp_match_result_type: String) throws -> String {
+    fn nested_release_return_expr(func_return_type: TypeId, func_can_throw: bool, cpp_match_result_type: String) -> String {
 
         let returns_void = func_return_type == void_type_id() or func_return_type == unknown_type_id() or func_return_type == never_type_id()
 
@@ -229,7 +229,7 @@ struct CodeGenerator {
     generic_inferences: [TypeId:TypeId]? = None
 
     // noreturn functions may not throw, so let them crash instead.
-    fn current_error_handler(this) throws -> String {
+    fn current_error_handler(this) -> String {
         if .inside_defer or (
             .current_function.has_value() and
             .current_function!.return_type_id == never_type_id() and
@@ -242,9 +242,9 @@ struct CodeGenerator {
         return "TRY"
     }
 
-    fn fresh_var(mut this) throws -> String => format("__jakt_var_{}", .fresh_var_counter++)
+    fn fresh_var(mut this) -> String => format("__jakt_var_{}", .fresh_var_counter++)
 
-    fn fresh_label(mut this) throws -> String => format("__jakt_label_{}", .fresh_label_counter++)
+    fn fresh_label(mut this) -> String => format("__jakt_label_{}", .fresh_label_counter++)
 
     fn topologically_sort_modules(this) throws -> [ModuleId] {
         mut in_degrees: [usize:i64] = [:]
@@ -2228,7 +2228,7 @@ struct CodeGenerator {
         return (common_fields, variant_field_list)
     }
 
-    fn destructor_name(this, anon id: TypeId) throws -> String? => match .program.get_type(id) {
+    fn destructor_name(this, anon id: TypeId) -> String? => match .program.get_type(id) {
         JaktString => "ByteString"
         GenericInstance(id) | GenericResolvedType(id) | Struct(id) => {
             let struct_ = .program.get_struct(id)

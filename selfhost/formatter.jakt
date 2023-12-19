@@ -89,7 +89,7 @@ enum State {
     )
     FunctionTypeContext(seen_final_type: bool)
 
-    fn name(this) throws -> String => match this {
+    fn name(this) -> String => match this {
         Toplevel => "toplevel"
         Extern => "extern"
         Import => "import"
@@ -298,7 +298,7 @@ struct Stage0 {
         )
     }
 
-    private fn formatted_token(this, anon token: Token, trailing_trivia: [u8], preceding_trivia: [u8]) throws -> FormattedToken {
+    private fn formatted_token(this, anon token: Token, trailing_trivia: [u8], preceding_trivia: [u8]) -> FormattedToken {
         return FormattedToken(
             token
             indent: .indent
@@ -2272,7 +2272,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         return length
     }
 
-    private fn fixup_tokens_to_reflow(mut this) throws {
+    private fn fixup_tokens_to_reflow(mut this) {
         if .tokens_to_reflow.is_empty() {
             return
         }

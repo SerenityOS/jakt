@@ -34,13 +34,13 @@ enum StructLikeId {
         return result
     }
 
-    fn generic_parameters_as_checked(this, anon program: &CheckedProgram) throws -> [CheckedGenericParameter] => match this {
+    fn generic_parameters_as_checked(this, anon program: &CheckedProgram) -> [CheckedGenericParameter] => match this {
         Struct(id) => program.get_struct(id).generic_parameters
         Enum(id) => program.get_enum(id).generic_parameters
         Trait(id) => program.get_trait(id).generic_parameters
     }
 
-    fn scope_id(this, anon program: &CheckedProgram) throws -> ScopeId => match this {
+    fn scope_id(this, anon program: &CheckedProgram) -> ScopeId => match this {
         Struct(id) => program.get_struct(id).scope_id
         Enum(id) => program.get_enum(id).scope_id
         Trait(id) => program.get_trait(id).scope_id
@@ -70,7 +70,7 @@ enum StructLikeId {
         }
     }
 
-    fn associated_scope_id(this, anon program: &CheckedProgram) throws -> ScopeId => match this {
+    fn associated_scope_id(this, anon program: &CheckedProgram) -> ScopeId => match this {
         Struct(id) => program.get_struct(id).scope_id
         Enum(id) => program.get_enum(id).scope_id
         Trait(id) => program.get_trait(id).scope_id
@@ -115,7 +115,7 @@ struct GenericInferences {
         return final_mapped_result ?? type
     }
 
-    fn find_and_map(this, anon name: String, anon program: &CheckedProgram) throws -> TypeId? {
+    fn find_and_map(this, anon name: String, anon program: &CheckedProgram) -> TypeId? {
         for (type_id, v) in .values {
             if program.get_type(type_id) is TypeVariable(name: var_name) and var_name == name {
                 return .map(v)
@@ -208,7 +208,7 @@ enum BuiltinType {
         Never => 17uz
     }
 
-    fn constructor_name(this) throws -> String => match this {
+    fn constructor_name(this) -> String => match this {
         Void => "Void"
         Bool => "Bool"
         U8 => "U8"
@@ -324,7 +324,7 @@ boxed enum Type {
         else => base_specificity
     }
 
-    fn constructor_name(this) throws -> String => match this {
+    fn constructor_name(this) -> String => match this {
         Void => "Void"
         Bool => "Bool"
         U8 => "U8"
@@ -581,7 +581,7 @@ boxed enum Type {
         else => 0u64
     }
 
-    fn flip_signedness(this) throws -> TypeId => match this {
+    fn flip_signedness(this) -> TypeId => match this {
         I8 => builtin(BuiltinType::U8)
         I16 => builtin(BuiltinType::U16)
         I32 => builtin(BuiltinType::U32)
@@ -899,7 +899,7 @@ class CheckedFunction {
         return true
     }
 
-    public fn is_static(this) throws -> bool {
+    public fn is_static(this) -> bool {
         if .params.size() < 1 {
             return true
         }
@@ -907,7 +907,7 @@ class CheckedFunction {
         return .params[0].variable.name != "this"
     }
 
-    public fn is_mutating(this) throws -> bool {
+    public fn is_mutating(this) -> bool {
         if .params.size() < 1 {
             return false
         }
@@ -922,7 +922,7 @@ class CheckedFunction {
         .generics.base_params.push(checked_param)
     }
 
-    public fn set_params(mut this, anon checked_params: [CheckedParameter]) throws {
+    public fn set_params(mut this, anon checked_params: [CheckedParameter]) {
         .params = checked_params
         .generics.base_params = checked_params
     }
@@ -931,7 +931,7 @@ class CheckedFunction {
         return .generics.is_specialized_for_types(types)
     }
 
-    public fn to_parsed_function(this) throws -> ParsedFunction {
+    public fn to_parsed_function(this) -> ParsedFunction {
         if not .parsed_function.has_value() {
             panic("to_parsed_function() called on a synthetic function")
         }
@@ -1362,7 +1362,7 @@ enum NumberConstant {
     Unsigned(u64)
     Floating(f64)
 
-    fn can_fit_number(this, type_id: TypeId, program: CheckedProgram) throws -> bool {
+    fn can_fit_number(this, type_id: TypeId, program: CheckedProgram) -> bool {
         let type_ = program.get_type(type_id)
 
         return match this {
@@ -1385,7 +1385,7 @@ enum NumberConstant {
         }
     }
 
-    fn to_usize(this) throws -> usize => match this {
+    fn to_usize(this) -> usize => match this {
         Signed(value) => value as! usize
         Unsigned(value) => value as! usize
         Floating(value) => {
@@ -2042,7 +2042,7 @@ class CheckedProgram {
         }
     }
 
-    public fn set_owner_scope_if_needed(mut this, parent_scope_id: ScopeId, var_id: VarId) throws {
+    public fn set_owner_scope_if_needed(mut this, parent_scope_id: ScopeId, var_id: VarId) {
         mut variable = .get_variable(var_id)
         if not variable.owner_scope.has_value() {
             variable.owner_scope = parent_scope_id
@@ -3245,7 +3245,7 @@ struct Value {
     span: Span
 
     fn copy(this) throws -> Value => Value(impl: .impl.copy(), span: .span)
-    fn type_name(this) throws -> String => match .impl {
+    fn type_name(this) -> String => match .impl {
         Void => "void"
         Bool => "bool"
         U8 => "u8"

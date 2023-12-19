@@ -43,18 +43,18 @@ fn print_error(file_name: String, file_contents: [u8]?, error: JaktError) throws
 enum MessageSeverity {
     Hint
     Error
-    public fn name(this) throws -> String => match this {
+    public fn name(this) -> String => match this {
         Hint => "Hint"
         Error => "Error"
     }
-    public fn ansi_color_code(this) throws -> String => match this {
+    public fn ansi_color_code(this) -> String => match this {
         Hint => "94"  // Bright Blue
         Error => "31" // Red
     }
 }
 
 
-fn display_message_with_span_json(anon severity: MessageSeverity, file_name: String, message: String, span: Span) throws
+fn display_message_with_span_json(anon severity: MessageSeverity, file_name: String, message: String, span: Span)
 {
     println("{{\"type\":\"diagnostic\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"
         message, severity.name(), span.file_id.id, span.start, span.end)

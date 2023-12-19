@@ -56,7 +56,7 @@ comptime get_current_git_hash() throws -> String {
     return hash.substring(start: 0, length: hash.length() - 1)
 }
 
-fn usage() throws => "usage: jakt [cross] [-h] [OPTIONS] <filename>"
+fn usage() => "usage: jakt [cross] [-h] [OPTIONS] <filename>"
 fn help() throws -> String {
     mut output = ""
     output += "Non-cross mode:\n"
@@ -142,7 +142,7 @@ struct FormatRange {
     start: usize
     end: usize
 }
-fn parse_format_range(anon range: String, anon input_file_length: usize) throws -> FormatRange? {
+fn parse_format_range(anon range: String, anon input_file_length: usize) -> FormatRange? {
     // range: <start-offset>:<end-offset>
     // {start,end}-offset: usize
 
@@ -473,7 +473,7 @@ fn find_with_extension(path: Path, extension: String) throws -> [Path] {
     return files_found
 }
 
-fn escape_for_depfile(anon input: String) throws -> String {
+fn escape_for_depfile(anon input: String) -> String {
     // $ -> $$, # -> \#, <space> -> \<space>
     return input.replace(replace: "$", with: "$$").replace(replace: "#", with: "\\#").replace(replace: " ", with: "\\ ")
 }

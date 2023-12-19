@@ -62,7 +62,7 @@ class Compiler {
         }
     }
 
-    public fn get_file_path(this, anon file_id: FileId) throws -> Path? {
+    public fn get_file_path(this, anon file_id: FileId) -> Path? {
         if file_id.id >= .files.size() {
             return None
         }
@@ -136,7 +136,7 @@ class Compiler {
         .current_file_contents = state.1
     }
 
-    public fn dbg_println(this, anon message: String) throws {
+    public fn dbg_println(this, anon message: String) {
         if .debug_print {
             println("{}", message)
         }

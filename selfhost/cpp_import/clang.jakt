@@ -55,12 +55,12 @@ fn bitcast<D, S>(anon value: S) -> D {
     return x
 }
 
-fn name_from(anon cursor: CXCursor) throws -> String {
+fn name_from(anon cursor: CXCursor) -> String {
     let spelling = clang_getCursorSpelling(cursor)
     return string_from(spelling)
 }
 
-fn string_from(anon string: CXString, dispose: bool = true) throws -> String {
+fn string_from(anon string: CXString, dispose: bool = true) -> String {
     defer {
         if dispose {
             clang_disposeString(string)
@@ -1742,7 +1742,7 @@ class CppImportProcessor {
         )
     }
 
-    fn is_erroror(mut this, anon type: CXType) throws -> bool {
+    fn is_erroror(mut this, anon type: CXType) -> bool {
         let declaration_cursor = clang_getTypeDeclaration(type)
         let usr = string_from(clang_getCursorUSR(cursor: declaration_cursor))
         return usr.starts_with("c:@N@AK@S@ErrorOr>")
