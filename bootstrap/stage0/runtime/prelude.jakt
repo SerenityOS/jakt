@@ -17,17 +17,17 @@ extern struct Array<T> {
     fn contains(this, anon value: T) -> bool
     fn size(this) -> usize
     fn capacity(this) -> usize
-    fn ensure_capacity(this, anon capacity: usize) throws
-    fn add_capacity(this, anon capacity: usize) throws
-    fn resize(mut this, anon size: usize) throws
+    fn ensure_capacity(this, anon capacity: usize)
+    fn add_capacity(this, anon capacity: usize)
+    fn resize(mut this, anon size: usize)
     fn shrink(mut this, anon size: usize) -> void
-    fn push(mut this, anon value: T) throws
-    fn push_values(mut this, anon other: &Array<T>) throws
+    fn push(mut this, anon value: T)
+    fn push_values(mut this, anon other: &Array<T>)
     fn pop(mut this) -> T?
     fn iterator(this) -> ArrayIterator<T>
     fn first(this) -> T?
     fn last(this) -> T?
-    fn insert(mut this, before_index: usize, value: T) throws
+    fn insert(mut this, before_index: usize, value: T)
     fn unsafe_data(this) -> raw T
 }
 

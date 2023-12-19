@@ -33,18 +33,14 @@ public:
     size_t size() const { return m_size; }
     size_t capacity() const { return m_capacity; }
 
-    ErrorOr<void> ensure_capacity(size_t capacity)
+    void ensure_capacity(size_t capacity)
     {
         if (m_capacity >= capacity) {
-            return {};
+            return;
         }
-        if (Checked<size_t>::multiplication_would_overflow(capacity, sizeof(T))) {
-            return Error::from_errno(EOVERFLOW);
-        }
+        VERIFY(!Checked<size_t>::multiplication_would_overflow(capacity, sizeof(T)));
         auto* new_elements = static_cast<T*>(malloc(capacity * sizeof(T)));
-        if (!new_elements) {
-            return Error::from_errno(ENOMEM);
-        }
+        VERIFY(new_elements);
         for (size_t i = 0; i < m_size; ++i) {
             new (&new_elements[i]) T(move(m_elements[i]));
             m_elements[i].~T();
@@ -52,26 +48,22 @@ public:
         free(m_elements);
         m_elements = new_elements;
         m_capacity = capacity;
-        return {};
     }
 
-    ErrorOr<void> add_capacity(size_t additional_capacity_needed)
+    void add_capacity(size_t additional_capacity_needed)
     {
         size_t available_space = m_capacity - m_size;
 
         // If we already have enough space, don't do anything.
         if (additional_capacity_needed < available_space)
-            return {};
+            return;
 
         // Grow the existing capacity by *at least* 25%.
         Checked<size_t> new_capacity = m_capacity;
         new_capacity += max(m_capacity / 4, additional_capacity_needed);
 
-        if (new_capacity.has_overflow())
-            return Error::from_errno(EOVERFLOW);
-
-        TRY(ensure_capacity(new_capacity.value()));
-        return {};
+        VERIFY(!new_capacity.has_overflow());
+        ensure_capacity(new_capacity.value());
     }
 
     bool contains(T const& value) const
@@ -89,7 +81,7 @@ public:
         if (Checked<size_t>::addition_would_overflow(m_size, size)) {
             return Error::from_errno(EOVERFLOW);
         }
-        TRY(resize(m_size + size));
+        resize(m_size + size);
         return {};
     }
 
@@ -105,18 +97,17 @@ public:
         m_size = size;
     }
 
-    ErrorOr<void> resize(size_t size)
+    void resize(size_t size)
     {
         if (size <= m_size) {
             shrink(size);
-            return {};
+            return;
         }
-        TRY(ensure_capacity(size));
+        ensure_capacity(size);
         for (size_t i = m_size; i < size; ++i) {
             new (&m_elements[i]) T();
         }
         m_size = size;
-        return {};
     }
 
     T const& at(size_t index) const
@@ -131,32 +122,29 @@ public:
         return m_elements[index];
     }
 
-    ErrorOr<void> push(T value)
+    void push(T value)
     {
-        TRY(add_capacity(1));
+        add_capacity(1);
         new (&m_elements[m_size]) T(move(value));
         ++m_size;
-        return {};
     }
 
-    ErrorOr<void> push_values(T const* values, size_t count)
+    void push_values(T const* values, size_t count)
     {
-        TRY(add_capacity(count));
+        add_capacity(count);
         for (size_t i = 0; i < count; ++i) {
             new (&m_elements[m_size + i]) T(values[i]);
         }
         m_size += count;
-        return {};
     }
 
-    ErrorOr<void> insert(size_t before_index, T value)
+    void insert(size_t before_index, T value)
     {
         VERIFY(before_index <= m_size);
-        TRY(ensure_capacity(size() + 1));
-        TRY(push(move(value)));
+        ensure_capacity(size() + 1);
+        push(move(value));
         for (size_t i = size() - 1; i > before_index; --i)
             swap(m_elements[i], m_elements[i - 1]);
-        return {};
     }
 
     T* unsafe_data() { return m_elements; }
@@ -212,9 +200,9 @@ public:
     DynamicArray(Vector<T>&& vector)
         : m_storage(MUST(adopt_nonnull_ref_or_enomem(new(nothrow) Storage)))
     {
-        MUST(ensure_capacity(vector.size()));
+        ensure_capacity(vector.size());
         for (auto& item : vector)
-            MUST(push(move(item)));
+            push(move(item));
     }
 
     operator Span<T const>() const
@@ -227,44 +215,54 @@ public:
         return ArrayIterator<T> { *m_storage, 0, m_storage->size() };
     }
 
-    static ErrorOr<DynamicArray> create_empty()
+    static DynamicArray create_empty()
     {
-        auto storage = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
+        auto storage = MUST(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
         return DynamicArray { move(storage) };
     }
 
-    static ErrorOr<DynamicArray> create_with(std::initializer_list<T> list) requires(!IsLvalueReference<T>)
+    static DynamicArray must_create_empty()
     {
-        auto array = TRY(create_empty());
-        TRY(array.ensure_capacity(list.size()));
+        return create_empty();
+    }
+
+    static DynamicArray create_with(std::initializer_list<T> list)
+        requires(!IsLvalueReference<T>)
+    {
+        auto array = create_empty();
+        array.ensure_capacity(list.size());
         for (auto const& item : list)
-            TRY(array.push(move(const_cast<T&>(item))));
+            array.push(move(const_cast<T&>(item)));
         return array;
     }
+
+    static DynamicArray must_create_with(std::initializer_list<T> list)
+        requires(!IsLvalueReference<T>)
+    {
+        return create_with(list);
+    }
+
 
     bool is_empty() const { return m_storage->is_empty(); }
     size_t size() const { return m_storage->size(); }
     size_t capacity() const { return m_storage->capacity(); }
 
-    ErrorOr<void> push(T value)
+    void push(T value)
     {
-        TRY(m_storage->push(move(value)));
-        return {};
+        m_storage->push(move(value));
     }
 
-    ErrorOr<void> push_values(T const* values, size_t count)
+    void push_values(T const* values, size_t count)
     {
-        TRY(m_storage->push_values(values, count));
-        return {};
+        m_storage->push_values(values, count);
     }
 
-    ErrorOr<void> push_values(DynamicArray<T> const& values)
+    void push_values(DynamicArray<T> const& values)
     {
-        TRY(m_storage->ensure_capacity(capacity() + values.size()));
+        m_storage->ensure_capacity(capacity() + values.size());
         for (size_t i = 0; i < values.size(); ++i) {
-            TRY(push(values.at(i)));
+            push(values.at(i));
         }
-        return {};
     }
 
     T const& at(size_t index) const
@@ -288,16 +286,14 @@ public:
     template<Integral U>
     ArraySlice<T> operator[](Range<U> range) const { return slice_range(range.start, range.end); }
 
-    ErrorOr<void> ensure_capacity(size_t capacity)
+    void ensure_capacity(size_t capacity)
     {
-        TRY(m_storage->ensure_capacity(capacity));
-        return {};
+        m_storage->ensure_capacity(capacity);
     }
 
-    ErrorOr<void> add_capacity(size_t capacity)
+    void add_capacity(size_t capacity)
     {
-        TRY(m_storage->add_capacity(capacity));
-        return {};
+        m_storage->add_capacity(capacity);
     }
 
     ErrorOr<void> add_size(size_t size)
@@ -319,12 +315,11 @@ public:
         m_storage->shrink(size);
     }
 
-    ErrorOr<void> resize(size_t size)
+    void resize(size_t size)
     {
         if (size != this->size()) {
-            TRY(m_storage->resize(size));
+            m_storage->resize(size);
         }
-        return {};
     }
 
     Optional<T> pop()
@@ -336,17 +331,27 @@ public:
         return value;
     }
 
-    ErrorOr<void> insert(size_t before_index, T value)
+    void insert(size_t before_index, T value)
     {
         return m_storage->insert(before_index, move(value));
     }
 
-    static ErrorOr<DynamicArray> filled(size_t size, T value)
+    static DynamicArray filled(size_t size, T value)
     {
-        auto array = TRY(create_empty());
-        TRY(array.ensure_capacity(size));
+        auto array = create_empty();
+        array.ensure_capacity(size);
         for (size_t i = 0; i < size; ++i) {
-            TRY(array.push(value));
+            array.push(value);
+        }
+        return array;
+    }
+
+    static DynamicArray must_filled(size_t size, T value)
+    {
+        auto array = must_create_empty();
+        array.ensure_capacity(size);
+        for (size_t i = 0; i < size; ++i) {
+            array.push(value);
         }
         return array;
     }
@@ -411,10 +416,10 @@ public:
 
     ErrorOr<DynamicArray<T>> to_array() const
     {
-        auto array = TRY(DynamicArray<T>::create_empty());
-        TRY(array.ensure_capacity(size()));
+        auto array = DynamicArray<T>::create_empty();
+        array.ensure_capacity(size());
         for (size_t i = 0; i < size(); ++i) {
-            TRY(array.push(at(i)));
+            array.push(at(i));
         }
 
         return array;
@@ -533,7 +538,7 @@ ArraySlice<T> ArraySlice<T>::slice(size_t offset, size_t size) const
 }
 
 namespace Jakt {
-using JaktInternal::DynamicArray;
 using JaktInternal::ArrayIterator;
 using JaktInternal::ArraySlice;
+using JaktInternal::DynamicArray;
 }

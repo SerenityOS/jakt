@@ -85,7 +85,7 @@ struct ArgsParser {
         return parser
     }
 
-    fn remaining_arguments(this) throws -> [String] {
+    fn remaining_arguments(this) -> [String] {
         mut remaining : [String] = []
 
         for i in 0...args.size() {

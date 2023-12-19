@@ -49,7 +49,7 @@ template<> ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,uti
 template<>
 ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> map<parser::ParsedField, JaktInternal::Tuple<ByteString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedField> const input,Function<ErrorOr<JaktInternal::Tuple<ByteString,utility::Span>>(parser::ParsedField)> const& mapper) {
 {
-JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> us = (TRY((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>::create_with({}))));
+JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> us = ((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>::must_create_with({})));
 {
 JaktInternal::ArrayIterator<parser::ParsedField> _magic = ((input).iterator());
 for (;;){
@@ -59,7 +59,7 @@ break;
 }
 parser::ParsedField t = (_magic_value.value());
 {
-TRY((((us).push(TRY((mapper(t)))))));
+((us).push(TRY((mapper(t)))));
 }
 
 }
@@ -71,7 +71,7 @@ return us;
 template<>
 ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> map<parser::ParsedMethod, JaktInternal::Tuple<ByteString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedMethod> const input,Function<ErrorOr<JaktInternal::Tuple<ByteString,utility::Span>>(parser::ParsedMethod)> const& mapper) {
 {
-JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> us = (TRY((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>::create_with({}))));
+JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> us = ((DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>::must_create_with({})));
 {
 JaktInternal::ArrayIterator<parser::ParsedMethod> _magic = ((input).iterator());
 for (;;){
@@ -81,7 +81,7 @@ break;
 }
 parser::ParsedMethod t = (_magic_value.value());
 {
-TRY((((us).push(TRY((mapper(t)))))));
+((us).push(TRY((mapper(t)))));
 }
 
 }

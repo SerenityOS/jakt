@@ -148,7 +148,7 @@ IterationDecision() {};
 template <typename T,typename U>
 ErrorOr<JaktInternal::DynamicArray<U>> map(JaktInternal::DynamicArray<T> const input, Function<ErrorOr<U>(T)> const& mapper);
 template <typename T>
-ErrorOr<JaktInternal::DynamicArray<T>> add_arrays(JaktInternal::DynamicArray<T> const a, JaktInternal::DynamicArray<T> const b);
+JaktInternal::DynamicArray<T> add_arrays(JaktInternal::DynamicArray<T> const a, JaktInternal::DynamicArray<T> const b);
 }
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::utility::FileId> : Jakt::Formatter<Jakt::StringView>{

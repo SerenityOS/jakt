@@ -123,7 +123,7 @@ return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("."sv))) +
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-return TRY((jakt__path::Path::from_parts((TRY((DynamicArray<ByteString>::create_with({((parts).template get<0>()), TRY((((basename) + (extension))))})))))));
+return TRY((jakt__path::Path::from_parts(((DynamicArray<ByteString>::must_create_with({((parts).template get<0>()), TRY((((basename) + (extension))))}))))));
 }
 }
 
@@ -206,7 +206,7 @@ return jakt__path::Path(((parts).template get<0>()));
 
 ErrorOr<void> jakt__path::Path::normalize_separators() {
 {
-JaktInternal::DynamicArray<u8> separators = (TRY((DynamicArray<u8>::create_with({static_cast<u8>(47)}))));
+JaktInternal::DynamicArray<u8> separators = ((DynamicArray<u8>::must_create_with({static_cast<u8>(47)})));
 u8 separator = static_cast<u8>(47);
 ByteStringBuilder normalized_builder = ByteStringBuilder::create();
 {
@@ -238,7 +238,7 @@ return {};
 
 ErrorOr<JaktInternal::DynamicArray<ByteString>> jakt__path::Path::components() const {
 {
-JaktInternal::DynamicArray<ByteString> parts = (TRY((DynamicArray<ByteString>::create_with({}))));
+JaktInternal::DynamicArray<ByteString> parts = ((DynamicArray<ByteString>::must_create_with({})));
 JaktInternal::Optional<size_t> last_slash = JaktInternal::OptionalNone();
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).path)).length()))});
@@ -255,14 +255,14 @@ if (((i) == (JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(
 (last_slash = i);
 continue;
 }
-TRY((((parts).push(((((*this).path)).substring(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(i,(last_slash.value())),static_cast<size_t>(1ULL))))))));
+((parts).push(((((*this).path)).substring(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(i,(last_slash.value())),static_cast<size_t>(1ULL))))));
 }
 else {
 if (((i) == (static_cast<size_t>(0ULL)))){
-TRY((((parts).push((ByteString::must_from_utf8("/"sv))))));
+((parts).push((ByteString::must_from_utf8("/"sv))));
 }
 else {
-TRY((((parts).push(((((*this).path)).substring(static_cast<size_t>(0ULL),i))))));
+((parts).push(((((*this).path)).substring(static_cast<size_t>(0ULL),i))));
 }
 
 }
@@ -286,11 +286,11 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),((((*this).path)).length()))){
-TRY((((parts).push(((((*this).path)).substring(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(((((*this).path)).length()),(last_slash.value())),static_cast<size_t>(1ULL))))))));
+((parts).push(((((*this).path)).substring(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(((((*this).path)).length()),(last_slash.value())),static_cast<size_t>(1ULL))))));
 }
 }
 else {
-TRY((((parts).push(((*this).path)))));
+((parts).push(((*this).path)));
 }
 
 return parts;

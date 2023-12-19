@@ -126,17 +126,17 @@ struct MessageSeverity;
 
 struct JaktError;
 
-ErrorOr<void> print_error_json(ByteString const file_name, error::JaktError const error);
+void print_error_json(ByteString const file_name, error::JaktError const error);
 
 ErrorOr<void> print_error(ByteString const file_name, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents, error::JaktError const error);
 
-ErrorOr<void> display_message_with_span(error::MessageSeverity const severity, ByteString const file_name, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents, ByteString const message, utility::Span const span);
+void display_message_with_span(error::MessageSeverity const severity, ByteString const file_name, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents, ByteString const message, utility::Span const span);
 
-ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>>> gather_line_spans(JaktInternal::DynamicArray<u8> const file_contents);
+JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>> gather_line_spans(JaktInternal::DynamicArray<u8> const file_contents);
 
-ErrorOr<void> print_underline(error::MessageSeverity const severity, size_t const width, JaktInternal::Tuple<size_t,size_t> const file_span, utility::Span const error_span, size_t const line_number, size_t const largest_line_number);
+void print_underline(error::MessageSeverity const severity, size_t const width, JaktInternal::Tuple<size_t,size_t> const file_span, utility::Span const error_span, size_t const line_number, size_t const largest_line_number);
 
-ErrorOr<void> print_source_line(error::MessageSeverity const severity, JaktInternal::DynamicArray<u8> const file_contents, JaktInternal::Tuple<size_t,size_t> const file_span, utility::Span const error_span, size_t const line_number, size_t const largest_line_number);
+void print_source_line(error::MessageSeverity const severity, JaktInternal::DynamicArray<u8> const file_contents, JaktInternal::Tuple<size_t,size_t> const file_span, utility::Span const error_span, size_t const line_number, size_t const largest_line_number);
 
 void display_message_with_span_json(error::MessageSeverity const severity, ByteString const file_name, ByteString const message, utility::Span const span);
 

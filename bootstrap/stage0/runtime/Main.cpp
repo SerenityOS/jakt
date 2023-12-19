@@ -2,9 +2,9 @@
 
 int main(int argc, char** argv)
 {
-    auto args = MUST(Jakt::DynamicArray<Jakt::ByteString>::create_empty());
+    auto args = Jakt::DynamicArray<Jakt::ByteString>::create_empty();
     for (int i = 0; i < argc; ++i) {
-        MUST(args.push(Jakt::ByteString(Jakt::StringView(argv[i], strlen(argv[i])))));
+        args.push(Jakt::ByteString(Jakt::StringView(argv[i], strlen(argv[i]))));
     }
     auto result = Jakt::main(move(args));
     if (result.is_error()) {
