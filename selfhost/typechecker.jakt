@@ -142,7 +142,7 @@ struct Typechecker {
     cpp_import_cache: [String:ScopeId]
     cpp_import_processor: CppImportProcessor? = None
 
-    fn set_self_type_id(mut this, anon type_id: TypeId) throws {
+    fn set_self_type_id(mut this, anon type_id: TypeId) {
         if .get_type(type_id) is Struct(struct_id) and .get_struct(struct_id).implements_type is Some(replacement_type_id) {
             .self_type_id = replacement_type_id
         } else {
@@ -163,7 +163,7 @@ struct Typechecker {
                 span.file_id.id, span.end, .type_name(type_id))
     }
 
-    fn dump_try_hint( this, span: Span) throws {
+    fn dump_try_hint( this, span: Span) {
         println("{{\"type\":\"try\",\"file_id\":{},\"position\":{}}}"
                 span.file_id.id, span.start)
     }
@@ -4490,7 +4490,7 @@ struct Typechecker {
         }
     }
 
-    fn type_contains_reference(mut this, type_id: TypeId) throws -> bool {
+    fn type_contains_reference(mut this, type_id: TypeId) -> bool {
         let type = .get_type(type_id)
 
         // FIXME: Check for any type that contains a reference as a generic parameter, etc.
@@ -8690,7 +8690,7 @@ struct Typechecker {
         return checked_op
     }
 
-    fn get_enum_variant(mut this, enum_: CheckedEnum, variant_name: String) throws -> CheckedEnumVariant? {
+    fn get_enum_variant(mut this, enum_: CheckedEnum, variant_name: String) -> CheckedEnumVariant? {
         for variant in enum_.variants {
             if variant.name() == variant_name {
                 return variant
@@ -11240,7 +11240,7 @@ struct Typechecker {
         return false
     }
 
-    fn get_argument_name(this, arg: (String, Span, ParsedExpression)) throws -> String {
+    fn get_argument_name(this, arg: (String, Span, ParsedExpression)) -> String {
         if not arg.0.is_empty() {
             return arg.0
         }

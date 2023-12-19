@@ -131,7 +131,7 @@ enum Token {
         else(span) => span
     }
 
-    fn from_keyword_or_identifier(string: String, span: Span) throws -> Token => match string {
+    fn from_keyword_or_identifier(string: String, span: Span) -> Token => match string {
         "and" => Token::And(span)
         "anon" => Token::Anon(span)
         "as" => Token::As(span)
@@ -195,7 +195,7 @@ enum LiteralPrefix {
     Octal
     Binary
 
-    fn to_string(this) throws -> String => match this {
+    fn to_string(this) -> String => match this {
         None => ""
         Hexadecimal => "0x"
         Octal => "0o"
@@ -217,7 +217,7 @@ enum LiteralSuffix {
     F32
     F64
 
-    fn to_string(this) throws -> String => match this {
+    fn to_string(this) -> String => match this {
         None => ""
         UZ => "uz"
         U8 => "u8"
@@ -519,7 +519,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return Token::Number(prefix, number: number.to_string(), suffix, span: .span(start, end: .index))
     }
 
-    fn consume_numeric_literal_suffix(mut this) throws -> LiteralSuffix {
+    fn consume_numeric_literal_suffix(mut this) -> LiteralSuffix {
         match .peek() {
             b'u' | b'i' | b'f' => {}
             else => {

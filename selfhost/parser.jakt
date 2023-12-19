@@ -29,7 +29,7 @@ enum ExternalName {
         Operator(name) => "operator" + name
     }
 
-    fn as_name_for_use(this) throws -> String => match this {
+    fn as_name_for_use(this) -> String => match this {
         Plain(name) => name
         PreprocessorName(name) => name
         Operator(name) => format(" {} ", name)
@@ -104,7 +104,7 @@ fn f64_to_f32(anon number: f64) -> f32 {
     return f32_value
 }
 
-fn merge_spans(anon start: Span, anon end: Span) throws -> Span {
+fn merge_spans(anon start: Span, anon end: Span) -> Span {
     if end.file_id.id == 0 and end.start == 0 and end.end == 0 {
         return start
     }
@@ -138,7 +138,7 @@ enum ImportName {
         }
     }
 
-    fn literal_name(this) throws -> String {
+    fn literal_name(this) -> String {
         guard this is Literal(name) else {
             panic("Cannot get literal name of non-literal import name")
         }
@@ -250,7 +250,7 @@ struct ParsedExternImport {
 
     fn get_name(this) -> String => .assigned_namespace.name!
 
-    fn is_equivalent_to(this, anon other: ParsedExternImport) throws -> bool {
+    fn is_equivalent_to(this, anon other: ParsedExternImport) -> bool {
         return .is_c and other.is_c and .get_path() == other.get_path() and .get_name() == other.get_name() and .should_auto_import == other.should_auto_import
     }
 }
@@ -359,7 +359,7 @@ enum RecordType {
     SumEnum(is_boxed: bool, fields: [ParsedField], variants: [SumEnumVariant])
     Garbage
 
-    public fn record_type_name(this) throws -> String => match this {
+    public fn record_type_name(this) -> String => match this {
         Struct => "struct"
         Class => "class"
         ValueEnum => "value enum"
@@ -549,7 +549,7 @@ struct ParsedBlock {
         return None
     }
 
-    fn span(this, parser: Parser) throws -> Span? {
+    fn span(this, parser: Parser) -> Span? {
         mut start: usize? = None
         mut end: usize = 0
 
@@ -5382,7 +5382,7 @@ struct Parser {
         return None
     }
 
-    fn make_float_numeric_constant(mut this, number: f64, suffix: LiteralSuffix, span: Span) throws -> NumericConstant? => match suffix {
+    fn make_float_numeric_constant(mut this, number: f64, suffix: LiteralSuffix, span: Span) -> NumericConstant? => match suffix {
         // FIXME: consider unifying with make_integer_numeric_constant() to a single function
         LiteralSuffix::F32 => NumericConstant::F32(f64_to_f32(number))
         LiteralSuffix::F64 => NumericConstant::F64(number)
@@ -6458,7 +6458,7 @@ struct Parser {
         return generic_parameters
     }
 
-    fn parse_argument_label(mut this) throws -> String {
+    fn parse_argument_label(mut this) -> String {
         if .peek(1) is Colon and .current() is Identifier(name) {
             .index += 2
             return name

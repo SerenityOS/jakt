@@ -880,7 +880,7 @@ class InterpreterScope {
         return bindings
     }
 
-    public fn map_type(this, anon id: TypeId) throws -> TypeId {
+    public fn map_type(this, anon id: TypeId) -> TypeId {
         if .type_bindings.contains(id) {
             return .type_bindings[id]
         }
