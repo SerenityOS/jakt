@@ -33,15 +33,15 @@ constexpr VariantData() {}
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<ByteString> debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Break */: {
-TRY(builder.append("IterationDecision::Break"sv));
+builder.append("IterationDecision::Break"sv);
 [[maybe_unused]] auto const& that = this->as.Break;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("value: {}", that.value));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("value: {}", that.value);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* Continue */: {
 return ByteString("IterationDecision::Continue"sv);

@@ -1,16 +1,21 @@
 #include "lexer.h"
 namespace Jakt {
 namespace lexer {
-ErrorOr<ByteString> lexer::Lexer::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Lexer("sv));{
+ErrorOr<ByteString> lexer::Lexer::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Lexer("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("index: {}, ", index));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("input: {}, ", input));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("compiler: {}, ", *compiler));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("comment_contents: {}, ", comment_contents));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("illegal_cpp_keywords: {}", illegal_cpp_keywords));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("index: {}, ", index);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("input: {}, ", input);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("compiler: {}, ", *compiler);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("comment_contents: {}, ", comment_contents);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("illegal_cpp_keywords: {}", illegal_cpp_keywords);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
-ErrorOr<JaktInternal::Optional<ByteString>> lexer::Lexer::consume_comment_contents() {
+builder.append(")"sv);return builder.to_string(); }
+JaktInternal::Optional<ByteString> lexer::Lexer::consume_comment_contents() {
 {
 if ((!(((((*this).comment_contents)).has_value())))){
 return JaktInternal::OptionalNone();
@@ -27,17 +32,17 @@ break;
 }
 u8 c = (_magic_value.value());
 {
-TRY((((builder).append(c))));
+((builder).append(c));
 }
 
 }
 }
 
-return TRY((((builder).to_string())));
+return ((builder).to_string());
 }
 }
 
-ErrorOr<lexer::Token> lexer::Lexer::lex_quoted_string(u8 const delimiter) {
+lexer::Token lexer::Lexer::lex_quoted_string(u8 const delimiter) {
 {
 size_t const start = ((*this).index);
 (++(((*this).index)));
@@ -60,7 +65,7 @@ else {
 
 (++(((*this).index)));
 }
-ByteString const str = TRY((((*this).substring(JaktInternal::checked_add(start,static_cast<size_t>(1ULL)),((*this).index)))));
+ByteString const str = ((*this).substring(JaktInternal::checked_add(start,static_cast<size_t>(1ULL)),((*this).index)));
 ((((*this).index)++));
 size_t const end = ((*this).index);
 if (((delimiter) == (static_cast<u8>(u8'\'')))){
@@ -169,22 +174,22 @@ else if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(((*this).lex_equals()));
 }
 else if (__jakt_enum_value == static_cast<u8>(u8'\n')) {
-return JaktInternal::ExplicitValue(lexer::Token::Eol(TRY((((*this).consume_comment_contents()))),((*this).span(start,(++(((*this).index)))))));
+return JaktInternal::ExplicitValue(lexer::Token::Eol(((*this).consume_comment_contents()),((*this).span(start,(++(((*this).index)))))));
 }
 else if (__jakt_enum_value == static_cast<u8>(u8'\'')) {
-return JaktInternal::ExplicitValue(TRY((((*this).lex_quoted_string(static_cast<u8>(u8'\''))))));
+return JaktInternal::ExplicitValue(((*this).lex_quoted_string(static_cast<u8>(u8'\''))));
 }
 else if (__jakt_enum_value == static_cast<u8>(u8'\"')) {
-return JaktInternal::ExplicitValue(TRY((((*this).lex_quoted_string(static_cast<u8>(u8'"'))))));
+return JaktInternal::ExplicitValue(((*this).lex_quoted_string(static_cast<u8>(u8'"'))));
 }
 else if (__jakt_enum_value == static_cast<u8>(u8'b')) {
-return JaktInternal::ExplicitValue(TRY((((*this).lex_character_constant_or_name()))));
+return JaktInternal::ExplicitValue(((*this).lex_character_constant_or_name()));
 }
 else if (__jakt_enum_value == static_cast<u8>(u8'c')) {
-return JaktInternal::ExplicitValue(TRY((((*this).lex_character_constant_or_name()))));
+return JaktInternal::ExplicitValue(((*this).lex_character_constant_or_name()));
 }
 else {
-return JaktInternal::ExplicitValue(TRY((((*this).lex_number_or_name()))));
+return JaktInternal::ExplicitValue(((*this).lex_number_or_name()));
 }
 }());
     if (_jakt_value.is_return())
@@ -194,13 +199,13 @@ return JaktInternal::ExplicitValue(TRY((((*this).lex_number_or_name()))));
 }
 }
 
-ErrorOr<lexer::Token> lexer::Lexer::lex_character_constant_or_name() {
+lexer::Token lexer::Lexer::lex_character_constant_or_name() {
 {
 if (((((*this).peek_ahead(static_cast<size_t>(1ULL)))) != (static_cast<u8>(u8'\'')))){
-return TRY((((*this).lex_number_or_name())));
+return ((*this).lex_number_or_name());
 }
 JaktInternal::Optional<ByteString> const prefix = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ByteString>,ErrorOr<lexer::Token>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ByteString>,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'b')) {
 return JaktInternal::ExplicitValue((ByteString::must_from_utf8("b"sv)));
@@ -259,11 +264,11 @@ if ((((*this).eof()) || ((((*this).peek())) != (static_cast<u8>(u8'\''))))){
 }
 ((((*this).index)) += (static_cast<size_t>(1ULL)));
 ByteStringBuilder builder = ByteStringBuilder::create();
-TRY((((builder).append(((((*this).input))[JaktInternal::checked_add(start,static_cast<size_t>(1ULL))])))));
+((builder).append(((((*this).input))[JaktInternal::checked_add(start,static_cast<size_t>(1ULL))])));
 if (escaped){
-TRY((((builder).append(((((*this).input))[JaktInternal::checked_add(start,static_cast<size_t>(2ULL))])))));
+((builder).append(((((*this).input))[JaktInternal::checked_add(start,static_cast<size_t>(2ULL))])));
 }
-ByteString const quote = TRY((((builder).to_string())));
+ByteString const quote = ((builder).to_string());
 size_t const end = ((*this).index);
 return lexer::Token::SingleQuotedString(quote,prefix,((*this).span(start,end)));
 }
@@ -338,7 +343,7 @@ return lexer::Token::ForwardSlash(((*this).span(start,((*this).index))));
 }
 if (((((*this).comment_contents)).has_value())){
 ((((*this).index)--));
-return lexer::Token::Eol(TRY((((*this).consume_comment_contents()))),((*this).span(start,((*this).index))));
+return lexer::Token::Eol(((*this).consume_comment_contents()),((*this).span(start,((*this).index))));
 }
 ((((*this).index)++));
 size_t const comment_start_index = ((*this).index);
@@ -468,7 +473,7 @@ return JaktInternal::ExplicitValue(lexer::Token::PercentSign(((*this).span(JaktI
 }
 }
 
-ErrorOr<lexer::Token> lexer::Lexer::lex_number_or_name() {
+lexer::Token lexer::Lexer::lex_number_or_name() {
 {
 size_t const start = ((*this).index);
 if (((*this).eof())){
@@ -476,18 +481,18 @@ if (((*this).eof())){
 return lexer::Token::Garbage(JaktInternal::OptionalNone(),((*this).span(start,start)));
 }
 if (utility::is_ascii_digit(((*this).peek()))){
-return TRY((((*this).lex_number())));
+return ((*this).lex_number());
 }
 else if ((utility::is_ascii_alpha(((*this).peek())) || ((((*this).peek())) == (static_cast<u8>(u8'_'))))){
 ByteStringBuilder string_builder = ByteStringBuilder::create();
 while ((utility::is_ascii_alphanumeric(((*this).peek())) || ((((*this).peek())) == (static_cast<u8>(u8'_'))))){
 u8 const value = ((((*this).input))[((*this).index)]);
 (++(((*this).index)));
-TRY((((string_builder).append(value))));
+((string_builder).append(value));
 }
 size_t const end = ((*this).index);
 utility::Span const span = ((*this).span(start,end));
-ByteString const string = TRY((((string_builder).to_string())));
+ByteString const string = ((string_builder).to_string());
 if (([](size_t const& self, size_t rhs) -> bool {
 {
 return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
@@ -868,7 +873,7 @@ return JaktInternal::ExplicitValue(lexer::Token::Equal(((*this).span(JaktInterna
 }
 }
 
-ErrorOr<ByteString> lexer::Lexer::substring(size_t const start,size_t const length) const {
+ByteString lexer::Lexer::substring(size_t const start,size_t const length) const {
 {
 ByteStringBuilder builder = ByteStringBuilder::create();
 {
@@ -880,13 +885,13 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-TRY((((builder).append(((((*this).input))[i])))));
+((builder).append(((((*this).input))[i])));
 }
 
 }
 }
 
-return TRY((((builder).to_string())));
+return ((builder).to_string());
 }
 }
 
@@ -977,7 +982,7 @@ return JaktInternal::ExplicitValue(lexer::Token::Caret(((*this).span(JaktInterna
 }
 }
 
-ErrorOr<lexer::Token> lexer::Lexer::lex_number() {
+lexer::Token lexer::Lexer::lex_number() {
 {
 size_t const start = ((*this).index);
 bool floating = false;
@@ -985,7 +990,7 @@ lexer::LiteralPrefix prefix = lexer::LiteralPrefix::None();
 ByteStringBuilder number = ByteStringBuilder::create();
 if (((((*this).peek())) == (static_cast<u8>(u8'0')))){
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<lexer::Token>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek_ahead(static_cast<size_t>(1ULL))));
 if (__jakt_enum_value == static_cast<u8>(u8'x')) {
 {
@@ -1029,15 +1034,15 @@ if (((value) == (static_cast<u8>(u8'.')))){
 if ((floating || (!(((*this).valid_digit(prefix,((*this).peek_ahead(static_cast<size_t>(1ULL))),false)))))){
 break;
 }
-TRY((((number).append(static_cast<u8>(u8'.')))));
+((number).append(static_cast<u8>(u8'.')));
 (floating = true);
 ((((*this).index)++));
 continue;
 }
-TRY((((number).append(value))));
+((number).append(value));
 (++(((*this).index)));
 if (((((*this).peek())) == (static_cast<u8>(u8'_')))){
-TRY((((number).append(static_cast<u8>(u8'_')))));
+((number).append(static_cast<u8>(u8'_')));
 if (((*this).valid_digit(prefix,((*this).peek_ahead(static_cast<size_t>(1ULL))),true))){
 (++(((*this).index)));
 }
@@ -1048,7 +1053,7 @@ break;
 }
 }
 lexer::LiteralSuffix const suffix = ((*this).consume_numeric_literal_suffix());
-return lexer::Token::Number(prefix,TRY((((number).to_string()))),suffix,((*this).span(start,((*this).index))));
+return lexer::Token::Number(prefix,((number).to_string()),suffix,((*this).span(start,((*this).index))));
 }
 }
 
@@ -1436,623 +1441,623 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 ErrorOr<ByteString> lexer::Token::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* SingleQuotedString */: {
-TRY(builder.append("Token::SingleQuotedString"sv));
+builder.append("Token::SingleQuotedString"sv);
 [[maybe_unused]] auto const& that = this->as.SingleQuotedString;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("quote: \"{}\", ", that.quote));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("prefix: {}, ", that.prefix));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("quote: \"{}\", ", that.quote);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("prefix: {}, ", that.prefix);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* QuotedString */: {
-TRY(builder.append("Token::QuotedString"sv));
+builder.append("Token::QuotedString"sv);
 [[maybe_unused]] auto const& that = this->as.QuotedString;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("quote: \"{}\", ", that.quote));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("quote: \"{}\", ", that.quote);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 2 /* Number */: {
-TRY(builder.append("Token::Number"sv));
+builder.append("Token::Number"sv);
 [[maybe_unused]] auto const& that = this->as.Number;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("prefix: {}, ", that.prefix));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("number: \"{}\", ", that.number));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("suffix: {}, ", that.suffix));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("prefix: {}, ", that.prefix);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("number: \"{}\", ", that.number);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("suffix: {}, ", that.suffix);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 3 /* Identifier */: {
-TRY(builder.append("Token::Identifier"sv));
+builder.append("Token::Identifier"sv);
 [[maybe_unused]] auto const& that = this->as.Identifier;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\", ", that.name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", that.name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 4 /* Semicolon */: {
-TRY(builder.append("Token::Semicolon"sv));
+builder.append("Token::Semicolon"sv);
 [[maybe_unused]] auto const& that = this->as.Semicolon;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 5 /* Colon */: {
-TRY(builder.append("Token::Colon"sv));
+builder.append("Token::Colon"sv);
 [[maybe_unused]] auto const& that = this->as.Colon;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 6 /* ColonColon */: {
-TRY(builder.append("Token::ColonColon"sv));
+builder.append("Token::ColonColon"sv);
 [[maybe_unused]] auto const& that = this->as.ColonColon;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 7 /* LParen */: {
-TRY(builder.append("Token::LParen"sv));
+builder.append("Token::LParen"sv);
 [[maybe_unused]] auto const& that = this->as.LParen;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 8 /* RParen */: {
-TRY(builder.append("Token::RParen"sv));
+builder.append("Token::RParen"sv);
 [[maybe_unused]] auto const& that = this->as.RParen;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 9 /* LCurly */: {
-TRY(builder.append("Token::LCurly"sv));
+builder.append("Token::LCurly"sv);
 [[maybe_unused]] auto const& that = this->as.LCurly;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 10 /* RCurly */: {
-TRY(builder.append("Token::RCurly"sv));
+builder.append("Token::RCurly"sv);
 [[maybe_unused]] auto const& that = this->as.RCurly;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 11 /* LSquare */: {
-TRY(builder.append("Token::LSquare"sv));
+builder.append("Token::LSquare"sv);
 [[maybe_unused]] auto const& that = this->as.LSquare;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 12 /* RSquare */: {
-TRY(builder.append("Token::RSquare"sv));
+builder.append("Token::RSquare"sv);
 [[maybe_unused]] auto const& that = this->as.RSquare;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 13 /* PercentSign */: {
-TRY(builder.append("Token::PercentSign"sv));
+builder.append("Token::PercentSign"sv);
 [[maybe_unused]] auto const& that = this->as.PercentSign;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 14 /* Plus */: {
-TRY(builder.append("Token::Plus"sv));
+builder.append("Token::Plus"sv);
 [[maybe_unused]] auto const& that = this->as.Plus;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 15 /* Minus */: {
-TRY(builder.append("Token::Minus"sv));
+builder.append("Token::Minus"sv);
 [[maybe_unused]] auto const& that = this->as.Minus;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 16 /* Equal */: {
-TRY(builder.append("Token::Equal"sv));
+builder.append("Token::Equal"sv);
 [[maybe_unused]] auto const& that = this->as.Equal;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 17 /* PlusEqual */: {
-TRY(builder.append("Token::PlusEqual"sv));
+builder.append("Token::PlusEqual"sv);
 [[maybe_unused]] auto const& that = this->as.PlusEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 18 /* PlusPlus */: {
-TRY(builder.append("Token::PlusPlus"sv));
+builder.append("Token::PlusPlus"sv);
 [[maybe_unused]] auto const& that = this->as.PlusPlus;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 19 /* MinusEqual */: {
-TRY(builder.append("Token::MinusEqual"sv));
+builder.append("Token::MinusEqual"sv);
 [[maybe_unused]] auto const& that = this->as.MinusEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 20 /* MinusMinus */: {
-TRY(builder.append("Token::MinusMinus"sv));
+builder.append("Token::MinusMinus"sv);
 [[maybe_unused]] auto const& that = this->as.MinusMinus;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 21 /* AsteriskEqual */: {
-TRY(builder.append("Token::AsteriskEqual"sv));
+builder.append("Token::AsteriskEqual"sv);
 [[maybe_unused]] auto const& that = this->as.AsteriskEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 22 /* ForwardSlashEqual */: {
-TRY(builder.append("Token::ForwardSlashEqual"sv));
+builder.append("Token::ForwardSlashEqual"sv);
 [[maybe_unused]] auto const& that = this->as.ForwardSlashEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 23 /* PercentSignEqual */: {
-TRY(builder.append("Token::PercentSignEqual"sv));
+builder.append("Token::PercentSignEqual"sv);
 [[maybe_unused]] auto const& that = this->as.PercentSignEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 24 /* NotEqual */: {
-TRY(builder.append("Token::NotEqual"sv));
+builder.append("Token::NotEqual"sv);
 [[maybe_unused]] auto const& that = this->as.NotEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 25 /* DoubleEqual */: {
-TRY(builder.append("Token::DoubleEqual"sv));
+builder.append("Token::DoubleEqual"sv);
 [[maybe_unused]] auto const& that = this->as.DoubleEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 26 /* GreaterThan */: {
-TRY(builder.append("Token::GreaterThan"sv));
+builder.append("Token::GreaterThan"sv);
 [[maybe_unused]] auto const& that = this->as.GreaterThan;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 27 /* GreaterThanOrEqual */: {
-TRY(builder.append("Token::GreaterThanOrEqual"sv));
+builder.append("Token::GreaterThanOrEqual"sv);
 [[maybe_unused]] auto const& that = this->as.GreaterThanOrEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 28 /* LessThan */: {
-TRY(builder.append("Token::LessThan"sv));
+builder.append("Token::LessThan"sv);
 [[maybe_unused]] auto const& that = this->as.LessThan;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 29 /* LessThanOrEqual */: {
-TRY(builder.append("Token::LessThanOrEqual"sv));
+builder.append("Token::LessThanOrEqual"sv);
 [[maybe_unused]] auto const& that = this->as.LessThanOrEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 30 /* LeftArithmeticShift */: {
-TRY(builder.append("Token::LeftArithmeticShift"sv));
+builder.append("Token::LeftArithmeticShift"sv);
 [[maybe_unused]] auto const& that = this->as.LeftArithmeticShift;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 31 /* LeftShift */: {
-TRY(builder.append("Token::LeftShift"sv));
+builder.append("Token::LeftShift"sv);
 [[maybe_unused]] auto const& that = this->as.LeftShift;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 32 /* LeftShiftEqual */: {
-TRY(builder.append("Token::LeftShiftEqual"sv));
+builder.append("Token::LeftShiftEqual"sv);
 [[maybe_unused]] auto const& that = this->as.LeftShiftEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 33 /* RightShift */: {
-TRY(builder.append("Token::RightShift"sv));
+builder.append("Token::RightShift"sv);
 [[maybe_unused]] auto const& that = this->as.RightShift;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 34 /* RightArithmeticShift */: {
-TRY(builder.append("Token::RightArithmeticShift"sv));
+builder.append("Token::RightArithmeticShift"sv);
 [[maybe_unused]] auto const& that = this->as.RightArithmeticShift;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 35 /* RightShiftEqual */: {
-TRY(builder.append("Token::RightShiftEqual"sv));
+builder.append("Token::RightShiftEqual"sv);
 [[maybe_unused]] auto const& that = this->as.RightShiftEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 36 /* Asterisk */: {
-TRY(builder.append("Token::Asterisk"sv));
+builder.append("Token::Asterisk"sv);
 [[maybe_unused]] auto const& that = this->as.Asterisk;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 37 /* Ampersand */: {
-TRY(builder.append("Token::Ampersand"sv));
+builder.append("Token::Ampersand"sv);
 [[maybe_unused]] auto const& that = this->as.Ampersand;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 38 /* AmpersandEqual */: {
-TRY(builder.append("Token::AmpersandEqual"sv));
+builder.append("Token::AmpersandEqual"sv);
 [[maybe_unused]] auto const& that = this->as.AmpersandEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 39 /* AmpersandAmpersand */: {
-TRY(builder.append("Token::AmpersandAmpersand"sv));
+builder.append("Token::AmpersandAmpersand"sv);
 [[maybe_unused]] auto const& that = this->as.AmpersandAmpersand;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 40 /* Pipe */: {
-TRY(builder.append("Token::Pipe"sv));
+builder.append("Token::Pipe"sv);
 [[maybe_unused]] auto const& that = this->as.Pipe;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 41 /* PipeEqual */: {
-TRY(builder.append("Token::PipeEqual"sv));
+builder.append("Token::PipeEqual"sv);
 [[maybe_unused]] auto const& that = this->as.PipeEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 42 /* PipePipe */: {
-TRY(builder.append("Token::PipePipe"sv));
+builder.append("Token::PipePipe"sv);
 [[maybe_unused]] auto const& that = this->as.PipePipe;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 43 /* Caret */: {
-TRY(builder.append("Token::Caret"sv));
+builder.append("Token::Caret"sv);
 [[maybe_unused]] auto const& that = this->as.Caret;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 44 /* CaretEqual */: {
-TRY(builder.append("Token::CaretEqual"sv));
+builder.append("Token::CaretEqual"sv);
 [[maybe_unused]] auto const& that = this->as.CaretEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 45 /* Dollar */: {
-TRY(builder.append("Token::Dollar"sv));
+builder.append("Token::Dollar"sv);
 [[maybe_unused]] auto const& that = this->as.Dollar;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 46 /* Tilde */: {
-TRY(builder.append("Token::Tilde"sv));
+builder.append("Token::Tilde"sv);
 [[maybe_unused]] auto const& that = this->as.Tilde;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 47 /* ForwardSlash */: {
-TRY(builder.append("Token::ForwardSlash"sv));
+builder.append("Token::ForwardSlash"sv);
 [[maybe_unused]] auto const& that = this->as.ForwardSlash;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 48 /* ExclamationPoint */: {
-TRY(builder.append("Token::ExclamationPoint"sv));
+builder.append("Token::ExclamationPoint"sv);
 [[maybe_unused]] auto const& that = this->as.ExclamationPoint;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 49 /* QuestionMark */: {
-TRY(builder.append("Token::QuestionMark"sv));
+builder.append("Token::QuestionMark"sv);
 [[maybe_unused]] auto const& that = this->as.QuestionMark;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 50 /* QuestionMarkQuestionMark */: {
-TRY(builder.append("Token::QuestionMarkQuestionMark"sv));
+builder.append("Token::QuestionMarkQuestionMark"sv);
 [[maybe_unused]] auto const& that = this->as.QuestionMarkQuestionMark;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 51 /* QuestionMarkQuestionMarkEqual */: {
-TRY(builder.append("Token::QuestionMarkQuestionMarkEqual"sv));
+builder.append("Token::QuestionMarkQuestionMarkEqual"sv);
 [[maybe_unused]] auto const& that = this->as.QuestionMarkQuestionMarkEqual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 52 /* Comma */: {
-TRY(builder.append("Token::Comma"sv));
+builder.append("Token::Comma"sv);
 [[maybe_unused]] auto const& that = this->as.Comma;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 53 /* Dot */: {
-TRY(builder.append("Token::Dot"sv));
+builder.append("Token::Dot"sv);
 [[maybe_unused]] auto const& that = this->as.Dot;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 54 /* DotDot */: {
-TRY(builder.append("Token::DotDot"sv));
+builder.append("Token::DotDot"sv);
 [[maybe_unused]] auto const& that = this->as.DotDot;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 55 /* Eol */: {
-TRY(builder.append("Token::Eol"sv));
+builder.append("Token::Eol"sv);
 [[maybe_unused]] auto const& that = this->as.Eol;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("comment: {}, ", that.comment));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("comment: {}, ", that.comment);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 56 /* Eof */: {
-TRY(builder.append("Token::Eof"sv));
+builder.append("Token::Eof"sv);
 [[maybe_unused]] auto const& that = this->as.Eof;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 57 /* FatArrow */: {
-TRY(builder.append("Token::FatArrow"sv));
+builder.append("Token::FatArrow"sv);
 [[maybe_unused]] auto const& that = this->as.FatArrow;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 58 /* Arrow */: {
-TRY(builder.append("Token::Arrow"sv));
+builder.append("Token::Arrow"sv);
 [[maybe_unused]] auto const& that = this->as.Arrow;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 59 /* And */: {
-TRY(builder.append("Token::And"sv));
+builder.append("Token::And"sv);
 [[maybe_unused]] auto const& that = this->as.And;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 60 /* Anon */: {
-TRY(builder.append("Token::Anon"sv));
+builder.append("Token::Anon"sv);
 [[maybe_unused]] auto const& that = this->as.Anon;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 61 /* As */: {
-TRY(builder.append("Token::As"sv));
+builder.append("Token::As"sv);
 [[maybe_unused]] auto const& that = this->as.As;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 62 /* Boxed */: {
-TRY(builder.append("Token::Boxed"sv));
+builder.append("Token::Boxed"sv);
 [[maybe_unused]] auto const& that = this->as.Boxed;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 63 /* Break */: {
-TRY(builder.append("Token::Break"sv));
+builder.append("Token::Break"sv);
 [[maybe_unused]] auto const& that = this->as.Break;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 64 /* Catch */: {
-TRY(builder.append("Token::Catch"sv));
+builder.append("Token::Catch"sv);
 [[maybe_unused]] auto const& that = this->as.Catch;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 65 /* Class */: {
-TRY(builder.append("Token::Class"sv));
+builder.append("Token::Class"sv);
 [[maybe_unused]] auto const& that = this->as.Class;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 66 /* Continue */: {
-TRY(builder.append("Token::Continue"sv));
+builder.append("Token::Continue"sv);
 [[maybe_unused]] auto const& that = this->as.Continue;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 67 /* Cpp */: {
-TRY(builder.append("Token::Cpp"sv));
+builder.append("Token::Cpp"sv);
 [[maybe_unused]] auto const& that = this->as.Cpp;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 68 /* Defer */: {
-TRY(builder.append("Token::Defer"sv));
+builder.append("Token::Defer"sv);
 [[maybe_unused]] auto const& that = this->as.Defer;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 69 /* Destructor */: {
-TRY(builder.append("Token::Destructor"sv));
+builder.append("Token::Destructor"sv);
 [[maybe_unused]] auto const& that = this->as.Destructor;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 70 /* Else */: {
-TRY(builder.append("Token::Else"sv));
+builder.append("Token::Else"sv);
 [[maybe_unused]] auto const& that = this->as.Else;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 71 /* Enum */: {
-TRY(builder.append("Token::Enum"sv));
+builder.append("Token::Enum"sv);
 [[maybe_unused]] auto const& that = this->as.Enum;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 72 /* Extern */: {
-TRY(builder.append("Token::Extern"sv));
+builder.append("Token::Extern"sv);
 [[maybe_unused]] auto const& that = this->as.Extern;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 73 /* False */: {
-TRY(builder.append("Token::False"sv));
+builder.append("Token::False"sv);
 [[maybe_unused]] auto const& that = this->as.False;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 74 /* For */: {
-TRY(builder.append("Token::For"sv));
+builder.append("Token::For"sv);
 [[maybe_unused]] auto const& that = this->as.For;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 75 /* Fn */: {
-TRY(builder.append("Token::Fn"sv));
+builder.append("Token::Fn"sv);
 [[maybe_unused]] auto const& that = this->as.Fn;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 76 /* Comptime */: {
-TRY(builder.append("Token::Comptime"sv));
+builder.append("Token::Comptime"sv);
 [[maybe_unused]] auto const& that = this->as.Comptime;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 77 /* If */: {
-TRY(builder.append("Token::If"sv));
+builder.append("Token::If"sv);
 [[maybe_unused]] auto const& that = this->as.If;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 78 /* Import */: {
-TRY(builder.append("Token::Import"sv));
+builder.append("Token::Import"sv);
 [[maybe_unused]] auto const& that = this->as.Import;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 79 /* Relative */: {
-TRY(builder.append("Token::Relative"sv));
+builder.append("Token::Relative"sv);
 [[maybe_unused]] auto const& that = this->as.Relative;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 80 /* In */: {
-TRY(builder.append("Token::In"sv));
+builder.append("Token::In"sv);
 [[maybe_unused]] auto const& that = this->as.In;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 81 /* Is */: {
-TRY(builder.append("Token::Is"sv));
+builder.append("Token::Is"sv);
 [[maybe_unused]] auto const& that = this->as.Is;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 82 /* Let */: {
-TRY(builder.append("Token::Let"sv));
+builder.append("Token::Let"sv);
 [[maybe_unused]] auto const& that = this->as.Let;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 83 /* Loop */: {
-TRY(builder.append("Token::Loop"sv));
+builder.append("Token::Loop"sv);
 [[maybe_unused]] auto const& that = this->as.Loop;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 84 /* Match */: {
-TRY(builder.append("Token::Match"sv));
+builder.append("Token::Match"sv);
 [[maybe_unused]] auto const& that = this->as.Match;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 85 /* Mut */: {
-TRY(builder.append("Token::Mut"sv));
+builder.append("Token::Mut"sv);
 [[maybe_unused]] auto const& that = this->as.Mut;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 86 /* Namespace */: {
-TRY(builder.append("Token::Namespace"sv));
+builder.append("Token::Namespace"sv);
 [[maybe_unused]] auto const& that = this->as.Namespace;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 87 /* Not */: {
-TRY(builder.append("Token::Not"sv));
+builder.append("Token::Not"sv);
 [[maybe_unused]] auto const& that = this->as.Not;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 88 /* Or */: {
-TRY(builder.append("Token::Or"sv));
+builder.append("Token::Or"sv);
 [[maybe_unused]] auto const& that = this->as.Or;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 89 /* Override */: {
-TRY(builder.append("Token::Override"sv));
+builder.append("Token::Override"sv);
 [[maybe_unused]] auto const& that = this->as.Override;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 90 /* Private */: {
-TRY(builder.append("Token::Private"sv));
+builder.append("Token::Private"sv);
 [[maybe_unused]] auto const& that = this->as.Private;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 91 /* Public */: {
-TRY(builder.append("Token::Public"sv));
+builder.append("Token::Public"sv);
 [[maybe_unused]] auto const& that = this->as.Public;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 92 /* Raw */: {
-TRY(builder.append("Token::Raw"sv));
+builder.append("Token::Raw"sv);
 [[maybe_unused]] auto const& that = this->as.Raw;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 93 /* Reflect */: {
-TRY(builder.append("Token::Reflect"sv));
+builder.append("Token::Reflect"sv);
 [[maybe_unused]] auto const& that = this->as.Reflect;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 94 /* Return */: {
-TRY(builder.append("Token::Return"sv));
+builder.append("Token::Return"sv);
 [[maybe_unused]] auto const& that = this->as.Return;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 95 /* Restricted */: {
-TRY(builder.append("Token::Restricted"sv));
+builder.append("Token::Restricted"sv);
 [[maybe_unused]] auto const& that = this->as.Restricted;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 96 /* Sizeof */: {
-TRY(builder.append("Token::Sizeof"sv));
+builder.append("Token::Sizeof"sv);
 [[maybe_unused]] auto const& that = this->as.Sizeof;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 97 /* Struct */: {
-TRY(builder.append("Token::Struct"sv));
+builder.append("Token::Struct"sv);
 [[maybe_unused]] auto const& that = this->as.Struct;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 98 /* This */: {
-TRY(builder.append("Token::This"sv));
+builder.append("Token::This"sv);
 [[maybe_unused]] auto const& that = this->as.This;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 99 /* Throw */: {
-TRY(builder.append("Token::Throw"sv));
+builder.append("Token::Throw"sv);
 [[maybe_unused]] auto const& that = this->as.Throw;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 100 /* Throws */: {
-TRY(builder.append("Token::Throws"sv));
+builder.append("Token::Throws"sv);
 [[maybe_unused]] auto const& that = this->as.Throws;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 101 /* True */: {
-TRY(builder.append("Token::True"sv));
+builder.append("Token::True"sv);
 [[maybe_unused]] auto const& that = this->as.True;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 102 /* Try */: {
-TRY(builder.append("Token::Try"sv));
+builder.append("Token::Try"sv);
 [[maybe_unused]] auto const& that = this->as.Try;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 103 /* Unsafe */: {
-TRY(builder.append("Token::Unsafe"sv));
+builder.append("Token::Unsafe"sv);
 [[maybe_unused]] auto const& that = this->as.Unsafe;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 104 /* Virtual */: {
-TRY(builder.append("Token::Virtual"sv));
+builder.append("Token::Virtual"sv);
 [[maybe_unused]] auto const& that = this->as.Virtual;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 105 /* Weak */: {
-TRY(builder.append("Token::Weak"sv));
+builder.append("Token::Weak"sv);
 [[maybe_unused]] auto const& that = this->as.Weak;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 106 /* While */: {
-TRY(builder.append("Token::While"sv));
+builder.append("Token::While"sv);
 [[maybe_unused]] auto const& that = this->as.While;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 107 /* Yield */: {
-TRY(builder.append("Token::Yield"sv));
+builder.append("Token::Yield"sv);
 [[maybe_unused]] auto const& that = this->as.Yield;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 108 /* Guard */: {
-TRY(builder.append("Token::Guard"sv));
+builder.append("Token::Guard"sv);
 [[maybe_unused]] auto const& that = this->as.Guard;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 109 /* Implements */: {
-TRY(builder.append("Token::Implements"sv));
+builder.append("Token::Implements"sv);
 [[maybe_unused]] auto const& that = this->as.Implements;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 110 /* Requires */: {
-TRY(builder.append("Token::Requires"sv));
+builder.append("Token::Requires"sv);
 [[maybe_unused]] auto const& that = this->as.Requires;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 111 /* Trait */: {
-TRY(builder.append("Token::Trait"sv));
+builder.append("Token::Trait"sv);
 [[maybe_unused]] auto const& that = this->as.Trait;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 112 /* Garbage */: {
-TRY(builder.append("Token::Garbage"sv));
+builder.append("Token::Garbage"sv);
 [[maybe_unused]] auto const& that = this->as.Garbage;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("consumed: {}, ", that.consumed));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("consumed: {}, ", that.consumed);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 }
 return builder.to_string();

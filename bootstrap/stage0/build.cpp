@@ -1,13 +1,16 @@
 #include "build.h"
 namespace Jakt {
 namespace build {
-ErrorOr<ByteString> build::Builder::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Builder("sv));{
+ErrorOr<ByteString> build::Builder::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Builder("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("linked_files: {}, ", linked_files));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("files_to_compile: {}, ", files_to_compile));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("pool: {}", pool));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("linked_files: {}, ", linked_files);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("files_to_compile: {}, ", files_to_compile);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("pool: {}", pool);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 ErrorOr<void> build::Builder::link_into_executable(ByteString const cxx_compiler_path,ByteString const output_filename,JaktInternal::DynamicArray<ByteString> const extra_arguments) {
 {
 JaktInternal::DynamicArray<ByteString> args = ((DynamicArray<ByteString>::must_create_with({cxx_compiler_path, (ByteString::must_from_utf8("-o"sv)), output_filename})));
@@ -136,9 +139,9 @@ return Error::from_errno(static_cast<i32>(1));
 }
 }
 
-ByteString const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((jakt__path::Path::from_string(file_name)))).replace_extension((ByteString::must_from_utf8("o"sv))))))).to_string())))))).to_string());
+ByteString const built_object = ((((binary_dir).join(((TRY((((jakt__path::Path::from_string(file_name)).replace_extension((ByteString::must_from_utf8("o"sv))))))).to_string())))).to_string());
 ((((*this).linked_files)).push(built_object));
-JaktInternal::DynamicArray<ByteString> const args = TRY((compiler_invocation(((TRY((((binary_dir).join(file_name))))).to_string()),built_object)));
+JaktInternal::DynamicArray<ByteString> const args = TRY((compiler_invocation(((((binary_dir).join(file_name))).to_string()),built_object)));
 size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((ids).add(id))));
 warnln((StringView::from_string_literal("{:c}[2LBuilding: {}/{} ({})"sv)),static_cast<i64>(27LL),((ids).size()),((((*this).files_to_compile)).size()),file_name);
@@ -175,14 +178,18 @@ return Error::from_errno(static_cast<i32>(1));
 return {};
 }
 
-ErrorOr<ByteString> build::ParallelExecutionPool::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParallelExecutionPool("sv));{
+ErrorOr<ByteString> build::ParallelExecutionPool::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParallelExecutionPool("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("pids: {}, ", pids));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("completed: {}, ", completed));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("pid_index: {}, ", pid_index));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("max_concurrent: {}", max_concurrent));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("pids: {}, ", pids);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("completed: {}, ", completed);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("pid_index: {}, ", pid_index);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("max_concurrent: {}", max_concurrent);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 ErrorOr<build::ParallelExecutionPool> build::ParallelExecutionPool::create(size_t const max_concurrent) {
 {
 return build::ParallelExecutionPool((TRY((Dictionary<size_t, jakt__platform__unknown_process::Process>::create_with_entries({})))),(TRY((Dictionary<size_t, jakt__platform__unknown_process::ExitPollResult>::create_with_entries({})))),static_cast<size_t>(0ULL),max_concurrent);

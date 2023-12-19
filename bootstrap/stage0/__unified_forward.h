@@ -102,7 +102,7 @@ ErrorOr<ByteString> join(JaktInternal::DynamicArray<ByteString> const strings, B
 
 ErrorOr<ByteString> to_string(JaktInternal::DynamicArray<u8> const bytes);
 
-ErrorOr<ByteString> escape_for_quotes(ByteString const s);
+ByteString escape_for_quotes(ByteString const s);
 
 ErrorOr<JaktInternal::DynamicArray<ByteString>> prepend_to_each(JaktInternal::DynamicArray<ByteString> const strings, ByteString const prefix);
 
@@ -112,7 +112,7 @@ bool is_ascii_hexdigit(u8 const c);
 
 ErrorOr<void> write_to_file(ByteString const data, ByteString const output_filename);
 
-ErrorOr<ByteString> interpret_escapes(ByteString const s);
+ByteString interpret_escapes(ByteString const s);
 
 [[noreturn]] void todo(ByteString const message);
 

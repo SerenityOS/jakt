@@ -24,32 +24,54 @@ return f32_value;
 }
 }
 
-ErrorOr<ByteString> parser::ParsedFunction::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedFunction("sv));{
+ErrorOr<ByteString> parser::ParsedFunction::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedFunction("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}, ", id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("visibility: {}, ", visibility));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("params: {}, ", params));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("generic_parameters: {}, ", generic_parameters));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("block: {}, ", block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("return_type: {}, ", return_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("return_type_span: {}, ", return_type_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("can_throw: {}, ", can_throw));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("type: {}, ", type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("linkage: {}, ", linkage));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("must_instantiate: {}, ", must_instantiate));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_comptime: {}, ", is_comptime));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_fat_arrow: {}, ", is_fat_arrow));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_unsafe: {}, ", is_unsafe));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("has_varargs: {}, ", has_varargs));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_jakt_main: {}, ", is_jakt_main));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("external_name: {}, ", external_name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("deprecated_message: {}, ", deprecated_message));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("stores_arguments: {}, ", stores_arguments));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("force_inline: {}", force_inline));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("id: {}, ", id);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name_span: {}, ", name_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("visibility: {}, ", visibility);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("params: {}, ", params);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("generic_parameters: {}, ", generic_parameters);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("block: {}, ", block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("return_type: {}, ", return_type);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("return_type_span: {}, ", return_type_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("can_throw: {}, ", can_throw);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("type: {}, ", type);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("linkage: {}, ", linkage);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("must_instantiate: {}, ", must_instantiate);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_comptime: {}, ", is_comptime);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_fat_arrow: {}, ", is_fat_arrow);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_unsafe: {}, ", is_unsafe);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("has_varargs: {}, ", has_varargs);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_jakt_main: {}, ", is_jakt_main);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("external_name: {}, ", external_name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("deprecated_message: {}, ", deprecated_message);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("stores_arguments: {}, ", stores_arguments);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("force_inline: {}", force_inline);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedFunction::ParsedFunction(size_t a_id, ByteString a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::DynamicArray<parser::ParsedParameter> a_params, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<typename parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow, bool a_is_unsafe, bool a_has_varargs, bool a_is_jakt_main, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<ByteString> a_deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> a_stores_arguments, parser::InlineState a_force_inline): id(move(a_id)), name(move(a_name)), name_span(move(a_name_span)), visibility(move(a_visibility)), params(move(a_params)), generic_parameters(move(a_generic_parameters)), block(move(a_block)), return_type(move(a_return_type)), return_type_span(move(a_return_type_span)), can_throw(move(a_can_throw)), type(move(a_type)), linkage(move(a_linkage)), must_instantiate(move(a_must_instantiate)), is_comptime(move(a_is_comptime)), is_fat_arrow(move(a_is_fat_arrow)), is_unsafe(move(a_is_unsafe)), has_varargs(move(a_has_varargs)), is_jakt_main(move(a_is_jakt_main)), external_name(move(a_external_name)), deprecated_message(move(a_deprecated_message)), stores_arguments(move(a_stores_arguments)), force_inline(move(a_force_inline)){}
 
 bool parser::ParsedFunction::equals(parser::ParsedFunction const other,bool const ignore_block) const {
@@ -92,26 +114,36 @@ return true;
 }
 }
 
-ErrorOr<ByteString> parser::ParsedGenericParameter::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedGenericParameter("sv));{
+ErrorOr<ByteString> parser::ParsedGenericParameter::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedGenericParameter("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("requires_list: {}, ", requires_list));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_value: {}", is_value));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}, ", span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("requires_list: {}, ", requires_list);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_value: {}", is_value);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedGenericParameter::ParsedGenericParameter(ByteString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> a_requires_list, bool a_is_value): name(move(a_name)), span(move(a_span)), requires_list(move(a_requires_list)), is_value(move(a_is_value)){}
 
-ErrorOr<ByteString> parser::EnumVariantPatternArgument::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("EnumVariantPatternArgument("sv));{
+ErrorOr<ByteString> parser::EnumVariantPatternArgument::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("EnumVariantPatternArgument("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: {}, ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("binding: \"{}\", ", binding));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_reference: {}, ", is_reference));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_mutable: {}", is_mutable));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: {}, ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name_span: {}, ", name_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("binding: \"{}\", ", binding);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}, ", span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_reference: {}, ", is_reference);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_mutable: {}", is_mutable);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 utility::Span parser::EnumVariantPatternArgument::name_in_enum_span() const {
 {
 return ((*this).name_span).value_or_lazy_evaluated([&] { return ((*this).span); });
@@ -149,42 +181,56 @@ return ((!(((((*this).name)).has_value()))) && (!(((((rhs_variant_pattern_argume
 }
 }
 
-ErrorOr<ByteString> parser::ParsedPatternDefault::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedPatternDefault("sv));{
+ErrorOr<ByteString> parser::ParsedPatternDefault::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedPatternDefault("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("variable: {}, ", variable));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("value: {}", value));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("variable: {}, ", variable);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("value: {}", value);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedPatternDefault::ParsedPatternDefault(parser::ParsedVarDecl a_variable, NonnullRefPtr<typename parser::ParsedExpression> a_value): variable(move(a_variable)), value(move(a_value)){}
 
-ErrorOr<ByteString> parser::ParsedExternalTraitImplementation::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedExternalTraitImplementation("sv));{
+ErrorOr<ByteString> parser::ParsedExternalTraitImplementation::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedExternalTraitImplementation("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("for_type: {}, ", for_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("traits: {}, ", traits));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("methods: {}", methods));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("for_type: {}, ", for_type);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("traits: {}, ", traits);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("methods: {}", methods);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedExternalTraitImplementation::ParsedExternalTraitImplementation(NonnullRefPtr<typename parser::ParsedType> a_for_type, JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> a_traits, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods): for_type(move(a_for_type)), traits(move(a_traits)), methods(move(a_methods)){}
 
-ErrorOr<ByteString> parser::ParsedTrait::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedTrait("sv));{
+ErrorOr<ByteString> parser::ParsedTrait::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedTrait("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("generic_parameters: {}, ", generic_parameters));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("requirements: {}", requirements));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name_span: {}, ", name_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("generic_parameters: {}, ", generic_parameters);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("requirements: {}", requirements);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedTrait::ParsedTrait(ByteString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedTraitRequirements a_requirements): name(move(a_name)), name_span(move(a_name_span)), generic_parameters(move(a_generic_parameters)), requirements(move(a_requirements)){}
 
-ErrorOr<ByteString> parser::ParsedExternImport::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedExternImport("sv));{
+ErrorOr<ByteString> parser::ParsedExternImport::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedExternImport("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_c: {}, ", is_c));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("assigned_namespace: {}, ", assigned_namespace));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("before_include: {}, ", before_include));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("after_include: {}, ", after_include));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("should_auto_import: {}", should_auto_import));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_c: {}, ", is_c);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("assigned_namespace: {}, ", assigned_namespace);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("before_include: {}, ", before_include);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("after_include: {}, ", after_include);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("should_auto_import: {}", should_auto_import);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 bool parser::ParsedExternImport::is_equivalent_to(parser::ParsedExternImport const other) const {
 {
 return (((*this).is_c) && (((other).is_c) && (((((*this).get_path())) == (((other).get_path()))) && (((((*this).get_name())) == (((other).get_name()))) && ((((*this).should_auto_import)) == (((other).should_auto_import)))))));
@@ -205,20 +251,24 @@ return (((((*this).assigned_namespace)).name).value());
 }
 }
 
-ErrorOr<ByteString> parser::ParsedAttributeArgument::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedAttributeArgument("sv));{
+ErrorOr<ByteString> parser::ParsedAttributeArgument::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedAttributeArgument("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("assigned_value: {}", assigned_value));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}, ", span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("assigned_value: {}", assigned_value);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedAttributeArgument::ParsedAttributeArgument(ByteString a_name, utility::Span a_span, JaktInternal::Optional<ByteString> a_assigned_value): name(move(a_name)), span(move(a_span)), assigned_value(move(a_assigned_value)){}
 
-ErrorOr<ByteString> parser::CheckedQualifiers::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("CheckedQualifiers("sv));{
+ErrorOr<ByteString> parser::CheckedQualifiers::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CheckedQualifiers("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_immutable: {}", is_immutable));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_immutable: {}", is_immutable);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 bool parser::CheckedQualifiers::equals(parser::CheckedQualifiers const other) const {
 {
 return ((((*this).is_immutable)) == (((other).is_immutable)));
@@ -228,15 +278,20 @@ return ((((*this).is_immutable)) == (((other).is_immutable)));
 parser::CheckedQualifiers::CheckedQualifiers(bool a_is_immutable): is_immutable(move(a_is_immutable)){}
 
 
-ErrorOr<ByteString> parser::ParsedModuleImport::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedModuleImport("sv));{
+ErrorOr<ByteString> parser::ParsedModuleImport::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedModuleImport("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("module_name: {}, ", module_name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("alias_name: {}, ", alias_name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("import_list: {}, ", import_list));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("relative_path: {}, ", relative_path));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("parent_path_count: {}", parent_path_count));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("module_name: {}, ", module_name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("alias_name: {}, ", alias_name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("import_list: {}, ", import_list);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("relative_path: {}, ", relative_path);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("parent_path_count: {}", parent_path_count);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 bool parser::ParsedModuleImport::has_same_alias_than(parser::ParsedModuleImport const other) const {
 {
 if (((((*this).alias_name)).has_value())){
@@ -354,14 +409,18 @@ return (((((*this).module_name)).equals(((other).module_name))) && (((*this).has
 }
 }
 
-ErrorOr<ByteString> parser::ParsedVariable::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedVariable("sv));{
+ErrorOr<ByteString> parser::ParsedVariable::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedVariable("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("parsed_type: {}, ", parsed_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_mutable: {}, ", is_mutable));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}", span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("parsed_type: {}, ", parsed_type);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_mutable: {}, ", is_mutable);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", span);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedVariable::ParsedVariable(ByteString a_name, NonnullRefPtr<typename parser::ParsedType> a_parsed_type, bool a_is_mutable, utility::Span a_span): name(move(a_name)), parsed_type(move(a_parsed_type)), is_mutable(move(a_is_mutable)), span(move(a_span)){}
 
 bool parser::ParsedVariable::equals(parser::ParsedVariable const rhs_parsed_varible) const {
@@ -370,32 +429,42 @@ return (((((*this).name)) == (((rhs_parsed_varible).name))) && (((((*this).parse
 }
 }
 
-ErrorOr<ByteString> parser::ParsedNameWithGenericParameters::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedNameWithGenericParameters("sv));{
+ErrorOr<ByteString> parser::ParsedNameWithGenericParameters::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedNameWithGenericParameters("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("generic_parameters: {}", generic_parameters));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name_span: {}, ", name_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("generic_parameters: {}", generic_parameters);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedNameWithGenericParameters::ParsedNameWithGenericParameters(ByteString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> a_generic_parameters): name(move(a_name)), name_span(move(a_name_span)), generic_parameters(move(a_generic_parameters)){}
 
-ErrorOr<ByteString> parser::SumEnumVariant::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("SumEnumVariant("sv));{
+ErrorOr<ByteString> parser::SumEnumVariant::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("SumEnumVariant("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("params: {}, ", params));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("default_values: {}", default_values));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}, ", span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("params: {}, ", params);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("default_values: {}", default_values);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::SumEnumVariant::SumEnumVariant(ByteString a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedVarDecl>> a_params, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>>>> a_default_values): name(move(a_name)), span(move(a_span)), params(move(a_params)), default_values(move(a_default_values)){}
 
-ErrorOr<ByteString> parser::ParsedMatchCase::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedMatchCase("sv));{
+ErrorOr<ByteString> parser::ParsedMatchCase::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedMatchCase("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("patterns: {}, ", patterns));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("marker_span: {}, ", marker_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("body: {}", body));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("patterns: {}, ", patterns);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("marker_span: {}, ", marker_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("body: {}", body);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 bool parser::ParsedMatchCase::has_equal_pattern(parser::ParsedMatchCase const rhs_match_case) const {
 {
 if (((((((*this).patterns)).size())) == (((((rhs_match_case).patterns)).size())))){
@@ -456,26 +525,36 @@ return false;
 
 parser::ParsedMatchCase::ParsedMatchCase(JaktInternal::DynamicArray<parser::ParsedMatchPattern> a_patterns, utility::Span a_marker_span, parser::ParsedMatchBody a_body): patterns(move(a_patterns)), marker_span(move(a_marker_span)), body(move(a_body)){}
 
-ErrorOr<ByteString> parser::ParsedRecord::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedRecord("sv));{
+ErrorOr<ByteString> parser::ParsedRecord::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedRecord("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("generic_parameters: {}, ", generic_parameters));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("definition_linkage: {}, ", definition_linkage));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("implements_list: {}, ", implements_list));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("methods: {}, ", methods));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("record_type: {}, ", record_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("nested_records: {}, ", nested_records));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("external_name: {}", external_name));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name_span: {}, ", name_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("generic_parameters: {}, ", generic_parameters);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("definition_linkage: {}, ", definition_linkage);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("implements_list: {}, ", implements_list);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("methods: {}, ", methods);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("record_type: {}, ", record_type);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("nested_records: {}, ", nested_records);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("external_name: {}", external_name);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedRecord::ParsedRecord(ByteString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> a_implements_list, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods, parser::RecordType a_record_type, JaktInternal::DynamicArray<parser::ParsedRecord> a_nested_records, JaktInternal::Optional<parser::ExternalName> a_external_name): name(move(a_name)), name_span(move(a_name_span)), generic_parameters(move(a_generic_parameters)), definition_linkage(move(a_definition_linkage)), implements_list(move(a_implements_list)), methods(move(a_methods)), record_type(move(a_record_type)), nested_records(move(a_nested_records)), external_name(move(a_external_name)){}
 
-ErrorOr<ByteString> parser::ParsedBlock::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedBlock("sv));{
+ErrorOr<ByteString> parser::ParsedBlock::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedBlock("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("stmts: {}", stmts));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("stmts: {}", stmts);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedBlock::ParsedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>> a_stmts): stmts(move(a_stmts)){}
 
 JaktInternal::Optional<utility::Span> parser::ParsedBlock::find_yield_span() const {
@@ -582,33 +661,44 @@ return JaktInternal::OptionalNone();
 }
 }
 
-ErrorOr<ByteString> parser::ParsedVarDeclTuple::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedVarDeclTuple("sv));{
+ErrorOr<ByteString> parser::ParsedVarDeclTuple::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedVarDeclTuple("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("var_decls: {}, ", var_decls));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}", span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("var_decls: {}, ", var_decls);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", span);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedVarDeclTuple::ParsedVarDeclTuple(JaktInternal::DynamicArray<parser::ParsedVarDecl> a_var_decls, utility::Span a_span): var_decls(move(a_var_decls)), span(move(a_span)){}
 
-ErrorOr<ByteString> parser::ParsedAttribute::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedAttribute("sv));{
+ErrorOr<ByteString> parser::ParsedAttribute::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedAttribute("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("assigned_value: {}, ", assigned_value));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("arguments: {}", arguments));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}, ", span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("assigned_value: {}, ", assigned_value);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("arguments: {}", arguments);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedAttribute::ParsedAttribute(ByteString a_name, utility::Span a_span, JaktInternal::Optional<ByteString> a_assigned_value, JaktInternal::DynamicArray<parser::ParsedAttributeArgument> a_arguments): name(move(a_name)), span(move(a_span)), assigned_value(move(a_assigned_value)), arguments(move(a_arguments)){}
 
-ErrorOr<ByteString> parser::Parser::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Parser("sv));{
+ErrorOr<ByteString> parser::Parser::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Parser("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("index: {}, ", index));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("tokens: {}, ", tokens));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("compiler: {}, ", *compiler));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("can_have_trailing_closure: {}, ", can_have_trailing_closure));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("next_function_id: {}", next_function_id));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("index: {}, ", index);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("tokens: {}, ", tokens);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("compiler: {}, ", *compiler);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("can_have_trailing_closure: {}, ", can_have_trailing_closure);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("next_function_id: {}", next_function_id);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 ErrorOr<NonnullRefPtr<typename parser::ParsedExpression>> parser::Parser::parse_operand_base() {
 {
 return ({
@@ -12351,14 +12441,18 @@ return JaktInternal::OptionalNone();
 }
 }
 
-ErrorOr<ByteString> parser::ParsedCall::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedCall("sv));{
+ErrorOr<ByteString> parser::ParsedCall::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedCall("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("namespace_: {}, ", namespace_));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("args: {}, ", args));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("type_args: {}", type_args));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("namespace_: {}, ", namespace_);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("args: {}, ", args);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("type_args: {}", type_args);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedCall::ParsedCall(JaktInternal::DynamicArray<ByteString> a_namespace_, ByteString a_name, JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>> a_args, JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> a_type_args): namespace_(move(a_namespace_)), name(move(a_name)), args(move(a_args)), type_args(move(a_type_args)){}
 
 bool parser::ParsedCall::equals(parser::ParsedCall const rhs_parsed_call) const {
@@ -12410,16 +12504,22 @@ return true;
 }
 }
 
-ErrorOr<ByteString> parser::ParsedVarDecl::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedVarDecl("sv));{
+ErrorOr<ByteString> parser::ParsedVarDecl::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedVarDecl("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("parsed_type: {}, ", parsed_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_mutable: {}, ", is_mutable));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("inlay_span: {}, ", inlay_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("external_name: {}", external_name));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("parsed_type: {}, ", parsed_type);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_mutable: {}, ", is_mutable);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("inlay_span: {}, ", inlay_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}, ", span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("external_name: {}", external_name);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 bool parser::ParsedVarDecl::equals(parser::ParsedVarDecl const rhs_var_decl) const {
 {
 return (((((*this).name)) == (((rhs_var_decl).name))) && ((((*this).is_mutable)) == (((rhs_var_decl).is_mutable))));
@@ -12428,26 +12528,42 @@ return (((((*this).name)) == (((rhs_var_decl).name))) && ((((*this).is_mutable))
 
 parser::ParsedVarDecl::ParsedVarDecl(ByteString a_name, NonnullRefPtr<typename parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span, JaktInternal::Optional<parser::ExternalName> a_external_name): name(move(a_name)), parsed_type(move(a_parsed_type)), is_mutable(move(a_is_mutable)), inlay_span(move(a_inlay_span)), span(move(a_span)), external_name(move(a_external_name)){}
 
-ErrorOr<ByteString> parser::ParsedNamespace::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedNamespace("sv));{
+ErrorOr<ByteString> parser::ParsedNamespace::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedNamespace("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: {}, ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name_span: {}, ", name_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("functions: {}, ", functions));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("records: {}, ", records));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("traits: {}, ", traits));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("external_trait_implementations: {}, ", external_trait_implementations));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("namespaces: {}, ", namespaces));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("aliases: {}, ", aliases));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("module_imports: {}, ", module_imports));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("extern_imports: {}, ", extern_imports));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("import_path_if_extern: {}, ", import_path_if_extern));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("generating_import_extern_before_include: {}, ", generating_import_extern_before_include));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("generating_import_extern_after_include: {}, ", generating_import_extern_after_include));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("forall_chunks: {}, ", forall_chunks));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_generated_code: {}, ", is_generated_code));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_auto_extern_imported: {}", is_auto_extern_imported));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: {}, ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name_span: {}, ", name_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("functions: {}, ", functions);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("records: {}, ", records);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("traits: {}, ", traits);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("external_trait_implementations: {}, ", external_trait_implementations);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("namespaces: {}, ", namespaces);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("aliases: {}, ", aliases);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("module_imports: {}, ", module_imports);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("extern_imports: {}, ", extern_imports);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("import_path_if_extern: {}, ", import_path_if_extern);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("generating_import_extern_before_include: {}, ", generating_import_extern_before_include);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("generating_import_extern_after_include: {}, ", generating_import_extern_after_include);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("forall_chunks: {}, ", forall_chunks);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_generated_code: {}, ", is_generated_code);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_auto_extern_imported: {}", is_auto_extern_imported);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 ErrorOr<void> parser::ParsedNamespace::add_child_namespace(parser::ParsedNamespace const namespace_) {
 {
 {
@@ -12609,49 +12725,64 @@ return {};
 return {};
 }
 
-ErrorOr<ByteString> parser::ParsedName::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedName("sv));{
+ErrorOr<ByteString> parser::ParsedName::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedName("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}", span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", span);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedName::ParsedName(ByteString a_name, utility::Span a_span): name(move(a_name)), span(move(a_span)){}
 
-ErrorOr<ByteString> parser::ParsedAlias::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedAlias("sv));{
+ErrorOr<ByteString> parser::ParsedAlias::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedAlias("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("alias_name: {}, ", alias_name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("target: {}", target));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("alias_name: {}, ", alias_name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("target: {}", target);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedAlias::ParsedAlias(JaktInternal::Optional<parser::ParsedName> a_alias_name, JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> a_target): alias_name(move(a_alias_name)), target(move(a_target)){}
 
-ErrorOr<ByteString> parser::ParsedMethod::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedMethod("sv));{
+ErrorOr<ByteString> parser::ParsedMethod::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedMethod("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("parsed_function: {}, ", parsed_function));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("visibility: {}, ", visibility));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_virtual: {}, ", is_virtual));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_override: {}", is_override));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("parsed_function: {}, ", parsed_function);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("visibility: {}, ", visibility);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_virtual: {}, ", is_virtual);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_override: {}", is_override);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedMethod::ParsedMethod(parser::ParsedFunction a_parsed_function, parser::Visibility a_visibility, bool a_is_virtual, bool a_is_override): parsed_function(move(a_parsed_function)), visibility(move(a_visibility)), is_virtual(move(a_is_virtual)), is_override(move(a_is_override)){}
 
-ErrorOr<ByteString> parser::ParsedField::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedField("sv));{
+ErrorOr<ByteString> parser::ParsedField::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedField("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("var_decl: {}, ", var_decl));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("visibility: {}, ", visibility));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("default_value: {}", default_value));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("var_decl: {}, ", var_decl);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("visibility: {}, ", visibility);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("default_value: {}", default_value);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedField::ParsedField(parser::ParsedVarDecl a_var_decl, parser::Visibility a_visibility, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_value): var_decl(move(a_var_decl)), visibility(move(a_visibility)), default_value(move(a_default_value)){}
 
-ErrorOr<ByteString> parser::ParsedParameter::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedParameter("sv));{
+ErrorOr<ByteString> parser::ParsedParameter::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedParameter("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("requires_label: {}, ", requires_label));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("variable: {}, ", variable));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("default_argument: {}, ", default_argument));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}", span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("requires_label: {}, ", requires_label);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("variable: {}, ", variable);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("default_argument: {}, ", default_argument);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", span);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedParameter::ParsedParameter(bool a_requires_label, parser::ParsedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_default_argument, utility::Span a_span): requires_label(move(a_requires_label)), variable(move(a_variable)), default_argument(move(a_default_argument)), span(move(a_span)){}
 
 bool parser::ParsedParameter::equals(parser::ParsedParameter const rhs_param) const {
@@ -12669,63 +12800,72 @@ return false;
 }
 }
 
-ErrorOr<ByteString> parser::ParsedTypeQualifiers::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedTypeQualifiers("sv));{
+ErrorOr<ByteString> parser::ParsedTypeQualifiers::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedTypeQualifiers("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_mutable: {}, ", is_mutable));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("is_immutable: {}", is_immutable));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_mutable: {}, ", is_mutable);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_immutable: {}", is_immutable);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedTypeQualifiers::ParsedTypeQualifiers(bool a_is_mutable, bool a_is_immutable): is_mutable(move(a_is_mutable)), is_immutable(move(a_is_immutable)){}
 
-ErrorOr<ByteString> parser::ValueEnumVariant::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ValueEnumVariant("sv));{
+ErrorOr<ByteString> parser::ValueEnumVariant::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ValueEnumVariant("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("span: {}, ", span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("value: {}", value));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}, ", span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("value: {}", value);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ValueEnumVariant::ValueEnumVariant(ByteString a_name, utility::Span a_span, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> a_value): name(move(a_name)), span(move(a_span)), value(move(a_value)){}
 
-ErrorOr<ByteString> parser::ParsedFunctionParameters::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ParsedFunctionParameters("sv));{
+ErrorOr<ByteString> parser::ParsedFunctionParameters::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParsedFunctionParameters("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("parameters: {}, ", parameters));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("has_varargs: {}", has_varargs));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("parameters: {}, ", parameters);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("has_varargs: {}", has_varargs);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::ParsedFunctionParameters::ParsedFunctionParameters(JaktInternal::DynamicArray<parser::ParsedParameter> a_parameters, bool a_has_varargs): parameters(move(a_parameters)), has_varargs(move(a_has_varargs)){}
 
-ErrorOr<ByteString> parser::VisibilityRestriction::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("VisibilityRestriction("sv));{
+ErrorOr<ByteString> parser::VisibilityRestriction::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("VisibilityRestriction("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("namespace_: {}, ", namespace_));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\"", name));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("namespace_: {}, ", namespace_);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\"", name);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 parser::VisibilityRestriction::VisibilityRestriction(JaktInternal::DynamicArray<ByteString> a_namespace_, ByteString a_name): namespace_(move(a_namespace_)), name(move(a_name)){}
 
 ErrorOr<ByteString> parser::ExternalName::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Plain */: {
-TRY(builder.append("ExternalName::Plain"sv));
+builder.append("ExternalName::Plain"sv);
 [[maybe_unused]] auto const& that = this->as.Plain;
-TRY(builder.appendff("(\"{}\")", that.value));
+builder.appendff("(\"{}\")", that.value);
 break;}
 case 1 /* PreprocessorName */: {
-TRY(builder.append("ExternalName::PreprocessorName"sv));
+builder.append("ExternalName::PreprocessorName"sv);
 [[maybe_unused]] auto const& that = this->as.PreprocessorName;
-TRY(builder.appendff("(\"{}\")", that.value));
+builder.appendff("(\"{}\")", that.value);
 break;}
 case 2 /* Operator */: {
-TRY(builder.append("ExternalName::Operator"sv));
+builder.append("ExternalName::Operator"sv);
 [[maybe_unused]] auto const& that = this->as.Operator;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\", ", that.name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_prefix: {}", that.is_prefix));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", that.name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_prefix: {}", that.is_prefix);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 }
 return builder.to_string();
@@ -12954,28 +13094,28 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 ErrorOr<ByteString> parser::ImportName::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Literal */: {
-TRY(builder.append("ImportName::Literal"sv));
+builder.append("ImportName::Literal"sv);
 [[maybe_unused]] auto const& that = this->as.Literal;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\", ", that.name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", that.name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* Comptime */: {
-TRY(builder.append("ImportName::Comptime"sv));
+builder.append("ImportName::Comptime"sv);
 [[maybe_unused]] auto const& that = this->as.Comptime;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expression: {}", that.expression));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expression: {}", that.expression);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 }
 return builder.to_string();
@@ -13188,41 +13328,41 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 ErrorOr<ByteString> parser::ParsedMatchPattern::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* EnumVariant */: {
-TRY(builder.append("ParsedMatchPattern::EnumVariant"sv));
+builder.append("ParsedMatchPattern::EnumVariant"sv);
 [[maybe_unused]] auto const& that = this->as.EnumVariant;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("defaults: {}, ", this->common.init_common.defaults));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("variant_names: {}, ", that.variant_names));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("variant_arguments: {}, ", that.variant_arguments));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("arguments_span: {}", that.arguments_span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("defaults: {}, ", this->common.init_common.defaults);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("variant_names: {}, ", that.variant_names);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("variant_arguments: {}, ", that.variant_arguments);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("arguments_span: {}", that.arguments_span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* Expression */: {
-TRY(builder.append("ParsedMatchPattern::Expression"sv));
+builder.append("ParsedMatchPattern::Expression"sv);
 [[maybe_unused]] auto const& that = this->as.Expression;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 2 /* CatchAll */: {
-TRY(builder.append("ParsedMatchPattern::CatchAll"sv));
+builder.append("ParsedMatchPattern::CatchAll"sv);
 [[maybe_unused]] auto const& that = this->as.CatchAll;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("defaults: {}, ", this->common.init_common.defaults));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("variant_arguments: {}, ", that.variant_arguments));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("arguments_span: {}", that.arguments_span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("defaults: {}, ", this->common.init_common.defaults);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("variant_arguments: {}, ", that.variant_arguments);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("arguments_span: {}", that.arguments_span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 3 /* Invalid */: {
 return ByteString("ParsedMatchPattern::Invalid"sv);
@@ -13596,17 +13736,17 @@ case 1 /* Private */: {
 return ByteString("Visibility::Private"sv);
 break;}
 case 2 /* Restricted */: {
-TRY(builder.append("Visibility::Restricted"sv));
+builder.append("Visibility::Restricted"sv);
 [[maybe_unused]] auto const& that = this->as.Restricted;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("whitelist: {}, ", that.whitelist));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("whitelist: {}, ", that.whitelist);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 }
 return builder.to_string();
@@ -13732,15 +13872,15 @@ break;
 ErrorOr<ByteString> parser::ArgumentStoreLevel::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* InObject */: {
-TRY(builder.append("ArgumentStoreLevel::InObject"sv));
+builder.append("ArgumentStoreLevel::InObject"sv);
 [[maybe_unused]] auto const& that = this->as.InObject;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("argument_index: {}", that.argument_index));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("argument_index: {}", that.argument_index);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* InStaticStorage */: {
 return ByteString("ArgumentStoreLevel::InStaticStorage"sv);
@@ -13842,14 +13982,14 @@ case 1 /* InStaticStorage */:break;
 ErrorOr<ByteString> parser::ParsedMatchBody::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Expression */: {
-TRY(builder.append("ParsedMatchBody::Expression"sv));
+builder.append("ParsedMatchBody::Expression"sv);
 [[maybe_unused]] auto const& that = this->as.Expression;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 1 /* Block */: {
-TRY(builder.append("ParsedMatchBody::Block"sv));
+builder.append("ParsedMatchBody::Block"sv);
 [[maybe_unused]] auto const& that = this->as.Block;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 }
 return builder.to_string();
@@ -14207,243 +14347,243 @@ case 4 /* AllByReference */:break;
 ErrorOr<ByteString> parser::ParsedType::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Name */: {
-TRY(builder.append("ParsedType::Name"sv));
+builder.append("ParsedType::Name"sv);
 [[maybe_unused]] auto const& that = this->as.Name;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\", ", that.name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", that.name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* NamespacedName */: {
-TRY(builder.append("ParsedType::NamespacedName"sv));
+builder.append("ParsedType::NamespacedName"sv);
 [[maybe_unused]] auto const& that = this->as.NamespacedName;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\", ", that.name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("namespaces: {}, ", that.namespaces));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("params: {}, ", that.params));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", that.name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("namespaces: {}, ", that.namespaces);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("params: {}, ", that.params);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 2 /* GenericType */: {
-TRY(builder.append("ParsedType::GenericType"sv));
+builder.append("ParsedType::GenericType"sv);
 [[maybe_unused]] auto const& that = this->as.GenericType;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\", ", that.name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("generic_parameters: {}, ", that.generic_parameters));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", that.name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("generic_parameters: {}, ", that.generic_parameters);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 3 /* JaktArray */: {
-TRY(builder.append("ParsedType::JaktArray"sv));
+builder.append("ParsedType::JaktArray"sv);
 [[maybe_unused]] auto const& that = this->as.JaktArray;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("inner: {}, ", that.inner));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("inner: {}, ", that.inner);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 4 /* Dictionary */: {
-TRY(builder.append("ParsedType::Dictionary"sv));
+builder.append("ParsedType::Dictionary"sv);
 [[maybe_unused]] auto const& that = this->as.Dictionary;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("key: {}, ", that.key));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("value: {}, ", that.value));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("key: {}, ", that.key);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("value: {}, ", that.value);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 5 /* JaktTuple */: {
-TRY(builder.append("ParsedType::JaktTuple"sv));
+builder.append("ParsedType::JaktTuple"sv);
 [[maybe_unused]] auto const& that = this->as.JaktTuple;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("types: {}, ", that.types));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("types: {}, ", that.types);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 6 /* Set */: {
-TRY(builder.append("ParsedType::Set"sv));
+builder.append("ParsedType::Set"sv);
 [[maybe_unused]] auto const& that = this->as.Set;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("inner: {}, ", that.inner));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("inner: {}, ", that.inner);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 7 /* Optional */: {
-TRY(builder.append("ParsedType::Optional"sv));
+builder.append("ParsedType::Optional"sv);
 [[maybe_unused]] auto const& that = this->as.Optional;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("inner: {}, ", that.inner));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("inner: {}, ", that.inner);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 8 /* Reference */: {
-TRY(builder.append("ParsedType::Reference"sv));
+builder.append("ParsedType::Reference"sv);
 [[maybe_unused]] auto const& that = this->as.Reference;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("inner: {}, ", that.inner));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("inner: {}, ", that.inner);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 9 /* MutableReference */: {
-TRY(builder.append("ParsedType::MutableReference"sv));
+builder.append("ParsedType::MutableReference"sv);
 [[maybe_unused]] auto const& that = this->as.MutableReference;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("inner: {}, ", that.inner));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("inner: {}, ", that.inner);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 10 /* RawPtr */: {
-TRY(builder.append("ParsedType::RawPtr"sv));
+builder.append("ParsedType::RawPtr"sv);
 [[maybe_unused]] auto const& that = this->as.RawPtr;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("inner: {}, ", that.inner));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("inner: {}, ", that.inner);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 11 /* WeakPtr */: {
-TRY(builder.append("ParsedType::WeakPtr"sv));
+builder.append("ParsedType::WeakPtr"sv);
 [[maybe_unused]] auto const& that = this->as.WeakPtr;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("inner: {}, ", that.inner));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("inner: {}, ", that.inner);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 12 /* Function */: {
-TRY(builder.append("ParsedType::Function"sv));
+builder.append("ParsedType::Function"sv);
 [[maybe_unused]] auto const& that = this->as.Function;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("params: {}, ", that.params));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("can_throw: {}, ", that.can_throw));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("return_type: {}, ", that.return_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("params: {}, ", that.params);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("can_throw: {}, ", that.can_throw);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("return_type: {}, ", that.return_type);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 13 /* Const */: {
-TRY(builder.append("ParsedType::Const"sv));
+builder.append("ParsedType::Const"sv);
 [[maybe_unused]] auto const& that = this->as.Const;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 14 /* DependentType */: {
-TRY(builder.append("ParsedType::DependentType"sv));
+builder.append("ParsedType::DependentType"sv);
 [[maybe_unused]] auto const& that = this->as.DependentType;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("base: {}, ", that.base));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\", ", that.name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("qualifiers: {}, ", this->common.init_common.qualifiers);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("base: {}, ", that.base);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", that.name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 15 /* Empty */: {
 return ByteString("ParsedType::Empty"sv);
@@ -15787,14 +15927,14 @@ switch (this->__jakt_init_index()) {case 0 /* Nothing */: {
 return ByteString("ParsedTraitRequirements::Nothing"sv);
 break;}
 case 1 /* Methods */: {
-TRY(builder.append("ParsedTraitRequirements::Methods"sv));
+builder.append("ParsedTraitRequirements::Methods"sv);
 [[maybe_unused]] auto const& that = this->as.Methods;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 2 /* ComptimeExpression */: {
-TRY(builder.append("ParsedTraitRequirements::ComptimeExpression"sv));
+builder.append("ParsedTraitRequirements::ComptimeExpression"sv);
 [[maybe_unused]] auto const& that = this->as.ComptimeExpression;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 }
 return builder.to_string();
@@ -15920,14 +16060,14 @@ break;
 ErrorOr<ByteString> parser::TypeCast::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Fallible */: {
-TRY(builder.append("TypeCast::Fallible"sv));
+builder.append("TypeCast::Fallible"sv);
 [[maybe_unused]] auto const& that = this->as.Fallible;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 1 /* Infallible */: {
-TRY(builder.append("TypeCast::Infallible"sv));
+builder.append("TypeCast::Infallible"sv);
 [[maybe_unused]] auto const& that = this->as.Infallible;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 }
 return builder.to_string();
@@ -16154,9 +16294,9 @@ case 1 /* External */:break;
 ErrorOr<ByteString> parser::ImportList::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* List */: {
-TRY(builder.append("ImportList::List"sv));
+builder.append("ImportList::List"sv);
 [[maybe_unused]] auto const& that = this->as.List;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 1 /* All */: {
 return ByteString("ImportList::All"sv);
@@ -16311,453 +16451,453 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 ErrorOr<ByteString> parser::ParsedExpression::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Boolean */: {
-TRY(builder.append("ParsedExpression::Boolean"sv));
+builder.append("ParsedExpression::Boolean"sv);
 [[maybe_unused]] auto const& that = this->as.Boolean;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("val: {}, ", that.val));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("val: {}, ", that.val);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* NumericConstant */: {
-TRY(builder.append("ParsedExpression::NumericConstant"sv));
+builder.append("ParsedExpression::NumericConstant"sv);
 [[maybe_unused]] auto const& that = this->as.NumericConstant;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("val: {}, ", that.val));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("val: {}, ", that.val);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 2 /* QuotedString */: {
-TRY(builder.append("ParsedExpression::QuotedString"sv));
+builder.append("ParsedExpression::QuotedString"sv);
 [[maybe_unused]] auto const& that = this->as.QuotedString;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("val: \"{}\", ", that.val));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("val: \"{}\", ", that.val);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 3 /* SingleQuotedString */: {
-TRY(builder.append("ParsedExpression::SingleQuotedString"sv));
+builder.append("ParsedExpression::SingleQuotedString"sv);
 [[maybe_unused]] auto const& that = this->as.SingleQuotedString;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("val: \"{}\", ", that.val));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("prefix: {}, ", that.prefix));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("val: \"{}\", ", that.val);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("prefix: {}, ", that.prefix);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 4 /* Call */: {
-TRY(builder.append("ParsedExpression::Call"sv));
+builder.append("ParsedExpression::Call"sv);
 [[maybe_unused]] auto const& that = this->as.Call;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("call: {}, ", that.call));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("call: {}, ", that.call);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 5 /* MethodCall */: {
-TRY(builder.append("ParsedExpression::MethodCall"sv));
+builder.append("ParsedExpression::MethodCall"sv);
 [[maybe_unused]] auto const& that = this->as.MethodCall;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("call: {}, ", that.call));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_optional: {}, ", that.is_optional));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("call: {}, ", that.call);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_optional: {}, ", that.is_optional);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 6 /* IndexedTuple */: {
-TRY(builder.append("ParsedExpression::IndexedTuple"sv));
+builder.append("ParsedExpression::IndexedTuple"sv);
 [[maybe_unused]] auto const& that = this->as.IndexedTuple;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("index: {}, ", that.index));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_optional: {}, ", that.is_optional));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("index: {}, ", that.index);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_optional: {}, ", that.is_optional);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 7 /* IndexedStruct */: {
-TRY(builder.append("ParsedExpression::IndexedStruct"sv));
+builder.append("ParsedExpression::IndexedStruct"sv);
 [[maybe_unused]] auto const& that = this->as.IndexedStruct;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("field_name: \"{}\", ", that.field_name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_optional: {}, ", that.is_optional));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("field_name: \"{}\", ", that.field_name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_optional: {}, ", that.is_optional);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 8 /* ComptimeIndex */: {
-TRY(builder.append("ParsedExpression::ComptimeIndex"sv));
+builder.append("ParsedExpression::ComptimeIndex"sv);
 [[maybe_unused]] auto const& that = this->as.ComptimeIndex;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("index: {}, ", that.index));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_optional: {}, ", that.is_optional));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("index: {}, ", that.index);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_optional: {}, ", that.is_optional);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 9 /* Var */: {
-TRY(builder.append("ParsedExpression::Var"sv));
+builder.append("ParsedExpression::Var"sv);
 [[maybe_unused]] auto const& that = this->as.Var;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\", ", that.name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", that.name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 10 /* IndexedExpression */: {
-TRY(builder.append("ParsedExpression::IndexedExpression"sv));
+builder.append("ParsedExpression::IndexedExpression"sv);
 [[maybe_unused]] auto const& that = this->as.IndexedExpression;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("base: {}, ", that.base));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("index: {}, ", that.index));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("base: {}, ", that.base);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("index: {}, ", that.index);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 11 /* UnaryOp */: {
-TRY(builder.append("ParsedExpression::UnaryOp"sv));
+builder.append("ParsedExpression::UnaryOp"sv);
 [[maybe_unused]] auto const& that = this->as.UnaryOp;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("op: {}, ", that.op));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("op: {}, ", that.op);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 12 /* BinaryOp */: {
-TRY(builder.append("ParsedExpression::BinaryOp"sv));
+builder.append("ParsedExpression::BinaryOp"sv);
 [[maybe_unused]] auto const& that = this->as.BinaryOp;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("lhs: {}, ", that.lhs));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("op: {}, ", that.op));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("rhs: {}, ", that.rhs));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("lhs: {}, ", that.lhs);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("op: {}, ", that.op);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("rhs: {}, ", that.rhs);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 13 /* Operator */: {
-TRY(builder.append("ParsedExpression::Operator"sv));
+builder.append("ParsedExpression::Operator"sv);
 [[maybe_unused]] auto const& that = this->as.Operator;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("op: {}, ", that.op));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("op: {}, ", that.op);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 14 /* OptionalSome */: {
-TRY(builder.append("ParsedExpression::OptionalSome"sv));
+builder.append("ParsedExpression::OptionalSome"sv);
 [[maybe_unused]] auto const& that = this->as.OptionalSome;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 15 /* OptionalNone */: {
-TRY(builder.append("ParsedExpression::OptionalNone"sv));
+builder.append("ParsedExpression::OptionalNone"sv);
 [[maybe_unused]] auto const& that = this->as.OptionalNone;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 16 /* JaktArray */: {
-TRY(builder.append("ParsedExpression::JaktArray"sv));
+builder.append("ParsedExpression::JaktArray"sv);
 [[maybe_unused]] auto const& that = this->as.JaktArray;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("values: {}, ", that.values));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("fill_size: {}, ", that.fill_size));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("values: {}, ", that.values);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("fill_size: {}, ", that.fill_size);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 17 /* JaktDictionary */: {
-TRY(builder.append("ParsedExpression::JaktDictionary"sv));
+builder.append("ParsedExpression::JaktDictionary"sv);
 [[maybe_unused]] auto const& that = this->as.JaktDictionary;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("values: {}, ", that.values));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("values: {}, ", that.values);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 18 /* Set */: {
-TRY(builder.append("ParsedExpression::Set"sv));
+builder.append("ParsedExpression::Set"sv);
 [[maybe_unused]] auto const& that = this->as.Set;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("values: {}, ", that.values));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("values: {}, ", that.values);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 19 /* JaktTuple */: {
-TRY(builder.append("ParsedExpression::JaktTuple"sv));
+builder.append("ParsedExpression::JaktTuple"sv);
 [[maybe_unused]] auto const& that = this->as.JaktTuple;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("values: {}, ", that.values));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("values: {}, ", that.values);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 20 /* Range */: {
-TRY(builder.append("ParsedExpression::Range"sv));
+builder.append("ParsedExpression::Range"sv);
 [[maybe_unused]] auto const& that = this->as.Range;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("from: {}, ", that.from));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("to: {}, ", that.to));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("from: {}, ", that.from);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("to: {}, ", that.to);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 21 /* ForcedUnwrap */: {
-TRY(builder.append("ParsedExpression::ForcedUnwrap"sv));
+builder.append("ParsedExpression::ForcedUnwrap"sv);
 [[maybe_unused]] auto const& that = this->as.ForcedUnwrap;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 22 /* Match */: {
-TRY(builder.append("ParsedExpression::Match"sv));
+builder.append("ParsedExpression::Match"sv);
 [[maybe_unused]] auto const& that = this->as.Match;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("cases: {}, ", that.cases));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}, ", that.span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("marker_span: {}", that.marker_span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("cases: {}, ", that.cases);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}, ", that.span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("marker_span: {}", that.marker_span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 23 /* EnumVariantArg */: {
-TRY(builder.append("ParsedExpression::EnumVariantArg"sv));
+builder.append("ParsedExpression::EnumVariantArg"sv);
 [[maybe_unused]] auto const& that = this->as.EnumVariantArg;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("arg: {}, ", that.arg));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("enum_variant: {}, ", that.enum_variant));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("arg: {}, ", that.arg);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("enum_variant: {}, ", that.enum_variant);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 24 /* NamespacedVar */: {
-TRY(builder.append("ParsedExpression::NamespacedVar"sv));
+builder.append("ParsedExpression::NamespacedVar"sv);
 [[maybe_unused]] auto const& that = this->as.NamespacedVar;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\", ", that.name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("namespace_: {}, ", that.namespace_));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", that.name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("namespace_: {}, ", that.namespace_);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 25 /* Function */: {
-TRY(builder.append("ParsedExpression::Function"sv));
+builder.append("ParsedExpression::Function"sv);
 [[maybe_unused]] auto const& that = this->as.Function;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("captures: {}, ", that.captures));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("params: {}, ", that.params));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("can_throw: {}, ", that.can_throw));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_fat_arrow: {}, ", that.is_fat_arrow));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("return_type: {}, ", that.return_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}, ", that.block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("captures: {}, ", that.captures);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("params: {}, ", that.params);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("can_throw: {}, ", that.can_throw);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_fat_arrow: {}, ", that.is_fat_arrow);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("return_type: {}, ", that.return_type);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("block: {}, ", that.block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 26 /* Try */: {
-TRY(builder.append("ParsedExpression::Try"sv));
+builder.append("ParsedExpression::Try"sv);
 [[maybe_unused]] auto const& that = this->as.Try;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("catch_block: {}, ", that.catch_block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("catch_span: {}, ", that.catch_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("catch_name: {}, ", that.catch_name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("catch_block: {}, ", that.catch_block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("catch_span: {}, ", that.catch_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("catch_name: {}, ", that.catch_name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 27 /* TryBlock */: {
-TRY(builder.append("ParsedExpression::TryBlock"sv));
+builder.append("ParsedExpression::TryBlock"sv);
 [[maybe_unused]] auto const& that = this->as.TryBlock;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("stmt: {}, ", that.stmt));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("error_name: \"{}\", ", that.error_name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("error_span: {}, ", that.error_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("catch_block: {}, ", that.catch_block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("stmt: {}, ", that.stmt);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("error_name: \"{}\", ", that.error_name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("error_span: {}, ", that.error_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("catch_block: {}, ", that.catch_block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 28 /* Reflect */: {
-TRY(builder.append("ParsedExpression::Reflect"sv));
+builder.append("ParsedExpression::Reflect"sv);
 [[maybe_unused]] auto const& that = this->as.Reflect;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("type: {}, ", that.type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("type: {}, ", that.type);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 29 /* Garbage */: {
-TRY(builder.append("ParsedExpression::Garbage"sv));
+builder.append("ParsedExpression::Garbage"sv);
 [[maybe_unused]] auto const& that = this->as.Garbage;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 30 /* Unsafe */: {
-TRY(builder.append("ParsedExpression::Unsafe"sv));
+builder.append("ParsedExpression::Unsafe"sv);
 [[maybe_unused]] auto const& that = this->as.Unsafe;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 }
 return builder.to_string();
@@ -19498,32 +19638,32 @@ case 10 /* BitwiseNot */: {
 return ByteString("UnaryOperator::BitwiseNot"sv);
 break;}
 case 11 /* TypeCast */: {
-TRY(builder.append("UnaryOperator::TypeCast"sv));
+builder.append("UnaryOperator::TypeCast"sv);
 [[maybe_unused]] auto const& that = this->as.TypeCast;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 12 /* Is */: {
-TRY(builder.append("UnaryOperator::Is"sv));
+builder.append("UnaryOperator::Is"sv);
 [[maybe_unused]] auto const& that = this->as.Is;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 13 /* IsEnumVariant */: {
-TRY(builder.append("UnaryOperator::IsEnumVariant"sv));
+builder.append("UnaryOperator::IsEnumVariant"sv);
 [[maybe_unused]] auto const& that = this->as.IsEnumVariant;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("inner: {}, ", that.inner));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("bindings: {}", that.bindings));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("inner: {}, ", that.inner);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("bindings: {}", that.bindings);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 14 /* Sizeof */: {
-TRY(builder.append("UnaryOperator::Sizeof"sv));
+builder.append("UnaryOperator::Sizeof"sv);
 [[maybe_unused]] auto const& that = this->as.Sizeof;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 }
 return builder.to_string();
@@ -20993,69 +21133,69 @@ return JaktInternal::ExplicitValue(false);
 ErrorOr<ByteString> parser::NumericConstant::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* I8 */: {
-TRY(builder.append("NumericConstant::I8"sv));
+builder.append("NumericConstant::I8"sv);
 [[maybe_unused]] auto const& that = this->as.I8;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 1 /* I16 */: {
-TRY(builder.append("NumericConstant::I16"sv));
+builder.append("NumericConstant::I16"sv);
 [[maybe_unused]] auto const& that = this->as.I16;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 2 /* I32 */: {
-TRY(builder.append("NumericConstant::I32"sv));
+builder.append("NumericConstant::I32"sv);
 [[maybe_unused]] auto const& that = this->as.I32;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 3 /* I64 */: {
-TRY(builder.append("NumericConstant::I64"sv));
+builder.append("NumericConstant::I64"sv);
 [[maybe_unused]] auto const& that = this->as.I64;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 4 /* U8 */: {
-TRY(builder.append("NumericConstant::U8"sv));
+builder.append("NumericConstant::U8"sv);
 [[maybe_unused]] auto const& that = this->as.U8;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 5 /* U16 */: {
-TRY(builder.append("NumericConstant::U16"sv));
+builder.append("NumericConstant::U16"sv);
 [[maybe_unused]] auto const& that = this->as.U16;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 6 /* U32 */: {
-TRY(builder.append("NumericConstant::U32"sv));
+builder.append("NumericConstant::U32"sv);
 [[maybe_unused]] auto const& that = this->as.U32;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 7 /* U64 */: {
-TRY(builder.append("NumericConstant::U64"sv));
+builder.append("NumericConstant::U64"sv);
 [[maybe_unused]] auto const& that = this->as.U64;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 8 /* USize */: {
-TRY(builder.append("NumericConstant::USize"sv));
+builder.append("NumericConstant::USize"sv);
 [[maybe_unused]] auto const& that = this->as.USize;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 9 /* F32 */: {
-TRY(builder.append("NumericConstant::F32"sv));
+builder.append("NumericConstant::F32"sv);
 [[maybe_unused]] auto const& that = this->as.F32;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 10 /* F64 */: {
-TRY(builder.append("NumericConstant::F64"sv));
+builder.append("NumericConstant::F64"sv);
 [[maybe_unused]] auto const& that = this->as.F64;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 11 /* UnknownSigned */: {
-TRY(builder.append("NumericConstant::UnknownSigned"sv));
+builder.append("NumericConstant::UnknownSigned"sv);
 [[maybe_unused]] auto const& that = this->as.UnknownSigned;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 12 /* UnknownUnsigned */: {
-TRY(builder.append("NumericConstant::UnknownUnsigned"sv));
+builder.append("NumericConstant::UnknownUnsigned"sv);
 [[maybe_unused]] auto const& that = this->as.UnknownUnsigned;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 }
 return builder.to_string();
@@ -21499,236 +21639,236 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((static_cast
 ErrorOr<ByteString> parser::ParsedStatement::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Expression */: {
-TRY(builder.append("ParsedStatement::Expression"sv));
+builder.append("ParsedStatement::Expression"sv);
 [[maybe_unused]] auto const& that = this->as.Expression;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* Defer */: {
-TRY(builder.append("ParsedStatement::Defer"sv));
+builder.append("ParsedStatement::Defer"sv);
 [[maybe_unused]] auto const& that = this->as.Defer;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("statement: {}, ", that.statement));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("statement: {}, ", that.statement);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 2 /* UnsafeBlock */: {
-TRY(builder.append("ParsedStatement::UnsafeBlock"sv));
+builder.append("ParsedStatement::UnsafeBlock"sv);
 [[maybe_unused]] auto const& that = this->as.UnsafeBlock;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}, ", that.block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("block: {}, ", that.block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 3 /* DestructuringAssignment */: {
-TRY(builder.append("ParsedStatement::DestructuringAssignment"sv));
+builder.append("ParsedStatement::DestructuringAssignment"sv);
 [[maybe_unused]] auto const& that = this->as.DestructuringAssignment;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("vars: {}, ", that.vars));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("var_decl: {}, ", that.var_decl));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("vars: {}, ", that.vars);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("var_decl: {}, ", that.var_decl);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 4 /* VarDecl */: {
-TRY(builder.append("ParsedStatement::VarDecl"sv));
+builder.append("ParsedStatement::VarDecl"sv);
 [[maybe_unused]] auto const& that = this->as.VarDecl;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("var: {}, ", that.var));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("init: {}, ", that.init));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("var: {}, ", that.var);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("init: {}, ", that.init);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 5 /* If */: {
-TRY(builder.append("ParsedStatement::If"sv));
+builder.append("ParsedStatement::If"sv);
 [[maybe_unused]] auto const& that = this->as.If;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("condition: {}, ", that.condition));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("then_block: {}, ", that.then_block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("else_statement: {}, ", that.else_statement));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("condition: {}, ", that.condition);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("then_block: {}, ", that.then_block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("else_statement: {}, ", that.else_statement);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 6 /* Block */: {
-TRY(builder.append("ParsedStatement::Block"sv));
+builder.append("ParsedStatement::Block"sv);
 [[maybe_unused]] auto const& that = this->as.Block;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}, ", that.block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("block: {}, ", that.block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 7 /* Loop */: {
-TRY(builder.append("ParsedStatement::Loop"sv));
+builder.append("ParsedStatement::Loop"sv);
 [[maybe_unused]] auto const& that = this->as.Loop;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}, ", that.block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("block: {}, ", that.block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 8 /* While */: {
-TRY(builder.append("ParsedStatement::While"sv));
+builder.append("ParsedStatement::While"sv);
 [[maybe_unused]] auto const& that = this->as.While;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("condition: {}, ", that.condition));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}, ", that.block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("condition: {}, ", that.condition);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("block: {}, ", that.block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 9 /* For */: {
-TRY(builder.append("ParsedStatement::For"sv));
+builder.append("ParsedStatement::For"sv);
 [[maybe_unused]] auto const& that = this->as.For;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("iterator_name: \"{}\", ", that.iterator_name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name_span: {}, ", that.name_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_destructuring: {}, ", that.is_destructuring));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("range: {}, ", that.range));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}, ", that.block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("iterator_name: \"{}\", ", that.iterator_name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name_span: {}, ", that.name_span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_destructuring: {}, ", that.is_destructuring);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("range: {}, ", that.range);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("block: {}, ", that.block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 10 /* Break */: {
-TRY(builder.append("ParsedStatement::Break"sv));
+builder.append("ParsedStatement::Break"sv);
 [[maybe_unused]] auto const& that = this->as.Break;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 11 /* Continue */: {
-TRY(builder.append("ParsedStatement::Continue"sv));
+builder.append("ParsedStatement::Continue"sv);
 [[maybe_unused]] auto const& that = this->as.Continue;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 case 12 /* Return */: {
-TRY(builder.append("ParsedStatement::Return"sv));
+builder.append("ParsedStatement::Return"sv);
 [[maybe_unused]] auto const& that = this->as.Return;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 13 /* Throw */: {
-TRY(builder.append("ParsedStatement::Throw"sv));
+builder.append("ParsedStatement::Throw"sv);
 [[maybe_unused]] auto const& that = this->as.Throw;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 14 /* Yield */: {
-TRY(builder.append("ParsedStatement::Yield"sv));
+builder.append("ParsedStatement::Yield"sv);
 [[maybe_unused]] auto const& that = this->as.Yield;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 15 /* InlineCpp */: {
-TRY(builder.append("ParsedStatement::InlineCpp"sv));
+builder.append("ParsedStatement::InlineCpp"sv);
 [[maybe_unused]] auto const& that = this->as.InlineCpp;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("block: {}, ", that.block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("block: {}, ", that.block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 16 /* Guard */: {
-TRY(builder.append("ParsedStatement::Guard"sv));
+builder.append("ParsedStatement::Guard"sv);
 [[maybe_unused]] auto const& that = this->as.Guard;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expr: {}, ", that.expr));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("else_block: {}, ", that.else_block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("remaining_code: {}, ", that.remaining_code));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("expr: {}, ", that.expr);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("else_block: {}, ", that.else_block);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("remaining_code: {}, ", that.remaining_code);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 17 /* Garbage */: {
-TRY(builder.append("ParsedStatement::Garbage"sv));
+builder.append("ParsedStatement::Garbage"sv);
 [[maybe_unused]] auto const& that = this->as.Garbage;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 }
 return builder.to_string();
@@ -22963,32 +23103,32 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 ErrorOr<ByteString> parser::IncludeAction::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Define */: {
-TRY(builder.append("IncludeAction::Define"sv));
+builder.append("IncludeAction::Define"sv);
 [[maybe_unused]] auto const& that = this->as.Define;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\", ", that.name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}, ", that.span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("value: \"{}\"", that.value));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", that.name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}, ", that.span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("value: \"{}\"", that.value);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* Undefine */: {
-TRY(builder.append("IncludeAction::Undefine"sv));
+builder.append("IncludeAction::Undefine"sv);
 [[maybe_unused]] auto const& that = this->as.Undefine;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\", ", that.name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\", ", that.name);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 }
 return builder.to_string();
@@ -23120,58 +23260,58 @@ break;
 ErrorOr<ByteString> parser::RecordType::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Struct */: {
-TRY(builder.append("RecordType::Struct"sv));
+builder.append("RecordType::Struct"sv);
 [[maybe_unused]] auto const& that = this->as.Struct;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("fields: {}, ", that.fields));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("super_type: {}", that.super_type));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("fields: {}, ", that.fields);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("super_type: {}", that.super_type);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* Class */: {
-TRY(builder.append("RecordType::Class"sv));
+builder.append("RecordType::Class"sv);
 [[maybe_unused]] auto const& that = this->as.Class;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("fields: {}, ", that.fields));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("super_type: {}", that.super_type));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("fields: {}, ", that.fields);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("super_type: {}", that.super_type);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 2 /* ValueEnum */: {
-TRY(builder.append("RecordType::ValueEnum"sv));
+builder.append("RecordType::ValueEnum"sv);
 [[maybe_unused]] auto const& that = this->as.ValueEnum;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("underlying_type: {}, ", that.underlying_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("variants: {}", that.variants));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("underlying_type: {}, ", that.underlying_type);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("variants: {}", that.variants);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 3 /* SumEnum */: {
-TRY(builder.append("RecordType::SumEnum"sv));
+builder.append("RecordType::SumEnum"sv);
 [[maybe_unused]] auto const& that = this->as.SumEnum;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_boxed: {}, ", that.is_boxed));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("fields: {}, ", that.fields));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("variants: {}", that.variants));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_boxed: {}, ", that.is_boxed);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("fields: {}, ", that.fields);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("variants: {}", that.variants);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 4 /* Garbage */: {
 return ByteString("RecordType::Garbage"sv);

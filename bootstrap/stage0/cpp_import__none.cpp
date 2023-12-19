@@ -1,10 +1,10 @@
 #include "cpp_import__none.h"
 namespace Jakt {
 namespace cpp_import__none {
-ErrorOr<ByteString> cpp_import__none::CppImportProcessor::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("CppImportProcessor("sv));{
+ErrorOr<ByteString> cpp_import__none::CppImportProcessor::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CppImportProcessor("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 cpp_import__none::CppImportProcessor cpp_import__none::CppImportProcessor::create() {
 {
 return cpp_import__none::CppImportProcessor();

@@ -28,7 +28,33 @@ public:
 private:
 Mutability() {};
 };
-struct VarVisibility {
+struct VarType {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<ByteString> debug_description() const;
+[[nodiscard]] static VarType Variable();
+[[nodiscard]] static VarType Field();
+~VarType();
+VarType& operator=(VarType const &);
+VarType& operator=(VarType &&);
+VarType(VarType const&);
+VarType(VarType &&);
+private: void __jakt_destroy_variant();
+public:
+private:
+VarType() {};
+};
+struct JaktSymbol {
+  public:
+public: ByteString name;public: JaktInternal::Optional<ByteString> detail;public: ByteString kind;public: utility::Span range;public: utility::Span selection_range;public: JaktInternal::DynamicArray<ide::JaktSymbol> children;public: JaktSymbol(ByteString a_name, JaktInternal::Optional<ByteString> a_detail, ByteString a_kind, utility::Span a_range, utility::Span a_selection_range, JaktInternal::DynamicArray<ide::JaktSymbol> a_children);
+
+public: ErrorOr<ByteString> to_json() const;
+public: ErrorOr<ByteString> debug_description() const;
+};struct VarVisibility {
 u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
@@ -49,32 +75,6 @@ private: void __jakt_destroy_variant();
 public:
 private:
 VarVisibility() {};
-};
-struct JaktSymbol {
-  public:
-public: ByteString name;public: JaktInternal::Optional<ByteString> detail;public: ByteString kind;public: utility::Span range;public: utility::Span selection_range;public: JaktInternal::DynamicArray<ide::JaktSymbol> children;public: JaktSymbol(ByteString a_name, JaktInternal::Optional<ByteString> a_detail, ByteString a_kind, utility::Span a_range, utility::Span a_selection_range, JaktInternal::DynamicArray<ide::JaktSymbol> a_children);
-
-public: ErrorOr<ByteString> to_json() const;
-public: ErrorOr<ByteString> debug_description() const;
-};struct VarType {
-u8 __jakt_variant_index = 0;
-union VariantData {
-u8 __jakt_uninit_value;
-constexpr VariantData() {}
-~VariantData() {}
-} as;
-constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<ByteString> debug_description() const;
-[[nodiscard]] static VarType Variable();
-[[nodiscard]] static VarType Field();
-~VarType();
-VarType& operator=(VarType const &);
-VarType& operator=(VarType &&);
-VarType(VarType const&);
-VarType(VarType &&);
-private: void __jakt_destroy_variant();
-public:
-private:
-VarType() {};
 };
 struct Usage {
 u8 __jakt_variant_index = 0;
@@ -132,8 +132,8 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::ide::VarVisibility> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::VarVisibility const& value) {
+template<>struct Jakt::Formatter<Jakt::ide::VarType> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::VarType const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {
@@ -144,8 +144,8 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::ide::VarType> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::VarType const& value) {
+template<>struct Jakt::Formatter<Jakt::ide::VarVisibility> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::VarVisibility const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

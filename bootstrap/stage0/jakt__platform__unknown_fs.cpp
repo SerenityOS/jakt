@@ -23,10 +23,10 @@ return Error::from_errno(static_cast<i32>(38));
 }
 }
 
-ErrorOr<ByteString> jakt__platform__unknown_fs::DirectoryIterator::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("DirectoryIterator("sv));{
+ErrorOr<ByteString> jakt__platform__unknown_fs::DirectoryIterator::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("DirectoryIterator("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 ErrorOr<JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>>> jakt__platform__unknown_fs::DirectoryIterator::from_path(jakt__path::Path const path) {
 {
 warnln((StringView::from_string_literal("NOT IMPLEMENTED: DirectoryIterator::from_path(path: {})"sv)),path);

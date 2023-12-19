@@ -1,20 +1,22 @@
 #include "repl_backend__common.h"
 namespace Jakt {
 namespace repl_backend__common {
-ErrorOr<ByteString> repl_backend__common::Style::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Style("sv));{
+ErrorOr<ByteString> repl_backend__common::Style::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Style("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("foreground: {}, ", foreground));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("background: {}", background));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("foreground: {}, ", foreground);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("background: {}", background);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 repl_backend__common::Style::Style(JaktInternal::Optional<repl_backend__common::Color> a_foreground, JaktInternal::Optional<repl_backend__common::Color> a_background): foreground(move(a_foreground)), background(move(a_background)){}
 
 ErrorOr<ByteString> repl_backend__common::LineResult::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Line */: {
-TRY(builder.append("LineResult::Line"sv));
+builder.append("LineResult::Line"sv);
 [[maybe_unused]] auto const& that = this->as.Line;
-TRY(builder.appendff("(\"{}\")", that.value));
+builder.appendff("(\"{}\")", that.value);
 break;}
 case 1 /* Eof */: {
 return ByteString("LineResult::Eof"sv);
@@ -380,24 +382,24 @@ case 9 /* Unchanged */:break;
 ErrorOr<ByteString> repl_backend__common::Color::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Components */: {
-TRY(builder.append("Color::Components"sv));
+builder.append("Color::Components"sv);
 [[maybe_unused]] auto const& that = this->as.Components;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("red: {}, ", that.red));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("green: {}, ", that.green));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("blue: {}", that.blue));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("red: {}, ", that.red);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("green: {}, ", that.green);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("blue: {}", that.blue);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* XTerm */: {
-TRY(builder.append("Color::XTerm"sv));
+builder.append("Color::XTerm"sv);
 [[maybe_unused]] auto const& that = this->as.XTerm;
-TRY(builder.appendff("({})", that.value));
+builder.appendff("({})", that.value);
 break;}
 }
 return builder.to_string();

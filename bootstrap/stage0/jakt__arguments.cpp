@@ -1,13 +1,16 @@
 #include "jakt__arguments.h"
 namespace Jakt {
 namespace jakt__arguments {
-ErrorOr<ByteString> jakt__arguments::ArgsParser::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("ArgsParser("sv));{
+ErrorOr<ByteString> jakt__arguments::ArgsParser::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ArgsParser("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("args: {}, ", args));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("removed_indices: {}, ", removed_indices));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("definitely_positional_args: {}", definitely_positional_args));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("args: {}, ", args);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("removed_indices: {}, ", removed_indices);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("definitely_positional_args: {}", definitely_positional_args);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 ErrorOr<jakt__arguments::ArgsParser> jakt__arguments::ArgsParser::from_args(JaktInternal::DynamicArray<ByteString> const args) {
 {
 jakt__arguments::ArgsParser parser = jakt__arguments::ArgsParser(args,((DynamicArray<size_t>::must_create_with({}))),((DynamicArray<ByteString>::must_create_with({}))));
