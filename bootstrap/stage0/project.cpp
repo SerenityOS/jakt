@@ -1,11 +1,12 @@
 #include "project.h"
 namespace Jakt {
 namespace project {
-ErrorOr<ByteString> project::Project::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Project("sv));{
+ErrorOr<ByteString> project::Project::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Project("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("name: \"{}\"", name));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("name: \"{}\"", name);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 ErrorOr<void> project::Project::create_template_cmake_lists(ByteString const project_directory) const {
 {
 ByteString const cml_contents = TRY((((TRY((((TRY((((TRY(((((ByteString::must_from_utf8("cmake_minimum_required(VERSION 3.20)\nproject("sv))) + (((*this).name)))))) + ((ByteString::must_from_utf8("\n   VERSION 1.0.0\n   LANGUAGES CXX\n)\n\nfind_package(Jakt REQUIRED)\n\nadd_jakt_executable("sv))))))) + (((*this).name)))))) + ((ByteString::must_from_utf8("\n   MAIN_SOURCE src/main.jakt\n   MODULE_SOURCES\n     src/second_module.jakt\n)\n"sv))))));

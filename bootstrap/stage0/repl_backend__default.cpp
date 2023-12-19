@@ -1,13 +1,16 @@
 #include "repl_backend__default.h"
 namespace Jakt {
 namespace repl_backend__default {
-ErrorOr<ByteString> repl_backend__default::Editor::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Editor("sv));{
+ErrorOr<ByteString> repl_backend__default::Editor::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Editor("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("standard_input_file: {}, ", standard_input_file));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("line_pointer: {}, ", line_pointer));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("prompt: \"{}\"", prompt));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("standard_input_file: {}, ", standard_input_file);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("line_pointer: {}, ", line_pointer);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("prompt: \"{}\"", prompt);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 void repl_backend__default::Editor::destroy() {
 {
 fclose(((*this).standard_input_file));
@@ -47,10 +50,10 @@ char* const c_string = fgets(((*this).line_pointer),static_cast<size_t>(4096ULL)
 if ((c_string == jakt__platform__utility::null<char*>())){
 return repl_backend__common::LineResult::Eof();
 }
-TRY((((builder).append_c_string(c_string))));
+((builder).append_c_string(c_string));
 }
 
-return repl_backend__common::LineResult::Line(TRY((((builder).to_string()))));
+return repl_backend__common::LineResult::Line(((builder).to_string()));
 }
 }
 

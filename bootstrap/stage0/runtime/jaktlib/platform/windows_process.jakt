@@ -100,14 +100,14 @@ fn join_arguments(args: [String]) throws -> String {
         if first {
             first = false
         } else {
-            joined_builder.append_string(" ")
+            joined_builder.append(" ")
         }
 
         joined_builder.append(b'"')
         for i in 0..arg.length() {
             let c = arg.byte_at(i)
             if c == b'"' {
-                joined_builder.append_string("\\\"")
+                joined_builder.append("\\\"")
             } else {
                 joined_builder.append(c)
             }

@@ -5,7 +5,7 @@ ErrorOr<ByteString> read_all(ByteString const filename) {
 {
 NonnullRefPtr<File> file = TRY((File::open_for_reading(filename)));
 JaktInternal::DynamicArray<u8> const buf = TRY((((file)->read_all())));
-ByteStringBuilder s = ByteStringBuilder::create();
+ByteStringBuilder builder = ByteStringBuilder::create();
 {
 JaktInternal::ArrayIterator<u8> _magic = ((buf).iterator());
 for (;;){
@@ -15,20 +15,20 @@ break;
 }
 u8 b = (_magic_value.value());
 {
-TRY((((s).append(b))));
+((builder).append(b));
 }
 
 }
 }
 
-return TRY((((s).to_string())));
+return ((builder).to_string());
 }
 }
 
-ErrorOr<ByteString> cpp_import__common::CppImportErrors::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("CppImportErrors("sv));{
+ErrorOr<ByteString> cpp_import__common::CppImportErrors::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CppImportErrors("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 StringView cpp_import__common::CppImportErrors::no_this_type() {
 {
 return (StringView::from_string_literal("No 'this' type when compiling a function"sv));

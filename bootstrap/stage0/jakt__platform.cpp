@@ -97,14 +97,18 @@ return JaktInternal::ExplicitValue(((DynamicArray<ByteString>::must_create_with(
 }
 }
 
-ErrorOr<ByteString> jakt__platform::Target::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Target("sv));{
+ErrorOr<ByteString> jakt__platform::Target::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Target("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("arch: \"{}\", ", arch));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("platform: \"{}\", ", platform));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("os: \"{}\", ", os));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("abi: \"{}\"", abi));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("arch: \"{}\", ", arch);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("platform: \"{}\", ", platform);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("os: \"{}\", ", os);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("abi: \"{}\"", abi);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 jakt__platform::Target::Target(ByteString a_arch, ByteString a_platform, ByteString a_os, ByteString a_abi): arch(move(a_arch)), platform(move(a_platform)), os(move(a_os)), abi(move(a_abi)){}
 
 ErrorOr<jakt__platform::Target> jakt__platform::Target::from_triple(ByteString const triple) {

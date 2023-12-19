@@ -11,18 +11,18 @@ public: ByteString extension() const;
 public: Path(ByteString a_path);
 
 public: ByteString basename(bool const strip_extension) const;
-public: ErrorOr<jakt__path::Path> join(ByteString const path) const;
-public: ErrorOr<jakt__path::Path> join(jakt__path::Path const path) const;
+public: jakt__path::Path join(ByteString const path) const;
+public: jakt__path::Path join(jakt__path::Path const path) const;
 public: ByteString to_string() const;
 public: bool exists() const;
 public: ErrorOr<jakt__path::Path> replace_extension(ByteString const new_extension) const;
 private: static JaktInternal::Optional<size_t> last_slash(ByteString const path);
-public: static ErrorOr<jakt__path::Path> from_string(ByteString const string);
-public: static ErrorOr<jakt__path::Path> from_parts(JaktInternal::DynamicArray<ByteString> const parts);
+public: static jakt__path::Path from_string(ByteString const string);
+public: static jakt__path::Path from_parts(JaktInternal::DynamicArray<ByteString> const parts);
 private: JaktInternal::Tuple<ByteString,ByteString> split_at_last_slash() const;
-public: ErrorOr<jakt__path::Path> parent() const;
-private: ErrorOr<void> normalize_separators();
-public: ErrorOr<JaktInternal::DynamicArray<ByteString>> components() const;
+public: jakt__path::Path parent() const;
+private: void normalize_separators();
+public: JaktInternal::DynamicArray<ByteString> components() const;
 public: bool is_dot() const;
 public: ErrorOr<ByteString> debug_description() const;
 };}

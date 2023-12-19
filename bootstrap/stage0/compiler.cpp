@@ -1,33 +1,52 @@
 #include "compiler.h"
 namespace Jakt {
 namespace compiler {
-ErrorOr<ByteString> compiler::Compiler::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Compiler("sv));{
+ErrorOr<ByteString> compiler::Compiler::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Compiler("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("files: {}, ", files));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("file_ids: {}, ", file_ids));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("errors: {}, ", errors));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("current_file: {}, ", current_file));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("current_file_contents: {}, ", current_file_contents));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("dump_lexer: {}, ", dump_lexer));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("dump_parser: {}, ", dump_parser));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("ignore_parser_errors: {}, ", ignore_parser_errors));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("debug_print: {}, ", debug_print));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("std_include_path: {}, ", std_include_path));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("include_paths: {}, ", include_paths));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("json_errors: {}, ", json_errors));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("dump_type_hints: {}, ", dump_type_hints));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("dump_try_hints: {}, ", dump_try_hints));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("optimize: {}, ", optimize));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("target_triple: {}, ", target_triple));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("user_configuration: {}, ", user_configuration));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("binary_dir: {}, ", binary_dir));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("assume_main_file_path: {}", assume_main_file_path));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("files: {}, ", files);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("file_ids: {}, ", file_ids);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("errors: {}, ", errors);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("current_file: {}, ", current_file);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("current_file_contents: {}, ", current_file_contents);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("dump_lexer: {}, ", dump_lexer);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("dump_parser: {}, ", dump_parser);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("ignore_parser_errors: {}, ", ignore_parser_errors);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("debug_print: {}, ", debug_print);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("std_include_path: {}, ", std_include_path);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("include_paths: {}, ", include_paths);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("json_errors: {}, ", json_errors);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("dump_type_hints: {}, ", dump_type_hints);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("dump_try_hints: {}, ", dump_try_hints);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("optimize: {}, ", optimize);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("target_triple: {}, ", target_triple);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("user_configuration: {}, ", user_configuration);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("binary_dir: {}, ", binary_dir);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("assume_main_file_path: {}", assume_main_file_path);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 ErrorOr<void> compiler::Compiler::load_prelude() {
 {
 ByteString const module_name = (ByteString::must_from_utf8("__prelude__"sv));
-jakt__path::Path const file_name = TRY((jakt__path::Path::from_string(module_name)));
+jakt__path::Path const file_name = jakt__path::Path::from_string(module_name);
 TRY((((*this).get_file_id_or_register(file_name))));
 }
 return {};
@@ -36,8 +55,8 @@ return {};
 ErrorOr<JaktInternal::Optional<jakt__path::Path>> compiler::Compiler::search_for_path(ByteString const input_module_name,bool const relative_import,size_t const parent_path_count) const {
 {
 ByteStringBuilder builder = ByteStringBuilder::create();
-TRY((((builder).append(static_cast<u8>(47)))));
-ByteString const separator = TRY((((builder).to_string())));
+((builder).append(static_cast<u8>(47)));
+ByteString const separator = ((builder).to_string());
 ByteString const module_name = ((input_module_name).replace((ByteString::must_from_utf8("::"sv)),separator));
 if ((!(relative_import))){
 {
@@ -49,7 +68,7 @@ break;
 }
 ByteString include_path = (_magic_value.value());
 {
-jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts(((DynamicArray<ByteString>::must_create_with({include_path, TRY((((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))))}))))));
+jakt__path::Path const candidate_path = jakt__path::Path::from_parts(((DynamicArray<ByteString>::must_create_with({include_path, TRY((((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))))}))));
 if (((candidate_path).exists())){
 return candidate_path;
 }
@@ -62,12 +81,12 @@ return candidate_path;
 ByteString const standard_module_name = (ByteString::must_from_utf8("jakt"sv));
 if (((module_name).starts_with(standard_module_name))){
 ByteString const std_module_name_path = ((module_name).substring(JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(((module_name).length()),JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)))));
-jakt__path::Path const candidate_path = TRY((jakt__path::Path::from_parts(((DynamicArray<ByteString>::must_create_with({((((*this).std_include_path)).to_string()), TRY((((std_module_name_path) + ((ByteString::must_from_utf8(".jakt"sv))))))}))))));
+jakt__path::Path const candidate_path = jakt__path::Path::from_parts(((DynamicArray<ByteString>::must_create_with({((((*this).std_include_path)).to_string()), TRY((((std_module_name_path) + ((ByteString::must_from_utf8(".jakt"sv))))))}))));
 if (((candidate_path).exists())){
 return candidate_path;
 }
 }
-return TRY((((*this).find_in_search_paths(TRY((jakt__path::Path::from_string(TRY((((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))))))),relative_import,parent_path_count))));
+return TRY((((*this).find_in_search_paths(jakt__path::Path::from_string(TRY((((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))))),relative_import,parent_path_count))));
 }
 }
 
@@ -179,7 +198,7 @@ break;
 }
 ByteString include_path = (_magic_value.value());
 {
-jakt__path::Path const candidate_path = TRY((((TRY((jakt__path::Path::from_string(include_path)))).join(path))));
+jakt__path::Path const candidate_path = ((jakt__path::Path::from_string(include_path)).join(path));
 if (((candidate_path).exists())){
 return candidate_path;
 }
@@ -190,7 +209,7 @@ return candidate_path;
 
 JaktInternal::Optional<jakt__path::Path> const current_file_path = ((*this).assume_main_file_path).value_or_lazy_evaluated_optional([&] { return ((*this).current_file_path()); });
 if (((current_file_path).has_value())){
-jakt__path::Path candidate_path = TRY((((TRY((((TRY(((((current_file_path.value())).absolute())))).parent())))).join(path))));
+jakt__path::Path candidate_path = ((((TRY(((((current_file_path.value())).absolute())))).parent())).join(path));
 if ((relative_import && [](size_t const& self, size_t rhs) -> bool {
 {
 return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
@@ -203,7 +222,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 (parent_path_count,static_cast<size_t>(0ULL)))){
 size_t parent_count = parent_path_count;
-jakt__path::Path parent = TRY((((candidate_path).parent())));
+jakt__path::Path parent = ((candidate_path).parent());
 while ([](size_t const& self, size_t rhs) -> bool {
 {
 return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
@@ -215,10 +234,10 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (parent_count,static_cast<size_t>(0ULL))){
-(parent = TRY((((parent).parent()))));
+(parent = ((parent).parent()));
 ((parent_count--));
 }
-(candidate_path = TRY((((parent).join(path)))));
+(candidate_path = ((parent).join(path)));
 }
 if (((candidate_path).exists())){
 return candidate_path;

@@ -75,23 +75,23 @@ extern struct String {
 
 [[name=ByteStringBuilder]]
 extern struct StringBuilder {
-    fn append(mut this, anon b: u8) throws
-    fn append(mut this, anon s: StringView) throws
-    fn append(mut this, anon s: String) throws
-    fn append(mut this, string: raw c_char, size: usize) throws
+    fn append(mut this, anon b: u8)
+    fn append(mut this, anon s: StringView)
+    fn append(mut this, anon s: String)
+    fn append(mut this, string: raw c_char, size: usize)
     [[name=append_code_point]]
-    fn append(mut this, anon code_point: u32) throws
-    fn append_escaped_for_json(mut this, anon s: String) throws
-    fn to_string(this) throws -> String
+    fn append(mut this, anon code_point: u32)
+    fn append_escaped_for_json(mut this, anon s: String)
+    fn to_string(this) -> String
+
     fn is_empty(this) -> bool
     fn length(this) -> usize
     fn clear(mut this)
     fn create() -> StringBuilder
 
     // Deprecated API
-    fn append_string(mut this, anon s: String) throws
-    fn append_c_string(mut this, anon s: raw c_char) throws
-    fn append_code_point(mut this, anon code_point: u32) throws
+    fn append_c_string(mut this, anon s: raw c_char)
+    fn append_code_point(mut this, anon code_point: u32)
 }
 
 extern struct WeakPtr<T> {

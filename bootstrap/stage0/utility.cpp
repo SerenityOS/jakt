@@ -113,17 +113,17 @@ break;
 }
 u8 byte = (_magic_value.value());
 {
-TRY((((builder).append(byte))));
+((builder).append(byte));
 }
 
 }
 }
 
-return TRY((((builder).to_string())));
+return ((builder).to_string());
 }
 }
 
-ErrorOr<ByteString> escape_for_quotes(ByteString const s) {
+ByteString escape_for_quotes(ByteString const s) {
 {
 ByteStringBuilder builder = ByteStringBuilder::create();
 {
@@ -136,29 +136,29 @@ break;
 u32 cp = (_magic_value.value());
 {
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<ByteString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ByteString>{
 auto __jakt_enum_value = (cp);
 if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'"'))))) {
 {
-TRY((((builder).append_string((ByteString::must_from_utf8("\\\""sv))))));
+((builder).append((StringView::from_string_literal("\\\""sv))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'\\'))))) {
 {
-TRY((((builder).append_string((ByteString::must_from_utf8("\\\\"sv))))));
+((builder).append((StringView::from_string_literal("\\\\"sv))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'\n'))))) {
 {
-TRY((((builder).append_string((ByteString::must_from_utf8("\\n"sv))))));
+((builder).append((StringView::from_string_literal("\\n"sv))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((builder).append_code_point(cp))));
+((builder).append_code_point(cp));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -177,7 +177,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 
-return TRY((((builder).to_string())));
+return ((builder).to_string());
 }
 }
 
@@ -319,7 +319,7 @@ TRY((((outfile)->write(bytes))));
 return {};
 }
 
-ErrorOr<ByteString> interpret_escapes(ByteString const s) {
+ByteString interpret_escapes(ByteString const s) {
 {
 ByteStringBuilder builder = ByteStringBuilder::create();
 bool in_escape = false;
@@ -333,12 +333,12 @@ break;
 u32 cp = (_magic_value.value());
 {
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<ByteString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ByteString>{
 auto __jakt_enum_value = (cp);
 if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'\\'))))) {
 {
 if (in_escape){
-TRY((((builder).append(static_cast<u8>(u8'\\')))));
+((builder).append(static_cast<u8>(u8'\\')));
 (in_escape = false);
 }
 else {
@@ -350,14 +350,14 @@ return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'"'))))) {
 {
-TRY((((builder).append_code_point(cp))));
+((builder).append_code_point(cp));
 (in_escape = false);
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'\''))))) {
 {
-TRY((((builder).append_code_point(cp))));
+((builder).append_code_point(cp));
 (in_escape = false);
 }
 return JaktInternal::ExplicitValue<void>();
@@ -365,11 +365,11 @@ return JaktInternal::ExplicitValue<void>();
 else if (__jakt_enum_value == (infallible_integer_cast<u32>((static_cast<u8>(u8'n'))))) {
 {
 if (in_escape){
-TRY((((builder).append(static_cast<u8>(u8'\n')))));
+((builder).append(static_cast<u8>(u8'\n')));
 (in_escape = false);
 }
 else {
-TRY((((builder).append_code_point(cp))));
+((builder).append_code_point(cp));
 }
 
 }
@@ -377,7 +377,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-TRY((((builder).append_code_point(cp))));
+((builder).append_code_point(cp));
 (in_escape = false);
 }
 return JaktInternal::ExplicitValue<void>();
@@ -397,7 +397,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 
-return TRY((((builder).to_string())));
+return ((builder).to_string());
 }
 }
 
@@ -476,13 +476,16 @@ return output;
 }
 }
 
-ErrorOr<ByteString> utility::Span::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("Span("sv));{
+ErrorOr<ByteString> utility::Span::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Span("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("file_id: {}, ", file_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("start: {}, ", start));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("end: {}", end));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("file_id: {}, ", file_id);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("start: {}, ", start);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("end: {}", end);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 bool utility::Span::contains(utility::Span const span) const {
 {
 return (((((*this).file_id)).equals(((span).file_id))) && ([](size_t const& self, size_t rhs) -> bool {
@@ -627,11 +630,12 @@ return b;
 }
 }
 
-ErrorOr<ByteString> utility::FileId::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("FileId("sv));{
+ErrorOr<ByteString> utility::FileId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("FileId("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("id: {}", id));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("id: {}", id);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 utility::FileId::FileId(size_t a_id): id(move(a_id)){}
 
 bool utility::FileId::equals(utility::FileId const rhs) const {

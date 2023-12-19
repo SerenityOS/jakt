@@ -597,34 +597,34 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 ErrorOr<ByteString> error::JaktError::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Message */: {
-TRY(builder.append("JaktError::Message"sv));
+builder.append("JaktError::Message"sv);
 [[maybe_unused]] auto const& that = this->as.Message;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("message: \"{}\", ", that.message));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("message: \"{}\", ", that.message);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}", that.span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 case 1 /* MessageWithHint */: {
-TRY(builder.append("JaktError::MessageWithHint"sv));
+builder.append("JaktError::MessageWithHint"sv);
 [[maybe_unused]] auto const& that = this->as.MessageWithHint;
-TRY(builder.append("("sv));
+builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("message: \"{}\", ", that.message));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}, ", that.span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("hint: \"{}\", ", that.hint));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("hint_span: {}", that.hint_span));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("message: \"{}\", ", that.message);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("span: {}, ", that.span);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("hint: \"{}\", ", that.hint);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("hint_span: {}", that.hint_span);
 }
-TRY(builder.append(")"sv));
+builder.append(")"sv);
 break;}
 }
 return builder.to_string();

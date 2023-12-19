@@ -1,13 +1,16 @@
 #include "jakt__file_iterator.h"
 namespace Jakt {
 namespace jakt__file_iterator {
-ErrorOr<ByteString> jakt__file_iterator::RecursiveFileIterator::debug_description() const { auto builder = ByteStringBuilder::create();TRY(builder.append("RecursiveFileIterator("sv));{
+ErrorOr<ByteString> jakt__file_iterator::RecursiveFileIterator::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("RecursiveFileIterator("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("extension: \"{}\", ", extension));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("directory_list: {}, ", directory_list));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff("current_directory: {}", current_directory));
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("extension: \"{}\", ", extension);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("directory_list: {}, ", directory_list);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("current_directory: {}", current_directory);
 }
-TRY(builder.append(")"sv));return builder.to_string(); }
+builder.append(")"sv);return builder.to_string(); }
 ErrorOr<NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator>> jakt__file_iterator::RecursiveFileIterator::make(jakt__path::Path const directory,ByteString const extension) {
 {
 return TRY((jakt__file_iterator::RecursiveFileIterator::__jakt_create(extension,((DynamicArray<jakt__path::Path>::must_create_with({directory}))),JaktInternal::OptionalNone())));
@@ -41,7 +44,7 @@ return JaktInternal::OptionalNone();
 }
 JaktInternal::Optional<JaktInternal::Tuple<jakt__path::Path,bool>> const next = TRY(((((((*this).current_directory).value()))->next())));
 if (((next).has_value())){
-jakt__path::Path new_path = TRY((((TRY(((((((*this).current_directory).value()))->get_path())))).join((((((next.value())).template get<0>())).to_string())))));
+jakt__path::Path new_path = ((TRY(((((((*this).current_directory).value()))->get_path())))).join((((((next.value())).template get<0>())).to_string())));
 if ((((next.value())).template get<1>())){
 ((((*this).directory_list)).push(new_path));
 return TRY((((*this).next())));

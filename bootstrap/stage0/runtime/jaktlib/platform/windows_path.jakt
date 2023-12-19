@@ -1,2 +1,2 @@
 comptime get_path_separator() -> u8 => b'\\'
-comptime get_valid_path_separators() throws -> [u8] => [b'\\', b'/']
+comptime get_valid_path_separators() -> [u8] => [b'\\', b'/']
