@@ -289,7 +289,7 @@ type bool implements(Equal<bool>, BitwiseAndAssign<bool>, BitwiseOrAssign<bool>,
     extern fn bitwise_xor_assign(mut this, anon rhs: bool) -> void
 }
 
-type String implements(Equal<String>, ThrowingAddAssign<String>) {
+type String implements(Equal<String>, AddAssign<String>) {
     [[name="operator(==)"]]
     extern fn equals(this, anon rhs: String) -> bool
 
@@ -297,7 +297,7 @@ type String implements(Equal<String>, ThrowingAddAssign<String>) {
     fn not_equals(this, anon rhs: String) -> bool => not .equals(rhs)
 
     [[inline(always)]]
-    fn add_assign(mut this, anon rhs: String) throws -> void {
+    fn add_assign(mut this, anon rhs: String) -> void {
         this = this + rhs
     }
 }
