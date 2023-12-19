@@ -26,7 +26,7 @@ class Compiler {
     public binary_dir: Path
     public assume_main_file_path: Path?
 
-    public fn panic(this, anon message: String) throws -> never {
+    public fn panic(this, anon message: String) -> never {
         .print_errors()
         utility::panic(message)
     }

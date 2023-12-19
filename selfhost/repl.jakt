@@ -263,7 +263,7 @@ struct REPL {
         return has_error
     }
 
-    fn line_to_bytes(anon line: String) throws -> [u8] {
+    fn line_to_bytes(anon line: String) -> [u8] {
       mut pos: usize   = 0
       mut bytes_: [u8] = []
 

@@ -15,7 +15,7 @@ fn todo(anon message: String) -> never {
     abort()
 }
 
-fn add_arrays<T>(anon a: [T], anon b: [T]) throws -> [T] {
+fn add_arrays<T>(anon a: [T], anon b: [T]) -> [T] {
     mut result: [T] = []
 
     for x in a {

@@ -575,7 +575,7 @@ struct CodeGenerator {
         return dependency_graph
     }
 
-    fn extract_dependencies_from(this, type_id: TypeId, dependency_graph: [TypeId:[TypeId]], top_level: bool) throws -> [TypeId] {
+    fn extract_dependencies_from(this, type_id: TypeId, dependency_graph: [TypeId:[TypeId]], top_level: bool) -> [TypeId] {
         mut dependencies: [TypeId] = []
 
         let type_ = .program.get_type(type_id)
@@ -601,7 +601,7 @@ struct CodeGenerator {
         return dependencies
     }
 
-    fn extract_dependencies_from_enum(this, enum_id: EnumId, dependency_graph: [TypeId:[TypeId]], top_level: bool) throws -> [TypeId] {
+    fn extract_dependencies_from_enum(this, enum_id: EnumId, dependency_graph: [TypeId:[TypeId]], top_level: bool) -> [TypeId] {
         mut dependencies: [TypeId] = []
 
         let enum_ = .program.get_enum(enum_id)
@@ -652,7 +652,7 @@ struct CodeGenerator {
         dependency_graph: [TypeId:[TypeId]]
         top_level: bool
         args: [TypeId]
-    ) throws -> [TypeId] {
+    ) -> [TypeId] {
         mut dependencies: [TypeId] = []
         let struct_ = .program.get_struct(struct_id)
 
