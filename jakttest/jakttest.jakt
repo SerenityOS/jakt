@@ -147,7 +147,7 @@ fn print_usage()  {
     eprintln("\t-C,--cpp-compiler <PATH>\t\tUse the C++ compiler at PATH to compile objects. Defaults to clang++.")
 }
 
-fn compare_test(bytes: [u8], expected: String) throws -> bool {
+fn compare_test(bytes: [u8], expected: String) -> bool {
     // first, build up the content to compare to
     mut builder = StringBuilder::create()
     for b in bytes {
@@ -165,7 +165,7 @@ fn compare_test(bytes: [u8], expected: String) throws -> bool {
     return true
 }
 
-fn compare_error(bytes: [u8], expected: String) throws -> bool {
+fn compare_error(bytes: [u8], expected: String) -> bool {
     // first, build up the content to compare to
     mut builder = StringBuilder::create()
 
@@ -193,7 +193,7 @@ fn compare_error(bytes: [u8], expected: String) throws -> bool {
     return true
 }
 
-fn strip_line_breaks(anon input: String) throws -> String {
+fn strip_line_breaks(anon input: String) -> String {
     mut builder = StringBuilder::create();
     for i in 0..input.length() {
         let b = input.byte_at(i)
@@ -875,7 +875,7 @@ fn main(args: [String]) -> c_int {
     return 0
 }
 
-fn bytes_to_string(anon bytes: [u8]) throws -> String {
+fn bytes_to_string(anon bytes: [u8]) -> String {
     mut builder = StringBuilder::create()
 
     for byte in bytes {

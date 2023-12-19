@@ -352,7 +352,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return .index >= .input.size()
     }
 
-    fn substring(this, start: usize, length: usize) throws -> String {
+    fn substring(this, start: usize, length: usize) -> String {
         mut builder = StringBuilder::create()
         for i in start..length {
             builder.append(.input[i])
@@ -360,7 +360,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return builder.to_string()
     }
 
-    fn lex_character_constant_or_name(mut this) throws -> Token {
+    fn lex_character_constant_or_name(mut this) -> Token {
         if .peek_ahead(1) != b'\'' {
             return .lex_number_or_name()
         }
@@ -412,7 +412,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return Token::SingleQuotedString(quote, prefix, span: .span(start, end))
     }
 
-    fn lex_number_or_name(mut this) throws -> Token {
+    fn lex_number_or_name(mut this) -> Token {
         let start = .index
 
         if .eof() {
@@ -458,7 +458,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         else => is_ascii_digit(digit) or (decimal_allowed and digit == b'.')
     }
 
-    fn lex_number(mut this) throws -> Token {
+    fn lex_number(mut this) -> Token {
         let start = .index
 
         mut floating: bool = false
@@ -577,7 +577,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return suffix
     }
 
-    fn lex_quoted_string(mut this, delimiter: u8) throws -> Token {
+    fn lex_quoted_string(mut this, delimiter: u8) -> Token {
         let start = .index
 
         ++.index
@@ -788,7 +788,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    fn consume_comment_contents(mut this) throws -> String? {
+    fn consume_comment_contents(mut this) -> String? {
         if not .comment_contents.has_value() {
             return None
         }
