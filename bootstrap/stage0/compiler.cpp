@@ -43,72 +43,10 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("assume_main_file_path: {}", assume_main_file_path);
 }
 builder.append(")"sv);return builder.to_string(); }
-ErrorOr<void> compiler::Compiler::load_prelude() {
+[[noreturn]] void compiler::Compiler::panic(ByteString const message) const {
 {
-ByteString const module_name = (ByteString::must_from_utf8("__prelude__"sv));
-jakt__path::Path const file_name = jakt__path::Path::from_string(module_name);
-TRY((((*this).get_file_id_or_register(file_name))));
-}
-return {};
-}
-
-ErrorOr<JaktInternal::Optional<jakt__path::Path>> compiler::Compiler::search_for_path(ByteString const input_module_name,bool const relative_import,size_t const parent_path_count) const {
-{
-ByteStringBuilder builder = ByteStringBuilder::create();
-((builder).append(static_cast<u8>(47)));
-ByteString const separator = ((builder).to_string());
-ByteString const module_name = ((input_module_name).replace((ByteString::must_from_utf8("::"sv)),separator));
-if ((!(relative_import))){
-{
-JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).include_paths)).iterator());
-for (;;){
-JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-ByteString include_path = (_magic_value.value());
-{
-jakt__path::Path const candidate_path = jakt__path::Path::from_parts(((DynamicArray<ByteString>::must_create_with({include_path, TRY((((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))))}))));
-if (((candidate_path).exists())){
-return candidate_path;
-}
-}
-
-}
-}
-
-}
-ByteString const standard_module_name = (ByteString::must_from_utf8("jakt"sv));
-if (((module_name).starts_with(standard_module_name))){
-ByteString const std_module_name_path = ((module_name).substring(JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(((module_name).length()),JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)))));
-jakt__path::Path const candidate_path = jakt__path::Path::from_parts(((DynamicArray<ByteString>::must_create_with({((((*this).std_include_path)).to_string()), TRY((((std_module_name_path) + ((ByteString::must_from_utf8(".jakt"sv))))))}))));
-if (((candidate_path).exists())){
-return candidate_path;
-}
-}
-return TRY((((*this).find_in_search_paths(jakt__path::Path::from_string(TRY((((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))))),relative_import,parent_path_count))));
-}
-}
-
-void compiler::Compiler::restore_file_state(JaktInternal::Tuple<JaktInternal::Optional<utility::FileId>,JaktInternal::DynamicArray<u8>> const state) {
-{
-(((*this).current_file) = ((state).template get<0>()));
-(((*this).current_file_contents) = ((state).template get<1>()));
-}
-}
-
-JaktInternal::Optional<jakt__path::Path> compiler::Compiler::current_file_path() const {
-{
-if (((((*this).current_file)).has_value())){
-return ((((*this).files))[(((((*this).current_file).value())).id)]);
-}
-return JaktInternal::OptionalNone();
-}
-}
-
-JaktInternal::Tuple<JaktInternal::Optional<utility::FileId>,JaktInternal::DynamicArray<u8>> compiler::Compiler::current_file_state() const {
-{
-return (Tuple{((*this).current_file), ((*this).current_file_contents)});
+MUST((((*this).print_errors())));
+utility::panic(message);
 }
 }
 
@@ -171,82 +109,6 @@ TRY((error::print_error(file_name,file_contents,error)));
 return {};
 }
 
-void compiler::Compiler::dbg_println(ByteString const message) const {
-{
-if (((*this).debug_print)){
-outln((StringView::from_string_literal("{}"sv)),message);
-}
-}
-}
-
-compiler::Compiler::Compiler(JaktInternal::DynamicArray<jakt__path::Path> a_files, JaktInternal::Dictionary<ByteString,utility::FileId> a_file_ids, JaktInternal::DynamicArray<error::JaktError> a_errors, JaktInternal::Optional<utility::FileId> a_current_file, JaktInternal::DynamicArray<u8> a_current_file_contents, bool a_dump_lexer, bool a_dump_parser, bool a_ignore_parser_errors, bool a_debug_print, jakt__path::Path a_std_include_path, JaktInternal::DynamicArray<ByteString> a_include_paths, bool a_json_errors, bool a_dump_type_hints, bool a_dump_try_hints, bool a_optimize, JaktInternal::Optional<ByteString> a_target_triple, JaktInternal::Dictionary<ByteString,ByteString> a_user_configuration, jakt__path::Path a_binary_dir, JaktInternal::Optional<jakt__path::Path> a_assume_main_file_path): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), std_include_path(move(a_std_include_path)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)), optimize(move(a_optimize)), target_triple(move(a_target_triple)), user_configuration(move(a_user_configuration)), binary_dir(move(a_binary_dir)), assume_main_file_path(move(a_assume_main_file_path)){}
-ErrorOr<NonnullRefPtr<Compiler>> compiler::Compiler::__jakt_create(JaktInternal::DynamicArray<jakt__path::Path> files, JaktInternal::Dictionary<ByteString,utility::FileId> file_ids, JaktInternal::DynamicArray<error::JaktError> errors, JaktInternal::Optional<utility::FileId> current_file, JaktInternal::DynamicArray<u8> current_file_contents, bool dump_lexer, bool dump_parser, bool ignore_parser_errors, bool debug_print, jakt__path::Path std_include_path, JaktInternal::DynamicArray<ByteString> include_paths, bool json_errors, bool dump_type_hints, bool dump_try_hints, bool optimize, JaktInternal::Optional<ByteString> target_triple, JaktInternal::Dictionary<ByteString,ByteString> user_configuration, jakt__path::Path binary_dir, JaktInternal::Optional<jakt__path::Path> assume_main_file_path) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Compiler (move(files), move(file_ids), move(errors), move(current_file), move(current_file_contents), move(dump_lexer), move(dump_parser), move(ignore_parser_errors), move(debug_print), move(std_include_path), move(include_paths), move(json_errors), move(dump_type_hints), move(dump_try_hints), move(optimize), move(target_triple), move(user_configuration), move(binary_dir), move(assume_main_file_path)))); return o; }
-JaktInternal::Optional<utility::FileId> compiler::Compiler::current_file_id() const {
-{
-return ((*this).current_file);
-}
-}
-
-ErrorOr<JaktInternal::Optional<jakt__path::Path>> compiler::Compiler::find_in_search_paths(jakt__path::Path const path,bool const relative_import,size_t const parent_path_count) const {
-{
-{
-JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).include_paths)).iterator());
-for (;;){
-JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-ByteString include_path = (_magic_value.value());
-{
-jakt__path::Path const candidate_path = ((jakt__path::Path::from_string(include_path)).join(path));
-if (((candidate_path).exists())){
-return candidate_path;
-}
-}
-
-}
-}
-
-JaktInternal::Optional<jakt__path::Path> const current_file_path = ((*this).assume_main_file_path).value_or_lazy_evaluated_optional([&] { return ((*this).current_file_path()); });
-if (((current_file_path).has_value())){
-jakt__path::Path candidate_path = ((((TRY(((((current_file_path.value())).absolute())))).parent())).join(path));
-if ((relative_import && [](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
-}
-}
-(self,rhs))))) == (static_cast<u8>(2)));
-}
-}
-(parent_path_count,static_cast<size_t>(0ULL)))){
-size_t parent_count = parent_path_count;
-jakt__path::Path parent = ((candidate_path).parent());
-while ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
-}
-}
-(self,rhs))))) == (static_cast<u8>(2)));
-}
-}
-(parent_count,static_cast<size_t>(0ULL))){
-(parent = ((parent).parent()));
-((parent_count--));
-}
-(candidate_path = ((parent).join(path)));
-}
-if (((candidate_path).exists())){
-return candidate_path;
-}
-}
-return JaktInternal::OptionalNone();
-}
-}
-
 JaktInternal::Optional<jakt__path::Path> compiler::Compiler::get_file_path(utility::FileId const file_id) const {
 {
 if ([](size_t const& self, size_t rhs) -> bool {
@@ -263,6 +125,21 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 return JaktInternal::OptionalNone();
 }
 return ((((*this).files))[((file_id).id)]);
+}
+}
+
+JaktInternal::Optional<utility::FileId> compiler::Compiler::current_file_id() const {
+{
+return ((*this).current_file);
+}
+}
+
+JaktInternal::Optional<jakt__path::Path> compiler::Compiler::current_file_path() const {
+{
+if (((((*this).current_file)).has_value())){
+return ((((*this).files))[(((((*this).current_file).value())).id)]);
+}
+return JaktInternal::OptionalNone();
 }
 }
 
@@ -330,12 +207,135 @@ return true;
 }
 }
 
-[[noreturn]] void compiler::Compiler::panic(ByteString const message) const {
+JaktInternal::Tuple<JaktInternal::Optional<utility::FileId>,JaktInternal::DynamicArray<u8>> compiler::Compiler::current_file_state() const {
 {
-MUST((((*this).print_errors())));
-utility::panic(message);
+return (Tuple{((*this).current_file), ((*this).current_file_contents)});
 }
 }
 
+void compiler::Compiler::restore_file_state(JaktInternal::Tuple<JaktInternal::Optional<utility::FileId>,JaktInternal::DynamicArray<u8>> const state) {
+{
+(((*this).current_file) = ((state).template get<0>()));
+(((*this).current_file_contents) = ((state).template get<1>()));
+}
+}
+
+void compiler::Compiler::dbg_println(ByteString const message) const {
+{
+if (((*this).debug_print)){
+outln((StringView::from_string_literal("{}"sv)),message);
+}
+}
+}
+
+ErrorOr<void> compiler::Compiler::load_prelude() {
+{
+ByteString const module_name = (ByteString::must_from_utf8("__prelude__"sv));
+jakt__path::Path const file_name = jakt__path::Path::from_string(module_name);
+TRY((((*this).get_file_id_or_register(file_name))));
+}
+return {};
+}
+
+ErrorOr<JaktInternal::Optional<jakt__path::Path>> compiler::Compiler::search_for_path(ByteString const input_module_name,bool const relative_import,size_t const parent_path_count) const {
+{
+ByteStringBuilder builder = ByteStringBuilder::create();
+((builder).append(static_cast<u8>(47)));
+ByteString const separator = ((builder).to_string());
+ByteString const module_name = ((input_module_name).replace((ByteString::must_from_utf8("::"sv)),separator));
+if ((!(relative_import))){
+{
+JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).include_paths)).iterator());
+for (;;){
+JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+ByteString include_path = (_magic_value.value());
+{
+jakt__path::Path const candidate_path = jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({include_path, TRY((((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))))})));
+if (((candidate_path).exists())){
+return candidate_path;
+}
+}
+
+}
+}
+
+}
+ByteString const standard_module_name = (ByteString::must_from_utf8("jakt"sv));
+if (((module_name).starts_with(standard_module_name))){
+ByteString const std_module_name_path = ((module_name).substring(JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(((module_name).length()),JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)))));
+jakt__path::Path const candidate_path = jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({((((*this).std_include_path)).to_string()), TRY((((std_module_name_path) + ((ByteString::must_from_utf8(".jakt"sv))))))})));
+if (((candidate_path).exists())){
+return candidate_path;
+}
+}
+return TRY((((*this).find_in_search_paths(jakt__path::Path::from_string(TRY((((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))))),relative_import,parent_path_count))));
+}
+}
+
+ErrorOr<JaktInternal::Optional<jakt__path::Path>> compiler::Compiler::find_in_search_paths(jakt__path::Path const path,bool const relative_import,size_t const parent_path_count) const {
+{
+{
+JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).include_paths)).iterator());
+for (;;){
+JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+ByteString include_path = (_magic_value.value());
+{
+jakt__path::Path const candidate_path = ((jakt__path::Path::from_string(include_path)).join(path));
+if (((candidate_path).exists())){
+return candidate_path;
+}
+}
+
+}
+}
+
+JaktInternal::Optional<jakt__path::Path> const current_file_path = ((*this).assume_main_file_path).value_or_lazy_evaluated_optional([&] { return ((*this).current_file_path()); });
+if (((current_file_path).has_value())){
+jakt__path::Path candidate_path = ((((TRY(((((current_file_path.value())).absolute())))).parent())).join(path));
+if ((relative_import && [](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) == (static_cast<u8>(2)));
+}
+}
+(parent_path_count,static_cast<size_t>(0ULL)))){
+size_t parent_count = parent_path_count;
+jakt__path::Path parent = ((candidate_path).parent());
+while ([](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) == (static_cast<u8>(2)));
+}
+}
+(parent_count,static_cast<size_t>(0ULL))){
+(parent = ((parent).parent()));
+((parent_count--));
+}
+(candidate_path = ((parent).join(path)));
+}
+if (((candidate_path).exists())){
+return candidate_path;
+}
+}
+return JaktInternal::OptionalNone();
+}
+}
+
+compiler::Compiler::Compiler(JaktInternal::DynamicArray<jakt__path::Path> a_files, JaktInternal::Dictionary<ByteString,utility::FileId> a_file_ids, JaktInternal::DynamicArray<error::JaktError> a_errors, JaktInternal::Optional<utility::FileId> a_current_file, JaktInternal::DynamicArray<u8> a_current_file_contents, bool a_dump_lexer, bool a_dump_parser, bool a_ignore_parser_errors, bool a_debug_print, jakt__path::Path a_std_include_path, JaktInternal::DynamicArray<ByteString> a_include_paths, bool a_json_errors, bool a_dump_type_hints, bool a_dump_try_hints, bool a_optimize, JaktInternal::Optional<ByteString> a_target_triple, JaktInternal::Dictionary<ByteString,ByteString> a_user_configuration, jakt__path::Path a_binary_dir, JaktInternal::Optional<jakt__path::Path> a_assume_main_file_path): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), std_include_path(move(a_std_include_path)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)), optimize(move(a_optimize)), target_triple(move(a_target_triple)), user_configuration(move(a_user_configuration)), binary_dir(move(a_binary_dir)), assume_main_file_path(move(a_assume_main_file_path)){}
+ErrorOr<NonnullRefPtr<Compiler>> compiler::Compiler::__jakt_create(JaktInternal::DynamicArray<jakt__path::Path> files, JaktInternal::Dictionary<ByteString,utility::FileId> file_ids, JaktInternal::DynamicArray<error::JaktError> errors, JaktInternal::Optional<utility::FileId> current_file, JaktInternal::DynamicArray<u8> current_file_contents, bool dump_lexer, bool dump_parser, bool ignore_parser_errors, bool debug_print, jakt__path::Path std_include_path, JaktInternal::DynamicArray<ByteString> include_paths, bool json_errors, bool dump_type_hints, bool dump_try_hints, bool optimize, JaktInternal::Optional<ByteString> target_triple, JaktInternal::Dictionary<ByteString,ByteString> user_configuration, jakt__path::Path binary_dir, JaktInternal::Optional<jakt__path::Path> assume_main_file_path) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Compiler (move(files), move(file_ids), move(errors), move(current_file), move(current_file_contents), move(dump_lexer), move(dump_parser), move(ignore_parser_errors), move(debug_print), move(std_include_path), move(include_paths), move(json_errors), move(dump_type_hints), move(dump_try_hints), move(optimize), move(target_triple), move(user_configuration), move(binary_dir), move(assume_main_file_path)))); return o; }
 }
 } // namespace Jakt

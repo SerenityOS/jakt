@@ -48,13 +48,7 @@ public:
 private:
 VarType() {};
 };
-struct JaktSymbol {
-  public:
-public: ByteString name;public: JaktInternal::Optional<ByteString> detail;public: ByteString kind;public: utility::Span range;public: utility::Span selection_range;public: JaktInternal::DynamicArray<ide::JaktSymbol> children;public: JaktSymbol(ByteString a_name, JaktInternal::Optional<ByteString> a_detail, ByteString a_kind, utility::Span a_range, utility::Span a_selection_range, JaktInternal::DynamicArray<ide::JaktSymbol> a_children);
-
-public: ErrorOr<ByteString> to_json() const;
-public: ErrorOr<ByteString> debug_description() const;
-};struct VarVisibility {
+struct VarVisibility {
 u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
@@ -124,7 +118,13 @@ public:
 private:
 Usage() {};
 };
-}
+struct JaktSymbol {
+  public:
+public: ByteString name;public: JaktInternal::Optional<ByteString> detail;public: ByteString kind;public: utility::Span range;public: utility::Span selection_range;public: JaktInternal::DynamicArray<ide::JaktSymbol> children;public: ErrorOr<ByteString> to_json() const;
+public: JaktSymbol(ByteString a_name, JaktInternal::Optional<ByteString> a_detail, ByteString a_kind, utility::Span a_range, utility::Span a_selection_range, JaktInternal::DynamicArray<ide::JaktSymbol> a_children);
+
+public: ErrorOr<ByteString> debug_description() const;
+};}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::ide::Mutability> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::Mutability const& value) {
@@ -138,12 +138,6 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 };
 namespace Jakt {
 } // namespace Jakt
-template<>struct Jakt::Formatter<Jakt::ide::JaktSymbol> : Jakt::Formatter<Jakt::StringView>{
-Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::JaktSymbol const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
-};
-namespace Jakt {
-} // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::ide::VarVisibility> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::VarVisibility const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
@@ -152,6 +146,12 @@ namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::ide::Usage> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::Usage const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::ide::JaktSymbol> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::ide::JaktSymbol const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
 };
 namespace Jakt {

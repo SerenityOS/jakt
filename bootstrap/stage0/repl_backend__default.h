@@ -8,13 +8,13 @@ namespace Jakt {
 namespace repl_backend__default {
 struct Editor {
   public:
-public: FILE* standard_input_file;public: char* line_pointer;public: ByteString prompt;public: void destroy();
-public: static ErrorOr<repl_backend__default::Editor> create(ByteString const prompt, Function<ErrorOr<void>(repl_backend__default::Editor&)> const& syntax_highlight_handler);
+public: FILE* standard_input_file;public: char* line_pointer;public: ByteString prompt;public: static ErrorOr<repl_backend__default::Editor> create(ByteString const prompt, Function<ErrorOr<void>(repl_backend__default::Editor&)> const& syntax_highlight_handler);
+public: ErrorOr<repl_backend__common::LineResult> get_line(JaktInternal::Optional<ByteString> const prompt);
 public: ErrorOr<ByteString> get_active_buffer();
+public: ErrorOr<void> highlight(utility::Span const span, repl_backend__common::Style const style);
+public: void destroy();
 public: Editor(FILE* a_standard_input_file, char* a_line_pointer, ByteString a_prompt);
 
-public: ErrorOr<repl_backend__common::LineResult> get_line(JaktInternal::Optional<ByteString> const prompt);
-public: ErrorOr<void> highlight(utility::Span const span, repl_backend__common::Style const style);
 public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt

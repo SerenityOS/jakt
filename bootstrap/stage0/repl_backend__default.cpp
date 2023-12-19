@@ -11,16 +11,6 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("prompt: \"{}\"", prompt);
 }
 builder.append(")"sv);return builder.to_string(); }
-void repl_backend__default::Editor::destroy() {
-{
-fclose(((*this).standard_input_file));
-{
-free(line_pointer);
-}
-
-}
-}
-
 ErrorOr<repl_backend__default::Editor> repl_backend__default::Editor::create(ByteString const prompt,Function<ErrorOr<void>(repl_backend__default::Editor&)> const& syntax_highlight_handler) {
 {
 FILE* std_in = fopen((((ByteString::must_from_utf8("/dev/stdin"sv))).characters()),(((ByteString::must_from_utf8("r"sv))).characters()));
@@ -32,14 +22,6 @@ repl_backend__default::Editor const editor = repl_backend__default::Editor(std_i
 return editor;
 }
 }
-
-ErrorOr<ByteString> repl_backend__default::Editor::get_active_buffer() {
-{
-return Error::__jakt_from_string_literal((StringView::from_string_literal("Active buffer not supported"sv)));
-}
-}
-
-repl_backend__default::Editor::Editor(FILE* a_standard_input_file, char* a_line_pointer, ByteString a_prompt): standard_input_file(move(a_standard_input_file)), line_pointer(move(a_line_pointer)), prompt(move(a_prompt)){}
 
 ErrorOr<repl_backend__common::LineResult> repl_backend__default::Editor::get_line(JaktInternal::Optional<ByteString> const prompt) {
 {
@@ -57,12 +39,30 @@ return repl_backend__common::LineResult::Line(((builder).to_string()));
 }
 }
 
+ErrorOr<ByteString> repl_backend__default::Editor::get_active_buffer() {
+{
+return Error::__jakt_from_string_literal((StringView::from_string_literal("Active buffer not supported"sv)));
+}
+}
+
 ErrorOr<void> repl_backend__default::Editor::highlight(utility::Span const span,repl_backend__common::Style const style) {
 {
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Highlighting not supported"sv)));
 }
 return {};
 }
+
+void repl_backend__default::Editor::destroy() {
+{
+fclose(((*this).standard_input_file));
+{
+free(line_pointer);
+}
+
+}
+}
+
+repl_backend__default::Editor::Editor(FILE* a_standard_input_file, char* a_line_pointer, ByteString a_prompt): standard_input_file(move(a_standard_input_file)), line_pointer(move(a_line_pointer)), prompt(move(a_prompt)){}
 
 }
 } // namespace Jakt

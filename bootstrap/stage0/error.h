@@ -51,8 +51,8 @@ MessageSeverity(MessageSeverity const&);
 MessageSeverity(MessageSeverity &&);
 private: void __jakt_destroy_variant();
 public:
-ByteString ansi_color_code() const;
 ByteString name() const;
+ByteString ansi_color_code() const;
 private:
 MessageSeverity() {};
 };

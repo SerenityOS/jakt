@@ -5,8 +5,8 @@ namespace Jakt {
 namespace cpp_import__common {
 struct CppImportErrors {
   public:
-public: static StringView no_this_type();
 public: static StringView path_not_found();
+public: static StringView no_this_type();
 public: CppImportErrors();
 
 public: ErrorOr<ByteString> debug_description() const;

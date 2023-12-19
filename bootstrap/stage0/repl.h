@@ -15,12 +15,12 @@ namespace repl {
 struct REPL {
   public:
 public: NonnullRefPtr<compiler::Compiler> compiler;public: typechecker::Typechecker typechecker;public: ids::ScopeId root_scope_id;public: NonnullRefPtr<interpreter::InterpreterScope> root_interpreter_scope;public: utility::FileId file_id;public: static ErrorOr<repl::REPL> create(jakt__path::Path const runtime_path, JaktInternal::Optional<ByteString> const target_triple, JaktInternal::Dictionary<ByteString,ByteString> const user_configuration);
+public: ErrorOr<bool> handle_possible_error();
 public: static JaktInternal::DynamicArray<u8> line_to_bytes(ByteString const line);
+public: static bool check_parens(JaktInternal::DynamicArray<lexer::Token> const tokens);
 public: ErrorOr<void> run();
 public: REPL(NonnullRefPtr<compiler::Compiler> a_compiler, typechecker::Typechecker a_typechecker, ids::ScopeId a_root_scope_id, NonnullRefPtr<interpreter::InterpreterScope> a_root_interpreter_scope, utility::FileId a_file_id);
 
-public: ErrorOr<bool> handle_possible_error();
-public: static bool check_parens(JaktInternal::DynamicArray<lexer::Token> const tokens);
 public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt

@@ -6,18 +6,18 @@ namespace Jakt {
 namespace utility {
 struct FileId {
   public:
-public: size_t id;public: FileId(size_t a_id);
+public: size_t id;public: bool equals(utility::FileId const rhs) const;
+public: FileId(size_t a_id);
 
-public: bool equals(utility::FileId const rhs) const;
 public: ErrorOr<ByteString> debug_description() const;
 };struct Span {
   public:
-public: utility::FileId file_id;public: size_t start;public: size_t end;public: bool contains(utility::Span const span) const;
+public: utility::FileId file_id;public: size_t start;public: size_t end;public: static utility::Span first(utility::Span const a, utility::Span const b);
+public: static utility::Span last(utility::Span const a, utility::Span const b);
+public: bool contains(utility::Span const span) const;
+public: bool is_in_offset_range(size_t const start, size_t const end) const;
 public: Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
 
-public: static utility::Span first(utility::Span const a, utility::Span const b);
-public: bool is_in_offset_range(size_t const start, size_t const end) const;
-public: static utility::Span last(utility::Span const a, utility::Span const b);
 public: ErrorOr<ByteString> debug_description() const;
 };template<typename T>
 struct IterationDecision {
@@ -145,10 +145,10 @@ public:
 private:
 IterationDecision() {};
 };
-template <typename T,typename U>
-ErrorOr<JaktInternal::DynamicArray<U>> map(JaktInternal::DynamicArray<T> const input, Function<ErrorOr<U>(T)> const& mapper);
 template <typename T>
 JaktInternal::DynamicArray<T> add_arrays(JaktInternal::DynamicArray<T> const a, JaktInternal::DynamicArray<T> const b);
+template <typename T,typename U>
+ErrorOr<JaktInternal::DynamicArray<U>> map(JaktInternal::DynamicArray<T> const input, Function<ErrorOr<U>(T)> const& mapper);
 }
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::utility::FileId> : Jakt::Formatter<Jakt::StringView>{

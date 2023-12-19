@@ -13,7 +13,7 @@ builder.appendff("current_directory: {}", current_directory);
 builder.append(")"sv);return builder.to_string(); }
 ErrorOr<NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator>> jakt__file_iterator::RecursiveFileIterator::make(jakt__path::Path const directory,ByteString const extension) {
 {
-return TRY((jakt__file_iterator::RecursiveFileIterator::__jakt_create(extension,((DynamicArray<jakt__path::Path>::must_create_with({directory}))),JaktInternal::OptionalNone())));
+return TRY((jakt__file_iterator::RecursiveFileIterator::__jakt_create(extension,(DynamicArray<jakt__path::Path>::create_with({directory})),JaktInternal::OptionalNone())));
 }
 }
 

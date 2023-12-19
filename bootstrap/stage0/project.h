@@ -7,10 +7,10 @@ namespace Jakt {
 namespace project {
 struct Project {
   public:
-public: ByteString name;public: ErrorOr<void> create_template_cmake_lists(ByteString const project_directory) const;
-public: ErrorOr<void> populate() const;
-public: ErrorOr<void> create_readme(ByteString const project_directory) const;
+public: ByteString name;public: ErrorOr<void> populate() const;
+public: ErrorOr<void> create_template_cmake_lists(ByteString const project_directory) const;
 public: ErrorOr<void> create_sample_jakt_files(ByteString const project_directory) const;
+public: ErrorOr<void> create_readme(ByteString const project_directory) const;
 public: Project(ByteString a_name);
 
 public: ErrorOr<ByteString> debug_description() const;

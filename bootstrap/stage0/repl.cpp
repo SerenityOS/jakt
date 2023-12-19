@@ -436,12 +436,12 @@ builder.appendff("file_id: {}", file_id);
 builder.append(")"sv);return builder.to_string(); }
 ErrorOr<repl::REPL> repl::REPL::create(jakt__path::Path const runtime_path,JaktInternal::Optional<ByteString> const target_triple,JaktInternal::Dictionary<ByteString,ByteString> const user_configuration) {
 {
-NonnullRefPtr<compiler::Compiler> compiler = TRY((compiler::Compiler::__jakt_create(((DynamicArray<jakt__path::Path>::must_create_with({}))),(TRY((Dictionary<ByteString, utility::FileId>::create_with_entries({})))),((DynamicArray<error::JaktError>::must_create_with({}))),JaktInternal::OptionalNone(),((DynamicArray<u8>::must_create_with({}))),false,false,false,false,runtime_path,((DynamicArray<ByteString>::must_create_with({}))),false,false,false,false,target_triple,user_configuration,jakt__path::Path::from_string((ByteString::must_from_utf8("build"sv))),jakt__path::Path::from_string((ByteString::must_from_utf8("repl.jakt"sv))))));
+NonnullRefPtr<compiler::Compiler> compiler = TRY((compiler::Compiler::__jakt_create((DynamicArray<jakt__path::Path>::create_with({})),(TRY((Dictionary<ByteString, utility::FileId>::create_with_entries({})))),(DynamicArray<error::JaktError>::create_with({})),JaktInternal::OptionalNone(),(DynamicArray<u8>::create_with({})),false,false,false,false,runtime_path,(DynamicArray<ByteString>::create_with({})),false,false,false,false,target_triple,user_configuration,jakt__path::Path::from_string((ByteString::must_from_utf8("build"sv))),jakt__path::Path::from_string((ByteString::must_from_utf8("repl.jakt"sv))))));
 TRY((((compiler)->load_prelude())));
 utility::FileId const file_id = TRY((((compiler)->get_file_id_or_register(jakt__path::Path::from_string((ByteString::must_from_utf8("<repl>"sv)))))));
 ids::ModuleId const placeholder_module_id = ids::ModuleId(static_cast<size_t>(0ULL));
 ByteString const root_module_name = (ByteString::must_from_utf8("repl"sv));
-typechecker::Typechecker typechecker = typechecker::Typechecker(compiler,TRY((types::CheckedProgram::__jakt_create(compiler,((DynamicArray<NonnullRefPtr<types::Module>>::must_create_with({}))),(TRY((Dictionary<ByteString, types::LoadedModule>::create_with_entries({}))))))),placeholder_module_id,ids::TypeId::none(),JaktInternal::OptionalNone(),false,static_cast<size_t>(0ULL),false,((compiler)->dump_type_hints),((compiler)->dump_try_hints),static_cast<u64>(0ULL),types::GenericInferences((TRY((Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({}))))),JaktInternal::OptionalNone(),root_module_name,false,false,(TRY((Dictionary<ByteString, ids::ScopeId>::create_with_entries({})))),JaktInternal::OptionalNone());
+typechecker::Typechecker typechecker = typechecker::Typechecker(compiler,TRY((types::CheckedProgram::__jakt_create(compiler,(DynamicArray<NonnullRefPtr<types::Module>>::create_with({})),(TRY((Dictionary<ByteString, types::LoadedModule>::create_with_entries({}))))))),placeholder_module_id,ids::TypeId::none(),JaktInternal::OptionalNone(),false,static_cast<size_t>(0ULL),false,((compiler)->dump_type_hints),((compiler)->dump_try_hints),static_cast<u64>(0ULL),types::GenericInferences((TRY((Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({}))))),JaktInternal::OptionalNone(),root_module_name,false,false,(TRY((Dictionary<ByteString, ids::ScopeId>::create_with_entries({})))),JaktInternal::OptionalNone());
 (((compiler)->current_file) = file_id);
 TRY((((typechecker).include_prelude())));
 ids::ModuleId const root_module_id = TRY((((typechecker).create_module(root_module_name,true,JaktInternal::OptionalNone()))));
@@ -455,10 +455,30 @@ return repl::REPL(compiler,typechecker,root_scope_id,root_interpreter_scope,file
 }
 }
 
+ErrorOr<bool> repl::REPL::handle_possible_error() {
+{
+TRY((((((*this).compiler))->print_errors())));
+bool const has_error = [](size_t const& self, size_t rhs) -> bool {
+{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
+{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) == (static_cast<u8>(2)));
+}
+}
+(((((((*this).compiler))->errors)).size()),static_cast<size_t>(0ULL));
+JaktInternal::DynamicArray<error::JaktError> const arr = (DynamicArray<error::JaktError>::create_with({}));
+(((((*this).compiler))->errors) = arr);
+return has_error;
+}
+}
+
 JaktInternal::DynamicArray<u8> repl::REPL::line_to_bytes(ByteString const line) {
 {
 size_t pos = static_cast<size_t>(0ULL);
-JaktInternal::DynamicArray<u8> bytes_ = ((DynamicArray<u8>::must_create_with({})));
+JaktInternal::DynamicArray<u8> bytes_ = (DynamicArray<u8>::create_with({}));
 ((bytes_).ensure_capacity(((line).length())));
 while ([](size_t const& self, size_t rhs) -> bool {
 {
@@ -478,13 +498,92 @@ return bytes_;
 }
 }
 
+bool repl::REPL::check_parens(JaktInternal::DynamicArray<lexer::Token> const tokens) {
+{
+i64 unmatched_parens = static_cast<i64>(0LL);
+i64 unmatched_brackets = static_cast<i64>(0LL);
+i64 unmatched_curlies = static_cast<i64>(0LL);
+{
+JaktInternal::ArrayIterator<lexer::Token> _magic = ((tokens).iterator());
+for (;;){
+JaktInternal::Optional<lexer::Token> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+lexer::Token token = (_magic_value.value());
+{
+({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, bool>{
+auto&& __jakt_match_variant = token;
+switch(__jakt_match_variant.__jakt_init_index()) {
+case 7 /* LParen */: {
+{
+((unmatched_parens) += (static_cast<i64>(1LL)));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 8 /* RParen */: {
+{
+((unmatched_parens) -= (static_cast<i64>(1LL)));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 11 /* LSquare */: {
+{
+((unmatched_brackets) += (static_cast<i64>(1LL)));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 12 /* RSquare */: {
+{
+((unmatched_brackets) -= (static_cast<i64>(1LL)));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 9 /* LCurly */: {
+{
+((unmatched_curlies) += (static_cast<i64>(1LL)));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 10 /* RCurly */: {
+{
+((unmatched_curlies) -= (static_cast<i64>(1LL)));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+default: {
+{
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+}/*switch end*/
+}()
+);
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    if (_jakt_value.is_loop_break())
+        break;
+    if (_jakt_value.is_loop_continue())
+        continue;
+    _jakt_value.release_value();
+});
+}
+
+}
+}
+
+return (((unmatched_parens) == (static_cast<i64>(0LL))) && (((unmatched_brackets) == (static_cast<i64>(0LL))) && ((unmatched_curlies) == (static_cast<i64>(0LL)))));
+}
+}
+
 ErrorOr<void> repl::REPL::run() {
 {
 Function<ErrorOr<void>(repl_backend__default::Editor&)> const syntax_highlight_handler = [this](repl_backend__default::Editor& editor) -> ErrorOr<void> {
 {
 ByteString const line = TRY((((((editor))).get_active_buffer())));
 size_t pos = static_cast<size_t>(0ULL);
-JaktInternal::DynamicArray<u8> bytes_ = ((DynamicArray<u8>::must_create_with({})));
+JaktInternal::DynamicArray<u8> bytes_ = (DynamicArray<u8>::create_with({}));
 ((bytes_).ensure_capacity(((line).length())));
 while ([](size_t const& self, size_t rhs) -> bool {
 {
@@ -504,7 +603,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (((((*this).compiler))->current_file_contents) = bytes_);
 ScopeGuard __jakt_var_934([&] {
 {
-JaktInternal::DynamicArray<error::JaktError> const arr = ((DynamicArray<error::JaktError>::must_create_with({})));
+JaktInternal::DynamicArray<error::JaktError> const arr = (DynamicArray<error::JaktError>::create_with({}));
 (((((*this).compiler))->errors) = arr);
 }
 
@@ -799,7 +898,7 @@ ScopeGuard __jakt_var_937([&] {
 for (;;){
 if ((!(((((((*this).compiler))->errors)).is_empty())))){
 TRY((((((*this).compiler))->print_errors())));
-JaktInternal::DynamicArray<error::JaktError> const arr = ((DynamicArray<error::JaktError>::must_create_with({})));
+JaktInternal::DynamicArray<error::JaktError> const arr = (DynamicArray<error::JaktError>::create_with({}));
 (((((*this).compiler))->errors) = arr);
 }
 repl_backend__common::LineResult const line_result = ({ Optional<repl_backend__common::LineResult> __jakt_var_938;
@@ -1038,105 +1137,6 @@ return {};
 }
 
 repl::REPL::REPL(NonnullRefPtr<compiler::Compiler> a_compiler, typechecker::Typechecker a_typechecker, ids::ScopeId a_root_scope_id, NonnullRefPtr<interpreter::InterpreterScope> a_root_interpreter_scope, utility::FileId a_file_id): compiler(move(a_compiler)), typechecker(move(a_typechecker)), root_scope_id(move(a_root_scope_id)), root_interpreter_scope(move(a_root_interpreter_scope)), file_id(move(a_file_id)){}
-
-ErrorOr<bool> repl::REPL::handle_possible_error() {
-{
-TRY((((((*this).compiler))->print_errors())));
-bool const has_error = [](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
-}
-}
-(self,rhs))))) == (static_cast<u8>(2)));
-}
-}
-(((((((*this).compiler))->errors)).size()),static_cast<size_t>(0ULL));
-JaktInternal::DynamicArray<error::JaktError> const arr = ((DynamicArray<error::JaktError>::must_create_with({})));
-(((((*this).compiler))->errors) = arr);
-return has_error;
-}
-}
-
-bool repl::REPL::check_parens(JaktInternal::DynamicArray<lexer::Token> const tokens) {
-{
-i64 unmatched_parens = static_cast<i64>(0LL);
-i64 unmatched_brackets = static_cast<i64>(0LL);
-i64 unmatched_curlies = static_cast<i64>(0LL);
-{
-JaktInternal::ArrayIterator<lexer::Token> _magic = ((tokens).iterator());
-for (;;){
-JaktInternal::Optional<lexer::Token> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-lexer::Token token = (_magic_value.value());
-{
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, bool>{
-auto&& __jakt_match_variant = token;
-switch(__jakt_match_variant.__jakt_init_index()) {
-case 7 /* LParen */: {
-{
-((unmatched_parens) += (static_cast<i64>(1LL)));
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 8 /* RParen */: {
-{
-((unmatched_parens) -= (static_cast<i64>(1LL)));
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 11 /* LSquare */: {
-{
-((unmatched_brackets) += (static_cast<i64>(1LL)));
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 12 /* RSquare */: {
-{
-((unmatched_brackets) -= (static_cast<i64>(1LL)));
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 9 /* LCurly */: {
-{
-((unmatched_curlies) += (static_cast<i64>(1LL)));
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 10 /* RCurly */: {
-{
-((unmatched_curlies) -= (static_cast<i64>(1LL)));
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-default: {
-{
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    if (_jakt_value.is_loop_break())
-        break;
-    if (_jakt_value.is_loop_continue())
-        continue;
-    _jakt_value.release_value();
-});
-}
-
-}
-}
-
-return (((unmatched_parens) == (static_cast<i64>(0LL))) && (((unmatched_brackets) == (static_cast<i64>(0LL))) && ((unmatched_curlies) == (static_cast<i64>(0LL)))));
-}
-}
 
 }
 } // namespace Jakt
