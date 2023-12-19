@@ -74,7 +74,7 @@ ErrorOr<NonnullRefPtr<File>> File::open_for_writing(StringView path_)
 
 ErrorOr<DynamicArray<u8>> File::read_all()
 {
-    auto entire_file = TRY(DynamicArray<u8>::create_empty());
+    auto entire_file = DynamicArray<u8>::create_empty();
 
     // Try to guess the file size so we can pre-allocate the buffer.
     size_t file_size = 0;

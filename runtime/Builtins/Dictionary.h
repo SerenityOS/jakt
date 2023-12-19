@@ -98,7 +98,7 @@ public:
 
     ErrorOr<DynamicArray<K>> keys() const
     {
-        DynamicArray<K> keys = TRY(DynamicArray<K>::create_empty());
+        auto keys = DynamicArray<K>::create_empty();
         keys.ensure_capacity(m_storage->map.size());
         for (auto& it : m_storage->map) {
             keys.push(it.key);
