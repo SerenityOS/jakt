@@ -22,7 +22,7 @@ ByteStringBuilder ByteStringBuilder::create()
 inline ErrorOr<void> ByteStringBuilder::will_append(size_t size)
 {
     if (!m_buffer.has_value()) {
-        m_buffer = TRY(DynamicArray<u8>::create_empty());
+        m_buffer = DynamicArray<u8>::create_empty();
     }
     m_buffer->add_capacity(size);
     return {};

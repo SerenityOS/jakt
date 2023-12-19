@@ -8993,22 +8993,6 @@ struct Typechecker {
     }
 
     fn typecheck_array(mut this, scope_id: ScopeId, values: [ParsedExpression], fill_size: ParsedExpression?, span: Span, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
-        if .dump_try_hints {
-            .dump_try_hint(span)
-        }
-        if not .get_scope(scope_id).can_throw {
-            let message = "Array initialization inside non-throwing scope"
-            if .current_function_id.has_value() {
-                let current_function = .get_function(.current_function_id!)
-                .error_with_hint(
-                    message
-                    span
-                    format("Add `throws` keyword to function {}", current_function.name),
-                    current_function.name_span)
-            } else {
-                .error(message, span)
-            }
-        }
         mut repeat: CheckedExpression? = None
         if fill_size.has_value() {
             // Check fill size is an integer.

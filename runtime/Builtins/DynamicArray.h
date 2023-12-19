@@ -215,21 +215,33 @@ public:
         return ArrayIterator<T> { *m_storage, 0, m_storage->size() };
     }
 
-    static ErrorOr<DynamicArray> create_empty()
+    static DynamicArray create_empty()
     {
-        auto storage = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
+        auto storage = MUST(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
         return DynamicArray { move(storage) };
     }
 
-    static ErrorOr<DynamicArray> create_with(std::initializer_list<T> list)
+    static DynamicArray must_create_empty()
+    {
+        return create_empty();
+    }
+
+    static DynamicArray create_with(std::initializer_list<T> list)
         requires(!IsLvalueReference<T>)
     {
-        auto array = TRY(create_empty());
+        auto array = create_empty();
         array.ensure_capacity(list.size());
         for (auto const& item : list)
             array.push(move(const_cast<T&>(item)));
         return array;
     }
+
+    static DynamicArray must_create_with(std::initializer_list<T> list)
+        requires(!IsLvalueReference<T>)
+    {
+        return create_with(list);
+    }
+
 
     bool is_empty() const { return m_storage->is_empty(); }
     size_t size() const { return m_storage->size(); }
@@ -324,9 +336,19 @@ public:
         return m_storage->insert(before_index, move(value));
     }
 
-    static ErrorOr<DynamicArray> filled(size_t size, T value)
+    static DynamicArray filled(size_t size, T value)
     {
-        auto array = TRY(create_empty());
+        auto array = create_empty();
+        array.ensure_capacity(size);
+        for (size_t i = 0; i < size; ++i) {
+            array.push(value);
+        }
+        return array;
+    }
+
+    static DynamicArray must_filled(size_t size, T value)
+    {
+        auto array = must_create_empty();
         array.ensure_capacity(size);
         for (size_t i = 0; i < size; ++i) {
             array.push(value);
@@ -394,7 +416,7 @@ public:
 
     ErrorOr<DynamicArray<T>> to_array() const
     {
-        auto array = TRY(DynamicArray<T>::create_empty());
+        auto array = DynamicArray<T>::create_empty();
         array.ensure_capacity(size());
         for (size_t i = 0; i < size(); ++i) {
             array.push(at(i));

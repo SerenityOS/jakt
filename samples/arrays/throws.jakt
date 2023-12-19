@@ -1,6 +1,0 @@
-/// Expect:
-/// - error: "Array initialization inside non-throwing scope\n"
-
-fn a() -> [u8] => []
-
-fn main() {}
