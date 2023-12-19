@@ -8,7 +8,7 @@ fn concat<T>(anon xs: [T], anon y: T) throws -> [T] {
     return ys
 }
 
-fn init<T>(anon xs: [T]) throws -> [T] => xs[..(xs.size() - 1)].to_array()
+fn init<T>(anon xs: [T]) -> [T] => xs[..(xs.size() - 1)].to_array()
 
 fn collapse<T>(anon x: Optional<T>?) -> T? => match x.has_value() {
     true => x!
@@ -355,7 +355,7 @@ struct Stage0 {
         .states.push(state)
     }
 
-    private fn to_array(anon x: String) throws -> [u8] {
+    private fn to_array(anon x: String) -> [u8] {
         mut res: [u8] = []
         for i in 0..x.length() {
             res.push(x.byte_at(i))
@@ -2289,7 +2289,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         }
     }
 
-    private fn to_array(anon s: String) throws -> [u8] {
+    private fn to_array(anon s: String) -> [u8] {
         mut result: [u8] = []
         for i in 0..s.length() {
             result.push(s.byte_at(i))
@@ -2297,7 +2297,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
         return result
     }
 
-    fn fixup_closing_enclosures(this, line: &mut [ReflowState]) throws {
+    fn fixup_closing_enclosures(this, line: &mut [ReflowState]) {
         if line.is_empty() {
             return
         }

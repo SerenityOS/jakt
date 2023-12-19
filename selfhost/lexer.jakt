@@ -233,7 +233,7 @@ enum LiteralSuffix {
     }
 }
 
-struct Lexer implements(ThrowingIterable<Token>) {
+struct Lexer implements(Iterable<Token>) {
     index: usize
     input: [u8]
     compiler: Compiler
@@ -643,7 +643,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         }
     }
 
-    fn lex_forward_slash(mut this) throws -> Token {
+    fn lex_forward_slash(mut this) -> Token {
         let start = .index++
         if .peek() == b'=' {
             return Token::ForwardSlashEqual(.span(start, end: ++.index))
@@ -803,7 +803,7 @@ struct Lexer implements(ThrowingIterable<Token>) {
         return builder.to_string()
     }
 
-    fn next(mut this) throws -> Token? {
+    fn next(mut this) -> Token? {
         // Consume whitespace until a character is encountered or Eof is
         // reached. For Eof return a token.
         loop {
