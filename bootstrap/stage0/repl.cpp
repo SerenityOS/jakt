@@ -8,40 +8,40 @@ return ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* PreIncrement */: {
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("++"sv))) + (expr)))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("++"sv))) + (expr)));
 };/*case end*/
 case 1 /* PostIncrement */: {
-return JaktInternal::ExplicitValue(TRY((((expr) + ((ByteString::must_from_utf8("++"sv)))))));
+return JaktInternal::ExplicitValue(((expr) + ((ByteString::must_from_utf8("++"sv)))));
 };/*case end*/
 case 2 /* PreDecrement */: {
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("--"sv))) + (expr)))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("--"sv))) + (expr)));
 };/*case end*/
 case 3 /* PostDecrement */: {
-return JaktInternal::ExplicitValue(TRY((((expr) + ((ByteString::must_from_utf8("--"sv)))))));
+return JaktInternal::ExplicitValue(((expr) + ((ByteString::must_from_utf8("--"sv)))));
 };/*case end*/
 case 4 /* Negate */: {
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("-"sv))) + (expr)))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("-"sv))) + (expr)));
 };/*case end*/
 case 5 /* Dereference */: {
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("*"sv))) + (expr)))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("*"sv))) + (expr)));
 };/*case end*/
 case 6 /* RawAddress */: {
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("&raw "sv))) + (expr)))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("&raw "sv))) + (expr)));
 };/*case end*/
 case 7 /* Reference */: {
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("&"sv))) + (expr)))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("&"sv))) + (expr)));
 };/*case end*/
 case 8 /* MutableReference */: {
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("&mut "sv))) + (expr)))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("&mut "sv))) + (expr)));
 };/*case end*/
 case 9 /* LogicalNot */: {
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("not "sv))) + (expr)))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("not "sv))) + (expr)));
 };/*case end*/
 case 10 /* BitwiseNot */: {
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("~"sv))) + (expr)))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("~"sv))) + (expr)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(TRY((((TRY(((((ByteString::must_from_utf8("(<Unimplemented unary operator> "sv))) + (expr))))) + ((ByteString::must_from_utf8(")"sv)))))));
+return JaktInternal::ExplicitValue((((((ByteString::must_from_utf8("(<Unimplemented unary operator> "sv))) + (expr))) + ((ByteString::must_from_utf8(")"sv)))));
 };/*case end*/
 }/*switch end*/
 }()
@@ -1097,7 +1097,7 @@ return JaktInternal::ExplicitValue(TRY((repl::serialize_ast_node(TRY((interprete
 };/*case end*/
 case 1 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;types::Value const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("throw "sv))) + (TRY((repl::serialize_ast_node(TRY((interpreter::value_to_checked_expression(value,interpreter)))))))))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("throw "sv))) + (TRY((repl::serialize_ast_node(TRY((interpreter::value_to_checked_expression(value,interpreter)))))))));
 };/*case end*/
 case 4 /* Break */: {
 {

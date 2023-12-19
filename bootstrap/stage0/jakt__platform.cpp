@@ -64,7 +64,7 @@ break;
 }
 ByteString str = (_magic_value.value());
 {
-((output).push(TRY((((TRY((((prefix) + (str))))) + (suffix))))));
+((output).push(((((prefix) + (str))) + (suffix))));
 }
 
 }

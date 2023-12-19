@@ -170,14 +170,14 @@ if (__jakt_enum_value == (ByteString::must_from_utf8(""sv))) {
 return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 }
 else {
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("."sv))) + (new_extension)))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("."sv))) + (new_extension)));
 }
 }());
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-return jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({((parts).template get<0>()), TRY((((basename) + (extension))))})));
+return jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({((parts).template get<0>()), ((basename) + (extension))})));
 }
 }
 

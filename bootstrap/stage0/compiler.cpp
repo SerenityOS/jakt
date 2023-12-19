@@ -253,7 +253,7 @@ break;
 }
 ByteString include_path = (_magic_value.value());
 {
-jakt__path::Path const candidate_path = jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({include_path, TRY((((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))))})));
+jakt__path::Path const candidate_path = jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({include_path, ((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))})));
 if (((candidate_path).exists())){
 return candidate_path;
 }
@@ -266,12 +266,12 @@ return candidate_path;
 ByteString const standard_module_name = (ByteString::must_from_utf8("jakt"sv));
 if (((module_name).starts_with(standard_module_name))){
 ByteString const std_module_name_path = ((module_name).substring(JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(((module_name).length()),JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)))));
-jakt__path::Path const candidate_path = jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({((((*this).std_include_path)).to_string()), TRY((((std_module_name_path) + ((ByteString::must_from_utf8(".jakt"sv))))))})));
+jakt__path::Path const candidate_path = jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({((((*this).std_include_path)).to_string()), ((std_module_name_path) + ((ByteString::must_from_utf8(".jakt"sv))))})));
 if (((candidate_path).exists())){
 return candidate_path;
 }
 }
-return TRY((((*this).find_in_search_paths(jakt__path::Path::from_string(TRY((((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))))),relative_import,parent_path_count))));
+return TRY((((*this).find_in_search_paths(jakt__path::Path::from_string(((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))),relative_import,parent_path_count))));
 }
 }
 

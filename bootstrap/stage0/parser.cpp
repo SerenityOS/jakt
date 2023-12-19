@@ -5715,13 +5715,12 @@ ByteString module_name = ((((parsed_import).module_name)).literal_name());
 utility::Span module_span = ((((parsed_import).module_name)).span());
 while (((((*this).current())).__jakt_init_index() == 6 /* ColonColon */)){
 ((((*this).index)++));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(module_name,(ByteString::must_from_utf8("::"sv)))));
+(module_name,(ByteString::must_from_utf8("::"sv)));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<parser::ParsedModuleImport>>{
 auto&& __jakt_match_variant = ((*this).current());
@@ -5730,13 +5729,12 @@ case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
 utility::Span const& span = __jakt_match_value.span;
 {
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(module_name,name)));
+(module_name,name);
 (module_span = parser::merge_spans(module_span,span));
 ((((*this).index)++));
 }
@@ -8368,20 +8366,18 @@ break;
 }
 parser::ParsedVarDecl var = (_magic_value.value());
 {
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(tuple_var_name,((var).name))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(tuple_var_name,((var).name));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(tuple_var_name,(ByteString::must_from_utf8("_"sv)))));
+(tuple_var_name,(ByteString::must_from_utf8("_"sv)));
 }
 
 }
@@ -8450,20 +8446,18 @@ break;
 }
 parser::ParsedVarDecl var = (_magic_value.value());
 {
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(tuple_var_name,((var).name))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(tuple_var_name,((var).name));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(tuple_var_name,(ByteString::must_from_utf8("_"sv)))));
+(tuple_var_name,(ByteString::must_from_utf8("_"sv)));
 }
 
 }
@@ -8667,20 +8661,18 @@ break;
 }
 parser::ParsedVarDecl var = (_magic_value.value());
 {
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(tuple_var_name,((var).name))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(tuple_var_name,((var).name));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(tuple_var_name,(ByteString::must_from_utf8("__"sv)))));
+(tuple_var_name,(ByteString::must_from_utf8("__"sv)));
 }
 
 }
@@ -8732,13 +8724,12 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (((destructured_var_decls).size()),static_cast<size_t>(0ULL))){
 (is_destructuring = true);
 ByteString tuple_var_name = (ByteString::must_from_utf8("jakt__"sv));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(tuple_var_name,iterator_name)));
+(tuple_var_name,iterator_name);
 parser::ParsedVarDecl tuple_var_decl = parser::ParsedVarDecl(tuple_var_name,TRY((parser::ParsedType::Empty(JaktInternal::OptionalNone()))),false,JaktInternal::OptionalNone(),((((*this).current())).span()),JaktInternal::OptionalNone());
 NonnullRefPtr<typename parser::ParsedExpression> const init = TRY((parser::ParsedExpression::Var(iterator_name,parser::merge_spans(start_span,((((*this).previous())).span())))));
 NonnullRefPtr<typename parser::ParsedStatement> const var_decl = TRY((parser::ParsedStatement::VarDecl(tuple_var_decl,init,parser::merge_spans(start_span,((((*this).previous())).span())))));
@@ -13019,7 +13010,7 @@ return JaktInternal::ExplicitValue(name);
 };/*case end*/
 case 2 /* Operator */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Operator;ByteString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(TRY(((((ByteString::must_from_utf8("operator"sv))) + (name)))));
+return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("operator"sv))) + (name)));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()

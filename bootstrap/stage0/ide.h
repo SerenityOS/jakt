@@ -120,7 +120,7 @@ Usage() {};
 };
 struct JaktSymbol {
   public:
-public: ByteString name;public: JaktInternal::Optional<ByteString> detail;public: ByteString kind;public: utility::Span range;public: utility::Span selection_range;public: JaktInternal::DynamicArray<ide::JaktSymbol> children;public: ErrorOr<ByteString> to_json() const;
+public: ByteString name;public: JaktInternal::Optional<ByteString> detail;public: ByteString kind;public: utility::Span range;public: utility::Span selection_range;public: JaktInternal::DynamicArray<ide::JaktSymbol> children;public: ByteString to_json() const;
 public: JaktSymbol(ByteString a_name, JaktInternal::Optional<ByteString> a_detail, ByteString a_kind, utility::Span a_range, utility::Span a_selection_range, JaktInternal::DynamicArray<ide::JaktSymbol> a_children);
 
 public: ErrorOr<ByteString> debug_description() const;

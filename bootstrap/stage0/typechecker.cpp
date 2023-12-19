@@ -78,7 +78,7 @@ break;
 }
 ids::TypeId arg = (_magic_value.value());
 {
-(args = TRY((((TRY((((args) + (TRY((((((program)))->type_name(arg,true))))))))) + ((ByteString::must_from_utf8(", "sv)))))));
+(args = ((((args) + (TRY((((((program)))->type_name(arg,true))))))) + ((ByteString::must_from_utf8(", "sv)))));
 }
 
 }
@@ -146,7 +146,7 @@ break;
 }
 types::CheckedParameter arg = (_magic_value.value());
 {
-(args = TRY((((TRY((((args) + (TRY((((((program)))->type_name(((((arg).variable))->type_id),true))))))))) + ((ByteString::must_from_utf8(", "sv)))))));
+(args = ((((args) + (TRY((((((program)))->type_name(((((arg).variable))->type_id),true))))))) + ((ByteString::must_from_utf8(", "sv)))));
 }
 
 }
@@ -162,7 +162,7 @@ break;
 }
 types::FunctionGenericParameter generic = (_magic_value.value());
 {
-(generics = TRY((((TRY((((generics) + (TRY((((((program)))->type_name(((generic).type_id()),true))))))))) + ((ByteString::must_from_utf8(", "sv)))))));
+(generics = ((((generics) + (TRY((((((program)))->type_name(((generic).type_id()),true))))))) + ((ByteString::must_from_utf8(", "sv)))));
 }
 
 }
@@ -1678,7 +1678,7 @@ break;
 }
 
 if ((!(((module_name_and_span).has_value())))){
-((*this).error(__jakt_format((StringView::from_string_literal("No module in module set {{{}}} was found"sv)),TRY((utility::join(names,(ByteString::must_from_utf8(", "sv)))))),((((import_).module_name)).span())));
+((*this).error(__jakt_format((StringView::from_string_literal("No module in module set {{{}}} was found"sv)),utility::join(names,(ByteString::must_from_utf8(", "sv)))),((((import_).module_name)).span())));
 return {};
 }
 JaktInternal::Tuple<ByteString,utility::Span> const module_name_module_span_ = (module_name_and_span.value());
@@ -2899,31 +2899,28 @@ parser::ParsedNamespace namespace_ = (_magic_value.value());
 {
 ByteString debug_name = (ByteString::must_from_utf8("namespace("sv));
 if (((((namespace_).name)).has_value())){
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(debug_name,(((namespace_).name).value()))));
+(debug_name,(((namespace_).name).value()));
 }
 else {
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(debug_name,(ByteString::must_from_utf8("unnamed-namespace"sv)))));
+(debug_name,(ByteString::must_from_utf8("unnamed-namespace"sv)));
 }
 
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(debug_name,(ByteString::must_from_utf8(")"sv)))));
+(debug_name,(ByteString::must_from_utf8(")"sv)));
 JaktInternal::Optional<ids::ScopeId> existing_scope_id = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ids::ScopeId>,ErrorOr<void>>{
 auto __jakt_enum_value = (((((namespace_).name)).has_value()));
@@ -2946,27 +2943,24 @@ VERIFY_NOT_REACHED();
 JaktInternal::Optional<ids::ScopeId> namespace_scope_id = existing_scope_id;
 if ((!(((existing_scope_id).has_value())))){
 if (((((namespace_).import_path_if_extern)).has_value())){
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(debug_name,(ByteString::must_from_utf8(" (extern "sv)))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(debug_name,(ByteString::must_from_utf8(" (extern "sv)));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(debug_name,(((namespace_).import_path_if_extern).value()))));
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+(debug_name,(((namespace_).import_path_if_extern).value()));
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(debug_name,(ByteString::must_from_utf8(")"sv)))));
+(debug_name,(ByteString::must_from_utf8(")"sv)));
 }
 ids::ScopeId const parent_scope_id = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::ScopeId,ErrorOr<void>>{
@@ -6889,21 +6883,19 @@ break;
 ids::TypeId arg = (_magic_value.value());
 {
 if ((!(((arg_names).is_empty())))){
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(arg_names,(ByteString::must_from_utf8(", "sv)))));
+(arg_names,(ByteString::must_from_utf8(", "sv)));
 }
-TRY(([](ByteString& self, ByteString rhs) -> ErrorOr<void> {
+[](ByteString& self, ByteString rhs) -> void {
 {
-(self = TRY((((self) + (rhs)))));
+(self = ((self) + (rhs)));
 }
-return {};
 }
-(arg_names,TRY((((*this).type_name(arg,false)))))));
+(arg_names,TRY((((*this).type_name(arg,false)))));
 }
 
 }
@@ -8391,7 +8383,7 @@ break;
 }
 
 }
-return TRY((utility::join(ss,(ByteString::must_from_utf8(" -> "sv)))));
+return utility::join(ss,(ByteString::must_from_utf8(" -> "sv)));
 }
 }
 
@@ -19218,7 +19210,7 @@ continue;
 }
 }
 
-((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Match case argument '{}' for struct-like enum variant '{}' cannot be anon"sv)),((arg).binding),name),((arg).span),__jakt_format((StringView::from_string_literal("Available arguments for '{}' are: {}\n"sv)),name,TRY((utility::join(unused_field_names,(ByteString::must_from_utf8(", "sv)))))),((arg).span)));
+((*this).error_with_hint(__jakt_format((StringView::from_string_literal("Match case argument '{}' for struct-like enum variant '{}' cannot be anon"sv)),((arg).binding),name),((arg).span),__jakt_format((StringView::from_string_literal("Available arguments for '{}' are: {}\n"sv)),name,utility::join(unused_field_names,(ByteString::must_from_utf8(", "sv)))),((arg).span)));
 continue;
 }
 }
@@ -19617,7 +19609,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 (((missing_variants).size()),static_cast<size_t>(0ULL))){
 if ((!(seen_catch_all))){
-((*this).error(__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),TRY((utility::join(missing_variants,(ByteString::must_from_utf8(", "sv)))))),span));
+((*this).error(__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),utility::join(missing_variants,(ByteString::must_from_utf8(", "sv)))),span));
 }
 }
 else if ((seen_catch_all && (!(expanded_catch_all)))){
@@ -19882,7 +19874,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 (((missing_variants).size()),static_cast<size_t>(0ULL))){
 if ((!(seen_catch_all))){
-((*this).error(__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),TRY((utility::join(missing_variants,(ByteString::must_from_utf8(", "sv)))))),span));
+((*this).error(__jakt_format((StringView::from_string_literal("Match expression is not exhaustive, missing variants are: {}"sv)),utility::join(missing_variants,(ByteString::must_from_utf8(", "sv)))),span));
 }
 }
 else if ((seen_catch_all && (!(expanded_catch_all)))){
@@ -20716,7 +20708,7 @@ return JaktInternal::ExplicitValue<void>();
     _jakt_value.release_value();
 });
 }
-((*this).error(__jakt_format((StringView::from_string_literal("Not a namespace, enum, class, or struct: ‘{}’"sv)),TRY((utility::join(((call).namespace_),(ByteString::must_from_utf8("::"sv)))))),span));
+((*this).error(__jakt_format((StringView::from_string_literal("Not a namespace, enum, class, or struct: ‘{}’"sv)),utility::join(((call).namespace_),(ByteString::must_from_utf8("::"sv)))),span));
 }
 
 }

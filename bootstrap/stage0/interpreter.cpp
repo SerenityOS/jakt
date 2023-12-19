@@ -10280,7 +10280,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 13 /* JaktString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.JaktString;ByteString const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((types::ValueImpl::JaktString(TRY((((x) + (y))))))));
+return JaktInternal::ExplicitValue(TRY((types::ValueImpl::JaktString(((x) + (y))))));
 };/*case end*/
 default: {
 {
