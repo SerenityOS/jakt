@@ -13,7 +13,7 @@ inline ByteString __jakt_format(CheckedFormatString<Ts...> fmt, Ts const&... arg
     return ByteString::formatted(fmt.view(), args...);
 }
 
-inline ErrorOr<ByteString> operator+(ByteString const& a, ByteString const& b)
+inline ByteString operator+(ByteString const& a, ByteString const& b)
 {
     return ByteString::formatted("{}{}", a, b);
 }

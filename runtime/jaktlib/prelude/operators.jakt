@@ -322,9 +322,9 @@ type String implements(Compare<String>) {
     }
 }
 
-type String implements(ThrowingAdd<String, String>) {
+type String implements(Add<String, String>) {
     [[name="operator(+)"]]
-    extern fn add(this, anon rhs: String) throws -> String
+    extern fn add(this, anon rhs: String) -> String
 }
 
 type StringView implements(Equal<StringView>) {
