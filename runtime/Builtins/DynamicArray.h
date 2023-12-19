@@ -414,14 +414,23 @@ public:
         }
     }
 
-    ErrorOr<DynamicArray<T>> to_array() const
+    DynamicArray<T> to_array() const
     {
         auto array = DynamicArray<T>::create_empty();
         array.ensure_capacity(size());
         for (size_t i = 0; i < size(); ++i) {
             array.push(at(i));
         }
+        return array;
+    }
 
+    DynamicArray<T> must_to_array() const
+    {
+        auto array = DynamicArray<T>::create_empty();
+        array.ensure_capacity(size());
+        for (size_t i = 0; i < size(); ++i) {
+            array.push(at(i));
+        }
         return array;
     }
 
