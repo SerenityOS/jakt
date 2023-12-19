@@ -48,8 +48,8 @@ ErrorOr<Optional<ByteString>> DirectoryIterator::next()
         return JaktInternal::OptionalNone {};
     }
     auto builder = ByteStringBuilder::create();
-    TRY(builder.append_c_string(next_dir->d_name));
-    return Optional<ByteString>(TRY(builder.to_string()));
+    builder.append_c_string(next_dir->d_name);
+    return builder.to_string();
 }
 DirectoryIterator::~DirectoryIterator()
 {

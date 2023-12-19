@@ -1938,37 +1938,37 @@ struct CodeGenerator {
         output += ")"
     }
 
-    fn codegen_for_enum_variants(this, anon enum_: &CheckedEnum, anon stmt_fmt: &fn(accessor: String) throws -> String, index_expr: String, output: &mut StringBuilder) throws {
+    fn codegen_for_enum_variants(this, anon enum_: &CheckedEnum, anon stmt_fmt: &fn(accessor: String) throws -> String, index_expr: String, builder: &mut StringBuilder) throws {
         // Adding to output here in a loop was causing a 30% slowdown, so using
         // a StringBuilder to mitigate it.
-        output.append(format("switch ({}) {{\n", index_expr))
+        builder.append(format("switch ({}) {{\n", index_expr))
 
         let common_field_count = enum_.fields.size()
 
         for variant_index in 0..enum_.variants.size() {
             let variant = &enum_.variants[variant_index]
             let variant_name = variant.name()
-            output.append(format("case {} /* {} */:\n", variant_index, variant_name))
+            builder.append(format("case {} /* {} */:\n", variant_index, variant_name))
 
             match variant {
                 Untyped | WithValue => {}
                 Typed => {
-                    output.append(stmt_fmt(accessor: format("as.{}.value", variant_name)))
+                    builder.append(stmt_fmt(accessor: format("as.{}.value", variant_name)))
                 }
                 StructLike(fields) => {
                     for field in fields[common_field_count..] {
                         let variable = .program.get_variable(field)
                         let name = variable.name_for_codegen().as_name_for_use()
 
-                        output.append(stmt_fmt(accessor: format("as.{}.{}", variant_name, name)))
+                        builder.append(stmt_fmt(accessor: format("as.{}.{}", variant_name, name)))
                     }
                 }
             }
 
-            output.append("break;\n")
+            builder.append("break;\n")
         }
 
-        output.append("}\n")
+        builder.append("}\n")
     }
 
     /// Generates the body for a copy/ move assignment operator/constructor.
@@ -1980,16 +1980,16 @@ struct CodeGenerator {
         is_constructor: bool // whether it's a constructor. If false, it's an assignment operator.
         use_move: bool // whether to use the "move()" function from AK lib.
     ) throws -> String {
-        mut output = StringBuilder::create()
-        output.append("{")
+        mut builder = StringBuilder::create()
+        builder.append("{")
 
         if is_constructor {
             // The assigned value must be initialized.
             // The constructed value is assumed to be uninitialized.
-            output.append("VERIFY(rhs.__jakt_variant_index != 0);\n")
+            builder.append("VERIFY(rhs.__jakt_variant_index != 0);\n")
         } else {
             // Both values are assumed to be initialized
-            output.append("VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);\n")
+            builder.append("VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);\n")
         }
 
         let assign = fn[use_move](accessor: String) throws -> String {
@@ -2014,21 +2014,21 @@ struct CodeGenerator {
                 let variable = .program.get_variable(common.variable_id)
                 let name = variable.name_for_codegen().as_name_for_use()
 
-                output.append(placement_new(accessor: format("common.init_common.{}", name)))
+                builder.append(placement_new(accessor: format("common.init_common.{}", name)))
             }
         } else {
             for common in enum_.fields {
                 let variable = .program.get_variable(common.variable_id)
                 let name = variable.name_for_codegen().as_name_for_use()
 
-                output.append(assign(accessor: format("common.init_common.{}", name)))
+                builder.append(assign(accessor: format("common.init_common.{}", name)))
             }
         }
 
 
         if is_constructor {
             // In a constructor, everything needs placement new since it's uninitialized.
-            .codegen_for_enum_variants(&enum_, &placement_new, index_expr: "rhs.__jakt_init_index()", &mut output)
+            .codegen_for_enum_variants(&enum_, &placement_new, index_expr: "rhs.__jakt_init_index()", &mut builder)
         } else {
             // If it's not the same thing, the only safe thing here is to call the destructor
             // and use placement_new.
@@ -2038,25 +2038,25 @@ struct CodeGenerator {
             // assignment operator since it's already initialized to the correct
             // type.
 
-            output.append("if (this->__jakt_variant_index != rhs.__jakt_variant_index) {\n")
-            output.append("this->__jakt_destroy_variant();\n")
+            builder.append("if (this->__jakt_variant_index != rhs.__jakt_variant_index) {\n")
+            builder.append("this->__jakt_destroy_variant();\n")
 
-            .codegen_for_enum_variants(&enum_, &placement_new, index_expr: "rhs.__jakt_init_index()", &mut output)
+            .codegen_for_enum_variants(&enum_, &placement_new, index_expr: "rhs.__jakt_init_index()", &mut builder)
 
-            output.append("} else {\n")
+            builder.append("} else {\n")
 
             // Here we can use assignment for all of the fields, since we know for sure
             // they have been initialized.
 
-            .codegen_for_enum_variants(&enum_, &assign, index_expr: "rhs.__jakt_init_index()", &mut output)
+            .codegen_for_enum_variants(&enum_, &assign, index_expr: "rhs.__jakt_init_index()", &mut builder)
 
-            output.append("}\n")
+            builder.append("}\n")
         }
 
-        output.append("this->__jakt_variant_index = rhs.__jakt_variant_index;\n")
+        builder.append("this->__jakt_variant_index = rhs.__jakt_variant_index;\n")
 
-        output.append("}\n")
-        return output.to_string()
+        builder.append("}\n")
+        return builder.to_string()
     }
 
     fn codegen_enum_constructors(
@@ -2348,15 +2348,15 @@ struct CodeGenerator {
         }
         output += "debug_description() const { "
         output += "auto builder = ByteStringBuilder::create();"
-        output += format("TRY(builder.append(\"{}(\"sv));", struct_.name_for_codegen().as_name_for_use())
+        output += format("builder.append(\"{}(\"sv);", struct_.name_for_codegen().as_name_for_use())
         output += "{\n"
         output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
 
         mut i = 0uz
         for field in struct_.fields {
             let field_var = .program.get_variable(field.variable_id)
-            output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));"
-            output += format("TRY(builder.appendff(\"{}: ", field_var.name_for_codegen().as_name_for_use())
+            output += "JaktInternal::PrettyPrint::must_output_indentation(builder);\n"
+            output += format("builder.appendff(\"{}: ", field_var.name_for_codegen().as_name_for_use())
             if .program.is_string(field_var.type_id) {
                 output += "\\\"{}\\\""
             } else {
@@ -2374,12 +2374,12 @@ struct CodeGenerator {
                 }
                 else => ""
             }
-            output += field_var.name_for_codegen().as_name_for_use() + "));\n"
+            output += field_var.name_for_codegen().as_name_for_use() + ");\n"
             i++
         }
 
         output += "}\n"
-        output += "TRY(builder.append(\")\"sv));"
+        output += "builder.append(\")\"sv);"
         output += "return builder.to_string();"
         output += " }\n"
         return output
@@ -2411,40 +2411,40 @@ struct CodeGenerator {
             output += format("case {} /* {} */: {{\n", i, name)
             match variant {
                 StructLike(fields) => {
-                    output += format("TRY(builder.append(\"{}::{}\"sv));\n", enum_.name, name)
+                    output += format("builder.append(\"{}::{}\"sv);\n", enum_.name, name)
                     output += format("[[maybe_unused]] auto const& that = this->as.{};\n", name)
-                    output += "TRY(builder.append(\"(\"sv));\n"
+                    output += "builder.append(\"(\"sv);\n"
                     output += "{\n";
                     output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
                     mut i = 0uz
                     for field in fields {
-                        output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));\n"
+                        output += "JaktInternal::PrettyPrint::must_output_indentation(builder);\n"
                         let var = .program.get_variable(field)
                         if .program.is_string(var.type_id){
-                            output += format("TRY(builder.appendff(\"{}: \\\"{{}}\\\"", var.name_for_codegen().as_name_for_use())
+                            output += format("builder.appendff(\"{}: \\\"{{}}\\\"", var.name_for_codegen().as_name_for_use())
                         } else {
-                            output += format("TRY(builder.appendff(\"{}: {{}}", var.name_for_codegen().as_name_for_use())
+                            output += format("builder.appendff(\"{}: {{}}", var.name_for_codegen().as_name_for_use())
                         }
                         if i != fields.size() - 1 {
                             output += ", "
                         }
                         if i < common_field_count {
-                            output += format("\", this->common.init_common.{}));\n", var.name_for_codegen().as_name_for_use())
+                            output += format("\", this->common.init_common.{});\n", var.name_for_codegen().as_name_for_use())
                         } else {
-                            output += format("\", that.{}));\n", var.name_for_codegen().as_name_for_use())
+                            output += format("\", that.{});\n", var.name_for_codegen().as_name_for_use())
                         }
                         i++
                     }
                     output += "}\n"
-                    output += "TRY(builder.append(\")\"sv));\n"
+                    output += "builder.append(\")\"sv);\n"
                 }
                 Typed(type_id) => {
-                    output += format("TRY(builder.append(\"{}::{}\"sv));\n", enum_.name, name)
+                    output += format("builder.append(\"{}::{}\"sv);\n", enum_.name, name)
                     output += format("[[maybe_unused]] auto const& that = this->as.{};\n", name)
                     if .program.is_string(type_id){
-                        output += "TRY(builder.appendff(\"(\\\"{}\\\")\", that.value));\n"
+                        output += "builder.appendff(\"(\\\"{}\\\")\", that.value);\n"
                     } else {
-                        output += "TRY(builder.appendff(\"({})\", that.value));\n"
+                        output += "builder.appendff(\"({})\", that.value);\n"
                     }
                 }
                 else => {
@@ -4591,15 +4591,15 @@ struct CodeGenerator {
                     false => ""
                     true => {
                         let parameters = .program.get_type(scope.relevant_type_id!).generic_parameters(program: .program)
-                        mut res = StringBuilder::create()
+                        mut builder = StringBuilder::create()
 
                         if parameters is Some(params) and generic_mappings is Some(mappings) and not params.is_empty() {
-                            res.append("<")
+                            builder.append("<")
                             mut first = true
                             for parameter in params {
                                 let mapping = mappings.get(parameter.type_id)!
                                 if .program.get_type(mapping) is TypeVariable and .map_type(mapping) == mapping {
-                                    // We couldn't resolve this somehow, so just...bail.
+                                    // We couldn't builderolve this somehow, so just...bail.
                                     // FIXME: We should make sure this can't happen?
                                     //        Or at least error out when it does.
                                     break
@@ -4608,15 +4608,15 @@ struct CodeGenerator {
                                 if first {
                                     first = false
                                 } else {
-                                    res.append(", ")
+                                    builder.append(", ")
                                 }
 
-                                res.append(.codegen_type(mapping))
+                                builder.append(.codegen_type(mapping))
                             }
-                            res.append(">")
+                            builder.append(">")
                         }
 
-                        yield res.to_string()
+                        yield builder.to_string()
                     }
                 }
                 output = format("{}{}::{}", name!, args, output)

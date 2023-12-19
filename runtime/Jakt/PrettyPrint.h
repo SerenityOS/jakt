@@ -5,6 +5,10 @@
 #include <AK/Error.h>
 #include <AK/Noncopyable.h>
 
+namespace Jakt {
+class ByteStringBuilder;
+}
+
 namespace JaktInternal::PrettyPrint {
 
 struct ScopedEnable {
@@ -27,5 +31,6 @@ public:
 };
 
 Jakt::ErrorOr<void> output_indentation(auto& builder);
+void must_output_indentation(Jakt::ByteStringBuilder&);
 
 }

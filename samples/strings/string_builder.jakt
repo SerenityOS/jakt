@@ -2,10 +2,10 @@
 /// - output: "abc123\n"
 
 fn main() {
-    mut s = StringBuilder::create()
+    mut builder = StringBuilder::create()
 
-    s.append_c_string("abc".c_string());
-    s.append_c_string("123".c_string());
+    builder.append_c_string("abc".c_string());
+    builder.append_c_string("123".c_string());
 
-    println("{}", s.to_string())
+    println("{}", builder.to_string())
 }

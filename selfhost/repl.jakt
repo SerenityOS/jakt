@@ -423,8 +423,8 @@ struct REPL {
             }
 
             if not check_parens(tokens) {
-                mut sb = StringBuilder::create()
-                sb.append(line)
+                mut builder = StringBuilder::create()
+                builder.append(line)
 
                 while not check_parens(tokens) {
                     let line_result = try editor.get_line(prompt: "..") catch error { return }
@@ -433,10 +433,10 @@ struct REPL {
                         return
                     }
 
-                    sb.append(line)
+                    builder.append(line)
 
                     .compiler.current_file = .file_id
-                    .compiler.current_file_contents = line_to_bytes(sb.to_string())
+                    .compiler.current_file_contents = line_to_bytes(builder.to_string())
 
                     tokens = try Lexer::lex(compiler: .compiler) catch { continue }
                 }
