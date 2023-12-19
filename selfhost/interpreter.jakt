@@ -2019,7 +2019,7 @@ class Interpreter {
                         )
                     )
                 }
-                "append" | "append_string" | "append_code_point" | "append_escaped_for_json" => {
+                "append" | "append_code_point" | "append_escaped_for_json" => {
                     mut (fields, current_string) = match this_argument!.impl {
                         Struct(fields) => match fields[0].impl {
                             JaktString(value) => (fields, value)
@@ -2037,7 +2037,7 @@ class Interpreter {
                     }
 
                     mut builder = StringBuilder::create()
-                    builder.append_string(current_string)
+                    builder.append(current_string)
                     match prelude_function {
                         "append" => match arguments[0].impl {
                             U8(value) => builder.append(value)
@@ -2049,13 +2049,6 @@ class Interpreter {
                                 throw Error::from_string_literal("Invalid type")
                             }
                         }
-                        "append_string" => builder.append_string(match arguments[0].impl {
-                            JaktString(value) => value
-                            else => {
-                                .error("Invalid use of StringBuilder::append_string()", call_span)
-                                throw Error::from_string_literal("Invalid type")
-                            }
-                        })
                         "append_escaped_for_json" => builder.append_escaped_for_json(match arguments[0].impl {
                             JaktString(value) => value
                             else => {

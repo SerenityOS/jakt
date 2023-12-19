@@ -58,21 +58,21 @@ struct JaktSymbol {
 
     fn to_json(this) throws -> String {
         mut json_builder = StringBuilder::create()
-        json_builder.append_string("{")
-        json_builder.append_string(format("\"name\": \"{}\",", this.name))
+        json_builder.append("{")
+        json_builder.append(format("\"name\": \"{}\",", this.name))
         if this.detail.has_value() {
-            json_builder.append_string(format("\"detail\": \"{}\",", this.detail))
+            json_builder.append(format("\"detail\": \"{}\",", this.detail))
         }
-        json_builder.append_string(format("\"kind\": \"{}\",", this.kind))
-        json_builder.append_string(format("\"range\": {{\"start\": {}, \"end\": {}}},", this.range.start, this.range.end))
-        json_builder.append_string(format("\"selection_range\": {{\"start\": {}, \"end\": {}}},", this.selection_range.start, this.selection_range.end))
+        json_builder.append(format("\"kind\": \"{}\",", this.kind))
+        json_builder.append(format("\"range\": {{\"start\": {}, \"end\": {}}},", this.range.start, this.range.end))
+        json_builder.append(format("\"selection_range\": {{\"start\": {}, \"end\": {}}},", this.selection_range.start, this.selection_range.end))
         mut child_symbols : [String] = []
         child_symbols.ensure_capacity(this.children.size())
         for child in this.children {
             child_symbols.push(child.to_json())
         }
-        json_builder.append_string(format("\"children\": [{}]", join(child_symbols, separator: ",")))
-        json_builder.append_string("}")
+        json_builder.append(format("\"children\": [{}]", join(child_symbols, separator: ",")))
+        json_builder.append("}")
         return json_builder.to_string()
     }
 }

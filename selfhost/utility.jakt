@@ -135,9 +135,9 @@ fn escape_for_quotes(anon s: String) throws -> String {
     mut builder = StringBuilder::create()
     for cp in s.code_points() {
         match cp {
-            b'"' as! u32 =>  { builder.append_string("\\\"") }
-            b'\\' as! u32 => { builder.append_string("\\\\") }
-            b'\n' as! u32 => { builder.append_string("\\n") }
+            b'"' as! u32 =>  { builder.append("\\\"") }
+            b'\\' as! u32 => { builder.append("\\\\") }
+            b'\n' as! u32 => { builder.append("\\n") }
             else =>  { builder.append_code_point(cp) }
         }
     }

@@ -55,13 +55,13 @@ struct Path {
         }
 
         mut join_builder = StringBuilder::create()
-        join_builder.append_string(.path)
+        join_builder.append(.path)
 
         if .path.byte_at(.path.length() - 1) != separator {
             join_builder.append(separator)
         }
 
-        join_builder.append_string(path)
+        join_builder.append(path)
 
         return Path::from_string(join_builder.to_string())
     }
