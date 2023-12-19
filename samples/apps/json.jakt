@@ -1,5 +1,5 @@
 /// Expect:
-/// - output: "JsonValue::JsonArray([JsonValue::Object([\"name\": JsonValue::JsonString(\"air\"), \"states\": JsonValue::JsonArray([]), \"maxStateId\": JsonValue::Number(0), \"minStateId\": JsonValue::Number(0), \"resistance\": JsonValue::Number(0), \"id\": JsonValue::Number(0.5), \"hardness\": JsonValue::Number(3.9), \"displayName\": JsonValue::JsonString(\"Air\")])])\n"
+/// - output: "JsonValue::JsonArray([JsonValue::Object([\"id\": JsonValue::Number(0.5), \"displayName\": JsonValue::JsonString(\"Air\"), \"name\": JsonValue::JsonString(\"air\"), \"hardness\": JsonValue::Number(3.9), \"resistance\": JsonValue::Number(0), \"minStateId\": JsonValue::Number(0), \"maxStateId\": JsonValue::Number(0), \"states\": JsonValue::JsonArray([])])])\n"
 
 enum JsonValue {
     Null

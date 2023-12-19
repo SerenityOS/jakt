@@ -43,7 +43,7 @@ struct JaktHashableKeyTraits : public Traits<T> {
 
 template<typename K, typename V>
 struct DictionaryStorage : public RefCounted<DictionaryStorage<K, V>> {
-    HashMap<K, V, JaktHashableKeyTraits<K>, DirectlyPeekableTraits<V>> map;
+    OrderedHashMap<K, V, JaktHashableKeyTraits<K>, DirectlyPeekableTraits<V>> map;
 };
 
 template<typename K, typename V>
