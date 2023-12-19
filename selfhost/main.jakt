@@ -1150,30 +1150,30 @@ fn format_output(file_path: Path, tokens: [Token], format_range: FormatRange?, f
                             else => " "
                         }
 
-                        formatted_file.append_string(format("{}//{}{}", lhs_space, space, comment!))
+                        formatted_file.append(format("{}//{}{}", lhs_space, space, comment!))
                     }
                     on_new_line = true
                 }
                 Garbage(consumed) => {
                     if consumed.has_value() {
-                        formatted_file.append_string(format("{}", consumed!))
+                        formatted_file.append(format("{}", consumed!))
                     }
                 }
                 else => {
                     if on_new_line {
-                        formatted_file.append_string(format("{}", indent(formatted_token.indent)))
+                        formatted_file.append(format("{}", indent(formatted_token.indent)))
                     }
-                    formatted_file.append_string(format("{}", formatted_token.token_text()))
+                    formatted_file.append(format("{}", formatted_token.token_text()))
                     on_new_line = false
                 }
             }
 
             for byte in formatted_token.trailing_trivia {
-                formatted_file.append_string(format("{:c}", byte))
+                formatted_file.append(format("{:c}", byte))
             }
 
             if formatted_token.token is Eol {
-                formatted_file.append_string("\n")
+                formatted_file.append("\n")
             }
         }
     }

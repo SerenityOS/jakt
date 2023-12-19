@@ -200,7 +200,7 @@ fn parse_quoted_string(anon quote: String) throws -> String {
                     panic(format("Unknown escape character: '{}'", ch))
                 }
             }
-            builder.append_string(escape)
+            builder.append(escape)
         } else {
             builder.append(ch)
         }

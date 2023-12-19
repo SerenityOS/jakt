@@ -56,14 +56,14 @@ fn serialize_ast_node(anon node: CheckedExpression) throws -> String => match no
     UnaryOp(expr, op) => serialize_unary_operation(op, serialize_ast_node(expr))
     JaktTuple(vals) => {
         mut builder = StringBuilder::create()
-        builder.append_string("(")
+        builder.append("(")
         for i in 0..vals.size() {
             if i != 0 {
-                builder.append_string(", ")
+                builder.append(", ")
             }
-            builder.append_string(serialize_ast_node(vals[i]))
+            builder.append(serialize_ast_node(vals[i]))
         }
-        builder.append_string(")")
+        builder.append(")")
         yield builder.to_string()
     }
     Range(from, to) => {
@@ -81,41 +81,41 @@ fn serialize_ast_node(anon node: CheckedExpression) throws -> String => match no
     }
     JaktArray(vals) => {
         mut builder = StringBuilder::create()
-        builder.append_string("[")
+        builder.append("[")
         for i in 0..vals.size() {
             if i != 0 {
-                builder.append_string(", ")
+                builder.append(", ")
             }
-            builder.append_string(serialize_ast_node(vals[i]))
+            builder.append(serialize_ast_node(vals[i]))
         }
-        builder.append_string("]")
+        builder.append("]")
         yield builder.to_string()
     }
     JaktSet(vals) => {
         mut builder = StringBuilder::create()
-        builder.append_string("{")
+        builder.append("{")
         for i in 0..vals.size() {
             if i != 0 {
-                builder.append_string(", ")
+                builder.append(", ")
             }
-            builder.append_string(serialize_ast_node(vals[i]))
+            builder.append(serialize_ast_node(vals[i]))
         }
-        builder.append_string("}")
+        builder.append("}")
         yield builder.to_string()
     }
     JaktDictionary(vals) => {
         mut builder = StringBuilder::create()
-        builder.append_string("[")
+        builder.append("[")
         for i in 0..vals.size() {
             if i != 0 {
-                builder.append_string(", ")
+                builder.append(", ")
             }
             let val = vals[i]
-            builder.append_string(serialize_ast_node(val.0))
-            builder.append_string(": ")
-            builder.append_string(serialize_ast_node(val.1))
+            builder.append(serialize_ast_node(val.0))
+            builder.append(": ")
+            builder.append(serialize_ast_node(val.1))
         }
-        builder.append_string("]")
+        builder.append("]")
         yield builder.to_string()
     }
     IndexedExpression(expr, index) => format("{}[{}]", serialize_ast_node(expr), serialize_ast_node(index))
@@ -125,10 +125,10 @@ fn serialize_ast_node(anon node: CheckedExpression) throws -> String => match no
     NamespacedVar(namespaces, var) => {
         mut builder = StringBuilder::create()
         for namespace_ in namespaces {
-            builder.append_string(namespace_.name)
-            builder.append_string("::")
+            builder.append(namespace_.name)
+            builder.append("::")
         }
-        builder.append_string(var.name)
+        builder.append(var.name)
         yield builder.to_string()
     }
     Var(var) => var.name
@@ -139,23 +139,23 @@ fn serialize_ast_node(anon node: CheckedExpression) throws -> String => match no
         mut builder = StringBuilder::create()
 
         for namespace_ in call.namespace_ {
-            builder.append_string(namespace_.name)
-            builder.append_string("::")
+            builder.append(namespace_.name)
+            builder.append("::")
         }
-        builder.append_string(call.name)
-        builder.append_string("(")
+        builder.append(call.name)
+        builder.append("(")
         for i in 0..call.args.size() {
             if i != 0 {
-                builder.append_string(", ")
+                builder.append(", ")
             }
             let arg = call.args[i]
             if not arg.0.is_empty() {
-                builder.append_string(arg.0)
-                builder.append_string(": ")
+                builder.append(arg.0)
+                builder.append(": ")
             }
-            builder.append_string(serialize_ast_node(arg.1))
+            builder.append(serialize_ast_node(arg.1))
         }
-        builder.append_string(")")
+        builder.append(")")
         yield builder.to_string()
     }
     Garbage => "<Garbage>"
@@ -424,7 +424,7 @@ struct REPL {
 
             if not check_parens(tokens) {
                 mut sb = StringBuilder::create()
-                sb.append_string(line)
+                sb.append(line)
 
                 while not check_parens(tokens) {
                     let line_result = try editor.get_line(prompt: "..") catch error { return }
@@ -433,7 +433,7 @@ struct REPL {
                         return
                     }
 
-                    sb.append_string(line)
+                    sb.append(line)
 
                     .compiler.current_file = .file_id
                     .compiler.current_file_contents = line_to_bytes(sb.to_string())
