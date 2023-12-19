@@ -57,9 +57,9 @@ fn current_directory() throws -> String {
             }
         }
 
-        mut b = StringBuilder::create()
-        b.append_c_string(buf)
-        return b.to_string()
+        mut builder = StringBuilder::create()
+        builder.append_c_string(buf)
+        return builder.to_string()
     }
 }
 
@@ -72,9 +72,9 @@ fn real_path(anon path: String) throws -> String {
         unsafe { cpp { "free(buffer);" } }
     }
 
-    mut b = StringBuilder::create()
-    b.append_c_string(buffer)
-    return b.to_string()
+    mut builder = StringBuilder::create()
+    builder.append_c_string(buffer)
+    return builder.to_string()
 }
 
 class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {

@@ -125,9 +125,9 @@ trait DeclarationImpl {}
 type Cpp::Declaration implements(DeclarationImpl) {
     [[inline(always)]]
     public fn typed_name(this) throws -> String {
-        mut s = StringBuilder::create()
-        s.append("(")
-        s.append(match true {
+        mut builder = StringBuilder::create()
+        builder.append("(")
+        builder.append(match true {
             (.is_variable_declaration()) => "VarDecl"
             (.is_parameter()) => "Parameter"
             (.is_struct()) => "Struct"
@@ -138,9 +138,9 @@ type Cpp::Declaration implements(DeclarationImpl) {
             (.is_member()) => "Member"
             else => "Unknown"
         })
-        s.append(") ")
-        s.append(.full_name())
-        return s.to_string()
+        builder.append(") ")
+        builder.append(.full_name())
+        return builder.to_string()
     }
 }
 type Cpp::NamedType implements(DeclarationImpl) {

@@ -3,11 +3,11 @@ import jakt::prelude::configuration { UserConfiguration }
 fn read_all(filename: String) throws -> String {
     mut file = File::open_for_reading(filename)
     let buf = file.read_all()
-    mut s = StringBuilder::create()
+    mut builder = StringBuilder::create()
     for b in buf {
-        s.append(b)
+        builder.append(b)
     }
-    return s.to_string()
+    return builder.to_string()
 }
 
 struct CppImportErrors {

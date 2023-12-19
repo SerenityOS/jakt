@@ -45,7 +45,7 @@ fn main() {
     mut builder = StringBuilder::create();
     for i in 0..read_amount {
         unsafe { cpp {
-                "TRY(builder.append(((u8*)buffer)[i]));"
+                "builder.append(((u8*)buffer)[i]);"
         }}
     }
     print("{}", builder.to_string())
