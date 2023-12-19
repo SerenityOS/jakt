@@ -24,7 +24,7 @@ inline ErrorOr<void> ByteStringBuilder::will_append(size_t size)
     if (!m_buffer.has_value()) {
         m_buffer = TRY(DynamicArray<u8>::create_empty());
     }
-    TRY(m_buffer->add_capacity(size));
+    m_buffer->add_capacity(size);
     return {};
 }
 
@@ -35,14 +35,14 @@ ErrorOr<void> ByteStringBuilder::append(StringView string)
     if (string.is_empty())
         return {};
     TRY(will_append(string.length()));
-    TRY(m_buffer->push_values((u8 const*)string.characters_without_null_termination(), string.length()));
+    m_buffer->push_values((u8 const*)string.characters_without_null_termination(), string.length());
     return {};
 }
 
 ErrorOr<void> ByteStringBuilder::append(char ch)
 {
     TRY(will_append(1));
-    TRY(m_buffer->push(ch));
+    m_buffer->push(ch);
     return {};
 }
 

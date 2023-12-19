@@ -84,7 +84,7 @@ ErrorOr<DynamicArray<u8>> File::read_all()
     }
 
     if (file_size > 0)
-        TRY(entire_file.ensure_capacity(file_size));
+        entire_file.ensure_capacity(file_size);
 
     while (true) {
         u8 buffer[4096];
