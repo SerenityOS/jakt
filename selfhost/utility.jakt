@@ -131,7 +131,7 @@ struct FileId {
     }
 }
 
-fn escape_for_quotes(anon s: String) throws -> String {
+fn escape_for_quotes(anon s: String) -> String {
     mut builder = StringBuilder::create()
     for cp in s.code_points() {
         match cp {
@@ -145,7 +145,7 @@ fn escape_for_quotes(anon s: String) throws -> String {
     return builder.to_string()
 }
 
-fn interpret_escapes(anon s: String) throws -> String {
+fn interpret_escapes(anon s: String) -> String {
     mut builder = StringBuilder::create()
     mut in_escape = false
     for cp in s.code_points() {

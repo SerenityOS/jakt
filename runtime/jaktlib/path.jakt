@@ -7,13 +7,13 @@ import platform_module("jakt::platform::path") {
 struct Path {
     private path: String
 
-    fn from_string(anon string: String) throws -> Path {
+    fn from_string(anon string: String) -> Path {
         mut path = Path(path: string)
         path.normalize_separators()
         return path
     }
 
-    fn from_parts(anon parts: [String]) throws -> Path {
+    fn from_parts(anon parts: [String]) -> Path {
         mut path = Path(path: ".")
         for part in parts {
             path = path.join(part)
@@ -21,7 +21,7 @@ struct Path {
         return path
     }
 
-    private fn normalize_separators(mut this) throws {
+    private fn normalize_separators(mut this) {
         mut separators = get_valid_path_separators()
         mut separator = get_path_separator()
         mut normalized_builder = StringBuilder::create()
@@ -40,7 +40,7 @@ struct Path {
         return .path
     }
 
-    fn join(this, anon path: String) throws -> Path {
+    fn join(this, anon path: String) -> Path {
         if .path == "." or .path.length() == 0 {
             return Path(path)
         }
@@ -66,7 +66,7 @@ struct Path {
         return Path::from_string(join_builder.to_string())
     }
 
-    fn join(this, anon path: Path) throws -> Path {
+    fn join(this, anon path: Path) -> Path {
         return .join(path.path)
     }
 
@@ -117,7 +117,7 @@ struct Path {
         ])
     }
 
-    fn parent(this) throws -> Path {
+    fn parent(this) -> Path {
         let parts = .split_at_last_slash()
         if parts.0 == "" {
             return Path(path: ".")
@@ -128,7 +128,7 @@ struct Path {
 
     fn exists(this) -> bool => File::exists(.path)
 
-    fn components(this) throws -> [String] {
+    fn components(this) -> [String] {
         mut parts: [String] = []
         mut last_slash: usize? = None
         for i in 0..(.path.length()) {
