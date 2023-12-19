@@ -28,7 +28,7 @@ public: ErrorOr<JaktInternal::Optional<jakt__path::Path>> find_in_search_paths(j
 public: JaktInternal::Optional<jakt__path::Path> get_file_path(utility::FileId const file_id) const;
 public: ErrorOr<utility::FileId> get_file_id_or_register(jakt__path::Path const file);
 public: ErrorOr<bool> set_current_file(utility::FileId const file_id);
-public: [[noreturn]] ErrorOr<void> panic(ByteString const message) const;
+public: [[noreturn]] void panic(ByteString const message) const;
 public: ErrorOr<ByteString> debug_description() const;
 };}
 } // namespace Jakt

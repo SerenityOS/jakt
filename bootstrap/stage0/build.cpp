@@ -10,7 +10,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.appendff
 TRY(builder.append(")"sv));return builder.to_string(); }
 ErrorOr<void> build::Builder::link_into_executable(ByteString const cxx_compiler_path,ByteString const output_filename,JaktInternal::DynamicArray<ByteString> const extra_arguments) {
 {
-JaktInternal::DynamicArray<ByteString> args = (TRY((DynamicArray<ByteString>::create_with({cxx_compiler_path, (ByteString::must_from_utf8("-o"sv)), output_filename}))));
+JaktInternal::DynamicArray<ByteString> args = ((DynamicArray<ByteString>::must_create_with({cxx_compiler_path, (ByteString::must_from_utf8("-o"sv)), output_filename})));
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).linked_files)).iterator());
 for (;;){
@@ -20,7 +20,7 @@ break;
 }
 ByteString file = (_magic_value.value());
 {
-TRY((((args).push(file))));
+((args).push(file));
 }
 
 }
@@ -35,7 +35,7 @@ break;
 }
 ByteString arg = (_magic_value.value());
 {
-TRY((((args).push(arg))));
+((args).push(arg));
 }
 
 }
@@ -53,13 +53,13 @@ return {};
 
 ErrorOr<build::Builder> build::Builder::for_building(JaktInternal::DynamicArray<ByteString> const files,size_t const max_concurrent) {
 {
-return build::Builder((TRY((DynamicArray<ByteString>::create_with({})))),files,TRY((build::ParallelExecutionPool::create(max_concurrent))));
+return build::Builder(((DynamicArray<ByteString>::must_create_with({}))),files,TRY((build::ParallelExecutionPool::create(max_concurrent))));
 }
 }
 
 ErrorOr<void> build::Builder::link_into_archive(ByteString const archiver,ByteString const archive_filename,JaktInternal::DynamicArray<ByteString> const extra_arguments) {
 {
-JaktInternal::DynamicArray<ByteString> args = (TRY((DynamicArray<ByteString>::create_with({archiver, ({
+JaktInternal::DynamicArray<ByteString> args = ((DynamicArray<ByteString>::must_create_with({archiver, ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>>{
 auto __jakt_enum_value = (((extra_arguments).size()));
 if (__jakt_enum_value == static_cast<size_t>(0ULL)) {
@@ -72,7 +72,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8("crT"sv)));
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}), archive_filename}))));
+}), archive_filename})));
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).linked_files)).iterator());
 for (;;){
@@ -82,13 +82,13 @@ break;
 }
 ByteString file = (_magic_value.value());
 {
-TRY((((args).push(file))));
+((args).push(file));
 }
 
 }
 }
 
-TRY((((args).push_values(((extra_arguments))))));
+((args).push_values(((extra_arguments))));
 size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
 if ((((((((((*this).pool)).status(id)).value())).exit_code)) != (static_cast<i32>(0)))){
@@ -137,7 +137,7 @@ return Error::from_errno(static_cast<i32>(1));
 }
 
 ByteString const built_object = ((TRY((((binary_dir).join(((TRY((((TRY((jakt__path::Path::from_string(file_name)))).replace_extension((ByteString::must_from_utf8("o"sv))))))).to_string())))))).to_string());
-TRY((((((*this).linked_files)).push(built_object))));
+((((*this).linked_files)).push(built_object));
 JaktInternal::DynamicArray<ByteString> const args = TRY((compiler_invocation(((TRY((((binary_dir).join(file_name))))).to_string()),built_object)));
 size_t const id = TRY((((((*this).pool)).run(args))));
 TRY((((ids).add(id))));
@@ -170,7 +170,7 @@ return Error::from_errno(static_cast<i32>(1));
 }
 }
 
-(((*this).files_to_compile) = (TRY((DynamicArray<ByteString>::create_with({})))));
+(((*this).files_to_compile) = ((DynamicArray<ByteString>::must_create_with({}))));
 }
 return {};
 }

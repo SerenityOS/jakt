@@ -98,10 +98,10 @@ public:
 
     ErrorOr<DynamicArray<K>> keys() const
     {
-        DynamicArray<K> keys = TRY(DynamicArray<K>::create_empty());
-        TRY(keys.ensure_capacity(m_storage->map.size()));
+        auto keys = DynamicArray<K>::create_empty();
+        keys.ensure_capacity(m_storage->map.size());
         for (auto& it : m_storage->map) {
-            MUST(keys.push(it.key));
+            keys.push(it.key);
         }
         return keys;
     }

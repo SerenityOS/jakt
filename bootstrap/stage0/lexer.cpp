@@ -42,7 +42,7 @@ ErrorOr<lexer::Token> lexer::Lexer::lex_quoted_string(u8 const delimiter) {
 size_t const start = ((*this).index);
 (++(((*this).index)));
 if (((*this).eof())){
-TRY((((*this).error((ByteString::must_from_utf8("unexpected eof"sv)),((*this).span(start,start))))));
+((*this).error((ByteString::must_from_utf8("unexpected eof"sv)),((*this).span(start,start))));
 return lexer::Token::Garbage(JaktInternal::OptionalNone(),((*this).span(start,start)));
 }
 bool escaped = false;
@@ -255,7 +255,7 @@ if (((!(escaped)) && ((((*this).peek())) == (static_cast<u8>(u8'\\'))))){
 ((((*this).index)++));
 }
 if ((((*this).eof()) || ((((*this).peek())) != (static_cast<u8>(u8'\''))))){
-TRY((((*this).error((ByteString::must_from_utf8("Expected single quote"sv)),((*this).span(start,start))))));
+((*this).error((ByteString::must_from_utf8("Expected single quote"sv)),((*this).span(start,start))));
 }
 ((((*this).index)) += (static_cast<size_t>(1ULL)));
 ByteStringBuilder builder = ByteStringBuilder::create();
@@ -472,7 +472,7 @@ ErrorOr<lexer::Token> lexer::Lexer::lex_number_or_name() {
 {
 size_t const start = ((*this).index);
 if (((*this).eof())){
-TRY((((*this).error((ByteString::must_from_utf8("unexpected eof"sv)),((*this).span(start,start))))));
+((*this).error((ByteString::must_from_utf8("unexpected eof"sv)),((*this).span(start,start))));
 return lexer::Token::Garbage(JaktInternal::OptionalNone(),((*this).span(start,start)));
 }
 if (utility::is_ascii_digit(((*this).peek()))){
@@ -499,16 +499,16 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (JaktInternal::checked_sub(end,start),static_cast<size_t>(6ULL)) && ((((string).substring(static_cast<size_t>(0ULL),static_cast<size_t>(6ULL)))) == ((ByteString::must_from_utf8("__jakt"sv)))))){
-TRY((((*this).error((ByteString::must_from_utf8("reserved identifier name"sv)),span))));
+((*this).error((ByteString::must_from_utf8("reserved identifier name"sv)),span));
 }
 if (((((*this).illegal_cpp_keywords)).contains(string))){
-TRY((((*this).error((ByteString::must_from_utf8("C++ keywords are not allowed to be used as identifiers"sv)),span))));
+((*this).error((ByteString::must_from_utf8("C++ keywords are not allowed to be used as identifiers"sv)),span));
 }
 return lexer::Token::from_keyword_or_identifier(string,span);
 }
 u8 const unknown_char = ((((*this).input))[((*this).index)]);
 size_t const end = (++(((*this).index)));
-TRY((((*this).error(__jakt_format((StringView::from_string_literal("unknown character: {:c}"sv)),unknown_char),((*this).span(start,end))))));
+((*this).error(__jakt_format((StringView::from_string_literal("unknown character: {:c}"sv)),unknown_char),((*this).span(start,end))));
 return lexer::Token::Garbage(__jakt_format((StringView::from_string_literal("{:c}"sv)),unknown_char),((*this).span(start,end)));
 }
 }
@@ -839,11 +839,10 @@ return JaktInternal::ExplicitValue((utility::is_ascii_digit(digit) || (decimal_a
 }
 }
 
-ErrorOr<void> lexer::Lexer::error(ByteString const message,utility::Span const span) {
+void lexer::Lexer::error(ByteString const message,utility::Span const span) {
 {
-TRY((((((((*this).compiler))->errors)).push(error::JaktError::Message(message,span)))));
+((((((*this).compiler))->errors)).push(error::JaktError::Message(message,span)));
 }
-return {};
 }
 
 lexer::Token lexer::Lexer::lex_equals() {
@@ -1057,7 +1056,7 @@ ErrorOr<JaktInternal::DynamicArray<lexer::Token>> lexer::Lexer::lex(NonnullRefPt
 {
 JaktInternal::Set<ByteString> const illegal_cpp_keywords = (TRY((Set<ByteString>::create_with_values({(ByteString::must_from_utf8("alignas"sv)), (ByteString::must_from_utf8("alignof"sv)), (ByteString::must_from_utf8("and_eq"sv)), (ByteString::must_from_utf8("asm"sv)), (ByteString::must_from_utf8("auto"sv)), (ByteString::must_from_utf8("bitand"sv)), (ByteString::must_from_utf8("bitor"sv)), (ByteString::must_from_utf8("case"sv)), (ByteString::must_from_utf8("char"sv)), (ByteString::must_from_utf8("char8_t"sv)), (ByteString::must_from_utf8("char16_t"sv)), (ByteString::must_from_utf8("char32_t"sv)), (ByteString::must_from_utf8("compl"sv)), (ByteString::must_from_utf8("concept"sv)), (ByteString::must_from_utf8("consteval"sv)), (ByteString::must_from_utf8("constexpr"sv)), (ByteString::must_from_utf8("constinit"sv)), (ByteString::must_from_utf8("const_cast"sv)), (ByteString::must_from_utf8("co_await"sv)), (ByteString::must_from_utf8("co_return"sv)), (ByteString::must_from_utf8("co_yield"sv)), (ByteString::must_from_utf8("decltype"sv)), (ByteString::must_from_utf8("delete"sv)), (ByteString::must_from_utf8("do"sv)), (ByteString::must_from_utf8("double"sv)), (ByteString::must_from_utf8("dynamic_cast"sv)), (ByteString::must_from_utf8("explicit"sv)), (ByteString::must_from_utf8("export"sv)), (ByteString::must_from_utf8("float"sv)), (ByteString::must_from_utf8("friend"sv)), (ByteString::must_from_utf8("goto"sv)), (ByteString::must_from_utf8("int"sv)), (ByteString::must_from_utf8("long"sv)), (ByteString::must_from_utf8("mutable"sv)), (ByteString::must_from_utf8("new"sv)), (ByteString::must_from_utf8("noexcept"sv)), (ByteString::must_from_utf8("not_eq"sv)), (ByteString::must_from_utf8("nullptr"sv)), (ByteString::must_from_utf8("operator"sv)), (ByteString::must_from_utf8("or_eq"sv)), (ByteString::must_from_utf8("protected"sv)), (ByteString::must_from_utf8("register"sv)), (ByteString::must_from_utf8("reinterpret_cast"sv)), (ByteString::must_from_utf8("short"sv)), (ByteString::must_from_utf8("signed"sv)), (ByteString::must_from_utf8("static"sv)), (ByteString::must_from_utf8("static_assert"sv)), (ByteString::must_from_utf8("static_cast"sv)), (ByteString::must_from_utf8("switch"sv)), (ByteString::must_from_utf8("template"sv)), (ByteString::must_from_utf8("thread_local"sv)), (ByteString::must_from_utf8("typedef"sv)), (ByteString::must_from_utf8("typeid"sv)), (ByteString::must_from_utf8("typename"sv)), (ByteString::must_from_utf8("union"sv)), (ByteString::must_from_utf8("unsigned"sv)), (ByteString::must_from_utf8("using"sv)), (ByteString::must_from_utf8("volatile"sv)), (ByteString::must_from_utf8("wchar_t"sv)), (ByteString::must_from_utf8("xor"sv)), (ByteString::must_from_utf8("xor_eq"sv))}))));
 lexer::Lexer lexer = lexer::Lexer(static_cast<size_t>(0ULL),((compiler)->current_file_contents),compiler,JaktInternal::OptionalNone(),illegal_cpp_keywords);
-JaktInternal::DynamicArray<lexer::Token> tokens = (TRY((DynamicArray<lexer::Token>::create_with({}))));
+JaktInternal::DynamicArray<lexer::Token> tokens = ((DynamicArray<lexer::Token>::must_create_with({})));
 {
 lexer::Lexer _magic = lexer;
 for (;;){
@@ -1067,7 +1066,7 @@ break;
 }
 lexer::Token token = (_magic_value.value());
 {
-TRY((((tokens).push(token))));
+((tokens).push(token));
 }
 
 }

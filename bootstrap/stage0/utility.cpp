@@ -183,7 +183,7 @@ return TRY((((builder).to_string())));
 
 ErrorOr<JaktInternal::DynamicArray<ByteString>> prepend_to_each(JaktInternal::DynamicArray<ByteString> const strings,ByteString const prefix) {
 {
-JaktInternal::DynamicArray<ByteString> output = (TRY((DynamicArray<ByteString>::create_with({}))));
+JaktInternal::DynamicArray<ByteString> output = ((DynamicArray<ByteString>::must_create_with({})));
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((strings).iterator());
 for (;;){
@@ -193,7 +193,7 @@ break;
 }
 ByteString str = (_magic_value.value());
 {
-TRY((((output).push(TRY((((prefix) + (str))))))));
+((output).push(TRY((((prefix) + (str))))));
 }
 
 }
@@ -298,7 +298,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 ErrorOr<void> write_to_file(ByteString const data,ByteString const output_filename) {
 {
 NonnullRefPtr<File> outfile = TRY((File::open_for_writing(output_filename)));
-JaktInternal::DynamicArray<u8> bytes = (TRY((DynamicArray<u8>::create_with({}))));
+JaktInternal::DynamicArray<u8> bytes = ((DynamicArray<u8>::must_create_with({})));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((data).length()))});
 for (;;){
@@ -308,7 +308,7 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-TRY((((bytes).push(((data).byte_at(i))))));
+((bytes).push(((data).byte_at(i))));
 }
 
 }
@@ -456,7 +456,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 
 ErrorOr<JaktInternal::DynamicArray<ByteString>> append_to_each(JaktInternal::DynamicArray<ByteString> const strings,ByteString const suffix) {
 {
-JaktInternal::DynamicArray<ByteString> output = (TRY((DynamicArray<ByteString>::create_with({}))));
+JaktInternal::DynamicArray<ByteString> output = ((DynamicArray<ByteString>::must_create_with({})));
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((strings).iterator());
 for (;;){
@@ -466,7 +466,7 @@ break;
 }
 ByteString str = (_magic_value.value());
 {
-TRY((((output).push(TRY((((str) + (suffix))))))));
+((output).push(TRY((((str) + (suffix))))));
 }
 
 }
