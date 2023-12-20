@@ -965,7 +965,7 @@ outln((StringView::from_string_literal("{}"sv)),help());
 return static_cast<int>(0);
 }
 if (TRY((((args_parser).flag((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-v"sv)), (ByteString::must_from_utf8("--version"sv))}))))))){
-outln((StringView::from_string_literal("{}"sv)),(ByteString::must_from_utf8("1264dd6d1a494e1099c548dcfcb87858bb8369bb"sv)));
+outln((StringView::from_string_literal("{}"sv)),(ByteString::must_from_utf8("f24fd6dce7f3556de492df4b5fa97bfea607a141"sv)));
 return static_cast<int>(0);
 }
 jakt__path::Path const current_executable_path = jakt__path::Path::from_string(TRY((File::current_executable_path())));
@@ -1152,7 +1152,7 @@ jakt__path::Path const file_path = jakt__path::Path::from_string((file_name.valu
 ByteString const guessed_output_filename = ((file_path).basename(true));
 ByteString const output_filename = ((((binary_dir).join(set_output_filename.value_or_lazy_evaluated([&] { return guessed_output_filename; })))).to_string());
 JaktInternal::DynamicArray<error::JaktError> errors = (DynamicArray<error::JaktError>::create_with({}));
-NonnullRefPtr<compiler::Compiler> compiler = TRY((compiler::Compiler::__jakt_create((DynamicArray<jakt__path::Path>::create_with({})),Dictionary<ByteString, utility::FileId>::create_with_entries({}),(DynamicArray<error::JaktError>::create_with({})),JaktInternal::OptionalNone(),(DynamicArray<u8>::create_with({})),lexer_debug,parser_debug,false,debug_print,jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({runtime_path, (ByteString::must_from_utf8("jaktlib"sv))}))),extra_include_paths,json_errors,dump_type_hints,dump_try_hints,optimize,target_triple,user_configuration,binary_dir,({
+NonnullRefPtr<compiler::Compiler> compiler = compiler::Compiler::__jakt_create((DynamicArray<jakt__path::Path>::create_with({})),Dictionary<ByteString, utility::FileId>::create_with_entries({}),(DynamicArray<error::JaktError>::create_with({})),JaktInternal::OptionalNone(),(DynamicArray<u8>::create_with({})),lexer_debug,parser_debug,false,debug_print,jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({runtime_path, (ByteString::must_from_utf8("jaktlib"sv))}))),extra_include_paths,json_errors,dump_type_hints,dump_try_hints,optimize,target_triple,user_configuration,binary_dir,({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<jakt__path::Path>,ErrorOr<int>>{
 auto __jakt_enum_value = (((assume_main_file_path).has_value()));
 if (__jakt_enum_value == true) {
@@ -1166,7 +1166,7 @@ VERIFY_NOT_REACHED();
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}))));
+}));
 TRY((((compiler)->load_prelude())));
 if (((format || format_debug) || format_inplace)){
 NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator> const directory_or_file_paths = TRY((jakt__file_iterator::RecursiveFileIterator::make(file_path,(ByteString::must_from_utf8("jakt"sv)))));
@@ -1323,7 +1323,7 @@ JaktInternal::DynamicArray<types::Value> const arguments = ({
 auto __jakt_enum_value = (((first_main_param).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<types::Value>> __jakt_var_967; {
-JaktInternal::DynamicArray<types::Value> passed_arguments = (DynamicArray<types::Value>::create_with({types::Value(TRY((types::ValueImpl::JaktString((file_name.value())))),call_span)}));
+JaktInternal::DynamicArray<types::Value> passed_arguments = (DynamicArray<types::Value>::create_with({types::Value(types::ValueImpl::JaktString((file_name.value())),call_span)}));
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((interpreted_main_arguments).iterator());
 for (;;){
@@ -1333,13 +1333,13 @@ break;
 }
 ByteString argument = (_magic_value.value());
 {
-((passed_arguments).push(types::Value(TRY((types::ValueImpl::JaktString(argument))),call_span)));
+((passed_arguments).push(types::Value(types::ValueImpl::JaktString(argument),call_span)));
 }
 
 }
 }
 
-__jakt_var_967 = (DynamicArray<types::Value>::create_with({types::Value(TRY((types::ValueImpl::JaktArray(passed_arguments,(((((first_main_param.value())).variable))->type_id)))),call_span)})); goto __jakt_label_833;
+__jakt_var_967 = (DynamicArray<types::Value>::create_with({types::Value(types::ValueImpl::JaktArray(passed_arguments,(((((first_main_param.value())).variable))->type_id)),call_span)})); goto __jakt_label_833;
 
 }
 __jakt_label_833:; __jakt_var_967.release_value(); }));

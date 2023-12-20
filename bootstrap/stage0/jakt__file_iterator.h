@@ -13,7 +13,7 @@ public: ErrorOr<JaktInternal::Optional<jakt__path::Path>> next();
 public: protected:
 explicit RecursiveFileIterator(ByteString a_extension, JaktInternal::DynamicArray<jakt__path::Path> a_directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> a_current_directory);
 public:
-static ErrorOr<NonnullRefPtr<RecursiveFileIterator>> __jakt_create(ByteString extension, JaktInternal::DynamicArray<jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory);
+static NonnullRefPtr<RecursiveFileIterator> __jakt_create(ByteString extension, JaktInternal::DynamicArray<jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory);
 
 public: ErrorOr<ByteString> debug_description() const;
 };}

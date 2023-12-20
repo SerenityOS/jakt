@@ -49,6 +49,6 @@ return Error::from_errno(static_cast<i32>(38));
 }
 
 jakt__platform__unknown_fs::DirectoryIterator::DirectoryIterator(){}
-ErrorOr<NonnullRefPtr<DirectoryIterator>> jakt__platform__unknown_fs::DirectoryIterator::__jakt_create() { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) DirectoryIterator ())); return o; }
+NonnullRefPtr<DirectoryIterator> jakt__platform__unknown_fs::DirectoryIterator::__jakt_create() { auto o = adopt_ref(*new DirectoryIterator ()); return o; }
 }
 } // namespace Jakt

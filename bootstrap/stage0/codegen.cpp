@@ -4654,7 +4654,7 @@ JaktInternal::Tuple<ByteString,ByteString> const declare_uninit_deref_uninit_ = 
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<ByteString,ByteString>,ByteString>{
 auto __jakt_enum_value = (((enum_).is_boxed));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((Tuple{__jakt_format((StringView::from_string_literal("NonnullRefPtr<{0}> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {0}));\n"sv)),ctor_type), (ByteString::must_from_utf8("__jakt_uninit_enum->"sv))}));
+return JaktInternal::ExplicitValue((Tuple{__jakt_format((StringView::from_string_literal("NonnullRefPtr<{0}> __jakt_uninit_enum = adopt_ref(*new {0});\n"sv)),ctor_type), (ByteString::must_from_utf8("__jakt_uninit_enum->"sv))}));
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue((Tuple{__jakt_format((StringView::from_string_literal("{} __jakt_uninit_enum;\n"sv)),((enum_).name)), (ByteString::must_from_utf8("__jakt_uninit_enum."sv))}));
@@ -5174,7 +5174,7 @@ if ((!(((((enum_).generic_parameters)).is_empty())))){
 (result,__jakt_format((StringView::from_string_literal("<{}>"sv)),(generic_parameter_list.value())));
 }
 if (((enum_).is_boxed)){
-(result = __jakt_format((StringView::from_string_literal("ErrorOr<NonnullRefPtr<{}>>"sv)),result));
+(result = __jakt_format((StringView::from_string_literal("NonnullRefPtr<{}>"sv)),result));
 }
 return result;
 }
@@ -6150,7 +6150,7 @@ return JaktInternal::ExplicitValue((((((ByteString::must_from_utf8("Jakt::ByteSt
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_634; {
-JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const ids = TRY((((((*this).program))->find_functions_with_name_in_scope(TRY((((((*this).program))->find_type_scope_id(((val).type_id))))),(ByteString::must_from_utf8("from_string_literal"sv)),false,JaktInternal::OptionalNone()))));
+JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const ids = TRY((((((*this).program))->find_functions_with_name_in_scope(((((*this).program))->find_type_scope_id(((val).type_id))),(ByteString::must_from_utf8("from_string_literal"sv)),false,JaktInternal::OptionalNone()))));
 if (((!(((ids).has_value()))) || (((ids.value())).is_empty()))){
 utility::panic((ByteString::must_from_utf8("Internal error: couldn't find a 'from_string_literal' function despite passing typecheck"sv)));
 }
@@ -10192,10 +10192,10 @@ NonnullRefPtr<typename types::Type> const reference_type = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::Type>,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (is_mutable);
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(TRY((types::Type::MutableReference(parser::CheckedQualifiers(false),((expr)->type())))));
+return JaktInternal::ExplicitValue(types::Type::MutableReference(parser::CheckedQualifiers(false),((expr)->type())));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue(TRY((types::Type::Reference(parser::CheckedQualifiers(false),((expr)->type())))));
+return JaktInternal::ExplicitValue(types::Type::Reference(parser::CheckedQualifiers(false),((expr)->type())));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -10203,7 +10203,7 @@ VERIFY_NOT_REACHED();
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-NonnullRefPtr<types::CheckedVariable> const var = TRY((types::CheckedVariable::__jakt_create((ByteString::must_from_utf8("self"sv)),((((*this).program))->find_or_add_type_id(reference_type,((((expr)->type())).module),false)),is_mutable,((expr)->span()),JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
+NonnullRefPtr<types::CheckedVariable> const var = types::CheckedVariable::__jakt_create((ByteString::must_from_utf8("self"sv)),((((*this).program))->find_or_add_type_id(reference_type,((((expr)->type())).module),false)),is_mutable,((expr)->span()),JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
 JaktInternal::DynamicArray<types::CheckedParameter> params = (DynamicArray<types::CheckedParameter>::create_with({types::CheckedParameter(false,var,JaktInternal::OptionalNone())}));
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((((function)->params))[(JaktInternal::Range<i64>{static_cast<i64>(static_cast<i64>(1LL)),static_cast<i64>(9223372036854775807LL)})])).iterator());
@@ -10224,7 +10224,7 @@ if (((((((function)->block)).statements)).is_empty())){
 warnln((StringView::from_string_literal("Shit, block is empty in function ({}): {}"sv)),(((call).function_id).value()),function);
 abort();
 }
-NonnullRefPtr<typename types::CheckedExpression> const lambda = TRY((types::CheckedExpression::Function(JaktInternal::OptionalNone(),(DynamicArray<types::CheckedCapture>::create_with({})),params,((function)->can_throw),((function)->return_type_id),((function)->block),((expr)->span()),types::unknown_type_id(),((call).function_id),((function)->function_scope_id))));
+NonnullRefPtr<typename types::CheckedExpression> const lambda = types::CheckedExpression::Function(JaktInternal::OptionalNone(),(DynamicArray<types::CheckedCapture>::create_with({})),params,((function)->can_throw),((function)->return_type_id),((function)->block),((expr)->span()),types::unknown_type_id(),((call).function_id),((function)->function_scope_id));
 JaktInternal::Optional<ByteString> const old_this_replacement = ((*this).this_replacement);
 (((*this).this_replacement) = (ByteString::must_from_utf8("self"sv)));
 [](ByteString& self, ByteString rhs) -> void {
@@ -12211,7 +12211,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8("void"sv)));
 case 32 /* Const */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Const;types::Value const& value = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_668; {
-NonnullRefPtr<interpreter::Interpreter> interpreter = TRY((interpreter::Interpreter::create(((*this).compiler),((*this).program),TRY((types::TypecheckFunctions::__jakt_create([](parser::ParsedBlock parsed_block, ids::ScopeId parent_scope_id, types::SafetyMode safety_mode, JaktInternal::Optional<ids::TypeId> yield_type_hint, JaktInternal::Optional<ids::FunctionId> containing_function_id) -> ErrorOr<types::CheckedBlock> {
+NonnullRefPtr<interpreter::Interpreter> interpreter = TRY((interpreter::Interpreter::create(((*this).compiler),((*this).program),types::TypecheckFunctions::__jakt_create([](parser::ParsedBlock parsed_block, ids::ScopeId parent_scope_id, types::SafetyMode safety_mode, JaktInternal::Optional<ids::TypeId> yield_type_hint, JaktInternal::Optional<ids::FunctionId> containing_function_id) -> ErrorOr<types::CheckedBlock> {
 {
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Cannot typecheck a const block"sv)));
 }
@@ -12221,7 +12221,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Canno
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Cannot typecheck a const function"sv)));
 }
 }
-))),(DynamicArray<utility::Span>::create_with({})))));
+),(DynamicArray<utility::Span>::create_with({})))));
 NonnullRefPtr<typename types::CheckedExpression> const expr = TRY((interpreter::value_to_checked_expression(value,interpreter)));
 __jakt_var_668 = TRY((((*this).codegen_expression(expr)))); goto __jakt_label_565;
 
@@ -13098,7 +13098,7 @@ if ((!(((((structure).generic_parameters)).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,__jakt_format((StringView::from_string_literal("static ErrorOr<NonnullRefPtr<{}>> __jakt_create"sv)),class_name_with_generics));
+(output,__jakt_format((StringView::from_string_literal("static NonnullRefPtr<{}> __jakt_create"sv)),class_name_with_generics));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13511,7 +13511,7 @@ VERIFY_NOT_REACHED();
 (self = ((self) + (rhs)));
 }
 }
-(output,__jakt_format((StringView::from_string_literal("ErrorOr<NonnullRefPtr<{}>> {}__jakt_create"sv)),class_name_with_generics,qualified_namespace));
+(output,__jakt_format((StringView::from_string_literal("NonnullRefPtr<{}> {}__jakt_create"sv)),class_name_with_generics,qualified_namespace));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13568,7 +13568,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,__jakt_format((StringView::from_string_literal(") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} ("sv)),((*this).current_error_handler()),class_name_with_generics));
+(output,__jakt_format((StringView::from_string_literal(") {{ auto o = adopt_ref(*new {} ("sv)),class_name_with_generics));
 (first = true);
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((function)->params)).iterator());
@@ -13619,7 +13619,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("))); return o; }"sv)));
+(output,(ByteString::must_from_utf8(")); return o; }"sv)));
 }
 return output;
 }
