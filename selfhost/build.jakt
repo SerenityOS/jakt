@@ -15,7 +15,7 @@ struct ParallelExecutionPool {
     pid_index: usize
     max_concurrent: usize
 
-    fn create(anon max_concurrent: usize) throws -> ParallelExecutionPool {
+    fn create(anon max_concurrent: usize) -> ParallelExecutionPool {
         return ParallelExecutionPool(
             pids: [:]
             completed: [:]

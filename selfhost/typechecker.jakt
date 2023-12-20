@@ -76,13 +76,13 @@ enum NumericOrStringValue {
 
 // [foo:[1,2], bar:[4,5]] -> [foo:1,bar:4], [foo:1,bar:5], [foo:2,bar:4], [foo:2,bar:5]
 // [K:[V]] -> [K:V]
-struct InternalDictionaryProduct<K, V> implements(ThrowingIterable<[K:V]>) {
+struct InternalDictionaryProduct<K, V> implements(Iterable<[K:V]>) {
     dict: [K:[V]]
     current: [K:V]
     current_index: [K:usize]
     done: bool = false
 
-    fn next(mut this) throws -> [K:V]? {
+    fn next(mut this) -> [K:V]? {
         if .done {
             return None
         }
@@ -113,7 +113,7 @@ struct InternalDictionaryProduct<K, V> implements(ThrowingIterable<[K:V]>) {
 //        the compiler to emit no generic parameters for the struct, which makes C++ angry
 //        and making it *not* generic makes the compiler emit no generic parameters at all.
 //        This is a compiler bug.
-fn create_internal_dictionary_product<R, S>(dict: [R:[S]]) throws -> InternalDictionaryProduct<R, S> {
+fn create_internal_dictionary_product<R, S>(dict: [R:[S]]) -> InternalDictionaryProduct<R, S> {
     mut current_index: [R:usize] = [:]
     for (key, _) in dict {
         current_index[key] = 0
@@ -11515,14 +11515,14 @@ struct TraitImplCheck {
     // 'Cannot implement method X for trait Y since it already implements Z'
     already_implemented_for: [String:AlreadyImplementedFor] // trait name -> (type name, span)
 
-    fn make() throws -> TraitImplCheck =>
+    fn make() -> TraitImplCheck =>
         TraitImplCheck(
             missing_methods: [:]
             unmatched_signatures: [:]
             private_matching_methods: [:]
             already_implemented_for: [:])
 
-    fn ensure_capacity(mut this, anon count: usize) throws {
+    fn ensure_capacity(mut this, anon count: usize) {
         .missing_methods.ensure_capacity(count)
         .unmatched_signatures.ensure_capacity(count)
         .private_matching_methods.ensure_capacity(count)
@@ -11534,7 +11534,7 @@ struct TraitImplCheck {
         trait_type_id: TypeId
         trait_name: String
         requirements: CheckedTraitRequirements
-    ) throws {
+    ) {
         guard requirements is Methods(trait_methods) else {
             return
         }

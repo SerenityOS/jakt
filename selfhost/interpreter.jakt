@@ -896,7 +896,7 @@ class InterpreterScope {
         return id
     }
 
-    fn type_map_for_substitution_helper(this, map: &mut [TypeId:TypeId]) throws {
+    fn type_map_for_substitution_helper(this, map: &mut [TypeId:TypeId]) {
         if .parent.has_value() {
             .parent!.type_map_for_substitution_helper(map)
         }
@@ -906,7 +906,7 @@ class InterpreterScope {
         }
     }
 
-    public fn type_map_for_substitution(this) throws -> GenericInferences {
+    public fn type_map_for_substitution(this) -> GenericInferences {
         mut map: [TypeId:TypeId] = [:]
         .type_map_for_substitution_helper(&mut map)
         return GenericInferences(values: map)
@@ -1334,7 +1334,7 @@ class Interpreter {
         }
     }
 
-    public fn find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
+    public fn find_or_add_type_id(mut this, anon type: Type) -> TypeId {
 
         for module in .program.modules {
             for id in 0..module.types.size() {

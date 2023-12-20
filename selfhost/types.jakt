@@ -80,7 +80,7 @@ enum StructLikeId {
 struct GenericInferences {
     values: [TypeId:TypeId]
 
-    fn set(mut this, anon key: TypeId, anon value: TypeId) throws {
+    fn set(mut this, anon key: TypeId, anon value: TypeId) {
         if key == value {
             return
         }
@@ -93,7 +93,7 @@ struct GenericInferences {
         .values[key] = mapped_value
     }
 
-    fn set_all(mut this, keys: [CheckedGenericParameter], values: [TypeId]) throws {
+    fn set_all(mut this, keys: [CheckedGenericParameter], values: [TypeId]) {
         for i in 0..(keys.size()) {
             let key = keys[i].type_id
             let value = values[i]
@@ -127,7 +127,7 @@ struct GenericInferences {
 
     fn iterator(this) -> [TypeId:TypeId] => .values
 
-    fn perform_checkpoint(mut this, reset: bool = true) throws -> [TypeId:TypeId] {
+    fn perform_checkpoint(mut this, reset: bool = true) -> [TypeId:TypeId] {
         let result = .values
         .values = [:]
 
@@ -144,7 +144,7 @@ struct GenericInferences {
         .values = checkpoint
     }
 
-    fn set_from(mut this, anon checkpoint: [TypeId:TypeId]) throws {
+    fn set_from(mut this, anon checkpoint: [TypeId:TypeId]) {
         for (key, value) in checkpoint {
             .set(key, value)
         }
@@ -680,7 +680,7 @@ class Module {
         return FunctionId(module: .id, id: .functions.size())
     }
 
-    public fn add_function(mut this, checked_function: CheckedFunction) throws -> FunctionId {
+    public fn add_function(mut this, checked_function: CheckedFunction) -> FunctionId {
         let new_id = .next_function_id()
 
         .functions.push(checked_function)
@@ -688,7 +688,7 @@ class Module {
         return new_id
     }
 
-    public fn add_variable(mut this, anon checked_variable: CheckedVariable) throws -> VarId {
+    public fn add_variable(mut this, anon checked_variable: CheckedVariable) -> VarId {
         let new_id = .variables.size()
 
         .variables.push(checked_variable)

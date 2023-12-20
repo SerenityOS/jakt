@@ -246,7 +246,7 @@ struct CodeGenerator {
 
     fn fresh_label(mut this) -> String => format("__jakt_label_{}", .fresh_label_counter++)
 
-    fn topologically_sort_modules(this) throws -> [ModuleId] {
+    fn topologically_sort_modules(this) -> [ModuleId] {
         mut in_degrees: [usize:i64] = [:]
 
         for module in .program.modules {
