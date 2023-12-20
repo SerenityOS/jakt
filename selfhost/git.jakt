@@ -1,0 +1,29 @@
+import utility { to_string }
+
+fn commit_hash() throws -> String {
+    let hash = fetch_commit_hash()
+    return hash
+}
+
+// Fetch git hash for build at comptime
+comptime fetch_commit_hash() throws -> String {
+    mut head_file: File? = None // FIXME: implement try expression in comptime
+    try {
+        head_file = File::open_for_reading("../.git/HEAD")
+    } catch {
+        return "unreleased"
+    }
+
+    guard head_file.has_value() else {
+        return "unreleased"
+    }
+
+    let path = to_string(head_file!.read_all())
+    guard path.starts_with("ref: ") and path.ends_with("\n") else {
+        return "HEAD"
+    }
+
+    mut ref_file = File::open_for_reading("../.git/" + path.substring(start: 5, length: path.length() - 6))
+    let hash = to_string(ref_file.read_all())
+    return hash.substring(start: 0, length: hash.length() - 1)
+}

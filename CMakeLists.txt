@@ -157,6 +157,7 @@ set(SELFHOST_SOURCES
   selfhost/compiler.jakt
   selfhost/error.jakt
   selfhost/formatter.jakt
+  selfhost/git.jakt
   selfhost/ide.jakt
   selfhost/ids.jakt
   selfhost/interpreter.jakt
