@@ -29,7 +29,7 @@ fn add_arrays<T>(anon a: [T], anon b: [T]) -> [T] {
     return result
 }
 
-fn to_string(anon bytes: [u8]) throws -> String {
+fn to_string(anon bytes: [u8]) -> String {
     mut builder = StringBuilder::create()
     for byte in bytes {
         builder.append(byte)
@@ -37,7 +37,7 @@ fn to_string(anon bytes: [u8]) throws -> String {
     return builder.to_string()
 }
 
-fn join(anon strings: [String], separator: String) throws -> String {
+fn join(anon strings: [String], separator: String) -> String {
     mut output = ""
 
     mut i = 0uz
@@ -60,7 +60,7 @@ fn map<T, U>(input: [T], mapper: &fn(item: T) throws -> U) throws -> [U] {
     return us
 }
 
-fn prepend_to_each(anon strings: [String], prefix: String) throws -> [String] {
+fn prepend_to_each(anon strings: [String], prefix: String) -> [String] {
     mut output: [String] = []
     for str in strings {
         output.push(prefix + str)
@@ -68,7 +68,7 @@ fn prepend_to_each(anon strings: [String], prefix: String) throws -> [String] {
     return output
 }
 
-fn append_to_each(anon strings: [String], suffix: String) throws -> [String] {
+fn append_to_each(anon strings: [String], suffix: String) -> [String] {
     mut output: [String] = []
     for str in strings {
         output.push(str + suffix)

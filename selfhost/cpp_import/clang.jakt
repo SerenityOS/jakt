@@ -1589,7 +1589,7 @@ class CppImportProcessor {
         }
     }
 
-    fn debug_description_of(anon program: &CheckedProgram, anon scope_id: ScopeId) throws -> String {
+    fn debug_description_of(anon program: &CheckedProgram, anon scope_id: ScopeId) -> String {
         mut ss: [String] = []
         mut current_scope_id = scope_id
         loop {

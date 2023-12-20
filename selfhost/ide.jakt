@@ -56,7 +56,7 @@ struct JaktSymbol {
     selection_range: Span,
     children: [JaktSymbol]
 
-    fn to_json(this) throws -> String {
+    fn to_json(this) -> String {
         mut json_builder = StringBuilder::create()
         json_builder.append("{")
         json_builder.append(format("\"name\": \"{}\",", this.name))
@@ -110,7 +110,7 @@ fn find_symbols_in_namespace(anon namespace_: ParsedNamespace) throws -> [JaktSy
         )]
 }
 
-fn record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
+fn record_to_symbol(anon record: ParsedRecord) -> JaktSymbol {
     mut children: [JaktSymbol] = []
     mut record_span = record.name_span
 
@@ -165,7 +165,7 @@ fn record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
     )
 }
 
-fn function_to_symbol(anon function: ParsedFunction, kind: String) throws -> JaktSymbol {
+fn function_to_symbol(anon function: ParsedFunction, kind: String) -> JaktSymbol {
     mut function_span = function.name_span
 
     for stmt in function.block.stmts {
@@ -1312,7 +1312,7 @@ fn get_enum_variant_signature_from_type_id_and_name(program: CheckedProgram, typ
     return ""
 }
 
-fn get_enum_variant_usage_from_type_id_and_name(program: CheckedProgram, type_id: TypeId, name: String) throws -> Usage {
+fn get_enum_variant_usage_from_type_id_and_name(program: CheckedProgram, type_id: TypeId, name: String) -> Usage {
     for enum_ in program.get_module(type_id.module).enums {
         if not enum_.type_id.equals(type_id) {
             continue
@@ -1339,7 +1339,7 @@ fn get_enum_variant_usage_from_type_id_and_name(program: CheckedProgram, type_id
     panic("unreachable: should have found variant")
 }
 
-fn enum_variant_fields(program: CheckedProgram, checked_enum_variant: CheckedEnumVariant) throws -> [(String?, TypeId)] {
+fn enum_variant_fields(program: CheckedProgram, checked_enum_variant: CheckedEnumVariant) -> [(String?, TypeId)] {
     return match checked_enum_variant {
         StructLike(fields) => {
             mut output: [(String?, TypeId)] = []

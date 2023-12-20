@@ -57,7 +57,7 @@ comptime get_current_git_hash() throws -> String {
 }
 
 fn usage() => "usage: jakt [cross] [-h] [OPTIONS] <filename>"
-fn help() throws -> String {
+fn help() -> String {
     mut output = ""
     output += "Non-cross mode:\n"
     output += "= General:\n"
@@ -130,7 +130,7 @@ fn help() throws -> String {
     return output
 }
 
-fn indent(anon level: usize) throws -> String {
+fn indent(anon level: usize) -> String {
     mut output = ""
     for i in 0uz..level {
         output += "    "
