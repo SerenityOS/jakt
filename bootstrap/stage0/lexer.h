@@ -542,7 +542,7 @@ Token() {};
 };
 struct Lexer {
   public:
-public: size_t index;public: JaktInternal::DynamicArray<u8> input;public: NonnullRefPtr<compiler::Compiler> compiler;public: JaktInternal::Optional<JaktInternal::DynamicArray<u8>> comment_contents;public: JaktInternal::Set<ByteString> illegal_cpp_keywords;public: static ErrorOr<JaktInternal::DynamicArray<lexer::Token>> lex(NonnullRefPtr<compiler::Compiler> const compiler);
+public: size_t index;public: JaktInternal::DynamicArray<u8> input;public: NonnullRefPtr<compiler::Compiler> compiler;public: JaktInternal::Optional<JaktInternal::DynamicArray<u8>> comment_contents;public: JaktInternal::Set<ByteString> illegal_cpp_keywords;public: static JaktInternal::DynamicArray<lexer::Token> lex(NonnullRefPtr<compiler::Compiler> const compiler);
 public: void error(ByteString const message, utility::Span const span);
 public: utility::Span span(size_t const start, size_t const end) const;
 public: u8 peek() const;

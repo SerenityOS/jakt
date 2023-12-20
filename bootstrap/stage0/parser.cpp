@@ -74,7 +74,7 @@ return (!(((((other).alias_name)).has_value())));
 
 ErrorOr<void> parser::ParsedModuleImport::merge_import_list(parser::ImportList const list) {
 {
-JaktInternal::Set<ByteString> name_set = (TRY((Set<ByteString>::create_with_values({}))));
+JaktInternal::Set<ByteString> name_set = Set<ByteString>::create_with_values({});
 bool everything = false;
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<void>>{
@@ -92,7 +92,7 @@ break;
 }
 parser::ImportName name = (_magic_value.value());
 {
-TRY((((name_set).add(((name).literal_name())))));
+((name_set).add(((name).literal_name())));
 }
 
 }

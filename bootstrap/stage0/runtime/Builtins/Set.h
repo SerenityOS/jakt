@@ -74,10 +74,10 @@ public:
     bool remove(T const& value) { return m_storage->table.remove(value); }
     bool contains(T const& value) const { return m_storage->table.contains(value); }
 
-    ErrorOr<Jakt::HashSetResult> add(T const& value) { return m_storage->table.set(value); }
-    ErrorOr<Jakt::HashSetResult> add(T&& value) { return m_storage->table.set(move(value)); }
-    ErrorOr<void> ensure_capacity(size_t capacity) { return m_storage->table.try_ensure_capacity(capacity); }
-
+    Jakt::HashSetResult add(T const& value) { return m_storage->table.set(value); }
+    Jakt::HashSetResult add(T&& value) { return m_storage->table.set(move(value)); }
+    void ensure_capacity(size_t capacity) { return m_storage->table.ensure_capacity(capacity); }
+    
     bool is_empty() const { return m_storage->table.is_empty(); }
     size_t capacity() const { return m_storage->table.capacity(); }
     size_t size() const { return m_storage->table.size(); }
@@ -92,18 +92,33 @@ public:
         return hash;
     }
 
-    static ErrorOr<Set> create_empty()
+    static Set create_empty()
     {
-        auto storage = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
+        auto storage = adopt_ref(*new Storage);
         return Set { move(storage) };
     }
 
-    static ErrorOr<Set> create_with_values(std::initializer_list<T> list)
+    static Set create_with_values(std::initializer_list<T> list)
     {
-        auto set = TRY(create_empty());
-        TRY(set.ensure_capacity(list.size()));
+        auto set = create_empty();
+        set.ensure_capacity(list.size());
         for (auto& value : list)
-            TRY(set.add(value));
+            set.add(value);
+       return set;
+    }
+
+    static Set must_create_empty()
+    {
+        auto storage = adopt_ref(*new Storage);
+        return Set { move(storage) };
+    }
+
+    static Set must_create_with_values(std::initializer_list<T> list)
+    {
+        auto set = must_create_empty();
+        set.ensure_capacity(list.size());
+        for (auto& value : list)
+            set.add(value);
         return set;
     }
 

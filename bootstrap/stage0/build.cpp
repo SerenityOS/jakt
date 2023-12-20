@@ -168,7 +168,7 @@ return build::Builder((DynamicArray<ByteString>::create_with({})),files,build::P
 
 ErrorOr<void> build::Builder::build_all(jakt__path::Path const binary_dir,Function<ErrorOr<JaktInternal::DynamicArray<ByteString>>(ByteString, ByteString)> const& compiler_invocation) {
 {
-JaktInternal::Set<size_t> ids = (TRY((Set<size_t>::create_with_values({}))));
+JaktInternal::Set<size_t> ids = Set<size_t>::create_with_values({});
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).files_to_compile)).iterator());
 for (;;){
@@ -205,7 +205,7 @@ ByteString const built_object = ((((binary_dir).join(((TRY((((jakt__path::Path::
 ((((*this).linked_files)).push(built_object));
 JaktInternal::DynamicArray<ByteString> const args = TRY((compiler_invocation(((((binary_dir).join(file_name))).to_string()),built_object)));
 size_t const id = TRY((((((*this).pool)).run(args))));
-TRY((((ids).add(id))));
+((ids).add(id));
 warnln((StringView::from_string_literal("{:c}[2LBuilding: {}/{} ({})"sv)),static_cast<i64>(27LL),((ids).size()),((((*this).files_to_compile)).size()),file_name);
 }
 

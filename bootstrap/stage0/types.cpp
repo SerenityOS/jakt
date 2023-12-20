@@ -1241,7 +1241,7 @@ return types::CheckedFunction::__jakt_create(((*this).name),((*this).name_span),
 }
 }
 
-ErrorOr<bool> types::CheckedFunction::signature_matches(NonnullRefPtr<types::CheckedFunction> const other,bool const ignore_this) const {
+bool types::CheckedFunction::signature_matches(NonnullRefPtr<types::CheckedFunction> const other,bool const ignore_this) const {
 {
 if (((([](ByteString const& self, ByteString rhs) -> bool {
 {
@@ -1257,8 +1257,8 @@ return false;
 if (((((((((*this).generics))->params)).size())) != (((((((other)->generics))->params)).size())))){
 return false;
 }
-JaktInternal::Set<ids::TypeId> lhs_generic_type_ids = (TRY((Set<ids::TypeId>::create_with_values({}))));
-JaktInternal::Set<ids::TypeId> rhs_generic_type_ids = (TRY((Set<ids::TypeId>::create_with_values({}))));
+JaktInternal::Set<ids::TypeId> lhs_generic_type_ids = Set<ids::TypeId>::create_with_values({});
+JaktInternal::Set<ids::TypeId> rhs_generic_type_ids = Set<ids::TypeId>::create_with_values({});
 {
 JaktInternal::ArrayIterator<types::FunctionGenericParameter> _magic = ((((((*this).generics))->params)).iterator());
 for (;;){
@@ -1269,7 +1269,7 @@ break;
 types::FunctionGenericParameter param = (_magic_value.value());
 {
 ids::TypeId const type_id = ((param).type_id());
-TRY((((lhs_generic_type_ids).add(type_id))));
+((lhs_generic_type_ids).add(type_id));
 }
 
 }
@@ -1285,7 +1285,7 @@ break;
 types::FunctionGenericParameter param = (_magic_value.value());
 {
 ids::TypeId const type_id = ((param).type_id());
-TRY((((rhs_generic_type_ids).add(type_id))));
+((rhs_generic_type_ids).add(type_id));
 }
 
 }
@@ -2492,7 +2492,7 @@ return ((((*this).get_type(type_id)))->is_signed());
 ErrorOr<JaktInternal::Optional<bool>> types::CheckedProgram::for_each_scope_accessible_unqualified_from_scope_direct_chain(ids::ScopeId const scope_id,Function<ErrorOr<typename utility::IterationDecision<bool>>(ids::ScopeId, JaktInternal::Optional<ByteString>, bool)> const& callback,JaktInternal::Optional<ids::ScopeId> const root_scope) const {
 {
 AK::Queue<ids::ScopeId> scopes_to_check = AK::Queue<ids::ScopeId>();
-JaktInternal::Set<ids::ScopeId> seen = (TRY((Set<ids::ScopeId>::create_with_values({}))));
+JaktInternal::Set<ids::ScopeId> seen = Set<ids::ScopeId>::create_with_values({});
 ((scopes_to_check).enqueue(scope_id));
 {
 JaktInternal::ArrayIterator<ids::ScopeId> _magic = ((((((*this).get_scope(scope_id)))->children)).iterator());
@@ -2514,7 +2514,7 @@ ids::ScopeId const scope_id = ((scopes_to_check).dequeue());
 if (((seen).contains(scope_id))){
 continue;
 }
-TRY((((seen).add(scope_id))));
+((seen).add(scope_id));
 typename utility::IterationDecision<bool> const res = TRY((callback(scope_id,JaktInternal::OptionalNone(),false)));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<JaktInternal::Optional<bool>>>{
@@ -2575,7 +2575,7 @@ if (ignore_mixin_scopes){
 return TRY((((*this).for_each_scope_accessible_unqualified_from_scope_direct_chain(scope_id,callback,root_scope))));
 }
 AK::Queue<ids::ScopeId> scopes_to_check = AK::Queue<ids::ScopeId>();
-JaktInternal::Set<ids::ScopeId> seen = (TRY((Set<ids::ScopeId>::create_with_values({}))));
+JaktInternal::Set<ids::ScopeId> seen = Set<ids::ScopeId>::create_with_values({});
 ((scopes_to_check).enqueue(scope_id));
 {
 JaktInternal::ArrayIterator<ids::ScopeId> _magic = ((((((*this).get_scope(scope_id)))->children)).iterator());
@@ -2597,7 +2597,7 @@ ids::ScopeId const scope_id = ((scopes_to_check).dequeue());
 if (((seen).contains(scope_id))){
 continue;
 }
-TRY((((seen).add(scope_id))));
+((seen).add(scope_id));
 typename utility::IterationDecision<bool> const res = TRY((callback(scope_id,JaktInternal::OptionalNone(),false)));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<JaktInternal::Optional<bool>>>{
