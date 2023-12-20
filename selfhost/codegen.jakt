@@ -2935,7 +2935,7 @@ struct CodeGenerator {
             }
             JaktSet(vals, span, type_id, inner_type_id) => {
                 mut output = ""
-                output += format("({}((Set<{}>::create_with_values({{", .current_error_handler(), .codegen_type(inner_type_id))
+                output += format("Set<{}>::create_with_values({{", .codegen_type(inner_type_id))
                 mut first = true
                 for value in vals {
                     if not first {
@@ -2945,7 +2945,7 @@ struct CodeGenerator {
                     }
                     output += .codegen_expression(value)
                 }
-                output += "}))))"
+                output += "})"
                 yield output
             }
             JaktTuple(vals, span, type_id) => {
