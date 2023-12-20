@@ -21,7 +21,7 @@ enum StructLikeId {
     Enum(EnumId)
     Trait(TraitId)
 
-    fn generic_parameters(this, anon program: &CheckedProgram) throws -> [TypeId] {
+    fn generic_parameters(this, anon program: &CheckedProgram) -> [TypeId] {
         let parameters = match this {
             Struct(id) => program.get_struct(id).generic_parameters
             Enum(id) => program.get_enum(id).generic_parameters
@@ -52,13 +52,13 @@ enum StructLikeId {
         anon program: &mut CheckedProgram
         module_id: ModuleId
         qualifiers: CheckedQualifiers = CheckedQualifiers()
-    ) throws -> TypeId => match this {
+    ) -> TypeId => match this {
         Struct(id) => program.find_or_add_type_id(Type::GenericInstance(qualifiers, id, args: arguments), module_id)
         Enum(id) => program.find_or_add_type_id(Type::GenericEnumInstance(qualifiers, id, args: arguments), module_id)
         Trait(id) => program.find_or_add_type_id(Type::GenericTraitInstance(qualifiers, id, args: arguments), module_id)
     }
 
-    fn from_type_id(anon type_id: TypeId, anon program: &CheckedProgram) throws -> StructLikeId? {
+    fn from_type_id(anon type_id: TypeId, anon program: &CheckedProgram) -> StructLikeId? {
         return match program.get_type(type_id) {
             GenericInstance(id: struct_id, args) | Struct(struct_id) default(args: [TypeId] = [])
                 => StructLikeId::Struct(generic_arguments: args, struct_id)
@@ -666,7 +666,7 @@ class Module {
     public is_root: bool
     public fn is_prelude(this) -> bool => .id.id == 0
 
-    public fn new_type_variable(mut this, implemented_traits: [TypeId]? = None) throws -> TypeId {
+    public fn new_type_variable(mut this, implemented_traits: [TypeId]? = None) -> TypeId {
         let new_id = .types.size()
 
         let empty_implementation: [TypeId] = []
@@ -823,7 +823,7 @@ class CheckedFunction {
         .params = changed_params
     }
 
-    public fn copy(this) throws -> CheckedFunction => CheckedFunction(
+    public fn copy(this) -> CheckedFunction => CheckedFunction(
         name: .name
         name_span: .name_span
         visibility: .visibility
@@ -1011,7 +1011,7 @@ struct FunctionGenericParameter {
     fn parameter(
         anon type_id: TypeId
         span: Span
-    ) throws -> FunctionGenericParameter => FunctionGenericParameter(
+    ) -> FunctionGenericParameter => FunctionGenericParameter(
         kind: FunctionGenericParameterKind::Parameter
         checked_parameter: CheckedGenericParameter::make(type_id, span)
     )
@@ -1282,7 +1282,7 @@ struct CheckedGenericParameter {
     fn make(
         anon type_id: TypeId
         span: Span
-    ) throws -> CheckedGenericParameter => CheckedGenericParameter(type_id, constraints: [], span)
+    ) -> CheckedGenericParameter => CheckedGenericParameter(type_id, constraints: [], span)
 }
 
 enum CheckedEnumVariant {
@@ -1669,7 +1669,7 @@ boxed enum CheckedExpression {
         else(type_id) => type_id
     }
 
-    fn control_flow(this) throws -> BlockControlFlow => match this {
+    fn control_flow(this)-> BlockControlFlow => match this {
         Match(expr, match_cases, span, type_id, all_variants_constant) => {
             mut control_flow: BlockControlFlow? = None
             for case_ in match_cases {
@@ -1739,7 +1739,7 @@ class CheckedProgram {
     public modules: [Module]
     public loaded_modules: [String: LoadedModule]
 
-    public fn create_module(mut this, name: String, is_root: bool, path: String? = None) throws -> ModuleId {
+    public fn create_module(mut this, name: String, is_root: bool, path: String? = None) -> ModuleId {
         let new_id = .modules.size()
         let module_id = ModuleId(id: new_id)
         let module = Module(
@@ -1805,7 +1805,7 @@ class CheckedProgram {
         debug_name: String
         module_id: ModuleId
         for_block: bool = true
-    ) throws -> ScopeId {
+    ) -> ScopeId {
         mut is_from_generated_code = false
         // Check that parent_scope_id is a valid ScopeId
         if parent_scope_id.has_value() {
@@ -1859,7 +1859,7 @@ class CheckedProgram {
         mut this
         qualifiers: CheckedQualifiers
         anon type_id: TypeId
-    ) throws -> TypeId {
+    ) -> TypeId {
         let type = .get_type(type_id)
 
         guard qualifiers != type.qualifiers else {
@@ -1911,7 +1911,7 @@ class CheckedProgram {
         only_in_current_module: true)
     }
 
-    public fn builtin_implementation_struct(mut this, builtin: BuiltinType, for_module: ModuleId) throws -> StructId {
+    public fn builtin_implementation_struct(mut this, builtin: BuiltinType, for_module: ModuleId) -> StructId {
         let id = builtin.id()
         mut module = .modules[for_module.id]
         if module.builtin_implementation_structs.contains(id) {
@@ -1979,7 +1979,7 @@ class CheckedProgram {
     public fn prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
     public fn prelude_module_id(this) -> ModuleId => ModuleId(id: 0)
 
-    public fn set_loaded_module(mut this, module_name: String, loaded_module: LoadedModule) throws {
+    public fn set_loaded_module(mut this, module_name: String, loaded_module: LoadedModule) {
         .loaded_modules.set(
             key: module_name
             value: loaded_module
@@ -1989,7 +1989,7 @@ class CheckedProgram {
         return .loaded_modules.get(module_name)
     }
 
-    public fn set_owner_scope_if_needed(mut this, parent_scope_id: ScopeId, overload_set: [FunctionId], span: Span) throws {
+    public fn set_owner_scope_if_needed(mut this, parent_scope_id: ScopeId, overload_set: [FunctionId], span: Span) {
         for overload in overload_set {
             mut function = .get_function(overload)
             if not function.owner_scope.has_value() {
@@ -2472,7 +2472,7 @@ class CheckedProgram {
         .compiler.panic(format("internal error: definition for reflect builtin '{}' not found", primitive))
     }
 
-    public fn find_type_scope_id(mut this, anon type_id: TypeId) throws -> ScopeId {
+    public fn find_type_scope_id(mut this, anon type_id: TypeId) -> ScopeId {
         let type = .get_type(type_id)
         return match type {
             Struct(struct_id) | GenericInstance(id: struct_id) => .get_struct(struct_id).scope_id
@@ -2490,7 +2490,7 @@ class CheckedProgram {
         scope_id: ScopeId
         anon name: String
         treat_aliases_as_imports: bool = false
-    ) throws -> ScopeId? {
+    ) -> ScopeId? {
         let scope = .get_scope(scope_id)
         for child in scope.children {
             let child_scope = .get_scope(child)
@@ -3127,7 +3127,7 @@ boxed enum ValueImpl {
         }
     }
 
-    fn copy(this) throws -> ValueImpl => match this {
+    fn copy(this) -> ValueImpl => match this {
         Void => ValueImpl::Void
         Bool(x) => ValueImpl::Bool(x)
         U8(x) => ValueImpl::U8(x)
@@ -3244,7 +3244,7 @@ struct Value {
     impl: ValueImpl
     span: Span
 
-    fn copy(this) throws -> Value => Value(impl: .impl.copy(), span: .span)
+    fn copy(this) -> Value => Value(impl: .impl.copy(), span: .span)
     fn type_name(this) -> String => match .impl {
         Void => "void"
         Bool => "bool"
@@ -3276,7 +3276,7 @@ struct Value {
         Function => "Function"
     }
 
-    fn cast(this, anon expected: Value, span: Span) throws -> Value => match .impl {
+    fn cast(this, anon expected: Value, span: Span) -> Value => match .impl {
         U8(value) => match expected.impl {
             U16 => Value(impl: ValueImpl::U16(value as! u16), span: span)
             U32 => Value(impl: ValueImpl::U32(value as! u32), span: span)
