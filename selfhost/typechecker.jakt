@@ -299,7 +299,7 @@ struct Typechecker {
 
     fn find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? => .program.find_comptime_binding_in_scope(scope_id, name)
 
-    fn get_root_path(this) throws -> Path {
+    fn get_root_path(this) -> Path {
         let root_module = .program.get_loaded_module(.root_module_name)
         if root_module.has_value() {
             let file_id = root_module!.file_id
@@ -313,7 +313,7 @@ struct Typechecker {
 
     fn current_module(this) -> Module => .program.get_module(.current_module_id)
 
-    public fn scope_can_access(this, accessor: ScopeId, accessee: ScopeId) throws -> bool {
+    public fn scope_can_access(this, accessor: ScopeId, accessee: ScopeId) -> bool {
         if accessor.equals(accessee) {
             return true
         }
@@ -351,7 +351,7 @@ struct Typechecker {
 
     fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, for_block: bool = true) throws -> ScopeId => .program.create_scope(parent_scope_id, can_throw, debug_name, module_id: .current_module_id, for_block)
 
-    fn create_module(mut this, name: String, is_root: bool, path: String? = None) throws -> ModuleId {
+    fn create_module(mut this, name: String, is_root: bool, path: String? = None) -> ModuleId {
         let new_id = .program.modules.size()
         let module_id = ModuleId(id: new_id)
         let module = Module(
@@ -616,7 +616,7 @@ struct Typechecker {
         return true
     }
 
-    fn add_enum_to_scope(mut this, scope_id: ScopeId, name: String, enum_id: EnumId, span: Span) throws -> bool {
+    fn add_enum_to_scope(mut this, scope_id: ScopeId, name: String, enum_id: EnumId, span: Span) -> bool {
         mut scope = .get_scope(scope_id)
         let maybe_enum_id = scope.enums.get(name)
         if maybe_enum_id.has_value() {
@@ -5886,7 +5886,7 @@ struct Typechecker {
         mut this
         qualifiers: CheckedQualifiers
         anon type_id: TypeId
-    ) throws -> TypeId {
+    ) -> TypeId {
         return .program.apply_qualifiers_to_type(qualifiers, type_id)
     }
 

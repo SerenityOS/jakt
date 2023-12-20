@@ -794,7 +794,7 @@ class InterpreterScope {
         defers: []
     )
 
-    public fn from_runtime_scope(scope_id: ScopeId, program: CheckedProgram, parent: InterpreterScope? = None) throws -> InterpreterScope {
+    public fn from_runtime_scope(scope_id: ScopeId, program: CheckedProgram, parent: InterpreterScope? = None) -> InterpreterScope {
         mut bindings: [String:Value] = [:]
         mut current_id: ScopeId? = scope_id
         while current_id.has_value() {
@@ -863,7 +863,7 @@ class InterpreterScope {
         throw Error::from_string_literal("Could not find binding")
     }
 
-    public fn all_bindings(this) throws -> [String:Value] {
+    public fn all_bindings(this) -> [String:Value] {
         mut bindings: [String:Value] = [:]
         mut scope = Some(this)
         while scope.has_value() {
