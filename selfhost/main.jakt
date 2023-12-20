@@ -930,7 +930,8 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         let (contents, module_file_path) = contents_and_path
 
         let path = binary_dir.join(file)
-        try write_to_file(data: contents, output_filename: path.to_string()) catch error {
+
+        try write_only_if_updated(data: contents, output_filename: path.to_string()) catch error {
             eprintln("Error: Could not write to file: {} ({})", file, error)
             return 1
         }
@@ -938,7 +939,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
 
     if generate_depfile.has_value() {
         try {
-            write_to_file(
+            write_only_if_updated(
                 data: depfile_builder.to_string()
                 output_filename: generate_depfile!
             )
@@ -1168,4 +1169,28 @@ fn format_output(file_path: Path, tokens: [Token], format_range: FormatRange?, f
     } else {
         print("{}", formatted_file.to_string())
     }
+}
+
+fn write_only_if_updated(data: String, output_filename: String) throws {
+    if file_needs_updating(path: output_filename, new_contents: data) {
+        write_to_file(data, output_filename)
+    }
+}
+
+fn file_needs_updating(path: String, new_contents: String) -> bool {
+    mut maybe_file = try File::open_for_reading(path)
+
+    // It doesn't exist, write it anyway
+    guard maybe_file.has_value() else {
+        return true
+    }
+
+    let contents = try maybe_file!.read_all()
+
+    // Could not read contents, so write it anyway.
+    guard contents.has_value() else {
+        return true
+    }
+
+    return to_string(contents!) != new_contents
 }
