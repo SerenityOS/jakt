@@ -2910,8 +2910,7 @@ struct CodeGenerator {
                 yield output
             }
             JaktDictionary(vals, span, type_id, key_type_id, value_type_id) => {
-                mut output = format("({}((Dictionary<{}, {}>::create_with_entries({{",
-                    .current_error_handler(),
+                mut output = format("Dictionary<{}, {}>::create_with_entries({{",
                     .codegen_type(key_type_id),
                     .codegen_type(value_type_id))
 
@@ -2930,7 +2929,7 @@ struct CodeGenerator {
                     output += "}"
                 }
 
-                output += "}))))"
+                output += "})"
 
                 yield output
             }

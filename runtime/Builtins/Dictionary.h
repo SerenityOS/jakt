@@ -116,9 +116,9 @@ public:
     {
     }
 
-    static ErrorOr<Dictionary> create_empty()
+    static Dictionary create_empty()
     {
-        auto storage = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
+        auto storage = MUST(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
         return Dictionary { move(storage) };
     }
 
@@ -126,9 +126,10 @@ public:
         K key;
         V value;
     };
-    static ErrorOr<Dictionary> create_with_entries(std::initializer_list<Entry> list)
+
+    static Dictionary create_with_entries(std::initializer_list<Entry> list)
     {
-        auto dictionary = TRY(create_empty());
+        auto dictionary = create_empty();
         dictionary.ensure_capacity(list.size());
         for (auto& item : list)
             dictionary.set(item.key, item.value);
