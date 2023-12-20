@@ -81,7 +81,7 @@ class Compiler {
         return None
     }
 
-    public fn get_file_id_or_register(mut this, anon file: Path) throws -> FileId {
+    public fn get_file_id_or_register(mut this, anon file: Path) -> FileId {
         // FIXME: maybe we want to index with the absolute path, just to be sure?
         let path = file.to_string()
         mut file_id = .file_ids.get(path)

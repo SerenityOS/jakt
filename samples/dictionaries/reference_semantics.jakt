@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "PASS\n"
 
-fn change_value(mut dictionary: [String:String]) throws {
+fn change_value(mut dictionary: [String:String]) {
     dictionary.set(key: "foo", value: "PASS")
 }
 
