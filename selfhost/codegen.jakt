@@ -3590,8 +3590,7 @@ struct CodeGenerator {
 
         if op.op is Assign and lhs is IndexedDictionary(expr, index) {
             return format(
-                "{}({}.set({}, {}))"
-                .current_error_handler()
+                "{}.set({}, {})"
                 .codegen_expression(expr)
                 .codegen_expression(index)
                 .codegen_expression(rhs)
