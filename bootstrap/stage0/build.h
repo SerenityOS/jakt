@@ -7,7 +7,7 @@ namespace Jakt {
 namespace build {
 struct ParallelExecutionPool {
   public:
-public: JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::Process> pids;public: JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::ExitPollResult> completed;public: size_t pid_index;public: size_t max_concurrent;public: static ErrorOr<build::ParallelExecutionPool> create(size_t const max_concurrent);
+public: JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::Process> pids;public: JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::ExitPollResult> completed;public: size_t pid_index;public: size_t max_concurrent;public: static build::ParallelExecutionPool create(size_t const max_concurrent);
 public: ErrorOr<size_t> run(JaktInternal::DynamicArray<ByteString> const args);
 public: JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult> status(size_t const id) const;
 public: ErrorOr<void> wait_for_any_job_to_complete();

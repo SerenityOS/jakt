@@ -16,7 +16,7 @@ public: ErrorOr<void> print_errors() const;
 public: JaktInternal::Optional<jakt__path::Path> get_file_path(utility::FileId const file_id) const;
 public: JaktInternal::Optional<utility::FileId> current_file_id() const;
 public: JaktInternal::Optional<jakt__path::Path> current_file_path() const;
-public: ErrorOr<utility::FileId> get_file_id_or_register(jakt__path::Path const file);
+public: utility::FileId get_file_id_or_register(jakt__path::Path const file);
 public: ErrorOr<bool> set_current_file(utility::FileId const file_id);
 public: JaktInternal::Tuple<JaktInternal::Optional<utility::FileId>,JaktInternal::DynamicArray<u8>> current_file_state() const;
 public: void restore_file_state(JaktInternal::Tuple<JaktInternal::Optional<utility::FileId>,JaktInternal::DynamicArray<u8>> const state);

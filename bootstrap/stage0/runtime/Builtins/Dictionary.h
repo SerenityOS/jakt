@@ -81,10 +81,9 @@ public:
     size_t size() const { return m_storage->map.size(); }
     void clear() { m_storage->map.clear(); }
 
-    ErrorOr<void> set(K const& key, V value)
+    void set(K const& key, V value)
     {
-        TRY(m_storage->map.try_set(key, move(value)));
-        return {};
+        m_storage->map.set(key, move(value));
     }
 
     bool remove(K const& key) { return m_storage->map.remove(key); }
@@ -96,7 +95,7 @@ public:
     V& operator[](K const& key) { return m_storage->map.get(key).value(); }
     V const& operator[](K const& key) const { return m_storage->map.get(key).value(); }
 
-    ErrorOr<DynamicArray<K>> keys() const
+    DynamicArray<K> keys() const
     {
         auto keys = DynamicArray<K>::create_empty();
         keys.ensure_capacity(m_storage->map.size());
@@ -106,10 +105,9 @@ public:
         return keys;
     }
 
-    ErrorOr<void> ensure_capacity(size_t capacity)
+    void ensure_capacity(size_t capacity)
     {
-        TRY(m_storage->map.try_ensure_capacity(capacity));
-        return {};
+        MUST(m_storage->map.try_ensure_capacity(capacity));
     }
 
     // FIXME: Remove this constructor once Jakt knows how to call Dictionary::create_empty()
@@ -118,9 +116,9 @@ public:
     {
     }
 
-    static ErrorOr<Dictionary> create_empty()
+    static Dictionary create_empty()
     {
-        auto storage = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
+        auto storage = MUST(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
         return Dictionary { move(storage) };
     }
 
@@ -128,12 +126,13 @@ public:
         K key;
         V value;
     };
-    static ErrorOr<Dictionary> create_with_entries(std::initializer_list<Entry> list)
+
+    static Dictionary create_with_entries(std::initializer_list<Entry> list)
     {
-        auto dictionary = TRY(create_empty());
-        TRY(dictionary.ensure_capacity(list.size()));
+        auto dictionary = create_empty();
+        dictionary.ensure_capacity(list.size());
         for (auto& item : list)
-            TRY(dictionary.set(item.key, item.value));
+            dictionary.set(item.key, item.value);
         return dictionary;
     }
 

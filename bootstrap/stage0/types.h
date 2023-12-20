@@ -78,15 +78,15 @@ StructLikeId() {};
 };
 struct GenericInferences {
   public:
-public: JaktInternal::Dictionary<ids::TypeId,ids::TypeId> values;public: ErrorOr<void> set(ids::TypeId const key, ids::TypeId const value);
-public: ErrorOr<void> set_all(JaktInternal::DynamicArray<types::CheckedGenericParameter> const keys, JaktInternal::DynamicArray<ids::TypeId> const values);
+public: JaktInternal::Dictionary<ids::TypeId,ids::TypeId> values;public: void set(ids::TypeId const key, ids::TypeId const value);
+public: void set_all(JaktInternal::DynamicArray<types::CheckedGenericParameter> const keys, JaktInternal::DynamicArray<ids::TypeId> const values);
 public: JaktInternal::Optional<ids::TypeId> get(ids::TypeId const key) const;
 public: ids::TypeId map(ids::TypeId const type) const;
 public: JaktInternal::Optional<ids::TypeId> find_and_map(ByteString const name, NonnullRefPtr<types::CheckedProgram> const& program) const;
 public: JaktInternal::Dictionary<ids::TypeId,ids::TypeId> iterator() const;
-public: ErrorOr<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> perform_checkpoint(bool const reset);
+public: JaktInternal::Dictionary<ids::TypeId,ids::TypeId> perform_checkpoint(bool const reset);
 public: void restore(JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const checkpoint);
-public: ErrorOr<void> set_from(JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const checkpoint);
+public: void set_from(JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const checkpoint);
 public: ErrorOr<void> debug_description(NonnullRefPtr<types::CheckedProgram> const& program) const;
 public: GenericInferences(JaktInternal::Dictionary<ids::TypeId,ids::TypeId> a_values);
 
@@ -307,8 +307,8 @@ virtual ~Module() = default;
 public: ids::ModuleId id;public: ByteString name;public: JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>> functions;public: JaktInternal::DynamicArray<types::CheckedStruct> structures;public: JaktInternal::DynamicArray<types::CheckedEnum> enums;public: JaktInternal::DynamicArray<NonnullRefPtr<types::Scope>> scopes;public: JaktInternal::DynamicArray<NonnullRefPtr<typename types::Type>> types;public: JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedTrait>> traits;public: JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedVariable>> variables;public: JaktInternal::DynamicArray<ids::ModuleId> imports;public: ByteString resolved_import_path;public: JaktInternal::Dictionary<size_t,ids::StructId> builtin_implementation_structs;public: bool is_root;public: bool is_prelude() const;
 public: ErrorOr<ids::TypeId> new_type_variable(JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> const implemented_traits);
 public: ids::FunctionId next_function_id() const;
-public: ErrorOr<ids::FunctionId> add_function(NonnullRefPtr<types::CheckedFunction> const checked_function);
-public: ErrorOr<ids::VarId> add_variable(NonnullRefPtr<types::CheckedVariable> const checked_variable);
+public: ids::FunctionId add_function(NonnullRefPtr<types::CheckedFunction> const checked_function);
+public: ids::VarId add_variable(NonnullRefPtr<types::CheckedVariable> const checked_variable);
 public: protected:
 explicit Module(ids::ModuleId a_id, ByteString a_name, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>> a_functions, JaktInternal::DynamicArray<types::CheckedStruct> a_structures, JaktInternal::DynamicArray<types::CheckedEnum> a_enums, JaktInternal::DynamicArray<NonnullRefPtr<types::Scope>> a_scopes, JaktInternal::DynamicArray<NonnullRefPtr<typename types::Type>> a_types, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedTrait>> a_traits, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedVariable>> a_variables, JaktInternal::DynamicArray<ids::ModuleId> a_imports, ByteString a_resolved_import_path, JaktInternal::Dictionary<size_t,ids::StructId> a_builtin_implementation_structs, bool a_is_root);
 public:

@@ -87,14 +87,14 @@ NumericOrStringValue() {};
 };
 template <typename K,typename V>struct InternalDictionaryProduct {
   public:
-public: JaktInternal::Dictionary<K,JaktInternal::DynamicArray<V>> dict;public: JaktInternal::Dictionary<K,V> current;public: JaktInternal::Dictionary<K,size_t> current_index;public: bool done;public: ErrorOr<JaktInternal::Optional<JaktInternal::Dictionary<K,V>>> next() {
+public: JaktInternal::Dictionary<K,JaktInternal::DynamicArray<V>> dict;public: JaktInternal::Dictionary<K,V> current;public: JaktInternal::Dictionary<K,size_t> current_index;public: bool done;public: JaktInternal::Optional<JaktInternal::Dictionary<K,V>> next() {
 {
 if (((*this).done)){
 return JaktInternal::OptionalNone();
 }
-JaktInternal::Dictionary<K,V> next = (TRY((Dictionary<K, V>::create_with_entries({}))));
+JaktInternal::Dictionary<K,V> next = Dictionary<K, V>::create_with_entries({});
 {
-JaktInternal::ArrayIterator<K> _magic = ((TRY((((((*this).dict)).keys())))).iterator());
+JaktInternal::ArrayIterator<K> _magic = ((((((*this).dict)).keys())).iterator());
 for (;;){
 JaktInternal::Optional<K> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -103,7 +103,7 @@ break;
 K key = (_magic_value.value());
 {
 V const value = ((((((*this).dict))[key]))[((((*this).current_index))[key])]);
-TRY(next.set(key, value));
+next.set(key, value);
 }
 
 }
@@ -135,10 +135,10 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (JaktInternal::checked_add(index,static_cast<size_t>(1ULL)),((values).size()))){
-TRY(((*this).current_index).set(key, JaktInternal::checked_add(index,static_cast<size_t>(1ULL))));
+((*this).current_index).set(key, JaktInternal::checked_add(index,static_cast<size_t>(1ULL)));
 return next;
 }
-TRY(((*this).current_index).set(key, static_cast<size_t>(0ULL)));
+((*this).current_index).set(key, static_cast<size_t>(0ULL));
 }
 
 }
@@ -361,16 +361,16 @@ public: ByteString trait_name;public: utility::Span encounter_span;public: Alrea
 public: ErrorOr<ByteString> debug_description() const;
 };struct TraitImplCheck {
   public:
-public: JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,ids::FunctionId>> missing_methods;public: JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<utility::Span,JaktInternal::DynamicArray<error::JaktError>>>> unmatched_signatures;public: JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,utility::Span>> private_matching_methods;public: JaktInternal::Dictionary<ByteString,typechecker::AlreadyImplementedFor> already_implemented_for;public: static ErrorOr<typechecker::TraitImplCheck> make();
-public: ErrorOr<void> ensure_capacity(size_t const count);
-public: ErrorOr<void> register_trait(ids::TypeId const trait_type_id, ByteString const trait_name, types::CheckedTraitRequirements const requirements);
+public: JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,ids::FunctionId>> missing_methods;public: JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<utility::Span,JaktInternal::DynamicArray<error::JaktError>>>> unmatched_signatures;public: JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,utility::Span>> private_matching_methods;public: JaktInternal::Dictionary<ByteString,typechecker::AlreadyImplementedFor> already_implemented_for;public: static typechecker::TraitImplCheck make();
+public: void ensure_capacity(size_t const count);
+public: void register_trait(ids::TypeId const trait_type_id, ByteString const trait_name, types::CheckedTraitRequirements const requirements);
 public: ErrorOr<void> throw_errors(utility::Span const record_decl_span, typechecker::Typechecker& typechecker);
 public: ErrorOr<void> register_method(ids::TypeId const self_type_id, ByteString const method_name, ids::FunctionId const method_id, typechecker::Typechecker& typechecker);
 public: TraitImplCheck(JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,ids::FunctionId>> a_missing_methods, JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<utility::Span,JaktInternal::DynamicArray<error::JaktError>>>> a_unmatched_signatures, JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,utility::Span>> a_private_matching_methods, JaktInternal::Dictionary<ByteString,typechecker::AlreadyImplementedFor> a_already_implemented_for);
 
 public: ErrorOr<ByteString> debug_description() const;
 };template <typename R,typename S>
-ErrorOr<typechecker::InternalDictionaryProduct<R,S>> create_internal_dictionary_product(JaktInternal::Dictionary<R,JaktInternal::DynamicArray<S>> const dict);
+typechecker::InternalDictionaryProduct<R,S> create_internal_dictionary_product(JaktInternal::Dictionary<R,JaktInternal::DynamicArray<S>> const dict);
 }
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::typechecker::FunctionMatchResult> : Jakt::Formatter<Jakt::StringView>{

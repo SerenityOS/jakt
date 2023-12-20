@@ -13,9 +13,9 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("max_concurrent: {}", max_concurrent);
 }
 builder.append(")"sv);return builder.to_string(); }
-ErrorOr<build::ParallelExecutionPool> build::ParallelExecutionPool::create(size_t const max_concurrent) {
+build::ParallelExecutionPool build::ParallelExecutionPool::create(size_t const max_concurrent) {
 {
-return build::ParallelExecutionPool((TRY((Dictionary<size_t, jakt__platform__unknown_process::Process>::create_with_entries({})))),(TRY((Dictionary<size_t, jakt__platform__unknown_process::ExitPollResult>::create_with_entries({})))),static_cast<size_t>(0ULL),max_concurrent);
+return build::ParallelExecutionPool(Dictionary<size_t, jakt__platform__unknown_process::Process>::create_with_entries({}),Dictionary<size_t, jakt__platform__unknown_process::ExitPollResult>::create_with_entries({}),static_cast<size_t>(0ULL),max_concurrent);
 }
 }
 
@@ -36,7 +36,7 @@ TRY((((*this).wait_for_any_job_to_complete())));
 }
 jakt__platform__unknown_process::Process const process = TRY((jakt__platform__unknown_process::start_background_process(args)));
 size_t const id = ((((*this).pid_index)++));
-TRY((((((*this).pids)).set(id,process))));
+((((*this).pids)).set(id,process));
 return id;
 }
 }
@@ -56,9 +56,9 @@ JaktInternal::Tuple<JaktInternal::Optional<size_t>,jakt__platform__unknown_proce
 JaktInternal::Optional<size_t> const finished_pid = ((finished_pid_finished_status_).template get<0>());
 jakt__platform__unknown_process::ExitPollResult const finished_status = ((finished_pid_finished_status_).template get<1>());
 
-JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::ExitPollResult> pids_to_remove = (TRY((Dictionary<size_t, jakt__platform__unknown_process::ExitPollResult>::create_with_entries({}))));
+JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::ExitPollResult> pids_to_remove = Dictionary<size_t, jakt__platform__unknown_process::ExitPollResult>::create_with_entries({});
 if (((finished_pid).has_value())){
-TRY((((pids_to_remove).set((finished_pid.value()),finished_status))));
+((pids_to_remove).set((finished_pid.value()),finished_status));
 }
 {
 JaktInternal::DictionaryIterator<size_t,jakt__platform__unknown_process::Process> _magic = ((((*this).pids)).iterator());
@@ -76,14 +76,14 @@ jakt__platform__unknown_process::Process const process = ((jakt__index__process_
 JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> __jakt_var_0;
 auto __jakt_var_1 = [&]() -> ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> { return TRY((jakt__platform__unknown_process::poll_process_exit(((process))))); }();
 if (__jakt_var_1.is_error()) {{
-TRY((((pids_to_remove).set(index,finished_status))));
+((pids_to_remove).set(index,finished_status));
 continue;
 }
 } else {__jakt_var_0 = __jakt_var_1.release_value();
 }
 __jakt_var_0.release_value(); });
 if (((status).has_value())){
-TRY((((pids_to_remove).set(index,(status.value())))));
+((pids_to_remove).set(index,(status.value())));
 }
 }
 
@@ -104,7 +104,7 @@ size_t const index = ((jakt__index__status__).template get<0>());
 jakt__platform__unknown_process::ExitPollResult const status = ((jakt__index__status__).template get<1>());
 
 ((((*this).pids)).remove(index));
-TRY((((((*this).completed)).set(index,status))));
+((((*this).completed)).set(index,status));
 }
 
 }
@@ -162,7 +162,7 @@ builder.appendff("pool: {}", pool);
 builder.append(")"sv);return builder.to_string(); }
 ErrorOr<build::Builder> build::Builder::for_building(JaktInternal::DynamicArray<ByteString> const files,size_t const max_concurrent) {
 {
-return build::Builder((DynamicArray<ByteString>::create_with({})),files,TRY((build::ParallelExecutionPool::create(max_concurrent))));
+return build::Builder((DynamicArray<ByteString>::create_with({})),files,build::ParallelExecutionPool::create(max_concurrent));
 }
 }
 

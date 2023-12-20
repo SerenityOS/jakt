@@ -11118,7 +11118,7 @@ __jakt_label_103:; __jakt_var_109.release_value(); }));
         continue;
     _jakt_value.release_value();
 });
-TRY((((defaults).set(((declaration).name),parser::ParsedPatternDefault(declaration,value)))));
+((defaults).set(((declaration).name),parser::ParsedPatternDefault(declaration,value)));
 }
 if (((((*this).current())).__jakt_init_index() == 8 /* RParen */)){
 ((((*this).index)) += (static_cast<size_t>(1ULL)));
@@ -11147,22 +11147,22 @@ return ({
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 101 /* True */: {
-return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression((TRY((Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})))),TRY((((*this).parse_operand())))));
+return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),TRY((((*this).parse_operand())))));
 };/*case end*/
 case 73 /* False */: {
-return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression((TRY((Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})))),TRY((((*this).parse_operand())))));
+return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),TRY((((*this).parse_operand())))));
 };/*case end*/
 case 2 /* Number */: {
-return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression((TRY((Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})))),TRY((((*this).parse_operand())))));
+return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),TRY((((*this).parse_operand())))));
 };/*case end*/
 case 1 /* QuotedString */: {
-return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression((TRY((Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})))),TRY((((*this).parse_operand())))));
+return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),TRY((((*this).parse_operand())))));
 };/*case end*/
 case 0 /* SingleQuotedString */: {
-return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression((TRY((Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})))),TRY((((*this).parse_operand())))));
+return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),TRY((((*this).parse_operand())))));
 };/*case end*/
 case 7 /* LParen */: {
-return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression((TRY((Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})))),TRY((((*this).parse_operand())))));
+return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),TRY((((*this).parse_operand())))));
 };/*case end*/
 case 70 /* Else */: {
 return JaktInternal::ExplicitValue(({ Optional<parser::ParsedMatchPattern> __jakt_var_110; {
@@ -11171,7 +11171,7 @@ JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> variant_arguments
 utility::Span const arguments_start = ((((*this).current())).span());
 utility::Span const arguments_end = ((((*this).previous())).span());
 utility::Span const arguments_span = parser::merge_spans(arguments_start,arguments_end);
-__jakt_var_110 = parser::ParsedMatchPattern::CatchAll((TRY((Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})))),variant_arguments,arguments_span); goto __jakt_label_104;
+__jakt_var_110 = parser::ParsedMatchPattern::CatchAll(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),variant_arguments,arguments_span); goto __jakt_label_104;
 
 }
 __jakt_label_104:; __jakt_var_110.release_value(); }));
@@ -11227,7 +11227,7 @@ JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> variant_arguments
 utility::Span const arguments_start = ((((*this).current())).span());
 utility::Span const arguments_end = ((((*this).previous())).span());
 utility::Span const arguments_span = parser::merge_spans(arguments_start,arguments_end);
-__jakt_var_111 = parser::ParsedMatchPattern::EnumVariant((TRY((Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})))),variant_names,variant_arguments,arguments_span); goto __jakt_label_105;
+__jakt_var_111 = parser::ParsedMatchPattern::EnumVariant(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),variant_names,variant_arguments,arguments_span); goto __jakt_label_105;
 
 }
 __jakt_label_105:; __jakt_var_111.release_value(); }));
@@ -11235,7 +11235,7 @@ __jakt_label_105:; __jakt_var_111.release_value(); }));
 default: {
 return JaktInternal::ExplicitValue(({ Optional<parser::ParsedMatchPattern> __jakt_var_112; {
 ((*this).error((ByteString::must_from_utf8("Expected pattern or ‘else’"sv)),((((*this).current())).span())));
-__jakt_var_112 = parser::ParsedMatchPattern::Invalid((TRY((Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}))))); goto __jakt_label_106;
+__jakt_var_112 = parser::ParsedMatchPattern::Invalid(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})); goto __jakt_label_106;
 
 }
 __jakt_label_106:; __jakt_var_112.release_value(); }));
