@@ -2847,9 +2847,8 @@ struct Typechecker {
         } else if not parsed_record.definition_linkage is External {
             // No constructor found, so let's make one
 
-            let constructor_can_throw = parsed_record.record_type is Class
-            let function_scope_id = .create_scope(parent_scope_id: struct_.scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor({})", parsed_record.name))
-            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor-block({})", parsed_record.name))
+            let function_scope_id = .create_scope(parent_scope_id: struct_.scope_id, can_throw: false, debug_name: format("generated-constructor({})", parsed_record.name))
+            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: false, debug_name: format("generated-constructor-block({})", parsed_record.name))
 
             let inheritance_chain = .struct_inheritance_chain(struct_id)
             mut constructor_parameters: [CheckedParameter] = []
@@ -2898,7 +2897,7 @@ struct Typechecker {
                     yielded_type: TypeId::none()
                     yielded_none: false
                 )
-                can_throw: constructor_can_throw
+                can_throw: false
                 type: FunctionType::ImplicitConstructor
                 linkage: FunctionLinkage::Internal
                 function_scope_id
