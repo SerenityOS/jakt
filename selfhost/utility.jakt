@@ -52,7 +52,7 @@ fn join(anon strings: [String], separator: String) -> String {
     return output
 }
 
-fn map<T, U>(input: [T], mapper: &fn(item: T) throws -> U) throws -> [U] {
+fn map<T, U>(input: [T], mapper: &fn(item: T) -> U) -> [U] {
     mut us: [U] = []
     for t in input {
         us.push(mapper(item: t))

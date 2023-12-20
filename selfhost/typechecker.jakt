@@ -714,7 +714,7 @@ struct Typechecker {
         return true
     }
 
-    fn add_var_to_scope(mut this, scope_id: ScopeId, name: String, var_id: VarId, span: Span) throws -> bool {
+    fn add_var_to_scope(mut this, scope_id: ScopeId, name: String, var_id: VarId, span: Span) -> bool {
         mut scope = .get_scope(scope_id)
         let existing_var = scope.vars.get(name)
         if existing_var.has_value() {
@@ -726,7 +726,7 @@ struct Typechecker {
         return true
     }
 
-    fn add_comptime_binding_to_scope(mut this, scope_id: ScopeId, name: String, value: Value, span: Span) throws -> bool {
+    fn add_comptime_binding_to_scope(mut this, scope_id: ScopeId, name: String, value: Value, span: Span) -> bool {
         mut scope = .get_scope(scope_id)
         let existing_binding = scope.comptime_bindings.get(name)
         if existing_binding.has_value() {
@@ -2786,7 +2786,7 @@ struct Typechecker {
         }
     }
 
-    fn struct_inheritance_chain(this, struct_id: StructId) throws -> [StructId] {
+    fn struct_inheritance_chain(this, struct_id: StructId) -> [StructId] {
         mut chain: [StructId] = []
         mut current = Some(struct_id)
 
@@ -2812,7 +2812,7 @@ struct Typechecker {
         struct_id: StructId
         super_struct_id: StructId
         struct_inheritance_chain: [StructId]? = None
-    ) throws -> bool {
+    ) -> bool {
         let chain = struct_inheritance_chain ?? .struct_inheritance_chain(struct_id)
         for id in chain {
             if id == super_struct_id {
@@ -3263,12 +3263,12 @@ struct Typechecker {
             Struct(fields) | Class(fields) => {
                 let field_names_and_spans = map(
                     input: fields
-                    mapper: &fn(item: ParsedField) throws -> (String, Span) =>
+                    mapper: &fn(item: ParsedField) -> (String, Span) =>
                         (item.var_decl.name, item.var_decl.span)
                 )
                 let method_names_and_spans = map(
                     input: parsed_record.methods
-                    mapper: &fn(item: ParsedMethod) throws -> (String, Span) =>
+                    mapper: &fn(item: ParsedMethod) -> (String, Span) =>
                         (item.parsed_function.name,item.parsed_function.name_span)
                 )
                 for x in field_names_and_spans {
@@ -4904,7 +4904,7 @@ struct Typechecker {
         .current_function_id = None
     }
 
-    fn statement_control_flow(this, anon statement: CheckedStatement) throws -> BlockControlFlow => match statement {
+    fn statement_control_flow(this, anon statement: CheckedStatement) -> BlockControlFlow => match statement {
         Return => BlockControlFlow::AlwaysReturns
         Throw => BlockControlFlow::AlwaysReturns
         Break => BlockControlFlow::AlwaysTransfersControl(might_break: true)
@@ -4960,7 +4960,7 @@ struct Typechecker {
         else => BlockControlFlow::MayReturn
     }
 
-    fn maybe_statement_control_flow(this, anon statement: CheckedStatement?, anon other_branch: BlockControlFlow) throws -> BlockControlFlow => match statement.has_value() {
+    fn maybe_statement_control_flow(this, anon statement: CheckedStatement?, anon other_branch: BlockControlFlow) -> BlockControlFlow => match statement.has_value() {
         true => .statement_control_flow(statement!)
         false => other_branch.partial()
     }
@@ -5587,7 +5587,7 @@ struct Typechecker {
         return checked_block
     }
 
-    fn debug_description_of(this, anon scope_id: ScopeId) throws -> String {
+    fn debug_description_of(this, anon scope_id: ScopeId) -> String {
         mut ss: [String] = []
         mut current_scope_id = scope_id
         loop {
@@ -7469,7 +7469,7 @@ struct Typechecker {
         return .dereference_if_needed(checked_expr, span)
     }
 
-    fn map_generic_arguments(mut this, type_id: TypeId, args: [TypeId]) throws {
+    fn map_generic_arguments(mut this, type_id: TypeId, args: [TypeId]) {
         match .get_type(type_id) {
             GenericInstance(id, args) => {
                 let struct_ = .get_struct(id)
@@ -11050,7 +11050,7 @@ struct Typechecker {
         return checked_call
     }
 
-    fn check_implicit_constructor_argument_access(mut this, caller_scope_id: ScopeId, call: ParsedCall, struct_: CheckedStruct)  throws {
+    fn check_implicit_constructor_argument_access(mut this, caller_scope_id: ScopeId, call: ParsedCall, struct_: CheckedStruct) {
         if not .scope_can_access(accessor:caller_scope_id, accessee:struct_.scope_id) {
             for arg in call.args {
                 for field in struct_.fields {
@@ -11190,7 +11190,7 @@ struct Typechecker {
         return current_type_id
     }
 
-    fn validate_argument_label(mut this, param: CheckedParameter, label: String, span: Span, expr: ParsedExpression, default_value: CheckedExpression?) throws -> bool {
+    fn validate_argument_label(mut this, param: CheckedParameter, label: String, span: Span, expr: ParsedExpression, default_value: CheckedExpression?) -> bool {
         let name = .get_argument_name(arg: (label, span, expr))
         if name == param.variable.name {
             return true

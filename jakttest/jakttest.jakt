@@ -589,7 +589,7 @@ struct TestScheduler {
         return .free_directories.pop()!
     }
 
-    fn create(directories: [String], collect_reasons: bool) throws -> TestScheduler {
+    fn create(directories: [String], collect_reasons: bool) -> TestScheduler {
         mut running_tests: [i32:Test] = [:]
         running_tests.ensure_capacity(directories.size())
         mut free_directories: [usize] = []
