@@ -505,12 +505,16 @@ ErrorOr<ByteString> serialize_unary_operation(types::CheckedUnaryOperator const 
 ErrorOr<ByteString> serialize_ast_node(NonnullRefPtr<typename types::CheckedExpression> const node);
 
 }
+namespace git {
+
+ErrorOr<ByteString> commit_hash();
+
+}
 namespace platform__unknown_compiler {
 ErrorOr<JaktInternal::DynamicArray<ByteString>> run_compiler(ByteString const cxx_compiler_path, ByteString const cpp_filename, ByteString const output_filename, ByteString const runtime_path, JaktInternal::DynamicArray<ByteString> const extra_include_paths, JaktInternal::DynamicArray<ByteString> const extra_lib_paths, JaktInternal::DynamicArray<ByteString> const extra_link_libs, bool const optimize, JaktInternal::DynamicArray<ByteString> const extra_compiler_flags, bool const use_ccache);
 
 }
 struct FormatRange;
-
 ByteString usage();
 
 ByteString help();
@@ -532,5 +536,9 @@ ByteString escape_for_depfile(ByteString const input);
 ErrorOr<int> compiler_main(JaktInternal::DynamicArray<ByteString> const args);
 
 ErrorOr<void> format_output(jakt__path::Path const file_path, JaktInternal::DynamicArray<lexer::Token> const tokens, JaktInternal::Optional<FormatRange> const format_range, bool const format_debug, bool const format_inplace);
+
+ErrorOr<void> write_only_if_updated(ByteString const data, ByteString const output_filename);
+
+bool file_needs_updating(ByteString const path, ByteString const new_contents);
 
 } // namespace Jakt

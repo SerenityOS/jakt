@@ -21,6 +21,7 @@
 #include "typechecker.h"
 #include "types.h"
 #include "utility.h"
+#include "git.h"
 #include "jakt__platform__unknown_fs.h"
 #include "platform__unknown_compiler.h"
 namespace Jakt {

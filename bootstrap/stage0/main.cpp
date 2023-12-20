@@ -965,7 +965,7 @@ outln((StringView::from_string_literal("{}"sv)),help());
 return static_cast<int>(0);
 }
 if (TRY((((args_parser).flag((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-v"sv)), (ByteString::must_from_utf8("--version"sv))}))))))){
-outln((StringView::from_string_literal("{}"sv)),(ByteString::must_from_utf8("f24fd6dce7f3556de492df4b5fa97bfea607a141"sv)));
+outln((StringView::from_string_literal("{}"sv)),TRY((git::commit_hash())));
 return static_cast<int>(0);
 }
 jakt__path::Path const current_executable_path = jakt__path::Path::from_string(TRY((File::current_executable_path())));
@@ -1611,7 +1611,7 @@ ByteString const contents = ((contents_module_file_path_).template get<0>());
 ByteString const module_file_path = ((contents_module_file_path_).template get<1>());
 
 jakt__path::Path const path = ((binary_dir).join(file));
-auto __jakt_var_969 = [&]() -> ErrorOr<void> { return TRY((utility::write_to_file(contents,((path).to_string())))), ErrorOr<void>{}; }();
+auto __jakt_var_969 = [&]() -> ErrorOr<void> { return TRY((write_only_if_updated(contents,((path).to_string())))), ErrorOr<void>{}; }();
 if (__jakt_var_969.is_error()) {auto error = __jakt_var_969.release_error();
 {
 warnln((StringView::from_string_literal("Error: Could not write to file: {} ({})"sv)),file,error);
@@ -1626,7 +1626,7 @@ return static_cast<int>(1);
 
 if (((generate_depfile).has_value())){
 auto __jakt_var_970 = [&]() -> ErrorOr<void> {{
-TRY((utility::write_to_file(((depfile_builder).to_string()),(generate_depfile.value()))));
+TRY((write_only_if_updated(((depfile_builder).to_string()),(generate_depfile.value()))));
 }
 
 ;return {};}();
@@ -2041,6 +2041,46 @@ out((StringView::from_string_literal("{}"sv)),((formatted_file).to_string()));
 
 }
 return {};
+}
+
+ErrorOr<void> write_only_if_updated(ByteString const data,ByteString const output_filename) {
+{
+if (file_needs_updating(output_filename,data)){
+TRY((utility::write_to_file(data,output_filename)));
+}
+}
+return {};
+}
+
+bool file_needs_updating(ByteString const path,ByteString const new_contents) {
+{
+JaktInternal::Optional<NonnullRefPtr<File>> maybe_file = ({ Optional<NonnullRefPtr<File>> __jakt_var_977;
+auto __jakt_var_978 = [&]() -> ErrorOr<NonnullRefPtr<File>> { return TRY((File::open_for_reading(path))); }();
+if (!__jakt_var_978.is_error()) __jakt_var_977 = __jakt_var_978.release_value();
+__jakt_var_977; });
+if (((maybe_file).has_value())){
+JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents = ({ Optional<JaktInternal::DynamicArray<u8>> __jakt_var_979;
+auto __jakt_var_980 = [&]() -> ErrorOr<JaktInternal::DynamicArray<u8>> { return TRY(((((maybe_file.value()))->read_all()))); }();
+if (!__jakt_var_980.is_error()) __jakt_var_979 = __jakt_var_980.release_value();
+__jakt_var_979; });
+if (((contents).has_value())){
+return [](ByteString const& self, ByteString rhs) -> bool {
+{
+return (!(((self) == (rhs))));
+}
+}
+(utility::to_string((contents.value())),new_contents);
+}
+else {
+return true;
+}
+
+}
+else {
+return true;
+}
+
+}
 }
 
 ErrorOr<ByteString> FormatRange::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("FormatRange("sv);{
