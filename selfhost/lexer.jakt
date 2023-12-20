@@ -240,7 +240,7 @@ struct Lexer implements(Iterable<Token>) {
     comment_contents: [u8]?
     illegal_cpp_keywords: {String}
 
-    fn lex(compiler: Compiler) throws -> [Token] {
+    fn lex(compiler: Compiler) -> [Token] {
         let illegal_cpp_keywords: {String} = {
             "alignas",
             "alignof",
