@@ -8124,10 +8124,6 @@ struct Typechecker {
             }
         }
         QuotedString(val, span) => {
-            if .dump_try_hints {
-                .dump_try_hint(span)
-            }
-
             yield match type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
                 true => {
                     mut type_id = .strip_optional_from_type(.generic_inferences.map(type_hint!))
@@ -9059,9 +9055,6 @@ struct Typechecker {
     }
 
     fn typecheck_set(mut this, values: [ParsedExpression], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
-        if .dump_try_hints {
-            .dump_try_hint(span)
-        }
         mut inner_type_id = unknown_type_id()
         mut inner_type_span: Span? = None
         mut output: [CheckedExpression] = []
@@ -10085,9 +10078,6 @@ struct Typechecker {
     }
 
     fn typecheck_dictionary(mut this, values: [(ParsedExpression, ParsedExpression)], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
-        if .dump_try_hints {
-            .dump_try_hint(span)
-        }
         let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
         mut checked_kv_pairs: [(CheckedExpression, CheckedExpression)] = []
         mut key_type_id = unknown_type_id()
