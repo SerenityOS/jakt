@@ -110,15 +110,12 @@ extern struct Dictionary<K, V> {
     fn get(this, anon key: K) -> V?
     fn contains(this, anon key: K) -> bool
     fn set(mut this, anon key: K, anon value: V)
-    fn must_set(mut this, anon key: K, anon value: V)
     fn remove(mut this, anon key: K) -> bool
     fn ensure_capacity(mut this, anon capacity: usize)
-    fn must_ensure_capacity(mut this, anon capacity: usize)
     fn clear(mut this)
     fn size(this) -> usize
     fn capacity(this) -> usize
     fn keys(this) -> [K]
-    fn must_keys(this) -> [K]
     fn hash(this) -> u32
     fn Dictionary<A, B>() -> Dictionary<A, B>
     fn iterator(this) -> DictionaryIterator<K, V>
@@ -131,9 +128,9 @@ extern struct SetIterator<T> {
 extern struct Set<V> {
     fn is_empty(this) -> bool
     fn contains(this, anon value: V) -> bool
-    fn add(mut this, anon value: V) throws
+    fn add(mut this, anon value: V)
     fn remove(mut this, anon value: V) -> bool
-    fn ensure_capacity(mut this, anon capacity: usize) throws
+    fn ensure_capacity(mut this, anon capacity: usize)
     fn clear(mut this)
     fn size(this) -> usize
     fn capacity(this) -> usize

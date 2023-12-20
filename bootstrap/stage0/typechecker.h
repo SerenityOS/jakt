@@ -189,7 +189,7 @@ public: void error_with_hint(ByteString const message, utility::Span const span,
 public: bool is_integer(ids::TypeId const type_id) const;
 public: bool is_floating(ids::TypeId const type_id) const;
 public: bool is_numeric(ids::TypeId const type_id) const;
-public: ErrorOr<ids::ScopeId> create_scope(JaktInternal::Optional<ids::ScopeId> const parent_scope_id, bool const can_throw, ByteString const debug_name, bool const for_block);
+public: ids::ScopeId create_scope(JaktInternal::Optional<ids::ScopeId> const parent_scope_id, bool const can_throw, ByteString const debug_name, bool const for_block);
 public: ids::ModuleId create_module(ByteString const name, bool const is_root, JaktInternal::Optional<ByteString> const path);
 public: ErrorOr<void> include_prelude();
 public: ErrorOr<JaktInternal::Optional<parser::ParsedNamespace>> lex_and_parse_file_contents(utility::FileId const file_id);
@@ -209,7 +209,7 @@ public: ErrorOr<bool> add_struct_to_scope(ids::ScopeId const scope_id, ByteStrin
 public: bool add_enum_to_scope(ids::ScopeId const scope_id, ByteString const name, ids::EnumId const enum_id, utility::Span const span);
 public: ErrorOr<bool> add_type_to_scope(ids::ScopeId const scope_id, ByteString const type_name, ids::TypeId const type_id, utility::Span const span);
 public: ErrorOr<bool> add_trait_to_scope(ids::ScopeId const scope_id, ByteString const trait_name, ids::TraitId const trait_id, utility::Span const span);
-public: ErrorOr<bool> add_function_to_scope(ids::ScopeId const parent_scope_id, ByteString const name, JaktInternal::DynamicArray<ids::FunctionId> const overload_set, utility::Span const span);
+public: bool add_function_to_scope(ids::ScopeId const parent_scope_id, ByteString const name, JaktInternal::DynamicArray<ids::FunctionId> const overload_set, utility::Span const span);
 public: ErrorOr<bool> add_var_to_scope(ids::ScopeId const scope_id, ByteString const name, ids::VarId const var_id, utility::Span const span);
 public: ErrorOr<bool> add_comptime_binding_to_scope(ids::ScopeId const scope_id, ByteString const name, types::Value const value, utility::Span const span);
 public: ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>>> find_functions_with_name_in_scope(ids::ScopeId const parent_scope_id, ByteString const function_name, JaktInternal::Optional<ids::ScopeId> const root_scope_id) const;
@@ -296,9 +296,9 @@ public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_for(B
 public: ErrorOr<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>>> expand_context_for_bindings(NonnullRefPtr<typename parser::ParsedExpression> const condition, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const acc, JaktInternal::Optional<parser::ParsedBlock> const then_block, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const else_statement, ids::ScopeId const scope_id, utility::Span const span);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_if(NonnullRefPtr<typename parser::ParsedExpression> const condition, parser::ParsedBlock const then_block, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const else_statement, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_destructuring_assignment(JaktInternal::DynamicArray<parser::ParsedVarDecl> const vars, NonnullRefPtr<typename parser::ParsedStatement> const var_decl, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
-public: ErrorOr<NonnullRefPtr<interpreter::Interpreter>> interpreter();
-public: ErrorOr<bool> scope_lifetime_subsumes(JaktInternal::Optional<ids::ScopeId> const larger, JaktInternal::Optional<ids::ScopeId> const smaller) const;
-public: ErrorOr<JaktInternal::Optional<ids::ScopeId>> scope_lifetime_union(JaktInternal::Optional<ids::ScopeId> const first, JaktInternal::Optional<ids::ScopeId> const second) const;
+public: NonnullRefPtr<interpreter::Interpreter> interpreter();
+public: bool scope_lifetime_subsumes(JaktInternal::Optional<ids::ScopeId> const larger, JaktInternal::Optional<ids::ScopeId> const smaller) const;
+public: JaktInternal::Optional<ids::ScopeId> scope_lifetime_union(JaktInternal::Optional<ids::ScopeId> const first, JaktInternal::Optional<ids::ScopeId> const second) const;
 public: ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<ids::ScopeId>,NonnullRefPtr<typename types::CheckedExpression>>> required_scope_id_in_hierarchy_for(NonnullRefPtr<typename types::CheckedExpression> const expr, ids::ScopeId const current_scope_id);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_var_decl(parser::ParsedVarDecl const var, NonnullRefPtr<typename parser::ParsedExpression> const init, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_while(NonnullRefPtr<typename parser::ParsedExpression> const condition, parser::ParsedBlock const block, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
