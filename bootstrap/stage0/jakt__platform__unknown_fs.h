@@ -12,7 +12,7 @@ public: ErrorOr<jakt__path::Path> get_path() const;
 public: protected:
 explicit DirectoryIterator();
 public:
-static ErrorOr<NonnullRefPtr<DirectoryIterator>> __jakt_create();
+static NonnullRefPtr<DirectoryIterator> __jakt_create();
 
 public: ErrorOr<ByteString> debug_description() const;
 };}

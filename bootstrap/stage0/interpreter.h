@@ -49,10 +49,10 @@ class InterpreterScope :public RefCounted<InterpreterScope>, public Weakable<Int
   public:
 virtual ~InterpreterScope() = default;
 public: JaktInternal::Dictionary<ByteString,types::Value> bindings;public: JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent;public: JaktInternal::Dictionary<ids::TypeId,ids::TypeId> type_bindings;public: JaktInternal::DynamicArray<interpreter::Deferred> defers;public: static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> create(JaktInternal::Dictionary<ByteString,types::Value> const bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const type_bindings);
-public: static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> from_runtime_scope(ids::ScopeId const scope_id, NonnullRefPtr<types::CheckedProgram> const program, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent);
+public: static NonnullRefPtr<interpreter::InterpreterScope> from_runtime_scope(ids::ScopeId const scope_id, NonnullRefPtr<types::CheckedProgram> const program, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent);
 public: ErrorOr<types::Value> must_get(ByteString const name) const;
 public: ErrorOr<void> set(ByteString const name, types::Value const value);
-public: ErrorOr<JaktInternal::Dictionary<ByteString,types::Value>> all_bindings() const;
+public: JaktInternal::Dictionary<ByteString,types::Value> all_bindings() const;
 public: ids::TypeId map_type(ids::TypeId const id) const;
 private: void type_map_for_substitution_helper(JaktInternal::Dictionary<ids::TypeId,ids::TypeId>& map) const;
 public: types::GenericInferences type_map_for_substitution() const;
@@ -62,7 +62,7 @@ public: void defer_statement(NonnullRefPtr<typename types::CheckedStatement> con
 public: protected:
 explicit InterpreterScope(JaktInternal::Dictionary<ByteString,types::Value> a_bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> a_parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> a_type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> a_defers);
 public:
-static ErrorOr<NonnullRefPtr<InterpreterScope>> __jakt_create(JaktInternal::Dictionary<ByteString,types::Value> bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> defers);
+static NonnullRefPtr<InterpreterScope> __jakt_create(JaktInternal::Dictionary<ByteString,types::Value> bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> defers);
 
 public: ErrorOr<ByteString> debug_description() const;
 };struct ExecutionResult {
@@ -167,7 +167,7 @@ public: ErrorOr<types::Value> reflect_type(ids::TypeId const type_id, utility::S
 public: protected:
 explicit Interpreter(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, JaktInternal::DynamicArray<utility::Span> a_spans, JaktInternal::Dictionary<ids::TypeId,types::Value> a_reflected_type_cache, JaktInternal::Set<ids::TypeId> a_seen_reflected_types, JaktInternal::Optional<ids::FunctionId> a_current_function_id, NonnullRefPtr<types::TypecheckFunctions> a_typecheck_functions);
 public:
-static ErrorOr<NonnullRefPtr<Interpreter>> __jakt_create(NonnullRefPtr<compiler::Compiler> compiler, NonnullRefPtr<types::CheckedProgram> program, JaktInternal::DynamicArray<utility::Span> spans, JaktInternal::Dictionary<ids::TypeId,types::Value> reflected_type_cache, JaktInternal::Set<ids::TypeId> seen_reflected_types, JaktInternal::Optional<ids::FunctionId> current_function_id, NonnullRefPtr<types::TypecheckFunctions> typecheck_functions);
+static NonnullRefPtr<Interpreter> __jakt_create(NonnullRefPtr<compiler::Compiler> compiler, NonnullRefPtr<types::CheckedProgram> program, JaktInternal::DynamicArray<utility::Span> spans, JaktInternal::Dictionary<ids::TypeId,types::Value> reflected_type_cache, JaktInternal::Set<ids::TypeId> seen_reflected_types, JaktInternal::Optional<ids::FunctionId> current_function_id, NonnullRefPtr<types::TypecheckFunctions> typecheck_functions);
 
 public: ErrorOr<ByteString> debug_description() const;
 };}
