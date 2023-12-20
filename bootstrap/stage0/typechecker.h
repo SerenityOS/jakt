@@ -31,7 +31,7 @@ JaktInternal::DynamicArray<error::JaktError> errors;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
-constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<ByteString> debug_description() const;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
 [[nodiscard]] static FunctionMatchResult MatchSuccess(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> args, JaktInternal::Optional<ids::TypeId> maybe_this_type_id, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> used_generic_inferences, i64 specificity);
 [[nodiscard]] static FunctionMatchResult MatchError(JaktInternal::DynamicArray<error::JaktError> errors);
 ~FunctionMatchResult();
@@ -48,13 +48,13 @@ struct TraitImplementationDescriptor {
   public:
 public: ids::TraitId trait_id;public: ByteString trait_name;public: JaktInternal::DynamicArray<ids::TypeId> implemented_type_args;public: TraitImplementationDescriptor(ids::TraitId a_trait_id, ByteString a_trait_name, JaktInternal::DynamicArray<ids::TypeId> a_implemented_type_args);
 
-public: ErrorOr<ByteString> debug_description() const;
+public: ByteString debug_description() const;
 };struct ImportRestrictions {
   public:
 public: bool functions;public: bool structs;public: bool enums;public: bool types;public: bool traits;public: bool namespaces;public: static typechecker::ImportRestrictions all();
 public: ImportRestrictions(bool a_functions, bool a_structs, bool a_enums, bool a_types, bool a_traits, bool a_namespaces);
 
-public: ErrorOr<ByteString> debug_description() const;
+public: ByteString debug_description() const;
 };struct NumericOrStringValue {
 u8 __jakt_variant_index = 0;
 union VariantData {
@@ -71,7 +71,7 @@ u64 value;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
-constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ErrorOr<ByteString> debug_description() const;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
 [[nodiscard]] static NumericOrStringValue StringValue(ByteString value);
 [[nodiscard]] static NumericOrStringValue SignedNumericValue(i64 value);
 [[nodiscard]] static NumericOrStringValue UnsignedNumericValue(u64 value);
@@ -150,7 +150,7 @@ return next;
 }
 public: InternalDictionaryProduct(JaktInternal::Dictionary<K,JaktInternal::DynamicArray<V>> a_dict, JaktInternal::Dictionary<K,V> a_current, JaktInternal::Dictionary<K,size_t> a_current_index, bool a_done): dict(move(a_dict)), current(move(a_current)), current_index(move(a_current_index)), done(move(a_done)){}
 
-public: ErrorOr<ByteString> debug_description() const { auto builder = ByteStringBuilder::create();builder.append("InternalDictionaryProduct("sv);{
+public: ByteString debug_description() const { auto builder = ByteStringBuilder::create();builder.append("InternalDictionaryProduct("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("dict: {}, ", dict);
@@ -210,8 +210,8 @@ public: bool add_enum_to_scope(ids::ScopeId const scope_id, ByteString const nam
 public: ErrorOr<bool> add_type_to_scope(ids::ScopeId const scope_id, ByteString const type_name, ids::TypeId const type_id, utility::Span const span);
 public: ErrorOr<bool> add_trait_to_scope(ids::ScopeId const scope_id, ByteString const trait_name, ids::TraitId const trait_id, utility::Span const span);
 public: bool add_function_to_scope(ids::ScopeId const parent_scope_id, ByteString const name, JaktInternal::DynamicArray<ids::FunctionId> const overload_set, utility::Span const span);
-public: ErrorOr<bool> add_var_to_scope(ids::ScopeId const scope_id, ByteString const name, ids::VarId const var_id, utility::Span const span);
-public: ErrorOr<bool> add_comptime_binding_to_scope(ids::ScopeId const scope_id, ByteString const name, types::Value const value, utility::Span const span);
+public: bool add_var_to_scope(ids::ScopeId const scope_id, ByteString const name, ids::VarId const var_id, utility::Span const span);
+public: bool add_comptime_binding_to_scope(ids::ScopeId const scope_id, ByteString const name, types::Value const value, utility::Span const span);
 public: ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>>> find_functions_with_name_in_scope(ids::ScopeId const parent_scope_id, ByteString const function_name, JaktInternal::Optional<ids::ScopeId> const root_scope_id) const;
 public: ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<JaktInternal::DynamicArray<ids::FunctionId>,ids::ScopeId>>> find_scoped_functions_with_name_in_scope(ids::ScopeId const parent_scope_id, ByteString const function_name, JaktInternal::Optional<ids::ScopeId> const root_scope_id) const;
 public: ErrorOr<JaktInternal::Optional<ids::FunctionId>> find_function_matching_signature_in_scope(ids::ScopeId const parent_scope_id, parser::ParsedFunction const prototype) const;
@@ -243,8 +243,8 @@ public: ErrorOr<void> typecheck_trait(parser::ParsedTrait const parsed_trait, id
 public: ErrorOr<void> typecheck_enum_predecl_initial(parser::ParsedRecord const parsed_record, size_t const enum_index, size_t const module_enum_len, ids::ScopeId const scope_id);
 public: ErrorOr<void> typecheck_enum_predecl(parser::ParsedRecord const parsed_record, ids::EnumId const enum_id, ids::ScopeId const scope_id);
 public: ErrorOr<void> typecheck_enum_methods_predecl(parser::ParsedRecord const parsed_record, ids::EnumId const enum_id, ids::ScopeId const scope_id, bool const comptime_pass, bool const generic_pass);
-public: ErrorOr<JaktInternal::DynamicArray<ids::StructId>> struct_inheritance_chain(ids::StructId const struct_id) const;
-public: ErrorOr<bool> struct_inherits_from(ids::StructId const struct_id, ids::StructId const super_struct_id, JaktInternal::Optional<JaktInternal::DynamicArray<ids::StructId>> const struct_inheritance_chain) const;
+public: JaktInternal::DynamicArray<ids::StructId> struct_inheritance_chain(ids::StructId const struct_id) const;
+public: bool struct_inherits_from(ids::StructId const struct_id, ids::StructId const super_struct_id, JaktInternal::Optional<JaktInternal::DynamicArray<ids::StructId>> const struct_inheritance_chain) const;
 public: ErrorOr<void> typecheck_struct_constructor(parser::ParsedRecord const parsed_record, ids::StructId const struct_id, ids::ScopeId const scope_id);
 public: bool is_class(ids::TypeId const type_id) const;
 public: bool is_struct(ids::TypeId const type_id) const;
@@ -274,13 +274,13 @@ public: ErrorOr<ids::FunctionId> typecheck_and_specialize_generic_function(ids::
 public: ErrorOr<void> typecheck_jakt_main(parser::ParsedFunction const parsed_function, ids::ScopeId const parent_scope_id);
 public: ids::TypeId infer_function_return_type(types::CheckedBlock const block) const;
 public: ErrorOr<void> typecheck_function(parser::ParsedFunction const parsed_function, ids::ScopeId const parent_scope_id);
-public: ErrorOr<types::BlockControlFlow> statement_control_flow(NonnullRefPtr<typename types::CheckedStatement> const statement) const;
-public: ErrorOr<types::BlockControlFlow> maybe_statement_control_flow(JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> const statement, types::BlockControlFlow const other_branch) const;
+public: types::BlockControlFlow statement_control_flow(NonnullRefPtr<typename types::CheckedStatement> const statement) const;
+public: types::BlockControlFlow maybe_statement_control_flow(JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> const statement, types::BlockControlFlow const other_branch) const;
 public: ErrorOr<bool> check_types_for_compat(ids::TypeId const lhs_type_id, ids::TypeId const rhs_type_id, types::GenericInferences& generic_inferences, utility::Span const span);
 public: bool is_subclass_of(ids::TypeId const ancestor_type_id, ids::TypeId const child_type_id) const;
 public: ErrorOr<ids::TypeId> substitute_typevars_in_type(ids::TypeId const type_id, types::GenericInferences const generic_inferences);
 public: ErrorOr<types::CheckedBlock> typecheck_block(parser::ParsedBlock const parsed_block, ids::ScopeId const parent_scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<ids::TypeId> const yield_type_hint);
-public: ErrorOr<ByteString> debug_description_of(ids::ScopeId const scope_id) const;
+public: ByteString debug_description_of(ids::ScopeId const scope_id) const;
 public: parser::CheckedQualifiers typecheck_type_qualifiers(JaktInternal::Optional<parser::ParsedTypeQualifiers> const qualifiers) const;
 public: ErrorOr<ids::TypeId> typecheck_typename(NonnullRefPtr<typename parser::ParsedType> const parsed_type, ids::ScopeId const scope_id, JaktInternal::Optional<ByteString> const name);
 public: ids::TypeId with_qualifiers(parser::CheckedQualifiers const qualifiers, ids::TypeId const type_id);
@@ -312,7 +312,7 @@ public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_inlin
 public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_return(JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const expr, utility::Span const span, ids::ScopeId const scope_id, types::SafetyMode const safety_mode);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> dereference_if_needed(NonnullRefPtr<typename types::CheckedExpression> const checked_expr, utility::Span const span);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_expression_and_dereference_if_needed(NonnullRefPtr<typename parser::ParsedExpression> const expr, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<ids::TypeId> const type_hint, utility::Span const span);
-public: ErrorOr<void> map_generic_arguments(ids::TypeId const type_id, JaktInternal::DynamicArray<ids::TypeId> const args);
+public: void map_generic_arguments(ids::TypeId const type_id, JaktInternal::DynamicArray<ids::TypeId> const args);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_indexed_struct(NonnullRefPtr<typename parser::ParsedExpression> const expr, ByteString const field_name, ids::ScopeId const scope_id, bool const is_optional, types::SafetyMode const safety_mode, utility::Span const span);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_indexed_tuple(NonnullRefPtr<typename parser::ParsedExpression> const expr, size_t const index, ids::ScopeId const scope_id, bool const is_optional, types::SafetyMode const safety_mode, utility::Span const span);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_comptime_index(NonnullRefPtr<typename parser::ParsedExpression> const expr, NonnullRefPtr<typename parser::ParsedExpression> const index, ids::ScopeId const scope_id, bool const is_optional, types::SafetyMode const safety_mode, utility::Span const span);
@@ -345,7 +345,7 @@ public: ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_call
 public: ErrorOr<void> check_implicit_constructor_argument_access(ids::ScopeId const caller_scope_id, parser::ParsedCall const call, types::CheckedStruct const struct_);
 public: ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename types::CheckedExpression>>>> resolve_default_params(JaktInternal::DynamicArray<types::CheckedParameter> const params, bool const has_varargs, JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>> const args, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, size_t const arg_offset, utility::Span const span);
 public: ErrorOr<ids::TypeId> resolve_type_var(ids::TypeId const type_var_type_id, ids::ScopeId const scope_id) const;
-public: ErrorOr<bool> validate_argument_label(types::CheckedParameter const param, ByteString const label, utility::Span const span, NonnullRefPtr<typename parser::ParsedExpression> const expr, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const default_value);
+public: bool validate_argument_label(types::CheckedParameter const param, ByteString const label, utility::Span const span, NonnullRefPtr<typename parser::ParsedExpression> const expr, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const default_value);
 public: ByteString get_argument_name(JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>> const arg) const;
 public: ErrorOr<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>> find_all_implementations_of_trait(ids::TypeId const type_id, ids::TraitId const trait_id, JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> const filter_for_generics);
 public: ErrorOr<bool> implements_trait(ids::TypeId const type_id, ids::TraitId const trait_id, JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> const generic_arguments);
@@ -353,12 +353,12 @@ public: ErrorOr<JaktInternal::Tuple<bool,JaktInternal::DynamicArray<error::JaktE
 private: ErrorOr<bool> signatures_match_impl(ids::TypeId const self_type_id, NonnullRefPtr<types::CheckedFunction> const first, NonnullRefPtr<types::CheckedFunction> const second, Function<ErrorOr<bool>(typechecker::Typechecker&, ids::TypeId, ids::TypeId)> const& types_match);
 public: Typechecker(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, ids::ModuleId a_current_module_id, JaktInternal::Optional<ids::TypeId> a_current_struct_type_id, JaktInternal::Optional<ids::FunctionId> a_current_function_id, bool a_inside_defer, size_t a_checkidx, bool a_ignore_errors, bool a_dump_type_hints, bool a_dump_try_hints, u64 a_lambda_count, types::GenericInferences a_generic_inferences, JaktInternal::Optional<ids::TypeId> a_self_type_id, ByteString a_root_module_name, bool a_in_comptime_function_call, bool a_had_an_error, JaktInternal::Dictionary<ByteString,ids::ScopeId> a_cpp_import_cache, JaktInternal::Optional<cpp_import__none::CppImportProcessor> a_cpp_import_processor);
 
-public: ErrorOr<ByteString> debug_description() const;
+public: ByteString debug_description() const;
 };struct AlreadyImplementedFor {
   public:
 public: ByteString trait_name;public: utility::Span encounter_span;public: AlreadyImplementedFor(ByteString a_trait_name, utility::Span a_encounter_span);
 
-public: ErrorOr<ByteString> debug_description() const;
+public: ByteString debug_description() const;
 };struct TraitImplCheck {
   public:
 public: JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,ids::FunctionId>> missing_methods;public: JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<utility::Span,JaktInternal::DynamicArray<error::JaktError>>>> unmatched_signatures;public: JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,utility::Span>> private_matching_methods;public: JaktInternal::Dictionary<ByteString,typechecker::AlreadyImplementedFor> already_implemented_for;public: static typechecker::TraitImplCheck make();
@@ -368,32 +368,32 @@ public: ErrorOr<void> throw_errors(utility::Span const record_decl_span, typeche
 public: ErrorOr<void> register_method(ids::TypeId const self_type_id, ByteString const method_name, ids::FunctionId const method_id, typechecker::Typechecker& typechecker);
 public: TraitImplCheck(JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,ids::FunctionId>> a_missing_methods, JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<utility::Span,JaktInternal::DynamicArray<error::JaktError>>>> a_unmatched_signatures, JaktInternal::Dictionary<ids::TypeId,JaktInternal::Dictionary<ByteString,utility::Span>> a_private_matching_methods, JaktInternal::Dictionary<ByteString,typechecker::AlreadyImplementedFor> a_already_implemented_for);
 
-public: ErrorOr<ByteString> debug_description() const;
+public: ByteString debug_description() const;
 };template <typename R,typename S>
 typechecker::InternalDictionaryProduct<R,S> create_internal_dictionary_product(JaktInternal::Dictionary<R,JaktInternal::DynamicArray<S>> const dict);
 }
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::typechecker::FunctionMatchResult> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::typechecker::FunctionMatchResult const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::typechecker::TraitImplementationDescriptor> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::typechecker::TraitImplementationDescriptor const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::typechecker::ImportRestrictions> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::typechecker::ImportRestrictions const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::typechecker::NumericOrStringValue> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::typechecker::NumericOrStringValue const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
@@ -401,25 +401,25 @@ template<typename K,typename V>struct Jakt::Formatter<Jakt::typechecker::Interna
 > : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::typechecker::InternalDictionaryProduct<K, V>
  const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::typechecker::Typechecker> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::typechecker::Typechecker const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::typechecker::AlreadyImplementedFor> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::typechecker::AlreadyImplementedFor const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::typechecker::TraitImplCheck> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::typechecker::TraitImplCheck const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt

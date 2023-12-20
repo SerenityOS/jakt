@@ -1,7 +1,7 @@
 #include "compiler.h"
 namespace Jakt {
 namespace compiler {
-ErrorOr<ByteString> compiler::Compiler::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Compiler("sv);{
+ByteString compiler::Compiler::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Compiler("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("files: {}, ", files);
@@ -253,7 +253,7 @@ break;
 }
 ByteString include_path = (_magic_value.value());
 {
-jakt__path::Path const candidate_path = jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({include_path, ((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))})));
+jakt__path::Path const candidate_path = jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({include_path, ((module_name) + ((ByteString::must_from_utf8(".jakt"sv))))}));
 if (((candidate_path).exists())){
 return candidate_path;
 }
@@ -266,7 +266,7 @@ return candidate_path;
 ByteString const standard_module_name = (ByteString::must_from_utf8("jakt"sv));
 if (((module_name).starts_with(standard_module_name))){
 ByteString const std_module_name_path = ((module_name).substring(JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(((module_name).length()),JaktInternal::checked_add(((standard_module_name).length()),static_cast<size_t>(1ULL)))));
-jakt__path::Path const candidate_path = jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({((((*this).std_include_path)).to_string()), ((std_module_name_path) + ((ByteString::must_from_utf8(".jakt"sv))))})));
+jakt__path::Path const candidate_path = jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({((((*this).std_include_path)).to_string()), ((std_module_name_path) + ((ByteString::must_from_utf8(".jakt"sv))))}));
 if (((candidate_path).exists())){
 return candidate_path;
 }

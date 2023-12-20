@@ -12,13 +12,13 @@ return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<ByteString>,ErrorOr<JaktInternal::DynamicArray<ByteString>>>{
 auto __jakt_enum_value = (((target).arch));
 if (__jakt_enum_value == (ByteString::must_from_utf8("x86_64"sv))) {
-return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("win64"sv)), (ByteString::must_from_utf8("windows"sv))})));
+return JaktInternal::ExplicitValue(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("win64"sv)), (ByteString::must_from_utf8("windows"sv))}));
 }
 else if (__jakt_enum_value == (ByteString::must_from_utf8("i686"sv))) {
-return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("win32"sv)), (ByteString::must_from_utf8("windows"sv))})));
+return JaktInternal::ExplicitValue(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("win32"sv)), (ByteString::must_from_utf8("windows"sv))}));
 }
 else {
-return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("windows"sv))})));
+return JaktInternal::ExplicitValue(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("windows"sv))}));
 }
 }());
     if (_jakt_value.is_return())
@@ -27,22 +27,22 @@ return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({(Byte
 }));
 }
 else if (__jakt_enum_value == (ByteString::must_from_utf8("darwin"sv))) {
-return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("darwin"sv)), (ByteString::must_from_utf8("posix"sv))})));
+return JaktInternal::ExplicitValue(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("darwin"sv)), (ByteString::must_from_utf8("posix"sv))}));
 }
 else if (__jakt_enum_value == (ByteString::must_from_utf8("linux"sv))) {
-return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({((target).os), (ByteString::must_from_utf8("posix"sv))})));
+return JaktInternal::ExplicitValue(DynamicArray<ByteString>::create_with({((target).os), (ByteString::must_from_utf8("posix"sv))}));
 }
 else if (__jakt_enum_value == (ByteString::must_from_utf8("openbsd"sv))) {
-return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({((target).os), (ByteString::must_from_utf8("posix"sv))})));
+return JaktInternal::ExplicitValue(DynamicArray<ByteString>::create_with({((target).os), (ByteString::must_from_utf8("posix"sv))}));
 }
 else if (__jakt_enum_value == (ByteString::must_from_utf8("serenityos"sv))) {
-return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({((target).os), (ByteString::must_from_utf8("posix"sv))})));
+return JaktInternal::ExplicitValue(DynamicArray<ByteString>::create_with({((target).os), (ByteString::must_from_utf8("posix"sv))}));
 }
 else if (__jakt_enum_value == (ByteString::must_from_utf8("serenity"sv))) {
-return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({((target).os), (ByteString::must_from_utf8("posix"sv))})));
+return JaktInternal::ExplicitValue(DynamicArray<ByteString>::create_with({((target).os), (ByteString::must_from_utf8("posix"sv))}));
 }
 else {
-return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({((target).os), (ByteString::must_from_utf8("unknown"sv))})));
+return JaktInternal::ExplicitValue(DynamicArray<ByteString>::create_with({((target).os), (ByteString::must_from_utf8("unknown"sv))}));
 }
 }());
     if (_jakt_value.is_return())
@@ -54,7 +54,7 @@ return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({((tar
 
 ErrorOr<JaktInternal::DynamicArray<ByteString>> add_to_each(JaktInternal::DynamicArray<ByteString> const strings,ByteString const prefix,ByteString const suffix) {
 {
-JaktInternal::DynamicArray<ByteString> output = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> output = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((strings).iterator());
 for (;;){
@@ -97,7 +97,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-ErrorOr<ByteString> jakt__platform::Target::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Target("sv);{
+ByteString jakt__platform::Target::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Target("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("arch: \"{}\", ", arch);

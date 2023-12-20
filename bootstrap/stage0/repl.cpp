@@ -420,7 +420,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8("<Unimplemented>"
 }
 }
 
-ErrorOr<ByteString> repl::REPL::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("REPL("sv);{
+ByteString repl::REPL::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("REPL("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("compiler: {}, ", *compiler);
@@ -436,12 +436,12 @@ builder.appendff("file_id: {}", file_id);
 builder.append(")"sv);return builder.to_string(); }
 ErrorOr<repl::REPL> repl::REPL::create(jakt__path::Path const runtime_path,JaktInternal::Optional<ByteString> const target_triple,JaktInternal::Dictionary<ByteString,ByteString> const user_configuration) {
 {
-NonnullRefPtr<compiler::Compiler> compiler = compiler::Compiler::__jakt_create((DynamicArray<jakt__path::Path>::create_with({})),Dictionary<ByteString, utility::FileId>::create_with_entries({}),(DynamicArray<error::JaktError>::create_with({})),JaktInternal::OptionalNone(),(DynamicArray<u8>::create_with({})),false,false,false,false,runtime_path,(DynamicArray<ByteString>::create_with({})),false,false,false,false,target_triple,user_configuration,jakt__path::Path::from_string((ByteString::must_from_utf8("build"sv))),jakt__path::Path::from_string((ByteString::must_from_utf8("repl.jakt"sv))));
+NonnullRefPtr<compiler::Compiler> compiler = compiler::Compiler::__jakt_create(DynamicArray<jakt__path::Path>::create_with({}),Dictionary<ByteString, utility::FileId>::create_with_entries({}),DynamicArray<error::JaktError>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<u8>::create_with({}),false,false,false,false,runtime_path,DynamicArray<ByteString>::create_with({}),false,false,false,false,target_triple,user_configuration,jakt__path::Path::from_string((ByteString::must_from_utf8("build"sv))),jakt__path::Path::from_string((ByteString::must_from_utf8("repl.jakt"sv))));
 TRY((((compiler)->load_prelude())));
 utility::FileId const file_id = ((compiler)->get_file_id_or_register(jakt__path::Path::from_string((ByteString::must_from_utf8("<repl>"sv)))));
 ids::ModuleId const placeholder_module_id = ids::ModuleId(static_cast<size_t>(0ULL));
 ByteString const root_module_name = (ByteString::must_from_utf8("repl"sv));
-typechecker::Typechecker typechecker = typechecker::Typechecker(compiler,types::CheckedProgram::__jakt_create(compiler,(DynamicArray<NonnullRefPtr<types::Module>>::create_with({})),Dictionary<ByteString, types::LoadedModule>::create_with_entries({})),placeholder_module_id,ids::TypeId::none(),JaktInternal::OptionalNone(),false,static_cast<size_t>(0ULL),false,((compiler)->dump_type_hints),((compiler)->dump_try_hints),static_cast<u64>(0ULL),types::GenericInferences(Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({})),JaktInternal::OptionalNone(),root_module_name,false,false,Dictionary<ByteString, ids::ScopeId>::create_with_entries({}),JaktInternal::OptionalNone());
+typechecker::Typechecker typechecker = typechecker::Typechecker(compiler,types::CheckedProgram::__jakt_create(compiler,DynamicArray<NonnullRefPtr<types::Module>>::create_with({}),Dictionary<ByteString, types::LoadedModule>::create_with_entries({})),placeholder_module_id,ids::TypeId::none(),JaktInternal::OptionalNone(),false,static_cast<size_t>(0ULL),false,((compiler)->dump_type_hints),((compiler)->dump_try_hints),static_cast<u64>(0ULL),types::GenericInferences(Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({})),JaktInternal::OptionalNone(),root_module_name,false,false,Dictionary<ByteString, ids::ScopeId>::create_with_entries({}),JaktInternal::OptionalNone());
 (((compiler)->current_file) = file_id);
 TRY((((typechecker).include_prelude())));
 ids::ModuleId const root_module_id = ((typechecker).create_module(root_module_name,true,JaktInternal::OptionalNone()));
@@ -469,7 +469,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (((((((*this).compiler))->errors)).size()),static_cast<size_t>(0ULL));
-JaktInternal::DynamicArray<error::JaktError> const arr = (DynamicArray<error::JaktError>::create_with({}));
+JaktInternal::DynamicArray<error::JaktError> const arr = DynamicArray<error::JaktError>::create_with({});
 (((((*this).compiler))->errors) = arr);
 return has_error;
 }
@@ -478,7 +478,7 @@ return has_error;
 JaktInternal::DynamicArray<u8> repl::REPL::line_to_bytes(ByteString const line) {
 {
 size_t pos = static_cast<size_t>(0ULL);
-JaktInternal::DynamicArray<u8> bytes_ = (DynamicArray<u8>::create_with({}));
+JaktInternal::DynamicArray<u8> bytes_ = DynamicArray<u8>::create_with({});
 ((bytes_).ensure_capacity(((line).length())));
 while ([](size_t const& self, size_t rhs) -> bool {
 {
@@ -583,7 +583,7 @@ Function<ErrorOr<void>(repl_backend__default::Editor&)> const syntax_highlight_h
 {
 ByteString const line = TRY((((((editor))).get_active_buffer())));
 size_t pos = static_cast<size_t>(0ULL);
-JaktInternal::DynamicArray<u8> bytes_ = (DynamicArray<u8>::create_with({}));
+JaktInternal::DynamicArray<u8> bytes_ = DynamicArray<u8>::create_with({});
 ((bytes_).ensure_capacity(((line).length())));
 while ([](size_t const& self, size_t rhs) -> bool {
 {
@@ -603,7 +603,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (((((*this).compiler))->current_file_contents) = bytes_);
 ScopeGuard __jakt_var_934([&] {
 {
-JaktInternal::DynamicArray<error::JaktError> const arr = (DynamicArray<error::JaktError>::create_with({}));
+JaktInternal::DynamicArray<error::JaktError> const arr = DynamicArray<error::JaktError>::create_with({});
 (((((*this).compiler))->errors) = arr);
 }
 
@@ -898,7 +898,7 @@ ScopeGuard __jakt_var_937([&] {
 for (;;){
 if ((!(((((((*this).compiler))->errors)).is_empty())))){
 TRY((((((*this).compiler))->print_errors())));
-JaktInternal::DynamicArray<error::JaktError> const arr = (DynamicArray<error::JaktError>::create_with({}));
+JaktInternal::DynamicArray<error::JaktError> const arr = DynamicArray<error::JaktError>::create_with({});
 (((((*this).compiler))->errors) = arr);
 }
 repl_backend__common::LineResult const line_result = ({ Optional<repl_backend__common::LineResult> __jakt_var_938;

@@ -43,14 +43,14 @@ namespace Jakt {
 namespace utility {
 
 /* specialisation 0 of function map: ["parser::ParsedField", "JaktInternal::Tuple<ByteString,utility::Span>"] */
-template<> ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> map<parser::ParsedField, JaktInternal::Tuple<ByteString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedField> const input,Function<ErrorOr<JaktInternal::Tuple<ByteString,utility::Span>>(parser::ParsedField)> const& mapper);
+template<> JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> map<parser::ParsedField, JaktInternal::Tuple<ByteString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedField> const input,Function<JaktInternal::Tuple<ByteString,utility::Span>(parser::ParsedField)> const& mapper);
 
 /* specialisation 1 of function map: ["parser::ParsedMethod", "JaktInternal::Tuple<ByteString,utility::Span>"] */
-template<> ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> map<parser::ParsedMethod, JaktInternal::Tuple<ByteString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedMethod> const input,Function<ErrorOr<JaktInternal::Tuple<ByteString,utility::Span>>(parser::ParsedMethod)> const& mapper);
+template<> JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> map<parser::ParsedMethod, JaktInternal::Tuple<ByteString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedMethod> const input,Function<JaktInternal::Tuple<ByteString,utility::Span>(parser::ParsedMethod)> const& mapper);
 template<>
-ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> map<parser::ParsedField, JaktInternal::Tuple<ByteString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedField> const input,Function<ErrorOr<JaktInternal::Tuple<ByteString,utility::Span>>(parser::ParsedField)> const& mapper) {
+JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> map<parser::ParsedField, JaktInternal::Tuple<ByteString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedField> const input,Function<JaktInternal::Tuple<ByteString,utility::Span>(parser::ParsedField)> const& mapper) {
 {
-JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> us = (DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>::create_with({}));
+JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> us = DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>::create_with({});
 {
 JaktInternal::ArrayIterator<parser::ParsedField> _magic = ((input).iterator());
 for (;;){
@@ -60,7 +60,7 @@ break;
 }
 parser::ParsedField t = (_magic_value.value());
 {
-((us).push(TRY((mapper(t)))));
+((us).push(mapper(t)));
 }
 
 }
@@ -70,9 +70,9 @@ return us;
 }
 }
 template<>
-ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>> map<parser::ParsedMethod, JaktInternal::Tuple<ByteString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedMethod> const input,Function<ErrorOr<JaktInternal::Tuple<ByteString,utility::Span>>(parser::ParsedMethod)> const& mapper) {
+JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> map<parser::ParsedMethod, JaktInternal::Tuple<ByteString,utility::Span>>(JaktInternal::DynamicArray<parser::ParsedMethod> const input,Function<JaktInternal::Tuple<ByteString,utility::Span>(parser::ParsedMethod)> const& mapper) {
 {
-JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> us = (DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>::create_with({}));
+JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> us = DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>::create_with({});
 {
 JaktInternal::ArrayIterator<parser::ParsedMethod> _magic = ((input).iterator());
 for (;;){
@@ -82,7 +82,7 @@ break;
 }
 parser::ParsedMethod t = (_magic_value.value());
 {
-((us).push(TRY((mapper(t)))));
+((us).push(mapper(t)));
 }
 
 }

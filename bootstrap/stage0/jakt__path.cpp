@@ -1,7 +1,7 @@
 #include "jakt__path.h"
 namespace Jakt {
 namespace jakt__path {
-ErrorOr<ByteString> jakt__path::Path::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Path("sv);{
+ByteString jakt__path::Path::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Path("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("path: \"{}\"", path);
@@ -39,7 +39,7 @@ return path;
 
 void jakt__path::Path::normalize_separators() {
 {
-JaktInternal::DynamicArray<u8> separators = (DynamicArray<u8>::create_with({static_cast<u8>(47)}));
+JaktInternal::DynamicArray<u8> separators = DynamicArray<u8>::create_with({static_cast<u8>(47)});
 u8 separator = static_cast<u8>(47);
 ByteStringBuilder normalized_builder = ByteStringBuilder::create();
 {
@@ -177,7 +177,7 @@ return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("."sv))) + (new
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-return jakt__path::Path::from_parts((DynamicArray<ByteString>::create_with({((parts).template get<0>()), ((basename) + (extension))})));
+return jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({((parts).template get<0>()), ((basename) + (extension))}));
 }
 }
 
@@ -199,7 +199,7 @@ return File::exists(((*this).path));
 
 JaktInternal::DynamicArray<ByteString> jakt__path::Path::components() const {
 {
-JaktInternal::DynamicArray<ByteString> parts = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> parts = DynamicArray<ByteString>::create_with({});
 JaktInternal::Optional<size_t> last_slash = JaktInternal::OptionalNone();
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).path)).length()))});

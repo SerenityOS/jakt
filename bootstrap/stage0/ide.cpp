@@ -3,7 +3,7 @@ namespace Jakt {
 namespace ide {
 ErrorOr<JaktInternal::DynamicArray<ide::JaktSymbol>> find_symbols_in_namespace(parser::ParsedNamespace const namespace_) {
 {
-JaktInternal::DynamicArray<ide::JaktSymbol> symbols = (DynamicArray<ide::JaktSymbol>::create_with({}));
+JaktInternal::DynamicArray<ide::JaktSymbol> symbols = DynamicArray<ide::JaktSymbol>::create_with({});
 {
 JaktInternal::ArrayIterator<parser::ParsedRecord> _magic = ((((namespace_).records)).iterator());
 for (;;){
@@ -66,7 +66,7 @@ ide::JaktSymbol child = (_magic_value.value());
 }
 }
 
-return (DynamicArray<ide::JaktSymbol>::create_with({ide::JaktSymbol((((namespace_).name).value()),JaktInternal::OptionalNone(),(ByteString::must_from_utf8("namespace"sv)),namespace_span,(((namespace_).name_span).value()),symbols)}));
+return DynamicArray<ide::JaktSymbol>::create_with({ide::JaktSymbol((((namespace_).name).value()),JaktInternal::OptionalNone(),(ByteString::must_from_utf8("namespace"sv)),namespace_span,(((namespace_).name_span).value()),symbols)});
 }
 else {
 return symbols;
@@ -77,7 +77,7 @@ return symbols;
 
 ide::JaktSymbol record_to_symbol(parser::ParsedRecord const record) {
 {
-JaktInternal::DynamicArray<ide::JaktSymbol> children = (DynamicArray<ide::JaktSymbol>::create_with({}));
+JaktInternal::DynamicArray<ide::JaktSymbol> children = DynamicArray<ide::JaktSymbol>::create_with({});
 utility::Span record_span = ((record).name_span);
 ByteString const record_kind = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ide::JaktSymbol>{
@@ -95,7 +95,7 @@ break;
 }
 parser::ParsedField field = (_magic_value.value());
 {
-((children).push(ide::JaktSymbol(((((field).var_decl)).name),JaktInternal::OptionalNone(),(ByteString::must_from_utf8("field"sv)),((((field).var_decl)).span),((((field).var_decl)).span),(DynamicArray<ide::JaktSymbol>::create_with({})))));
+((children).push(ide::JaktSymbol(((((field).var_decl)).name),JaktInternal::OptionalNone(),(ByteString::must_from_utf8("field"sv)),((((field).var_decl)).span),((((field).var_decl)).span),DynamicArray<ide::JaktSymbol>::create_with({}))));
 }
 
 }
@@ -118,7 +118,7 @@ break;
 }
 parser::ParsedField field = (_magic_value.value());
 {
-((children).push(ide::JaktSymbol(((((field).var_decl)).name),JaktInternal::OptionalNone(),(ByteString::must_from_utf8("field"sv)),((((field).var_decl)).span),((((field).var_decl)).span),(DynamicArray<ide::JaktSymbol>::create_with({})))));
+((children).push(ide::JaktSymbol(((((field).var_decl)).name),JaktInternal::OptionalNone(),(ByteString::must_from_utf8("field"sv)),((((field).var_decl)).span),((((field).var_decl)).span),DynamicArray<ide::JaktSymbol>::create_with({}))));
 }
 
 }
@@ -141,7 +141,7 @@ break;
 }
 parser::ValueEnumVariant variant = (_magic_value.value());
 {
-((children).push(ide::JaktSymbol(((variant).name),JaktInternal::OptionalNone(),(ByteString::must_from_utf8("enum-member"sv)),((variant).span),((variant).span),(DynamicArray<ide::JaktSymbol>::create_with({})))));
+((children).push(ide::JaktSymbol(((variant).name),JaktInternal::OptionalNone(),(ByteString::must_from_utf8("enum-member"sv)),((variant).span),((variant).span),DynamicArray<ide::JaktSymbol>::create_with({}))));
 }
 
 }
@@ -164,7 +164,7 @@ break;
 }
 parser::SumEnumVariant variant = (_magic_value.value());
 {
-JaktInternal::DynamicArray<ide::JaktSymbol> variant_children = (DynamicArray<ide::JaktSymbol>::create_with({}));
+JaktInternal::DynamicArray<ide::JaktSymbol> variant_children = DynamicArray<ide::JaktSymbol>::create_with({});
 if (((((variant).params)).has_value())){
 {
 JaktInternal::ArrayIterator<parser::ParsedVarDecl> _magic = (((((variant).params).value())).iterator());
@@ -181,7 +181,7 @@ return (!(((self) == (rhs))));
 }
 }
 (((param).name),(ByteString::must_from_utf8(""sv)))){
-((variant_children).push(ide::JaktSymbol(((param).name),JaktInternal::OptionalNone(),(ByteString::must_from_utf8("field"sv)),((param).span),((param).span),(DynamicArray<ide::JaktSymbol>::create_with({})))));
+((variant_children).push(ide::JaktSymbol(((param).name),JaktInternal::OptionalNone(),(ByteString::must_from_utf8("field"sv)),((param).span),((param).span),DynamicArray<ide::JaktSymbol>::create_with({}))));
 }
 }
 
@@ -249,7 +249,7 @@ NonnullRefPtr<typename parser::ParsedStatement> stmt = (_magic_value.value());
 }
 }
 
-return ide::JaktSymbol(((function).name),JaktInternal::OptionalNone(),kind,function_span,((function).name_span),(DynamicArray<ide::JaktSymbol>::create_with({})));
+return ide::JaktSymbol(((function).name),JaktInternal::OptionalNone(),kind,function_span,((function).name_span),DynamicArray<ide::JaktSymbol>::create_with({}));
 }
 }
 
@@ -610,7 +610,7 @@ return JaktInternal::OptionalNone();
 
 ErrorOr<JaktInternal::DynamicArray<ByteString>> completions_for_type_id(NonnullRefPtr<types::CheckedProgram> const program,ids::TypeId const type_id) {
 {
-JaktInternal::DynamicArray<ByteString> output = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> output = DynamicArray<ByteString>::create_with({});
 NonnullRefPtr<typename types::Type> const ty = ((program)->get_type(type_id));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::DynamicArray<ByteString>>>{
@@ -693,7 +693,7 @@ return output;
 
 ErrorOr<JaktInternal::DynamicArray<ByteString>> find_function_completions_in_scope(NonnullRefPtr<types::Scope> const scope,NonnullRefPtr<types::CheckedProgram> const program) {
 {
-JaktInternal::DynamicArray<ByteString> output = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> output = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((((((scope)->functions)).keys())).iterator());
 for (;;){
@@ -812,7 +812,7 @@ __jakt_var_890 = TRY((ide::completions_for_type_id(program,result_type_id))); go
 __jakt_label_784:; __jakt_var_890.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({})));
+return JaktInternal::ExplicitValue(DynamicArray<ByteString>::create_with({}));
 };/*case end*/
 }/*switch end*/
 }()
@@ -823,7 +823,7 @@ return JaktInternal::ExplicitValue((DynamicArray<ByteString>::create_with({})));
 });
 }
 else {
-return (DynamicArray<ByteString>::create_with({}));
+return DynamicArray<ByteString>::create_with({});
 }
 
 }
@@ -1011,7 +1011,7 @@ return static_cast<JaktInternal::Optional<ide::Usage>>(ide::Usage::Typename(((va
 }
 
 if (((variant_span).contains(span))){
-return static_cast<JaktInternal::Optional<ide::Usage>>(ide::Usage::EnumVariant(span,name,((checked_enum).type_id),(DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>::create_with({})),JaktInternal::OptionalNone()));
+return static_cast<JaktInternal::Optional<ide::Usage>>(ide::Usage::EnumVariant(span,name,((checked_enum).type_id),DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>::create_with({}),JaktInternal::OptionalNone()));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -1031,7 +1031,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Untyped;ByteString const& na
 utility::Span const& variant_span = __jakt_match_value.span;
 {
 if (((variant_span).contains(span))){
-return static_cast<JaktInternal::Optional<ide::Usage>>(ide::Usage::EnumVariant(variant_span,name,((checked_enum).type_id),(DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>::create_with({})),JaktInternal::OptionalNone()));
+return static_cast<JaktInternal::Optional<ide::Usage>>(ide::Usage::EnumVariant(variant_span,name,((checked_enum).type_id),DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>::create_with({}),JaktInternal::OptionalNone()));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -1742,7 +1742,7 @@ __jakt_var_906 = ({
 auto __jakt_enum_value = (((remaining_cases).is_empty()));
 if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<ide::Usage>> __jakt_var_910; {
-JaktInternal::DynamicArray<ByteString> cases_array = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> cases_array = DynamicArray<ByteString>::create_with({});
 ((cases_array).ensure_capacity(((remaining_cases).size())));
 {
 JaktInternal::SetIterator<ByteString> _magic = ((remaining_cases).iterator());
@@ -2452,13 +2452,13 @@ return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_litera
 };/*case end*/
 case 32 /* Const */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Const;types::Value const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(TRY((types::comptime_format_impl((ByteString::must_from_utf8("const {}"sv)),(((DynamicArray<types::Value>::create_with({value})))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})]),((program))))));
+return JaktInternal::ExplicitValue(TRY((types::comptime_format_impl((ByteString::must_from_utf8("const {}"sv)),((DynamicArray<types::Value>::create_with({value}))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})]),((program))))));
 };/*case end*/
 case 30 /* Function */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Function;JaktInternal::DynamicArray<ids::TypeId> const& params = __jakt_match_value.params;
 ids::TypeId const& return_type_id = __jakt_match_value.return_type_id;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_916; {
-JaktInternal::DynamicArray<ByteString> param_names = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> param_names = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((params).iterator());
 for (;;){
@@ -3249,7 +3249,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* StructLike */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.StructLike;JaktInternal::DynamicArray<ids::VarId> const& fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>> __jakt_var_925; {
-JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>> output = (DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>::create_with({}));
+JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>> output = DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>::create_with({});
 {
 JaktInternal::ArrayIterator<ids::VarId> _magic = ((fields).iterator());
 for (;;){
@@ -3277,13 +3277,13 @@ case 1 /* Typed */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Typed;ids::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>> __jakt_var_926; {
 JaktInternal::Optional<ByteString> const string_none = JaktInternal::OptionalNone();
-__jakt_var_926 = (DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>::create_with({(Tuple{string_none, type_id})})); goto __jakt_label_820;
+__jakt_var_926 = DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>::create_with({(Tuple{string_none, type_id})}); goto __jakt_label_820;
 
 }
 __jakt_label_820:; __jakt_var_926.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>::create_with({})));
+return JaktInternal::ExplicitValue(DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString>,ids::TypeId>>::create_with({}));
 };/*case end*/
 }/*switch end*/
 }()
@@ -3376,7 +3376,7 @@ return (ByteString::must_from_utf8(""sv));
 }
 }
 
-ErrorOr<ByteString> ide::JaktSymbol::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("JaktSymbol("sv);{
+ByteString ide::JaktSymbol::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("JaktSymbol("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("name: \"{}\", ", name);
@@ -3403,7 +3403,7 @@ if (((((*this).detail)).has_value())){
 ((json_builder).append(__jakt_format((StringView::from_string_literal("\"kind\": \"{}\","sv)),((*this).kind))));
 ((json_builder).append(__jakt_format((StringView::from_string_literal("\"range\": {{\"start\": {}, \"end\": {}}},"sv)),((((*this).range)).start),((((*this).range)).end))));
 ((json_builder).append(__jakt_format((StringView::from_string_literal("\"selection_range\": {{\"start\": {}, \"end\": {}}},"sv)),((((*this).selection_range)).start),((((*this).selection_range)).end))));
-JaktInternal::DynamicArray<ByteString> child_symbols = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> child_symbols = DynamicArray<ByteString>::create_with({});
 ((child_symbols).ensure_capacity(((((*this).children)).size())));
 {
 JaktInternal::ArrayIterator<ide::JaktSymbol> _magic = ((((*this).children)).iterator());
@@ -3428,7 +3428,7 @@ return ((json_builder).to_string());
 
 ide::JaktSymbol::JaktSymbol(ByteString a_name, JaktInternal::Optional<ByteString> a_detail, ByteString a_kind, utility::Span a_range, utility::Span a_selection_range, JaktInternal::DynamicArray<ide::JaktSymbol> a_children): name(move(a_name)), detail(move(a_detail)), kind(move(a_kind)), range(move(a_range)), selection_range(move(a_selection_range)), children(move(a_children)){}
 
-ErrorOr<ByteString> ide::Mutability::debug_description() const {
+ByteString ide::Mutability::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* DoesNotApply */: {
 return ByteString("Mutability::DoesNotApply"sv);
@@ -3544,7 +3544,7 @@ case 1 /* Immutable */:break;
 case 2 /* Mutable */:break;
 }
 }
-ErrorOr<ByteString> ide::VarType::debug_description() const {
+ByteString ide::VarType::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Variable */: {
 return ByteString("VarType::Variable"sv);
@@ -3639,7 +3639,7 @@ case 0 /* Variable */:break;
 case 1 /* Field */:break;
 }
 }
-ErrorOr<ByteString> ide::VarVisibility::debug_description() const {
+ByteString ide::VarVisibility::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* DoesNotApply */: {
 return ByteString("VarVisibility::DoesNotApply"sv);
@@ -3776,7 +3776,7 @@ case 2 /* Private */:break;
 case 3 /* Restricted */:break;
 }
 }
-ErrorOr<ByteString> ide::Usage::debug_description() const {
+ByteString ide::Usage::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Variable */: {
 builder.append("Usage::Variable"sv);

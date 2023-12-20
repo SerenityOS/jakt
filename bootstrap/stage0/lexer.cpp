@@ -1,7 +1,7 @@
 #include "lexer.h"
 namespace Jakt {
 namespace lexer {
-ErrorOr<ByteString> lexer::Lexer::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Lexer("sv);{
+ByteString lexer::Lexer::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Lexer("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("index: {}, ", index);
@@ -19,7 +19,7 @@ JaktInternal::DynamicArray<lexer::Token> lexer::Lexer::lex(NonnullRefPtr<compile
 {
 JaktInternal::Set<ByteString> const illegal_cpp_keywords = Set<ByteString>::create_with_values({(ByteString::must_from_utf8("alignas"sv)), (ByteString::must_from_utf8("alignof"sv)), (ByteString::must_from_utf8("and_eq"sv)), (ByteString::must_from_utf8("asm"sv)), (ByteString::must_from_utf8("auto"sv)), (ByteString::must_from_utf8("bitand"sv)), (ByteString::must_from_utf8("bitor"sv)), (ByteString::must_from_utf8("case"sv)), (ByteString::must_from_utf8("char"sv)), (ByteString::must_from_utf8("char8_t"sv)), (ByteString::must_from_utf8("char16_t"sv)), (ByteString::must_from_utf8("char32_t"sv)), (ByteString::must_from_utf8("compl"sv)), (ByteString::must_from_utf8("concept"sv)), (ByteString::must_from_utf8("consteval"sv)), (ByteString::must_from_utf8("constexpr"sv)), (ByteString::must_from_utf8("constinit"sv)), (ByteString::must_from_utf8("const_cast"sv)), (ByteString::must_from_utf8("co_await"sv)), (ByteString::must_from_utf8("co_return"sv)), (ByteString::must_from_utf8("co_yield"sv)), (ByteString::must_from_utf8("decltype"sv)), (ByteString::must_from_utf8("delete"sv)), (ByteString::must_from_utf8("do"sv)), (ByteString::must_from_utf8("double"sv)), (ByteString::must_from_utf8("dynamic_cast"sv)), (ByteString::must_from_utf8("explicit"sv)), (ByteString::must_from_utf8("export"sv)), (ByteString::must_from_utf8("float"sv)), (ByteString::must_from_utf8("friend"sv)), (ByteString::must_from_utf8("goto"sv)), (ByteString::must_from_utf8("int"sv)), (ByteString::must_from_utf8("long"sv)), (ByteString::must_from_utf8("mutable"sv)), (ByteString::must_from_utf8("new"sv)), (ByteString::must_from_utf8("noexcept"sv)), (ByteString::must_from_utf8("not_eq"sv)), (ByteString::must_from_utf8("nullptr"sv)), (ByteString::must_from_utf8("operator"sv)), (ByteString::must_from_utf8("or_eq"sv)), (ByteString::must_from_utf8("protected"sv)), (ByteString::must_from_utf8("register"sv)), (ByteString::must_from_utf8("reinterpret_cast"sv)), (ByteString::must_from_utf8("short"sv)), (ByteString::must_from_utf8("signed"sv)), (ByteString::must_from_utf8("static"sv)), (ByteString::must_from_utf8("static_assert"sv)), (ByteString::must_from_utf8("static_cast"sv)), (ByteString::must_from_utf8("switch"sv)), (ByteString::must_from_utf8("template"sv)), (ByteString::must_from_utf8("thread_local"sv)), (ByteString::must_from_utf8("typedef"sv)), (ByteString::must_from_utf8("typeid"sv)), (ByteString::must_from_utf8("typename"sv)), (ByteString::must_from_utf8("union"sv)), (ByteString::must_from_utf8("unsigned"sv)), (ByteString::must_from_utf8("using"sv)), (ByteString::must_from_utf8("volatile"sv)), (ByteString::must_from_utf8("wchar_t"sv)), (ByteString::must_from_utf8("xor"sv)), (ByteString::must_from_utf8("xor_eq"sv))});
 lexer::Lexer lexer = lexer::Lexer(static_cast<size_t>(0ULL),((compiler)->current_file_contents),compiler,JaktInternal::OptionalNone(),illegal_cpp_keywords);
-JaktInternal::DynamicArray<lexer::Token> tokens = (DynamicArray<lexer::Token>::create_with({}));
+JaktInternal::DynamicArray<lexer::Token> tokens = DynamicArray<lexer::Token>::create_with({});
 {
 lexer::Lexer _magic = lexer;
 for (;;){
@@ -1081,7 +1081,7 @@ return JaktInternal::ExplicitValue(((*this).lex_number_or_name()));
 
 lexer::Lexer::Lexer(size_t a_index, JaktInternal::DynamicArray<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::DynamicArray<u8>> a_comment_contents, JaktInternal::Set<ByteString> a_illegal_cpp_keywords): index(move(a_index)), input(move(a_input)), compiler(move(a_compiler)), comment_contents(move(a_comment_contents)), illegal_cpp_keywords(move(a_illegal_cpp_keywords)){}
 
-ErrorOr<ByteString> lexer::Token::debug_description() const {
+ByteString lexer::Token::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* SingleQuotedString */: {
 builder.append("Token::SingleQuotedString"sv);
@@ -5406,7 +5406,7 @@ return JaktInternal::ExplicitValue(lexer::Token::Identifier(string,span));
 }
 }
 
-ErrorOr<ByteString> lexer::LiteralPrefix::debug_description() const {
+ByteString lexer::LiteralPrefix::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* None */: {
 return ByteString("LiteralPrefix::None"sv);
@@ -5571,7 +5571,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 }
 
-ErrorOr<ByteString> lexer::LiteralSuffix::debug_description() const {
+ByteString lexer::LiteralSuffix::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* None */: {
 return ByteString("LiteralSuffix::None"sv);

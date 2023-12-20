@@ -1,7 +1,7 @@
 #include "repl_backend__common.h"
 namespace Jakt {
 namespace repl_backend__common {
-ErrorOr<ByteString> repl_backend__common::Style::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Style("sv);{
+ByteString repl_backend__common::Style::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Style("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("foreground: {}, ", foreground);
@@ -11,7 +11,7 @@ builder.appendff("background: {}", background);
 builder.append(")"sv);return builder.to_string(); }
 repl_backend__common::Style::Style(JaktInternal::Optional<repl_backend__common::Color> a_foreground, JaktInternal::Optional<repl_backend__common::Color> a_background): foreground(move(a_foreground)), background(move(a_background)){}
 
-ErrorOr<ByteString> repl_backend__common::LineResult::debug_description() const {
+ByteString repl_backend__common::LineResult::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Line */: {
 builder.append("LineResult::Line"sv);
@@ -116,7 +116,7 @@ break;
 case 1 /* Eof */:break;
 }
 }
-ErrorOr<ByteString> repl_backend__common::XTermColor::debug_description() const {
+ByteString repl_backend__common::XTermColor::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Default */: {
 return ByteString("XTermColor::Default"sv);
@@ -379,7 +379,7 @@ case 8 /* White */:break;
 case 9 /* Unchanged */:break;
 }
 }
-ErrorOr<ByteString> repl_backend__common::Color::debug_description() const {
+ByteString repl_backend__common::Color::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Components */: {
 builder.append("Color::Components"sv);

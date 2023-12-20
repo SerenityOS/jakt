@@ -25,7 +25,7 @@ return ((builder).to_string());
 }
 }
 
-ErrorOr<ByteString> cpp_import__common::CppImportErrors::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CppImportErrors("sv);{
+ByteString cpp_import__common::CppImportErrors::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CppImportErrors("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
 builder.append(")"sv);return builder.to_string(); }

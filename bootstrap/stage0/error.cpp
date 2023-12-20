@@ -419,7 +419,7 @@ warnln((StringView::from_string_literal(""sv)));
 JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>> gather_line_spans(JaktInternal::DynamicArray<u8> const file_contents) {
 {
 size_t idx = static_cast<size_t>(0ULL);
-JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>> output = (DynamicArray<JaktInternal::Tuple<size_t,size_t>>::create_with({}));
+JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>> output = DynamicArray<JaktInternal::Tuple<size_t,size_t>>::create_with({});
 size_t start = idx;
 while ([](size_t const& self, size_t rhs) -> bool {
 {
@@ -455,7 +455,7 @@ return output;
 }
 }
 
-ErrorOr<ByteString> error::JaktError::debug_description() const {
+ByteString error::JaktError::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Message */: {
 builder.append("JaktError::Message"sv);
@@ -646,7 +646,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 }
 
-ErrorOr<ByteString> error::MessageSeverity::debug_description() const {
+ByteString error::MessageSeverity::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Hint */: {
 return ByteString("MessageSeverity::Hint"sv);

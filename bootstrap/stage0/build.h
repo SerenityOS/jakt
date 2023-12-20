@@ -15,7 +15,7 @@ public: ErrorOr<void> wait_for_all_jobs_to_complete();
 public: ErrorOr<void> kill_all();
 public: ParallelExecutionPool(JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::Process> a_pids, JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::ExitPollResult> a_completed, size_t a_pid_index, size_t a_max_concurrent);
 
-public: ErrorOr<ByteString> debug_description() const;
+public: ByteString debug_description() const;
 };struct Builder {
   public:
 public: JaktInternal::DynamicArray<ByteString> linked_files;public: JaktInternal::DynamicArray<ByteString> files_to_compile;public: build::ParallelExecutionPool pool;public: static ErrorOr<build::Builder> for_building(JaktInternal::DynamicArray<ByteString> const files, size_t const max_concurrent);
@@ -24,18 +24,18 @@ public: ErrorOr<void> link_into_archive(ByteString const archiver, ByteString co
 public: ErrorOr<void> link_into_executable(ByteString const cxx_compiler_path, ByteString const output_filename, JaktInternal::DynamicArray<ByteString> const extra_arguments);
 public: Builder(JaktInternal::DynamicArray<ByteString> a_linked_files, JaktInternal::DynamicArray<ByteString> a_files_to_compile, build::ParallelExecutionPool a_pool);
 
-public: ErrorOr<ByteString> debug_description() const;
+public: ByteString debug_description() const;
 };}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::build::ParallelExecutionPool> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::build::ParallelExecutionPool const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::build::Builder> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::build::Builder const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));return format_error;}
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {
 } // namespace Jakt

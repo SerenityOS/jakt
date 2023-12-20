@@ -1,7 +1,7 @@
 #include "jakt__arguments.h"
 namespace Jakt {
 namespace jakt__arguments {
-ErrorOr<ByteString> jakt__arguments::ArgsParser::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ArgsParser("sv);{
+ByteString jakt__arguments::ArgsParser::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ArgsParser("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("args: {}, ", args);
@@ -108,7 +108,7 @@ return JaktInternal::OptionalNone();
 
 ErrorOr<JaktInternal::DynamicArray<ByteString>> jakt__arguments::ArgsParser::option_multiple(JaktInternal::DynamicArray<ByteString> const names) {
 {
-JaktInternal::DynamicArray<ByteString> result = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> result = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(1ULL)),static_cast<size_t>(((((*this).args)).size()))});
 for (;;){
@@ -167,7 +167,7 @@ return result;
 
 jakt__arguments::ArgsParser jakt__arguments::ArgsParser::from_args(JaktInternal::DynamicArray<ByteString> const args) {
 {
-jakt__arguments::ArgsParser parser = jakt__arguments::ArgsParser(args,(DynamicArray<size_t>::create_with({})),(DynamicArray<ByteString>::create_with({})));
+jakt__arguments::ArgsParser parser = jakt__arguments::ArgsParser(args,DynamicArray<size_t>::create_with({}),DynamicArray<ByteString>::create_with({}));
 size_t i = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((((parser).args)).iterator());
@@ -195,7 +195,7 @@ return parser;
 
 JaktInternal::DynamicArray<ByteString> jakt__arguments::ArgsParser::remaining_arguments() const {
 {
-JaktInternal::DynamicArray<ByteString> remaining = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> remaining = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).args)).size()))});
 for (;;){

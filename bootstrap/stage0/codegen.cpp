@@ -13,7 +13,7 @@ return (!(((allowed_control_exits).__jakt_init_index() == 0 /* Nothing */)));
 }
 }
 
-ErrorOr<ByteString> codegen::ControlFlowState::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ControlFlowState("sv);{
+ByteString codegen::ControlFlowState::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ControlFlowState("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("allowed_exits: {}, ", allowed_exits);
@@ -100,7 +100,7 @@ VERIFY_NOT_REACHED();
 
 codegen::ControlFlowState::ControlFlowState(codegen::AllowedControlExits a_allowed_exits, bool a_passes_through_match, bool a_passes_through_try, size_t a_match_nest_level): allowed_exits(move(a_allowed_exits)), passes_through_match(move(a_passes_through_match)), passes_through_try(move(a_passes_through_try)), match_nest_level(move(a_match_nest_level)){}
 
-ErrorOr<ByteString> codegen::LineSpan::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("LineSpan("sv);{
+ByteString codegen::LineSpan::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("LineSpan("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("start: {}, ", start);
@@ -110,7 +110,7 @@ builder.appendff("end: {}", end);
 builder.append(")"sv);return builder.to_string(); }
 codegen::LineSpan::LineSpan(size_t a_start, size_t a_end): start(move(a_start)), end(move(a_end)){}
 
-ErrorOr<ByteString> codegen::CodegenDebugInfo::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CodegenDebugInfo("sv);{
+ByteString codegen::CodegenDebugInfo::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CodegenDebugInfo("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("compiler: {}, ", *compiler);
@@ -187,7 +187,7 @@ continue;
 }
 TRY((((((*this).compiler))->set_current_file(((file).template get<1>())))));
 size_t const file_idx = ((((file).template get<1>())).id);
-JaktInternal::DynamicArray<codegen::LineSpan> const empty_array = (DynamicArray<codegen::LineSpan>::create_with({}));
+JaktInternal::DynamicArray<codegen::LineSpan> const empty_array = DynamicArray<codegen::LineSpan>::create_with({});
 ((((*this).line_spans)).set(file_idx,empty_array));
 size_t idx = static_cast<size_t>(0ULL);
 size_t start = idx;
@@ -232,7 +232,7 @@ return {};
 
 codegen::CodegenDebugInfo::CodegenDebugInfo(NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Dictionary<size_t,JaktInternal::DynamicArray<codegen::LineSpan>> a_line_spans, bool a_statement_span_comments): compiler(move(a_compiler)), line_spans(move(a_line_spans)), statement_span_comments(move(a_statement_span_comments)){}
 
-ErrorOr<ByteString> codegen::CodeGenerator::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CodeGenerator("sv);{
+ByteString codegen::CodeGenerator::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CodeGenerator("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("compiler: {}, ", *compiler);
@@ -319,7 +319,7 @@ if ((!(((in_degrees).contains(((((module)->id)).id)))))){
 }
 }
 
-JaktInternal::DynamicArray<ids::ModuleId> stack = (DynamicArray<ids::ModuleId>::create_with({}));
+JaktInternal::DynamicArray<ids::ModuleId> stack = DynamicArray<ids::ModuleId>::create_with({});
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<types::Module>> _magic = ((((((*this).program))->modules)).iterator());
 for (;;){
@@ -337,7 +337,7 @@ if (((((in_degrees)[((((module)->id)).id)])) == (static_cast<i64>(0LL)))){
 }
 }
 
-JaktInternal::DynamicArray<ids::ModuleId> sorted_modules = (DynamicArray<ids::ModuleId>::create_with({}));
+JaktInternal::DynamicArray<ids::ModuleId> sorted_modules = DynamicArray<ids::ModuleId>::create_with({});
 while ((!(((stack).is_empty())))){
 ids::ModuleId const id = (((stack).pop()).value());
 ((sorted_modules).push(id));
@@ -370,7 +370,7 @@ utility::panic((ByteString::must_from_utf8("Cyclic module imports"sv)));
 
 ErrorOr<JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<ByteString,ByteString>>> codegen::CodeGenerator::generate(NonnullRefPtr<compiler::Compiler> const compiler,NonnullRefPtr<types::CheckedProgram> const program,bool const debug_info) {
 {
-codegen::CodeGenerator generator = codegen::CodeGenerator(compiler,program,codegen::ControlFlowState(codegen::AllowedControlExits::Nothing(),false,false,static_cast<size_t>(0ULL)),(DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({})),(ByteString::must_from_utf8(""sv)),JaktInternal::OptionalNone(),false,codegen::CodegenDebugInfo(compiler,Dictionary<size_t, JaktInternal::DynamicArray<codegen::LineSpan>>::create_with_entries({}),debug_info),(DynamicArray<ByteString>::create_with({})),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
+codegen::CodeGenerator generator = codegen::CodeGenerator(compiler,program,codegen::ControlFlowState(codegen::AllowedControlExits::Nothing(),false,false,static_cast<size_t>(0ULL)),DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({}),(ByteString::must_from_utf8(""sv)),JaktInternal::OptionalNone(),false,codegen::CodegenDebugInfo(compiler,Dictionary<size_t, JaktInternal::DynamicArray<codegen::LineSpan>>::create_with_entries({}),debug_info),DynamicArray<ByteString>::create_with({}),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
 JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<ByteString,ByteString>> result = Dictionary<ByteString, JaktInternal::Tuple<ByteString,ByteString>>::create_with_entries({});
 ByteString output = (ByteString::must_from_utf8(""sv));
 [](ByteString& self, ByteString rhs) -> void {
@@ -699,7 +699,7 @@ NonnullRefPtr<types::Scope> const scope = ((((generator).program))->get_scope(sc
 (output,(ByteString::must_from_utf8("} // namespace Jakt\n"sv)));
 ((result).set((ByteString::must_from_utf8("__unified_forward.h"sv)),(Tuple{output, (((((compiler)->current_file_path()).value())).to_string())})));
 {
-JaktInternal::ArrayIterator<bool> _magic = (((DynamicArray<bool>::create_with({true, false}))).iterator());
+JaktInternal::ArrayIterator<bool> _magic = ((DynamicArray<bool>::create_with({true, false})).iterator());
 for (;;){
 JaktInternal::Optional<bool> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -1157,7 +1157,7 @@ return dependency_graph;
 
 JaktInternal::DynamicArray<ids::TypeId> codegen::CodeGenerator::extract_dependencies_from(ids::TypeId const type_id,JaktInternal::Dictionary<ids::TypeId,JaktInternal::DynamicArray<ids::TypeId>> const dependency_graph,bool const top_level) const {
 {
-JaktInternal::DynamicArray<ids::TypeId> dependencies = (DynamicArray<ids::TypeId>::create_with({}));
+JaktInternal::DynamicArray<ids::TypeId> dependencies = DynamicArray<ids::TypeId>::create_with({});
 NonnullRefPtr<typename types::Type> const type_ = ((((*this).program))->get_type(type_id));
 if (((!(((type_)->is_boxed(((*this).program))))) && ((dependency_graph).contains(type_id)))){
 {
@@ -1191,7 +1191,7 @@ return JaktInternal::ExplicitValue(((*this).extract_dependencies_from_enum(id,de
 };/*case end*/
 case 24 /* Struct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Struct;ids::StructId const& id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(((*this).extract_dependencies_from_struct(id,dependency_graph,top_level,(DynamicArray<ids::TypeId>::create_with({})))));
+return JaktInternal::ExplicitValue(((*this).extract_dependencies_from_struct(id,dependency_graph,top_level,DynamicArray<ids::TypeId>::create_with({}))));
 };/*case end*/
 case 20 /* GenericInstance */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructId const& id = __jakt_match_value.id;
@@ -1199,7 +1199,7 @@ JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(((*this).extract_dependencies_from_struct(id,dependency_graph,top_level,args)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((DynamicArray<ids::TypeId>::create_with({})));
+return JaktInternal::ExplicitValue(DynamicArray<ids::TypeId>::create_with({}));
 };/*case end*/
 }/*switch end*/
 }()
@@ -1229,7 +1229,7 @@ return dependencies;
 
 JaktInternal::DynamicArray<ids::TypeId> codegen::CodeGenerator::extract_dependencies_from_enum(ids::EnumId const enum_id,JaktInternal::Dictionary<ids::TypeId,JaktInternal::DynamicArray<ids::TypeId>> const dependency_graph,bool const top_level) const {
 {
-JaktInternal::DynamicArray<ids::TypeId> dependencies = (DynamicArray<ids::TypeId>::create_with({}));
+JaktInternal::DynamicArray<ids::TypeId> dependencies = DynamicArray<ids::TypeId>::create_with({});
 types::CheckedEnum const enum_ = ((((*this).program))->get_enum(enum_id));
 if (((((enum_).definition_linkage)).__jakt_init_index() == 1 /* External */)){
 return dependencies;
@@ -1360,7 +1360,7 @@ return dependencies;
 
 JaktInternal::DynamicArray<ids::TypeId> codegen::CodeGenerator::extract_dependencies_from_struct(ids::StructId const struct_id,JaktInternal::Dictionary<ids::TypeId,JaktInternal::DynamicArray<ids::TypeId>> const dependency_graph,bool const top_level,JaktInternal::DynamicArray<ids::TypeId> const args) const {
 {
-JaktInternal::DynamicArray<ids::TypeId> dependencies = (DynamicArray<ids::TypeId>::create_with({}));
+JaktInternal::DynamicArray<ids::TypeId> dependencies = DynamicArray<ids::TypeId>::create_with({});
 types::CheckedStruct const struct_ = ((((*this).program))->get_struct(struct_id));
 if ((((((struct_).definition_linkage)).__jakt_init_index() == 1 /* External */) && [](ByteString const& self, ByteString rhs) -> bool {
 {
@@ -1394,7 +1394,7 @@ case 24 /* Struct */: {
 return JaktInternal::ExplicitValue(((*this).extract_dependencies_from(inner_type,dependency_graph,false)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((DynamicArray<ids::TypeId>::create_with({})));
+return JaktInternal::ExplicitValue(DynamicArray<ids::TypeId>::create_with({}));
 };/*case end*/
 }/*switch end*/
 }()
@@ -1431,7 +1431,7 @@ ids::TypeId dependency = (_magic_value.value());
 JaktInternal::Optional<ids::StructId> super_struct_id = ((struct_).super_struct_id);
 while (((super_struct_id).has_value())){
 types::CheckedStruct const super_struct = ((((*this).program))->get_struct((super_struct_id.value())));
-JaktInternal::DynamicArray<ids::TypeId> const super_dependencies = ((*this).extract_dependencies_from_struct((super_struct_id.value()),dependency_graph,true,(DynamicArray<ids::TypeId>::create_with({}))));
+JaktInternal::DynamicArray<ids::TypeId> const super_dependencies = ((*this).extract_dependencies_from_struct((super_struct_id.value()),dependency_graph,true,DynamicArray<ids::TypeId>::create_with({})));
 ((dependencies).push_values(((super_dependencies))));
 (super_struct_id = ((super_struct).super_struct_id));
 }
@@ -1592,7 +1592,7 @@ else {
 (output,TRY((((*this).codegen_function_in_namespace(function,containing_struct,false,true,((((((function)->generics))->specializations))[(((function)->specialization_index).value())]))))));
 }
 else if (is_full_respecialization){
-JaktInternal::DynamicArray<ByteString> args = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> args = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((((((((function)->generics))->specializations))[(((function)->specialization_index).value())])).iterator());
 for (;;){
@@ -1837,7 +1837,7 @@ if (((((scope)->namespace_name)).has_value())){
 (output,(((((ByteString::must_from_utf8("namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::must_from_utf8(" {\n"sv)))));
 }
 {
-JaktInternal::ArrayIterator<bool> _magic = (((DynamicArray<bool>::create_with({false, true}))).iterator());
+JaktInternal::ArrayIterator<bool> _magic = ((DynamicArray<bool>::create_with({false, true})).iterator());
 for (;;){
 JaktInternal::Optional<bool> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -2089,7 +2089,7 @@ break;
 }
 JaktInternal::Tuple<ids::TypeId,JaktInternal::DynamicArray<ids::TypeId>> entry = (_magic_value.value());
 {
-JaktInternal::DynamicArray<ids::TypeId> const traversal = (DynamicArray<ids::TypeId>::create_with({}));
+JaktInternal::DynamicArray<ids::TypeId> const traversal = DynamicArray<ids::TypeId>::create_with({});
 TRY((((*this).postorder_traversal(((entry).template get<0>()),seen_types,dependency_graph,traversal))));
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((traversal).iterator());
@@ -2880,7 +2880,7 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_template_parameter_names(JaktInternal::DynamicArray<types::FunctionGenericParameter> const parameters,JaktInternal::DynamicArray<ByteString>& names) {
 {
-JaktInternal::DynamicArray<ids::TypeId> ids = (DynamicArray<ids::TypeId>::create_with({}));
+JaktInternal::DynamicArray<ids::TypeId> ids = DynamicArray<ids::TypeId>::create_with({});
 {
 JaktInternal::ArrayIterator<types::FunctionGenericParameter> _magic = ((parameters).iterator());
 for (;;){
@@ -2902,14 +2902,14 @@ return TRY((((*this).codegen_template_parameter_names(ids,names))));
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_template_parameter_names(JaktInternal::DynamicArray<types::FunctionGenericParameter> const parameters) {
 {
-JaktInternal::DynamicArray<ByteString> names = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> names = DynamicArray<ByteString>::create_with({});
 return TRY((((*this).codegen_template_parameter_names(parameters,((names))))));
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_template_parameter_names(JaktInternal::DynamicArray<types::CheckedGenericParameter> const parameters,JaktInternal::DynamicArray<ByteString>& names) {
 {
-JaktInternal::DynamicArray<ids::TypeId> ids = (DynamicArray<ids::TypeId>::create_with({}));
+JaktInternal::DynamicArray<ids::TypeId> ids = DynamicArray<ids::TypeId>::create_with({});
 {
 JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((parameters).iterator());
 for (;;){
@@ -2931,7 +2931,7 @@ return TRY((((*this).codegen_template_parameter_names(ids,names))));
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_template_parameter_names(JaktInternal::DynamicArray<types::CheckedGenericParameter> const parameters) {
 {
-JaktInternal::DynamicArray<ByteString> names = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> names = DynamicArray<ByteString>::create_with({});
 return TRY((((*this).codegen_template_parameter_names(parameters,((names))))));
 }
 }
@@ -3307,7 +3307,7 @@ if (((((struct_).definition_linkage)).__jakt_init_index() == 1 /* External */)){
 return (ByteString::must_from_utf8(""sv));
 }
 bool struct_is_generic = false;
-JaktInternal::DynamicArray<ByteString> generic_parameter_names = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> generic_parameter_names = DynamicArray<ByteString>::create_with({});
 ByteString template_parameters = (ByteString::must_from_utf8(""sv));
 if ((!(((((struct_).generic_parameters)).is_empty())))){
 (struct_is_generic = true);
@@ -3739,7 +3739,7 @@ if (((((struct_).generic_parameters)).is_empty())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ErrorOr<ByteString> debug_description() const;\n"sv)));
+(output,(ByteString::must_from_utf8("ByteString debug_description() const;\n"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -3871,7 +3871,7 @@ utility::todo((ByteString::must_from_utf8("Enums with a non-integer underlying t
 
 }
 bool const is_generic = (!(((((enum_).generic_parameters)).is_empty())));
-JaktInternal::DynamicArray<ByteString> generic_parameter_names = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> generic_parameter_names = DynamicArray<ByteString>::create_with({});
 ByteString template_args = TRY((((*this).codegen_template_parameter_names(((enum_).generic_parameters),((generic_parameter_names))))));
 ByteString const generic_parameter_list = utility::join(generic_parameter_names,(ByteString::must_from_utf8(", "sv)));
 if (is_generic){
@@ -4111,7 +4111,7 @@ if (((((enum_).generic_parameters)).is_empty())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ErrorOr<ByteString> debug_description() const;\n"sv)));
+(output,(ByteString::must_from_utf8("ByteString debug_description() const;\n"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -4917,7 +4917,7 @@ utility::panic((ByteString::must_from_utf8("Out of line constructor cannot be ge
 
 ErrorOr<JaktInternal::Tuple<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>>>>> codegen::CodeGenerator::codegen_enum_field_lists(types::CheckedEnum const enum_) {
 {
-JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> common_fields = (DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({}));
+JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> common_fields = DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({});
 JaktInternal::Set<ByteString> common_field_names = Set<ByteString>::create_with_values({});
 {
 JaktInternal::ArrayIterator<types::CheckedField> _magic = ((((enum_).fields)).iterator());
@@ -4937,7 +4937,7 @@ ByteString const name = TRY((((((variable)->name_for_codegen())).as_name_for_def
 }
 }
 
-JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>>> variant_field_list = (DynamicArray<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>>>::create_with({}));
+JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>>> variant_field_list = DynamicArray<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>>>::create_with({});
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((enum_).variants)).size()))});
 for (;;){
@@ -4954,13 +4954,13 @@ auto&& __jakt_match_variant = variant;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Untyped */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Untyped;ByteString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue((DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({})));
+return JaktInternal::ExplicitValue(DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({}));
 };/*case end*/
 case 3 /* StructLike */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.StructLike;ByteString const& name = __jakt_match_value.name;
 JaktInternal::DynamicArray<ids::VarId> const& own_fields = __jakt_match_value.fields;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>> __jakt_var_619; {
-JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> fields = (DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({}));
+JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> fields = DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({});
 {
 JaktInternal::ArrayIterator<ids::VarId> _magic = ((own_fields).iterator());
 for (;;){
@@ -4988,7 +4988,7 @@ case 1 /* Typed */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Typed;ByteString const& name = __jakt_match_value.name;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>> __jakt_var_620; {
-JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> fields = (DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({}));
+JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> fields = DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({});
 ((fields).push((Tuple{(ByteString::must_from_utf8("value"sv)), TRY((((*this).codegen_type(type_id))))})));
 __jakt_var_620 = fields; goto __jakt_label_521;
 
@@ -5381,7 +5381,7 @@ if (((!(is_inline)) && (!(((((struct_).generic_parameters)).is_empty()))))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ErrorOr<ByteString> "sv)));
+(output,(ByteString::must_from_utf8("ByteString "sv)));
 if ((!(is_inline))){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -5595,7 +5595,7 @@ if (((!(is_inline)) && (!(((((enum_).generic_parameters)).is_empty()))))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ErrorOr<ByteString> "sv)));
+(output,(ByteString::must_from_utf8("ByteString "sv)));
 if ((!(is_inline))){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -5931,7 +5931,7 @@ if ((!(((generic_parameter_names).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));"sv)));
+(output,(ByteString::must_from_utf8("Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7319,7 +7319,7 @@ NonnullRefPtr<typename types::CheckedExpression> const repeat_val = ((repeat).va
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("(DynamicArray<"sv)));
+(output,(ByteString::must_from_utf8("DynamicArray<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7355,7 +7355,7 @@ NonnullRefPtr<typename types::CheckedExpression> const repeat_val = ((repeat).va
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("))"sv)));
+(output,(ByteString::must_from_utf8(")"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -7363,7 +7363,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("(DynamicArray<"sv)));
+(output,(ByteString::must_from_utf8("DynamicArray<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7414,7 +7414,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}))"sv)));
+(output,(ByteString::must_from_utf8("})"sv)));
 }
 
 __jakt_var_644 = output; goto __jakt_label_544;
@@ -7628,7 +7628,7 @@ types::CheckedBlock const& block = __jakt_match_value.block;
 ids::TypeId const& return_type_id = __jakt_match_value.return_type_id;
 JaktInternal::Optional<ids::FunctionId> const& pseudo_function_id = __jakt_match_value.pseudo_function_id;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_648; {
-JaktInternal::DynamicArray<ByteString> generated_captures = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> generated_captures = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<types::CheckedCapture> _magic = ((captures).iterator());
 for (;;){
@@ -7667,7 +7667,7 @@ return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_litera
 }
 }
 
-JaktInternal::DynamicArray<ByteString> generated_params = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> generated_params = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((params).iterator());
 for (;;){
@@ -10204,7 +10204,7 @@ VERIFY_NOT_REACHED();
     _jakt_value.release_value();
 });
 NonnullRefPtr<types::CheckedVariable> const var = types::CheckedVariable::__jakt_create((ByteString::must_from_utf8("self"sv)),((((*this).program))->find_or_add_type_id(reference_type,((((expr)->type())).module),false)),is_mutable,((expr)->span()),JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
-JaktInternal::DynamicArray<types::CheckedParameter> params = (DynamicArray<types::CheckedParameter>::create_with({types::CheckedParameter(false,var,JaktInternal::OptionalNone())}));
+JaktInternal::DynamicArray<types::CheckedParameter> params = DynamicArray<types::CheckedParameter>::create_with({types::CheckedParameter(false,var,JaktInternal::OptionalNone())});
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((((function)->params))[(JaktInternal::Range<i64>{static_cast<i64>(static_cast<i64>(1LL)),static_cast<i64>(9223372036854775807LL)})])).iterator());
 for (;;){
@@ -10224,7 +10224,7 @@ if (((((((function)->block)).statements)).is_empty())){
 warnln((StringView::from_string_literal("Shit, block is empty in function ({}): {}"sv)),(((call).function_id).value()),function);
 abort();
 }
-NonnullRefPtr<typename types::CheckedExpression> const lambda = types::CheckedExpression::Function(JaktInternal::OptionalNone(),(DynamicArray<types::CheckedCapture>::create_with({})),params,((function)->can_throw),((function)->return_type_id),((function)->block),((expr)->span()),types::unknown_type_id(),((call).function_id),((function)->function_scope_id));
+NonnullRefPtr<typename types::CheckedExpression> const lambda = types::CheckedExpression::Function(JaktInternal::OptionalNone(),DynamicArray<types::CheckedCapture>::create_with({}),params,((function)->can_throw),((function)->return_type_id),((function)->block),((expr)->span()),types::unknown_type_id(),((call).function_id),((function)->function_scope_id));
 JaktInternal::Optional<ByteString> const old_this_replacement = ((*this).this_replacement);
 (((*this).this_replacement) = (ByteString::must_from_utf8("self"sv)));
 [](ByteString& self, ByteString rhs) -> void {
@@ -10437,7 +10437,7 @@ if ((!(((generic_parameters).is_empty())))){
 }
 (output,((name).as_name_for_use()));
 if ((!(((generic_parameters).is_empty())))){
-JaktInternal::DynamicArray<ByteString> types = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> types = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((generic_parameters).iterator());
 for (;;){
@@ -11337,7 +11337,7 @@ else {
 
 JaktInternal::DynamicArray<ids::TypeId> const generic_parameters = ((call).type_args);
 if ((!(((generic_parameters).is_empty())))){
-JaktInternal::DynamicArray<ByteString> types = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> types = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((generic_parameters).iterator());
 for (;;){
@@ -11360,7 +11360,7 @@ ids::TypeId gen_param = (_magic_value.value());
 }
 (output,__jakt_format((StringView::from_string_literal("<{}>"sv)),utility::join(types,(ByteString::must_from_utf8(", "sv)))));
 }
-JaktInternal::DynamicArray<ByteString> arguments = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> arguments = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>> _magic = ((((call).args)).iterator());
 for (;;){
@@ -12221,7 +12221,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Canno
 return Error::__jakt_from_string_literal((StringView::from_string_literal("Cannot typecheck a const function"sv)));
 }
 }
-),(DynamicArray<utility::Span>::create_with({})));
+),DynamicArray<utility::Span>::create_with({}));
 NonnullRefPtr<typename types::CheckedExpression> const expr = TRY((interpreter::value_to_checked_expression(value,interpreter)));
 __jakt_var_664 = TRY((((*this).codegen_expression(expr)))); goto __jakt_label_561;
 
@@ -13343,7 +13343,7 @@ if ((!(((((function)->params)).is_empty())))){
 }
 }
 (output,(ByteString::must_from_utf8(": "sv)));
-JaktInternal::DynamicArray<ByteString> initializers = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> initializers = DynamicArray<ByteString>::create_with({});
 size_t const parent_constructor_parameter_count = JaktInternal::checked_sub(((((function)->params)).size()),((((structure).fields)).size()));
 if ([](size_t const& self, size_t rhs) -> bool {
 {
@@ -13369,7 +13369,7 @@ ByteString parent_initializer = (ByteString::must_from_utf8(""sv));
 }
 }
 (parent_initializer,(ByteString::must_from_utf8("("sv)));
-JaktInternal::DynamicArray<ByteString> strings = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> strings = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((((function)->params))[(JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(parent_constructor_parameter_count)})])).iterator());
 for (;;){
@@ -14136,7 +14136,7 @@ return output;
 
 codegen::CodeGenerator::CodeGenerator(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, codegen::ControlFlowState a_control_flow_state, JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> a_entered_yieldable_blocks, ByteString a_deferred_output, JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> a_current_function, bool a_inside_defer, codegen::CodegenDebugInfo a_debug_info, JaktInternal::DynamicArray<ByteString> a_namespace_stack, size_t a_fresh_var_counter, size_t a_fresh_label_counter, JaktInternal::Optional<ByteString> a_this_replacement, JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> a_generic_inferences): compiler(move(a_compiler)), program(move(a_program)), control_flow_state(move(a_control_flow_state)), entered_yieldable_blocks(move(a_entered_yieldable_blocks)), deferred_output(move(a_deferred_output)), current_function(move(a_current_function)), inside_defer(move(a_inside_defer)), debug_info(move(a_debug_info)), namespace_stack(move(a_namespace_stack)), fresh_var_counter(move(a_fresh_var_counter)), fresh_label_counter(move(a_fresh_label_counter)), this_replacement(move(a_this_replacement)), generic_inferences(move(a_generic_inferences)){}
 
-ErrorOr<ByteString> codegen::AllowedControlExits::debug_description() const {
+ByteString codegen::AllowedControlExits::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Nothing */: {
 return ByteString("AllowedControlExits::Nothing"sv);
