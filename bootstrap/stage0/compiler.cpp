@@ -143,7 +143,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-ErrorOr<utility::FileId> compiler::Compiler::get_file_id_or_register(jakt__path::Path const file) {
+utility::FileId compiler::Compiler::get_file_id_or_register(jakt__path::Path const file) {
 {
 ByteString const path = ((file).to_string());
 JaktInternal::Optional<utility::FileId> file_id = ((((*this).file_ids)).get(path));
@@ -152,7 +152,7 @@ return (file_id.value());
 }
 ((((*this).files)).push(file));
 (file_id = utility::FileId(JaktInternal::checked_sub(((((*this).files)).size()),static_cast<size_t>(1ULL))));
-TRY((((((*this).file_ids)).set(path,(file_id.value())))));
+((((*this).file_ids)).set(path,(file_id.value())));
 return (file_id.value());
 }
 }
@@ -232,7 +232,7 @@ ErrorOr<void> compiler::Compiler::load_prelude() {
 {
 ByteString const module_name = (ByteString::must_from_utf8("__prelude__"sv));
 jakt__path::Path const file_name = jakt__path::Path::from_string(module_name);
-TRY((((*this).get_file_id_or_register(file_name))));
+((*this).get_file_id_or_register(file_name));
 }
 return {};
 }

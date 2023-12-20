@@ -42,11 +42,11 @@ namespace Jakt {
 namespace typechecker {
 
 /* specialisation 0 of function create_internal_dictionary_product: ["ByteString", "JaktInternal::Tuple<utility::Span,ids::TypeId>"] */
-template<> ErrorOr<typechecker::InternalDictionaryProduct<ByteString,JaktInternal::Tuple<utility::Span,ids::TypeId>>> create_internal_dictionary_product<ByteString, JaktInternal::Tuple<utility::Span,ids::TypeId>>(JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> const dict);
+template<> typechecker::InternalDictionaryProduct<ByteString,JaktInternal::Tuple<utility::Span,ids::TypeId>> create_internal_dictionary_product<ByteString, JaktInternal::Tuple<utility::Span,ids::TypeId>>(JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> const dict);
 template<>
-ErrorOr<typechecker::InternalDictionaryProduct<ByteString,JaktInternal::Tuple<utility::Span,ids::TypeId>>> create_internal_dictionary_product<ByteString, JaktInternal::Tuple<utility::Span,ids::TypeId>>(JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> const dict) {
+typechecker::InternalDictionaryProduct<ByteString,JaktInternal::Tuple<utility::Span,ids::TypeId>> create_internal_dictionary_product<ByteString, JaktInternal::Tuple<utility::Span,ids::TypeId>>(JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> const dict) {
 {
-JaktInternal::Dictionary<ByteString,size_t> current_index = (TRY((Dictionary<ByteString, size_t>::create_with_entries({}))));
+JaktInternal::Dictionary<ByteString,size_t> current_index = Dictionary<ByteString, size_t>::create_with_entries({});
 {
 JaktInternal::DictionaryIterator<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> _magic = ((dict).iterator());
 for (;;){
@@ -60,13 +60,13 @@ JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ut
 ByteString const key = ((jakt__key_____).template get<0>());
 JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>> const _ = ((jakt__key_____).template get<1>());
 
-TRY(current_index.set(key, static_cast<size_t>(0ULL)));
+current_index.set(key, static_cast<size_t>(0ULL));
 }
 
 }
 }
 
-JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<utility::Span,ids::TypeId>> const current = (TRY((Dictionary<ByteString, JaktInternal::Tuple<utility::Span,ids::TypeId>>::create_with_entries({}))));
+JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<utility::Span,ids::TypeId>> const current = Dictionary<ByteString, JaktInternal::Tuple<utility::Span,ids::TypeId>>::create_with_entries({});
 return typechecker::InternalDictionaryProduct<ByteString, JaktInternal::Tuple<utility::Span,ids::TypeId>>(dict,current,current_index,false);
 }
 }
