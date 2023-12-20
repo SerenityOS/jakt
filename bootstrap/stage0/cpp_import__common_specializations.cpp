@@ -1,6 +1,7 @@
 #include "cpp_import__common.h"
 #include "main.h"
 #include "platform__unknown_compiler.h"
+#include "git.h"
 #include "repl.h"
 #include "repl_backend__default.h"
 #include "repl_backend__common.h"
