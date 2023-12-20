@@ -92,15 +92,30 @@ public:
         return hash;
     }
 
-    static ErrorOr<Set> create_empty()
+    static Set create_empty()
     {
-        auto storage = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
+        auto storage = adopt_ref(*new Storage);
         return Set { move(storage) };
     }
 
-    static ErrorOr<Set> create_with_values(std::initializer_list<T> list)
+    static Set create_with_values(std::initializer_list<T> list)
     {
-        auto set = TRY(create_empty());
+        auto set = create_empty();
+        set.ensure_capacity(list.size());
+        for (auto& value : list)
+            set.add(value);
+       return set;
+    }
+
+    static Set must_create_empty()
+    {
+        auto storage = adopt_ref(*new Storage);
+        return Set { move(storage) };
+    }
+
+    static Set must_create_with_values(std::initializer_list<T> list)
+    {
+        auto set = must_create_empty();
         set.ensure_capacity(list.size());
         for (auto& value : list)
             set.add(value);

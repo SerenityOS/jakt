@@ -9062,9 +9062,6 @@ struct Typechecker {
         if .dump_try_hints {
             .dump_try_hint(span)
         }
-        if not .get_scope(scope_id).can_throw {
-            .error("Set initialization needs to be in a try statement or a function marked as throws", span)
-        }
         mut inner_type_id = unknown_type_id()
         mut inner_type_span: Span? = None
         mut output: [CheckedExpression] = []
