@@ -1637,7 +1637,7 @@ struct CodeGenerator {
 
         set_access_level(CheckedVisibility::Public)
         if struct_.generic_parameters.is_empty() {
-            output += "ErrorOr<ByteString> debug_description() const;\n"
+            output += "ByteString debug_description() const;\n"
         } else {
             output += .codegen_debug_description_getter(struct_, is_inline: true)
         }
@@ -1805,7 +1805,7 @@ struct CodeGenerator {
 
 
         if enum_.generic_parameters.is_empty() {
-            output += "ErrorOr<ByteString> debug_description() const;\n"
+            output += "ByteString debug_description() const;\n"
         } else {
             output += .codegen_enum_debug_description_getter(enum_, is_inline: true)
         }
@@ -2341,7 +2341,7 @@ struct CodeGenerator {
             output += ">\n"
         }
 
-        output += "ErrorOr<ByteString> "
+        output += "ByteString "
         if not is_inline {
             output += .codegen_type_possibly_as_namespace(type_id: struct_.type_id, as_namespace: true)
             output += "::"
@@ -2394,7 +2394,7 @@ struct CodeGenerator {
             output += ">\n"
         }
 
-        output += "ErrorOr<ByteString> "
+        output += "ByteString "
         if not is_inline {
             output += .codegen_type_possibly_as_namespace(type_id: enum_.type_id, as_namespace: true)
             output += "::"
@@ -2483,7 +2483,7 @@ struct CodeGenerator {
         output += "{\n"
         output += format("Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::{} const& value) {{\n", qualified_name)
         output += "JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };"
-        output += "Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, MUST(value.debug_description()));"
+        output += "Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());"
         output += "return format_error;"
         output += "}\n"
         output += "};\n"
