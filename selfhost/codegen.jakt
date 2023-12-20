@@ -4759,7 +4759,7 @@ struct CodeGenerator {
             }
 
             output += "public:\n"
-            output += format("static ErrorOr<NonnullRefPtr<{}>> __jakt_create", class_name_with_generics)
+            output += format("static NonnullRefPtr<{}> __jakt_create", class_name_with_generics)
             output += "("
 
             first = true
@@ -4900,7 +4900,7 @@ struct CodeGenerator {
                     true => ""
                     false => qualified_name + "::"
                 }
-                output += format("ErrorOr<NonnullRefPtr<{}>> {}__jakt_create", class_name_with_generics, qualified_namespace)
+                output += format("NonnullRefPtr<{}> {}__jakt_create", class_name_with_generics, qualified_namespace)
                 output += "("
 
                 first = true
@@ -4916,7 +4916,7 @@ struct CodeGenerator {
                     output += param.variable.name_for_codegen().as_name_for_definition()
                 }
 
-                output += format(") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", .current_error_handler(), class_name_with_generics)
+                output += format(") {{ auto o = adopt_ref(*new {} (", class_name_with_generics)
 
                 first = true
                 for param in function.params {
@@ -4931,7 +4931,7 @@ struct CodeGenerator {
                     output += ")"
                 }
 
-                output += "))); return o; }"
+                output += ")); return o; }"
             }
 
             return output
