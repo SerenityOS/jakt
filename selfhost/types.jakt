@@ -853,7 +853,7 @@ class CheckedFunction {
         stores_arguments: .stores_arguments
     )
 
-    public fn signature_matches(this, anon other: CheckedFunction, ignore_this: bool = false) throws -> bool {
+    public fn signature_matches(this, anon other: CheckedFunction, ignore_this: bool = false) -> bool {
         if this.name != other.name or
             this.can_throw != other.can_throw or
             this.is_comptime != other.is_comptime or

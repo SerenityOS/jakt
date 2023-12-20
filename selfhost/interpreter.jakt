@@ -787,7 +787,7 @@ class InterpreterScope {
         bindings: [String:Value] = [:]
         parent: InterpreterScope? = None
         type_bindings: [TypeId:TypeId] = [:]
-    ) throws -> InterpreterScope => InterpreterScope(
+    ) -> InterpreterScope => InterpreterScope(
         bindings
         parent
         type_bindings
@@ -959,7 +959,7 @@ class Interpreter {
         program: CheckedProgram
         typecheck_functions: TypecheckFunctions
         spans: [Span]
-    ) throws -> Interpreter {
+    ) -> Interpreter {
         return Interpreter(
             compiler
             program

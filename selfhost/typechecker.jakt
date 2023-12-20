@@ -349,7 +349,7 @@ struct Typechecker {
     fn is_floating(this, anon type_id: TypeId) -> bool => .program.is_floating(type_id)
     fn is_numeric(this, anon type_id: TypeId) -> bool => .program.is_numeric(type_id)
 
-    fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, for_block: bool = true) throws -> ScopeId => .program.create_scope(parent_scope_id, can_throw, debug_name, module_id: .current_module_id, for_block)
+    fn create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, for_block: bool = true) -> ScopeId => .program.create_scope(parent_scope_id, can_throw, debug_name, module_id: .current_module_id, for_block)
 
     fn create_module(mut this, name: String, is_root: bool, path: String? = None) -> ModuleId {
         let new_id = .program.modules.size()
@@ -681,7 +681,7 @@ struct Typechecker {
         return true
     }
 
-    fn add_function_to_scope(mut this, parent_scope_id: ScopeId, name: String, overload_set: [FunctionId], span: Span) throws -> bool {
+    fn add_function_to_scope(mut this, parent_scope_id: ScopeId, name: String, overload_set: [FunctionId], span: Span) -> bool {
         mut scope = .get_scope(id: parent_scope_id)
 
         if scope.functions.contains(name) {
@@ -6928,7 +6928,7 @@ struct Typechecker {
         return CheckedStatement::DestructuringAssignment(vars: var_decls, var_decl: checked_tuple_var_decl, span)
     }
 
-    fn interpreter(mut this) throws -> Interpreter => Interpreter::create(
+    fn interpreter(mut this) -> Interpreter => Interpreter::create(
         compiler: .compiler
         program: .program
         typecheck_functions: TypecheckFunctions(
@@ -6960,7 +6960,7 @@ struct Typechecker {
         spans: []
     )
 
-    fn scope_lifetime_subsumes(this, anon larger: ScopeId?, anon smaller: ScopeId?) throws -> bool {
+    fn scope_lifetime_subsumes(this, anon larger: ScopeId?, anon smaller: ScopeId?) -> bool {
         if not larger.has_value() {
             return false
         }
@@ -6999,7 +6999,7 @@ struct Typechecker {
         return false
     }
 
-    fn scope_lifetime_union(this, anon first: ScopeId?, anon second: ScopeId?) throws -> ScopeId? {
+    fn scope_lifetime_union(this, anon first: ScopeId?, anon second: ScopeId?) -> ScopeId? {
         // If one is immediate, the union is also immediate:
         if not first.has_value() or not second.has_value() {
             return None
