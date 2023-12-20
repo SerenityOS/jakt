@@ -2081,7 +2081,7 @@ struct CodeGenerator {
             // NOTE: these statements should compile because a default constructor is provided privately.
         let (declare_uninit, deref_uninit) = match enum_.is_boxed {
             true => (
-                format("NonnullRefPtr<{0}> __jakt_uninit_enum = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {0}));\n", ctor_type),
+                format("NonnullRefPtr<{0}> __jakt_uninit_enum = adopt_ref(*new {0});\n", ctor_type),
                 "__jakt_uninit_enum->"
             )
             false => (
@@ -2254,7 +2254,7 @@ struct CodeGenerator {
             result += format("<{}>", generic_parameter_list!)
         }
         if enum_.is_boxed {
-            result = format("ErrorOr<NonnullRefPtr<{}>>", result)
+            result = format("NonnullRefPtr<{}>", result)
         }
         return result
     }

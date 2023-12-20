@@ -3812,9 +3812,8 @@ struct Typechecker {
                         enum_.variants.push(CheckedEnumVariant::StructLike(enum_id, name: variant.name, fields, span: variant.span))
                         let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
-                            let can_function_throw = is_boxed
-                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
-                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: false, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
+                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: false, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
                             let checked_function = CheckedFunction(
                                 name: variant.name
                                 name_span: variant.span
@@ -3835,7 +3834,7 @@ struct Typechecker {
                                     yielded_type: TypeId::none()
                                     yielded_none: false
                                 ),
-                                can_throw: can_function_throw
+                                can_throw: false
                                 type: FunctionType::ImplicitEnumConstructor
                                 linkage: FunctionLinkage::Internal
                                 function_scope_id
@@ -3867,9 +3866,8 @@ struct Typechecker {
 
                         let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
-                            let can_function_throw = is_boxed
-                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
-                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: false, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
+                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: false, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
                             let variable = CheckedVariable(
                                 name: "value"
                                 type_id
@@ -3902,7 +3900,7 @@ struct Typechecker {
                                     yielded_type: TypeId::none()
                                     yielded_none: false
                                 ),
-                                can_throw: can_function_throw
+                                can_throw: false
                                 type: FunctionType::ImplicitEnumConstructor
                                 linkage: FunctionLinkage::Internal
                                 function_scope_id
@@ -3931,9 +3929,8 @@ struct Typechecker {
                         enum_.variants.push(CheckedEnumVariant::Untyped(enum_id, name: variant.name, span: variant.span))
                         let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
-                            let can_function_throw = is_boxed
-                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
-                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: false, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
+                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: false, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
                             let checked_function = CheckedFunction(
                                 name: variant.name
                                 name_span: variant.span
@@ -3954,7 +3951,7 @@ struct Typechecker {
                                     yielded_type: TypeId::none()
                                     yielded_none: false
                                 ),
-                                can_throw: can_function_throw
+                                can_throw: false
                                 type: FunctionType::ImplicitEnumConstructor
                                 linkage: FunctionLinkage::Internal
                                 function_scope_id
