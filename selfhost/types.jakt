@@ -1781,7 +1781,7 @@ class CheckedProgram {
         return module_id
     }
 
-    public fn debug_description_of(this, anon scope_id: ScopeId) throws -> String {
+    public fn debug_description_of(this, anon scope_id: ScopeId) -> String {
         mut ss: [String] = []
         mut current_scope_id = scope_id
         loop {

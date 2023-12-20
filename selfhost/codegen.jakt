@@ -1902,7 +1902,7 @@ struct CodeGenerator {
         is_inline: bool // whether it's an inline definition (inside of the `struct`) or out-of-line one.
         ctor_result_type: String
         output: &mut String
-    ) throws {
+    ) {
         output += "[[nodiscard]] "
         if is_inline {
             output += format("static {} {}(", ctor_result_type, variant_name)
@@ -1938,7 +1938,7 @@ struct CodeGenerator {
         output += ")"
     }
 
-    fn codegen_for_enum_variants(this, anon enum_: &CheckedEnum, anon stmt_fmt: &fn(accessor: String) throws -> String, index_expr: String, builder: &mut StringBuilder) throws {
+    fn codegen_for_enum_variants(this, anon enum_: &CheckedEnum, anon stmt_fmt: &fn(accessor: String) -> String, index_expr: String, builder: &mut StringBuilder) {
         // Adding to output here in a loop was causing a 30% slowdown, so using
         // a StringBuilder to mitigate it.
         builder.append(format("switch ({}) {{\n", index_expr))
@@ -1979,7 +1979,7 @@ struct CodeGenerator {
         enum_: CheckedEnum
         is_constructor: bool // whether it's a constructor. If false, it's an assignment operator.
         use_move: bool // whether to use the "move()" function from AK lib.
-    ) throws -> String {
+    ) -> String {
         mut builder = StringBuilder::create()
         builder.append("{")
 
@@ -1992,7 +1992,7 @@ struct CodeGenerator {
             builder.append("VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);\n")
         }
 
-        let assign = fn[use_move](accessor: String) throws -> String {
+        let assign = fn[use_move](accessor: String) -> String {
             let rhs = match use_move {
                 true => format("move(rhs.{})", accessor)
                 false => format("rhs.{}", accessor)
@@ -2000,7 +2000,7 @@ struct CodeGenerator {
             return format("this->{} = {};\n", accessor, rhs)
         }
 
-        let placement_new = fn[use_move](accessor: String) throws -> String {
+        let placement_new = fn[use_move](accessor: String) -> String {
             let rhs = match use_move {
                 true => format("move(rhs.{})", accessor)
                 false => format("rhs.{}", accessor)
@@ -2066,7 +2066,7 @@ struct CodeGenerator {
         generic_parameter_list: String? // Must be Some if enum is generic.
         variant_field_list: [(String, [(String, String)])] // variant_name, [(field_name, .codegen_type(field_type)]
         common_fields: [(String, String)]
-    ) throws -> String {
+    ) -> String {
         mut output = ""
 
         let is_generic = not enum_.generic_parameters.is_empty()
@@ -2094,7 +2094,7 @@ struct CodeGenerator {
             panic("Out of line constructor cannot be generated for generic enum")
         }
 
-        let placement_new = fn[](target: String, name: String) throws -> String {
+        let placement_new = fn[](target: String, name: String) -> String {
             return format("new (&{0}) (decltype({1}))(move({1}));\n", target, name)
         }
 
@@ -2248,7 +2248,7 @@ struct CodeGenerator {
         else => None
     }
 
-    fn enum_constructor_result_type(enum_: CheckedEnum, generic_parameter_list: String? = None) throws -> String {
+    fn enum_constructor_result_type(enum_: CheckedEnum, generic_parameter_list: String? = None) -> String {
         mut result = enum_.name
         if not enum_.generic_parameters.is_empty() {
             result += format("<{}>", generic_parameter_list!)
@@ -2266,7 +2266,7 @@ struct CodeGenerator {
     fn codegen_enum_destroy_variant(this
         enum_: CheckedEnum
         output: &mut String
-    ) throws {
+    ) {
         let common_field_count = enum_.fields.size()
         output += "switch (this->__jakt_init_index()) {\n"
         for variant_index in 0..enum_.variants.size() {
@@ -2309,7 +2309,7 @@ struct CodeGenerator {
         this
         enum_: CheckedEnum
         output: &mut String
-    ) throws {
+    ) {
         output += "{\n"
 
         output += "if (this->__jakt_variant_index == 0) return;\n"
@@ -2460,7 +2460,7 @@ struct CodeGenerator {
         return output
     }
 
-    fn codegen_ak_formatter(mut this, name: String, generic_parameter_names: [String], anon template_args: String) throws -> String {
+    fn codegen_ak_formatter(mut this, name: String, generic_parameter_names: [String], anon template_args: String) -> String {
         mut output = ""
 
         let generic_type_args = join(generic_parameter_names, separator: ", ")
