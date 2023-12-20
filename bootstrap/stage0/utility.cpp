@@ -86,7 +86,7 @@ return output;
 
 JaktInternal::DynamicArray<ByteString> prepend_to_each(JaktInternal::DynamicArray<ByteString> const strings,ByteString const prefix) {
 {
-JaktInternal::DynamicArray<ByteString> output = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> output = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((strings).iterator());
 for (;;){
@@ -108,7 +108,7 @@ return output;
 
 JaktInternal::DynamicArray<ByteString> append_to_each(JaktInternal::DynamicArray<ByteString> const strings,ByteString const suffix) {
 {
-JaktInternal::DynamicArray<ByteString> output = (DynamicArray<ByteString>::create_with({}));
+JaktInternal::DynamicArray<ByteString> output = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((strings).iterator());
 for (;;){
@@ -131,7 +131,7 @@ return output;
 ErrorOr<void> write_to_file(ByteString const data,ByteString const output_filename) {
 {
 NonnullRefPtr<File> outfile = TRY((File::open_for_writing(output_filename)));
-JaktInternal::DynamicArray<u8> bytes = (DynamicArray<u8>::create_with({}));
+JaktInternal::DynamicArray<u8> bytes = DynamicArray<u8>::create_with({});
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((data).length()))});
 for (;;){
@@ -474,7 +474,7 @@ return ((((byte) == (static_cast<u8>(u8' '))) || ((byte) == (static_cast<u8>(u8'
 }
 }
 
-ErrorOr<ByteString> utility::Span::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Span("sv);{
+ByteString utility::Span::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Span("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("file_id: {}, ", file_id);
@@ -628,7 +628,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 
 utility::Span::Span(utility::FileId a_file_id, size_t a_start, size_t a_end): file_id(move(a_file_id)), start(move(a_start)), end(move(a_end)){}
 
-ErrorOr<ByteString> utility::FileId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("FileId("sv);{
+ByteString utility::FileId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("FileId("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("id: {}", id);

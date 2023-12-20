@@ -1,7 +1,7 @@
 #include "build.h"
 namespace Jakt {
 namespace build {
-ErrorOr<ByteString> build::ParallelExecutionPool::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParallelExecutionPool("sv);{
+ByteString build::ParallelExecutionPool::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ParallelExecutionPool("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("pids: {}, ", pids);
@@ -150,7 +150,7 @@ return {};
 
 build::ParallelExecutionPool::ParallelExecutionPool(JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::Process> a_pids, JaktInternal::Dictionary<size_t,jakt__platform__unknown_process::ExitPollResult> a_completed, size_t a_pid_index, size_t a_max_concurrent): pids(move(a_pids)), completed(move(a_completed)), pid_index(move(a_pid_index)), max_concurrent(move(a_max_concurrent)){}
 
-ErrorOr<ByteString> build::Builder::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Builder("sv);{
+ByteString build::Builder::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Builder("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("linked_files: {}, ", linked_files);
@@ -162,7 +162,7 @@ builder.appendff("pool: {}", pool);
 builder.append(")"sv);return builder.to_string(); }
 ErrorOr<build::Builder> build::Builder::for_building(JaktInternal::DynamicArray<ByteString> const files,size_t const max_concurrent) {
 {
-return build::Builder((DynamicArray<ByteString>::create_with({})),files,build::ParallelExecutionPool::create(max_concurrent));
+return build::Builder(DynamicArray<ByteString>::create_with({}),files,build::ParallelExecutionPool::create(max_concurrent));
 }
 }
 
@@ -235,14 +235,14 @@ return Error::from_errno(static_cast<i32>(1));
 }
 }
 
-(((*this).files_to_compile) = (DynamicArray<ByteString>::create_with({})));
+(((*this).files_to_compile) = DynamicArray<ByteString>::create_with({}));
 }
 return {};
 }
 
 ErrorOr<void> build::Builder::link_into_archive(ByteString const archiver,ByteString const archive_filename,JaktInternal::DynamicArray<ByteString> const extra_arguments) {
 {
-JaktInternal::DynamicArray<ByteString> args = (DynamicArray<ByteString>::create_with({archiver, ({
+JaktInternal::DynamicArray<ByteString> args = DynamicArray<ByteString>::create_with({archiver, ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>>{
 auto __jakt_enum_value = (((extra_arguments).size()));
 if (__jakt_enum_value == static_cast<size_t>(0ULL)) {
@@ -255,7 +255,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8("crT"sv)));
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}), archive_filename}));
+}), archive_filename});
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).linked_files)).iterator());
 for (;;){
@@ -284,7 +284,7 @@ return {};
 
 ErrorOr<void> build::Builder::link_into_executable(ByteString const cxx_compiler_path,ByteString const output_filename,JaktInternal::DynamicArray<ByteString> const extra_arguments) {
 {
-JaktInternal::DynamicArray<ByteString> args = (DynamicArray<ByteString>::create_with({cxx_compiler_path, (ByteString::must_from_utf8("-o"sv)), output_filename}));
+JaktInternal::DynamicArray<ByteString> args = DynamicArray<ByteString>::create_with({cxx_compiler_path, (ByteString::must_from_utf8("-o"sv)), output_filename});
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).linked_files)).iterator());
 for (;;){

@@ -1,7 +1,7 @@
 #include "repl_backend__default.h"
 namespace Jakt {
 namespace repl_backend__default {
-ErrorOr<ByteString> repl_backend__default::Editor::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Editor("sv);{
+ByteString repl_backend__default::Editor::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Editor("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("standard_input_file: {}, ", standard_input_file);

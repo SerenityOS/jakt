@@ -23,7 +23,7 @@ return Error::from_errno(static_cast<i32>(38));
 }
 }
 
-ErrorOr<ByteString> jakt__platform__unknown_fs::DirectoryIterator::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("DirectoryIterator("sv);{
+ByteString jakt__platform__unknown_fs::DirectoryIterator::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("DirectoryIterator("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
 builder.append(")"sv);return builder.to_string(); }

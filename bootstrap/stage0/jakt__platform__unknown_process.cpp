@@ -37,13 +37,13 @@ return Error::from_errno(static_cast<i32>(38));
 }
 }
 
-ErrorOr<ByteString> jakt__platform__unknown_process::Process::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Process("sv);{
+ByteString jakt__platform__unknown_process::Process::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Process("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
 builder.append(")"sv);return builder.to_string(); }
 jakt__platform__unknown_process::Process::Process(){}
 
-ErrorOr<ByteString> jakt__platform__unknown_process::ExitPollResult::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ExitPollResult("sv);{
+ByteString jakt__platform__unknown_process::ExitPollResult::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ExitPollResult("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("exit_code: {}, ", exit_code);

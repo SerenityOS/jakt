@@ -1,7 +1,7 @@
 #include "project.h"
 namespace Jakt {
 namespace project {
-ErrorOr<ByteString> project::Project::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Project("sv);{
+ByteString project::Project::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Project("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("name: \"{}\"", name);
