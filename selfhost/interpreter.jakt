@@ -2181,7 +2181,7 @@ class Interpreter {
                         panic("Invalid use of Dictionary::get()")
                     }
                 }
-                "set" | "must_set" => match this_argument!.impl {
+                "set" => match this_argument!.impl {
                     JaktDictionary(keys, values) => {
                         mut found_index: usize? = None
                         for i in 0..keys.size() {
@@ -2280,7 +2280,7 @@ class Interpreter {
                         panic("Invalid use of Dictionary::remove()")
                     }
                 }
-                "ensure_capacity" | "must_ensure_capacity" => match this_argument!.impl {
+                "ensure_capacity" => match this_argument!.impl {
                     JaktDictionary(keys, values) => match arguments[0].impl {
                         USize(capacity) => {
                             mut mutable_keys = keys
@@ -2336,7 +2336,7 @@ class Interpreter {
                         panic("Invalid use of Dictionary::size()")
                     }
                 }
-                "keys" | "must_keys" => match this_argument!.impl {
+                "keys" => match this_argument!.impl {
                     JaktDictionary(keys, type_id) => {
                         let generics = match .program.get_type(type_id) {
                             GenericInstance(args) => args
