@@ -11,6 +11,6 @@ type StringView implements(FromStringLiteral) {
 }
 
 type String implements(FromStringLiteral) {
-    [[name=must_from_utf8]]
+    [[name=from_utf8_without_validation]]
     extern fn from_string_literal(anon string: StringView) -> String
 }

@@ -8,40 +8,40 @@ return ({
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* PreIncrement */: {
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("++"sv))) + (expr)));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("++"sv))) + (expr)));
 };/*case end*/
 case 1 /* PostIncrement */: {
-return JaktInternal::ExplicitValue(((expr) + ((ByteString::must_from_utf8("++"sv)))));
+return JaktInternal::ExplicitValue(((expr) + ((ByteString::from_utf8_without_validation("++"sv)))));
 };/*case end*/
 case 2 /* PreDecrement */: {
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("--"sv))) + (expr)));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("--"sv))) + (expr)));
 };/*case end*/
 case 3 /* PostDecrement */: {
-return JaktInternal::ExplicitValue(((expr) + ((ByteString::must_from_utf8("--"sv)))));
+return JaktInternal::ExplicitValue(((expr) + ((ByteString::from_utf8_without_validation("--"sv)))));
 };/*case end*/
 case 4 /* Negate */: {
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("-"sv))) + (expr)));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("-"sv))) + (expr)));
 };/*case end*/
 case 5 /* Dereference */: {
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("*"sv))) + (expr)));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("*"sv))) + (expr)));
 };/*case end*/
 case 6 /* RawAddress */: {
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("&raw "sv))) + (expr)));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("&raw "sv))) + (expr)));
 };/*case end*/
 case 7 /* Reference */: {
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("&"sv))) + (expr)));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("&"sv))) + (expr)));
 };/*case end*/
 case 8 /* MutableReference */: {
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("&mut "sv))) + (expr)));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("&mut "sv))) + (expr)));
 };/*case end*/
 case 9 /* LogicalNot */: {
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("not "sv))) + (expr)));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("not "sv))) + (expr)));
 };/*case end*/
 case 10 /* BitwiseNot */: {
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("~"sv))) + (expr)));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("~"sv))) + (expr)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((((((ByteString::must_from_utf8("(<Unimplemented unary operator> "sv))) + (expr))) + ((ByteString::must_from_utf8(")"sv)))));
+return JaktInternal::ExplicitValue((((((ByteString::from_utf8_without_validation("(<Unimplemented unary operator> "sv))) + (expr))) + ((ByteString::from_utf8_without_validation(")"sv)))));
 };/*case end*/
 }/*switch end*/
 }()
@@ -188,11 +188,11 @@ case 9 /* Range */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Range;JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const& from = __jakt_match_value.from;
 JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const& to = __jakt_match_value.to;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_928; {
-ByteString from_output = (ByteString::must_from_utf8(""sv));
+ByteString from_output = (ByteString::from_utf8_without_validation(""sv));
 if (((from).has_value())){
 (from_output = TRY((repl::serialize_ast_node((from.value())))));
 }
-ByteString to_output = (ByteString::must_from_utf8(""sv));
+ByteString to_output = (ByteString::from_utf8_without_validation(""sv));
 if (((to).has_value())){
 (to_output = TRY((repl::serialize_ast_node((to.value())))));
 }
@@ -343,7 +343,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Var;NonnullRefPtr<types::Che
 return JaktInternal::ExplicitValue(((var)->name));
 };/*case end*/
 case 25 /* OptionalNone */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("None"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("None"sv)));
 };/*case end*/
 case 26 /* OptionalSome */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.OptionalSome;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
@@ -405,10 +405,10 @@ __jakt_var_933 = ((builder).to_string()); goto __jakt_label_827;
 __jakt_label_827:; __jakt_var_933.release_value(); }));
 };/*case end*/
 case 34 /* Garbage */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("<Garbage>"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("<Garbage>"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("<Unimplemented>"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("<Unimplemented>"sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -436,11 +436,11 @@ builder.appendff("file_id: {}", file_id);
 builder.append(")"sv);return builder.to_string(); }
 ErrorOr<repl::REPL> repl::REPL::create(jakt__path::Path const runtime_path,JaktInternal::Optional<ByteString> const target_triple,JaktInternal::Dictionary<ByteString,ByteString> const user_configuration) {
 {
-NonnullRefPtr<compiler::Compiler> compiler = compiler::Compiler::__jakt_create(DynamicArray<jakt__path::Path>::create_with({}),Dictionary<ByteString, utility::FileId>::create_with_entries({}),DynamicArray<error::JaktError>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<u8>::create_with({}),false,false,false,false,runtime_path,DynamicArray<ByteString>::create_with({}),false,false,false,false,target_triple,user_configuration,jakt__path::Path::from_string((ByteString::must_from_utf8("build"sv))),jakt__path::Path::from_string((ByteString::must_from_utf8("repl.jakt"sv))));
+NonnullRefPtr<compiler::Compiler> compiler = compiler::Compiler::__jakt_create(DynamicArray<jakt__path::Path>::create_with({}),Dictionary<ByteString, utility::FileId>::create_with_entries({}),DynamicArray<error::JaktError>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<u8>::create_with({}),false,false,false,false,runtime_path,DynamicArray<ByteString>::create_with({}),false,false,false,false,target_triple,user_configuration,jakt__path::Path::from_string((ByteString::from_utf8_without_validation("build"sv))),jakt__path::Path::from_string((ByteString::from_utf8_without_validation("repl.jakt"sv))));
 TRY((((compiler)->load_prelude())));
-utility::FileId const file_id = ((compiler)->get_file_id_or_register(jakt__path::Path::from_string((ByteString::must_from_utf8("<repl>"sv)))));
+utility::FileId const file_id = ((compiler)->get_file_id_or_register(jakt__path::Path::from_string((ByteString::from_utf8_without_validation("<repl>"sv)))));
 ids::ModuleId const placeholder_module_id = ids::ModuleId(static_cast<size_t>(0ULL));
-ByteString const root_module_name = (ByteString::must_from_utf8("repl"sv));
+ByteString const root_module_name = (ByteString::from_utf8_without_validation("repl"sv));
 typechecker::Typechecker typechecker = typechecker::Typechecker(compiler,types::CheckedProgram::__jakt_create(compiler,DynamicArray<NonnullRefPtr<types::Module>>::create_with({}),Dictionary<ByteString, types::LoadedModule>::create_with_entries({})),placeholder_module_id,ids::TypeId::none(),JaktInternal::OptionalNone(),false,static_cast<size_t>(0ULL),false,((compiler)->dump_type_hints),((compiler)->dump_try_hints),static_cast<u64>(0ULL),types::GenericInferences(Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({})),JaktInternal::OptionalNone(),root_module_name,false,false,Dictionary<ByteString, ids::ScopeId>::create_with_entries({}),JaktInternal::OptionalNone());
 (((compiler)->current_file) = file_id);
 TRY((((typechecker).include_prelude())));
@@ -448,8 +448,8 @@ ids::ModuleId const root_module_id = ((typechecker).create_module(root_module_na
 (((typechecker).current_module_id) = root_module_id);
 ((((typechecker).program))->set_loaded_module(root_module_name,types::LoadedModule(root_module_id,file_id)));
 ids::ScopeId const PRELUDE_SCOPE_ID = ((typechecker).prelude_scope_id());
-ids::ScopeId const root_scope_id = ((typechecker).create_scope(PRELUDE_SCOPE_ID,true,(ByteString::must_from_utf8("root"sv)),true));
-TRY((((typechecker).typecheck_module_import(parser::ParsedModuleImport(parser::ImportName::Literal((ByteString::must_from_utf8("jakt::prelude::prelude"sv)),utility::Span(utility::FileId(static_cast<size_t>(0ULL)),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL))),JaktInternal::OptionalNone(),parser::ImportList::All(),false,static_cast<size_t>(0ULL)),root_scope_id))));
+ids::ScopeId const root_scope_id = ((typechecker).create_scope(PRELUDE_SCOPE_ID,true,(ByteString::from_utf8_without_validation("root"sv)),true));
+TRY((((typechecker).typecheck_module_import(parser::ParsedModuleImport(parser::ImportName::Literal((ByteString::from_utf8_without_validation("jakt::prelude::prelude"sv)),utility::Span(utility::FileId(static_cast<size_t>(0ULL)),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL))),JaktInternal::OptionalNone(),parser::ImportList::All(),false,static_cast<size_t>(0ULL)),root_scope_id))));
 NonnullRefPtr<interpreter::InterpreterScope> const root_interpreter_scope = interpreter::InterpreterScope::create(Dictionary<ByteString, types::Value>::create_with_entries({}),JaktInternal::OptionalNone(),Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({}));
 return repl::REPL(compiler,typechecker,root_scope_id,root_interpreter_scope,file_id);
 }
@@ -891,7 +891,7 @@ return JaktInternal::ExplicitValue<void>();
 return {};
 }
 ;
-repl_backend__default::Editor editor = TRY((repl_backend__default::Editor::create((ByteString::must_from_utf8("> "sv)),((syntax_highlight_handler)))));
+repl_backend__default::Editor editor = TRY((repl_backend__default::Editor::create((ByteString::from_utf8_without_validation("> "sv)),((syntax_highlight_handler)))));
 ScopeGuard __jakt_var_937([&] {
 ((editor).destroy());
 });
@@ -912,10 +912,10 @@ return {};
 __jakt_var_938.release_value(); });
 if (((line_result).__jakt_init_index() == 0 /* Line */)){
 ByteString const line = (line_result).as.Line.value;
-if (((line) == ((ByteString::must_from_utf8("\n"sv))))){
+if (((line) == ((ByteString::from_utf8_without_validation("\n"sv))))){
 continue;
 }
-if (((line) == ((ByteString::must_from_utf8(".exit\n"sv))))){
+if (((line) == ((ByteString::from_utf8_without_validation(".exit\n"sv))))){
 break;
 }
 (((((*this).compiler))->current_file) = ((*this).file_id));
@@ -936,7 +936,7 @@ ByteStringBuilder builder = ByteStringBuilder::create();
 ((builder).append(line));
 while ((!(repl::REPL::check_parens(tokens)))){
 repl_backend__common::LineResult const line_result = ({ Optional<repl_backend__common::LineResult> __jakt_var_942;
-auto __jakt_var_943 = [&]() -> ErrorOr<repl_backend__common::LineResult> { return TRY((((editor).get_line((ByteString::must_from_utf8(".."sv)))))); }();
+auto __jakt_var_943 = [&]() -> ErrorOr<repl_backend__common::LineResult> { return TRY((((editor).get_line((ByteString::from_utf8_without_validation(".."sv)))))); }();
 if (__jakt_var_943.is_error()) {auto error = __jakt_var_943.release_error();
 {
 return {};
@@ -1097,7 +1097,7 @@ return JaktInternal::ExplicitValue(TRY((repl::serialize_ast_node(TRY((interprete
 };/*case end*/
 case 1 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;types::Value const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("throw "sv))) + (TRY((repl::serialize_ast_node(TRY((interpreter::value_to_checked_expression(value,interpreter)))))))));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("throw "sv))) + (TRY((repl::serialize_ast_node(TRY((interpreter::value_to_checked_expression(value,interpreter)))))))));
 };/*case end*/
 case 4 /* Break */: {
 {
