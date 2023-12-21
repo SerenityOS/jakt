@@ -126,20 +126,19 @@ struct Typechecker {
     compiler: Compiler
     program: CheckedProgram
     current_module_id: ModuleId
-    current_struct_type_id: TypeId?
-    current_function_id: FunctionId?
-    inside_defer: bool
-    checkidx: usize
-    ignore_errors: bool
-    dump_type_hints: bool
-    dump_try_hints: bool
-    lambda_count: u64
-    generic_inferences: GenericInferences
+    current_struct_type_id: TypeId? = None
+    current_function_id: FunctionId? = None
+    inside_defer: bool = false
+    ignore_errors: bool = false
+    dump_type_hints: bool = false
+    dump_try_hints: bool = false
+    lambda_count: u64 = 0
+    generic_inferences: GenericInferences = GenericInferences()
     self_type_id: TypeId? = None
     root_module_name: String
     in_comptime_function_call: bool = false
     had_an_error: bool = false
-    cpp_import_cache: [String:ScopeId]
+    cpp_import_cache: [String:ScopeId] = [:]
     cpp_import_processor: CppImportProcessor? = None
 
     fn set_self_type_id(mut this, anon type_id: TypeId) {
@@ -185,17 +184,9 @@ struct Typechecker {
             compiler
             program: CheckedProgram(compiler),
             current_module_id: placeholder_module_id,
-            current_struct_type_id: TypeId::none()
-            current_function_id: None
-            inside_defer: false
-            checkidx: 0uz
-            ignore_errors: false
             dump_type_hints: compiler.dump_type_hints
             dump_try_hints: compiler.dump_try_hints
-            lambda_count: 0
-            generic_inferences: GenericInferences(values: [:])
             root_module_name
-            cpp_import_cache: [:]
         )
 
         typechecker.include_prelude()

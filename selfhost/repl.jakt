@@ -202,17 +202,9 @@ struct REPL {
             compiler
             program: CheckedProgram(compiler),
             current_module_id: placeholder_module_id,
-            current_struct_type_id: TypeId::none()
-            current_function_id: None
-            inside_defer: false
-            checkidx: 0uz
-            ignore_errors: false
             dump_type_hints: compiler.dump_type_hints
             dump_try_hints: compiler.dump_try_hints
-            lambda_count: 0
-            generic_inferences: GenericInferences(values: [:])
             root_module_name
-            cpp_import_cache: [:]
         )
 
         compiler.current_file = file_id
