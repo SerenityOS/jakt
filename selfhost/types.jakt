@@ -78,7 +78,7 @@ enum StructLikeId {
 }
 
 struct GenericInferences {
-    values: [TypeId:TypeId]
+    values: [TypeId:TypeId] = [:]
 
     fn set(mut this, anon key: TypeId, anon value: TypeId) {
         if key == value {
