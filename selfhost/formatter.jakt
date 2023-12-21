@@ -112,8 +112,8 @@ enum State {
 struct FormattedToken {
     token: Token
     indent: usize
-    trailing_trivia: [u8]
-    preceding_trivia: [u8]
+    trailing_trivia: [u8] = []
+    preceding_trivia: [u8] = []
 
     fn debug_text(this) throws -> String => match .token {
         Identifier(name) => format("Identifier: {}", name)
@@ -293,12 +293,10 @@ struct Stage0 {
         return FormattedToken(
             token
             indent: .indent
-            trailing_trivia: []
-            preceding_trivia: []
         )
     }
 
-    private fn formatted_token(this, anon token: Token, trailing_trivia: [u8], preceding_trivia: [u8]) -> FormattedToken {
+    private fn formatted_token(this, anon token: Token, trailing_trivia: [u8] = [], preceding_trivia: [u8] = []) -> FormattedToken {
         return FormattedToken(
             token
             indent: .indent
@@ -405,7 +403,7 @@ struct Stage0 {
                 trailing_trivia.push(b' ')
             }
 
-            yield .formatted_token(token, trailing_trivia, preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia)
         }
         else => {
             .pop_state()
@@ -428,7 +426,7 @@ struct Stage0 {
                 }
                 else => {}
             }
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Identifier(name) => {
             if name == "type" and .peek() is Identifier {
@@ -439,7 +437,7 @@ struct Stage0 {
                     generic_nesting: 0uz
                     is_extern
                 ))
-                return .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+                return .formatted_token(token, trailing_trivia: [b' '])
             }
             yield .formatted_token(token)
         }
@@ -457,7 +455,7 @@ struct Stage0 {
                 trailing_trivia.push(b' ')
             }
 
-            yield .formatted_token(token, trailing_trivia, preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia)
         }
         LSquare => {
             .replace_state(State::Toplevel(
@@ -517,7 +515,7 @@ struct Stage0 {
                 open_squares
                 is_extern
             ))
-            yield .formatted_token(token, trailing_trivia: [], preceding_trivia: [b' '])
+            yield .formatted_token(token, preceding_trivia: [b' '])
         }
         RCurly => {
             if open_curlies == 0 {
@@ -544,20 +542,20 @@ struct Stage0 {
                 seen_start: false
             ))
 
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Import => {
             .push_state(State::Import(
                 is_extern: .peek() is Extern
             ))
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
-        Public | Private | Virtual | Override | Boxed | Unsafe => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Public | Private | Virtual | Override | Boxed | Unsafe => .formatted_token(token, trailing_trivia: [b' '])
         Restricted => {
             .push_state(State::RestrictionList)
             yield .formatted_token(token)
         }
-        Comma => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Comma => .formatted_token(token, trailing_trivia: [b' '])
         Equal => {
             .push_state(State::StatementContext(
                 open_parens: 0
@@ -579,7 +577,7 @@ struct Stage0 {
         is_extern: bool
         token: Token
     ) throws -> FormattedToken? => match token {
-        Extern | As => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Extern | As => .formatted_token(token, trailing_trivia: [b' '])
         Identifier => {
             if not is_extern and .peek() is LParen {
                 return .formatted_token(token)
@@ -593,7 +591,7 @@ struct Stage0 {
                 .pop_state()
             }
 
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         LParen => .formatted_token(token)
         LCurly => {
@@ -621,11 +619,10 @@ struct Stage0 {
                     Eol => []
                     else => [b' ']
                 }
-                preceding_trivia: []
             )
         }
         ColonColon => .formatted_token(token)
-        else => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        else => .formatted_token(token, trailing_trivia: [b' '])
     }
 
     private fn next_in_implements_context(
@@ -651,7 +648,7 @@ struct Stage0 {
         }
         Comma => {
             .replace_state(State::ImportList(emitted_comma: true))
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Eol => {
             // Drop Eols, we'll regenerate them if needed.
@@ -754,12 +751,12 @@ struct Stage0 {
 
             if .peek() is Implements {
                 .push_state(State::Implements)
-                return .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+                return .formatted_token(token, trailing_trivia: [b' '])
             }
 
             yield .formatted_token(token)
         }
-        Comma => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Comma => .formatted_token(token, trailing_trivia: [b' '])
         RCurly => {
             .pop_state()
             yield .formatted_token(token)
@@ -768,12 +765,12 @@ struct Stage0 {
             .pop_state()
             yield .formatted_token(token)
         }
-        Public | Private | Virtual | Override => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Public | Private | Virtual | Override => .formatted_token(token, trailing_trivia: [b' '])
         Restricted => {
             .push_state(State::RestrictionList)
             yield .formatted_token(token)
         }
-        Requires => .formatted_token(token, trailing_trivia: [], preceding_trivia: [b' '])
+        Requires => .formatted_token(token, preceding_trivia: [b' '])
         else => .formatted_token(token)
     }
 
@@ -790,7 +787,6 @@ struct Stage0 {
 
                 yield .formatted_token(
                     token
-                    trailing_trivia: []
                     preceding_trivia: match .peek(offset: -1) {
                         Eol | LCurly => []
                         else => [b' ']
@@ -813,10 +809,10 @@ struct Stage0 {
                     preceding_trivia: [b' ']
                 )
             }
-            Colon => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            Colon => .formatted_token(token, trailing_trivia: [b' '])
             Equal => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [b' '])
             Identifier => .formatted_token(token)
-            else => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            else => .formatted_token(token, trailing_trivia: [b' '])
         }
         Function(arrow, indented) => match token {
             FatArrow => {
@@ -876,7 +872,6 @@ struct Stage0 {
                     Throws => [b' ']
                     else => []
                 }
-                preceding_trivia: []
             )
             LCurly => {
                 .push_state(State::StatementContext(
@@ -889,7 +884,7 @@ struct Stage0 {
                     expression_mode: ExpressionMode::OutsideExpression
                     dedents_on_open_curly: 0
                 ))
-                yield .formatted_token(token, trailing_trivia: [], preceding_trivia: [b' '])
+                yield .formatted_token(token, preceding_trivia: [b' '])
             }
             RCurly => {
                 .pop_state()
@@ -948,7 +943,7 @@ struct Stage0 {
             .push_state(State::VariableDeclaration(
                 open_parens: 0
             ))
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Mut => {
             .replace_state(State::StatementContext(
@@ -967,7 +962,7 @@ struct Stage0 {
                     open_parens: 0
                 ))
             }
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Match | For | While | If | Try | Loop | Guard | Defer => {
             let added_indent = match token {
@@ -993,7 +988,7 @@ struct Stage0 {
             ))
             indent_change += (added_indent as! i64)
 
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Catch | Else => {
             .replace_state(State::StatementContext(
@@ -1090,7 +1085,7 @@ struct Stage0 {
 
             yield match .peek() {
                 Eol => .formatted_token(token)
-                else => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+                else => .formatted_token(token, trailing_trivia: [b' '])
             }
         }
         Return | Throw | Yield => match .peek() {
@@ -1119,7 +1114,7 @@ struct Stage0 {
                     dedents_on_open_curly
                 ))
 
-                yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+                yield .formatted_token(token, trailing_trivia: [b' '])
             }
         }
         FatArrow => {
@@ -1271,7 +1266,6 @@ struct Stage0 {
 
             yield .formatted_token(
                 token
-                trailing_trivia: []
                 preceding_trivia: match .peek(offset: -1) {
                     Eol | LCurly => []
                     else => [b' ']
@@ -1290,10 +1284,10 @@ struct Stage0 {
                 dedents_on_open_curly
             ))
 
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Sizeof => {
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Colon => {
             .replace_state(State::StatementContext(
@@ -1313,7 +1307,6 @@ struct Stage0 {
                     RSquare => []
                     else => [b' ']
                 }
-                preceding_trivia: []
             )
         }
         // Shared unary and binary ops
@@ -1401,7 +1394,7 @@ struct Stage0 {
             preceding_trivia: [b' ']
         )
         QuestionMark | ExclamationPoint => match .peek(offset: -1) {
-            As => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            As => .formatted_token(token, trailing_trivia: [b' '])
             else => .formatted_token(token)
         }
         Identifier | Number => {
@@ -1418,7 +1411,7 @@ struct Stage0 {
                     expression_mode: ExpressionMode::InExpression
                     dedents_on_open_curly
                 ))
-                return .formatted_token(token: Token::Comma(token.span()), trailing_trivia: [b' '], preceding_trivia: [])
+                return .formatted_token(token: Token::Comma(token.span()), trailing_trivia: [b' '])
             }
             .replace_state(State::StatementContext(
                 open_parens
@@ -1499,7 +1492,7 @@ struct Stage0 {
                 }
             }
 
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Raw => {
             .replace_state(State::StatementContext(
@@ -1512,7 +1505,7 @@ struct Stage0 {
                 expression_mode: ExpressionMode::AtExpressionStart
                 dedents_on_open_curly
             ))
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Reflect => {
             .replace_state(State::TypeContext(
@@ -1527,7 +1520,6 @@ struct Stage0 {
                 token
                 indent: .indent
                 trailing_trivia: [b' ']
-                preceding_trivia: []
             )
         }
         else => {
@@ -1581,7 +1573,7 @@ struct Stage0 {
                 seen_start: false
             ))
 
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         else => .formatted_token(token)
     }
@@ -1599,7 +1591,7 @@ struct Stage0 {
                 open_angles: 0
                 seen_start: false
             ))
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         LParen => {
             .replace_state(State::VariableDeclaration(
@@ -1622,7 +1614,7 @@ struct Stage0 {
             .pop_state()
             yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [b' '])
         }
-        Comma => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Comma => .formatted_token(token, trailing_trivia: [b' '])
         else => .formatted_token(token)
     }
 
@@ -1638,11 +1630,11 @@ struct Stage0 {
                 open_angles: 0
                 seen_start: false
             ))
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         RParen => {
             .pop_state()
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         else => .formatted_token(token)
     }
@@ -1652,7 +1644,7 @@ struct Stage0 {
         open_parens: usize
         token: Token
     ) throws -> FormattedToken? => match token {
-        Anon | Mut => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Anon | Mut => .formatted_token(token, trailing_trivia: [b' '])
         Colon => {
             .push_state(State::TypeContext(
                 open_parens: 0
@@ -1662,9 +1654,9 @@ struct Stage0 {
                 seen_start: false
             ))
 
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
-        Comma => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Comma => .formatted_token(token, trailing_trivia: [b' '])
         Equal => {
             .push_state(State::StatementContext(
                 open_parens: 0
@@ -1891,7 +1883,7 @@ struct Stage0 {
                 open_angles
                 seen_start: true
             ))
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Ampersand => {
             .replace_state(State::TypeContext(
@@ -1931,7 +1923,7 @@ struct Stage0 {
                 seen_start: false
             ))
 
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         Identifier => {
             .replace_state(State::TypeContext(
@@ -1943,7 +1935,7 @@ struct Stage0 {
             ))
             yield .formatted_token(token)
         }
-        Weak => .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+        Weak => .formatted_token(token, trailing_trivia: [b' '])
         Equal | Arrow | FatArrow => {
             .pop_state()
             .index--
@@ -1961,7 +1953,7 @@ struct Stage0 {
             yield .formatted_token(token)
         }
         Comma | Mut => {
-            yield .formatted_token(token, trailing_trivia: [b' '], preceding_trivia: [])
+            yield .formatted_token(token, trailing_trivia: [b' '])
         }
         else => {
             yield .formatted_token(token)
@@ -2026,7 +2018,6 @@ struct Stage0 {
                     Throws => [b' ']
                     else => []
                 }
-                preceding_trivia: []
             )
         }
         Throws => .formatted_token(token)
@@ -2156,7 +2147,7 @@ struct Stage0 {
             eprintln()
             eprintln(
                 "Token: {} -- Indent: {}",
-                FormattedToken(token, indent: 0, trailing_trivia: [], preceding_trivia: []).debug_text(),
+                FormattedToken(token, indent: 0).debug_text(),
                 .indent
             )
             for state in .states {
@@ -2217,33 +2208,23 @@ struct ReflowState {
 
 struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
     token_provider: Stage0
-    current_line: [ReflowState]
-    current_line_length: usize
     max_allowed_line_length: usize
-    breakable_points_in_current_line: [BreakablePoint]
-    tokens_to_reflow: [ReflowState]
-    replace_commas_in_enclosure: [Token?]
-    enclosures_to_ignore: usize
-    in_condition_expr: bool
-    in_condition_expr_indented: bool
-    logical_break_indent: usize?
-    empty_line_count: usize
+    current_line: [ReflowState] = []
+    current_line_length: usize = 0
+    breakable_points_in_current_line: [BreakablePoint] = []
+    tokens_to_reflow: [ReflowState] = []
+    replace_commas_in_enclosure: [Token?] = []
+    enclosures_to_ignore: usize = 0
+    in_condition_expr: bool = false
+    in_condition_expr_indented: bool = false
+    logical_break_indent: usize? = None
+    empty_line_count: usize = 0
 
     fn for_tokens(tokens: [Token], debug: bool = false, max_allowed_line_length: usize = 120uz) throws -> Formatter {
         let none: Token? = None
         return Formatter(
             token_provider: Stage0::for_tokens(tokens, debug)
-            current_line: []
-            current_line_length: 0
             max_allowed_line_length
-            breakable_points_in_current_line: []
-            tokens_to_reflow: []
-            replace_commas_in_enclosure: [none]
-            enclosures_to_ignore: 0
-            in_condition_expr: false
-            in_condition_expr_indented: false
-            logical_break_indent: None
-            empty_line_count: 0
         )
     }
 
@@ -2548,8 +2529,6 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
                         let new_token = FormattedToken(
                             token: newline
                             indent: .logical_break_indent!
-                            trailing_trivia: []
-                            preceding_trivia: []
                         )
                         .current_line.push(ReflowState(
                             token: new_token
@@ -2601,8 +2580,6 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
                             token: FormattedToken(
                                 token: newline
                                 indent: maybe_next_underlying_token!.indent
-                                trailing_trivia: []
-                                preceding_trivia: []
                             )
                             state: final_state
                             enclosures_to_ignore: .enclosures_to_ignore
