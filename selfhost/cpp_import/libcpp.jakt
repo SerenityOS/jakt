@@ -443,11 +443,9 @@ fn process_cpp_declaration(
             mut struct_ = CheckedStruct(
                 name: sd.full_name()
                 name_span: span
-                generic_parameters: []
                 fields
                 scope_id: struct_scope
                 definition_linkage: DefinitionLinkage::External
-                trait_implementations: [:]
                 record_type: RecordType::Struct(fields: [], super_type: None)
                 type_id: struct_type_id
                 super_struct_id: None

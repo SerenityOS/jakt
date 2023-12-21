@@ -1244,15 +1244,15 @@ struct CheckedField {
 struct CheckedStruct {
     name: String
     name_span: Span
-    generic_parameters: [CheckedGenericParameter]
+    generic_parameters: [CheckedGenericParameter] = []
     generic_parameter_defaults: [TypeId?]? = None
-    fields: [CheckedField]
+    fields: [CheckedField] = []
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
-    trait_implementations: [String:[(TraitId, [TypeId])]]
+    trait_implementations: [String:[(TraitId, [TypeId])]] = [:]
     record_type: RecordType
     type_id: TypeId
-    super_struct_id: StructId?
+    super_struct_id: StructId? = None
 
     external_name: ExternalName? = None
     implements_type: TypeId? = None
@@ -1263,12 +1263,12 @@ struct CheckedStruct {
 struct CheckedEnum {
     name: String
     name_span: Span
-    generic_parameters: [CheckedGenericParameter]
-    variants: [CheckedEnumVariant]
-    fields: [CheckedField]
+    generic_parameters: [CheckedGenericParameter] = []
+    variants: [CheckedEnumVariant] = []
+    fields: [CheckedField] = []
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
-    trait_implementations: [String:[(TraitId, [TypeId])]]
+    trait_implementations: [String:[(TraitId, [TypeId])]] = [:]
     record_type: RecordType
     underlying_type_id: TypeId
     type_id: TypeId
@@ -1916,8 +1916,6 @@ class CheckedProgram {
         let struct_ = CheckedStruct(
             name: format("Builtin_{}", builtin.constructor_name())
             name_span
-            generic_parameters: []
-            fields: []
             scope_id
             definition_linkage: DefinitionLinkage::External
             trait_implementations
