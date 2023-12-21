@@ -357,10 +357,6 @@ struct Typechecker {
         let module = Module(
             id: module_id,
             name: name,
-            functions: [],
-            structures: [],
-            enums: [],
-            scopes: [],
             types: [ // FIXME: use general builtin types array
                 Type::Void,
                 Type::Bool,
@@ -381,11 +377,7 @@ struct Typechecker {
                 Type::Unknown,
                 Type::Never
             ],
-            traits: [],
-            variables: [],
-            imports: [],
             resolved_import_path: path ?? .compiler.current_file_path()!.to_string(),
-            builtin_implementation_structs: [:]
             is_root: is_root,
         )
         .program.modules.push(module)
