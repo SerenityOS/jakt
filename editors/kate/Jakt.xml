@@ -54,6 +54,7 @@
             <item>defer</item>
             <item>unsafe</item>
             <item>try</item>
+            <item>must</item>
             <item>catch</item>
             <item>cpp</item>
             <item>weak</item>

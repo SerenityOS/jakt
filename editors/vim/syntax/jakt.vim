@@ -38,6 +38,7 @@ let s:jakt_syntax_keywords = {
     \ , 'jaktMacro' :["defer"
     \ ,               "unsafe"
     \ ,               "try"
+    \ ,               "must"
     \ ,               "catch"
     \ ,               "cpp"
     \ ,              ]
