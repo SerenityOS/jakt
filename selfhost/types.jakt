@@ -1965,15 +1965,7 @@ class CheckedProgram {
     public fn get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
     public fn get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
     public fn get_struct(this, anon id: StructId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
-    public fn get_scope(this, anon id: ScopeId) -> Scope {
-        let max_scope = .modules[id.module_id.id].scopes.size() - 1
-        if id.id > max_scope {
-            .compiler.panic(format("scope_id {} does not exist in module", id))
-        }
-
-        return .modules[id.module_id.id].scopes[id.id]
-    }
-
+    public fn get_scope(this, anon id: ScopeId) -> Scope => .modules[id.module_id.id].scopes[id.id]
     public fn get_trait(this, anon id: TraitId) -> CheckedTrait => .modules[id.module.id].traits[id.id]
 
     public fn prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
