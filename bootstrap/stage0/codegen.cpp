@@ -49,20 +49,7 @@ return codegen::ControlFlowState(((((*this).allowed_exits)).allow_return()),((*t
 }
 }
 
-ByteString codegen::ControlFlowState::nested_release_return_expr(ids::TypeId const func_return_type,bool const func_can_throw,ByteString const cpp_match_result_type) {
-{
-bool const returns_void = ((((func_return_type).equals(types::void_type_id())) || ((func_return_type).equals(types::unknown_type_id()))) || ((func_return_type).equals(types::never_type_id())));
-if ((returns_void && (!(func_can_throw)))){
-return __jakt_format((StringView::from_string_literal("JaktInternal::ExplicitValueOrControlFlow<{}, void>()"sv)),cpp_match_result_type);
-}
-else {
-return (ByteString::from_utf8_without_validation("_jakt_value.release_return()"sv));
-}
-
-}
-}
-
-ErrorOr<ByteString> codegen::ControlFlowState::apply_control_flow_macro(ByteString const x,ids::TypeId const func_return_type,bool const func_can_throw,ByteString const cpp_match_result_type) const {
+ErrorOr<ByteString> codegen::ControlFlowState::apply_control_flow_macro(ByteString const x,ids::TypeId const func_return_type,bool const func_can_throw) const {
 {
 ByteString const handle_loop_controls = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
@@ -101,11 +88,13 @@ VERIFY_NOT_REACHED();
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
+bool const cpp_func_returns_void = ((!(func_can_throw)) && ((((func_return_type).equals(types::void_type_id())) || ((func_return_type).equals(types::unknown_type_id()))) || ((func_return_type).equals(types::never_type_id()))));
+bool const substitute_naked_return = (((*this).indirectly_inside_match) && cpp_func_returns_void);
 ByteString const forward_return_expr = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
-auto __jakt_enum_value = (((*this).indirectly_inside_match));
+auto __jakt_enum_value = (substitute_naked_return);
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(codegen::ControlFlowState::nested_release_return_expr(func_return_type,func_can_throw,cpp_match_result_type));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("{}"sv)));
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("_jakt_value.release_return()"sv)));
@@ -8208,7 +8197,7 @@ else {
 }
 
 (((*this).control_flow_state) = last_control_flow);
-return TRY((((((*this).control_flow_state)).apply_control_flow_macro(output,(((((*this).current_function).value()))->return_type_id),(((((*this).current_function).value()))->can_throw),cpp_match_result_type))));
+return TRY((((((*this).control_flow_state)).apply_control_flow_macro(output,(((((*this).current_function).value()))->return_type_id),(((((*this).current_function).value()))->can_throw)))));
 }
 }
 

@@ -36,8 +36,7 @@ public: codegen::AllowedControlExits allowed_exits;public: bool passes_through_t
 public: codegen::ControlFlowState enter_function() const;
 public: codegen::ControlFlowState enter_loop() const;
 public: codegen::ControlFlowState enter_match() const;
-public: static ByteString nested_release_return_expr(ids::TypeId const func_return_type, bool const func_can_throw, ByteString const cpp_match_result_type);
-public: ErrorOr<ByteString> apply_control_flow_macro(ByteString const x, ids::TypeId const func_return_type, bool const func_can_throw, ByteString const cpp_match_result_type) const;
+public: ErrorOr<ByteString> apply_control_flow_macro(ByteString const x, ids::TypeId const func_return_type, bool const func_can_throw) const;
 public: ControlFlowState(codegen::AllowedControlExits a_allowed_exits, bool a_passes_through_try, bool a_directly_inside_match, bool a_indirectly_inside_match);
 
 public: ByteString debug_description() const;
