@@ -36,49 +36,44 @@ fn is_return_allowed(anon allowed_control_exits: AllowedControlExits) -> bool =>
 
 struct ControlFlowState {
     allowed_exits: AllowedControlExits
-    /// Whether `break` and `continue` should use `return ExplicitValueOrControlFlow` instead of
-    /// C++'s `break`/`continue`.
-    passes_through_match: bool
     passes_through_try: bool
-    match_nest_level: usize
+    // whether the current scope is a match IIFE
+    directly_inside_match: bool = false
+    // whether any outer scope is a match IIFE
+    indirectly_inside_match: bool = false
 
     fn no_control_flow() -> ControlFlowState {
         return ControlFlowState(
             allowed_exits: AllowedControlExits::Nothing
-            passes_through_match: false
             passes_through_try: false
-            match_nest_level: 0
+            directly_inside_match: false
+            indirectly_inside_match: false
         )
     }
     fn enter_function(this) -> ControlFlowState {
         return ControlFlowState(
             allowed_exits: AllowedControlExits::JustReturn
-            passes_through_match: false
             passes_through_try: false
-            match_nest_level: .match_nest_level
+            indirectly_inside_match: false
+            directly_inside_match: false
         )
     }
     fn enter_loop(this) -> ControlFlowState {
         return ControlFlowState(
             allowed_exits: AllowedControlExits::AtLoop
-            passes_through_match: false
             passes_through_try: .passes_through_try
-            match_nest_level: 0
+            indirectly_inside_match: .indirectly_inside_match
+            directly_inside_match: false
         )
     }
     fn enter_match(this) -> ControlFlowState {
-        mut level = .match_nest_level
-        if .passes_through_match {
-            level = .match_nest_level + 1
-        }
         return ControlFlowState(
             allowed_exits: .allowed_exits.allow_return()
-            passes_through_match: true
             passes_through_try: .passes_through_try
-            match_nest_level: level
+            directly_inside_match: true
+            indirectly_inside_match: true
         )
     }
-    fn is_match_nested(this) -> bool => .match_nest_level != 0
 
     // Instead of trying to use `release_return()` which returns `void`, we'll
     // directly construct a `ExplicitValueOrControlFlow<MatchResult, void>` so
@@ -97,52 +92,47 @@ struct ControlFlowState {
         }
     }
 
+    // apply control flow macro to a match, from outside its scope
     fn apply_control_flow_macro(this, anon x: String, func_return_type: TypeId, func_can_throw: bool, cpp_match_result_type: String) throws -> String {
-        if are_loop_exits_allowed(.allowed_exits) {
-            if .is_match_nested() {
+        let handle_loop_controls = match are_loop_exits_allowed(.allowed_exits) {
+            // Not inside a loop, so the inner match better not yield those
+            // values, since there's no one that can catch them.
+            // In practice it's impossible because break/continue is guaranteed
+            // by the typechecker to only appear within loop contexts.
+            false => ""
+            // there's a loop somewhere up there.
+            true => {
+                let (break_stmt, continue_stmt) = match .directly_inside_match {
+                    // This match has to forward the loop break/continues
+                    true => ("return JaktInternal::LoopBreak {}", "return JaktInternal::LoopContinue {}")
+                    // This is the loop that the inner match wants to modify the control flow of.
+                    false => ("break", "continue")
 
-                return format(
-                    "({{
-    auto&& _jakt_value = {};
-    if (_jakt_value.is_return())
-        return {};
-    if (_jakt_value.is_loop_break())
-        return JaktInternal::LoopBreak {{}};
+                }
+                yield format("if (_jakt_value.is_loop_break())
+        {};
     if (_jakt_value.is_loop_continue())
-        return JaktInternal::LoopContinue {{}};
-    _jakt_value.release_value();
-}})",
-                    x,
-                    nested_release_return_expr(func_return_type, func_can_throw, cpp_match_result_type)
-                )
+        {};
+    ", break_stmt, continue_stmt)
             }
-            return format(
-                "({{
-    auto&& _jakt_value = {};
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    if (_jakt_value.is_loop_break())
-        break;
-    if (_jakt_value.is_loop_continue())
-        continue;
-    _jakt_value.release_value();
-}})",
-                x
-            )
         }
-        return format(
-            "({{
-    auto&& _jakt_value = {};
+
+        // Make sure we don't return 'void' when forwarding a return inside a match IIFE.
+        let forward_return_expr = match .indirectly_inside_match {
+            true => nested_release_return_expr(func_return_type, func_can_throw, cpp_match_result_type)
+            false => "_jakt_value.release_return()"
+        }
+
+        return format("({{
+    auto&& _jakt_value = {0};
     if (_jakt_value.is_return())
-        return {};
-    _jakt_value.release_value();
+        return {1};
+    {2}_jakt_value.release_value();
 }})",
-            x,
-            match .is_match_nested() {
-                false => "_jakt_value.release_return()",
-                true => nested_release_return_expr(func_return_type, func_can_throw, cpp_match_result_type),
-            }
+            x, forward_return_expr, handle_loop_controls
         )
+
+
     }
 }
 
@@ -291,12 +281,7 @@ struct CodeGenerator {
         mut generator = CodeGenerator(
             compiler
             program
-            control_flow_state: ControlFlowState(
-                allowed_exits: AllowedControlExits::Nothing
-                passes_through_match: false
-                passes_through_try: false
-                match_nest_level: 0
-            )
+            control_flow_state: ControlFlowState::no_control_flow()
             entered_yieldable_blocks: []
             deferred_output: ""
             current_function: None
@@ -3013,7 +2998,8 @@ struct CodeGenerator {
                 output += try_var
                 output += " = [&]() -> ErrorOr<void> {"
                 let last_control_flow = .control_flow_state
-                .control_flow_state.passes_through_match = false
+                .control_flow_state.directly_inside_match = false
+                .control_flow_state.indirectly_inside_match = false
                 .control_flow_state.passes_through_try = true
                 output += .codegen_statement(statement: stmt)
                 output += ";"
@@ -3043,7 +3029,8 @@ struct CodeGenerator {
                 let try_var = .fresh_var()
 
                 let last_control_flow = .control_flow_state
-                .control_flow_state.passes_through_match = false
+                .control_flow_state.directly_inside_match = false
+                .control_flow_state.indirectly_inside_match = false
                 .control_flow_state.passes_through_try = true
                 defer {
                     .control_flow_state = last_control_flow
@@ -3128,6 +3115,7 @@ struct CodeGenerator {
         .control_flow_state = .control_flow_state.enter_match()
         mut output = ""
 
+        let cpp_match_result_type = .codegen_type(type_id)
         let expr_type = .program.get_type(expr.type())
         if expr_type is Enum(enum_id) {
             output += .codegen_enum_match(
@@ -3135,6 +3123,7 @@ struct CodeGenerator {
                 expr
                 match_cases
                 type_id
+                cpp_match_result_type
                 all_variants_constant
             )
         } else {
@@ -3142,14 +3131,20 @@ struct CodeGenerator {
                 expr
                 cases: match_cases
                 return_type_id: type_id
+                cpp_match_result_type
                 all_variants_constant
             )
         }
         .control_flow_state = last_control_flow
-        return output
+        return .control_flow_state.apply_control_flow_macro(
+            output,
+            func_return_type: .current_function!.return_type_id,
+            func_can_throw: .current_function!.can_throw,
+            cpp_match_result_type
+        )
     }
 
-    fn codegen_generic_match(mut this, expr: CheckedExpression, cases: [CheckedMatchCase], return_type_id: TypeId, all_variants_constant: bool) throws -> String {
+    fn codegen_generic_match(mut this, expr: CheckedExpression, cases: [CheckedMatchCase], return_type_id: TypeId, cpp_match_result_type: String, all_variants_constant: bool) throws -> String {
         mut output = ""
 
         mut is_generic_enum: bool = false
@@ -3161,7 +3156,6 @@ struct CodeGenerator {
         }
         let match_values_all_constant = all_variants_constant and not is_generic_enum
 
-        let cpp_match_result_type = .codegen_type(return_type_id)
 
         // TODO: Use switch statement if all values are constant
         output += format(
@@ -3308,21 +3302,14 @@ struct CodeGenerator {
 
         output += "}())"
 
-        return .control_flow_state.apply_control_flow_macro(
-            output,
-            func_return_type: .current_function!.return_type_id,
-            func_can_throw: .current_function!.can_throw,
-            cpp_match_result_type
-        )
+        return output
     }
 
-    fn codegen_enum_match(mut this, enum_: CheckedEnum, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
+    fn codegen_enum_match(mut this, enum_: CheckedEnum, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, cpp_match_result_type: String, all_variants_constant: bool) throws -> String {
         mut output = ""
 
         let subject = .codegen_expression(expr)
         let needs_deref = enum_.is_boxed and subject != "*this"
-
-        let cpp_match_result_type = .codegen_type(type_id)
 
         if enum_.underlying_type_id == void_type_id() {
             output += "([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
@@ -3457,12 +3444,7 @@ struct CodeGenerator {
             output += "}()\n)"
         }
 
-        return .control_flow_state.apply_control_flow_macro(
-            output,
-            func_return_type: .current_function!.return_type_id,
-            func_can_throw: .current_function!.can_throw,
-            cpp_match_result_type
-        )
+        return output
     }
 
     fn codegen_match_body(mut this, body: CheckedMatchBody, return_type_id: TypeId) throws -> String {
@@ -4179,11 +4161,11 @@ struct CodeGenerator {
 
         output += match statement {
             Throw(expr) => "return " + .codegen_expression(expr) + ";"
-            Continue => match .control_flow_state.passes_through_match {
+            Continue => match .control_flow_state.directly_inside_match {
                 true => "return JaktInternal::LoopContinue{};"
                 false => "continue;"
             }
-            Break => match .control_flow_state.passes_through_match {
+            Break => match .control_flow_state.directly_inside_match {
                 true => "return JaktInternal::LoopBreak{};"
                 false => "break;"
             }
@@ -4196,7 +4178,8 @@ struct CodeGenerator {
                 let last_control_flow = .control_flow_state
                 let old_inside_defer = .inside_defer
 
-                .control_flow_state.passes_through_match = false
+                .control_flow_state.directly_inside_match = false
+                .control_flow_state.indirectly_inside_match = false
                 .inside_defer = true
 
                 output += .codegen_statement(statement)
@@ -4222,7 +4205,7 @@ struct CodeGenerator {
                     false => "return " + .codegen_expression(val!) + ";"
                 }
                 false => {
-                    yield match .current_function!.can_throw {
+                    yield match .current_function!.can_throw or .control_flow_state.indirectly_inside_match {
                         true => "return {};"
                         false => "return;"
                     }
