@@ -1,0 +1,27 @@
+/// Expect:
+/// - output: "no boog!\n"
+
+// Adapted from #1520.
+
+fn boog() {
+    match 1 {
+        else => {
+            loop {
+                // This match should yield nothing,
+                // and should not interfere with the outer match.
+                match 1 {
+                    else => {
+                        println("no boog!")
+                    }
+                }
+                // This return should not be naked in the C++,
+                // since we're inside a match.
+                return
+            }
+        }
+    }
+}
+
+fn main() {
+    boog()
+}
