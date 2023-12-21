@@ -1462,10 +1462,10 @@ struct ParsedVariable {
 }
 
 struct ParsedCall {
-    namespace_: [String]
-    name: String
-    args: [(String, Span, ParsedExpression)]
-    type_args: [ParsedType]
+    namespace_: [String] = []
+    name: String = ""
+    args: [(String, Span, ParsedExpression)] = []
+    type_args: [ParsedType] = []
 
     fn equals(this, anon rhs_parsed_call: ParsedCall) -> bool {
         if .name != rhs_parsed_call.name {
@@ -6148,12 +6148,7 @@ struct Parser {
     }
 
     fn parse_call(mut this) throws -> ParsedCall? {
-        mut call = ParsedCall(
-            namespace_: []
-            name: ""
-            args: []
-            type_args: []
-        )
+        mut call = ParsedCall()
 
         guard .current() is Identifier(name) else {
             .error("Expected function call", .current().span())
