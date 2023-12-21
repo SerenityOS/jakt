@@ -601,38 +601,38 @@ struct SpecializedType {
 }
 
 class Scope {
-    public namespace_name: String?
-    public external_name: ExternalName?
-
-    public vars: [String: VarId]
-    public comptime_bindings: [String: Value]
-    public structs: [String: StructId]
-    public functions: [String: [FunctionId]]
-    public enums: [String: EnumId]
-    public types: [String: TypeId]
-    public traits: [String: TraitId]
-    public imports: [String: ModuleId] // FIXME: Span
-    public aliases: [String: ScopeId]
     public parent: ScopeId?
-    public alias_scope: ScopeId? = None
-    public children: [ScopeId]
     public can_throw: bool
-    public import_path_if_extern: String?
-    public alias_path: [ResolvedNamespace]? = None
-    public after_extern_include: [IncludeAction]
-    public before_extern_include: [IncludeAction]
-
     public debug_name: String
-    public resolution_mixins: [ScopeId]
+    public is_block_scope: bool
+    public is_from_generated_code: bool
+
+    public namespace_name: String? = None
+    public external_name: ExternalName? = None
+
+    public vars: [String: VarId] = [:]
+    public comptime_bindings: [String: Value] = [:]
+    public structs: [String: StructId] = [:]
+    public functions: [String: [FunctionId]] = [:]
+    public enums: [String: EnumId] = [:]
+    public types: [String: TypeId] = [:]
+    public traits: [String: TraitId] = [:]
+    public imports: [String: ModuleId] = [:] // FIXME: Span
+    public aliases: [String: ScopeId] = [:]
+    
+    public alias_scope: ScopeId? = None
+    public children: [ScopeId] = []
+    public import_path_if_extern: String? = None
+    public alias_path: [ResolvedNamespace]? = None
+    public after_extern_include: [IncludeAction] = []
+    public before_extern_include: [IncludeAction] = []
+    public resolution_mixins: [ScopeId] = []
 
     // Set if this scope corresponds to a type, as opposed to a block or a namespace.
     public relevant_type_id: TypeId? = None
 
-    public is_block_scope: bool = true
-
     public resolved_forall_chunks: [ResolvedForallChunk]? = None
-    public explicitly_specialized_types: [String:SpecializedType]
-    public is_from_generated_code: bool = false
+    public explicitly_specialized_types: [String:SpecializedType] = [:]
 
     public fn namespace_name_for_codegen(this) -> ExternalName? {
         if .external_name.has_value() { return .external_name }
@@ -1736,8 +1736,8 @@ fn builtin(anon builtin: BuiltinType) -> TypeId {
 // This is the "result" object produced by type-checking.
 class CheckedProgram {
     public compiler: Compiler
-    public modules: [Module]
-    public loaded_modules: [String: LoadedModule]
+    public modules: [Module] = []
+    public loaded_modules: [String: LoadedModule] = [:]
 
     public fn create_module(mut this, name: String, is_root: bool, path: String? = None) -> ModuleId {
         let new_id = .modules.size()
@@ -1823,30 +1823,11 @@ class CheckedProgram {
             is_from_generated_code = scope.is_from_generated_code
         }
 
-        let none_string: String? = None
-
         let scope = Scope(
-            namespace_name: none_string
-            external_name: None
-            vars: [:]
-            comptime_bindings: [:]
-            structs: [:]
-            functions: [:]
-            enums: [:]
-            types: [:]
-            traits: [:]
-            imports: [:]
-            aliases: [:]
             parent: parent_scope_id
-            children: []
             can_throw
-            import_path_if_extern: None
-            after_extern_include: []
-            before_extern_include: []
             debug_name
-            resolution_mixins: []
             is_block_scope: for_block
-            explicitly_specialized_types: [:]
             is_from_generated_code
         )
 
