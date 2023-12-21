@@ -6546,12 +6546,7 @@ struct Typechecker {
                 // We need to call the `.iterator()` method on the iterable
                 expression_to_iterate = ParsedExpression::MethodCall(
                     expr: range
-                    call: ParsedCall(
-                        namespace_: []
-                        name: "iterator"
-                        args: []
-                        type_args: []
-                    )
+                    call: ParsedCall(name: "iterator")
                     is_optional: false
                     span: name_span
                 )
@@ -6625,12 +6620,7 @@ struct Typechecker {
                                             name: "_magic",
                                             span: name_span
                                         ),
-                                        call: ParsedCall(
-                                            namespace_: [],
-                                            name: "next",
-                                            args: [],
-                                            type_args: []
-                                        ),
+                                        call: ParsedCall(name: "next")
                                         is_optional: false
                                         span: name_span
                                     )
@@ -6644,12 +6634,7 @@ struct Typechecker {
                                                 name: "_magic_value",
                                                 span: name_span
                                             ),
-                                            call: ParsedCall(
-                                                namespace_: [],
-                                                name: "has_value",
-                                                args: [],
-                                                type_args: []
-                                            )
+                                            call: ParsedCall(name: "has_value")
                                             is_optional: false
                                             span: name_span
                                         ),
@@ -8897,7 +8882,7 @@ struct Typechecker {
             return CheckedExpression::NamespacedVar(namespaces: checked_namespaces, var: var!, span)
         }
 
-        let implicit_constructor_call = ParsedCall(namespace_, name, args: [], type_args: [])
+        let implicit_constructor_call = ParsedCall(namespace_, name)
         let call_expression = .typecheck_call(call: implicit_constructor_call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: true)
         let type_id = call_expression.type()
         let call = match call_expression {
