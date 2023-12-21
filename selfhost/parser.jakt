@@ -407,9 +407,9 @@ struct ParsedFunction {
     name: String
     name_span: Span
     visibility: Visibility
-    params: [ParsedParameter]
-    generic_parameters: [ParsedGenericParameter]
-    block: ParsedBlock
+    params: [ParsedParameter] = []
+    generic_parameters: [ParsedGenericParameter] = []
+    block: ParsedBlock = ParsedBlock()
     return_type: ParsedType
     return_type_span: Span
     can_throw: bool
@@ -516,7 +516,7 @@ struct ParsedExternalTraitImplementation {
 }
 
 struct ParsedBlock {
-    stmts: [ParsedStatement]
+    stmts: [ParsedStatement] = []
 
     fn equals(this, anon rhs_block: ParsedBlock) -> bool {
         if .stmts.size() != rhs_block.stmts.size() {
@@ -3956,9 +3956,6 @@ struct Parser {
             name: "",
             name_span: .empty_span(),
             visibility,
-            params: [],
-            generic_parameters: [],
-            block: ParsedBlock(stmts: []),
             return_type: ParsedType::Empty,
             return_type_span: .span(start: 0, end: 0),
             can_throw: false,
@@ -4481,7 +4478,7 @@ struct Parser {
 
     fn parse_block(mut this) throws -> ParsedBlock {
         let start = .current().span()
-        mut block = ParsedBlock(stmts: [])
+        mut block = ParsedBlock()
 
         if .eof() {
             .error("Incomplete block", start)
@@ -4657,7 +4654,7 @@ struct Parser {
         }
         let else_block = .parse_block()
 
-        mut remaining_code = ParsedBlock(stmts: [])
+        mut remaining_code = ParsedBlock()
 
         while not .eof() {
             match .current() {
