@@ -3096,6 +3096,28 @@ struct CodeGenerator {
 
                 yield output
             }
+            Must(expr, type_id) => {
+                mut output = StringBuilder::create()
+
+                let last_control_flow = .control_flow_state
+                .control_flow_state.directly_inside_match = false
+                .control_flow_state.indirectly_inside_match = false
+                .control_flow_state.passes_through_try = true
+                defer {
+                    .control_flow_state = last_control_flow
+                }
+
+                // FIXME: This could use smarter codegen that disables error
+                // propagation for the expression codegen, instead of wrapping
+                // it inside an IIFE and a macro.
+                output.append("MUST(([&]() -> ErrorOr<")
+                output.append(.codegen_type(type_id))
+                output.append("> { return ")
+                output.append(.codegen_expression(expr))
+                output.append("; })())")
+
+                yield output.to_string()
+            }
             Garbage(span) => {
                 todo(format("codegen_expression of bad AST node in {} at {}..{}", this.compiler.get_file_path(span.file_id), span.start, span.end))
             }
