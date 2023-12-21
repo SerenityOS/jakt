@@ -11050,17 +11050,18 @@ struct Typechecker {
         return checked_call
     }
 
-    fn check_implicit_constructor_argument_access(mut this, caller_scope_id: ScopeId, call: ParsedCall, struct_: CheckedStruct) {
-        if not .scope_can_access(accessor:caller_scope_id, accessee:struct_.scope_id) {
-            for arg in call.args {
-                for field in struct_.fields {
-                    let variable = .get_variable(field.variable_id)
+    fn check_implicit_constructor_argument_access(mut this, caller_scope_id: ScopeId, call: ParsedCall, struct_: CheckedStruct)  throws {
+        if .scope_can_access(accessor:caller_scope_id, accessee:struct_.scope_id) {
+            return
+        }
+        for arg in call.args {
+            for field in struct_.fields {
+                let variable = .get_variable(field.variable_id)
 
-                    let name = .get_argument_name(arg)
-                    if (variable.name == name and variable.visibility is Private) {
-                        .error(format("Can't access field '{}' when calling implicit constructor of '{}' because it is marked private", variable.name, struct_.name), arg.1)
-                        return
-                    }
+                let name = .get_argument_name(arg)
+                if (variable.name == name and variable.visibility is Private) {
+                    .error(format("Can't access field '{}' when calling implicit constructor of '{}' because it is marked private", variable.name, struct_.name), arg.1)
+                    return
                 }
             }
         }
