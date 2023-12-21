@@ -75,25 +75,8 @@ struct ControlFlowState {
         )
     }
 
-    // Instead of trying to use `release_return()` which returns `void`, we'll
-    // directly construct a `ExplicitValueOrControlFlow<MatchResult, void>` so
-    // that the compiler doesn't try to construct one from a `void` value,
-    // which it doesn't know how to do.
-    fn nested_release_return_expr(func_return_type: TypeId, func_can_throw: bool, cpp_match_result_type: String) -> String {
-
-        let returns_void = func_return_type == void_type_id() or func_return_type == unknown_type_id() or func_return_type == never_type_id()
-
-        // The C++ function won't return 'void' if it can throw, but rather
-        // `ErrorOr`.
-        if returns_void and not func_can_throw {
-            return format("JaktInternal::ExplicitValueOrControlFlow<{}, void>()", cpp_match_result_type)
-        } else {
-            return "_jakt_value.release_return()"
-        }
-    }
-
     // apply control flow macro to a match, from outside its scope
-    fn apply_control_flow_macro(this, anon x: String, func_return_type: TypeId, func_can_throw: bool, cpp_match_result_type: String) throws -> String {
+    fn apply_control_flow_macro(this, anon x: String, func_return_type: TypeId, func_can_throw: bool) throws -> String {
         let handle_loop_controls = match are_loop_exits_allowed(.allowed_exits) {
             // Not inside a loop, so the inner match better not yield those
             // values, since there's no one that can catch them.
@@ -117,9 +100,18 @@ struct ControlFlowState {
             }
         }
 
+        let cpp_func_returns_void = not func_can_throw and (
+            func_return_type == void_type_id() or
+            func_return_type == unknown_type_id() or
+            func_return_type == never_type_id())
+
         // Make sure we don't return 'void' when forwarding a return inside a match IIFE.
-        let forward_return_expr = match .indirectly_inside_match {
-            true => nested_release_return_expr(func_return_type, func_can_throw, cpp_match_result_type)
+        // We'll have to use {} like in the codegen for return, to construct an
+        // `ExplicitValueOrControlFlow` that signals that we want to return from
+        // the top-level function.
+        let substitute_naked_return = .indirectly_inside_match and cpp_func_returns_void
+        let forward_return_expr = match substitute_naked_return {
+            true => "{}"
             false => "_jakt_value.release_return()"
         }
 
@@ -3140,7 +3132,6 @@ struct CodeGenerator {
             output,
             func_return_type: .current_function!.return_type_id,
             func_can_throw: .current_function!.can_throw,
-            cpp_match_result_type
         )
     }
 
