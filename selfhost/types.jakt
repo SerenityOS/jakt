@@ -1712,15 +1712,15 @@ struct ResolvedNamespace {
 }
 
 struct CheckedCall {
-    namespace_: [ResolvedNamespace]
+    namespace_: [ResolvedNamespace] = []
     name: String,
     args: [(String, CheckedExpression)]
-    type_args: [TypeId]
+    type_args: [TypeId] = []
     function_id: FunctionId?
     return_type: TypeId
     callee_throws: bool
 
-    external_name: ExternalName?
+    external_name: ExternalName? = None
     force_inline: InlineState = InlineState::Default
 
     fn name_for_codegen(this) -> ExternalName => .external_name ?? ExternalName::Plain(.name)

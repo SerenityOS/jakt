@@ -550,11 +550,9 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
             namespace_
             name
             args
-            type_args: []
             function_id: constructor
             return_type: struct_.type_id
             callee_throws: callee.can_throw
-            external_name: None
         )
 
         yield CheckedExpression::Call(
@@ -602,11 +600,9 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
             namespace_
             name: callee.name
             args
-            type_args: []
             function_id: constructor
             return_type: enum_.type_id
             callee_throws: callee.can_throw
-            external_name: None
         )
 
         yield CheckedExpression::Call(
@@ -1279,7 +1275,6 @@ class Interpreter {
                     function_id: call.function_id
                     return_type: call.return_type
                     callee_throws: call.callee_throws
-                    external_name: None
                 )
                 span
                 type_id
@@ -1303,7 +1298,6 @@ class Interpreter {
                     function_id: call.function_id
                     return_type: call.return_type
                     callee_throws: call.callee_throws
-                    external_name: None
                 )
                 span
                 is_optional

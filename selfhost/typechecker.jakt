@@ -6330,10 +6330,8 @@ struct Typechecker {
                         type_id = implementation_function.return_type_id
 
                         mut call_expression = CheckedCall(
-                            namespace_: []
                             name: function_name
                             args: [("", checked_rhs)]
-                            type_args: []
                             function_id: implementation_function_id
                             return_type: type_id
                             callee_throws: implementation_function.can_throw
@@ -9092,14 +9090,12 @@ struct Typechecker {
         return CheckedExpression::MethodCall(
             expr: checked_expr
             call: CheckedCall(
-                namespace_: []
                 name: call.name
                 args: checked_args
                 type_args: checked_type_args
                 function_id: None
                 return_type: unknown_type_id()
                 callee_throws: false
-                external_name: None
             )
             span
             is_optional
@@ -10702,7 +10698,6 @@ struct Typechecker {
                         function_id: None,
                         return_type: builtin(BuiltinType::Unknown),
                         callee_throws
-                        external_name: None
                     ),
                     span,
                     type_id: builtin(BuiltinType::Unknown)
