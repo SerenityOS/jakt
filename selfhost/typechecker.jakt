@@ -8697,6 +8697,9 @@ struct Typechecker {
                 .error(format("Enum variant ‘{}’ must have exactly one argument", variant.name()), span)
                 return None
             }
+            if .dump_type_hints {
+                .dump_type_hint(type_id, span: bindings[0].span)
+            }
             return [CheckedEnumVariantBinding(name: None, binding: bindings[0].binding, type_id, span)]
         }
 
@@ -8714,6 +8717,9 @@ struct Typechecker {
                 let binding_name = binding.name ?? binding.binding
                 let type_id = var.type_id
                 if binding_name == var.name {
+                    if .dump_type_hints {
+                        .dump_type_hint(type_id, span: binding.span)
+                    }
                     checked_enum_variant_bindings.push(CheckedEnumVariantBinding(name: binding.name, binding: binding.binding, type_id, span))
                     found = true
                     break
