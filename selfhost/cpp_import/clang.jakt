@@ -537,8 +537,6 @@ class CppImportProcessor {
                     generics: FunctionGenerics(
                         base_scope_id: scope_id
                         base_params: function_params
-                        params: []
-                        specializations: []
                     )
                     block: CheckedBlock(
                         statements: []
@@ -1536,7 +1534,6 @@ class CppImportProcessor {
                 base_scope_id: function_scope
                 base_params: params
                 params: .function_generic_parameters_from(template_parameters?.params)
-                specializations: []
             )
             block: CheckedBlock(
                 statements: []
@@ -2118,7 +2115,6 @@ class CppImportProcessor {
                     base_scope_id: function_scope
                     base_params: params
                     params: generic_params
-                    specializations: []
                 )
                 block: CheckedBlock(
                     statements: []

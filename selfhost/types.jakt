@@ -942,9 +942,9 @@ class CheckedFunction {
 
 class FunctionGenerics {
     public base_scope_id: ScopeId
-    public base_params: [CheckedParameter]
-    public params: [FunctionGenericParameter]
-    public specializations: [[TypeId]]
+    public base_params: [CheckedParameter] = []
+    public params: [FunctionGenericParameter] = []
+    public specializations: [[TypeId]] = []
 
     public fn is_specialized_for_types(this, types: [TypeId]) -> bool {
         if types.size() == 0 {

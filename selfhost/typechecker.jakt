@@ -2663,9 +2663,6 @@ struct Typechecker {
                 params: []
                 generics: FunctionGenerics(
                     base_scope_id: method_scope_id
-                    base_params: []
-                    params: []
-                    specializations: []
                 )
                 block: CheckedBlock(
                     statements: []
@@ -2879,8 +2876,6 @@ struct Typechecker {
                 generics: FunctionGenerics(
                     base_scope_id: function_scope_id
                     base_params: constructor_parameters
-                    params: []
-                    specializations: []
                 )
                 block: CheckedBlock(
                     statements: []
@@ -3816,8 +3811,6 @@ struct Typechecker {
                                 generics: FunctionGenerics(
                                     base_scope_id: function_scope_id
                                     base_params: params
-                                    params: []
-                                    specializations: []
                                 )
                                 block: CheckedBlock(
                                     statements: []
@@ -3882,8 +3875,6 @@ struct Typechecker {
                                 generics: FunctionGenerics(
                                     base_scope_id: function_scope_id
                                     base_params: params
-                                    params: []
-                                    specializations: []
                                 )
                                 block: CheckedBlock(
                                     statements: [],
@@ -3933,8 +3924,6 @@ struct Typechecker {
                                 generics: FunctionGenerics(
                                     base_scope_id: function_scope_id
                                     base_params: params
-                                    params: []
-                                    specializations: []
                                 )
                                 block: CheckedBlock(
                                     statements: []
@@ -4249,9 +4238,6 @@ struct Typechecker {
         if not generics.has_value() {
             generics = FunctionGenerics(
                 base_scope_id: function_scope_id
-                base_params: []
-                params: []
-                specializations: []
             )
 
             base_definition = true
@@ -5831,8 +5817,6 @@ struct Typechecker {
                     generics: FunctionGenerics(
                         base_scope_id: scope_id
                         base_params: checked_params
-                        params: []
-                        specializations: []
                     )
                     block: CheckedBlock(
                         statements: []
