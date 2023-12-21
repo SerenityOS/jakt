@@ -240,10 +240,10 @@ enum IncludeAction {
 }
 
 struct ParsedExternImport {
-    is_c: bool
-    assigned_namespace: ParsedNamespace
-    before_include: [IncludeAction]
-    after_include: [IncludeAction]
+    is_c: bool = false
+    assigned_namespace: ParsedNamespace = ParsedNamespace()
+    before_include: [IncludeAction] = []
+    after_include: [IncludeAction] = []
     should_auto_import: bool = false
 
     fn get_path(this) -> String => .assigned_namespace.import_path_if_extern!
@@ -256,25 +256,25 @@ struct ParsedExternImport {
 }
 
 struct ParsedAlias {
-    alias_name: ParsedName?
-    target: [ParsedNameWithGenericParameters]
+    alias_name: ParsedName? = None
+    target: [ParsedNameWithGenericParameters] = []
 }
 
 struct ParsedNamespace {
-    name: String?
-    name_span: Span?
-    functions: [ParsedFunction]
-    records: [ParsedRecord]
-    traits: [ParsedTrait]
-    external_trait_implementations: [ParsedExternalTraitImplementation]
-    namespaces: [ParsedNamespace]
-    aliases: [ParsedAlias]
-    module_imports: [ParsedModuleImport]
-    extern_imports: [ParsedExternImport]
-    import_path_if_extern: String?
-    generating_import_extern_before_include: [IncludeAction]
-    generating_import_extern_after_include: [IncludeAction]
-    forall_chunks: [([ParsedGenericParameter], ParsedNamespace)]
+    name: String? = None
+    name_span: Span? = None
+    functions: [ParsedFunction] = []
+    records: [ParsedRecord] = []
+    traits: [ParsedTrait] = []
+    external_trait_implementations: [ParsedExternalTraitImplementation] = []
+    namespaces: [ParsedNamespace] = []
+    aliases: [ParsedAlias] = []
+    module_imports: [ParsedModuleImport] = []
+    extern_imports: [ParsedExternImport] = []
+    import_path_if_extern: String? = None
+    generating_import_extern_before_include: [IncludeAction] = []
+    generating_import_extern_after_include: [IncludeAction] = []
+    forall_chunks: [([ParsedGenericParameter], ParsedNamespace)] = []
     is_generated_code: bool = false
     is_auto_extern_imported: bool = false
 
@@ -504,15 +504,15 @@ enum ParsedTraitRequirements {
 struct ParsedTrait {
     name: String
     name_span: Span
-    generic_parameters: [ParsedGenericParameter]
+    generic_parameters: [ParsedGenericParameter] = []
 
     requirements: ParsedTraitRequirements
 }
 
 struct ParsedExternalTraitImplementation {
     for_type: ParsedType
-    traits: [ParsedNameWithGenericParameters]
-    methods: [ParsedMethod]
+    traits: [ParsedNameWithGenericParameters] = []
+    methods: [ParsedMethod] = []
 }
 
 struct ParsedBlock {
@@ -1750,22 +1750,7 @@ struct Parser {
     }
 
     public fn parse_namespace(mut this, process_only_one_entity: bool = false) throws -> ParsedNamespace {
-        mut parsed_namespace = ParsedNamespace(
-            name: None
-            name_span: None
-            functions: []
-            records: []
-            traits: []
-            external_trait_implementations: []
-            namespaces: []
-            aliases: []
-            module_imports: []
-            extern_imports: []
-            import_path_if_extern: None
-            generating_import_extern_before_include: []
-            generating_import_extern_after_include: []
-            forall_chunks: []
-        )
+        mut parsed_namespace = ParsedNamespace()
 
         mut active_attributes: [ParsedAttribute] = []
         mut saw_an_entity = false
@@ -2412,10 +2397,7 @@ struct Parser {
 
     fn parse_using(mut this) throws -> ParsedAlias {
         // (using) qualified_name [as Ident]
-        mut alias = ParsedAlias(
-            alias_name: None
-            target: []
-        )
+        mut alias = ParsedAlias()
 
         loop {
             match .current() {
@@ -2508,18 +2490,14 @@ struct Parser {
         let trait_list = .parse_trait_list()
         if not trait_list.has_value() {
             .error("Expected non-empty trait list", .current().span())
-            return ParsedExternalTraitImplementation(
-                for_type: type_name
-                traits: []
-                methods: []
-            )
+            return ParsedExternalTraitImplementation(for_type: type_name)
         }
 
         .skip_newlines()
 
         guard .current() is LCurly else {
             .error("Expected ‘{’", .current().span())
-            return ParsedExternalTraitImplementation(for_type: type_name, traits: trait_list!, methods: [])
+            return ParsedExternalTraitImplementation(for_type: type_name, traits: trait_list!)
         }
 
         let (fields, methods, records) = .parse_struct_class_body(
@@ -2672,27 +2650,7 @@ struct Parser {
 
     fn parse_extern_import(mut this, parent: &mut ParsedNamespace) throws -> ParsedExternImport {
         // import extern . [c] "<path>" [as <alias-name>] namespace?
-        mut parsed_import = ParsedExternImport(
-            is_c: false
-            assigned_namespace: ParsedNamespace(
-                name: None
-                name_span: None
-                functions: []
-                records: []
-                traits: []
-                external_trait_implementations: []
-                namespaces: []
-                aliases: []
-                module_imports: []
-                extern_imports: []
-                import_path_if_extern: None
-                generating_import_extern_before_include: []
-                generating_import_extern_after_include: []
-                forall_chunks: []
-            )
-            before_include: []
-            after_include: []
-        )
+        mut parsed_import = ParsedExternImport()
 
         if .current() is Identifier(name, span) {
             .index++
