@@ -774,8 +774,8 @@ enum Deferred {
 class InterpreterScope {
     public bindings: [String:Value]
     public parent: InterpreterScope?
-    public type_bindings: [TypeId:TypeId]
-    public defers: [Deferred]
+    public type_bindings: [TypeId:TypeId] = [:]
+    public defers: [Deferred] = []
 
     public fn create(
         bindings: [String:Value] = [:]
@@ -785,7 +785,6 @@ class InterpreterScope {
         bindings
         parent
         type_bindings
-        defers: []
     )
 
     public fn from_runtime_scope(scope_id: ScopeId, program: CheckedProgram, parent: InterpreterScope? = None) -> InterpreterScope {
@@ -816,8 +815,6 @@ class InterpreterScope {
         return InterpreterScope(
             bindings
             parent
-            type_bindings: [:]
-            defers: []
         )
     }
 
