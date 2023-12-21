@@ -234,6 +234,7 @@ struct FormattedToken {
         Implements => "implements"
         Requires => "requires"
         Trait => "trait"
+        Must => "must"
         Reflect => "reflect"
         Garbage => ""
     }

@@ -7029,6 +7029,9 @@ struct Typechecker {
             }
             yield (final_scope_id, expr)
         }
+
+        Must(expr) => .required_scope_id_in_hierarchy_for(expr, current_scope_id)
+
         // FIXME: Check what the expression actually returns, also check the catch block (if one exists)
         Try => (None, expr)
         TryBlock => (None, expr)
@@ -8551,12 +8554,25 @@ struct Typechecker {
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
         Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode, type_hint)
         Function(captures, params, can_throw, is_fat_arrow, return_type, block, span) => .typecheck_lambda(captures, params, can_throw, is_fat_arrow, return_type, block, span, scope_id, safety_mode)
+        Must(expr, span) => .typecheck_must(expr, span, scope_id, safety_mode, type_hint)
         Try(expr, catch_block, catch_span, catch_name, span) => .typecheck_try(expr, catch_block, catch_span, catch_name, scope_id, safety_mode, span, type_hint)
         TryBlock(stmt, catch_block, error_name, error_span, span) => .typecheck_try_block(stmt, error_name, error_span, catch_block, scope_id, safety_mode, span)
         Unsafe(expr) => .typecheck_expression(expr, scope_id, safety_mode: SafetyMode::Unsafe, type_hint)
         Operator => {
             .compiler.panic("idk how to handle this thing")
         }
+    }
+
+    fn typecheck_must(mut this, expr: ParsedExpression, span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint)
+        if not checked_expr.can_throw() {
+            .error(format("‘must’ operator used on non-throwing expression"), span)
+        }
+        return CheckedExpression::Must(
+            generic_inferences: None,
+            expr: checked_expr,
+            span,
+            type_id: checked_expr.type())
     }
 
     fn typecheck_is_enum_variant(mut this, checked_expr: CheckedExpression, inner: ParsedType, bindings: [EnumVariantPatternArgument], scope_id: ScopeId) throws -> CheckedUnaryOperator {

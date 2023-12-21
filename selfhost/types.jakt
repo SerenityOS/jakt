@@ -1559,6 +1559,7 @@ boxed enum CheckedExpression {
         pseudo_function_id: FunctionId?
         scope_id: ScopeId
     )
+    Must(expr: CheckedExpression, span: Span, type_id: TypeId)
     Try(
         expr: CheckedExpression
         catch_block: CheckedBlock?

@@ -1102,6 +1102,7 @@ boxed enum ParsedExpression {
     EnumVariantArg(expr: ParsedExpression, arg: EnumVariantPatternArgument, enum_variant: ParsedType, span: Span)
     NamespacedVar(name: String, namespace_: [String], span: Span)
     Function(captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, is_fat_arrow: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
+    Must(expr: ParsedExpression, span: Span)
     Try(expr: ParsedExpression, catch_block: ParsedBlock?, catch_span: Span?, catch_name: String?, span: Span)
     TryBlock(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, span: Span)
     Reflect(type: ParsedType, span: Span)
@@ -1353,6 +1354,16 @@ boxed enum ParsedExpression {
                     }
                 }
                 yield lhs_name == rhs_name
+            }
+            else => false
+        }
+        Must(expr: lhs_expr, span: lhs_span) => match rhs_expression {
+            Must(expr: rhs_expr, span: rhs_span) => {
+                mut equals = rhs_span.start == lhs_span.start and rhs_span.end == lhs_span.end
+                if not equals {
+                    equals = lhs_expr.equals(rhs_expr)
+                }
+                yield equals
             }
             else => false
         }
@@ -4893,6 +4904,13 @@ struct Parser {
     fn parse_operand_base(mut this) throws -> ParsedExpression => match .current() {
         Dot(span) => {
             yield ParsedExpression::Var(name: "this", span)
+        }
+        Must(span) => {
+            let start = .current().span()
+            .index++
+            let expr = .parse_operand()
+            let span = merge_spans(start, expr.span())
+            yield ParsedExpression::Must(expr, span)
         }
         Try(span) => {
             .index++
