@@ -1224,11 +1224,11 @@ enum BlockControlFlow {
 }
 
 struct CheckedBlock {
-    statements: [CheckedStatement]
+    statements: [CheckedStatement] = []
     scope_id: ScopeId
     control_flow: BlockControlFlow
-    yielded_type: TypeId?
-    yielded_none: bool
+    yielded_type: TypeId? = None
+    yielded_none: bool = false
 }
 
 struct FieldRecord {

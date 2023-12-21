@@ -2665,11 +2665,8 @@ struct Typechecker {
                     base_scope_id: method_scope_id
                 )
                 block: CheckedBlock(
-                    statements: []
                     scope_id: block_scope_id
                     control_flow: BlockControlFlow::MayReturn
-                    yielded_type: TypeId::none()
-                    yielded_none: false
                 )
                 can_throw: func.can_throw
                 type: func.type
@@ -2878,11 +2875,8 @@ struct Typechecker {
                     base_params: constructor_parameters
                 )
                 block: CheckedBlock(
-                    statements: []
                     scope_id: block_scope_id
                     control_flow: BlockControlFlow::MayReturn
-                    yielded_type: TypeId::none()
-                    yielded_none: false
                 )
                 can_throw: false
                 type: FunctionType::ImplicitConstructor
@@ -3813,11 +3807,8 @@ struct Typechecker {
                                     base_params: params
                                 )
                                 block: CheckedBlock(
-                                    statements: []
                                     scope_id: block_scope_id
                                     control_flow: BlockControlFlow::MayReturn
-                                    yielded_type: TypeId::none()
-                                    yielded_none: false
                                 ),
                                 can_throw: false
                                 type: FunctionType::ImplicitEnumConstructor
@@ -3877,11 +3868,8 @@ struct Typechecker {
                                     base_params: params
                                 )
                                 block: CheckedBlock(
-                                    statements: [],
                                     scope_id: block_scope_id
                                     control_flow: BlockControlFlow::AlwaysReturns
-                                    yielded_type: TypeId::none()
-                                    yielded_none: false
                                 ),
                                 can_throw: false
                                 type: FunctionType::ImplicitEnumConstructor
@@ -3926,11 +3914,8 @@ struct Typechecker {
                                     base_params: params
                                 )
                                 block: CheckedBlock(
-                                    statements: []
                                     scope_id: block_scope_id
                                     control_flow: BlockControlFlow::AlwaysReturns
-                                    yielded_type: TypeId::none()
-                                    yielded_none: false
                                 ),
                                 can_throw: false
                                 type: FunctionType::ImplicitEnumConstructor
@@ -4264,11 +4249,8 @@ struct Typechecker {
             params: []
             generics: generics!
             block: CheckedBlock(
-                statements: []
                 scope_id: block_scope_id
                 control_flow: BlockControlFlow::MayReturn
-                yielded_type: TypeId::none()
-                yielded_none: false
             )
             can_throw: parsed_function.can_throw
             type: parsed_function.type
@@ -5502,11 +5484,8 @@ struct Typechecker {
         let parent_throws = .get_scope(parent_scope_id).can_throw
         let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws, debug_name: "block")
         mut checked_block = CheckedBlock(
-            statements: []
             scope_id: block_scope_id
             control_flow: BlockControlFlow::MayReturn
-            yielded_type: TypeId::none()
-            yielded_none: false
         )
         for parsed_statement in parsed_block.stmts {
             if not checked_block.control_flow.is_reachable() {
@@ -5819,11 +5798,8 @@ struct Typechecker {
                         base_params: checked_params
                     )
                     block: CheckedBlock(
-                        statements: []
                         scope_id
                         control_flow: BlockControlFlow::MayReturn
-                        yielded_type: None
-                        yielded_none: false
                     )
                     can_throw
                     type: FunctionType::Expression

@@ -321,11 +321,8 @@ fn process_cpp_declaration(
                     base_params: params
                 )
                 block: CheckedBlock(
-                    statements: []
                     scope_id: function_scope
                     control_flow: BlockControlFlow::MayReturn
-                    yielded_type: None
-                    yielded_none: false
                 )
                 can_throw: false // FIXME: ErrorOr
                 type: match fd.is_constructor() {

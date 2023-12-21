@@ -539,11 +539,8 @@ class CppImportProcessor {
                         base_params: function_params
                     )
                     block: CheckedBlock(
-                        statements: []
                         scope_id
                         control_flow: BlockControlFlow::MayReturn
-                        yielded_type: None
-                        yielded_none: false
                     )
                     can_throw: false
                     type: FunctionType::Normal
@@ -1536,11 +1533,8 @@ class CppImportProcessor {
                 params: .function_generic_parameters_from(template_parameters?.params)
             )
             block: CheckedBlock(
-                statements: []
                 scope_id: function_scope
                 control_flow: BlockControlFlow::MayReturn
-                yielded_type: None
-                yielded_none: false
             )
             can_throw: function_throws
             type: match kind {
@@ -2117,11 +2111,8 @@ class CppImportProcessor {
                     params: generic_params
                 )
                 block: CheckedBlock(
-                    statements: []
                     scope_id: function_scope
                     control_flow: BlockControlFlow::MayReturn
-                    yielded_type: None
-                    yielded_none: false
                 )
                 can_throw: is_class
                 type: FunctionType::ImplicitConstructor
