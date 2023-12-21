@@ -370,13 +370,13 @@ enum RecordType {
 struct ParsedRecord {
     name: String
     name_span: Span
-    generic_parameters: [ParsedGenericParameter]
+    generic_parameters: [ParsedGenericParameter] = []
     definition_linkage: DefinitionLinkage
     // if not empty, must have at least one value.
-    implements_list: [ParsedNameWithGenericParameters]?
-    methods: [ParsedMethod]
+    implements_list: [ParsedNameWithGenericParameters]? = None
+    methods: [ParsedMethod] = []
     record_type: RecordType
-    nested_records: [ParsedRecord]
+    nested_records: [ParsedRecord] = []
 
     external_name: ExternalName? = None
 }
@@ -2628,12 +2628,8 @@ struct Parser {
             yield ParsedRecord(
                 name: "",
                 name_span: .empty_span(),
-                generic_parameters: [],
                 definition_linkage,
-                implements_list: None,
-                methods: [],
                 record_type: RecordType::Garbage
-                nested_records: []
             )
         }
     }
@@ -3365,12 +3361,8 @@ struct Parser {
         mut parsed_enum = ParsedRecord(
             name: "",
             name_span: .empty_span(),
-            generic_parameters: [],
             definition_linkage,
-            implements_list: None,
-            methods: [],
             record_type: RecordType::Garbage
-            nested_records: []
         )
         mut underlying_type: ParsedType? = None
         if .current() is Enum {
@@ -3649,12 +3641,8 @@ struct Parser {
         mut parsed_struct = ParsedRecord(
             name: "",
             name_span: .empty_span(),
-            generic_parameters: [],
             definition_linkage,
-            implements_list: None,
-            methods: [],
             record_type: RecordType::Garbage
-            nested_records: []
         )
         if .current() is Struct {
             .index++
@@ -3717,12 +3705,8 @@ struct Parser {
         mut parsed_class = ParsedRecord(
             name: "",
             name_span: .empty_span(),
-            generic_parameters: [],
             definition_linkage,
-            implements_list: None,
-            methods: [],
             record_type: RecordType::Garbage
-            nested_records: []
         )
         mut super_type: ParsedType? = None
         if .current() is Class {
