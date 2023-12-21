@@ -32,14 +32,13 @@ AllowedControlExits() {};
 };
 struct ControlFlowState {
   public:
-public: codegen::AllowedControlExits allowed_exits;public: bool passes_through_match;public: bool passes_through_try;public: size_t match_nest_level;public: static codegen::ControlFlowState no_control_flow();
+public: codegen::AllowedControlExits allowed_exits;public: bool passes_through_try;public: bool directly_inside_match;public: bool indirectly_inside_match;public: static codegen::ControlFlowState no_control_flow();
 public: codegen::ControlFlowState enter_function() const;
 public: codegen::ControlFlowState enter_loop() const;
 public: codegen::ControlFlowState enter_match() const;
-public: bool is_match_nested() const;
 public: static ByteString nested_release_return_expr(ids::TypeId const func_return_type, bool const func_can_throw, ByteString const cpp_match_result_type);
 public: ErrorOr<ByteString> apply_control_flow_macro(ByteString const x, ids::TypeId const func_return_type, bool const func_can_throw, ByteString const cpp_match_result_type) const;
-public: ControlFlowState(codegen::AllowedControlExits a_allowed_exits, bool a_passes_through_match, bool a_passes_through_try, size_t a_match_nest_level);
+public: ControlFlowState(codegen::AllowedControlExits a_allowed_exits, bool a_passes_through_try, bool a_directly_inside_match, bool a_indirectly_inside_match);
 
 public: ByteString debug_description() const;
 };struct LineSpan {
@@ -97,8 +96,8 @@ public: ByteString codegen_ak_formatter(ByteString const name, JaktInternal::Dyn
 public: ErrorOr<ByteString> codegen_expression_and_deref_if_generic_and_needed(NonnullRefPtr<typename types::CheckedExpression> const expression);
 public: ErrorOr<ByteString> codegen_expression(NonnullRefPtr<typename types::CheckedExpression> const expression);
 public: ErrorOr<ByteString> codegen_match(NonnullRefPtr<typename types::CheckedExpression> const expr, JaktInternal::DynamicArray<types::CheckedMatchCase> const match_cases, ids::TypeId const type_id, bool const all_variants_constant);
-public: ErrorOr<ByteString> codegen_generic_match(NonnullRefPtr<typename types::CheckedExpression> const expr, JaktInternal::DynamicArray<types::CheckedMatchCase> const cases, ids::TypeId const return_type_id, bool const all_variants_constant);
-public: ErrorOr<ByteString> codegen_enum_match(types::CheckedEnum const enum_, NonnullRefPtr<typename types::CheckedExpression> const expr, JaktInternal::DynamicArray<types::CheckedMatchCase> const match_cases, ids::TypeId const type_id, bool const all_variants_constant);
+public: ErrorOr<ByteString> codegen_generic_match(NonnullRefPtr<typename types::CheckedExpression> const expr, JaktInternal::DynamicArray<types::CheckedMatchCase> const cases, ids::TypeId const return_type_id, ByteString const cpp_match_result_type, bool const all_variants_constant);
+public: ErrorOr<ByteString> codegen_enum_match(types::CheckedEnum const enum_, NonnullRefPtr<typename types::CheckedExpression> const expr, JaktInternal::DynamicArray<types::CheckedMatchCase> const match_cases, ids::TypeId const type_id, ByteString const cpp_match_result_type, bool const all_variants_constant);
 public: ErrorOr<ByteString> codegen_match_body(types::CheckedMatchBody const body, ids::TypeId const return_type_id);
 public: ErrorOr<ByteString> codegen_function_return_type(NonnullRefPtr<types::CheckedFunction> const function);
 public: ErrorOr<ByteString> codegen_binary_expression(NonnullRefPtr<typename types::CheckedExpression> const expression, ids::TypeId const type_id, NonnullRefPtr<typename types::CheckedExpression> const lhs, NonnullRefPtr<typename types::CheckedExpression> const rhs, types::CheckedBinaryOperator const op);
