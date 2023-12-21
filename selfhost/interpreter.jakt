@@ -3708,8 +3708,6 @@ class Interpreter {
                             statements: [else_statement!]
                             scope_id: then_block.scope_id
                             control_flow: BlockControlFlow::MayReturn
-                            yielded_type: None
-                            yielded_none: false
                         ))
                         false => None
                     }
