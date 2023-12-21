@@ -652,18 +652,19 @@ struct ResolvedForallChunk {
 class Module {
     public id: ModuleId
     public name: String
-    public functions: [CheckedFunction]
-    public structures: [CheckedStruct]
-    public enums: [CheckedEnum]
-    public scopes: [Scope]
     public types: [Type]
-    public traits: [CheckedTrait]
-    public variables: [CheckedVariable]
-    public imports: [ModuleId]
     public resolved_import_path: String
-    public builtin_implementation_structs: [usize:StructId]
-
     public is_root: bool
+
+    public functions: [CheckedFunction] = []
+    public structures: [CheckedStruct] = []
+    public enums: [CheckedEnum] = []
+    public scopes: [Scope] = []
+    public traits: [CheckedTrait] = []
+    public variables: [CheckedVariable] = []
+    public imports: [ModuleId] = []
+    public builtin_implementation_structs: [usize:StructId] = [:]
+
     public fn is_prelude(this) -> bool => .id.id == 0
 
     public fn new_type_variable(mut this, implemented_traits: [TypeId]? = None) -> TypeId {
@@ -1745,10 +1746,6 @@ class CheckedProgram {
         let module = Module(
             id: module_id,
             name: name,
-            functions: [],
-            structures: [],
-            enums: [],
-            scopes: [],
             types: [ // FIXME: use general builtin types array
                 Type::Void,
                 Type::Bool,
@@ -1769,11 +1766,7 @@ class CheckedProgram {
                 Type::Unknown,
                 Type::Never
             ],
-            traits: [],
-            variables: [],
-            imports: [],
             resolved_import_path: path ?? .compiler.current_file_path()!.to_string(),
-            builtin_implementation_structs: [:]
             is_root: is_root,
         )
         .modules.push(module)
